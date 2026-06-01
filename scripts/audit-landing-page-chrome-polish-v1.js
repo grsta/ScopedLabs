@@ -4,7 +4,7 @@ const path = require("path");
 const ROOT = process.cwd();
 const VERSION = "landing-page-chrome-polish-audit-002-homepage-story-sync";
 const LANDING_STYLE_CACHE = "landing-card-button-polish-v2-001";
-const HOMEPAGE_STYLE_CACHE = "homepage-product-story-004-analytics-dashboard-panel";
+const HOMEPAGE_STYLE_CACHE = "homepage-product-story-005-cad-coverage-panel";
 
 function file(rel) {
   return path.join(ROOT, rel);

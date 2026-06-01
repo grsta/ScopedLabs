@@ -16,7 +16,7 @@
   <meta name="twitter:title" content="ScopedLabs ? Engineering Planning Tools">
   <meta name="twitter:description" content="Calculator-backed planning tools, guided workflows, and exportable reports for real infrastructure decisions.">
 
-  <link rel="stylesheet" href="/assets/style.css?v=homepage-product-story-004-analytics-dashboard-panel" />
+  <link rel="stylesheet" href="/assets/style.css?v=homepage-product-story-005-cad-coverage-panel" />
   <script src="/assets/app.js?v=0314" defer></script>
 </head>
 
@@ -153,7 +153,7 @@
     </div>
   </section>
 
-  <section class="section section-muted homepage-section-tight homepage-proof-band">
+  <section class="section section-muted homepage-section-tight homepage-proof-band homepage-cad-proof-band">
     <div class="container">
       <div class="section-head homepage-proof-head">
         <span class="homepage-card-eyebrow">Why ScopedLabs works</span>
@@ -164,7 +164,7 @@
         </p>
       </div>
 
-      <div class="homepage-proof-grid homepage-proof-grid-visual">
+      <div class="homepage-proof-grid homepage-proof-grid-cad">
         <div class="card homepage-proof-card homepage-proof-card-feature">
           <div class="card-title">Transparent planning support.</div>
           <div class="card-text">
@@ -179,171 +179,88 @@
           </ul>
         </div>
 
-        <div class="homepage-proof-visual homepage-analytics-visual" aria-label="ScopedLabs analytical dashboard preview">
-          <div class="homepage-analytics-dashboard">
-            <svg class="homepage-analytics-svg" viewBox="0 0 760 520" role="img" aria-label="Glass analytics dashboard showing trend lines, gauges, progress bars, and reporting flow">
-              <defs>
-                <linearGradient id="slHpPanel" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0" stop-color="#143526" stop-opacity=".78"/>
-                  <stop offset=".55" stop-color="#06120f" stop-opacity=".88"/>
-                  <stop offset="1" stop-color="#020706" stop-opacity=".96"/>
-                </linearGradient>
+        <div class="homepage-cad-coverage-panel" aria-label="ScopedLabs CAD-style planning graph preview">
+          <svg class="homepage-cad-coverage-svg" viewBox="0 0 760 430" role="img" aria-label="CAD-style coverage footprint graph showing a camera, raw footprint, reserve margins, usable coverage, and report-ready planning output">
+            <defs>
+              <linearGradient id="hpCadPanel" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#0d1915" stop-opacity=".98"/>
+                <stop offset="1" stop-color="#030806" stop-opacity=".98"/>
+              </linearGradient>
+              <linearGradient id="hpCadUsable" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#5dff70" stop-opacity=".32"/>
+                <stop offset="1" stop-color="#5dff70" stop-opacity=".16"/>
+              </linearGradient>
+              <linearGradient id="hpCadReserve" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#f5cf57" stop-opacity=".28"/>
+                <stop offset="1" stop-color="#f5cf57" stop-opacity=".10"/>
+              </linearGradient>
+              <filter id="hpCadSoftGlow" x="-30%" y="-30%" width="160%" height="160%">
+                <feGaussianBlur stdDeviation="2.2" result="blur"/>
+                <feMerge>
+                  <feMergeNode in="blur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+            </defs>
 
-                <linearGradient id="slHpGreenLine" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0" stop-color="#53ff3d"/>
-                  <stop offset=".55" stop-color="#72ff41"/>
-                  <stop offset="1" stop-color="#b3ff41"/>
-                </linearGradient>
+            <rect x="18" y="18" width="724" height="394" rx="26" fill="url(#hpCadPanel)" stroke="rgba(83,255,61,.28)" stroke-width="1.1"/>
+            <rect x="34" y="34" width="692" height="362" rx="18" fill="rgba(0,0,0,.16)" stroke="rgba(255,255,255,.06)"/>
 
-                <linearGradient id="slHpCyanLine" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0" stop-color="#19f5c8"/>
-                  <stop offset="1" stop-color="#53ffdd"/>
-                </linearGradient>
+            <text x="58" y="68" fill="#6eff8a" font-size="14" font-weight="900" letter-spacing="2.2">PLANNING GRAPH / COVERAGE FOOTPRINT</text>
+            <text x="58" y="92" fill="rgba(230,255,238,.62)" font-size="13">Simplified site-native CAD visual derived from real tool output.</text>
 
-                <linearGradient id="slHpBar" x1="0" y1="1" x2="0" y2="0">
-                  <stop offset="0" stop-color="#00d5bb" stop-opacity=".38"/>
-                  <stop offset="1" stop-color="#53ff3d" stop-opacity=".9"/>
-                </linearGradient>
+            <g opacity=".42" stroke="rgba(255,255,255,.11)" stroke-width="1">
+              <path d="M80 126h590M80 164h590M80 202h590M80 240h590M80 278h590M80 316h590"/>
+              <path d="M126 116v218M182 116v218M238 116v218M294 116v218M350 116v218M406 116v218M462 116v218M518 116v218M574 116v218M630 116v218"/>
+            </g>
 
-                <filter id="slHpGlow" x="-30%" y="-30%" width="160%" height="160%">
-                  <feGaussianBlur stdDeviation="3" result="blur"/>
-                  <feMerge>
-                    <feMergeNode in="blur"/>
-                    <feMergeNode in="SourceGraphic"/>
-                  </feMerge>
-                </filter>
+            <g>
+              <line x1="126" y1="224" x2="646" y2="224" stroke="rgba(160,255,178,.28)" stroke-width="1.2" stroke-dasharray="8 9"/>
+              <text x="64" y="218" fill="rgba(230,255,238,.78)" font-size="13" font-weight="800">Cam</text>
+              <text x="64" y="238" fill="rgba(230,255,238,.46)" font-size="11">HFOV</text>
 
-                <filter id="slHpSoftGlow" x="-45%" y="-45%" width="190%" height="190%">
-                  <feGaussianBlur stdDeviation="10" result="blur"/>
-                  <feColorMatrix in="blur" type="matrix"
-                    values="0 0 0 0 0.32
-                            0 0 0 0 1
-                            0 0 0 0 0.24
-                            0 0 0 .55 0"/>
-                  <feMerge>
-                    <feMergeNode/>
-                    <feMergeNode in="SourceGraphic"/>
-                  </feMerge>
-                </filter>
-              </defs>
+              <circle cx="122" cy="224" r="5" fill="none" stroke="#70ff7d" stroke-width="1.5"/>
+              <rect x="132" y="214" width="25" height="20" rx="3" fill="rgba(83,255,61,.08)" stroke="#70ff7d" stroke-width="1.3"/>
+              <line x1="157" y1="224" x2="178" y2="224" stroke="#70ff7d" stroke-width="1.3"/>
+            </g>
 
-              <rect x="24" y="22" width="712" height="474" rx="30" fill="url(#slHpPanel)" stroke="rgba(83,255,61,.48)" stroke-width="1.2"/>
-              <rect x="25" y="23" width="710" height="472" rx="30" fill="none" stroke="rgba(255,255,255,.10)" stroke-width=".8"/>
+            <polygon points="184,224 650,118 650,330" fill="rgba(245,207,87,.08)" stroke="#f5d25b" stroke-width="1.35"/>
+            <polygon points="184,224 650,144 650,304" fill="url(#hpCadUsable)" stroke="#75ff76" stroke-width="1.6" filter="url(#hpCadSoftGlow)"/>
+            <polygon points="184,224 650,118 650,144" fill="url(#hpCadReserve)" stroke="#f5d25b" stroke-width="1"/>
+            <polygon points="184,224 650,304 650,330" fill="url(#hpCadReserve)" stroke="#f5d25b" stroke-width="1"/>
 
-              <g opacity=".9">
-                <rect x="24" y="22" width="68" height="474" rx="30" fill="rgba(83,255,61,.035)"/>
-                <line x1="92" y1="22" x2="92" y2="496" stroke="rgba(83,255,61,.18)"/>
-                <circle cx="58" cy="72" r="4" fill="#53ff3d" filter="url(#slHpGlow)"/>
-                <rect x="45" y="116" width="28" height="28" rx="6" fill="rgba(83,255,61,.10)" stroke="rgba(83,255,61,.28)"/>
-                <path d="M52 126h6v6h-6zM62 126h6v6h-6zM52 136h6v6h-6zM62 136h6v6h-6z" fill="#91ff7b"/>
-                <path d="M49 184h27M50 184l8-10 9 5 8-15" fill="none" stroke="#53ffdd" stroke-width="2"/>
-                <path d="M51 240v-22M60 240v-34M69 240v-48" stroke="#7bffd0" stroke-width="2"/>
-                <path d="M48 292l13-8 13 8-13 8zM48 306l13-8 13 8" fill="none" stroke="#63ff9b" stroke-width="2"/>
-                <path d="M52 354h20M52 364h20M52 374h14" stroke="#7bffd0" stroke-width="2"/>
-                <circle cx="50" cy="444" r="3" fill="#53ff3d"/>
-                <circle cx="63" cy="444" r="3" fill="#1fe6c9" opacity=".6"/>
-              </g>
+            <g stroke="rgba(255,255,255,.38)" stroke-width="1">
+              <line x1="184" y1="350" x2="650" y2="350"/>
+              <line x1="184" y1="342" x2="184" y2="358"/>
+              <line x1="650" y1="342" x2="650" y2="358"/>
+              <text x="417" y="374" text-anchor="middle" fill="rgba(230,255,238,.70)" font-size="13" font-weight="800">Target distance</text>
 
-              <g>
-                <rect x="120" y="74" width="430" height="188" rx="14" fill="rgba(0,0,0,.18)" stroke="rgba(83,255,61,.16)"/>
-                <g opacity=".34" stroke="rgba(255,255,255,.22)" stroke-width=".8">
-                  <path d="M140 112h390M140 150h390M140 188h390M140 226h390"/>
-                  <path d="M174 92v150M218 92v150M262 92v150M306 92v150M350 92v150M394 92v150M438 92v150M482 92v150"/>
-                </g>
+              <line x1="690" y1="118" x2="690" y2="330"/>
+              <line x1="680" y1="118" x2="700" y2="118"/>
+              <line x1="680" y1="330" x2="700" y2="330"/>
+            </g>
 
-                <path d="M142 230C184 212 214 196 250 178C285 160 305 176 330 151C356 125 382 143 409 114C439 82 463 105 489 88C510 74 526 64 536 52"
-                      fill="none" stroke="url(#slHpGreenLine)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#slHpGlow)"/>
-                <path d="M142 228C174 220 214 214 248 204C290 192 318 198 354 178C392 156 428 146 466 157C497 166 520 144 540 137"
-                      fill="none" stroke="url(#slHpCyanLine)" stroke-width="2.6" stroke-dasharray="5 8" stroke-linecap="round"/>
-                <path d="M142 240C188 232 218 224 260 220C304 216 336 200 384 205C430 210 462 190 512 184"
-                      fill="none" stroke="rgba(113,255,55,.45)" stroke-width="1.8"/>
+            <g font-size="13" font-weight="900">
+              <text x="670" y="134" fill="#ffe070">Reserve margin</text>
+              <text x="670" y="224" fill="rgba(230,255,238,.86)">Raw footprint</text>
+              <text x="670" y="286" fill="#75ff76">Usable coverage</text>
+              <text x="670" y="318" fill="#ffe070">Reserve margin</text>
+            </g>
 
-                <g fill="#84ff3d" filter="url(#slHpGlow)">
-                  <circle cx="166" cy="218" r="4"/>
-                  <circle cx="198" cy="202" r="4"/>
-                  <circle cx="236" cy="184" r="4"/>
-                  <circle cx="284" cy="168" r="4"/>
-                  <circle cx="330" cy="151" r="4"/>
-                  <circle cx="382" cy="143" r="4"/>
-                  <circle cx="409" cy="114" r="4"/>
-                  <circle cx="463" cy="105" r="4"/>
-                  <circle cx="489" cy="88" r="4"/>
-                  <circle cx="526" cy="64" r="4"/>
-                </g>
+            <g>
+              <rect x="70" y="354" width="150" height="34" rx="9" fill="rgba(0,0,0,.20)" stroke="rgba(83,255,61,.15)"/>
+              <text x="86" y="375" fill="rgba(230,255,238,.74)" font-size="12" font-weight="900" letter-spacing="1.2">ASSUMPTIONS</text>
 
-                <path d="M534 52l-5 23 22-9z" fill="#8dff46" filter="url(#slHpGlow)"/>
-              </g>
+              <rect x="235" y="354" width="132" height="34" rx="9" fill="rgba(0,0,0,.20)" stroke="rgba(83,255,61,.15)"/>
+              <text x="251" y="375" fill="rgba(230,255,238,.74)" font-size="12" font-weight="900" letter-spacing="1.2">VALIDATED</text>
 
-              <g>
-                <rect x="570" y="74" width="132" height="124" rx="14" fill="rgba(0,0,0,.18)" stroke="rgba(83,255,61,.16)"/>
-                <circle cx="636" cy="136" r="38" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="9"/>
-                <path d="M636 98a38 38 0 1 1-34 54" fill="none" stroke="#1fe6c9" stroke-width="9" stroke-linecap="round" filter="url(#slHpGlow)"/>
-                <path d="M636 98a38 38 0 0 1 33 18" fill="none" stroke="#d5d540" stroke-width="9" stroke-linecap="round"/>
-                <text x="636" y="136" text-anchor="middle" fill="#aaff74" font-size="28" font-weight="800">78%</text>
-                <text x="636" y="158" text-anchor="middle" fill="rgba(230,255,238,.7)" font-size="10" letter-spacing="2">HEALTH</text>
-              </g>
+              <rect x="382" y="354" width="146" height="34" rx="9" fill="rgba(0,0,0,.20)" stroke="rgba(83,255,61,.15)"/>
+              <text x="398" y="375" fill="rgba(230,255,238,.74)" font-size="12" font-weight="900" letter-spacing="1.2">WORKFLOW</text>
 
-              <g>
-                <rect x="570" y="212" width="132" height="50" rx="12" fill="rgba(0,0,0,.14)" stroke="rgba(83,255,61,.11)"/>
-                <text x="586" y="234" fill="rgba(230,255,238,.72)" font-size="11" font-weight="800" letter-spacing="1.2">KEY SIGNALS</text>
-                <line x1="586" y1="248" x2="678" y2="248" stroke="rgba(83,255,61,.18)" stroke-width="6" stroke-linecap="round"/>
-                <line x1="586" y1="248" x2="654" y2="248" stroke="#53ff3d" stroke-width="6" stroke-linecap="round" filter="url(#slHpGlow)"/>
-              </g>
-
-              <g>
-                <rect x="120" y="284" width="132" height="82" rx="14" fill="rgba(0,0,0,.18)" stroke="rgba(83,255,61,.15)"/>
-                <circle cx="144" cy="315" r="14" fill="none" stroke="#71ff36" stroke-width="3"/>
-                <text x="174" y="306" fill="rgba(230,255,238,.7)" font-size="10" font-weight="800" letter-spacing="1.2">ESTIMATES</text>
-                <text x="174" y="331" fill="#fff" font-size="24" font-weight="800">1,248</text>
-                <polyline points="134,350 150,342 164,350 180,338 194,346 216,332" fill="none" stroke="#71ff36" stroke-width="2"/>
-              </g>
-
-              <g>
-                <rect x="268" y="284" width="132" height="82" rx="14" fill="rgba(0,0,0,.18)" stroke="rgba(31,230,201,.15)"/>
-                <circle cx="292" cy="315" r="14" fill="none" stroke="#1fe6c9" stroke-width="3"/>
-                <text x="322" y="306" fill="rgba(230,255,238,.7)" font-size="10" font-weight="800" letter-spacing="1.2">SCENARIOS</text>
-                <text x="322" y="331" fill="#fff" font-size="24" font-weight="800">356</text>
-                <polyline points="282,350 300,340 314,348 332,336 354,346 374,332" fill="none" stroke="#1fe6c9" stroke-width="2"/>
-              </g>
-
-              <g>
-                <rect x="416" y="284" width="132" height="82" rx="14" fill="rgba(0,0,0,.18)" stroke="rgba(220,177,43,.15)"/>
-                <circle cx="440" cy="315" r="14" fill="none" stroke="#e0b72c" stroke-width="3"/>
-                <path d="M440 306l9 17h-18z" fill="none" stroke="#e0b72c" stroke-width="2"/>
-                <text x="470" y="306" fill="rgba(230,255,238,.7)" font-size="10" font-weight="800" letter-spacing="1.2">WATCH</text>
-                <text x="470" y="331" fill="#fff" font-size="24" font-weight="800">24</text>
-                <polyline points="430,350 448,340 464,350 480,337 500,348 520,340" fill="none" stroke="#e0b72c" stroke-width="2"/>
-              </g>
-
-              <g>
-                <rect x="564" y="284" width="138" height="82" rx="14" fill="rgba(0,0,0,.18)" stroke="rgba(83,255,61,.15)"/>
-                <circle cx="588" cy="315" r="14" fill="none" stroke="#53ff75" stroke-width="3"/>
-                <path d="M581 315l5 5 11-13" fill="none" stroke="#53ff75" stroke-width="2.4"/>
-                <text x="618" y="306" fill="rgba(230,255,238,.7)" font-size="10" font-weight="800" letter-spacing="1.2">REPORTS</text>
-                <text x="618" y="331" fill="#fff" font-size="24" font-weight="800">Ready</text>
-                <polyline points="576,350 594,340 612,348 632,336 652,344 676,330" fill="none" stroke="#53ff75" stroke-width="2"/>
-              </g>
-
-              <g>
-                <rect x="120" y="388" width="582" height="70" rx="18" fill="rgba(0,0,0,.18)" stroke="rgba(83,255,61,.15)"/>
-                <g stroke="rgba(83,255,61,.35)" stroke-width="1.6" fill="none">
-                  <path d="M168 424H264M300 424h96M432 424h96M564 424h82"/>
-                </g>
-                <g fill="rgba(83,255,61,.18)" stroke="#53ff3d" stroke-width="2">
-                  <rect x="138" y="404" width="48" height="40" rx="8"/>
-                  <circle cx="282" cy="424" r="24"/>
-                  <circle cx="414" cy="424" r="24"/>
-                  <rect x="530" y="404" width="58" height="40" rx="8"/>
-                  <rect x="648" y="404" width="40" height="40" rx="8"/>
-                </g>
-                <path d="M151 424h22M151 416h22M151 432h16" stroke="#9cff8a" stroke-width="2"/>
-                <path d="M273 414l18 20M291 414l-18 20" stroke="#9cff8a" stroke-width="2"/>
-                <path d="M414 408l16 9v18l-16 9-16-9v-18z" fill="none" stroke="#1fe6c9" stroke-width="2"/>
-                <path d="M548 432l11-14 13 8 7-12" fill="none" stroke="#9cff8a" stroke-width="2"/>
-                <path d="M660 416h18M660 424h18M660 432h12" stroke="#1fe6c9" stroke-width="2"/>
-              </g>
-            </svg>
-          </div>
+              <rect x="543" y="354" width="142" height="34" rx="9" fill="rgba(0,0,0,.20)" stroke="rgba(83,255,61,.15)"/>
+              <text x="559" y="375" fill="rgba(230,255,238,.74)" font-size="12" font-weight="900" letter-spacing="1.2">REPORT READY</text>
+            </g>
+          </svg>
         </div>
       </div>
     </div>

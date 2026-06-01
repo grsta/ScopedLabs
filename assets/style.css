@@ -3411,3 +3411,86 @@ body.homepage-product-story .homepage-analytics-svg {
     width: calc(100% + 32px);
   }
 }
+
+
+/* homepage-product-story-005-cad-coverage-panel
+   Homepage proof band uses a simplified CAD-style planning graph derived from real Coverage Area visual language.
+   Hero remains protected. */
+body.homepage-product-story .homepage-cad-proof-band {
+  padding-top: 42px;
+  padding-bottom: 46px;
+  position: relative;
+}
+
+body.homepage-product-story .homepage-cad-proof-band::before {
+  background:
+    radial-gradient(circle at 24% 28%, rgba(83,255,61,.12), transparent 30%),
+    linear-gradient(90deg, rgba(83,255,61,.05), transparent 62%);
+  content: "";
+  inset: 0;
+  opacity: .78;
+  pointer-events: none;
+  position: absolute;
+}
+
+body.homepage-product-story .homepage-cad-proof-band > .container {
+  position: relative;
+  z-index: 1;
+}
+
+body.homepage-product-story .homepage-proof-grid-cad {
+  align-items: center;
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, .86fr) minmax(500px, 1.14fr);
+}
+
+body.homepage-product-story .homepage-proof-card-feature {
+  background:
+    radial-gradient(circle at top left, rgba(83,255,61,.10), transparent 36%),
+    linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.20));
+  border-color: rgba(83,255,61,.18);
+}
+
+body.homepage-product-story .homepage-proof-bullets {
+  color: rgba(225,255,231,.88);
+  display: grid;
+  gap: 10px;
+  margin: 20px 0 0;
+  padding-left: 20px;
+}
+
+body.homepage-product-story .homepage-cad-coverage-panel {
+  filter: drop-shadow(0 24px 64px rgba(0,0,0,.50));
+  min-width: 0;
+}
+
+body.homepage-product-story .homepage-cad-coverage-svg {
+  display: block;
+  height: auto;
+  overflow: visible;
+  width: 100%;
+}
+
+@media (max-width: 1000px) {
+  body.homepage-product-story .homepage-proof-grid-cad {
+    grid-template-columns: 1fr;
+  }
+
+  body.homepage-product-story .homepage-cad-coverage-panel {
+    margin: 0 auto;
+    max-width: 720px;
+  }
+}
+
+@media (max-width: 620px) {
+  body.homepage-product-story .homepage-cad-proof-band {
+    padding-top: 34px;
+  }
+
+  body.homepage-product-story .homepage-cad-coverage-panel {
+    margin-left: -12px;
+    margin-right: -12px;
+    width: calc(100% + 24px);
+  }
+}
