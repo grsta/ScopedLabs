@@ -3416,7 +3416,7 @@ body.homepage-product-story .homepage-analytics-svg {
 
 
 
-/* homepage-product-story-006-cad-panel-polish
+/* homepage-product-story-007-stacked-proof-panel
    Tightens the homepage CAD proof band, darkens the background, balances the grid,
    and uses the physical-security camera-library style marker inside the SVG. */
 body.homepage-product-story .homepage-cad-proof-band {
@@ -3497,4 +3497,29 @@ body.homepage-product-story .homepage-cad-coverage-svg {
     margin-right: -8px;
     width: calc(100% + 16px);
   }
+}
+
+
+/* homepage-product-story-007-stacked-proof-panel
+   Stacks the proof card and CAD graph so the graph can breathe.
+   Hero remains protected. */
+body.homepage-product-story .homepage-proof-grid-cad {
+  align-items: stretch;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 1fr !important;
+}
+
+body.homepage-product-story .homepage-proof-card-feature {
+  max-width: 880px;
+  min-height: 0;
+}
+
+body.homepage-product-story .homepage-cad-coverage-panel {
+  max-width: 980px;
+  width: 100%;
+}
+
+body.homepage-product-story .homepage-cad-coverage-svg {
+  width: 100%;
 }
