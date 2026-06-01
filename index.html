@@ -16,7 +16,7 @@
   <meta name="twitter:title" content="ScopedLabs ? Engineering Planning Tools">
   <meta name="twitter:description" content="Calculator-backed planning tools, guided workflows, and exportable reports for real infrastructure decisions.">
 
-  <link rel="stylesheet" href="/assets/style.css?v=homepage-product-story-005-cad-coverage-panel" />
+  <link rel="stylesheet" href="/assets/style.css?v=homepage-product-story-006-cad-panel-polish" />
   <script src="/assets/app.js?v=0314" defer></script>
 </head>
 
@@ -168,8 +168,8 @@
         <div class="card homepage-proof-card homepage-proof-card-feature">
           <div class="card-title">Transparent planning support.</div>
           <div class="card-text">
-            Use the tools to pressure-test a planning path, validate the numbers that matter, and keep
-            the workflow focused on engineering intent instead of product-driven guesswork.
+            Use the tools to pressure-test a planning path, validate the numbers that matter,
+            and keep the workflow focused on engineering intent instead of product-driven guesswork.
           </div>
 
           <ul class="homepage-proof-bullets" aria-label="ScopedLabs proof points">
@@ -183,82 +183,85 @@
           <svg class="homepage-cad-coverage-svg" viewBox="0 0 760 430" role="img" aria-label="CAD-style coverage footprint graph showing a camera, raw footprint, reserve margins, usable coverage, and report-ready planning output">
             <defs>
               <linearGradient id="hpCadPanel" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="#0d1915" stop-opacity=".98"/>
-                <stop offset="1" stop-color="#030806" stop-opacity=".98"/>
+                <stop offset="0" stop-color="#0a120f" stop-opacity=".98"/>
+                <stop offset="1" stop-color="#060b09" stop-opacity=".99"/>
               </linearGradient>
               <linearGradient id="hpCadUsable" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0" stop-color="#5dff70" stop-opacity=".32"/>
-                <stop offset="1" stop-color="#5dff70" stop-opacity=".16"/>
+                <stop offset="0" stop-color="#6dff7a" stop-opacity=".30"/>
+                <stop offset="1" stop-color="#6dff7a" stop-opacity=".12"/>
               </linearGradient>
               <linearGradient id="hpCadReserve" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0" stop-color="#f5cf57" stop-opacity=".28"/>
-                <stop offset="1" stop-color="#f5cf57" stop-opacity=".10"/>
+                <stop offset="0" stop-color="#efd36a" stop-opacity=".22"/>
+                <stop offset="1" stop-color="#efd36a" stop-opacity=".09"/>
               </linearGradient>
-              <filter id="hpCadSoftGlow" x="-30%" y="-30%" width="160%" height="160%">
-                <feGaussianBlur stdDeviation="2.2" result="blur"/>
-                <feMerge>
-                  <feMergeNode in="blur"/>
-                  <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-              </filter>
             </defs>
 
-            <rect x="18" y="18" width="724" height="394" rx="26" fill="url(#hpCadPanel)" stroke="rgba(83,255,61,.28)" stroke-width="1.1"/>
-            <rect x="34" y="34" width="692" height="362" rx="18" fill="rgba(0,0,0,.16)" stroke="rgba(255,255,255,.06)"/>
+            <rect x="18" y="18" width="724" height="394" rx="24" fill="url(#hpCadPanel)" stroke="rgba(83,255,61,.17)" stroke-width="1.1"/>
+            <rect x="38" y="38" width="684" height="354" rx="16" fill="rgba(0,0,0,.10)" stroke="rgba(255,255,255,.05)"/>
 
-            <text x="58" y="68" fill="#6eff8a" font-size="14" font-weight="900" letter-spacing="2.2">PLANNING GRAPH / COVERAGE FOOTPRINT</text>
-            <text x="58" y="92" fill="rgba(230,255,238,.62)" font-size="13">Simplified site-native CAD visual derived from real tool output.</text>
+            <text x="60" y="68" fill="#7bff8e" font-size="14" font-weight="900" letter-spacing="2">PLANNING GRAPH / COVERAGE FOOTPRINT</text>
+            <text x="60" y="88" fill="rgba(230,255,238,.52)" font-size="12.5">Simplified site-native CAD visual derived from real tool output.</text>
 
-            <g opacity=".42" stroke="rgba(255,255,255,.11)" stroke-width="1">
-              <path d="M80 126h590M80 164h590M80 202h590M80 240h590M80 278h590M80 316h590"/>
-              <path d="M126 116v218M182 116v218M238 116v218M294 116v218M350 116v218M406 116v218M462 116v218M518 116v218M574 116v218M630 116v218"/>
+            <g opacity=".28" stroke="rgba(255,255,255,.10)" stroke-width="1">
+              <path d="M84 122h540M84 156h540M84 190h540M84 224h540M84 258h540M84 292h540"/>
+              <path d="M126 112v190M174 112v190M222 112v190M270 112v190M318 112v190M366 112v190M414 112v190M462 112v190M510 112v190M558 112v190M606 112v190"/>
             </g>
 
             <g>
-              <line x1="126" y1="224" x2="646" y2="224" stroke="rgba(160,255,178,.28)" stroke-width="1.2" stroke-dasharray="8 9"/>
-              <text x="64" y="218" fill="rgba(230,255,238,.78)" font-size="13" font-weight="800">Cam</text>
-              <text x="64" y="238" fill="rgba(230,255,238,.46)" font-size="11">HFOV</text>
-
-              <circle cx="122" cy="224" r="5" fill="none" stroke="#70ff7d" stroke-width="1.5"/>
-              <rect x="132" y="214" width="25" height="20" rx="3" fill="rgba(83,255,61,.08)" stroke="#70ff7d" stroke-width="1.3"/>
-              <line x1="157" y1="224" x2="178" y2="224" stroke="#70ff7d" stroke-width="1.3"/>
+              <line x1="152" y1="208" x2="604" y2="208" stroke="rgba(160,255,178,.22)" stroke-width="1.1" stroke-dasharray="7 8"/>
             </g>
 
-            <polygon points="184,224 650,118 650,330" fill="rgba(245,207,87,.08)" stroke="#f5d25b" stroke-width="1.35"/>
-            <polygon points="184,224 650,144 650,304" fill="url(#hpCadUsable)" stroke="#75ff76" stroke-width="1.6" filter="url(#hpCadSoftGlow)"/>
-            <polygon points="184,224 650,118 650,144" fill="url(#hpCadReserve)" stroke="#f5d25b" stroke-width="1"/>
-            <polygon points="184,224 650,304 650,330" fill="url(#hpCadReserve)" stroke="#f5d25b" stroke-width="1"/>
-
-            <g stroke="rgba(255,255,255,.38)" stroke-width="1">
-              <line x1="184" y1="350" x2="650" y2="350"/>
-              <line x1="184" y1="342" x2="184" y2="358"/>
-              <line x1="650" y1="342" x2="650" y2="358"/>
-              <text x="417" y="374" text-anchor="middle" fill="rgba(230,255,238,.70)" font-size="13" font-weight="800">Target distance</text>
-
-              <line x1="690" y1="118" x2="690" y2="330"/>
-              <line x1="680" y1="118" x2="700" y2="118"/>
-              <line x1="680" y1="330" x2="700" y2="330"/>
+            <!-- physical-security camera-library style marker -->
+            <g transform="translate(145 208) scale(0.56)" class="homepage-cad-camera">
+              <rect x="-22" y="-13" width="44" height="26" rx="4" fill="rgba(15,23,42,.92)" stroke="#70ff7d" stroke-width="1.7" />
+              <path d="M 22 -8 L 42 -14 L 42 14 L 22 8 Z" fill="rgba(15,23,42,.96)" stroke="#70ff7d" stroke-width="1.7" stroke-linejoin="round" />
+              <line x1="42" y1="-12" x2="42" y2="12" stroke="#70ff7d" stroke-width="1.7" stroke-linecap="round" />
+              <line x1="-13" y1="-13" x2="-13" y2="13" stroke="rgba(125,255,158,.38)" stroke-width=".9" />
+              <circle cx="-5" cy="0" r="4" fill="none" stroke="rgba(125,255,158,.55)" stroke-width="1.2" />
+              <circle cx="-30" cy="0" r="5" fill="rgba(2,6,23,.95)" stroke="#70ff7d" stroke-width="1.7" />
+              <line x1="-25" y1="0" x2="-22" y2="0" stroke="#70ff7d" stroke-width="1.7" stroke-linecap="round" />
+              <line x1="44" y1="0" x2="72" y2="0" stroke="#70ff7d" stroke-width="1.2" stroke-dasharray="4 5" stroke-linecap="round" />
             </g>
 
-            <g font-size="13" font-weight="900">
-              <text x="670" y="134" fill="#ffe070">Reserve margin</text>
-              <text x="670" y="224" fill="rgba(230,255,238,.86)">Raw footprint</text>
-              <text x="670" y="286" fill="#75ff76">Usable coverage</text>
-              <text x="670" y="318" fill="#ffe070">Reserve margin</text>
+            <text x="82" y="202" fill="rgba(235,245,239,.82)" font-size="12.5" font-weight="800">Cam 1</text>
+            <text x="82" y="220" fill="rgba(235,245,239,.45)" font-size="10.8">HFOV 90?</text>
+
+            <polygon points="188,208 596,126 596,290" fill="rgba(239,211,106,.05)" stroke="#efd36a" stroke-width="1.15"/>
+            <polygon points="188,208 596,146 596,270" fill="url(#hpCadUsable)" stroke="#71ff79" stroke-width="1.35"/>
+            <polygon points="188,208 596,126 596,146" fill="url(#hpCadReserve)" stroke="#efd36a" stroke-width=".95"/>
+            <polygon points="188,208 596,270 596,290" fill="url(#hpCadReserve)" stroke="#efd36a" stroke-width=".95"/>
+
+            <g stroke="rgba(255,255,255,.34)" stroke-width="1">
+              <line x1="188" y1="326" x2="596" y2="326"/>
+              <line x1="188" y1="318" x2="188" y2="334"/>
+              <line x1="596" y1="318" x2="596" y2="334"/>
+              <text x="392" y="347" text-anchor="middle" fill="rgba(230,255,238,.66)" font-size="12.5" font-weight="800">Target distance ? 60 ft</text>
+
+              <line x1="634" y1="126" x2="634" y2="290"/>
+              <line x1="626" y1="126" x2="642" y2="126"/>
+              <line x1="626" y1="290" x2="642" y2="290"/>
+            </g>
+
+            <g font-size="12.5" font-weight="850">
+              <text x="648" y="136" fill="#efd36a">Reserve 9 ft</text>
+              <text x="648" y="210" fill="rgba(235,245,239,.84)">Raw footprint 120 ft</text>
+              <text x="648" y="262" fill="#71ff79">Usable width 102 ft</text>
+              <text x="648" y="280" fill="rgba(235,245,239,.40)" font-size="11.2">after reserve</text>
+              <text x="648" y="286" opacity="0">.</text>
+              <text x="648" y="280" opacity="0">.</text>
+              <text x="648" y="286" fill="#efd36a" dy="22">Reserve 9 ft</text>
             </g>
 
             <g>
-              <rect x="70" y="354" width="150" height="34" rx="9" fill="rgba(0,0,0,.20)" stroke="rgba(83,255,61,.15)"/>
-              <text x="86" y="375" fill="rgba(230,255,238,.74)" font-size="12" font-weight="900" letter-spacing="1.2">ASSUMPTIONS</text>
+              <rect x="72"  y="358" width="148" height="28" rx="8" fill="rgba(255,255,255,.02)" stroke="rgba(83,255,61,.14)"/>
+              <rect x="232" y="358" width="148" height="28" rx="8" fill="rgba(255,255,255,.02)" stroke="rgba(83,255,61,.14)"/>
+              <rect x="392" y="358" width="148" height="28" rx="8" fill="rgba(255,255,255,.02)" stroke="rgba(83,255,61,.14)"/>
+              <rect x="552" y="358" width="148" height="28" rx="8" fill="rgba(255,255,255,.02)" stroke="rgba(83,255,61,.14)"/>
 
-              <rect x="235" y="354" width="132" height="34" rx="9" fill="rgba(0,0,0,.20)" stroke="rgba(83,255,61,.15)"/>
-              <text x="251" y="375" fill="rgba(230,255,238,.74)" font-size="12" font-weight="900" letter-spacing="1.2">VALIDATED</text>
-
-              <rect x="382" y="354" width="146" height="34" rx="9" fill="rgba(0,0,0,.20)" stroke="rgba(83,255,61,.15)"/>
-              <text x="398" y="375" fill="rgba(230,255,238,.74)" font-size="12" font-weight="900" letter-spacing="1.2">WORKFLOW</text>
-
-              <rect x="543" y="354" width="142" height="34" rx="9" fill="rgba(0,0,0,.20)" stroke="rgba(83,255,61,.15)"/>
-              <text x="559" y="375" fill="rgba(230,255,238,.74)" font-size="12" font-weight="900" letter-spacing="1.2">REPORT READY</text>
+              <text x="146" y="376" text-anchor="middle" fill="rgba(230,255,238,.76)" font-size="11" font-weight="850" letter-spacing="1">ASSUMPTIONS</text>
+              <text x="306" y="376" text-anchor="middle" fill="rgba(230,255,238,.76)" font-size="11" font-weight="850" letter-spacing="1">VALIDATED</text>
+              <text x="466" y="376" text-anchor="middle" fill="rgba(230,255,238,.76)" font-size="11" font-weight="850" letter-spacing="1">WORKFLOW</text>
+              <text x="626" y="376" text-anchor="middle" fill="rgba(230,255,238,.76)" font-size="11" font-weight="850" letter-spacing="1">REPORT READY</text>
             </g>
           </svg>
         </div>
