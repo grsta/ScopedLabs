@@ -16,7 +16,7 @@
   <meta name="twitter:title" content="ScopedLabs ? Engineering Planning Tools">
   <meta name="twitter:description" content="Calculator-backed planning tools, guided workflows, and exportable reports for real infrastructure decisions.">
 
-  <link rel="stylesheet" href="/assets/style.css?v=homepage-product-story-003-visual-proof-panel" />
+  <link rel="stylesheet" href="/assets/style.css?v=homepage-product-story-004-analytics-dashboard-panel" />
   <script src="/assets/app.js?v=0314" defer></script>
 </head>
 
@@ -50,7 +50,7 @@
 </header>
 
 <main id="main-content" class="homepage-main">
-  <!-- homepage-product-story-003-visual-proof-panel -->
+  <!-- homepage-product-story-004-analytics-dashboard-panel -->
 
   <section class="hero homepage-hero">
     <div class="container">
@@ -179,54 +179,170 @@
           </ul>
         </div>
 
-        <div class="homepage-proof-visual" aria-hidden="true">
-          <div class="homepage-proof-visual-shell">
-            <div class="homepage-proof-visual-header">
-              <span class="homepage-proof-kicker">Analytical view</span>
-              <span class="homepage-proof-visual-dots">
-                <i></i><i></i><i></i>
-              </span>
-            </div>
+        <div class="homepage-proof-visual homepage-analytics-visual" aria-label="ScopedLabs analytical dashboard preview">
+          <div class="homepage-analytics-dashboard">
+            <svg class="homepage-analytics-svg" viewBox="0 0 760 520" role="img" aria-label="Glass analytics dashboard showing trend lines, gauges, progress bars, and reporting flow">
+              <defs>
+                <linearGradient id="slHpPanel" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#143526" stop-opacity=".78"/>
+                  <stop offset=".55" stop-color="#06120f" stop-opacity=".88"/>
+                  <stop offset="1" stop-color="#020706" stop-opacity=".96"/>
+                </linearGradient>
 
-            <div class="homepage-proof-visual-chart">
-              <div class="homepage-proof-gridlines"></div>
+                <linearGradient id="slHpGreenLine" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0" stop-color="#53ff3d"/>
+                  <stop offset=".55" stop-color="#72ff41"/>
+                  <stop offset="1" stop-color="#b3ff41"/>
+                </linearGradient>
 
-              <div class="homepage-proof-trend">
-                <span class="pt p1"></span>
-                <span class="pt p2"></span>
-                <span class="pt p3"></span>
-                <span class="pt p4"></span>
-                <span class="pt p5"></span>
+                <linearGradient id="slHpCyanLine" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0" stop-color="#19f5c8"/>
+                  <stop offset="1" stop-color="#53ffdd"/>
+                </linearGradient>
 
-                <i class="seg s1"></i>
-                <i class="seg s2"></i>
-                <i class="seg s3"></i>
-                <i class="seg s4"></i>
-              </div>
+                <linearGradient id="slHpBar" x1="0" y1="1" x2="0" y2="0">
+                  <stop offset="0" stop-color="#00d5bb" stop-opacity=".38"/>
+                  <stop offset="1" stop-color="#53ff3d" stop-opacity=".9"/>
+                </linearGradient>
 
-              <div class="homepage-proof-bars">
-                <span style="--h:34%"></span>
-                <span style="--h:52%"></span>
-                <span style="--h:46%"></span>
-                <span style="--h:68%"></span>
-                <span style="--h:74%"></span>
-              </div>
-            </div>
+                <filter id="slHpGlow" x="-30%" y="-30%" width="160%" height="160%">
+                  <feGaussianBlur stdDeviation="3" result="blur"/>
+                  <feMerge>
+                    <feMergeNode in="blur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
 
-            <div class="homepage-proof-stats">
-              <div class="homepage-proof-stat">
-                <small>Math</small>
-                <strong>Visible</strong>
-              </div>
-              <div class="homepage-proof-stat">
-                <small>Workflow</small>
-                <strong>Linked</strong>
-              </div>
-              <div class="homepage-proof-stat">
-                <small>Report</small>
-                <strong>Ready</strong>
-              </div>
-            </div>
+                <filter id="slHpSoftGlow" x="-45%" y="-45%" width="190%" height="190%">
+                  <feGaussianBlur stdDeviation="10" result="blur"/>
+                  <feColorMatrix in="blur" type="matrix"
+                    values="0 0 0 0 0.32
+                            0 0 0 0 1
+                            0 0 0 0 0.24
+                            0 0 0 .55 0"/>
+                  <feMerge>
+                    <feMergeNode/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+              </defs>
+
+              <rect x="24" y="22" width="712" height="474" rx="30" fill="url(#slHpPanel)" stroke="rgba(83,255,61,.48)" stroke-width="1.2"/>
+              <rect x="25" y="23" width="710" height="472" rx="30" fill="none" stroke="rgba(255,255,255,.10)" stroke-width=".8"/>
+
+              <g opacity=".9">
+                <rect x="24" y="22" width="68" height="474" rx="30" fill="rgba(83,255,61,.035)"/>
+                <line x1="92" y1="22" x2="92" y2="496" stroke="rgba(83,255,61,.18)"/>
+                <circle cx="58" cy="72" r="4" fill="#53ff3d" filter="url(#slHpGlow)"/>
+                <rect x="45" y="116" width="28" height="28" rx="6" fill="rgba(83,255,61,.10)" stroke="rgba(83,255,61,.28)"/>
+                <path d="M52 126h6v6h-6zM62 126h6v6h-6zM52 136h6v6h-6zM62 136h6v6h-6z" fill="#91ff7b"/>
+                <path d="M49 184h27M50 184l8-10 9 5 8-15" fill="none" stroke="#53ffdd" stroke-width="2"/>
+                <path d="M51 240v-22M60 240v-34M69 240v-48" stroke="#7bffd0" stroke-width="2"/>
+                <path d="M48 292l13-8 13 8-13 8zM48 306l13-8 13 8" fill="none" stroke="#63ff9b" stroke-width="2"/>
+                <path d="M52 354h20M52 364h20M52 374h14" stroke="#7bffd0" stroke-width="2"/>
+                <circle cx="50" cy="444" r="3" fill="#53ff3d"/>
+                <circle cx="63" cy="444" r="3" fill="#1fe6c9" opacity=".6"/>
+              </g>
+
+              <g>
+                <rect x="120" y="74" width="430" height="188" rx="14" fill="rgba(0,0,0,.18)" stroke="rgba(83,255,61,.16)"/>
+                <g opacity=".34" stroke="rgba(255,255,255,.22)" stroke-width=".8">
+                  <path d="M140 112h390M140 150h390M140 188h390M140 226h390"/>
+                  <path d="M174 92v150M218 92v150M262 92v150M306 92v150M350 92v150M394 92v150M438 92v150M482 92v150"/>
+                </g>
+
+                <path d="M142 230C184 212 214 196 250 178C285 160 305 176 330 151C356 125 382 143 409 114C439 82 463 105 489 88C510 74 526 64 536 52"
+                      fill="none" stroke="url(#slHpGreenLine)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#slHpGlow)"/>
+                <path d="M142 228C174 220 214 214 248 204C290 192 318 198 354 178C392 156 428 146 466 157C497 166 520 144 540 137"
+                      fill="none" stroke="url(#slHpCyanLine)" stroke-width="2.6" stroke-dasharray="5 8" stroke-linecap="round"/>
+                <path d="M142 240C188 232 218 224 260 220C304 216 336 200 384 205C430 210 462 190 512 184"
+                      fill="none" stroke="rgba(113,255,55,.45)" stroke-width="1.8"/>
+
+                <g fill="#84ff3d" filter="url(#slHpGlow)">
+                  <circle cx="166" cy="218" r="4"/>
+                  <circle cx="198" cy="202" r="4"/>
+                  <circle cx="236" cy="184" r="4"/>
+                  <circle cx="284" cy="168" r="4"/>
+                  <circle cx="330" cy="151" r="4"/>
+                  <circle cx="382" cy="143" r="4"/>
+                  <circle cx="409" cy="114" r="4"/>
+                  <circle cx="463" cy="105" r="4"/>
+                  <circle cx="489" cy="88" r="4"/>
+                  <circle cx="526" cy="64" r="4"/>
+                </g>
+
+                <path d="M534 52l-5 23 22-9z" fill="#8dff46" filter="url(#slHpGlow)"/>
+              </g>
+
+              <g>
+                <rect x="570" y="74" width="132" height="124" rx="14" fill="rgba(0,0,0,.18)" stroke="rgba(83,255,61,.16)"/>
+                <circle cx="636" cy="136" r="38" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="9"/>
+                <path d="M636 98a38 38 0 1 1-34 54" fill="none" stroke="#1fe6c9" stroke-width="9" stroke-linecap="round" filter="url(#slHpGlow)"/>
+                <path d="M636 98a38 38 0 0 1 33 18" fill="none" stroke="#d5d540" stroke-width="9" stroke-linecap="round"/>
+                <text x="636" y="136" text-anchor="middle" fill="#aaff74" font-size="28" font-weight="800">78%</text>
+                <text x="636" y="158" text-anchor="middle" fill="rgba(230,255,238,.7)" font-size="10" letter-spacing="2">HEALTH</text>
+              </g>
+
+              <g>
+                <rect x="570" y="212" width="132" height="50" rx="12" fill="rgba(0,0,0,.14)" stroke="rgba(83,255,61,.11)"/>
+                <text x="586" y="234" fill="rgba(230,255,238,.72)" font-size="11" font-weight="800" letter-spacing="1.2">KEY SIGNALS</text>
+                <line x1="586" y1="248" x2="678" y2="248" stroke="rgba(83,255,61,.18)" stroke-width="6" stroke-linecap="round"/>
+                <line x1="586" y1="248" x2="654" y2="248" stroke="#53ff3d" stroke-width="6" stroke-linecap="round" filter="url(#slHpGlow)"/>
+              </g>
+
+              <g>
+                <rect x="120" y="284" width="132" height="82" rx="14" fill="rgba(0,0,0,.18)" stroke="rgba(83,255,61,.15)"/>
+                <circle cx="144" cy="315" r="14" fill="none" stroke="#71ff36" stroke-width="3"/>
+                <text x="174" y="306" fill="rgba(230,255,238,.7)" font-size="10" font-weight="800" letter-spacing="1.2">ESTIMATES</text>
+                <text x="174" y="331" fill="#fff" font-size="24" font-weight="800">1,248</text>
+                <polyline points="134,350 150,342 164,350 180,338 194,346 216,332" fill="none" stroke="#71ff36" stroke-width="2"/>
+              </g>
+
+              <g>
+                <rect x="268" y="284" width="132" height="82" rx="14" fill="rgba(0,0,0,.18)" stroke="rgba(31,230,201,.15)"/>
+                <circle cx="292" cy="315" r="14" fill="none" stroke="#1fe6c9" stroke-width="3"/>
+                <text x="322" y="306" fill="rgba(230,255,238,.7)" font-size="10" font-weight="800" letter-spacing="1.2">SCENARIOS</text>
+                <text x="322" y="331" fill="#fff" font-size="24" font-weight="800">356</text>
+                <polyline points="282,350 300,340 314,348 332,336 354,346 374,332" fill="none" stroke="#1fe6c9" stroke-width="2"/>
+              </g>
+
+              <g>
+                <rect x="416" y="284" width="132" height="82" rx="14" fill="rgba(0,0,0,.18)" stroke="rgba(220,177,43,.15)"/>
+                <circle cx="440" cy="315" r="14" fill="none" stroke="#e0b72c" stroke-width="3"/>
+                <path d="M440 306l9 17h-18z" fill="none" stroke="#e0b72c" stroke-width="2"/>
+                <text x="470" y="306" fill="rgba(230,255,238,.7)" font-size="10" font-weight="800" letter-spacing="1.2">WATCH</text>
+                <text x="470" y="331" fill="#fff" font-size="24" font-weight="800">24</text>
+                <polyline points="430,350 448,340 464,350 480,337 500,348 520,340" fill="none" stroke="#e0b72c" stroke-width="2"/>
+              </g>
+
+              <g>
+                <rect x="564" y="284" width="138" height="82" rx="14" fill="rgba(0,0,0,.18)" stroke="rgba(83,255,61,.15)"/>
+                <circle cx="588" cy="315" r="14" fill="none" stroke="#53ff75" stroke-width="3"/>
+                <path d="M581 315l5 5 11-13" fill="none" stroke="#53ff75" stroke-width="2.4"/>
+                <text x="618" y="306" fill="rgba(230,255,238,.7)" font-size="10" font-weight="800" letter-spacing="1.2">REPORTS</text>
+                <text x="618" y="331" fill="#fff" font-size="24" font-weight="800">Ready</text>
+                <polyline points="576,350 594,340 612,348 632,336 652,344 676,330" fill="none" stroke="#53ff75" stroke-width="2"/>
+              </g>
+
+              <g>
+                <rect x="120" y="388" width="582" height="70" rx="18" fill="rgba(0,0,0,.18)" stroke="rgba(83,255,61,.15)"/>
+                <g stroke="rgba(83,255,61,.35)" stroke-width="1.6" fill="none">
+                  <path d="M168 424H264M300 424h96M432 424h96M564 424h82"/>
+                </g>
+                <g fill="rgba(83,255,61,.18)" stroke="#53ff3d" stroke-width="2">
+                  <rect x="138" y="404" width="48" height="40" rx="8"/>
+                  <circle cx="282" cy="424" r="24"/>
+                  <circle cx="414" cy="424" r="24"/>
+                  <rect x="530" y="404" width="58" height="40" rx="8"/>
+                  <rect x="648" y="404" width="40" height="40" rx="8"/>
+                </g>
+                <path d="M151 424h22M151 416h22M151 432h16" stroke="#9cff8a" stroke-width="2"/>
+                <path d="M273 414l18 20M291 414l-18 20" stroke="#9cff8a" stroke-width="2"/>
+                <path d="M414 408l16 9v18l-16 9-16-9v-18z" fill="none" stroke="#1fe6c9" stroke-width="2"/>
+                <path d="M548 432l11-14 13 8 7-12" fill="none" stroke="#9cff8a" stroke-width="2"/>
+                <path d="M660 416h18M660 424h18M660 432h12" stroke="#1fe6c9" stroke-width="2"/>
+              </g>
+            </svg>
           </div>
         </div>
       </div>
