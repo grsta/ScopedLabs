@@ -3654,3 +3654,16 @@ body.homepage-product-story .homepage-cad-proof-band .section-subtitle {
 body.homepage-product-story .homepage-cad-proof-band .homepage-proof-head {
   margin-bottom: 38px !important;
 }
+
+
+/* homepage-product-story-018-hide-header-divider
+   Removes the full-width header divider line on the homepage only.
+   Nav tabs, hero, proof card, and CAD graph remain untouched. */
+body.homepage-product-story .site-header {
+  border-bottom-color: transparent !important;
+}
+
+body.homepage-product-story .site-header::before,
+body.homepage-product-story .site-header::after {
+  display: none !important;
+}
