@@ -3682,3 +3682,18 @@ body.homepage-product-story .site-header::after {
   content: none !important;
   display: none !important;
 }
+
+
+/* homepage-product-story-020-remove-proof-band-stripe
+   Removes the full-width proof-band background stripe behind the CAD graph section.
+   Graph/SVG, hero, nav, and card layout remain untouched. */
+body.homepage-product-story .homepage-cad-proof-band::before,
+body.homepage-product-story .homepage-proof-band::before {
+  background: none !important;
+  content: none !important;
+  display: none !important;
+}
+
+body.homepage-product-story .homepage-cad-proof-band {
+  background: transparent !important;
+}
