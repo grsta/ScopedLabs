@@ -3634,3 +3634,15 @@ body.homepage-product-story .homepage-proof-card-feature {
 body.homepage-product-story .homepage-cad-coverage-panel {
   margin-top: -4px;
 }
+
+
+/* homepage-product-story-016-proof-header-spacing
+   Adds breathing room below the proof-section intro text.
+   CAD graph and proof card sizing remain untouched. */
+body.homepage-product-story .homepage-cad-proof-band .homepage-proof-head {
+  margin-bottom: 28px !important;
+}
+
+body.homepage-product-story .homepage-cad-proof-band .section-subtitle {
+  margin-bottom: 0;
+}
