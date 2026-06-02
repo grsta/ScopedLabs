@@ -3823,3 +3823,18 @@ body.homepage-product-story .homepage-flow-step small {
 /* homepage-product-story-029-remove-workflow-streak
    Removes the Planning Workflow single-streak experiment.
    Smaller workflow card sizing remains intact. */
+
+
+/* homepage-product-story-030-cad-graph-container-scale
+   Moderately scales down only the homepage CAD graph container.
+   SVG geometry, descriptor labels, proof text card, hero, and bottom section remain untouched. */
+body.homepage-product-story .homepage-cad-coverage-panel {
+  max-width: 760px !important;
+  padding: 12px 14px !important;
+}
+
+body.homepage-product-story .homepage-cad-coverage-svg,
+body.homepage-product-story .homepage-cad-coverage-panel svg {
+  max-width: 760px !important;
+  width: 100% !important;
+}

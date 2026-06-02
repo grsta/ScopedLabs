@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const STYLE_CACHE = "homepage-product-story-029-remove-workflow-streak";
+const STYLE_CACHE = "homepage-product-story-030-cad-graph-container-scale";
 const VERSION = "homepage-product-story-audit-001";
 
 const ROOT = process.cwd();
@@ -55,12 +55,16 @@ has("style-hero-grid", "style.css", style, ".homepage-hero-grid");
 has("style-category-grid", "style.css", style, ".homepage-category-grid");
 has("style-proof-grid", "style.css", style, ".homepage-proof-grid");
 has("style-mobile", "style.css", style, "@media (max-width: 620px)");
+has("cad-graph-container-scaled-final", "style.css", style, "homepage-product-story-030-cad-graph-container-scale");
+has("cad-graph-container-width-760", "style.css", style, "max-width: 760px !important");
+has("cad-graph-container-padding-tight", "style.css", style, "padding: 12px 14px !important");
+has("cad-graph-svg-width-760", "style.css", style, ".homepage-cad-coverage-svg");
 has("cad-target-normal-weight-style", "Homepage", index, 'font-size="12.2" font-weight="400" style="font-weight:400;">Target distance: 60 ft</text>');
 has("cad-target-size-final", "Homepage", index, 'font-size="12.2" font-weight="400" style="font-weight:400;">Target distance: 60 ft</text>');
 has("cad-right-label-size-final", "Homepage", index, 'font-size="12.2" font-weight="400" style="font-weight:400;">Raw: 120 ft</text>');
 has("cad-usable-size-final", "Homepage", index, 'font-size="12.2" font-weight="400" style="font-weight:400;">Usable Width: 102ft</text>');
 has("cad-usable-width-label", "Homepage", index, "Usable Width: 102ft");
-add("workflow-streak-removed", !style.includes("homepage-product-story-028-workflow-single-streak"), "Planning Workflow streak experiment removed");
+add("workflow-streak-removed", !style.includes("homepage-product-story-030-cad-graph-container-scale"), "Planning Workflow streak experiment removed");
 has("workflow-card-smaller-retained", "style.css", style, "max-width: 285px !important");
 has("workflow-card-smaller-retained", "style.css", style, "max-width: 285px !important");
 has("workflow-card-smaller-retained", "style.css", style, "max-width: 285px !important");

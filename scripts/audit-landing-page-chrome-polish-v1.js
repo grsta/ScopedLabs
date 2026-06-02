@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const HOMEPAGE_STYLE_CACHE = "homepage-product-story-029-remove-workflow-streak";
+const HOMEPAGE_STYLE_CACHE = "homepage-product-story-030-cad-graph-container-scale";
 const ROOT = process.cwd();
 const VERSION = "landing-page-chrome-polish-audit-002-homepage-story-sync";
 const LANDING_STYLE_CACHE = "landing-card-button-polish-v2-001";

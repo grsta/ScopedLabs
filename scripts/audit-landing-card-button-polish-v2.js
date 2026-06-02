@@ -1,11 +1,11 @@
 const fs = require("fs");
 const path = require("path");
-const homepageStyleCache = "homepage-product-story-029-remove-workflow-streak";
+const homepageStyleCache = "homepage-product-story-030-cad-graph-container-scale";
 const landingStyleCache = "landing-card-button-polish-v2-001";
 
 const ROOT = process.cwd();
 const VERSION = "landing-card-button-polish-v2-audit-001";
-const STYLE_CACHE = "homepage-product-story-029-remove-workflow-streak";
+const STYLE_CACHE = "homepage-product-story-030-cad-graph-container-scale";
 
 function file(rel) {
   return path.join(ROOT, rel);
