@@ -1,11 +1,11 @@
 const fs = require("fs");
 const path = require("path");
-const homepageStyleCache = "homepage-product-story-032-proof-card-title-accent";
+const homepageStyleCache = "homepage-product-story-033-category-title-polish";
 const landingStyleCache = "landing-card-button-polish-v2-001";
 
 const ROOT = process.cwd();
 const VERSION = "landing-card-button-polish-v2-audit-001";
-const STYLE_CACHE = "homepage-product-story-032-proof-card-title-accent";
+const STYLE_CACHE = "homepage-product-story-033-category-title-polish";
 
 function file(rel) {
   return path.join(ROOT, rel);
@@ -86,13 +86,13 @@ for (const rel of uniqueTargets) {
 
   has(rel, "landing-body-class", html, "landing-chrome-polish");
   if (rel === "index.html") {
-    const expectedStyleCache = rel === "index.html" ? homepageStyleCache : landingStyleCache;
-    has(rel, "style-cache", html, "/assets/style.css?v=" + expectedStyleCache);
+
+    has(rel, "style-cache", html, "/assets/style.css?v=" + (rel === "index.html" ? homepageStyleCache : landingStyleCache));
   } else {
     has(rel, "style-cache", html, "/assets/style.css?v=" + STYLE_CACHE);
   }
   if (rel === "index.html") {
-    has(rel, "v2-marker", html, expectedStyleCache);
+    has(rel, "v2-marker", html, rel === "index.html" ? homepageStyleCache : landingStyleCache);
   } else {
     has(rel, "v2-marker", html, STYLE_CACHE);
   }

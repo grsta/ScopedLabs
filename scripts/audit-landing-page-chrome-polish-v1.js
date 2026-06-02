@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const HOMEPAGE_STYLE_CACHE = "homepage-product-story-032-proof-card-title-accent";
+const HOMEPAGE_STYLE_CACHE = "homepage-product-story-033-category-title-polish";
 const ROOT = process.cwd();
 const VERSION = "landing-page-chrome-polish-audit-002-homepage-story-sync";
 const LANDING_STYLE_CACHE = "landing-card-button-polish-v2-001";

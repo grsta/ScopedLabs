@@ -3891,3 +3891,8 @@ body.homepage-product-story .homepage-proof-card-feature {
 body.homepage-product-story .homepage-proof-card-feature > .card-title {
   color: var(--accent) !important;
 }
+
+
+/* homepage-product-story-033-category-title-polish
+   Marker only for the current homepage cache-busted text/layout polish.
+   No visual CSS in this marker block. */
