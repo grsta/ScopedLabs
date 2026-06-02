@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const STYLE_CACHE = "homepage-product-story-028-workflow-single-streak";
+const STYLE_CACHE = "homepage-product-story-029-remove-workflow-streak";
 const VERSION = "homepage-product-story-audit-001";
 
 const ROOT = process.cwd();
@@ -55,6 +55,8 @@ has("style-hero-grid", "style.css", style, ".homepage-hero-grid");
 has("style-category-grid", "style.css", style, ".homepage-category-grid");
 has("style-proof-grid", "style.css", style, ".homepage-proof-grid");
 has("style-mobile", "style.css", style, "@media (max-width: 620px)");
+add("workflow-streak-removed", !style.includes("homepage-product-story-028-workflow-single-streak"), "Planning Workflow streak experiment removed");
+has("workflow-card-smaller-retained", "style.css", style, "max-width: 285px !important");
 has("workflow-card-smaller-retained", "style.css", style, "max-width: 285px !important");
 has("workflow-card-smaller-retained", "style.css", style, "max-width: 285px !important");
 has("hero-workflow-card-compact", "style.css", style, "max-width: 320px");
