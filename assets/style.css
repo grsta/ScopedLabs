@@ -3816,6 +3816,42 @@ body.homepage-product-story .homepage-flow-step small {
 
 
 
-/* homepage-product-story-027-remove-workflow-direction-lines
-   Removes the Planning Workflow directional-line experiment.
-   Smaller workflow card sizing remains intact. */
+
+
+/* homepage-product-story-028-workflow-single-streak
+   Adds one short restrained fading motion streak behind the Planning Workflow card.
+   No size, position, graph, label, or bottom-section changes. */
+body.homepage-product-story .homepage-hero-panel {
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
+}
+
+body.homepage-product-story .homepage-hero-panel::after {
+  content: "";
+  position: absolute;
+  right: -14px;
+  bottom: 22px;
+  width: 92px;
+  height: 5px;
+  pointer-events: none;
+  z-index: -1;
+  transform: rotate(-45deg);
+  transform-origin: center;
+  border-radius: 999px;
+  opacity: 0.42;
+  background: linear-gradient(
+    90deg,
+    rgba(118, 255, 185, 0.00) 0%,
+    rgba(118, 255, 185, 0.06) 42%,
+    rgba(118, 255, 185, 0.18) 74%,
+    rgba(118, 255, 185, 0.30) 100%
+  );
+  filter: blur(2px);
+}
+
+@media (max-width: 900px) {
+  body.homepage-product-story .homepage-hero-panel::after {
+    display: none;
+  }
+}

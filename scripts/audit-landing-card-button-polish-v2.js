@@ -1,10 +1,11 @@
 const fs = require("fs");
 const path = require("path");
-const homepageStyleCache = "homepage-product-story-027-remove-workflow-direction-lines";
+const homepageStyleCache = "homepage-product-story-028-workflow-single-streak";
+const landingStyleCache = "landing-card-button-polish-v2-001";
 
 const ROOT = process.cwd();
 const VERSION = "landing-card-button-polish-v2-audit-001";
-const STYLE_CACHE = "landing-card-button-polish-v2-001";
+const STYLE_CACHE = "homepage-product-story-028-workflow-single-streak";
 
 function file(rel) {
   return path.join(ROOT, rel);
@@ -85,12 +86,13 @@ for (const rel of uniqueTargets) {
 
   has(rel, "landing-body-class", html, "landing-chrome-polish");
   if (rel === "index.html") {
-    has(rel, "style-cache", html, "/assets/style.css?v=" + homepageStyleCache);
+    const expectedStyleCache = rel === "index.html" ? homepageStyleCache : landingStyleCache;
+    has(rel, "style-cache", html, "/assets/style.css?v=" + expectedStyleCache);
   } else {
     has(rel, "style-cache", html, "/assets/style.css?v=" + STYLE_CACHE);
   }
   if (rel === "index.html") {
-    has(rel, "v2-marker", html, homepageStyleCache);
+    has(rel, "v2-marker", html, expectedStyleCache);
   } else {
     has(rel, "v2-marker", html, STYLE_CACHE);
   }
