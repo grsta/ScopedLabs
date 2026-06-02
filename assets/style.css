@@ -3814,37 +3814,8 @@ body.homepage-product-story .homepage-flow-step small {
    Smaller workflow card sizing remains intact. */
 
 
-/* homepage-product-story-026-workflow-direction-lines
-   Adds a restrained CAD-style directional accent behind the Planning Workflow card.
-   Three thin 45-degree lines imply motion from bottom-right toward upper-left.
-   No size, position, graph, label, or bottom-section changes. */
-body.homepage-product-story .homepage-hero-panel {
-  position: relative;
-  isolation: isolate;
-  overflow: visible;
-}
 
-body.homepage-product-story .homepage-hero-panel::after {
-  content: "";
-  position: absolute;
-  right: -34px;
-  bottom: -28px;
-  width: 180px;
-  height: 145px;
-  pointer-events: none;
-  z-index: -1;
-  opacity: 0.18;
-  background-repeat: no-repeat;
-  background-image:
-    linear-gradient(135deg, transparent 0 44%, rgba(118, 255, 185, 0.00) 44%, rgba(118, 255, 185, 0.72) 49.5%, rgba(118, 255, 185, 0.72) 50.5%, rgba(118, 255, 185, 0.00) 56%, transparent 56%),
-    linear-gradient(135deg, transparent 0 44%, rgba(118, 255, 185, 0.00) 44%, rgba(118, 255, 185, 0.58) 49.5%, rgba(118, 255, 185, 0.58) 50.5%, rgba(118, 255, 185, 0.00) 56%, transparent 56%),
-    linear-gradient(135deg, transparent 0 44%, rgba(118, 255, 185, 0.00) 44%, rgba(118, 255, 185, 0.44) 49.5%, rgba(118, 255, 185, 0.44) 50.5%, rgba(118, 255, 185, 0.00) 56%, transparent 56%);
-  background-size: 180px 145px, 138px 110px, 96px 78px;
-  background-position: right bottom, right 20px bottom 18px, right 38px bottom 34px;
-}
 
-@media (max-width: 900px) {
-  body.homepage-product-story .homepage-hero-panel::after {
-    display: none;
-  }
-}
+/* homepage-product-story-027-remove-workflow-direction-lines
+   Removes the Planning Workflow directional-line experiment.
+   Smaller workflow card sizing remains intact. */
