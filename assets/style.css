@@ -3756,3 +3756,50 @@ body.homepage-product-story .homepage-cad-coverage-panel svg {
     max-width: none;
   }
 }
+
+
+/* homepage-product-story-022-workflow-card-smaller-only
+   Shrinks only the homepage Planning Workflow card.
+   No vertical nudge. Hero copy, CTAs, CAD graph, graph labels, and bottom section remain untouched. */
+body.homepage-product-story .homepage-hero-panel {
+  max-width: 285px !important;
+  padding: 12px !important;
+  transform: none !important;
+}
+
+body.homepage-product-story .homepage-hero-panel .section-kicker,
+body.homepage-product-story .homepage-hero-panel .eyebrow {
+  font-size: .68rem !important;
+  letter-spacing: .14em !important;
+}
+
+body.homepage-product-story .homepage-flow-list {
+  gap: 7px !important;
+  margin-top: 9px !important;
+}
+
+body.homepage-product-story .homepage-flow-step {
+  gap: 2px !important;
+  padding: 8px 9px !important;
+  border-radius: 11px !important;
+}
+
+body.homepage-product-story .homepage-flow-step span {
+  font-size: .66rem !important;
+}
+
+body.homepage-product-story .homepage-flow-step strong {
+  font-size: .84rem !important;
+}
+
+body.homepage-product-story .homepage-flow-step small {
+  font-size: .72rem !important;
+  line-height: 1.22 !important;
+}
+
+@media (max-width: 900px) {
+  body.homepage-product-story .homepage-hero-panel {
+    max-width: none !important;
+    transform: none !important;
+  }
+}
