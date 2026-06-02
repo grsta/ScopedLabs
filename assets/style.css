@@ -4012,3 +4012,37 @@ body.homepage-product-story .homepage-final-actions .btn {
   text-align: center;
   width: 100%;
 }
+
+/* homepage-product-story-036-final-cta-type-match
+   Final CTA typography match only.
+   Keeps final CTA structure/buttons, accepted proof graph, hero, category cards, and alternate-start section intact. */
+body.homepage-product-story .homepage-final-copy > .card-title {
+  color: var(--text);
+  font-size: 1.02rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  line-height: 1.28 !important;
+}
+
+body.homepage-product-story .homepage-final-path .homepage-final-path-step {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  color: var(--accent) !important;
+  font-size: .72rem !important;
+  font-weight: 800 !important;
+  letter-spacing: .12em !important;
+  padding: 0 !important;
+  text-transform: uppercase !important;
+}
+
+body.homepage-product-story .homepage-final-path .homepage-final-path-step + .homepage-final-path-step::before {
+  color: rgba(255,255,255,.32);
+  content: "\2192";
+  display: inline-block;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  margin: 0 10px 0 3px;
+  text-transform: none;
+}

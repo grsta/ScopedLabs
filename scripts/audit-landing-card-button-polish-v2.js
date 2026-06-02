@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const homepageStyleCache = "homepage-product-story-035-final-cta-arrow-path";
+const homepageStyleCache = "homepage-product-story-036-final-cta-type-match";
 const landingStyleCache = "landing-card-button-polish-v2-001";
 function expectedStyleCacheFor(rel) {
   return rel === "index.html" ? homepageStyleCache : landingStyleCache;
@@ -9,7 +9,7 @@ function expectedStyleCacheFor(rel) {
 
 const ROOT = process.cwd();
 const VERSION = "landing-card-button-polish-v2-audit-001";
-const STYLE_CACHE = "homepage-product-story-035-final-cta-arrow-path";
+const STYLE_CACHE = "homepage-product-story-036-final-cta-type-match";
 function file(rel) {
   return path.join(ROOT, rel);
 }
