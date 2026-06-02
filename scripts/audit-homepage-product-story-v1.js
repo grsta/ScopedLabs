@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const STYLE_CACHE = "homepage-product-story-033-category-title-polish";
+const STYLE_CACHE = "homepage-product-story-034-final-cta-closeout";
 const VERSION = "homepage-product-story-audit-001";
 
 const ROOT = process.cwd();
@@ -57,6 +57,9 @@ has("style-proof-grid", "style.css", style, ".homepage-proof-grid");
 has("style-mobile", "style.css", style, "@media (max-width: 620px)");
 has("final-cta-title-polished", "Homepage", index, "Turn your next rough request into a clear plan.");
 has("final-cta-body-polished", "Homepage", index, "Pick a category, run the first check, and let ScopedLabs carry the assumptions, risks, and report-ready details as the design comes together.");
+has("final-cta-closeout-layout", "Homepage", index, "homepage-final-path");
+has("final-cta-actions-panel", "style.css", style, "body.homepage-product-story .homepage-final-actions .btn");
+has("final-cta-cache-marker", "style.css", style, "homepage-product-story-034-final-cta-closeout");
 add("old-final-cta-copy-removed", !index.includes("Start with a real planning question.") && !index.includes("Pick a category, enter the assumptions you know, and use ScopedLabs to turn rough requirements into clearer engineering decisions."), "Old final CTA copy removed");
 has("other-ways-title-polished", "Homepage", index, "Other ways to begin.");
 add("old-start-titles-removed", !index.includes("Good places to start") && !index.includes("Choose how you want to begin."), "Old start section titles removed");
@@ -71,7 +74,7 @@ has("cad-target-size-final", "Homepage", index, 'font-size="12.2" font-weight="4
 has("cad-right-label-size-final", "Homepage", index, 'font-size="12.2" font-weight="400" style="font-weight:400;">Raw: 120 ft</text>');
 has("cad-usable-size-final", "Homepage", index, 'font-size="12.2" font-weight="400" style="font-weight:400;">Usable Width: 102ft</text>');
 has("cad-usable-width-label", "Homepage", index, "Usable Width: 102ft");
-add("workflow-streak-removed", !style.includes("homepage-product-story-033-category-title-polish"), "Planning Workflow streak experiment removed");
+add("workflow-streak-removed", !style.includes("homepage-workflow-streak"), "Planning Workflow streak experiment removed");
 has("workflow-card-smaller-retained", "style.css", style, "max-width: 285px !important");
 has("workflow-card-smaller-retained", "style.css", style, "max-width: 285px !important");
 has("workflow-card-smaller-retained", "style.css", style, "max-width: 285px !important");

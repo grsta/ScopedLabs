@@ -3247,23 +3247,6 @@ body.homepage-product-story .homepage-proof-item span {
   line-height: 1.5;
 }
 
-body.homepage-product-story .homepage-final-cta-section {
-  padding-top: 48px;
-}
-
-body.homepage-product-story .homepage-final-cta {
-  align-items: center;
-  display: flex;
-  gap: 20px;
-  justify-content: space-between;
-}
-
-body.homepage-product-story .homepage-final-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: flex-end;
-}
 
 @media (max-width: 900px) {
   body.homepage-product-story .homepage-hero {
@@ -3278,15 +3261,6 @@ body.homepage-product-story .homepage-final-actions {
   body.homepage-product-story .homepage-category-grid,
   body.homepage-product-story .homepage-start-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  body.homepage-product-story .homepage-final-cta {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  body.homepage-product-story .homepage-final-actions {
-    justify-content: flex-start;
   }
 }
 
@@ -3892,7 +3866,105 @@ body.homepage-product-story .homepage-proof-card-feature > .card-title {
   color: var(--accent) !important;
 }
 
+/* homepage-product-story-034-final-cta-closeout
+   Homepage final CTA closeout: makes the last section a real conversion panel
+   while preserving the accepted hero, category, proof graph, and nav behavior. */
+body.homepage-product-story .homepage-final-cta-section {
+  padding-top: 42px;
+  padding-bottom: 54px;
+}
 
-/* homepage-product-story-033-category-title-polish
-   Marker only for the current homepage cache-busted text/layout polish.
-   No visual CSS in this marker block. */
+body.homepage-product-story .homepage-final-cta {
+  align-items: stretch;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(83,255,61,.13), transparent 34%),
+    linear-gradient(135deg, rgba(255,255,255,.045), rgba(0,0,0,.22));
+  border-color: rgba(83,255,61,.18) !important;
+  box-shadow: 0 28px 72px rgba(0,0,0,.34);
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) minmax(210px, 250px);
+  overflow: hidden;
+  padding: 26px !important;
+}
+
+body.homepage-product-story .homepage-final-copy {
+  display: grid;
+  gap: 10px;
+  max-width: 760px;
+}
+
+body.homepage-product-story .homepage-final-copy .card-title {
+  color: var(--text);
+  font-size: clamp(1.22rem, 2.1vw, 1.62rem);
+  line-height: 1.18;
+}
+
+body.homepage-product-story .homepage-final-copy .card-text {
+  color: rgba(230,245,236,.82);
+  line-height: 1.55;
+  max-width: 720px;
+}
+
+body.homepage-product-story .homepage-final-path {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+body.homepage-product-story .homepage-final-path span {
+  background: rgba(0,0,0,.2);
+  border: 1px solid rgba(83,255,61,.14);
+  border-radius: 999px;
+  color: rgba(230,255,238,.78);
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .02em;
+  padding: 7px 10px;
+}
+
+body.homepage-product-story .homepage-final-actions {
+  align-content: center;
+  background: rgba(0,0,0,.2);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  display: grid;
+  gap: 10px;
+  justify-items: stretch;
+  min-width: 0;
+  padding: 16px;
+}
+
+body.homepage-product-story .homepage-final-actions .btn {
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  body.homepage-product-story .homepage-final-cta {
+    grid-template-columns: 1fr;
+  }
+
+  body.homepage-product-story .homepage-final-actions {
+    align-content: stretch;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  body.homepage-product-story .homepage-final-actions .btn {
+    width: auto;
+  }
+}
+
+@media (max-width: 620px) {
+  body.homepage-product-story .homepage-final-cta {
+    padding: 22px !important;
+  }
+
+  body.homepage-product-story .homepage-final-actions .btn {
+    width: 100%;
+  }
+}
