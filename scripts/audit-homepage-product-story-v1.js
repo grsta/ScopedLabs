@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const STYLE_CACHE = "homepage-product-story-036-final-cta-type-match";
+const STYLE_CACHE = "homepage-product-story-037-final-cta-muted-path";
 const VERSION = "homepage-product-story-audit-001";
 
 const ROOT = process.cwd();
@@ -55,12 +55,15 @@ has("style-hero-grid", "style.css", style, ".homepage-hero-grid");
 has("style-category-grid", "style.css", style, ".homepage-category-grid");
 has("style-proof-grid", "style.css", style, ".homepage-proof-grid");
 has("style-mobile", "style.css", style, "@media (max-width: 620px)");
+has("final-cta-muted-path-marker", "style.css", style, "homepage-product-story-037-final-cta-muted-path");
+has("final-cta-path-label-muted", "style.css", style, "color: rgba(230,245,236,.78) !important;");
+add("final-cta-path-not-neon", !style.includes("body.homepage-product-story .homepage-final-path .homepage-final-path-step {\n  background: transparent !important;\n  border: 0 !important;\n  border-radius: 0 !important;\n  color: var(--accent) !important;"), "Final CTA path labels are no longer neon green");
 add("final-cta-no-question-separators", !index.includes(">?</span>") && !index.includes("sl-pipeline-sep"), "No broken question-mark separators in final CTA");
 has("final-cta-arrow-css-safe", "style.css", style, 'content: "\\2192";');
-has("final-cta-path-label-accent", "style.css", style, "color: var(--accent) !important;");
+has("final-cta-path-label-muted", "style.css", style, "color: rgba(230,245,236,.78) !important;");
 has("final-cta-path-label-pipeline-style", "style.css", style, "text-transform: uppercase !important;");
 has("final-cta-title-weight-card-match", "style.css", style, "font-weight: 700 !important;");
-has("final-cta-type-match-marker", "style.css", style, "homepage-product-story-036-final-cta-type-match");
+has("final-cta-type-match-marker", "style.css", style, "homepage-product-story-037-final-cta-muted-path");
 has("final-cta-title-polished", "Homepage", index, "Turn your next rough request into a clear plan.");
 has("final-cta-body-polished", "Homepage", index, "Pick a category, run the first check, and let ScopedLabs carry the assumptions, risks, and report-ready details as the design comes together.");
 has("final-cta-title-weight-normalized", "style.css", style, "body.homepage-product-story .homepage-final-copy > .card-title");
@@ -70,7 +73,7 @@ has("final-cta-arrow-path-css", "style.css", style, ".homepage-final-path-step +
 has("final-cta-arrow-path-markup", "Homepage", index, "homepage-final-path-step");
 has("final-cta-closeout-layout", "Homepage", index, "homepage-final-path");
 has("final-cta-actions-panel", "style.css", style, "body.homepage-product-story .homepage-final-actions .btn");
-has("final-cta-cache-marker", "style.css", style, "homepage-product-story-036-final-cta-type-match");
+has("final-cta-cache-marker", "style.css", style, "homepage-product-story-037-final-cta-muted-path");
 add("old-final-cta-copy-removed", !index.includes("Start with a real planning question.") && !index.includes("Pick a category, enter the assumptions you know, and use ScopedLabs to turn rough requirements into clearer engineering decisions."), "Old final CTA copy removed");
 has("other-ways-title-polished", "Homepage", index, "Other ways to begin.");
 add("old-start-titles-removed", !index.includes("Good places to start") && !index.includes("Choose how you want to begin."), "Old start section titles removed");

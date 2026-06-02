@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const HOMEPAGE_STYLE_CACHE = "homepage-product-story-036-final-cta-type-match";
+const HOMEPAGE_STYLE_CACHE = "homepage-product-story-037-final-cta-muted-path";
 const ROOT = process.cwd();
 const VERSION = "landing-page-chrome-polish-audit-002-homepage-story-sync";
 const LANDING_STYLE_CACHE = "landing-card-button-polish-v2-001";

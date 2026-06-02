@@ -4046,3 +4046,14 @@ body.homepage-product-story .homepage-final-path .homepage-final-path-step + .ho
   margin: 0 10px 0 3px;
   text-transform: none;
 }
+
+/* homepage-product-story-037-final-cta-muted-path
+   Final CTA path label color only.
+   Keeps the accepted final CTA layout/buttons and makes the flow labels quiet instead of neon green. */
+body.homepage-product-story .homepage-final-path .homepage-final-path-step {
+  color: rgba(230,245,236,.78) !important;
+}
+
+body.homepage-product-story .homepage-final-path .homepage-final-path-step + .homepage-final-path-step::before {
+  color: rgba(255,255,255,.30) !important;
+}
