@@ -3838,3 +3838,48 @@ body.homepage-product-story .homepage-cad-coverage-panel svg {
   max-width: 760px !important;
   width: 100% !important;
 }
+
+
+/* homepage-product-story-031-proof-card-side-layout
+   Moves the existing proof text card to the right of the CAD graph on desktop.
+   Existing text is preserved. CAD graph SVG, labels, geometry, hero, and bottom section remain untouched. */
+body.homepage-product-story .homepage-proof-grid-cad {
+  display: grid !important;
+  grid-template-columns: minmax(0, 760px) minmax(260px, 320px) !important;
+  gap: 22px !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+body.homepage-product-story .homepage-cad-coverage-panel {
+  order: 1;
+  margin: 0 !important;
+  max-width: 760px !important;
+}
+
+body.homepage-product-story .homepage-proof-card-feature {
+  order: 2;
+  max-width: 320px !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  align-self: center;
+}
+
+@media (max-width: 1080px) {
+  body.homepage-product-story .homepage-proof-grid-cad {
+    grid-template-columns: 1fr !important;
+    justify-items: center;
+  }
+
+  body.homepage-product-story .homepage-cad-coverage-panel {
+    order: 1;
+    width: 100%;
+    max-width: 760px !important;
+  }
+
+  body.homepage-product-story .homepage-proof-card-feature {
+    order: 2;
+    width: 100%;
+    max-width: 760px !important;
+  }
+}

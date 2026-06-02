@@ -1,11 +1,11 @@
 const fs = require("fs");
 const path = require("path");
-const homepageStyleCache = "homepage-product-story-030-cad-graph-container-scale";
+const homepageStyleCache = "homepage-product-story-031-proof-card-side-layout";
 const landingStyleCache = "landing-card-button-polish-v2-001";
 
 const ROOT = process.cwd();
 const VERSION = "landing-card-button-polish-v2-audit-001";
-const STYLE_CACHE = "homepage-product-story-030-cad-graph-container-scale";
+const STYLE_CACHE = "homepage-product-story-031-proof-card-side-layout";
 
 function file(rel) {
   return path.join(ROOT, rel);
