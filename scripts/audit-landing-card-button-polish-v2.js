@@ -7,6 +7,7 @@ function expectedStyleCacheFor(rel) {
   return rel === "index.html" ? homepageStyleCache : landingStyleCache;
 }
 
+
 const ROOT = process.cwd();
 const VERSION = "landing-card-button-polish-v2-audit-001";
 const STYLE_CACHE = "homepage-product-story-033-category-title-polish";
@@ -91,14 +92,14 @@ for (const rel of uniqueTargets) {
   has(rel, "landing-body-class", html, "landing-chrome-polish");
   if (rel === "index.html") {
 
-    has(rel, "style-cache", html, "/assets/style.css?v=" + expectedStyleCacheFor(rel));
+has(rel, "style-cache", html, "/assets/style.css?v=" + expectedStyleCacheFor(rel));
   } else {
-    has(rel, "style-cache", html, "/assets/style.css?v=" + expectedStyleCacheFor(rel));
+has(rel, "style-cache", html, "/assets/style.css?v=" + expectedStyleCacheFor(rel));
   }
   if (rel === "index.html") {
-    has(rel, "v2-marker", html, expectedStyleCacheFor(rel));
+has(rel, "v2-marker", html, expectedStyleCacheFor(rel));
   } else {
-    has(rel, "v2-marker", html, expectedStyleCacheFor(rel));
+has(rel, "v2-marker", html, expectedStyleCacheFor(rel));
   }
   has(rel, "nav-tabs-present", html, "nav-tabs");
 }
