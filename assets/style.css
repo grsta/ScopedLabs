@@ -3697,3 +3697,62 @@ body.homepage-product-story .homepage-proof-band::before {
 body.homepage-product-story .homepage-cad-proof-band {
   background: transparent !important;
 }
+
+
+/* homepage-product-story-021-top-mid-scale-tuning
+   Tunes the accepted homepage top/mid scale without redesigning the hero or CAD graph.
+   - Shrinks Planning workflow card.
+   - Shrinks CAD graph container.
+   - Leaves graph geometry and section copy intact. */
+body.homepage-product-story .homepage-hero-grid {
+  grid-template-columns: minmax(0, 1.42fr) minmax(230px, .58fr) !important;
+  gap: 28px !important;
+  align-items: center;
+}
+
+body.homepage-product-story .homepage-hero-panel {
+  justify-self: end;
+  max-width: 320px;
+  padding: 16px !important;
+}
+
+body.homepage-product-story .homepage-flow-list {
+  gap: 9px !important;
+  margin-top: 12px !important;
+}
+
+body.homepage-product-story .homepage-flow-step {
+  gap: 2px !important;
+  padding: 10px 11px !important;
+}
+
+body.homepage-product-story .homepage-flow-step span {
+  font-size: .72rem !important;
+}
+
+body.homepage-product-story .homepage-flow-step strong {
+  font-size: .94rem !important;
+}
+
+body.homepage-product-story .homepage-flow-step small {
+  font-size: .78rem !important;
+  line-height: 1.34 !important;
+}
+
+body.homepage-product-story .homepage-cad-coverage-panel {
+  max-width: 860px !important;
+  padding: 14px 16px !important;
+}
+
+body.homepage-product-story .homepage-cad-coverage-svg,
+body.homepage-product-story .homepage-cad-coverage-panel svg {
+  max-width: 860px !important;
+  width: 100% !important;
+}
+
+@media (max-width: 900px) {
+  body.homepage-product-story .homepage-hero-panel {
+    justify-self: stretch;
+    max-width: none;
+  }
+}
