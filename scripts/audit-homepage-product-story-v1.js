@@ -2,8 +2,8 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "homepage-product-story-022-workflow-card-smaller-only";
-const STYLE_CACHE = "homepage-product-story-022-workflow-card-smaller-only";
+const VERSION = "homepage-product-story-023-workflow-subtle-halo";
+const STYLE_CACHE = "homepage-product-story-023-workflow-subtle-halo";
 
 function read(rel) {
   const target = path.join(ROOT, rel);
@@ -27,7 +27,7 @@ function has(id, sourceName, source, signal) {
 
 has("style-cache", "Homepage", index, "/assets/style.css?v=" + STYLE_CACHE);
 has("body-class", "Homepage", index, "homepage-product-story");
-has("main-marker", "Homepage", index, "homepage-product-story-022-workflow-card-smaller-only");
+has("main-marker", "Homepage", index, "homepage-product-story-023-workflow-subtle-halo");
 has("hero-title", "Homepage", index, "Engineering planning tools for real infrastructure decisions.");
 has("browser-title-clean", "Homepage", index, "<title>ScopedLabs - Engineering planning tools for infrastructure decisions</title>");
 has("og-title-clean", "Homepage", index, 'property="og:title" content="ScopedLabs - Engineering Planning Tools"');
@@ -51,7 +51,7 @@ has("footer-preserved", "Homepage", index, "site-footer");
   "/tools/wireless/"
 ].forEach((href) => has("category-" + href.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, ""), "Homepage", index, 'href="' + href + '"'));
 
-has("style-marker", "style.css", style, "homepage-product-story-022-workflow-card-smaller-only");
+has("style-marker", "style.css", style, "homepage-product-story-023-workflow-subtle-halo");
 has("style-body-scope", "style.css", style, "body.homepage-product-story");
 has("style-hero-grid", "style.css", style, ".homepage-hero-grid");
 has("style-category-grid", "style.css", style, ".homepage-category-grid");
@@ -61,7 +61,7 @@ has("hero-workflow-card-compact", "style.css", style, "max-width: 320px");
 has("hero-workflow-step-compact", "style.css", style, "padding: 10px 11px !important");
 has("cad-panel-scaled-down", "style.css", style, "max-width: 860px !important");
 has("cad-usable-width-label", "Homepage", index, "Usable Width: 102ft");
-has("proof-band-stripe-removed", "style.css", style, "homepage-product-story-022-workflow-card-smaller-only");
+has("proof-band-stripe-removed", "style.css", style, "homepage-product-story-023-workflow-subtle-halo");
 has("proof-band-overlay-disabled", "style.css", style, "background: none !important");
 has("graph-untouched-marker", "Homepage", index, "homepage-cad-coverage-svg");
 has("homepage-header-inset-line-removed", "style.css", style, "box-shadow: 0 12px 34px rgba(0,0,0,0.22) !important");
@@ -77,12 +77,12 @@ has("cad-clean-target-label", "Homepage", index, "Target distance: 60 ft");
 has("cad-clean-raw-label", "Homepage", index, "Raw: 120 ft");
 has("cad-clean-usable-label", "Homepage", index, "Usable Width: 102ft");
 has("cad-camera-marker", "Homepage", index, "homepage-cad-camera");
-has("cad-inner-fit-css", "style.css", style, "homepage-product-story-022-workflow-card-smaller-only");
+has("cad-inner-fit-css", "style.css", style, "homepage-product-story-023-workflow-subtle-halo");
 has("cad-coverage-panel", "Homepage", index, "homepage-cad-coverage-panel");
 has("cad-camera-marker", "Homepage", index, "homepage-cad-camera");
 has("cad-usable-label", "Homepage", index, "Usable Width: 102ft");
 has("cad-report-ready", "Homepage", index, "REPORT READY");
-has("cad-css-marker", "style.css", style, "homepage-product-story-022-workflow-card-smaller-only");
+has("cad-css-marker", "style.css", style, "homepage-product-story-023-workflow-subtle-halo");
 
 const mainCount = (index.match(/<main\b/g) || []).length;
 add("single-main", mainCount === 1 ? "SAFE" : "FAIL", "Found " + mainCount + " <main> element(s)");
