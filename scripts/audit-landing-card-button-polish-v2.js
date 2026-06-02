@@ -3,6 +3,10 @@ const path = require("path");
 const homepageStyleCache = "homepage-product-story-033-category-title-polish";
 const landingStyleCache = "landing-card-button-polish-v2-001";
 
+function expectedStyleCacheFor(rel) {
+  return rel === "index.html" ? homepageStyleCache : landingStyleCache;
+}
+
 const ROOT = process.cwd();
 const VERSION = "landing-card-button-polish-v2-audit-001";
 const STYLE_CACHE = "homepage-product-story-033-category-title-polish";
@@ -74,7 +78,7 @@ for (const rel of walkGuideIndexes("guides")) {
 const uniqueTargets = Array.from(new Set(targetFiles));
 const style = read("assets/style.css");
 
-has("assets/style.css", "v2-style-marker", style, STYLE_CACHE);
+has("assets/style.css", "v2-style-marker", style, landingStyleCache);
 has("assets/style.css", "v2-body-scope", style, "body.landing-chrome-polish");
 has("assets/style.css", "v2-button-radius", style, "border-radius: 7px !important;");
 has("assets/style.css", "v2-card-radius", style, "border-radius: 14px !important;");
@@ -87,14 +91,14 @@ for (const rel of uniqueTargets) {
   has(rel, "landing-body-class", html, "landing-chrome-polish");
   if (rel === "index.html") {
 
-    has(rel, "style-cache", html, "/assets/style.css?v=" + (rel === "index.html" ? homepageStyleCache : landingStyleCache));
+    has(rel, "style-cache", html, "/assets/style.css?v=" + expectedStyleCacheFor(rel));
   } else {
-    has(rel, "style-cache", html, "/assets/style.css?v=" + STYLE_CACHE);
+    has(rel, "style-cache", html, "/assets/style.css?v=" + expectedStyleCacheFor(rel));
   }
   if (rel === "index.html") {
-    has(rel, "v2-marker", html, rel === "index.html" ? homepageStyleCache : landingStyleCache);
+    has(rel, "v2-marker", html, expectedStyleCacheFor(rel));
   } else {
-    has(rel, "v2-marker", html, STYLE_CACHE);
+    has(rel, "v2-marker", html, expectedStyleCacheFor(rel));
   }
   has(rel, "nav-tabs-present", html, "nav-tabs");
 }
