@@ -55,6 +55,8 @@ has("style-hero-grid", "style.css", style, ".homepage-hero-grid");
 has("style-category-grid", "style.css", style, ".homepage-category-grid");
 has("style-proof-grid", "style.css", style, ".homepage-proof-grid");
 has("style-mobile", "style.css", style, "@media (max-width: 620px)");
+has("start-section-title-polished", "Homepage", index, "Choose how you want to begin.");
+add("old-start-section-title-removed", !index.includes("Good places to start"), "Old start section title removed");
 has("category-section-title-polished", "Homepage", index, "Start with the system you need to plan.");
 add("old-category-section-title-removed", !index.includes("What ScopedLabs helps you plan"), "Old category section title removed");
 has("cad-graph-container-scaled-final", "style.css", style, "max-width: 760px !important");
