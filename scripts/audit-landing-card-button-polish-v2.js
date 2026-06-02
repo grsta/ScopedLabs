@@ -71,7 +71,7 @@ for (const rel of walkGuideIndexes("guides")) {
 
 const uniqueTargets = Array.from(new Set(targetFiles));
 const style = read("assets/style.css");
-const homepageStyleCache = "homepage-product-story-023-workflow-subtle-halo";
+const homepageStyleCache = "homepage-product-story-024-workflow-bottom-right-halo";
 
 has("assets/style.css", "v2-style-marker", style, STYLE_CACHE);
 has("assets/style.css", "v2-body-scope", style, "body.landing-chrome-polish");

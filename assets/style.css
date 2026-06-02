@@ -3815,3 +3815,16 @@ body.homepage-product-story .homepage-hero-panel {
     inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
   border-color: rgba(120, 255, 140, 0.18) !important;
 }
+
+
+/* homepage-product-story-024-workflow-bottom-right-halo
+   Moves the subtle Planning Workflow halo to the bottom-right side,
+   suggesting the card is drifting toward the upper-left.
+   No size, position, graph, label, or bottom-section changes. */
+body.homepage-product-story .homepage-hero-panel {
+  box-shadow:
+    18px 18px 46px rgba(120, 255, 140, 0.075),
+    0 20px 54px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+  border-color: rgba(120, 255, 140, 0.18) !important;
+}
