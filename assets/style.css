@@ -3883,3 +3883,11 @@ body.homepage-product-story .homepage-proof-card-feature {
     max-width: 760px !important;
   }
 }
+
+
+/* homepage-product-story-032-proof-card-title-accent
+   Gives only the existing proof text card title a neon-green accent.
+   No size, weight, spacing, graph, SVG, hero, or bottom-section changes. */
+body.homepage-product-story .homepage-proof-card-feature > .card-title {
+  color: var(--accent) !important;
+}
