@@ -3968,3 +3968,47 @@ body.homepage-product-story .homepage-final-actions .btn {
     width: 100%;
   }
 }
+
+/* homepage-product-story-035-final-cta-arrow-path
+   Final CTA closeout polish only.
+   Keeps the accepted hero, category cards, CAD proof graph, and alternate-start section intact. */
+body.homepage-product-story .homepage-final-copy > .card-title {
+  color: var(--text);
+  font-size: 1.08rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.25;
+}
+
+body.homepage-product-story .homepage-final-path {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 8px;
+}
+
+body.homepage-product-story .homepage-final-path .homepage-final-path-step {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  color: rgba(230,255,238,.78);
+  font-size: .82rem;
+  font-weight: 800;
+  letter-spacing: .01em;
+  padding: 0;
+}
+
+body.homepage-product-story .homepage-final-path .homepage-final-path-step + .homepage-final-path-step::before {
+  color: rgba(255,255,255,.32);
+  content: "\2192";
+  display: inline-block;
+  font-weight: 800;
+  margin: 0 9px 0 2px;
+}
+
+body.homepage-product-story .homepage-final-actions .btn {
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+}
