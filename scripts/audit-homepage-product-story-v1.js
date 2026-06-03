@@ -66,6 +66,8 @@ has("final-cta-title-weight-card-match", "style.css", style, "font-weight: 700 !
 has("final-cta-type-match-marker", "style.css", style, "homepage-product-story-037-final-cta-muted-path");
 has("final-cta-title-polished", "Homepage", index, "Turn your next rough request into a clear plan.");
 has("final-cta-body-polished", "Homepage", index, "Pick a category, run the first check, and let ScopedLabs carry the assumptions, risks, and report-ready details as the design comes together.");
+has("final-cta-assistant-copy", "Homepage", index, "Tool assistants flag assumptions, warnings, and risks as you work; category summaries collect those checks into report-ready review.");
+add("final-cta-assistant-copy-location", index.indexOf("Tool assistants flag assumptions, warnings, and risks as you work; category summaries collect those checks into report-ready review.") > index.indexOf("homepage-final-cta-section") ? "SAFE" : "FAIL", "Assistant copy is scoped to the final CTA, not the proof card");
 has("final-cta-title-weight-normalized", "style.css", style, "body.homepage-product-story .homepage-final-copy > .card-title");
 add("final-cta-no-question-separators", !index.includes("sl-pipeline-sep") && !index.includes(">?</span>"), "No broken question-mark separators in final CTA");
 has("final-cta-arrow-css-content", "style.css", style, 'content: "\\2192";');
