@@ -67,6 +67,12 @@
             { id: "lock-power-budget", label: "Lock Power Budget", href: "/tools/access-control/lock-power-budget/" },
             { id: "panel-capacity", label: "Panel Capacity", href: "/tools/access-control/panel-capacity/" },
             { id: "access-level-sizing", label: "Access Level Sizing", href: "/tools/access-control/access-level-sizing/" },
+            {
+              id: "access-control-summary",
+              label: "Summary",
+              href: "/tools/access-control/summary/",
+              flowGroup: "core"
+            },
       {
         id: "elevator-bank-scope",
         label: "Elevator Bank Scope",

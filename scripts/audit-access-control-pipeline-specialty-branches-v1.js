@@ -25,13 +25,15 @@ const coreLabelsPresent = [
   "Access Level"
 ].every((token) => pipelines.includes(token));
 
-check("Planner cache bumped to specialty pipeline lane", index.includes("access-control-scope-planner-area-match-008-specialty-pipeline"));
+check("Planner cache bumped to summary core pipeline lane", index.includes("access-control-scope-planner-area-match-009-summary-core"));
+check("Planner loads refreshed shared pipeline assets", index.includes("pipelines.js?v=access-control-specialty-pipeline-009-summary-core") && index.includes("pipeline.js?v=access-control-specialty-pipeline-009-summary-core"));
 check("Pipeline renderer has category-aware grouped copy", pipelineJs.includes("const groupedFlowCopy") && pipelineJs.includes('category === "access-control"'));
 check("Access foundation copy is present", pipelineJs.includes("Create or select the access scope being planned."));
 check("Access core pipeline copy is present", pipelineJs.includes("Core access pipeline") && pipelineJs.includes("normal access-controlled doors"));
 check("Access specialty copy is present", pipelineJs.includes("elevator, anti-passback, or special locking review"));
 check("Access scope planner has foundation flowGroup", pipelines.includes('id: "scope-planner"') && pipelines.includes('flowGroup: "foundation"'));
 check("Access core pipeline steps are present and default to core group", coreLabelsPresent && pipelineJs.includes('return "core";'));
+check("Access core pipeline includes Summary", pipelines.includes('id: "access-control-summary"') && pipelines.includes('label: "Summary"') && pipelines.includes('/tools/access-control/summary/'));
 check("Access pipeline includes elevator specialty branch", pipelines.includes('id: "elevator-bank-scope"') && pipelines.includes("Elevator Bank Scope"));
 check("Access pipeline includes anti-passback specialty branch", pipelines.includes('id: "anti-passback-zone"') && pipelines.includes("Anti-Passback Zone"));
 check("Access pipeline includes special locking specialty branch", pipelines.includes('id: "special-locking-scope"') && pipelines.includes("Special Locking / High-Security Scope"));
