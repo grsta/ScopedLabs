@@ -24,7 +24,7 @@ check("Planner has no metadata inputs", !["reportName","clientName","projectName
 check("Planner has Area-style intro card", index.includes("Define the doors and zones before running the Access Control flow"));
 check("Planner has Active Access Scope Setup", index.includes("Active Access Scope Setup"));
 check("Planner has Scope Ledger section", index.includes("Scope Ledger") && index.includes("Planning Scopes"));
-check("Planner has Access Control scope summary", index.includes("Access Control scope and door summary"));
+check("Planner has Access Control scope summary", index.includes("Access Control scope and branch summary"));
 check("Planner uses same plugin module stack", ["tool-flow.js","catalog.js","pipelines.js","pipeline-state.js","pipeline.js","scopedlabs-tool-shell.js","help.js"].every((token) => index.includes(token)));
 check("Planner uses Access scope state", index.includes("/assets/access-control-scope-state.js"));
 check("Planner has no standalone auth bridge", !index.includes("/api/unlocks/list") && !index.includes("data-access-scope-unlocked"));

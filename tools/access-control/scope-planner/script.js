@@ -125,6 +125,66 @@
     });
   }
 
+
+  function branchKey(scope) {
+    if (!scope) return "core";
+    if (scope.scopeType === "elevator-bank" || scope.planningPath === "elevator-bank") return "elevator";
+    if (scope.scopeType === "anti-passback-zone" || scope.planningPath === "anti-passback-zone") return "antiPassback";
+    if (
+      scope.scopeType === "high-security-room" ||
+      scope.planningPath === "high-security-door" ||
+      scope.planningPath === "egress-review" ||
+      scope.scopeType === "egress-path" ||
+      scope.freeEgress === "no" ||
+      scope.lockIntent === "maglock"
+    ) return "special";
+    return "core";
+  }
+
+  function branchLabel(key) {
+    const labels = {
+      core: "Core Door Scope",
+      elevator: "Elevator Bank Scope",
+      antiPassback: "Anti-Passback Zone",
+      special: "Special Locking / High-Security Scope"
+    };
+    return labels[key] || labels.core;
+  }
+
+  function branchPluralLabel(key) {
+    const labels = {
+      core: "Core Door Scopes",
+      elevator: "Elevator Bank Scopes",
+      antiPassback: "Anti-Passback Zones",
+      special: "Special Locking / High-Security Scopes"
+    };
+    return labels[key] || labels.core;
+  }
+
+  function branchDescription(key) {
+    const descriptions = {
+      core: "Direct Access Control pipeline scopes. These continue through fail-state behavior, reader selection, lock power, panel capacity, access levels, and final summary.",
+      elevator: "Optional specialty branch scopes for elevator reader or floor-access planning. These still roll into the final Access Control summary.",
+      antiPassback: "Optional specialty branch scopes for anti-passback logic, controlled zones, or directional access rules. These still roll into the final Access Control summary.",
+      special: "Optional review scopes for high-security, maglock, egress-sensitive, fire-release, or special-locking conditions. These carry authority-review flags into the final Access Control summary."
+    };
+    return descriptions[key] || descriptions.core;
+  }
+
+  function branchNextAction(scope) {
+    if (!scope) return "Save a scope before continuing.";
+    if (branchKey(scope) === "elevator") return "Run Elevator Reader Count when this specialty lane is ready.";
+    if (branchKey(scope) === "antiPassback") return "Run Anti-Passback Zones when this specialty lane is ready.";
+    if (branchKey(scope) === "special") return "Resolve authority-review assumptions before final design approval.";
+    return "Continue to Fail-Safe / Fail-Secure.";
+  }
+
+  function completedCheckCount(scope) {
+    const completed = scope && scope.completedTools && typeof scope.completedTools === "object" ? scope.completedTools : {};
+    return Object.keys(completed).filter((key) => completed[key]).length;
+  }
+
+
   function scopePathContinueLabel(value) {
     if (value === "elevator-bank") return "Elevator Reader Count";
     if (value === "anti-passback-zone") return "Anti-Passback Zones";
@@ -315,19 +375,26 @@
 
     els.scopeList.innerHTML = scopes.map((scope) => {
       const active = scope.id === ledger.activeScopeId;
-      const reasons = Array.isArray(scope.authorityReviewReasons) ? scope.authorityReviewReasons : [];
+      const key = branchKey(scope);
+      const checks = completedCheckCount(scope);
+
       return [
         '<article class="access-scope-card' + (active ? ' is-active' : '') + '">',
-        '<div class="access-scope-flow-line" style="margin-bottom: 0;">',
+        '<div class="access-scope-mini-flow">',
         '<span>' + escapeHtml(active ? "Active Scope" : "Saved Scope") + '</span>',
+        '<span class="arrow">&rarr;</span>',
+        '<span>' + escapeHtml(branchLabel(key)) + '</span>',
+        '<span class="arrow">&rarr;</span>',
+        '<span>' + escapeHtml(scope.status === "AUTHORITY REVIEW" ? "Planning" : titleCase(scope.status || "Planning")) + '</span>',
         '</div>',
         '<h3>' + escapeHtml(scope.name) + '</h3>',
         '<p class="muted">' + escapeHtml(titleCase(scope.scopeType)) + ' | ' + escapeHtml(titleCase(scope.doorFunction)) + '</p>',
         '<div class="access-scope-meta">',
         '<div><strong>Path</strong>' + escapeHtml(scopePathContinueLabel(scope.planningPath)) + '</div>',
         '<div><strong>Egress</strong>' + escapeHtml(titleCase(scope.egressRole)) + '</div>',
-        '<div><strong>Free Egress</strong>' + escapeHtml(titleCase(scope.freeEgress)) + '</div>',
         '<div><strong>Lock Intent</strong>' + escapeHtml(titleCase(scope.lockIntent)) + '</div>',
+        '<div><strong>Pipeline Progress</strong>' + checks + ' checks</div>',
+        '<div><strong>Next Result</strong>' + escapeHtml(branchNextAction(scope)) + '</div>',
         '</div>',
         '<div class="btn-row" style="margin-top: 12px;">',
         '<button class="btn btn-primary" type="button" data-scope-use="' + escapeHtml(scope.id) + '">Use Scope</button>',
@@ -339,54 +406,100 @@
     }).join("");
   }
 
+
   function renderScopeSummary(ledger) {
     if (!els.scopeSummary) return;
 
     const scopes = Array.isArray(ledger?.scopes) ? ledger.scopes : [];
-    const metadata = state()?.normalizeMetadata?.(ledger?.metadata || {}) || {};
     const active = getActiveScopeFromLedger(ledger);
-
-    const authorityCount = scopes.filter((scope) => scope.requiresAuthorityReview).length;
-    const elevatorCount = scopes.filter((scope) => scope.scopeType === "elevator-bank" || scope.planningPath === "elevator-bank").length;
-    const antiPassbackCount = scopes.filter((scope) => scope.scopeType === "anti-passback-zone" || scope.planningPath === "anti-passback-zone").length;
 
     if (!scopes.length) {
       els.scopeSummary.innerHTML = '<p class="muted">Save at least one access scope to build the summary.</p>';
       return;
     }
 
-    const rows = scopes.map((scope) => {
-      const reasons = Array.isArray(scope.authorityReviewReasons) ? scope.authorityReviewReasons : [];
+    const groups = {
+      core: scopes.filter((scope) => branchKey(scope) === "core"),
+      elevator: scopes.filter((scope) => branchKey(scope) === "elevator"),
+      antiPassback: scopes.filter((scope) => branchKey(scope) === "antiPassback"),
+      special: scopes.filter((scope) => branchKey(scope) === "special")
+    };
+
+    const authorityCount = scopes.filter((scope) => scope.requiresAuthorityReview).length;
+    const plannedReaders = scopes.filter((scope) => scope.readerIntent && scope.readerIntent !== "unknown").length;
+    const plannedLocks = scopes.filter((scope) => scope.lockIntent && scope.lockIntent !== "unknown").length;
+    const completedChecks = scopes.reduce((sum, scope) => sum + completedCheckCount(scope), 0);
+
+    function branchTable(key, items) {
+      const countLabel = items.length + (items.length === 1 ? " ITEM" : " ITEMS");
+      const emptyLabel = {
+        core: "No core door scopes have been defined yet.",
+        elevator: "No elevator bank scopes have been defined yet.",
+        antiPassback: "No anti-passback zones have been defined yet.",
+        special: "No special locking or high-security scopes have been defined yet."
+      }[key] || "No scopes have been defined yet.";
+
+      const rows = items.length ? items.map((scope) => {
+        const selected = scope.id === ledger.activeScopeId ? "Active Scope" : "Saved Scope";
+        const checks = completedCheckCount(scope);
+        const savedResult = [
+          "Egress: " + titleCase(scope.egressRole),
+          "Lock: " + titleCase(scope.lockIntent),
+          "Reader: " + titleCase(scope.readerIntent)
+        ].join("; ");
+
+        return [
+          '<tr>',
+          '<td><strong>' + escapeHtml(scope.name) + '</strong><br><span class="muted">' + escapeHtml(titleCase(scope.scopeType)) + ' | ' + escapeHtml(titleCase(scope.doorFunction)) + '</span></td>',
+          '<td>' + escapeHtml(selected) + '</td>',
+          '<td>' + escapeHtml(scope.status || "PLANNING") + '</td>',
+          '<td>' + checks + '</td>',
+          '<td>' + escapeHtml(savedResult) + '</td>',
+          '<td>' + escapeHtml(branchNextAction(scope)) + '</td>',
+          '</tr>'
+        ].join("");
+      }).join("") : '<tr><td colspan="6">' + escapeHtml(emptyLabel) + '</td></tr>';
+
       return [
-        '<div class="access-scope-summary-zone">',
-        '<div class="access-scope-summary-zone-head">',
-        '<div><h4>' + escapeHtml(scope.name) + '</h4><div class="access-scope-summary-note">' + escapeHtml(titleCase(scope.scopeType)) + ' | ' + escapeHtml(titleCase(scope.doorFunction)) + '</div></div>',
-        '<div class="access-status-text">' + escapeHtml(scope.status || "PLANNING") + '</div>',
+        '<section class="access-scope-summary-branch">',
+        '<div class="access-scope-summary-branch-head">',
+        '<h3>' + escapeHtml(branchPluralLabel(key)) + '</h3>',
+        '<span class="access-scope-summary-branch-count">' + escapeHtml(countLabel) + '</span>',
         '</div>',
-        '<table class="access-scope-table"><tbody>',
-        '<tr><th>Planning Path</th><td>' + escapeHtml(scopePathContinueLabel(scope.planningPath)) + '</td></tr>',
-        '<tr><th>Egress / Fire</th><td>' + escapeHtml(titleCase(scope.egressRole)) + ' | free egress: ' + escapeHtml(titleCase(scope.freeEgress)) + ' | fire release: ' + escapeHtml(titleCase(scope.fireRelease)) + '</td></tr>',
-        '<tr><th>Lock / Reader</th><td>' + escapeHtml(titleCase(scope.lockIntent)) + ' | ' + escapeHtml(titleCase(scope.readerIntent)) + '</td></tr>',
-        '<tr><th>Security</th><td>' + escapeHtml(titleCase(scope.securityLevel)) + ' | threat: ' + escapeHtml(titleCase(scope.threatLevel)) + ' | traffic: ' + escapeHtml(titleCase(scope.trafficLevel)) + '</td></tr>',
-        '<tr><th>Notes</th><td>' + escapeHtml(scope.restrictions || (Array.isArray(scope.notes) ? scope.notes.join("; ") : "") || "No notes recorded.") + '</td></tr>',
-        '</tbody></table>',
-        reasons.length ? '<div class="access-scope-warn"><strong>Authority review required:</strong><br>' + reasons.map(escapeHtml).join('<br>') + '</div>' : '',
-        '</div>'
+        '<p class="access-scope-branch-description">' + escapeHtml(branchDescription(key)) + '</p>',
+        '<table class="access-scope-summary-table">',
+        '<thead><tr>',
+        '<th>Scope / Door</th>',
+        '<th>Selected</th>',
+        '<th>Status</th>',
+        '<th>Checks</th>',
+        '<th>Key Saved Result</th>',
+        '<th>Next Action</th>',
+        '</tr></thead>',
+        '<tbody>' + rows + '</tbody>',
+        '</table>',
+        '</section>'
       ].join("");
-    }).join("");
+    }
 
     els.scopeSummary.innerHTML = [
       '<div class="access-scope-summary-rollup">',
-      '<div class="access-scope-summary-metric"><span class="access-scope-summary-label">Report</span><span class="access-scope-summary-value">' + escapeHtml(metadata.reportName || "Access Control Scope Summary") + '</span><div class="access-scope-summary-note">' + escapeHtml(metadata.clientName || "No client entered") + '</div></div>',
-      '<div class="access-scope-summary-metric"><span class="access-scope-summary-label">Scopes</span><span class="access-scope-summary-value">' + scopes.length + '</span><div class="access-scope-summary-note">Saved access doors/zones</div></div>',
-      '<div class="access-scope-summary-metric"><span class="access-scope-summary-label">Authority Review</span><span class="access-scope-summary-value">' + authorityCount + '</span><div class="access-scope-summary-note">Egress/fire/special-locking flags</div></div>',
-      '<div class="access-scope-summary-metric"><span class="access-scope-summary-label">Special Zones</span><span class="access-scope-summary-value">' + (elevatorCount + antiPassbackCount) + '</span><div class="access-scope-summary-note">Elevator / anti-passback scopes</div></div>',
+      '<div class="access-scope-summary-metric"><span class="access-scope-summary-label">Scopes</span><span class="access-scope-summary-value">' + scopes.length + '</span><div class="access-scope-summary-note">Defined access doors and specialty zones.</div></div>',
+      '<div class="access-scope-summary-metric"><span class="access-scope-summary-label">Core Door Scopes</span><span class="access-scope-summary-value">' + groups.core.length + '</span><div class="access-scope-summary-note">Direct Access Control pipeline scopes.</div></div>',
+      '<div class="access-scope-summary-metric"><span class="access-scope-summary-label">Specialty Branches</span><span class="access-scope-summary-value">' + (groups.elevator.length + groups.antiPassback.length + groups.special.length) + '</span><div class="access-scope-summary-note">Elevator, anti-passback, and special review lanes.</div></div>',
+      '<div class="access-scope-summary-metric"><span class="access-scope-summary-label">Needs Review</span><span class="access-scope-summary-value">' + authorityCount + '</span><div class="access-scope-summary-note">Authority/AHJ/code review flags.</div></div>',
+      '<div class="access-scope-summary-metric"><span class="access-scope-summary-label">Planned Readers</span><span class="access-scope-summary-value">' + plannedReaders + '</span><div class="access-scope-summary-note">Scopes with reader intent selected.</div></div>',
+      '<div class="access-scope-summary-metric"><span class="access-scope-summary-label">Planned Locks</span><span class="access-scope-summary-value">' + plannedLocks + '</span><div class="access-scope-summary-note">Scopes with lock intent selected.</div></div>',
       '</div>',
       active ? '<div class="access-scope-warn"><strong>Active scope:</strong> ' + escapeHtml(active.name) + ' continues to ' + escapeHtml(scopePathContinueLabel(active.planningPath)) + '.</div>' : '',
       authorityCount ? '<div class="access-authority-caution"><strong>Authority review caution:</strong> One or more scopes may involve egress, fire-rated openings, fire alarm release, maglocks, special locking, elevator lobby locking, panic hardware, or AHJ/code interpretation. Treat this as planning guidance only. Final approval must come from applicable code review, the authority having jurisdiction, fire marshal/AHJ, qualified professional review, and manufacturer-listed hardware documentation.</div>' : '',
-      '<div class="access-scope-summary-zones">' + rows + '</div>'
+      branchTable("core", groups.core),
+      branchTable("elevator", groups.elevator),
+      branchTable("antiPassback", groups.antiPassback),
+      branchTable("special", groups.special)
     ].join("");
   }
+
 
   function render() {
     const api = state();
