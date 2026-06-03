@@ -38,7 +38,8 @@
     customNotes: $("customNotes"),
     exportReport: $("exportReport"),
     saveSnapshot: $("saveSnapshot"),
-    exportStatus: $("exportStatus")
+    exportStatus: $("exportStatus"),
+    localAssistantMount: $("accessControlLocalAssistantMount")
   };
 
   let currentReport = null;
@@ -709,6 +710,30 @@
     hideContinue();
   }
 
+  function clearLocalAssistant() {
+    if (window.ScopedLabsLocalAssistant && els.localAssistantMount) {
+      window.ScopedLabsLocalAssistant.clear(els.localAssistantMount);
+      return;
+    }
+
+    if (els.localAssistantMount) {
+      els.localAssistantMount.innerHTML = "";
+      els.localAssistantMount.hidden = true;
+    }
+  }
+
+  function renderLocalAssistant(core) {
+    const assistant = window.ScopedLabsLocalAssistant;
+    const adapters = window.ScopedLabsAccessControlToolAssistantAdapters;
+    const adapter = adapters && typeof adapters.getAdapter === "function" ? adapters.getAdapter(STEP) : null;
+
+    if (!assistant || !adapter || !els.localAssistantMount || typeof adapter.buildModel !== "function") {
+      return false;
+    }
+
+    return assistant.mount(els.localAssistantMount, adapter.buildModel(core));
+  }
+
   function clearAnalysis() {
     if (window.ScopedLabsAnalyzer && els.analysis) {
       ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
@@ -723,6 +748,7 @@
       els.results.innerHTML = `<div class="muted">${escapeHtml(message)}</div>`;
     }
 
+    clearLocalAssistant();
     clearAnalysis();
     hideContinue();
   }
@@ -858,6 +884,25 @@
 
     showContinue();
 
+    const assistantPayload = {
+      status,
+      recommendation,
+      confidence,
+      score,
+      rationale,
+      scoreMeaning,
+      risk,
+      interpretation,
+      guidance,
+      inputs: {
+        doorTypeLabel: labelFromSelect(els.doorType),
+        lifeLabel: labelFromSelect(els.life),
+        powerLossLabel: labelFromSelect(els.powerLoss),
+        fireLabel: labelFromSelect(els.fire),
+        threatLabel: labelFromSelect(els.threat)
+      }
+    };
+
     currentReport = buildReportPayload({
       status,
       summary: `${recommendation} is the current planning recommendation with ${confidence.toLowerCase()} confidence. ${rationale}`,
@@ -872,6 +917,7 @@
       outputs: getRenderedRows()
     });
 
+    renderLocalAssistant(assistantPayload);
     updateExportControls();
   }
 

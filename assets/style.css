@@ -4983,3 +4983,85 @@ body.physical-security-guide-polish .physical-security-guide-disclaimer p {
 body.homepage-product-story .homepage-final-path .homepage-final-path-step {
   font-weight: 500 !important;
 }
+
+
+/* scopedlabs-local-assistant-001-proof
+   Generic local assistant renderer used by one-tool Access Control proof. */
+.scopedlabs-local-assistant-card {
+  margin-top: 14px;
+  border-color: rgba(83,255,61,.14);
+  background:
+    radial-gradient(circle at top left, rgba(83,255,61,.055), transparent 44%),
+    linear-gradient(180deg, rgba(255,255,255,.026), rgba(0,0,0,.13));
+}
+
+.scopedlabs-local-assistant-head {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.scopedlabs-local-assistant-kicker {
+  color: rgba(168,183,174,.9);
+  font-size: .78rem;
+  font-weight: 740;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.scopedlabs-local-assistant-status {
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 999px;
+  color: rgba(230,245,236,.86);
+  font-size: .74rem;
+  font-weight: 780;
+  letter-spacing: .06em;
+  padding: 5px 9px;
+  text-transform: uppercase;
+}
+
+.scopedlabs-local-assistant-status[data-status="HEALTHY"] { border-color: rgba(83,255,61,.22); }
+.scopedlabs-local-assistant-status[data-status="WATCH"] { border-color: rgba(255,197,92,.30); }
+.scopedlabs-local-assistant-status[data-status="RISK"] { border-color: rgba(255,114,114,.30); }
+
+.scopedlabs-local-assistant-card .h2 {
+  margin-bottom: 8px;
+  margin-top: 0;
+}
+
+.scopedlabs-local-assistant-summary {
+  line-height: 1.56;
+  margin-bottom: 14px;
+}
+
+.scopedlabs-local-assistant-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.scopedlabs-local-assistant-panel {
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  background: rgba(0,0,0,.16);
+  padding: 14px 15px;
+}
+
+.scopedlabs-local-assistant-panel h3 {
+  font-size: .9rem;
+  margin: 0 0 8px;
+}
+
+.scopedlabs-local-assistant-panel ul {
+  color: var(--muted);
+  line-height: 1.52;
+  margin: 0;
+  padding-left: 18px;
+}
+
+@media (max-width: 760px) {
+  .scopedlabs-local-assistant-grid { grid-template-columns: 1fr; }
+}
