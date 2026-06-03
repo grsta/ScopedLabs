@@ -4752,3 +4752,226 @@ body.network-guide-polish .network-guide-disclaimer p {
     width: 100%;
   }
 }
+
+
+/* physical-security-guide-polish-001-category-story
+   Physical Security parent guide only. No visible breadcrumbs, pills, or on-page menu. */
+body.physical-security-guide-polish .physical-security-guide-main {
+  max-width: 1120px;
+}
+
+body.physical-security-guide-polish .physical-security-guide-hero {
+  padding-top: 46px;
+  padding-bottom: 20px;
+}
+
+body.physical-security-guide-polish .physical-security-guide-hero .subhead {
+  max-width: 74ch;
+}
+
+body.physical-security-guide-polish .physical-security-guide-answer {
+  align-items: stretch;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, .72fr);
+  margin-top: 4px;
+  padding: 22px;
+  border-color: rgba(83,255,61,.15);
+  background:
+    radial-gradient(circle at top left, rgba(83,255,61,.07), transparent 40%),
+    linear-gradient(180deg, rgba(255,255,255,.026), rgba(0,0,0,.13));
+}
+
+body.physical-security-guide-polish .physical-security-guide-answer .card-desc {
+  line-height: 1.58;
+  margin-bottom: 0;
+}
+
+body.physical-security-guide-polish .physical-security-flow-card {
+  border: 1px solid rgba(83,255,61,.14);
+  border-radius: 15px;
+  background: rgba(0,0,0,.18);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+}
+
+body.physical-security-guide-polish .physical-security-flow-card strong {
+  color: var(--text);
+  font-size: .94rem;
+}
+
+body.physical-security-guide-polish .physical-security-flow-list {
+  color: rgba(230,245,236,.84);
+  display: grid;
+  gap: 7px;
+  line-height: 1.42;
+  margin: 0;
+  padding-left: 20px;
+}
+
+body.physical-security-guide-polish .physical-security-guide-article {
+  display: grid;
+  gap: 18px;
+  margin-top: 20px;
+}
+
+body.physical-security-guide-polish .physical-security-guide-article .card {
+  margin-bottom: 0;
+  padding: 22px;
+}
+
+body.physical-security-guide-polish .physical-security-guide-article .card-title {
+  margin-top: 0;
+}
+
+body.physical-security-guide-polish .physical-security-guide-article p,
+body.physical-security-guide-polish .physical-security-check-list li {
+  line-height: 1.58;
+}
+
+body.physical-security-guide-polish .physical-security-step-grid,
+body.physical-security-guide-polish .physical-security-specialty-grid {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+body.physical-security-guide-polish .physical-security-step-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+body.physical-security-guide-polish .physical-security-specialty-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+body.physical-security-guide-polish .physical-security-step-card,
+body.physical-security-guide-polish .physical-security-specialty-card {
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  background: rgba(0,0,0,.17);
+  display: block;
+  min-height: 100%;
+  padding: 15px;
+}
+
+body.physical-security-guide-polish .physical-security-step-card:hover,
+body.physical-security-guide-polish .physical-security-specialty-card:hover {
+  border-color: rgba(83,255,61,.20);
+  background: rgba(83,255,61,.045);
+}
+
+body.physical-security-guide-polish .physical-security-step-card strong,
+body.physical-security-guide-polish .physical-security-step-card span,
+body.physical-security-guide-polish .physical-security-specialty-card strong,
+body.physical-security-guide-polish .physical-security-specialty-card span {
+  display: block;
+}
+
+body.physical-security-guide-polish .physical-security-step-card strong,
+body.physical-security-guide-polish .physical-security-specialty-card strong {
+  color: var(--text);
+  line-height: 1.28;
+}
+
+body.physical-security-guide-polish .physical-security-step-card span,
+body.physical-security-guide-polish .physical-security-specialty-card span {
+  color: var(--muted);
+  font-size: .91rem;
+  line-height: 1.48;
+  margin-top: 6px;
+}
+
+body.physical-security-guide-polish .physical-security-guide-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+body.physical-security-guide-polish .physical-security-metric-row {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 16px;
+}
+
+body.physical-security-guide-polish .physical-security-metric-row div {
+  border: 1px solid rgba(83,255,61,.12);
+  border-radius: 14px;
+  background: rgba(0,0,0,.16);
+  padding: 14px;
+}
+
+body.physical-security-guide-polish .physical-security-metric-row strong,
+body.physical-security-guide-polish .physical-security-metric-row span {
+  display: block;
+}
+
+body.physical-security-guide-polish .physical-security-metric-row strong {
+  color: rgba(233,240,236,.96);
+  font-size: 1.08rem;
+}
+
+body.physical-security-guide-polish .physical-security-metric-row span {
+  color: var(--muted);
+  font-size: .88rem;
+  line-height: 1.42;
+  margin-top: 4px;
+}
+
+body.physical-security-guide-polish .physical-security-faq-list {
+  display: grid;
+  gap: 10px;
+}
+
+body.physical-security-guide-polish .physical-security-faq-list details {
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  background: rgba(0,0,0,.16);
+  padding: 13px 15px;
+}
+
+body.physical-security-guide-polish .physical-security-faq-list summary {
+  color: rgba(233,240,236,.94);
+  cursor: pointer;
+  font-weight: 740;
+}
+
+body.physical-security-guide-polish .physical-security-faq-list p {
+  color: var(--muted);
+  margin-bottom: 0;
+}
+
+body.physical-security-guide-polish .physical-security-guide-disclaimer {
+  margin-top: 0;
+}
+
+body.physical-security-guide-polish .physical-security-guide-disclaimer p {
+  margin-bottom: 0;
+}
+
+@media (max-width: 1020px) {
+  body.physical-security-guide-polish .physical-security-step-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  body.physical-security-guide-polish .physical-security-guide-answer {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  body.physical-security-guide-polish .physical-security-step-grid,
+  body.physical-security-guide-polish .physical-security-specialty-grid,
+  body.physical-security-guide-polish .physical-security-metric-row {
+    grid-template-columns: 1fr;
+  }
+
+  body.physical-security-guide-polish .physical-security-guide-actions .btn,
+  body.physical-security-guide-polish .physical-security-guide-hero .btn {
+    width: 100%;
+  }
+}
