@@ -4,13 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <title>Fail-Safe vs Fail-Secure • ScopedLabs</title>
+  <title>Fail-Safe vs Fail-Secure - ScopedLabs</title>
   <meta
     name="description"
     content="Determine correct door behavior based on life safety, threat level, and power conditions."
   />
 
-  <link rel="stylesheet" href="/assets/style.css?v=access-control-fail-safe-assistant-proof-001" />
+  <link rel="stylesheet" href="/assets/style.css?v=access-control-fail-safe-factory-closeout-001" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -112,25 +112,13 @@
   </header>
 
   <main class="container page">
-    <div class="crumbs">
-      <a href="/tools/">Tools</a>
-      <span class="sep">/</span>
-      <a href="/tools/access-control/">Access Control</a>
-      <span class="sep">/</span>
-      <span>Fail-Safe vs Fail-Secure</span>
-    </div>
 
-    <div class="pill-row" style="margin-top: 6px;">
-      <span class="pill pill--free">Free Tier</span>
-    </div>
 
     <h1>Fail-Safe vs Fail-Secure</h1>
 
     <div id="pipeline"></div>
 
-    <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-      <div class="pill pill--free" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
-      <h2 class="h3" style="margin-top: 0;">This tool starts the Access Control design flow</h2>
+    <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">      <h2 class="h3" style="margin-top: 0;">This tool starts the Access Control design flow</h2>
       <p class="muted" style="margin-bottom: 0;">
         Use this first to determine how a door should behave during power loss before you choose reader strategy, lock power, panel sizing, and long-term access structure.
       </p>
@@ -146,7 +134,7 @@
     <div id="flow-note" class="flow-note" hidden></div>
 
     <section id="toolCard" class="card tool-card" style="margin-top: 18px;">
-      <h2 class="card-title" style="margin-top: 0;">Inputs</h2>
+      <h2 class="card-title" style="margin-top: 0;">Planning Inputs</h2>
 
       <div class="form-grid" style="margin-top: 14px;">
         <label class="field">
@@ -200,8 +188,8 @@
         <button id="reset" class="btn" type="button">Reset</button>
       </div>
 
-      <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
-        <h3 class="h3" style="margin-top: 0;">Recommendation</h3>
+      <div id="accessControlLegacyResultsCard" class="card access-control-hidden-results-card" hidden aria-hidden="true" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+        <h3 class="h3" style="margin-top: 0;">Calculation Data Source</h3>
         <div id="results" class="results-grid" aria-live="polite">
           <div class="muted">Run the evaluation to see results.</div>
         </div>
@@ -212,7 +200,7 @@
         </p>
       </div>
 
-      <div id="accessControlLocalAssistantMount" hidden></div>
+      <div id="accessControlLocalAssistantMount" class="access-control-local-assistant-mount" hidden></div>
 
       <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
         <div class="pill-row">
@@ -269,7 +257,7 @@
     </div>
 
     <footer class="site-footer">
-      <div class="muted">© <span data-year></span> ScopedLabs</div>
+      <div class="muted">&copy; <span data-year></span> ScopedLabs</div>
             <div class="footer-links">
       <a href="/tools/">Tools</a>
       <a href="/upgrade/">Upgrade</a>
@@ -306,9 +294,10 @@
   </script>
 
   <script src="/assets/export.js?v=shared-export-025-tool-notes-column-widths"></script>
-  <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-001-proof"></script>
-  <script src="/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-001-fail-safe-proof"></script>
-  <script src="./script.js?v=access-control-fail-safe-assistant-proof-001"></script>
+  <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
+  <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-002-physical-style"></script>
+  <script src="/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-002-factory-closeout"></script>
+  <script src="./script.js?v=access-control-fail-safe-factory-closeout-001"></script>
   <script defer src="/assets/help.js?v=help-025"></script>
 </body>
 </html>

@@ -1,11 +1,11 @@
 /* ScopedLabs Access Control Tool Assistant Adapters
-   Version: access-control-assistant-adapters-001-fail-safe-proof
+   Version: access-control-assistant-adapters-002-factory-closeout
    Purpose: category-specific local assistant model adapters. Dormant unless a tool explicitly calls one.
 */
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-assistant-adapters-001-fail-safe-proof";
+  const API_VERSION = "access-control-assistant-adapters-002-factory-closeout";
 
   function safeText(value) {
     return String(value ?? "");
@@ -37,11 +37,11 @@
     return {
       category: "access-control",
       tool: "fail-safe-fail-secure",
-      kicker: "Local Tool Assistant",
+      kicker: "Local Design Assistant",
       title: "Fail-Safe / Fail-Secure Assistant",
       status,
       summary: recommendation + " is the current planning direction with " + confidence + " confidence. The key risk to manage is: " + risk,
-      assumptionsTitle: "Assumptions Checked",
+      assumptionsTitle: "Assumptions",
       actionsTitle: "Recommended Actions",
       assumptions: [
         "Door behavior is being reviewed before reader strategy, lock power, panel sizing, or access-level structure.",

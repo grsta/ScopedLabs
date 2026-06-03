@@ -1,11 +1,16 @@
 /* ScopedLabs Local Assistant
-   Version: scopedlabs-local-assistant-001-proof
-   Purpose: generic local tool assistant renderer. Dormant unless a tool explicitly mounts it.
+   Version: scopedlabs-local-assistant-002-physical-style
+   Purpose: generic local tool assistant renderer with the same visible card rhythm used by proven Physical Security local assistants.
+   Notes:
+   - Dormant by default.
+   - No auto-mount.
+   - No runtime fetch.
+   - Visible rendering requires an explicit mount call.
 */
 (function () {
   "use strict";
 
-  const API_VERSION = "scopedlabs-local-assistant-001-proof";
+  const API_VERSION = "scopedlabs-local-assistant-002-physical-style";
 
   function safeText(value) {
     return String(value ?? "");
@@ -29,11 +34,11 @@
       version: API_VERSION,
       category: safeText(data.category || ""),
       tool: safeText(data.tool || data.slug || "tool"),
-      title: safeText(data.title || "Tool Assistant"),
-      kicker: safeText(data.kicker || "Local Tool Assistant"),
+      title: safeText(data.title || "Design Assistant"),
+      kicker: safeText(data.kicker || "Local Design Assistant"),
       status: normalizeStatus(data.status),
-      summary: safeText(data.summary || "Run the tool to generate local guidance."),
-      assumptionsTitle: safeText(data.assumptionsTitle || "Assumptions Checked"),
+      summary: safeText(data.summary || "Run the tool to generate local design guidance."),
+      assumptionsTitle: safeText(data.assumptionsTitle || "Assumptions"),
       actionsTitle: safeText(data.actionsTitle || "Recommended Actions"),
       assumptions: list(data.assumptions),
       actions: list(data.actions)
@@ -57,16 +62,16 @@
   function renderHtml(modelInput) {
     const model = buildModel(modelInput);
     return '' +
-      '<section class="card tool-card scopedlabs-local-assistant-card" data-local-assistant-category="' + escapeHtml(model.category) + '" data-local-assistant-tool="' + escapeHtml(model.tool) + '">' +
-        '<div class="scopedlabs-local-assistant-head">' +
-          '<span class="scopedlabs-local-assistant-kicker">' + escapeHtml(model.kicker) + '</span>' +
-          '<span class="scopedlabs-local-assistant-status" data-status="' + escapeHtml(model.status) + '">' + escapeHtml(model.status) + '</span>' +
+      '<section class="card tool-card scopedlabs-local-assistant-card access-control-local-assistant-card" data-local-assistant-category="' + escapeHtml(model.category) + '" data-local-assistant-tool="' + escapeHtml(model.tool) + '">' +
+        '<div class="pill-row">' +
+          '<span class="pill">' + escapeHtml(model.kicker) + '</span>' +
+          '<span class="pill" data-status="' + escapeHtml(model.status) + '">' + escapeHtml(model.status) + '</span>' +
         '</div>' +
         '<h2 class="h2">' + escapeHtml(model.title) + '</h2>' +
-        '<p class="muted scopedlabs-local-assistant-summary">' + escapeHtml(model.summary) + '</p>' +
-        '<div class="scopedlabs-local-assistant-grid">' +
-          '<div class="scopedlabs-local-assistant-panel"><h3>' + escapeHtml(model.assumptionsTitle) + '</h3>' + renderList(model.assumptions, "No assumptions recorded yet.") + '</div>' +
-          '<div class="scopedlabs-local-assistant-panel"><h3>' + escapeHtml(model.actionsTitle) + '</h3>' + renderList(model.actions, "No recommended actions yet.") + '</div>' +
+        '<p class="muted">' + escapeHtml(model.summary) + '</p>' +
+        '<div class="assistant-grid">' +
+          '<div><h3>' + escapeHtml(model.assumptionsTitle) + '</h3>' + renderList(model.assumptions, "No assumptions recorded yet.") + '</div>' +
+          '<div><h3>' + escapeHtml(model.actionsTitle) + '</h3>' + renderList(model.actions, "No recommended actions yet.") + '</div>' +
         '</div>' +
       '</section>';
   }

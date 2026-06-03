@@ -5065,3 +5065,64 @@ body.homepage-product-story .homepage-final-path .homepage-final-path-step {
 @media (max-width: 760px) {
   .scopedlabs-local-assistant-grid { grid-template-columns: 1fr; }
 }
+
+
+/* access-control-fail-safe-factory-closeout-001
+   Fail-Safe / Fail-Secure full factory closeout.
+   Keeps legacy calculated outputs in the DOM as a hidden data source while the local assistant becomes the visible results experience. */
+body[data-category="access-control"][data-step="fail-safe-fail-secure"] .crumbs,
+body[data-category="access-control"][data-step="fail-safe-fail-secure"] > .pill-row {
+  display: none !important;
+}
+
+body[data-category="access-control"][data-step="fail-safe-fail-secure"] .access-control-hidden-results-card[hidden] {
+  display: none !important;
+}
+
+body[data-category="access-control"][data-step="fail-safe-fail-secure"] .access-control-local-assistant-mount {
+  margin-top: 14px;
+}
+
+body[data-category="access-control"][data-step="fail-safe-fail-secure"] .scopedlabs-local-assistant-card {
+  margin-top: 14px;
+}
+
+body[data-category="access-control"][data-step="fail-safe-fail-secure"] .scopedlabs-local-assistant-card .pill-row {
+  margin-bottom: 10px;
+}
+
+body[data-category="access-control"][data-step="fail-safe-fail-secure"] .scopedlabs-local-assistant-card .h2 {
+  margin-top: 0;
+}
+
+body[data-category="access-control"][data-step="fail-safe-fail-secure"] .scopedlabs-local-assistant-card .assistant-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 14px;
+}
+
+body[data-category="access-control"][data-step="fail-safe-fail-secure"] .scopedlabs-local-assistant-card .assistant-grid > div {
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  background: rgba(0,0,0,.16);
+  padding: 14px 15px;
+}
+
+body[data-category="access-control"][data-step="fail-safe-fail-secure"] .scopedlabs-local-assistant-card .assistant-grid h3 {
+  font-size: .9rem;
+  margin: 0 0 8px;
+}
+
+body[data-category="access-control"][data-step="fail-safe-fail-secure"] .scopedlabs-local-assistant-card .assistant-grid ul {
+  color: var(--muted);
+  line-height: 1.52;
+  margin: 0;
+  padding-left: 18px;
+}
+
+@media (max-width: 760px) {
+  body[data-category="access-control"][data-step="fail-safe-fail-secure"] .scopedlabs-local-assistant-card .assistant-grid {
+    grid-template-columns: 1fr;
+  }
+}
