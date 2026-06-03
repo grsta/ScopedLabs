@@ -7,7 +7,7 @@
   <meta name="description" content="Define access control doors, door groups, access zones, elevator banks, and egress scopes before running downstream access control planning tools." />
   <meta name="robots" content="noindex,follow" />
 
-  <link rel="stylesheet" href="/assets/style.css?v=access-control-scope-planner-area-pattern-003-gating" />
+  <link rel="stylesheet" href="/assets/style.css?v=access-control-scope-planner-area-pattern-004-auth-unlock" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
@@ -692,12 +692,165 @@
   <script src="/assets/pipeline-state.js?v=access-scope-planner-001"></script>
   <script src="/assets/pipeline.js?v=access-scope-planner-001"></script>
   <script src="/assets/access-control-scope-state.js?v=access-control-scope-state-001-area-pattern"></script>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var CATEGORY = "access-control";
+      var CACHE_KEY = "sl_unlocked_categories";
+
+      function cleanSlug(value) {
+        return String(value || "").trim().toLowerCase();
+      }
+
+      function getStoredAccessToken() {
+        try {
+          var key = Object.keys(localStorage).find(function (item) {
+            return item.indexOf("sb-") === 0;
+          });
+
+          if (!key) return null;
+
+          var raw = JSON.parse(localStorage.getItem(key));
+          return raw && (
+            raw.access_token ||
+            (raw.currentSession && raw.currentSession.access_token) ||
+            (Array.isArray(raw) && raw[0] && raw[0].access_token) ||
+            null
+          );
+        } catch (err) {
+          return null;
+        }
+      }
+
+      function getSessionToken() {
+        return (
+          (window.SL_AUTH && window.SL_AUTH.__session && window.SL_AUTH.__session.access_token) ||
+          getStoredAccessToken() ||
+          null
+        );
+      }
+
+      function readCachedUnlocks() {
+        try {
+          return String(localStorage.getItem(CACHE_KEY) || "")
+            .split(",")
+            .map(cleanSlug)
+            .filter(Boolean);
+        } catch (err) {
+          return [];
+        }
+      }
+
+      function hasCachedCategoryUnlock() {
+        return readCachedUnlocks().indexOf(CATEGORY) >= 0;
+      }
+
+      function showPlanner() {
+        var lockedCard = document.getElementById("lockedCard");
+        var toolCard = document.getElementById("toolCard");
+
+        if (lockedCard) lockedCard.style.display = "none";
+        if (toolCard) toolCard.style.display = "";
+        document.body.setAttribute("data-access-scope-unlocked", "true");
+      }
+
+      function showLocked() {
+        var lockedCard = document.getElementById("lockedCard");
+        var toolCard = document.getElementById("toolCard");
+
+        if (lockedCard) lockedCard.style.display = "";
+        if (toolCard) toolCard.style.display = "none";
+        document.body.setAttribute("data-access-scope-unlocked", "false");
+      }
+
+      async function fetchUnlocks(token) {
+        if (!token) return [];
+
+        try {
+          var response = await fetch("/api/unlocks/list", {
+            method: "GET",
+            headers: {
+              Authorization: "Bearer " + token
+            }
+          });
+
+          var data = null;
+          try {
+            data = await response.json();
+          } catch (err) {
+            data = null;
+          }
+
+          if (!response.ok || !data || !data.ok || !Array.isArray(data.categories)) {
+            return [];
+          }
+
+          try {
+            localStorage.setItem(CACHE_KEY, data.categories.map(cleanSlug).filter(Boolean).join(","));
+          } catch (err) {}
+
+          return data.categories.map(cleanSlug).filter(Boolean);
+        } catch (err) {
+          return [];
+        }
+      }
+
+      async function applyAccessScopeUnlock() {
+        var token = getSessionToken();
+
+        if (!token) {
+          showLocked();
+          return;
+        }
+
+        if (hasCachedCategoryUnlock()) {
+          showPlanner();
+          return;
+        }
+
+        var categories = await fetchUnlocks(token);
+        if (categories.indexOf(CATEGORY) >= 0) {
+          showPlanner();
+          return;
+        }
+
+        showLocked();
+      }
+
+      function start() {
+        showLocked();
+
+        var ready = window.SL_AUTH && window.SL_AUTH.ready;
+        if (ready && typeof ready.then === "function") {
+          ready.finally(function () {
+            window.setTimeout(applyAccessScopeUnlock, 100);
+          });
+        } else {
+          window.setTimeout(applyAccessScopeUnlock, 100);
+        }
+
+        window.setTimeout(applyAccessScopeUnlock, 900);
+        window.addEventListener("storage", function (event) {
+          if (event && event.key === CACHE_KEY) applyAccessScopeUnlock();
+        });
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", start);
+      } else {
+        start();
+      }
+    })();
+  </script>
+
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
-  <script src="./script.js?v=access-control-scope-planner-area-pattern-003-gating"></script>
+  <script src="./script.js?v=access-control-scope-planner-area-pattern-004-auth-unlock"></script>
   <script>
     window.ScopedLabsToolShell?.applyBackContinueShell?.({ rowId: "accessScopeFlowActions" });
   </script>
   <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>
-  <!-- access-control-scope-planner-area-pattern-003-gating -->
+  <!-- access-control-scope-planner-area-pattern-004-auth-unlock -->
 </body>
 </html>
