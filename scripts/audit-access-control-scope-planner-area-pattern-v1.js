@@ -40,7 +40,7 @@ check("Script renders ledger and summary", script.includes("renderScopeList") &&
 check("Script supports print and copy summary", script.includes("print-access-scope-summary") && script.includes("buildClientSummary"));
 check("Script routes active scope to next tool", script.includes("/tools/access-control/fail-safe-fail-secure/") && script.includes("scopePathUrl"));
 check("Category landing routes guided flow to planner", category.includes('/tools/access-control/scope-planner/">Start Guided Flow'));
-check("Category tool list includes planner", category.includes("Access Scope Planner"));
+check("Scope Planner is intentionally not listed as a Free Tier tool card", !category.includes('<div class="tool-row-title">Access Scope Planner</div>'));
 check("Sitemap includes planner", sitemap.includes("https://scopedlabs.com/tools/access-control/scope-planner/"));
 check("Fail-Safe was not patched in this lane", !failSafe.includes("access-control-scope-state.js?v=access-control-scope-state-001-area-pattern"));
 check("Reader Type was not patched in this lane", !reader.includes("access-control-scope-state.js"));
