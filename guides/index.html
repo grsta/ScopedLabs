@@ -4,22 +4,102 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Planning Guides | ScopedLabs</title>
-  <meta name="description" content="Browse ScopedLabs planning guides for access control, compute, infrastructure, network, performance, physical security, power, thermal, video storage, and wireless design workflows.">
+  <meta name="description" content="Browse ScopedLabs planning guides for category workflows, calculator explainers, design assumptions, risk checks, and report-ready engineering planning steps.">
   <link rel="canonical" href="https://scopedlabs.com/guides/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="ScopedLabs">
   <meta property="og:title" content="Planning Guides | ScopedLabs">
-  <meta property="og:description" content="Browse ScopedLabs planning guides for practical engineering workflows across tools, calculators, and design categories.">
+  <meta property="og:description" content="Browse ScopedLabs planning guides for category workflows, calculator explainers, design assumptions, and report-ready planning steps.">
   <meta property="og:url" content="https://scopedlabs.com/guides/">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Planning Guides | ScopedLabs">
-  <meta name="twitter:description" content="Browse ScopedLabs planning guides for practical engineering workflows across all tool categories.">
+  <meta name="twitter:description" content="Browse ScopedLabs planning guides for category workflows, calculator explainers, and report-ready engineering planning steps.">
+  <script type="application/ld+json" id="guides-hub-item-list">
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "ScopedLabs Planning Guides",
+    "url": "https://scopedlabs.com/guides/",
+    "description": "A guide hub for ScopedLabs category planning workflows and calculator explainers.",
+    "mainEntity": {
+      "@type": "ItemList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "PoE Budget Calculator Guide",
+          "url": "https://scopedlabs.com/guides/poe-budget-calculator/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Access Control Planning Guide",
+          "url": "https://scopedlabs.com/guides/access-control-planning/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Compute Planning Guide",
+          "url": "https://scopedlabs.com/guides/compute-planning/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "name": "Infrastructure Planning Guide",
+          "url": "https://scopedlabs.com/guides/infrastructure-planning/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 5,
+          "name": "Network & Throughput Planning Guide",
+          "url": "https://scopedlabs.com/guides/network-throughput-planning/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 6,
+          "name": "Performance Planning Guide",
+          "url": "https://scopedlabs.com/guides/performance-planning/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 7,
+          "name": "Physical Security Planning Guide",
+          "url": "https://scopedlabs.com/guides/physical-security-planning/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 8,
+          "name": "Power & Runtime Planning Guide",
+          "url": "https://scopedlabs.com/guides/power-runtime-planning/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 9,
+          "name": "Thermal Planning Guide",
+          "url": "https://scopedlabs.com/guides/thermal-planning/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 10,
+          "name": "Video & Storage Planning Guide",
+          "url": "https://scopedlabs.com/guides/video-storage-planning/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 11,
+          "name": "Wireless Planning Guide",
+          "url": "https://scopedlabs.com/guides/wireless-planning/"
+        }
+      ]
+    }
+  }
+  </script>
 
-  <link rel="stylesheet" href="/assets/style.css?v=landing-card-button-polish-v2-001" />
+  <link rel="stylesheet" href="/assets/style.css?v=guides-hub-polish-001" />
   <script src="/assets/app.js?v=0314" defer></script>
 </head>
 
-<body class="page-tools landing-chrome-polish landing-guides">
+<body class="page-tools landing-chrome-polish landing-guides guides-hub-polish">
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/" aria-label="ScopedLabs Home">
@@ -57,88 +137,126 @@
     <section class="page-head">
       <h1 class="h1">Planning Guides</h1>
       <p class="subhead">
-        Written workflows that explain how ScopedLabs calculators fit together, what to check first,
-        why each step matters, and which assumptions should be documented before a plan is treated as complete.
+        Written workflows for choosing the right starting point, understanding why each calculator matters,
+        documenting assumptions, and turning rough planning inputs into report-ready design notes.
       </p>
       <div class="hero-actions">
         <a class="btn btn-primary" href="/tools/">Browse All Tools</a>
+        <a class="btn btn-ghost" href="/guides/poe-budget-calculator/">Open PoE Budget Guide</a>
       </div>
     </section>
 
     <section class="tool-feature" aria-labelledby="guides-overview-title">
-      <div class="tool-feature-top">
-        <span class="pill">Guide Library</span>
-      </div>
-      <h2 class="h2" id="guides-overview-title">Use guides before calculators when you want the full workflow.</h2>
+      <h2 class="h2" id="guides-overview-title">Use guides when you need the workflow, not just the calculation.</h2>
       <p class="muted">
-        Tool pages are best for calculations. Planning guides are best for understanding the sequence behind those calculations:
-        the baseline, the follow-up checks, the common mistakes, and the supporting tools that help validate a design.
+        Calculator pages answer a specific question. Planning guides explain the sequence around that question:
+        what to confirm first, what can break the result, which follow-up checks matter, and what should be captured
+        before the work becomes a client-ready report.
       </p>
     </section>
 
-    <section class="grid category-grid" aria-label="Planning guide categories">
-      <a class="card" href="/guides/access-control-planning/">
-        <div class="card-top"><span class="pill">Planning Guide</span></div>
-        <h2 class="h2">Access Control</h2>
-        <p class="muted">Plan fail-safe and fail-secure behavior, reader selection, lock power, panel capacity, and access level structure.</p>
-      </a>
-
-      <a class="card" href="/guides/compute-planning/">
-        <div class="card-top"><span class="pill">Planning Guide</span></div>
-        <h2 class="h2">Compute</h2>
-        <p class="muted">Walk through CPU, RAM, storage IOPS, throughput, VM density, GPU, power, thermal, RAID, and backup-window planning.</p>
-      </a>
-
-      <a class="card" href="/guides/infrastructure-planning/">
-        <div class="card-top"><span class="pill">Planning Guide</span></div>
-        <h2 class="h2">Infrastructure</h2>
-        <p class="muted">Estimate room footprint, rack space, equipment spacing, rack weight, floor loading, UPS room needs, and generator runtime.</p>
-      </a>
-
-      <a class="card" href="/guides/network-throughput-planning/">
-        <div class="card-top"><span class="pill">Planning Guide</span></div>
-        <h2 class="h2">Network & Throughput</h2>
-        <p class="muted">Plan PoE budget, bandwidth demand, uplink oversubscription, latency, MTU, VPN overhead, packet loss, jitter, and failure behavior.</p>
-      </a>
-
-      <a class="card" href="/guides/performance-planning/">
-        <div class="card-top"><span class="pill">Planning Guide</span></div>
-        <h2 class="h2">Performance</h2>
-        <p class="muted">Review response targets, latency, throughput, queues, concurrency, CPU, disk, network, cache, bottlenecks, and headroom.</p>
-      </a>
-
-      <a class="card" href="/guides/physical-security-planning/">
-        <div class="card-top"><span class="pill">Planning Guide</span></div>
-        <h2 class="h2">Physical Security</h2>
-        <p class="muted">Plan camera lighting, mounting, field of view, coverage, spacing, blind spots, pixel density, lenses, and capture range.</p>
-      </a>
-
-      <a class="card" href="/guides/power-runtime-planning/">
-        <div class="card-top"><span class="pill">Planning Guide</span></div>
-        <h2 class="h2">Power & Runtime</h2>
-        <p class="muted">Estimate device load, VA, watts, amps, load growth, UPS runtime, battery sizing, reserve, and supporting runtime checks.</p>
-      </a>
-
-      <a class="card" href="/guides/thermal-planning/">
-        <div class="card-top"><span class="pill">Planning Guide</span></div>
-        <h2 class="h2">Thermal</h2>
-        <p class="muted">Estimate heat load, PSU losses, BTU conversion, rack density, airflow, fan CFM, aisle behavior, ambient rise, and cooling capacity.</p>
-      </a>
-
-      <a class="card" href="/guides/video-storage-planning/">
-        <div class="card-top"><span class="pill">Planning Guide</span></div>
-        <h2 class="h2">Video & Storage</h2>
-        <p class="muted">Plan video bitrate, usable storage, retention, RAID impact, survivability, codec effects, compression, archive cost, and failure exposure.</p>
-      </a>
-
-      <a class="card" href="/guides/wireless-planning/">
-        <div class="card-top"><span class="pill">Planning Guide</span></div>
-        <h2 class="h2">Wireless</h2>
-        <p class="muted">Plan coverage radius, channel overlap, RF noise margin, client density, AP capacity, link budget, backhaul, PtP links, and roaming.</p>
-      </a>
+    <section class="guide-hub-feature card" aria-labelledby="featured-guide-title">
+      <div class="guide-hub-feature-copy">
+        <h2 class="h2" id="featured-guide-title">Featured calculator guide: PoE Budget</h2>
+        <p class="muted">
+          Start here when planning cameras, wireless access points, VoIP phones, intercoms, or access-control devices
+          powered from a switch. The guide explains how device count, wattage, future growth, and headroom fit together
+          before the calculator is used.
+        </p>
+        <div class="guide-hub-feature-actions">
+          <a class="btn btn-primary" href="/guides/poe-budget-calculator/">Read PoE Budget Guide</a>
+          <a class="btn btn-ghost" href="/tools/network/poe-budget/">Open Calculator</a>
+        </div>
+      </div>
+      <div class="guide-hub-panel" aria-label="PoE planning sequence">
+        <div class="guide-hub-step">
+          <strong>1. Count powered devices</strong>
+          <span>Cameras, APs, readers, phones, intercoms, and future endpoints.</span>
+        </div>
+        <div class="guide-hub-step">
+          <strong>2. Add real load and growth</strong>
+          <span>Use rated draw, expansion allowance, and realistic switch budget.</span>
+        </div>
+        <div class="guide-hub-step">
+          <strong>3. Check headroom before selection</strong>
+          <span>Document pressure, reserve, and whether the design needs a larger switch.</span>
+        </div>
+      </div>
     </section>
 
-    <section class="note" aria-label="Planning disclaimer">
+    <section class="guide-hub-section" aria-labelledby="category-guides-title">
+      <div class="guide-hub-section-head">
+        <h2 class="h2" id="category-guides-title">Category planning guides</h2>
+        <p class="muted">
+          Use these as the written version of each ScopedLabs planning workflow. They connect the tools in the category,
+          explain the order of checks, and call out assumptions that should not be skipped.
+        </p>
+      </div>
+
+      <div class="grid category-grid" aria-label="Planning guide categories">
+        <a class="card" data-guide-category-card href="/guides/access-control-planning/">
+          <h3 class="h2">Access Control</h3>
+          <p class="muted">Plan fail-safe and fail-secure behavior, reader selection, lock power, panel capacity, and access level structure.</p>
+          <span class="category-card-cta">Open guide</span>
+        </a>
+
+        <a class="card" data-guide-category-card href="/guides/compute-planning/">
+          <h3 class="h2">Compute</h3>
+          <p class="muted">Walk through CPU, RAM, storage IOPS, throughput, VM density, GPU, power, thermal, RAID, and backup-window planning.</p>
+          <span class="category-card-cta">Open guide</span>
+        </a>
+
+        <a class="card" data-guide-category-card href="/guides/infrastructure-planning/">
+          <h3 class="h2">Infrastructure</h3>
+          <p class="muted">Estimate room footprint, rack space, equipment spacing, rack weight, floor loading, UPS room needs, and generator runtime.</p>
+          <span class="category-card-cta">Open guide</span>
+        </a>
+
+        <a class="card" data-guide-category-card href="/guides/network-throughput-planning/">
+          <h3 class="h2">Network &amp; Throughput</h3>
+          <p class="muted">Plan PoE budget, bandwidth demand, uplink oversubscription, latency, MTU, VPN overhead, packet loss, jitter, and failure behavior.</p>
+          <span class="category-card-cta">Open guide</span>
+        </a>
+
+        <a class="card" data-guide-category-card href="/guides/performance-planning/">
+          <h3 class="h2">Performance</h3>
+          <p class="muted">Review response targets, latency, throughput, queues, concurrency, CPU, disk, network, cache, bottlenecks, and headroom.</p>
+          <span class="category-card-cta">Open guide</span>
+        </a>
+
+        <a class="card" data-guide-category-card href="/guides/physical-security-planning/">
+          <h3 class="h2">Physical Security</h3>
+          <p class="muted">Plan camera lighting, mounting, field of view, coverage, spacing, blind spots, pixel density, lenses, and capture range.</p>
+          <span class="category-card-cta">Open guide</span>
+        </a>
+
+        <a class="card" data-guide-category-card href="/guides/power-runtime-planning/">
+          <h3 class="h2">Power &amp; Runtime</h3>
+          <p class="muted">Estimate device load, VA, watts, amps, load growth, UPS runtime, battery sizing, reserve, and supporting runtime checks.</p>
+          <span class="category-card-cta">Open guide</span>
+        </a>
+
+        <a class="card" data-guide-category-card href="/guides/thermal-planning/">
+          <h3 class="h2">Thermal</h3>
+          <p class="muted">Estimate heat load, PSU losses, BTU conversion, rack density, airflow, fan CFM, aisle behavior, ambient rise, and cooling capacity.</p>
+          <span class="category-card-cta">Open guide</span>
+        </a>
+
+        <a class="card" data-guide-category-card href="/guides/video-storage-planning/">
+          <h3 class="h2">Video &amp; Storage</h3>
+          <p class="muted">Plan video bitrate, usable storage, retention, RAID impact, survivability, codec effects, compression, archive cost, and failure exposure.</p>
+          <span class="category-card-cta">Open guide</span>
+        </a>
+
+        <a class="card" data-guide-category-card href="/guides/wireless-planning/">
+          <h3 class="h2">Wireless</h3>
+          <p class="muted">Plan coverage radius, channel overlap, RF noise margin, client density, AP capacity, link budget, backhaul, PtP links, and roaming.</p>
+          <span class="category-card-cta">Open guide</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="note guide-hub-note" aria-label="Planning disclaimer">
       <p class="muted">
         ScopedLabs guides and tools are planning aids. They do not replace manufacturer documentation, project-specific engineering,
         professional review, code review, site survey, or final deployment validation.

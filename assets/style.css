@@ -4057,3 +4057,174 @@ body.homepage-product-story .homepage-final-path .homepage-final-path-step {
 body.homepage-product-story .homepage-final-path .homepage-final-path-step + .homepage-final-path-step::before {
   color: rgba(255,255,255,.30) !important;
 }
+
+
+/* guides-hub-polish-001
+   Guides landing hub only. Keeps calculators and accepted homepage sections untouched. */
+body.guides-hub-polish .page-head {
+  padding-top: 14px;
+  padding-bottom: 22px;
+}
+
+body.guides-hub-polish .page-head .subhead {
+  max-width: 76ch;
+}
+
+body.guides-hub-polish .hero-actions {
+  flex-wrap: wrap;
+}
+
+body.guides-hub-polish .tool-feature {
+  margin: 8px 0 20px;
+  padding: 22px;
+  border-color: rgba(83,255,61,.13);
+  background:
+    linear-gradient(180deg, rgba(83,255,61,.045), rgba(0,0,0,.12)),
+    linear-gradient(180deg, rgba(255,255,255,.025), rgba(0,0,0,.10));
+}
+
+body.guides-hub-polish .tool-feature .h2 {
+  font-size: 1.32rem;
+  line-height: 1.25;
+  margin-bottom: 10px;
+  max-width: 780px;
+}
+
+body.guides-hub-polish .tool-feature .muted {
+  line-height: 1.58;
+  margin-bottom: 0;
+  max-width: 82ch;
+}
+
+body.guides-hub-polish .guide-hub-feature {
+  align-items: stretch;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 1.08fr) minmax(280px, .92fr);
+  margin: 18px 0 24px;
+  padding: 22px;
+  border-color: rgba(83,255,61,.14);
+  background:
+    radial-gradient(circle at top left, rgba(83,255,61,.075), transparent 42%),
+    linear-gradient(180deg, rgba(255,255,255,.026), rgba(0,0,0,.13));
+}
+
+body.guides-hub-polish .guide-hub-feature .h2 {
+  font-size: 1.32rem;
+  line-height: 1.25;
+  margin-bottom: 10px;
+}
+
+body.guides-hub-polish .guide-hub-feature .muted {
+  line-height: 1.58;
+  margin-top: 0;
+}
+
+body.guides-hub-polish .guide-hub-feature-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+body.guides-hub-polish .guide-hub-panel {
+  display: grid;
+  gap: 10px;
+}
+
+body.guides-hub-polish .guide-hub-step {
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 13px;
+  background: rgba(0,0,0,.17);
+  padding: 14px 15px;
+}
+
+body.guides-hub-polish .guide-hub-step strong {
+  color: var(--text);
+  display: block;
+  font-size: .94rem;
+  line-height: 1.25;
+}
+
+body.guides-hub-polish .guide-hub-step span {
+  color: var(--muted);
+  display: block;
+  font-size: .88rem;
+  line-height: 1.48;
+  margin-top: 4px;
+}
+
+body.guides-hub-polish .guide-hub-section {
+  padding: 12px 0 8px;
+}
+
+body.guides-hub-polish .guide-hub-section-head {
+  margin: 0 0 16px;
+  max-width: 74ch;
+}
+
+body.guides-hub-polish .guide-hub-section-head .h2 {
+  font-size: 1.42rem;
+  line-height: 1.25;
+  margin-bottom: 8px;
+}
+
+body.guides-hub-polish .guide-hub-section-head .muted {
+  line-height: 1.56;
+  margin: 0;
+}
+
+body.guides-hub-polish .category-grid {
+  padding: 0;
+}
+
+body.guides-hub-polish .category-grid > a.card {
+  min-height: 186px;
+  padding: 20px;
+}
+
+body.guides-hub-polish .category-grid > a.card .h2 {
+  margin-bottom: 10px;
+}
+
+body.guides-hub-polish .category-grid > a.card .muted {
+  line-height: 1.5;
+  max-width: none;
+}
+
+body.guides-hub-polish .category-card-cta {
+  color: rgba(168,183,174,.96);
+  font-size: .84rem;
+  font-weight: 720;
+  justify-content: flex-start;
+  letter-spacing: .01em;
+  margin-top: auto;
+  padding-top: 14px;
+  text-align: left;
+  width: auto;
+}
+
+body.guides-hub-polish .guide-hub-note {
+  margin-top: 20px;
+}
+
+body.guides-hub-polish .guide-hub-note p {
+  margin-bottom: 0;
+}
+
+@media (max-width: 860px) {
+  body.guides-hub-polish .guide-hub-feature {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  body.guides-hub-polish .guide-hub-feature,
+  body.guides-hub-polish .tool-feature {
+    padding: 18px;
+  }
+
+  body.guides-hub-polish .guide-hub-feature-actions .btn {
+    width: 100%;
+  }
+}
