@@ -4528,3 +4528,227 @@ body.poe-guide-polish .guide-answer-rule {
 
 /* poe-guide-polish-004-ascii-title
    Cache bump for ASCII-safe PoE guide browser title and meta titles. */
+
+
+/* network-guide-polish-001-clean-parent
+   Network & Throughput parent guide only. No visible breadcrumbs, pills, or on-page menu. */
+body.network-guide-polish .network-guide-main {
+  max-width: 1120px;
+}
+
+body.network-guide-polish .network-guide-hero {
+  padding-top: 46px;
+  padding-bottom: 20px;
+}
+
+body.network-guide-polish .network-guide-hero .subhead {
+  max-width: 74ch;
+}
+
+body.network-guide-polish .network-guide-answer {
+  align-items: stretch;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, .72fr);
+  margin-top: 4px;
+  padding: 22px;
+  border-color: rgba(83,255,61,.15);
+  background:
+    radial-gradient(circle at top left, rgba(83,255,61,.07), transparent 40%),
+    linear-gradient(180deg, rgba(255,255,255,.026), rgba(0,0,0,.13));
+}
+
+body.network-guide-polish .network-guide-answer .card-desc {
+  line-height: 1.58;
+  margin-bottom: 0;
+}
+
+body.network-guide-polish .network-flow-card {
+  border: 1px solid rgba(83,255,61,.14);
+  border-radius: 15px;
+  background: rgba(0,0,0,.18);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+}
+
+body.network-guide-polish .network-flow-card strong {
+  color: var(--text);
+  font-size: .94rem;
+}
+
+body.network-guide-polish .network-flow-list {
+  color: rgba(230,245,236,.84);
+  display: grid;
+  gap: 7px;
+  line-height: 1.42;
+  margin: 0;
+  padding-left: 20px;
+}
+
+body.network-guide-polish .network-guide-article {
+  display: grid;
+  gap: 18px;
+  margin-top: 20px;
+}
+
+body.network-guide-polish .network-guide-article .card {
+  margin-bottom: 0;
+  padding: 22px;
+}
+
+body.network-guide-polish .network-guide-article .card-title {
+  margin-top: 0;
+}
+
+body.network-guide-polish .network-guide-article p,
+body.network-guide-polish .network-check-list li {
+  line-height: 1.58;
+}
+
+body.network-guide-polish .network-step-grid,
+body.network-guide-polish .network-support-grid {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+body.network-guide-polish .network-step-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+body.network-guide-polish .network-support-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+body.network-guide-polish .network-step-card,
+body.network-guide-polish .network-support-card {
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  background: rgba(0,0,0,.17);
+  display: block;
+  min-height: 100%;
+  padding: 15px;
+}
+
+body.network-guide-polish .network-step-card:hover,
+body.network-guide-polish .network-support-card:hover {
+  border-color: rgba(83,255,61,.20);
+  background: rgba(83,255,61,.045);
+}
+
+body.network-guide-polish .network-step-card strong,
+body.network-guide-polish .network-step-card span,
+body.network-guide-polish .network-support-card strong,
+body.network-guide-polish .network-support-card span {
+  display: block;
+}
+
+body.network-guide-polish .network-step-card strong,
+body.network-guide-polish .network-support-card strong {
+  color: var(--text);
+  line-height: 1.28;
+}
+
+body.network-guide-polish .network-step-card span,
+body.network-guide-polish .network-support-card span {
+  color: var(--muted);
+  font-size: .91rem;
+  line-height: 1.48;
+  margin-top: 6px;
+}
+
+body.network-guide-polish .network-guide-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+body.network-guide-polish .network-metric-row {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 16px;
+}
+
+body.network-guide-polish .network-metric-row div {
+  border: 1px solid rgba(83,255,61,.12);
+  border-radius: 14px;
+  background: rgba(0,0,0,.16);
+  padding: 14px;
+}
+
+body.network-guide-polish .network-metric-row strong,
+body.network-guide-polish .network-metric-row span {
+  display: block;
+}
+
+body.network-guide-polish .network-metric-row strong {
+  color: rgba(233,240,236,.96);
+  font-size: 1.08rem;
+}
+
+body.network-guide-polish .network-metric-row span {
+  color: var(--muted);
+  font-size: .88rem;
+  line-height: 1.42;
+  margin-top: 4px;
+}
+
+body.network-guide-polish .network-faq-list {
+  display: grid;
+  gap: 10px;
+}
+
+body.network-guide-polish .network-faq-list details {
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  background: rgba(0,0,0,.16);
+  padding: 13px 15px;
+}
+
+body.network-guide-polish .network-faq-list summary {
+  color: rgba(233,240,236,.94);
+  cursor: pointer;
+  font-weight: 740;
+}
+
+body.network-guide-polish .network-faq-list p {
+  color: var(--muted);
+  margin-bottom: 0;
+}
+
+body.network-guide-polish .network-guide-disclaimer {
+  margin-top: 0;
+}
+
+body.network-guide-polish .network-guide-disclaimer p {
+  margin-bottom: 0;
+}
+
+@media (max-width: 980px) {
+  body.network-guide-polish .network-step-grid,
+  body.network-guide-polish .network-support-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  body.network-guide-polish .network-guide-answer {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  body.network-guide-polish .network-step-grid,
+  body.network-guide-polish .network-support-grid,
+  body.network-guide-polish .network-metric-row {
+    grid-template-columns: 1fr;
+  }
+
+  body.network-guide-polish .network-guide-actions .btn,
+  body.network-guide-polish .network-guide-hero .btn {
+    width: 100%;
+  }
+}
