@@ -417,6 +417,22 @@
   }
 
 
+  function renderStatusLegend() {
+    return [
+      '<section class="access-status-legend" aria-label="Access Control status legend">',
+      '<h3 class="access-status-legend-title">Status Legend</h3>',
+      '<div class="access-status-legend-grid">',
+      '<div class="access-status-legend-item"><strong class="access-status-planning">PLANNING</strong>Scope is defined but not fully validated yet.</div>',
+      '<div class="access-status-legend-item"><strong class="access-status-pending">PENDING</strong>Required core checks are not complete.</div>',
+      '<div class="access-status-legend-item"><strong class="access-status-watch">WATCH</strong>Assumptions need review, but the scope can continue.</div>',
+      '<div class="access-status-legend-item"><strong class="access-status-risk">RISK</strong>A tool assistant found a likely design conflict.</div>',
+      '<div class="access-status-legend-item"><strong class="access-status-authority">AUTHORITY REVIEW</strong>AHJ/code/fire/life-safety review may be required.</div>',
+      '<div class="access-status-legend-item"><strong class="access-status-complete">COMPLETE</strong>Enough validated data exists for summary rollup.</div>',
+      '</div>',
+      '</section>'
+    ].join("");
+  }
+
   function renderScopeSummary(ledger) {
     if (!els.scopeSummary) return;
 
@@ -501,6 +517,7 @@
       '<div class="access-scope-summary-metric"><span class="access-scope-summary-label">Planned Readers</span><span class="access-scope-summary-value">' + plannedReaders + '</span><div class="access-scope-summary-note">Scopes with reader intent selected.</div></div>',
       '<div class="access-scope-summary-metric"><span class="access-scope-summary-label">Planned Locks</span><span class="access-scope-summary-value">' + plannedLocks + '</span><div class="access-scope-summary-note">Scopes with lock intent selected.</div></div>',
       '</div>',
+      renderStatusLegend(),
       active ? '<div class="access-scope-warn"><strong>Active scope:</strong> ' + escapeHtml(active.name) + ' continues to ' + escapeHtml(scopePathContinueLabel(active.planningPath)) + '.</div>' : '',
       authorityCount ? '<div class="access-authority-caution"><strong>Authority review caution:</strong> One or more scopes may involve egress, fire-rated openings, fire alarm release, maglocks, special locking, elevator lobby locking, panic hardware, or AHJ/code interpretation. Treat this as planning guidance only. Final approval must come from applicable code review, the authority having jurisdiction, fire marshal/AHJ, qualified professional review, and manufacturer-listed hardware documentation.</div>' : '',
       branchTable("core", groups.core),
