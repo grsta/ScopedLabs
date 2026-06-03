@@ -99,7 +99,7 @@
 
   function titleCase(value) {
     return String(value || "n/a")
-      .replace(/-/g, " ")
+      .replace(/-/g, " | ")
       .replace(/\b\w/g, (letter) => letter.toUpperCase());
   }
 
@@ -320,18 +320,15 @@
         '<article class="access-scope-card' + (active ? ' is-active' : '') + '">',
         '<div class="access-scope-flow-line" style="margin-bottom: 0;">',
         '<span>' + escapeHtml(active ? "Active Scope" : "Saved Scope") + '</span>',
-        '<span class="access-scope-flow-arrow">&rarr;</span>',
-        '<span class="access-scope-flow-label">' + escapeHtml(scope.status || "PLANNING") + '</span>',
         '</div>',
         '<h3>' + escapeHtml(scope.name) + '</h3>',
-        '<p class="muted">' + escapeHtml(titleCase(scope.scopeType)) + ' ? ' + escapeHtml(titleCase(scope.doorFunction)) + '</p>',
+        '<p class="muted">' + escapeHtml(titleCase(scope.scopeType)) + ' | ' + escapeHtml(titleCase(scope.doorFunction)) + '</p>',
         '<div class="access-scope-meta">',
         '<div><strong>Path</strong>' + escapeHtml(scopePathContinueLabel(scope.planningPath)) + '</div>',
         '<div><strong>Egress</strong>' + escapeHtml(titleCase(scope.egressRole)) + '</div>',
         '<div><strong>Free Egress</strong>' + escapeHtml(titleCase(scope.freeEgress)) + '</div>',
         '<div><strong>Lock Intent</strong>' + escapeHtml(titleCase(scope.lockIntent)) + '</div>',
         '</div>',
-        reasons.length ? '<div class="access-scope-warn"><strong>Authority review flags:</strong><br>' + reasons.map(escapeHtml).join('<br>') + '</div>' : '',
         '<div class="btn-row" style="margin-top: 12px;">',
         '<button class="btn btn-primary" type="button" data-scope-use="' + escapeHtml(scope.id) + '">Use Scope</button>',
         '<button class="btn" type="button" data-scope-edit="' + escapeHtml(scope.id) + '">Edit</button>',
@@ -363,14 +360,14 @@
       return [
         '<div class="access-scope-summary-zone">',
         '<div class="access-scope-summary-zone-head">',
-        '<div><h4>' + escapeHtml(scope.name) + '</h4><div class="access-scope-summary-note">' + escapeHtml(titleCase(scope.scopeType)) + ' ? ' + escapeHtml(titleCase(scope.doorFunction)) + '</div></div>',
+        '<div><h4>' + escapeHtml(scope.name) + '</h4><div class="access-scope-summary-note">' + escapeHtml(titleCase(scope.scopeType)) + ' | ' + escapeHtml(titleCase(scope.doorFunction)) + '</div></div>',
         '<div class="access-status-text">' + escapeHtml(scope.status || "PLANNING") + '</div>',
         '</div>',
         '<table class="access-scope-table"><tbody>',
         '<tr><th>Planning Path</th><td>' + escapeHtml(scopePathContinueLabel(scope.planningPath)) + '</td></tr>',
-        '<tr><th>Egress / Fire</th><td>' + escapeHtml(titleCase(scope.egressRole)) + ' ? free egress: ' + escapeHtml(titleCase(scope.freeEgress)) + ' ? fire release: ' + escapeHtml(titleCase(scope.fireRelease)) + '</td></tr>',
-        '<tr><th>Lock / Reader</th><td>' + escapeHtml(titleCase(scope.lockIntent)) + ' ? ' + escapeHtml(titleCase(scope.readerIntent)) + '</td></tr>',
-        '<tr><th>Security</th><td>' + escapeHtml(titleCase(scope.securityLevel)) + ' ? threat: ' + escapeHtml(titleCase(scope.threatLevel)) + ' ? traffic: ' + escapeHtml(titleCase(scope.trafficLevel)) + '</td></tr>',
+        '<tr><th>Egress / Fire</th><td>' + escapeHtml(titleCase(scope.egressRole)) + ' | free egress: ' + escapeHtml(titleCase(scope.freeEgress)) + ' | fire release: ' + escapeHtml(titleCase(scope.fireRelease)) + '</td></tr>',
+        '<tr><th>Lock / Reader</th><td>' + escapeHtml(titleCase(scope.lockIntent)) + ' | ' + escapeHtml(titleCase(scope.readerIntent)) + '</td></tr>',
+        '<tr><th>Security</th><td>' + escapeHtml(titleCase(scope.securityLevel)) + ' | threat: ' + escapeHtml(titleCase(scope.threatLevel)) + ' | traffic: ' + escapeHtml(titleCase(scope.trafficLevel)) + '</td></tr>',
         '<tr><th>Notes</th><td>' + escapeHtml(scope.restrictions || (Array.isArray(scope.notes) ? scope.notes.join("; ") : "") || "No notes recorded.") + '</td></tr>',
         '</tbody></table>',
         reasons.length ? '<div class="access-scope-warn"><strong>Authority review required:</strong><br>' + reasons.map(escapeHtml).join('<br>') + '</div>' : '',

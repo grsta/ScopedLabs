@@ -7,7 +7,7 @@
   <meta name="description" content="Define access control doors, door groups, access zones, elevator banks, and egress scopes before running downstream access control planning tools." />
   <meta name="robots" content="noindex,follow" />
 
-  <link rel="stylesheet" href="/assets/style.css?v=access-control-scope-planner-area-match-001" />
+  <link rel="stylesheet" href="/assets/style.css?v=access-control-scope-planner-area-match-004-card-polish" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
@@ -232,6 +232,41 @@
     .access-status-text {
       color: rgba(255,246,196,.92);
       font-weight: 850;
+    }
+
+
+    #toolCard .btn,
+    #lockedCard .btn,
+    #scopeSummaryCard .btn,
+    #scopeList .btn,
+    #accessScopePlannerFlowActions .btn,
+    #next-step-row .btn,
+    #toolCard .actions .btn {
+      border-radius: 7px !important;
+    }
+
+    #scopeList .access-scope-flow-arrow,
+    #scopeList .access-status-text,
+    #scopeList .access-scope-warn,
+    #scopeList .access-scope-flow-line > :last-child {
+      display: none !important;
+    }
+
+    #scopeList .access-scope-flow-line {
+      gap: 0 !important;
+    }
+
+
+    /* access-scope-card-polish-004 */
+    #scopeList .access-scope-flow-arrow,
+    #scopeList .access-scope-flow-label,
+    #scopeList .access-status-text,
+    #scopeList .access-scope-warn {
+      display: none !important;
+    }
+
+    #scopeList .access-scope-flow-line {
+      gap: 0 !important;
     }
 
     @media (max-width: 860px) {
@@ -639,11 +674,11 @@
   <script src="/assets/pipeline.js?v=access-scope-planner-001"></script>
   <script src="/assets/access-control-scope-state.js?v=access-control-scope-state-001-area-pattern"></script>
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
-  <script src="./script.js?v=access-control-scope-planner-area-match-001"></script>
+  <script src="./script.js?v=access-control-scope-planner-area-match-004-card-polish"></script>
   <script>
     window.ScopedLabsToolShell?.applyBackContinueShell?.({ rowId: "accessScopePlannerFlowActions" });
   </script>
   <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>
-  <!-- access-control-scope-planner-area-match-001 -->
+  <!-- access-control-scope-planner-area-match-004-card-polish -->
 </body>
 </html>
