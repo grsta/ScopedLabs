@@ -61,6 +61,7 @@
         label: "Access Control",
         lanes: {
           v1: [
+            { id: "scope-planner", label: "Access Scope Planner", href: "/tools/access-control/scope-planner/", flowGroup: "foundation" },
             { id: "fail-safe-fail-secure", label: "Fail-Safe / Fail-Secure", href: "/tools/access-control/fail-safe-fail-secure/" },
             { id: "reader-type-selector", label: "Reader Type", href: "/tools/access-control/reader-type-selector/" },
             { id: "lock-power-budget", label: "Lock Power Budget", href: "/tools/access-control/lock-power-budget/" },

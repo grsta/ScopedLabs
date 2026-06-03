@@ -2,6 +2,7 @@ window.SCOPEDLABS_CATALOG = {
   "access-control": {
     label: "Access Control",
     tools: [
+      { slug: "scope-planner", label: "Access Scope Planner", tier: "pro", order: 0, pipeline: "access-design", step: "scope-planner" },
       { slug: "door-count-planner", label: "Door Count Planner", tier: "free", order: 1, pipeline: "access-design", step: "door-count" },
       { slug: "credential-format", label: "Credential Format", tier: "free", order: 2, pipeline: "access-design", step: "credential-format" },
       { slug: "reader-type-selector", label: "Reader Type Selector", tier: "free", order: 3, pipeline: "access-design", step: "reader-type" },

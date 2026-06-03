@@ -7,14 +7,7 @@
   const $ = (id) => document.getElementById(id);
 
   const els = {
-    reportName: $("reportName"),
-    clientName: $("clientName"),
-    projectName: $("projectName"),
-    projectLocation: $("projectLocation"),
-    preparedBy: $("preparedBy"),
-    reportNotes: $("reportNotes"),
-
-    scopeName: $("scopeName"),
+        scopeName: $("scopeName"),
     scopeType: $("scopeType"),
     planningPath: $("planningPath"),
     openingType: $("openingType"),
@@ -49,6 +42,47 @@
   };
 
   let editingScopeId = null;
+
+  function hasStoredAuth() {
+    try {
+      const key = Object.keys(localStorage).find((item) => item.startsWith("sb-"));
+      if (!key) return false;
+      const raw = JSON.parse(localStorage.getItem(key));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((item) => String(item).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(CATEGORY);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
+  }
+
 
   function state() {
     return window.ScopedLabsAccessControlScopeState;
@@ -226,10 +260,7 @@
     const scope = scopeFromForm();
     const ledgerBefore = api.readLedger();
     const normalized = api.normalizeScope(scope, ledgerBefore.scopes.length);
-    const metadata = collectMetadata();
-
     const ledger = api.upsertScope(normalized);
-    ledger.metadata = metadata;
     api.writeLedger(ledger);
 
     editingScopeId = normalized.id;
@@ -499,25 +530,9 @@
       if (editBtn) editScope(editBtn.getAttribute("data-scope-edit"));
       if (deleteBtn) deleteScope(deleteBtn.getAttribute("data-scope-delete"));
     });
-
-    ["reportName", "clientName", "projectName", "projectLocation", "preparedBy", "reportNotes"].forEach((id) => {
-      const el = els[id];
-      if (!el) return;
-      el.addEventListener("change", () => {
-        const api = state();
-        if (!api) return;
-        const ledger = api.readLedger();
-        ledger.metadata = collectMetadata();
-        api.writeLedger(ledger);
-        render();
-      });
-    });
   }
 
   function init() {
-    const year = document.querySelector("[data-year]");
-    if (year) year.textContent = new Date().getFullYear();
-
     const api = state();
     if (!api) {
       status("Access Control scope state failed to load.");
@@ -525,8 +540,6 @@
     }
 
     const ledger = api.readLedger();
-    hydrateMetadata(ledger.metadata);
-
     const active = getActiveScopeFromLedger(ledger);
     if (active) hydrateScopeForm(active);
     else clearScopeForm("Main Entry Door");
@@ -535,5 +548,19 @@
     render();
   }
 
-  init();
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+
+    let unlocked = unlockCategoryPage();
+    if (unlocked) init();
+
+    setTimeout(() => {
+      unlocked = unlockCategoryPage();
+      if (unlocked && els.toolCard && !els.toolCard.dataset.initialized) {
+        els.toolCard.dataset.initialized = "true";
+        init();
+      }
+    }, 400);
+  });
 })();
