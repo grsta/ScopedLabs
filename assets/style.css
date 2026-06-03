@@ -5126,38 +5126,3 @@ body[data-category="access-control"][data-step="fail-safe-fail-secure"] .scopedl
     grid-template-columns: 1fr;
   }
 }
-
-
-/* access-control-scope-planner-foundation-001
-   Access Control Scope Planner foundation. Category control-center only; downstream tool wiring comes next. */
-.access-scope-planner-main { max-width: 1120px; }
-.access-scope-planner-hero { padding-top: 32px; }
-.access-scope-intro-card { align-items: stretch; display: grid; gap: 18px; grid-template-columns: minmax(0,1fr) minmax(280px,.72fr); border-color: rgba(83,255,61,.15); background: radial-gradient(circle at top left, rgba(83,255,61,.07), transparent 40%), linear-gradient(180deg, rgba(255,255,255,.026), rgba(0,0,0,.13)); }
-.access-scope-intro-card .card-desc { line-height: 1.58; margin-bottom: 0; }
-.access-scope-flow-card { border: 1px solid rgba(83,255,61,.14); border-radius: 15px; background: rgba(0,0,0,.18); padding: 16px; }
-.access-scope-flow-card strong { color: var(--text); font-size: .94rem; }
-.access-scope-flow-card ol { color: rgba(230,245,236,.84); display: grid; gap: 7px; line-height: 1.42; margin: 10px 0 0; padding-left: 20px; }
-.access-scope-form { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0,1fr)); margin-top: 14px; }
-.access-scope-form .field.full { grid-column: 1 / -1; }
-.access-scope-actions { align-items: center; flex-wrap: wrap; margin-top: 14px; }
-.access-scope-summary-grid { display: grid; gap: 10px; grid-template-columns: repeat(4, minmax(0,1fr)); margin-top: 12px; }
-.access-scope-summary-grid div, .access-scope-card-meta div { border: 1px solid rgba(255,255,255,.08); border-radius: 12px; background: rgba(0,0,0,.16); padding: 10px; }
-.access-scope-summary-grid strong, .access-scope-card-meta strong { color: rgba(168,183,174,.88); display: block; font-size: .72rem; letter-spacing: .08em; margin-bottom: 4px; text-transform: uppercase; }
-.access-scope-summary-grid span, .access-scope-card-meta span { color: rgba(233,240,236,.94); display: block; }
-.access-scope-flags { color: rgba(255,205,120,.94); line-height: 1.5; margin: 14px 0 0; padding-left: 20px; }
-.access-scope-ledger-grid { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0,1fr)); margin-top: 14px; }
-.access-scope-card { border: 1px solid rgba(255,255,255,.08); border-radius: 14px; background: rgba(0,0,0,.15); padding: 14px; }
-.access-scope-card.is-active { border-color: rgba(83,255,61,.25); background: rgba(83,255,61,.045); }
-.access-scope-card-head { align-items: start; display: flex; gap: 10px; justify-content: space-between; }
-.access-scope-card-head h3 { margin: 0; }
-.access-scope-card-head span { border: 1px solid rgba(255,255,255,.10); border-radius: 999px; color: rgba(230,245,236,.86); font-size: .72rem; font-weight: 760; letter-spacing: .06em; padding: 5px 8px; text-transform: uppercase; }
-.access-scope-card-meta { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0,1fr)); margin-top: 12px; }
-@media (max-width: 860px) {
-  .access-scope-intro-card,
-  .access-scope-form,
-  .access-scope-summary-grid,
-  .access-scope-ledger-grid,
-  .access-scope-card-meta {
-    grid-template-columns: 1fr;
-  }
-}
