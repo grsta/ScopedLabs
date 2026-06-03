@@ -4217,3 +4217,267 @@ body.guides-hub-polish .guide-hub-note p {
     width: 100%;
   }
 }
+
+
+/* poe-guide-polish-001
+   PoE Budget calculator guide only. Keeps tools, homepage, auth, export, snapshot, KB, and pipeline behavior untouched. */
+body.poe-guide-polish .poe-guide-main {
+  max-width: 1120px;
+}
+
+body.poe-guide-polish .poe-guide-hero {
+  padding-bottom: 20px;
+}
+
+body.poe-guide-polish .guide-kicker {
+  color: rgba(168,183,174,.88);
+  font-size: .86rem;
+  font-weight: 720;
+  letter-spacing: .08em;
+  margin: 18px 0 10px;
+  text-transform: uppercase;
+}
+
+body.poe-guide-polish .guide-hero-actions {
+  margin-top: 20px;
+}
+
+body.poe-guide-polish .guide-answer-card {
+  align-items: stretch;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, .72fr);
+  margin-top: 4px;
+  padding: 22px;
+  border-color: rgba(83,255,61,.15);
+  background:
+    radial-gradient(circle at top left, rgba(83,255,61,.07), transparent 40%),
+    linear-gradient(180deg, rgba(255,255,255,.026), rgba(0,0,0,.13));
+}
+
+body.poe-guide-polish .guide-answer-card .card-desc {
+  line-height: 1.58;
+  margin-bottom: 0;
+}
+
+body.poe-guide-polish .guide-answer-formula {
+  border: 1px solid rgba(83,255,61,.14);
+  border-radius: 15px;
+  background: rgba(0,0,0,.18);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 7px;
+  padding: 16px;
+}
+
+body.poe-guide-polish .guide-answer-formula strong {
+  color: var(--text);
+  font-size: .94rem;
+}
+
+body.poe-guide-polish .guide-answer-formula span {
+  color: rgba(230,245,236,.82);
+  line-height: 1.45;
+}
+
+body.poe-guide-polish .guide-layout {
+  align-items: start;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 250px minmax(0, 1fr);
+  margin-top: 20px;
+}
+
+body.poe-guide-polish .guide-toc {
+  position: sticky;
+  top: 96px;
+  padding: 18px;
+}
+
+body.poe-guide-polish .guide-toc .h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+body.poe-guide-polish .guide-toc a {
+  border-top: 1px solid rgba(255,255,255,.07);
+  color: rgba(230,245,236,.78);
+  display: block;
+  font-size: .91rem;
+  line-height: 1.35;
+  padding: 10px 0;
+}
+
+body.poe-guide-polish .guide-toc a:hover {
+  color: rgba(233,240,236,.96);
+}
+
+body.poe-guide-polish .guide-article {
+  display: grid;
+  gap: 18px;
+}
+
+body.poe-guide-polish .guide-article .card {
+  margin-bottom: 0;
+  padding: 22px;
+}
+
+body.poe-guide-polish .guide-article .card-title {
+  margin-top: 0;
+}
+
+body.poe-guide-polish .guide-article p,
+body.poe-guide-polish .guide-check-list li {
+  line-height: 1.58;
+}
+
+body.poe-guide-polish .guide-step-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 16px;
+}
+
+body.poe-guide-polish .guide-step-card {
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  background: rgba(0,0,0,.17);
+  padding: 15px;
+}
+
+body.poe-guide-polish .guide-step-card strong,
+body.poe-guide-polish .guide-step-card span {
+  display: block;
+}
+
+body.poe-guide-polish .guide-step-card strong {
+  color: var(--text);
+  line-height: 1.28;
+}
+
+body.poe-guide-polish .guide-step-card span {
+  color: var(--muted);
+  font-size: .91rem;
+  line-height: 1.48;
+  margin-top: 6px;
+}
+
+body.poe-guide-polish .guide-table-wrap {
+  overflow-x: auto;
+  margin-top: 14px;
+}
+
+body.poe-guide-polish .guide-input-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 620px;
+}
+
+body.poe-guide-polish .guide-input-table th,
+body.poe-guide-polish .guide-input-table td {
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  padding: 12px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+body.poe-guide-polish .guide-input-table th {
+  color: rgba(233,240,236,.92);
+  font-size: .9rem;
+}
+
+body.poe-guide-polish .guide-input-table td {
+  color: rgba(168,183,174,.94);
+  line-height: 1.48;
+}
+
+body.poe-guide-polish .guide-input-table td:first-child {
+  color: rgba(233,240,236,.90);
+  font-weight: 720;
+  white-space: nowrap;
+}
+
+body.poe-guide-polish .guide-metric-row {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 16px 0;
+}
+
+body.poe-guide-polish .guide-metric-row div {
+  border: 1px solid rgba(83,255,61,.12);
+  border-radius: 14px;
+  background: rgba(0,0,0,.16);
+  padding: 14px;
+}
+
+body.poe-guide-polish .guide-metric-row strong,
+body.poe-guide-polish .guide-metric-row span {
+  display: block;
+}
+
+body.poe-guide-polish .guide-metric-row strong {
+  color: rgba(233,240,236,.96);
+  font-size: 1.15rem;
+}
+
+body.poe-guide-polish .guide-metric-row span {
+  color: var(--muted);
+  font-size: .86rem;
+  margin-top: 4px;
+}
+
+body.poe-guide-polish .guide-faq-list {
+  display: grid;
+  gap: 10px;
+}
+
+body.poe-guide-polish .guide-faq-list details {
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  background: rgba(0,0,0,.16);
+  padding: 13px 15px;
+}
+
+body.poe-guide-polish .guide-faq-list summary {
+  color: rgba(233,240,236,.94);
+  cursor: pointer;
+  font-weight: 740;
+}
+
+body.poe-guide-polish .guide-faq-list p {
+  color: var(--muted);
+  margin-bottom: 0;
+}
+
+body.poe-guide-polish .guide-disclaimer {
+  margin-top: 0;
+}
+
+body.poe-guide-polish .guide-disclaimer p {
+  margin-bottom: 0;
+}
+
+@media (max-width: 920px) {
+  body.poe-guide-polish .guide-layout,
+  body.poe-guide-polish .guide-answer-card {
+    grid-template-columns: 1fr;
+  }
+
+  body.poe-guide-polish .guide-toc {
+    position: static;
+  }
+}
+
+@media (max-width: 680px) {
+  body.poe-guide-polish .guide-step-grid,
+  body.poe-guide-polish .guide-metric-row {
+    grid-template-columns: 1fr;
+  }
+
+  body.poe-guide-polish .guide-hero-actions .btn,
+  body.poe-guide-polish .guide-article .btn-row .btn {
+    width: 100%;
+  }
+}
