@@ -171,6 +171,16 @@
     return descriptions[key] || descriptions.core;
   }
 
+  function accessStatusClass(value) {
+    const status = String(value || "").toUpperCase();
+    if (status === "AUTHORITY REVIEW") return "access-status-authority";
+    if (status === "RISK") return "access-status-risk";
+    if (status === "WATCH") return "access-status-watch";
+    if (status === "COMPLETE") return "access-status-complete";
+    if (status === "PENDING") return "access-status-pending";
+    return "access-status-planning";
+  }
+
   function branchNextAction(scope) {
     if (!scope) return "Save a scope before continuing.";
     if (branchKey(scope) === "elevator") return "Run Elevator Reader Count when this specialty lane is ready.";
@@ -452,7 +462,7 @@
           '<tr>',
           '<td><strong>' + escapeHtml(scope.name) + '</strong><br><span class="muted">' + escapeHtml(titleCase(scope.scopeType)) + ' | ' + escapeHtml(titleCase(scope.doorFunction)) + '</span></td>',
           '<td><span class="' + (selected === "Active Scope" ? "access-status-active-text" : "access-status-muted-text") + '">' + escapeHtml(selected) + '</span></td>',
-          '<td>' + escapeHtml(scope.status || "PLANNING") + '</td>',
+          '<td><span class="' + accessStatusClass(scope.status || "PLANNING") + '">' + escapeHtml(scope.status || "PLANNING") + '</span></td>',
           '<td>' + checks + '</td>',
           '<td>' + escapeHtml(savedResult) + '</td>',
           '<td>' + escapeHtml(branchNextAction(scope)) + '</td>',
