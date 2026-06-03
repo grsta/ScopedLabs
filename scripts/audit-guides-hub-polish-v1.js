@@ -36,7 +36,7 @@ safe('Guides hub file exists', html.length > 0);
 safe('Stylesheet exists', css.length > 0);
 safe('Sitemap exists', sitemap.length > 0);
 safe('Hub body scoped class present', html.includes('guides-hub-polish'));
-safe('Hub cache bust updated', html.includes('/assets/style.css?v=guides-hub-polish-001'));
+safe('Hub cache bust updated', html.includes('/assets/style.css?v=guides-hub-polish-002-guide-cta-match'));
 safe('Primary nav still marks Guides active', html.includes('<a class="nav-tab is-active" href="/guides/" aria-current="page">Guides</a>'));
 safe('Footer legal/disclaimer links preserved', ['/privacy/','/terms/','/disclaimer/'].every(token => html.includes(token)));
 safe('PoE featured guide surfaced', html.includes('Featured calculator guide: PoE Budget') && html.includes('/guides/poe-budget-calculator/'));
@@ -49,8 +49,9 @@ safe('Structured data script present', html.includes('id="guides-hub-item-list"'
 safe('All guide URLs linked from hub', guideUrls.every(url => html.includes(url)));
 safe('All guide URLs listed in sitemap', guideUrls.every(url => sitemap.includes('https://scopedlabs.com' + url)));
 safe('Guides hub sitemap lastmod updated', sitemap.includes('<loc>https://scopedlabs.com/guides/</loc>') && sitemap.includes('<lastmod>2026-06-02</lastmod>'));
-safe('Scoped CSS block present', css.includes('guides-hub-polish-001'));
+safe('Scoped CSS block present', (css.includes('guides-hub-polish-001') || css.includes('guides-hub-polish-002-guide-cta-match')));
 safe('Scoped CSS uses body guard', css.includes('body.guides-hub-polish .guide-hub-feature'));
+safe('Guide CTA inherits shared Tools card CTA styling', !css.includes('body.guides-hub-polish .category-card-cta') && css.includes('.page-tools .category-card-cta'));
 safe('Homepage accepted scope untouched by guide CSS', css.includes('body.homepage-product-story .homepage-category-grid'));
 
 const fail = checks.filter(check => !check.ok);

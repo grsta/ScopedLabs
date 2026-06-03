@@ -4059,7 +4059,7 @@ body.homepage-product-story .homepage-final-path .homepage-final-path-step + .ho
 }
 
 
-/* guides-hub-polish-001
+/* guides-hub-polish-002-guide-cta-match
    Guides landing hub only. Keeps calculators and accepted homepage sections untouched. */
 body.guides-hub-polish .page-head {
   padding-top: 14px;
@@ -4192,17 +4192,6 @@ body.guides-hub-polish .category-grid > a.card .muted {
   max-width: none;
 }
 
-body.guides-hub-polish .category-card-cta {
-  color: rgba(168,183,174,.96);
-  font-size: .84rem;
-  font-weight: 720;
-  justify-content: flex-start;
-  letter-spacing: .01em;
-  margin-top: auto;
-  padding-top: 14px;
-  text-align: left;
-  width: auto;
-}
 
 body.guides-hub-polish .guide-hub-note {
   margin-top: 20px;
