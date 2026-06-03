@@ -4975,3 +4975,11 @@ body.physical-security-guide-polish .physical-security-guide-disclaimer p {
     width: 100%;
   }
 }
+
+
+/* homepage-product-story-038-footer-copy-path-weight
+   Homepage footer copyright and final CTA path label weight only.
+   Keeps accepted final CTA layout, muted label color, arrows, buttons, and proof area untouched. */
+body.homepage-product-story .homepage-final-path .homepage-final-path-step {
+  font-weight: 500 !important;
+}

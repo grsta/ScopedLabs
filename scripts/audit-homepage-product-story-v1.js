@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const STYLE_CACHE = "homepage-product-story-037-final-cta-muted-path";
+const STYLE_CACHE = "homepage-product-story-038-footer-copy-path-weight";
 const VERSION = "homepage-product-story-audit-001";
 
 const ROOT = process.cwd();
@@ -40,6 +40,7 @@ has("power-link", "Homepage", index, 'href="/tools/power/"');
 has("upgrade-link", "Homepage", index, 'href="/upgrade/"');
 has("nav-preserved", "Homepage", index, "nav-tabs");
 has("footer-preserved", "Homepage", index, "site-footer");
+has("footer-copyright-symbol", "Homepage", index, "&copy; <span data-year></span> ScopedLabs");
 
 [
   "/tools/power/",
@@ -57,6 +58,7 @@ has("style-proof-grid", "style.css", style, ".homepage-proof-grid");
 has("style-mobile", "style.css", style, "@media (max-width: 620px)");
 has("final-cta-muted-path-marker", "style.css", style, "homepage-product-story-037-final-cta-muted-path");
 has("final-cta-path-label-muted", "style.css", style, "color: rgba(230,245,236,.78) !important;");
+has("final-cta-path-label-not-bold", "style.css", style, "font-weight: 500 !important;");
 add("final-cta-path-not-neon", !style.includes("body.homepage-product-story .homepage-final-path .homepage-final-path-step {\n  background: transparent !important;\n  border: 0 !important;\n  border-radius: 0 !important;\n  color: var(--accent) !important;"), "Final CTA path labels are no longer neon green");
 add("final-cta-no-question-separators", !index.includes(">?</span>") && !index.includes("sl-pipeline-sep"), "No broken question-mark separators in final CTA");
 has("final-cta-arrow-css-safe", "style.css", style, 'content: "\\2192";');
