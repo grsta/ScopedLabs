@@ -165,31 +165,55 @@
   if (hasFlowGroups) {
     title.textContent = "DESIGN FLOW";
 
+    const groupedFlowCopy = category === "access-control"
+      ? {
+          foundationLabel: "Foundation",
+          foundationDescription: "Create or select the access scope being planned.",
+          foundationAria: "Access Control foundation step",
+          coreLabel: "Core access pipeline",
+          coreDescription: "Run this path for normal access-controlled doors, or select an individual core tool.",
+          coreAria: "Access Control core access pipeline steps",
+          specialtyLabel: "Optional specialty zones",
+          specialtyDescription: "Use these only when the access design needs elevator, anti-passback, or special locking review, or select an individual specialty tool.",
+          specialtyAria: "Access Control optional specialty zone checks"
+        }
+      : {
+          foundationLabel: "Foundation",
+          foundationDescription: "Create or select the area/zone being planned.",
+          foundationAria: "Physical Security foundation step",
+          coreLabel: "Core area pipeline",
+          coreDescription: "Run this path for normal camera coverage areas, or select an individual core tool.",
+          coreAria: "Physical Security core area pipeline steps",
+          specialtyLabel: "Optional specialty zones",
+          specialtyDescription: "Use these only when a specific area needs identity or vehicle capture validation, or select an individual specialty tool.",
+          specialtyAria: "Physical Security optional specialty zone checks"
+        };
+
     const groupsWrap = document.createElement("div");
     groupsWrap.className = "sl-pipeline-groups";
 
     appendGroupedFlow(
       groupsWrap,
-      "Foundation",
-      "Create or select the area/zone being planned.",
+      groupedFlowCopy.foundationLabel,
+      groupedFlowCopy.foundationDescription,
       indexedSteps.filter((step) => flowGroupFor(step) === "foundation"),
-      "Physical Security foundation step"
+      groupedFlowCopy.foundationAria
     );
 
     appendGroupedFlow(
       groupsWrap,
-      "Core area pipeline",
-      "Run this path for normal camera coverage areas, or select an individual core tool.",
+      groupedFlowCopy.coreLabel,
+      groupedFlowCopy.coreDescription,
       indexedSteps.filter((step) => flowGroupFor(step) === "core"),
-      "Physical Security core area pipeline steps"
+      groupedFlowCopy.coreAria
     );
 
     appendGroupedFlow(
       groupsWrap,
-      "Optional specialty zones",
-      "Use these only when a specific area needs identity or vehicle capture validation, or select an individual specialty tool.",
+      groupedFlowCopy.specialtyLabel,
+      groupedFlowCopy.specialtyDescription,
       indexedSteps.filter((step) => flowGroupFor(step) === "optional-specialty-zone"),
-      "Physical Security optional specialty zone checks"
+      groupedFlowCopy.specialtyAria
     );
 
     wrap.appendChild(groupsWrap);

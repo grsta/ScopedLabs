@@ -66,7 +66,28 @@
             { id: "reader-type-selector", label: "Reader Type", href: "/tools/access-control/reader-type-selector/" },
             { id: "lock-power-budget", label: "Lock Power Budget", href: "/tools/access-control/lock-power-budget/" },
             { id: "panel-capacity", label: "Panel Capacity", href: "/tools/access-control/panel-capacity/" },
-            { id: "access-level-sizing", label: "Access Level Sizing", href: "/tools/access-control/access-level-sizing/" }
+            { id: "access-level-sizing", label: "Access Level Sizing", href: "/tools/access-control/access-level-sizing/" },
+      {
+        id: "elevator-bank-scope",
+        label: "Elevator Bank Scope",
+        href: "/tools/access-control/elevator-reader-count/",
+        flowGroup: "optional-specialty-zone",
+        optional: true
+      },
+      {
+        id: "anti-passback-zone",
+        label: "Anti-Passback Zone",
+        href: "/tools/access-control/anti-passback-zones/",
+        flowGroup: "optional-specialty-zone",
+        optional: true
+      },
+      {
+        id: "special-locking-scope",
+        label: "Special Locking / High-Security Scope",
+        href: "/tools/access-control/scope-planner/",
+        flowGroup: "optional-specialty-zone",
+        optional: true
+      }
           ]
         }
       },
