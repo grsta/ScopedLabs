@@ -33,6 +33,7 @@ check("Summary includes Elevator Bank Scopes", script.includes("Elevator Bank Sc
 check("Summary includes Anti-Passback Zones", script.includes("Anti-Passback Zones"));
 check("Summary includes Special Locking / High-Security Scopes", script.includes("Special Locking / High-Security Scopes"));
 check("Summary branch tables use Physical Security-style columns", ["Scope / Door", "Selected", "Status", "Checks", "Key Saved Result", "Next Action"].every((token) => script.includes(token)));
+check("Selected Active Scope uses green text class", index.includes("access-status-active-text") && script.includes("access-status-active-text"));
 check("Bad display separator strings are gone", badDisplaySeparatorsGone);
 check("Authority review caution remains in summary", script.includes("Authority review caution:") && script.includes("Final approval must come from applicable code review"));
 

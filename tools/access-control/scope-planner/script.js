@@ -451,7 +451,7 @@
         return [
           '<tr>',
           '<td><strong>' + escapeHtml(scope.name) + '</strong><br><span class="muted">' + escapeHtml(titleCase(scope.scopeType)) + ' | ' + escapeHtml(titleCase(scope.doorFunction)) + '</span></td>',
-          '<td>' + escapeHtml(selected) + '</td>',
+          '<td><span class="' + (selected === "Active Scope" ? "access-status-active-text" : "access-status-muted-text") + '">' + escapeHtml(selected) + '</span></td>',
           '<td>' + escapeHtml(scope.status || "PLANNING") + '</td>',
           '<td>' + checks + '</td>',
           '<td>' + escapeHtml(savedResult) + '</td>',
