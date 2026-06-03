@@ -4494,3 +4494,33 @@ body.poe-guide-clean-detail .guide-kicker,
 body.poe-guide-clean-detail .crumbs {
   display: none;
 }
+
+
+/* poe-guide-polish-003-planning-check-steps
+   PoE guide Planning Check card. Keeps the card readable and avoids symbol-rendering issues. */
+body.poe-guide-polish .guide-answer-formula {
+  gap: 10px;
+}
+
+body.poe-guide-polish .guide-answer-steps {
+  color: rgba(230,245,236,.84);
+  display: grid;
+  gap: 7px;
+  line-height: 1.42;
+  margin: 0;
+  padding-left: 20px;
+}
+
+body.poe-guide-polish .guide-answer-steps li {
+  padding-left: 2px;
+}
+
+body.poe-guide-polish .guide-answer-rule {
+  border-top: 1px solid rgba(255,255,255,.08);
+  color: rgba(168,183,174,.96);
+  display: block;
+  font-size: .9rem;
+  line-height: 1.45;
+  margin-top: 2px;
+  padding-top: 10px;
+}
