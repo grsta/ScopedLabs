@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Access Scope Planner | ScopedLabs</title>
+  <meta name="description" content="Define access control doors, door groups, access zones, elevator banks, and egress scopes before running downstream access control planning tools." />
+  <meta name="robots" content="noindex,follow" />
+
+  <link rel="stylesheet" href="/assets/style.css?v=access-control-scope-planner-area-pattern-001" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJvcGVuYWkiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc3MDU4NjA2MSwiZXhwIjoyMDg2MTYyMDYxfQ.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=auth-magiclink-session-restore-0527"></script>
+  <script defer src="/assets/app.js?v=access-control-scope-planner-001"></script>
+
+  <style>
+    .access-scope-ledger-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .access-scope-card {
+      border: 1px solid rgba(148,163,184,.14);
+      border-radius: 14px;
+      background: rgba(255,255,255,.025);
+      padding: 12px;
+    }
+
+    .access-scope-card.is-active {
+      border-color: rgba(125,255,152,.34);
+      background: rgba(125,255,152,.045);
+    }
+
+    .access-scope-card h3 {
+      margin: 8px 0 6px;
+    }
+
+    .access-scope-meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .access-scope-meta div {
+      border: 1px solid rgba(148,163,184,.12);
+      border-radius: 10px;
+      background: rgba(0,0,0,.12);
+      padding: 8px;
+      color: rgba(226,232,240,.82);
+      font-size: .82rem;
+    }
+
+    .access-scope-meta strong {
+      display: block;
+      color: rgba(203,213,225,.62);
+      font-size: .62rem;
+      letter-spacing: .12em;
+      margin-bottom: 4px;
+    }
+
+    .access-scope-summary-card {
+      border-color: rgba(125,255,158,.18);
+      background: radial-gradient(circle at 15% 0%, rgba(125,255,152,.055), transparent 28%), rgba(0,0,0,.12);
+    }
+
+    .access-scope-summary-rollup {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .access-scope-summary-metric,
+    .access-scope-summary-zone {
+      border: 1px solid rgba(148,163,184,.14);
+      border-radius: 12px;
+      background: rgba(255,255,255,.025);
+      padding: 10px;
+      min-width: 0;
+    }
+
+    .access-scope-summary-label {
+      display: block;
+      color: rgba(203,213,225,.62);
+      font-size: .62rem;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .access-scope-summary-value {
+      display: block;
+      color: #fff;
+      font-size: 1.04rem;
+      font-weight: 950;
+      line-height: 1.15;
+    }
+
+    .access-scope-summary-note {
+      color: rgba(226,232,240,.66);
+      font-size: .76rem;
+      line-height: 1.42;
+      margin-top: 7px;
+    }
+
+    .access-scope-summary-zones {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .access-scope-summary-zone-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .access-scope-summary-zone h4 {
+      margin: 0;
+      color: #fff;
+      font-size: 1rem;
+    }
+
+    .access-scope-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: .82rem;
+    }
+
+    .access-scope-table th,
+    .access-scope-table td {
+      border-bottom: 1px solid rgba(148,163,184,.12);
+      padding: 8px 6px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .access-scope-table th {
+      color: rgba(203,213,225,.68);
+      font-size: .62rem;
+      font-weight: 950;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .access-scope-table td {
+      color: rgba(226,232,240,.82);
+    }
+
+    .access-scope-warn {
+      border: 1px solid rgba(255,211,79,.24);
+      background: rgba(255,211,79,.065);
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: rgba(255,246,196,.92);
+      margin-top: 12px;
+      line-height: 1.45;
+    }
+
+    .access-scope-section-title {
+      margin-top: 10px;
+      margin-bottom: 8px;
+      font-size: clamp(1.38rem, 2.2vw, 1.72rem);
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+    }
+
+    .access-scope-flow-line {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 7px;
+      color: rgba(226,232,240,.82);
+      font-size: .9rem;
+      font-weight: 850;
+      letter-spacing: .02em;
+      margin-bottom: 14px;
+      text-transform: none;
+    }
+
+    .access-scope-flow-arrow {
+      color: rgba(125,255,152,.72);
+    }
+
+    .access-scope-flow-label {
+      color: rgba(190,255,205,.82);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .access-scope-flow-actions {
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .access-scope-flow-actions #next-step-row {
+      align-items: center;
+      gap: 10px;
+      margin-top: 0 !important;
+      display: flex;
+    }
+
+    .access-authority-caution {
+      border: 1px solid rgba(255,211,79,.24);
+      background: rgba(255,211,79,.065);
+      border-radius: 12px;
+      padding: 12px;
+      color: rgba(255,246,196,.94);
+      line-height: 1.5;
+      margin-top: 14px;
+    }
+
+    .access-authority-caution strong {
+      color: rgba(255,248,205,.98);
+    }
+
+    .access-status-text {
+      color: rgba(255,246,196,.92);
+      font-weight: 850;
+    }
+
+    @media (max-width: 860px) {
+      .access-scope-ledger-grid,
+      .access-scope-meta,
+      .access-scope-summary-rollup {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media print {
+      @page {
+        size: auto;
+        margin: 0.55in;
+      }
+
+      html,
+      body,
+      body.print-access-scope-summary {
+        background: #fff !important;
+        color: #111 !important;
+        -webkit-print-color-adjust: economy !important;
+        print-color-adjust: economy !important;
+      }
+
+      body.print-access-scope-summary *,
+      body.print-access-scope-summary *::before,
+      body.print-access-scope-summary *::after {
+        background-image: none !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+        filter: none !important;
+        backdrop-filter: none !important;
+      }
+
+      body.print-access-scope-summary .site-header,
+      body.print-access-scope-summary .crumbs,
+      body.print-access-scope-summary #pipeline,
+      body.print-access-scope-summary #lockedCard,
+      body.print-access-scope-summary #toolCard > h2,
+      body.print-access-scope-summary #toolCard > p,
+      body.print-access-scope-summary #toolCard > .form-grid,
+      body.print-access-scope-summary #toolCard > .btn-row,
+      body.print-access-scope-summary #scopeStatus,
+      body.print-access-scope-summary #scopeList,
+      body.print-access-scope-summary #next-step-row,
+      body.print-access-scope-summary .site-footer,
+      body.print-access-scope-summary #printScopeSummary,
+      body.print-access-scope-summary #copyScopeSummary {
+        display: none !important;
+      }
+
+      body.print-access-scope-summary main,
+      body.print-access-scope-summary .container,
+      body.print-access-scope-summary #toolCard,
+      body.print-access-scope-summary #scopeSummaryCard {
+        display: block !important;
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        background: #fff !important;
+        color: #111 !important;
+      }
+
+      body.print-access-scope-summary #scopeSummaryCard h3,
+      body.print-access-scope-summary #scopeSummaryCard h4,
+      body.print-access-scope-summary #scopeSummaryCard p,
+      body.print-access-scope-summary #scopeSummaryCard div,
+      body.print-access-scope-summary #scopeSummaryCard span,
+      body.print-access-scope-summary #scopeSummaryCard td,
+      body.print-access-scope-summary #scopeSummaryCard th,
+      body.print-access-scope-summary #scopeSummaryCard strong {
+        color: #111 !important;
+      }
+
+      body.print-access-scope-summary .access-scope-summary-rollup {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 8px !important;
+        margin: 12px 0 18px !important;
+      }
+
+      body.print-access-scope-summary .access-scope-summary-metric,
+      body.print-access-scope-summary .access-scope-summary-zone,
+      body.print-access-scope-summary .access-scope-warn,
+      body.print-access-scope-summary .access-authority-caution {
+        border: 1px solid #bbb !important;
+        background: #fff !important;
+        color: #111 !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      body.print-access-scope-summary .access-scope-table th,
+      body.print-access-scope-summary .access-scope-table td {
+        border-bottom: 1px solid #ccc !important;
+        color: #111 !important;
+      }
+
+      body.print-access-scope-summary .access-scope-table th {
+        background: #f2f2f2 !important;
+      }
+    }
+  </style>
+</head>
+
+<body
+  data-tier="pro"
+  data-category="access-control"
+  data-tool="scope-planner"
+  data-step="scope-planner"
+  data-lane="v1"
+>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="ScopedLabs Home">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-icon-wrap" aria-hidden="true">
+          <img class="brand-icon" src="/assets/favicon/favicon-32x32.png?v=1" alt="" width="32" height="32" />
+        </span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
+
+      <nav class="nav site-nav nav-tabs" aria-label="Primary">
+        <a class="nav-tab" href="/">Home</a>
+        <a class="nav-tab is-active" href="/tools/" aria-current="page">Tools</a>
+        <a class="nav-tab" href="/guides/">Guides</a>
+        <a class="nav-tab" href="/about/">About</a>
+        <a class="nav-tab" href="/contact/">Contact</a>
+        <a class="nav-tab" href="/account/">Account</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="container">
+      <h1 style="margin-top: 10px;">Access Scope Planner</h1>
+
+      <div id="pipeline"></div>
+
+      <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+        <h2 class="h3" style="margin-top: 0;">Define doors and zones before running the Access Control flow</h2>
+        <p class="muted" style="margin-bottom: 0;">
+          Real access control systems rarely use one lock, one reader, and one egress assumption everywhere. Use this step to define one or more access scopes so downstream lock behavior, reader, power, panel, and policy results are tied to the correct door or zone.
+        </p>
+      </section>
+
+      <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
+        <h2 class="h2">&#128274; Locked</h2>
+        <p class="muted">This setup step is included with Pro access for Access Control.</p>
+        <div class="actions">
+          <a class="btn" href="/tools/access-control/">Back to Access Control</a>
+          <a class="btn btn-primary" href="/upgrade/">Unlock Pro for Access Control</a>
+        </div>
+      </section>
+
+      <section id="toolCard" class="card tool-card" style="display:none; margin-top: 18px;">
+        <h2 class="card-title" style="margin-top: 0;">Active Access Scope Setup</h2>
+        <p class="muted" style="margin-top: -4px;">
+          Start with one door or zone, then add more if the site has different egress behavior, fire release requirements, lock hardware, reader types, traffic levels, or access policy needs.
+        </p>
+
+        <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.12);">
+          <h2 class="h2 access-scope-section-title" style="margin-top: 10px;">Client and report metadata</h2>
+          <p class="muted" style="margin-bottom: 0;">
+            These labels are saved with the Access Control scope ledger so print, copy, and future summary exports have report-ready context.
+          </p>
+
+          <div class="form-grid" style="margin-top: 14px;">
+            <div class="field">
+              <div class="label-row"><label for="reportName">Report Name</label></div>
+              <input id="reportName" type="text" placeholder="Example: Access Control Scope Summary" />
+            </div>
+
+            <div class="field">
+              <div class="label-row"><label for="clientName">Client Name</label></div>
+              <input id="clientName" type="text" placeholder="Optional" />
+            </div>
+
+            <div class="field">
+              <div class="label-row"><label for="projectName">Project Name</label></div>
+              <input id="projectName" type="text" placeholder="Optional" />
+            </div>
+
+            <div class="field">
+              <div class="label-row"><label for="projectLocation">Project Location</label></div>
+              <input id="projectLocation" type="text" placeholder="Optional" />
+            </div>
+
+            <div class="field">
+              <div class="label-row"><label for="preparedBy">Prepared By</label></div>
+              <input id="preparedBy" type="text" placeholder="Optional" />
+            </div>
+
+            <div class="field">
+              <div class="label-row"><label for="reportNotes">Report Notes</label></div>
+              <input id="reportNotes" type="text" placeholder="Optional" />
+            </div>
+          </div>
+        </section>
+
+        <div class="form-grid" style="margin-top: 14px;">
+          <div class="field">
+            <div class="label-row"><label for="scopeName">Scope Name</label></div>
+            <input id="scopeName" type="text" placeholder="Example: Main Entry Door" />
+          </div>
+
+          <div class="field">
+            <div class="label-row"><label for="scopeType">Scope Type</label></div>
+            <select id="scopeType">
+              <option value="single-door">Single Door</option>
+              <option value="door-group">Door Group</option>
+              <option value="access-zone">Access Zone</option>
+              <option value="high-security-room">High-Security Room</option>
+              <option value="exterior-entry">Exterior Entry</option>
+              <option value="elevator-bank">Elevator Bank</option>
+              <option value="anti-passback-zone">Anti-Passback Zone</option>
+              <option value="egress-path">Emergency Egress Path</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label-row"><label for="planningPath">Planning Path</label></div>
+            <select id="planningPath">
+              <option value="core-door" selected>Core Door - start at Fail-Safe / Fail-Secure</option>
+              <option value="high-security-door">High-Security Door - flag extra review</option>
+              <option value="elevator-bank">Elevator Bank - attach to future elevator planning</option>
+              <option value="anti-passback-zone">Anti-Passback Zone - attach to future anti-passback planning</option>
+              <option value="egress-review">Egress Review Scope - flag authority review</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label-row"><label for="openingType">Opening Type</label></div>
+            <select id="openingType">
+              <option value="single-door">Single Door</option>
+              <option value="door-pair">Pair of Doors</option>
+              <option value="corridor-door">Corridor Door</option>
+              <option value="stairwell-door">Stairwell Door</option>
+              <option value="exit-door">Exit Door</option>
+              <option value="gate">Gate</option>
+              <option value="turnstile">Turnstile</option>
+              <option value="elevator">Elevator</option>
+              <option value="unknown">Unknown</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label-row"><label for="locationType">Location Type</label></div>
+            <select id="locationType">
+              <option value="interior">Interior</option>
+              <option value="exterior">Exterior</option>
+              <option value="perimeter">Perimeter</option>
+              <option value="elevator-lobby">Elevator Lobby</option>
+              <option value="parking-gate">Parking / Gate</option>
+              <option value="unknown">Unknown</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label-row"><label for="doorFunction">Door / Zone Function</label></div>
+            <select id="doorFunction">
+              <option value="staff-entry">Staff Entry</option>
+              <option value="public-entry">Public Entry</option>
+              <option value="restricted-room">Restricted Room</option>
+              <option value="it-server-room">IT / Server Room</option>
+              <option value="stairwell-egress">Stairwell / Egress</option>
+              <option value="service-entry">Service Entry</option>
+              <option value="elevator-control">Elevator Control</option>
+              <option value="anti-passback">Anti-Passback Control</option>
+              <option value="unknown">Unknown</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label-row"><label for="egressRole">Required Egress Role</label></div>
+            <select id="egressRole">
+              <option value="unknown" selected>Unknown - needs review</option>
+              <option value="not-egress">Not a required egress path</option>
+              <option value="required-egress">Required means of egress</option>
+              <option value="exit-door">Exit / emergency exit door</option>
+              <option value="stairwell-egress">Stairwell egress door</option>
+              <option value="corridor-egress">Corridor egress door</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label-row"><label for="freeEgress">Free Mechanical Egress Confirmed?</label></div>
+            <select id="freeEgress">
+              <option value="unknown" selected>Unknown - needs review</option>
+              <option value="yes">Yes, free egress confirmed</option>
+              <option value="no">No / special locking may apply</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label-row"><label for="fireRated">Fire-Rated Opening?</label></div>
+            <select id="fireRated">
+              <option value="unknown" selected>Unknown - needs review</option>
+              <option value="no">No</option>
+              <option value="yes">Yes</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label-row"><label for="fireRelease">Fire Alarm Release Needed?</label></div>
+            <select id="fireRelease">
+              <option value="unknown" selected>Unknown - needs review</option>
+              <option value="no">No / not expected</option>
+              <option value="yes">Yes / expected</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label-row"><label for="powerLossIntent">Power-Loss Behavior Intent</label></div>
+            <select id="powerLossIntent">
+              <option value="unknown" selected>Unknown - calculate next</option>
+              <option value="fail-safe">Fail-Safe Preferred</option>
+              <option value="fail-secure">Fail-Secure Preferred</option>
+              <option value="conditional">Conditional / needs review</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label-row"><label for="lockIntent">Lock Hardware Intent</label></div>
+            <select id="lockIntent">
+              <option value="unknown" selected>Unknown</option>
+              <option value="electric-strike">Electric Strike</option>
+              <option value="maglock">Maglock / Electromagnetic</option>
+              <option value="electrified-lockset">Electrified Lockset</option>
+              <option value="electrified-panic">Electrified Panic Hardware</option>
+              <option value="motorized-latch">Motorized Latch</option>
+              <option value="gate-lock">Gate Lock</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label-row"><label for="readerIntent">Reader Intent</label></div>
+            <select id="readerIntent">
+              <option value="card-or-fob">Card / Fob</option>
+              <option value="pin">PIN Keypad</option>
+              <option value="mobile">Mobile Credential</option>
+              <option value="multi-factor">Multi-Factor</option>
+              <option value="biometric">Biometric</option>
+              <option value="long-range">Long-Range</option>
+              <option value="unknown">Unknown</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label-row"><label for="securityLevel">Security Level</label></div>
+            <select id="securityLevel">
+              <option value="low">Low</option>
+              <option value="standard" selected>Standard</option>
+              <option value="high">High</option>
+              <option value="critical">Critical</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label-row"><label for="threatLevel">Threat Pressure</label></div>
+            <select id="threatLevel">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label-row"><label for="trafficLevel">Traffic Level</label></div>
+            <select id="trafficLevel">
+              <option value="low">Low</option>
+              <option value="normal" selected>Normal</option>
+              <option value="high">High</option>
+              <option value="public-heavy">Public / High Volume</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label-row"><label for="controllerGroup">Controller / Panel Group</label></div>
+            <input id="controllerGroup" type="text" placeholder="Example: Panel A" />
+          </div>
+
+          <div class="field">
+            <div class="label-row"><label for="restrictions">Known Restrictions / Policy Notes</label></div>
+            <textarea id="restrictions" rows="3" placeholder="Example: Visitor escort, after-hours staff access, lockdown mode, fire release, or AHJ review."></textarea>
+          </div>
+
+          <div class="field">
+            <div class="label-row"><label for="scopeNotes">Scope Report Notes</label></div>
+            <textarea id="scopeNotes" rows="3" placeholder="Optional notes to carry into downstream tools and the future Access Control Summary."></textarea>
+          </div>
+        </div>
+
+        <div class="access-authority-caution" id="authorityCaution">
+          <strong>Authority review caution:</strong>
+          Access control planning can involve egress, fire-rated openings, fire alarm release, maglocks, special locking, delayed egress, elevator lobby locking, panic hardware, and AHJ/code interpretation. ScopedLabs provides planning guidance only. Final approval must come from applicable code review, the authority having jurisdiction, fire marshal/AHJ, qualified professional review, and manufacturer-listed hardware documentation.
+        </div>
+
+        <div class="btn-row" style="margin-top: 14px;">
+          <button id="saveScope" class="btn btn-primary" type="button">Save / Update Scope</button>
+          <button id="newScope" class="btn" type="button">Add Another Scope</button>
+          <button id="resetScopes" class="btn" type="button">Reset Scope Plan</button>
+        </div>
+
+        <div id="scopeStatus" class="muted" style="margin-top: 12px;"></div>
+
+        <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.12);">
+          <div class="access-scope-flow-line" aria-label="Access scope ledger summary">
+            <span>Scope Ledger</span>
+            <span class="access-scope-flow-arrow">&rarr;</span>
+            <span id="scopeCountLabel" class="access-scope-flow-label">0 scopes</span>
+          </div>
+          <h2 class="h2 access-scope-section-title" style="margin-top: 10px;">Planning Scopes</h2>
+          <p class="muted" style="margin-bottom: 0;">
+            Downstream results should be treated as door- or zone-specific. The future Access Control Summary can roll these scopes into a category-level access design report.
+          </p>
+          <div id="scopeList" class="access-scope-ledger-grid"></div>
+        </section>
+
+        <section id="scopeSummaryCard" class="card access-scope-summary-card" style="margin-top: 14px;" data-export-section="Access Control Scope Summary">
+          <h2 class="h2 access-scope-section-title" style="margin-top: 10px;">Access Control scope summary</h2>
+          <p class="muted" style="margin-bottom: 0;">
+            This rollup separates core doors, special review scopes, elevator banks, and anti-passback zones, then summarizes active status, authority-review flags, saved assumptions, and next action notes.
+          </p>
+          <div id="scopeSummary"></div>
+          <div class="btn-row" style="margin-top: 14px;">
+            <button id="printScopeSummary" class="btn btn-primary" type="button">Print / Save Scope Summary</button>
+            <button id="copyScopeSummary" class="btn" type="button">Copy Client Summary</button>
+          </div>
+        </section>
+
+        <div id="accessScopeFlowActions" class="btn-row access-scope-flow-actions" style="margin-top: 14px;">
+          <a class="btn" href="/tools/access-control/">Back to Access Control</a>
+          <div id="next-step-row" class="btn-row access-scope-continue-slot" style="margin-top: 0;">
+            <button id="continue" class="btn btn-primary" type="button">Continue &rarr; Fail-Safe / Fail-Secure</button>
+          </div>
+        </div>
+      </section>
+
+      <footer class="site-footer">
+        <div class="muted">&copy; <span data-year></span> ScopedLabs</div>
+        <div class="footer-links">
+          <a href="/tools/">Tools</a>
+          <a href="/upgrade/">Upgrade</a>
+          <a href="/about/">About</a>
+          <a href="/contact/">Contact</a>
+          <a href="/changelog/">Changelog</a>
+          <a href="/privacy/">Privacy</a>
+          <a href="/terms/">Terms</a>
+          <a href="/disclaimer/">Disclaimer</a>
+        </div>
+      </footer>
+    </div>
+  </main>
+
+  <script src="/assets/tool-flow.js?v=access-scope-planner-001"></script>
+  <script src="/assets/catalog.js?v=access-scope-planner-001"></script>
+  <script src="/assets/pipelines.js?v=access-scope-planner-001"></script>
+  <script src="/assets/pipeline-state.js?v=access-scope-planner-001"></script>
+  <script src="/assets/pipeline.js?v=access-scope-planner-001"></script>
+  <script src="/assets/access-control-scope-state.js?v=access-control-scope-state-001-area-pattern"></script>
+  <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
+  <script src="./script.js?v=access-control-scope-planner-area-pattern-001"></script>
+  <script>
+    window.ScopedLabsToolShell?.applyBackContinueShell?.({ rowId: "accessScopeFlowActions" });
+  </script>
+  <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>
+  <!-- access-control-scope-planner-area-pattern-001 -->
+</body>
+</html>
