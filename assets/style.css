@@ -4481,3 +4481,16 @@ body.poe-guide-polish .guide-disclaimer p {
     width: 100%;
   }
 }
+
+
+/* poe-guide-polish-002-clean-detail
+   Top-up cleanup after PoE guide detail polish. */
+body.poe-guide-clean-detail .guide-layout {
+  grid-template-columns: 1fr;
+}
+
+body.poe-guide-clean-detail .guide-toc,
+body.poe-guide-clean-detail .guide-kicker,
+body.poe-guide-clean-detail .crumbs {
+  display: none;
+}
