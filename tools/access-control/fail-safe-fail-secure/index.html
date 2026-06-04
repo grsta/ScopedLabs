@@ -10,7 +10,7 @@
     content="Determine correct door behavior based on life safety, threat level, and power conditions."
   />
 
-  <link rel="stylesheet" href="/assets/style.css?v=access-control-fail-safe-shell-modules-006-back-continue" />
+  <link rel="stylesheet" href="/assets/style.css?v=access-control-fail-safe-module-closeout-007-shell-export" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -273,19 +273,50 @@
       margin-right: 5px;
     }
 
-    /* access-fail-safe-shell-modules-006 */
+    /* access-fail-safe-module-closeout-007 */
+    body[data-step="fail-safe-fail-secure"] .btn {
+      border-radius: 10px !important;
+    }
+
+    body[data-step="fail-safe-fail-secure"] .btn-row .btn,
+    body[data-step="fail-safe-fail-secure"] .access-control-flow-actions .btn {
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     .access-control-flow-actions {
       align-items: center;
       display: flex;
-      gap: 12px;
+      flex-wrap: wrap;
+      gap: 10px;
       justify-content: flex-start;
-      margin-top: 28px;
+      margin-top: 26px;
       margin-bottom: 18px;
     }
 
     .access-control-flow-actions #next-step-row {
       display: none;
-      margin: 0;
+      align-items: center;
+      gap: 10px;
+      margin: 0 !important;
+    }
+
+    .access-control-flow-actions #continue {
+      white-space: nowrap;
+    }
+
+    .access-fail-safe-export-card {
+      margin-top: 14px;
+      background: rgba(0,0,0,.14);
+    }
+
+    .access-fail-safe-export-card .h3 {
+      margin-top: 0;
+      font-size: 1rem;
+      font-weight: 850;
+      letter-spacing: normal;
     }
 
     @media (max-width: 640px) {
@@ -293,7 +324,17 @@
         align-items: stretch;
         flex-direction: column;
       }
+
+      .access-control-flow-actions #next-step-row {
+        width: 100%;
+      }
+
+      .access-control-flow-actions .btn {
+        width: 100%;
+      }
     }
+
+
 
 
 
@@ -544,42 +585,20 @@
         </div>
       </div>
 
-<section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
-        <div class="pill-row">
-          <span class="pill pill--pro">Documentation & Export</span>
-        </div>
-
-        <h3 class="h3" style="margin-top: 10px;">Export Report</h3>
+      <section class="card access-fail-safe-export-card">
+        <h3 class="h3">Export Report</h3>
         <p class="muted" style="margin-bottom: 0;">
           Add optional project context and generate a clean documentation view that can be printed or saved as a PDF for client or internal use.
         </p>
 
-        <div class="export-grid">
-          <label class="field">
-            <span class="label">Report Title</span>
-            <input id="reportTitle" type="text" placeholder="Fail-Safe vs Fail-Secure Assessment" />
-          </label>
-
-          <label class="field">
-            <span class="label">Project Name</span>
-            <input id="projectName" type="text" placeholder="Project Name" />
-          </label>
-
-          <label class="field">
-            <span class="label">Client Name</span>
-            <input id="clientName" type="text" placeholder="Client / Site Name" />
-          </label>
-
-          <label class="field">
-            <span class="label">Prepared By</span>
-            <input id="preparedBy" type="text" placeholder="ScopedLabs Pro User" />
-          </label>
-
-          <label class="field full">
-            <span class="label">Custom Notes</span>
-            <textarea id="customNotes" placeholder="Optional notes, assumptions, field conditions, or design caveats to include in the report."></textarea>
-          </label>
-        </div>
+        <div
+          id="reportMetadataMount"
+          data-report-metadata
+          data-report-title="Report details"
+          data-report-copy="Optional metadata can be included in the generated report. Leave blank to use the default report naming."
+          data-report-fields="reportTitle,projectName,clientName,preparedBy,customNotes"
+          data-collapsed="true"
+        ></div>
 
         <div class="btn-row" style="margin-top: 14px;">
           <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Export Report</button>
@@ -632,9 +651,16 @@
 
   <script src="/assets/export.js?v=shared-export-025-tool-notes-column-widths"></script>
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
+  <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-001"></script>
   <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-002-physical-style"></script>
   <script src="/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-002-factory-closeout"></script>
-  <script src="./script.js?v=access-control-fail-safe-shell-modules-006-back-continue"></script>
+  <script src="/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes"></script>
+  <script data-access-fail-safe-report-metadata-init>
+    if (window.ScopedLabsReportMetadata && typeof window.ScopedLabsReportMetadata.init === "function") {
+      window.ScopedLabsReportMetadata.init(document);
+    }
+  </script>
+  <script src="./script.js?v=access-control-fail-safe-module-closeout-007-shell-export"></script>
   <script defer src="/assets/help.js?v=help-025"></script>
 </body>
 </html>
