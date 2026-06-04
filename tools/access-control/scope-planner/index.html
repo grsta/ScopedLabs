@@ -7,7 +7,7 @@
   <meta name="description" content="Define access control doors, door groups, access zones, elevator banks, and egress scopes before running downstream access control planning tools." />
   <meta name="robots" content="noindex,follow" />
 
-  <link rel="stylesheet" href="/assets/style.css?v=access-control-scope-planner-area-match-009-summary-core" />
+  <link rel="stylesheet" href="/assets/style.css?v=access-control-scope-planner-area-match-010-print-summary-polish" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
@@ -466,6 +466,34 @@
     }
 
     @media print {
+      /* access-scope-print-summary-polish-010 */
+      body.print-access-scope-summary h1,
+      body.print-access-scope-summary #accessScopeIntroCard,
+      body.print-access-scope-summary #scopeLedgerCard,
+      body.print-access-scope-summary #accessScopePlannerFlowActions,
+      body.print-access-scope-summary .access-scope-summary-actions {
+        display: none !important;
+      }
+
+      body.print-access-scope-summary #scopeSummaryCard {
+        page-break-before: avoid !important;
+        break-before: avoid !important;
+      }
+
+      body.print-access-scope-summary .access-scope-summary-rollup {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+      }
+
+      body.print-access-scope-summary .access-status-legend,
+      body.print-access-scope-summary .access-scope-warn,
+      body.print-access-scope-summary .access-authority-caution,
+      body.print-access-scope-summary .access-scope-summary-branch {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+
       @page {
         size: auto;
         margin: 0.55in;
@@ -541,7 +569,7 @@
 
       body.print-access-scope-summary .access-scope-summary-metric,
       body.print-access-scope-summary .access-scope-summary-zone,
-      body.print-access-scope-warn,
+      body.print-access-scope-summary .access-scope-warn,
       body.print-access-scope-summary .access-authority-caution {
         border: 1px solid #bbb !important;
         background: #fff !important;
@@ -597,7 +625,7 @@
 
       <div id="pipeline"></div>
 
-      <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+      <section id="accessScopeIntroCard" class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
         <h2 class="h3" style="margin-top: 0;">Define the doors and zones before running the Access Control flow</h2>
         <p class="muted" style="margin-bottom: 0;">
           Real access control systems rarely use one lock, one reader, and one egress assumption everywhere. Use this step to define one or more access scopes so downstream lock behavior, reader, power, panel, and policy results can be tied to the correct door or zone.
@@ -806,7 +834,7 @@
 
         <div id="scopeStatus" class="muted" style="margin-top: 12px;"></div>
 
-        <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.12);">
+        <section id="scopeLedgerCard" class="card" style="margin-top: 14px; background: rgba(0,0,0,.12);">
           <div class="access-scope-flow-line access-scope-flow-line--ledger" aria-label="Access scope ledger summary">
             <span>Scope Ledger</span>
             <span class="access-scope-flow-arrow">&rarr;</span>
@@ -824,11 +852,11 @@
           <p class="muted" style="margin-bottom: 0;">
             This rollup separates core door scopes from optional specialty branches, then summarizes active status, completed checks, saved assumptions, and next actions for the future Access Control summary.
           </p>
-          <div id="scopeSummary"></div>
-          <div class="btn-row" style="margin-top: 14px;">
+          <div class="btn-row access-scope-summary-actions" style="margin-top: 14px;">
             <button id="printScopeSummary" class="btn btn-primary" type="button">Print / Save Scope Summary</button>
             <button id="copyScopeSummary" class="btn" type="button">Copy Client Summary</button>
           </div>
+          <div id="scopeSummary"></div>
         </section>
 
         <div id="accessScopePlannerFlowActions" class="btn-row access-scope-planner-flow-actions" style="margin-top: 14px;">
@@ -862,11 +890,11 @@
   <script src="/assets/pipeline.js?v=access-control-specialty-pipeline-009-summary-core"></script>
   <script src="/assets/access-control-scope-state.js?v=access-control-scope-state-001-area-pattern"></script>
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
-  <script src="./script.js?v=access-control-scope-planner-area-match-009-summary-core"></script>
+  <script src="./script.js?v=access-control-scope-planner-area-match-010-print-summary-polish"></script>
   <script>
     window.ScopedLabsToolShell?.applyBackContinueShell?.({ rowId: "accessScopePlannerFlowActions" });
   </script>
   <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>
-  <!-- access-control-scope-planner-area-match-009-summary-core -->
+  <!-- access-control-scope-planner-area-match-010-print-summary-polish -->
 </body>
 </html>
