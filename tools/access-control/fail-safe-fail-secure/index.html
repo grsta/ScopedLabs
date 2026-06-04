@@ -10,7 +10,7 @@
     content="Determine correct door behavior based on life safety, threat level, and power conditions."
   />
 
-  <link rel="stylesheet" href="/assets/style.css?v=access-control-fail-safe-module-closeout-007-shell-export" />
+  <link rel="stylesheet" href="/assets/style.css?v=access-control-fail-safe-final-shell-008-tool-polish" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -350,7 +350,7 @@
   </style>
 </head>
 
-<body data-tier="free" data-category="access-control" data-step="fail-safe-fail-secure" data-lane="v1">
+<body data-tier="free" data-category="access-control" data-step="fail-safe-fail-secure" data-lane="v1" data-access-control-tool-polish="true">
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/" aria-label="ScopedLabs Home">
@@ -385,7 +385,8 @@
 
     <div id="pipeline"></div>
 
-    <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">      <h2 class="h3" style="margin-top: 0;">This tool starts the Access Control design flow</h2>
+    <section class="card access-control-tool-intro-card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+      <h2 class="access-control-tool-card-title">This tool starts the Access Control design flow</h2>
       <p class="muted" style="margin-bottom: 0;">
         Use this first to determine how a door should behave during power loss before you choose reader strategy, lock power, panel sizing, and long-term access structure.
       </p>
@@ -393,12 +394,7 @@
         This is the logic gate for the rest of the access-control lane, because the wrong fail state can create life-safety conflicts or security exposure before hardware selection is even finalized.
       </p>
     </section>
-
-    <p class="tool-best-for">
-      <strong>Best for:</strong> deciding door behavior early so you don’t choose the wrong lock type or create life-safety conflicts later.
-    </p>
-
-    <div id="flow-note" class="flow-note" hidden></div>
+<div id="flow-note" class="flow-note" hidden></div>
 
     <section id="activeAccessScopeCard" class="card access-scope-context-card" style="margin-top: 18px;" hidden>
       <div class="access-scope-context-line">
@@ -660,7 +656,8 @@
       window.ScopedLabsReportMetadata.init(document);
     }
   </script>
-  <script src="./script.js?v=access-control-fail-safe-module-closeout-007-shell-export"></script>
+  <script src="./script.js?v=access-control-fail-safe-final-shell-008-tool-polish"></script>
+  <script src="/assets/access-control-tool-polish.js?v=access-control-tool-polish-001"></script>
   <script defer src="/assets/help.js?v=help-025"></script>
 </body>
 </html>

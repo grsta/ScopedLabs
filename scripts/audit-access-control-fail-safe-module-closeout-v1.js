@@ -21,11 +21,11 @@ const nextIdx = html.indexOf('id="next-step-row"');
 const continueIdx = html.indexOf('id="continue"');
 const exportIdx = html.indexOf("Export Report");
 
-check("Fail-Safe cache bumped to module closeout lane", html.includes("access-control-fail-safe-module-closeout-007-shell-export") && html.includes("./script.js?v=access-control-fail-safe-module-closeout-007-shell-export"));
+check("Fail-Safe cache bumped to final shell polish lane", html.includes("access-control-fail-safe-final-shell-008-tool-polish") && html.includes("./script.js?v=access-control-fail-safe-final-shell-008-tool-polish"));
 check("Tool shell helper is loaded", html.includes("/assets/scopedlabs-tool-shell.js"));
 check("Assistant export helper is loaded", html.includes("/assets/scopedlabs-assistant-export.js"));
 check("Report metadata helper is loaded", html.includes("/assets/scopedlabs-report-metadata.js"));
-check("Report metadata init runs before tool script", html.indexOf("ScopedLabsReportMetadata.init") < html.indexOf("./script.js?v=access-control-fail-safe-module-closeout-007-shell-export"));
+check("Report metadata init runs before tool script", html.indexOf("ScopedLabsReportMetadata.init") < html.indexOf("./script.js?v=access-control-fail-safe-final-shell-008-tool-polish"));
 check("Collapsed report metadata mount exists", html.includes('id="reportMetadataMount"') && html.includes("data-report-metadata") && html.includes('data-collapsed="true"'));
 check("Expanded manual metadata grid removed", !html.includes('<div class="export-grid">'));
 check("Export pill label removed", !html.includes("Documentation & Export") && !html.includes("pill--pro"));
