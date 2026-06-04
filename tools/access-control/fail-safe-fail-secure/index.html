@@ -273,33 +273,7 @@
       margin-right: 5px;
     }
 
-
-    /* access-fail-safe-flow-actions-004 */
-    .access-control-flow-actions {
-      align-items: center;
-      display: flex;
-      gap: 12px;
-      justify-content: space-between;
-      margin-top: 14px;
-    }
-
-    .access-control-flow-actions #next-step-row {
-      margin-left: auto;
-    }
-
-    @media (max-width: 640px) {
-      .access-control-flow-actions {
-        align-items: stretch;
-        flex-direction: column;
-      }
-
-      .access-control-flow-actions #next-step-row {
-        margin-left: 0;
-      }
-    }
-
-
-    /* access-fail-safe-flow-before-export-005 */
+    /* access-fail-safe-shell-modules-006 */
     .access-control-flow-actions {
       align-items: center;
       display: flex;
@@ -310,7 +284,8 @@
     }
 
     .access-control-flow-actions #next-step-row {
-      margin-left: 0;
+      display: none;
+      margin: 0;
     }
 
     @media (max-width: 640px) {
@@ -319,6 +294,8 @@
         flex-direction: column;
       }
     }
+
+
 
     @media (max-width: 860px) {
       .access-scope-context-grid {
@@ -563,7 +540,7 @@
             <div id="accessControlFlowActions" class="access-control-flow-actions">
         <a class="btn" href="/tools/access-control/">Back to Access Control</a>
         <div id="next-step-row" class="btn-row" style="display:none;">
-          <button id="continue" class="btn btn-primary" type="button">Continue &rarr; Reader Type</button>
+          <button id="continue" class="btn btn-primary" type="button" disabled>Continue &rarr; Reader Type</button>
         </div>
       </div>
 

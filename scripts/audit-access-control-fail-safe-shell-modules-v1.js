@@ -35,6 +35,7 @@ check("Continue still routes to Reader Type", script.includes('/tools/access-con
 check("Visible status card remains", html.includes('id="failSafeStatusCard"') && script.includes("renderVisibleDecisionStatus"));
 check("Compact status legend remains", html.includes('id="failSafeStatusLegend"') && html.includes("Authority Review"));
 check("Export controls remain wired", html.includes('id="exportReport"') && html.includes('id="saveSnapshot"'));
+check("Stale duplicate flow CSS removed", !html.includes("access-fail-safe-flow-actions-004") && !html.includes("access-fail-safe-flow-before-export-005"));
 
 console.log("\nAccess Control Fail-Safe shell module audit:");
 console.table(rows);
