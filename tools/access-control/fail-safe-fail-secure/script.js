@@ -47,7 +47,7 @@
     activeScopeTitle: $("activeAccessScopeTitle"),
     activeScopeDescription: $("activeAccessScopeDescription"),
     activeScopeMeta: $("activeAccessScopeMeta"),
-    continueWrap: $("continue-wrap"),
+    nextStepRow: $("next-step-row"),
     continueBtn: $("continue"),
     reportTitle: $("reportTitle"),
     projectName: $("projectName"),
@@ -408,12 +408,12 @@
   }
 
   function showContinue() {
-    if (els.continueWrap) els.continueWrap.style.display = "flex";
+    if (els.nextStepRow) els.nextStepRow.style.display = "flex";
     if (els.continueBtn) els.continueBtn.disabled = false;
   }
 
   function hideContinue() {
-    if (els.continueWrap) els.continueWrap.style.display = "none";
+    if (els.nextStepRow) els.nextStepRow.style.display = "none";
     if (els.continueBtn) els.continueBtn.disabled = true;
   }
 
@@ -1381,11 +1381,23 @@
     });
   }
 
+  function applyToolShellModules() {
+    if (
+      window.ScopedLabsToolShell &&
+      typeof window.ScopedLabsToolShell.applyBackContinueShell === "function"
+    ) {
+      window.ScopedLabsToolShell.applyBackContinueShell({
+        rowId: "accessControlFlowActions"
+      });
+    }
+  }
+
   function init() {
     const year = document.querySelector("[data-year]");
     if (year) year.textContent = new Date().getFullYear();
 
     resetAll();
+    applyToolShellModules();
     renderActiveScopeContext();
 
     window.addEventListener("scopedlabs:access-control-scope-updated", renderActiveScopeContext);

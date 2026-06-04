@@ -16,7 +16,7 @@ function check(name, ok, detail = "") {
 const html = read("tools/access-control/fail-safe-fail-secure/index.html");
 const script = read("tools/access-control/fail-safe-fail-secure/script.js");
 
-check("Fail-Safe cache bumped to flow before export lane", html.includes("access-control-fail-safe-polish-005-flow-before-export") && html.includes("./script.js?v=access-control-fail-safe-polish-005-flow-before-export"));
+check("Fail-Safe cache bumped to shell modules lane", html.includes("access-control-fail-safe-shell-modules-006-back-continue") && html.includes("./script.js?v=access-control-fail-safe-shell-modules-006-back-continue"));
 check("Fail-Safe loads Access Scope state", html.includes("/assets/access-control-scope-state.js"));
 check("Active scope context card exists", html.includes('id="activeAccessScopeCard"') && html.includes("access-scope-context-card"));
 check("Script tracks active scope elements", script.includes("activeScopeCard") && script.includes("activeScopeMeta"));
