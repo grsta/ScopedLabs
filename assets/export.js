@@ -3,6 +3,7 @@
 
   /* shared-export-027-section-titles */
   /* shared-export-028-planner-sections */
+  /* shared-export-029-access-report-polish */
   const DEFAULTS = {
     siteName: "ScopedLabs",
     siteTagline: "Engineering · Analysis · Tools",
@@ -1606,6 +1607,82 @@ if (shouldSuppressDefaultInterpretationBlock()) {
     table.extra-export-table--planner td:first-child{
       color:var(--ink);
       font-weight:800;
+    }
+    table.extra-export-table--access-scope{
+      font-size:.86rem;
+    }
+    table.extra-export-table--access-scope th,
+    table.extra-export-table--access-scope td{
+      padding:9px 10px;
+      overflow-wrap:normal;
+      word-break:normal;
+    }
+    table.extra-export-table--access-scope th:nth-child(1),
+    table.extra-export-table--access-scope td:nth-child(1){
+      width:22%;
+    }
+    table.extra-export-table--access-scope th:nth-child(2),
+    table.extra-export-table--access-scope td:nth-child(2){
+      width:13%;
+    }
+    table.extra-export-table--access-scope th:nth-child(3),
+    table.extra-export-table--access-scope td:nth-child(3){
+      width:14%;
+    }
+    table.extra-export-table--access-scope th:nth-child(4),
+    table.extra-export-table--access-scope td:nth-child(4){
+      width:7%;
+      text-align:center;
+    }
+    table.extra-export-table--access-scope th:nth-child(5),
+    table.extra-export-table--access-scope td:nth-child(5){
+      width:22%;
+    }
+    table.extra-export-table--access-scope th:nth-child(6),
+    table.extra-export-table--access-scope td:nth-child(6){
+      width:22%;
+    }
+    table.extra-export-table--access-scope td{
+      font-weight:650;
+      line-height:1.45;
+    }
+    table.extra-export-table--access-scope td:first-child{
+      color:var(--ink);
+      font-weight:800;
+    }
+    table.extra-export-table--decision{
+      font-size:.89rem;
+    }
+    table.extra-export-table--decision th,
+    table.extra-export-table--decision td{
+      padding:9px 10px;
+    }
+    table.extra-export-table--decision th:nth-child(1),
+    table.extra-export-table--decision td:nth-child(1){
+      width:18%;
+    }
+    table.extra-export-table--decision th:nth-child(2),
+    table.extra-export-table--decision td:nth-child(2){
+      width:18%;
+    }
+    table.extra-export-table--decision th:nth-child(3),
+    table.extra-export-table--decision td:nth-child(3){
+      width:14%;
+    }
+    table.extra-export-table--decision th:nth-child(4),
+    table.extra-export-table--decision td:nth-child(4){
+      width:10%;
+      text-align:center;
+    }
+    table.extra-export-table--decision th:nth-child(5),
+    table.extra-export-table--decision td:nth-child(5){
+      width:40%;
+    }
+    .body-copy{
+      border-color:#dfe8e2;
+      background:#fbfdfb;
+      padding:14px 16px;
+      line-height:1.58;
     }
     table.extra-export-table--kv td:first-child{
       width:28%;

@@ -564,6 +564,14 @@
       };
     };
 
+    const compactSentence = (value, fallback) => {
+      const text = String(value || fallback || "").trim();
+      if (!text) return "";
+      return text
+        .replace(/\s+/g, " ")
+        .replace(/\.$/, "");
+    };
+
     const decisionStatus = outputValue("Status") || currentReport.status || "";
     const recommendation = outputValue("Recommendation") || "";
     const confidence = outputValue("Confidence") || "";
@@ -577,13 +585,16 @@
     const scopeType = scopeValue("Scope Type") || "Not documented";
     const openingType = scopeValue("Opening Type") || "Not documented";
     const doorFunction = scopeValue("Door / Zone Function") || "Not documented";
-    const egressRole = scopeValue("Egress Role") || "Not documented";
-    const fireRelease = scopeValue("Fire Release") || "Not documented";
+
     const keySavedResult = [
-      recommendation ? "Recommendation: " + recommendation : "",
-      decisionStatus ? "Status: " + decisionStatus : "",
+      recommendation || "",
+      decisionStatus || "",
       confidence ? "Confidence: " + confidence : ""
     ].filter(Boolean).join(" | ");
+
+    const scopeNextAction = requiredAction
+      ? compactSentence(requiredAction)
+      : "Continue to Reader Type after this decision is documented";
 
     const extraSections = [
       {
@@ -594,7 +605,7 @@
         title: "Active Scope Context",
         description: "Access Control scope attached to this fail-state decision. This keeps the result tied to the correct door or zone.",
         countLabel: activeScopeName === "No active scope attached" ? "0 ITEMS" : "1 ITEM",
-        tableClass: "extra-export-table--planner",
+        tableClass: "extra-export-table--planner extra-export-table--access-scope",
         tables: [
           {
             headers: ["Scope / Door", "Selected", "Status", "Checks", "Key Saved Result", "Next Action"],
@@ -603,8 +614,8 @@
               activeScopeName === "No active scope attached" ? "Not Attached" : "Active Scope",
               decisionStatus || "Pending",
               "1",
-              keySavedResult || "No fail-state result saved yet.",
-              requiredAction || "Continue to Reader Type after the fail-state decision is documented."
+              keySavedResult || "No saved result",
+              scopeNextAction
             ]]
           }
         ]
@@ -623,7 +634,7 @@
       {
         title: "Decision Summary",
         description: "Short decision facts only. Longer engineering guidance is separated below for readability.",
-        tableClass: "extra-export-table--planner",
+        tableClass: "extra-export-table--planner extra-export-table--decision",
         tables: [
           {
             headers: ["Recommendation", "Status", "Confidence", "Score", "Primary Risk"],

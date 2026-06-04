@@ -49,8 +49,8 @@ const referencesReportShell = searchFiles
   .filter((rel) => rel !== "scripts/audit-access-control-export-ownership-v1.js")
   .filter((rel) => read(rel).includes("access-control-report-shell"));
 
-check("Fail-Safe cache bumped to export ownership lane", html.includes("access-control-fail-safe-export-ownership-012-planner-report") && html.includes("./script.js?v=access-control-fail-safe-export-ownership-012-planner-report"));
-check("Fail-Safe uses canonical export.js lane", html.includes("/assets/export.js?v=shared-export-028-planner-sections"));
+check("Fail-Safe cache bumped to export ownership lane", html.includes("access-control-fail-safe-export-ownership-013-report-polish") && html.includes("./script.js?v=access-control-fail-safe-export-ownership-013-report-polish"));
+check("Fail-Safe uses canonical export.js lane", html.includes("/assets/export.js?v=shared-export-029-access-report-polish"));
 check("Fail-Safe does not load duplicate report shell", !html.includes("/assets/access-control-report-shell.js"));
 check("Duplicate Access Control report shell asset retired", !exists("assets/access-control-report-shell.js"));
 check("Old report shell audit retired", !exists("scripts/audit-access-control-report-shell-v1.js"));
@@ -74,6 +74,9 @@ check("Export.js supports Planner-style table classes", exportJs.includes("extra
 check("Fail-Safe suppresses standard calculator report sections", html.includes('"suppressStandardReportSections": true'));
 check("Fail-Safe report uses Planner-style sections", script.includes('"Active Scope Context"') && script.includes('"Decision Summary"') && script.includes('"Required Action"'));
 check("Fail-Safe report keeps long narrative outside decision table", script.includes('textSection("Engineering Interpretation"') && script.includes('textSection("Actionable Guidance"') && script.includes('outputs: []'));
+check("Export.js includes Access Control report polish classes", exportJs.includes("extra-export-table--access-scope") && exportJs.includes("extra-export-table--decision"));
+check("Fail-Safe report uses short scope table values", script.includes('const keySavedResult = [') && !script.includes('"Recommendation: " + recommendation'));
+check("Fail-Safe report applies compact table classes", script.includes("extra-export-table--access-scope") && script.includes("extra-export-table--decision"));
 check("Export.js supports configurable section titles", exportJs.includes("inputSectionTitle") && exportJs.includes("outputSectionTitle"));
 check("Fail-Safe labels output table as Decision Summary", html.includes('"outputSectionTitle": "Decision Summary"'));
 check("Fail-Safe report moves narrative rows into sections", script.includes('textSection("Engineering Interpretation"') && script.includes('textSection("Actionable Guidance"') && script.includes('textSection("Required Action"'));
