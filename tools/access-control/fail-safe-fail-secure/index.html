@@ -10,7 +10,7 @@
     content="Determine correct door behavior based on life safety, threat level, and power conditions."
   />
 
-  <link rel="stylesheet" href="/assets/style.css?v=access-control-fail-safe-decision-model-003-visible-status-legend" />
+  <link rel="stylesheet" href="/assets/style.css?v=access-control-fail-safe-polish-004-flow-actions" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -271,6 +271,31 @@
     .access-tool-status-legend-grid strong {
       display: inline-block;
       margin-right: 5px;
+    }
+
+
+    /* access-fail-safe-flow-actions-004 */
+    .access-control-flow-actions {
+      align-items: center;
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      margin-top: 14px;
+    }
+
+    .access-control-flow-actions #continue-wrap {
+      margin-left: auto;
+    }
+
+    @media (max-width: 640px) {
+      .access-control-flow-actions {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .access-control-flow-actions #continue-wrap {
+        margin-left: 0;
+      }
     }
 
     @media (max-width: 860px) {
@@ -558,14 +583,13 @@
         <div id="exportStatus" class="export-status"></div>
       </section>
 
-      <div class="btn-row" style="margin-top: 14px;">
+            <div id="accessControlFlowActions" class="access-control-flow-actions">
         <a class="btn" href="/tools/access-control/">Back to Access Control</a>
+        <div id="continue-wrap" class="btn-row" style="display:none;">
+          <button id="continue" class="btn btn-primary" type="button">Continue &rarr; Reader Type</button>
+        </div>
       </div>
     </section>
-
-    <div id="continue-wrap" class="btn-row" style="margin-top: 12px; display:none;">
-      <button id="continue" class="btn btn-primary" type="button">Continue → Reader Type</button>
-    </div>
 
     <footer class="site-footer">
       <div class="muted">&copy; <span data-year></span> ScopedLabs</div>
@@ -609,7 +633,7 @@
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
   <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-002-physical-style"></script>
   <script src="/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-002-factory-closeout"></script>
-  <script src="./script.js?v=access-control-fail-safe-decision-model-003-visible-status-legend"></script>
+  <script src="./script.js?v=access-control-fail-safe-polish-004-flow-actions"></script>
   <script defer src="/assets/help.js?v=help-025"></script>
 </body>
 </html>
