@@ -10,7 +10,7 @@
     content="Determine correct door behavior based on life safety, threat level, and power conditions."
   />
 
-  <link rel="stylesheet" href="/assets/style.css?v=access-control-fail-safe-scope-foundation-001" />
+  <link rel="stylesheet" href="/assets/style.css?v=access-control-fail-safe-decision-model-002" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -264,6 +264,61 @@
             <option value="high">High</option>
           </select>
         </label>
+
+        <label class="field">
+          <span class="label">Hardware Type</span>
+          <select id="hardwareType">
+            <option value="unknown">Unknown / Not Selected Yet</option>
+            <option value="electric-strike">Electric Strike</option>
+            <option value="electrified-lockset">Electrified Lockset</option>
+            <option value="electrified-panic-trim">Electrified Panic / Exit Trim</option>
+            <option value="electric-latch-retraction">Electric Latch Retraction</option>
+            <option value="maglock">Maglock / Electromagnetic Lock</option>
+            <option value="delayed-egress">Delayed Egress Locking</option>
+            <option value="special-locking">Special Locking / Controlled Egress</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Fire-Rated Opening</span>
+          <select id="fireRated">
+            <option value="unknown">Unknown</option>
+            <option value="no">No / Not Expected</option>
+            <option value="yes">Yes / Fire-Rated Door Assembly</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Egress Controlled by Access System</span>
+          <select id="egressControlled">
+            <option value="unknown">Unknown</option>
+            <option value="no">No ? Free Mechanical Egress Remains</option>
+            <option value="yes">Yes ? Locking Arrangement Affects Egress</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Required Release Event</span>
+          <select id="releaseEvent">
+            <option value="unknown">Unknown / Not Documented</option>
+            <option value="none">No Special Release Required</option>
+            <option value="power-loss">Loss of Power</option>
+            <option value="fire-alarm">Fire Alarm</option>
+            <option value="sprinkler">Sprinkler / Fire Protection Activation</option>
+            <option value="manual-release">Manual Release Device</option>
+            <option value="multiple">Multiple Release Conditions</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Standby Power Expectation</span>
+          <select id="standbyPower">
+            <option value="unknown">Unknown</option>
+            <option value="none">No Standby Power</option>
+            <option value="local-battery">Local Battery / Listed Power Supply</option>
+            <option value="ups-generator">UPS / Generator Backed</option>
+          </select>
+        </label>
       </div>
 
       <div class="btn-row" style="margin-top: 14px;">
@@ -279,7 +334,7 @@
         <div id="analysis-copy" style="display:none;"></div>
 
         <p class="mini-note">
-          Model: recommendation is based on life safety, threat pressure, power reliability, fire integration, and door function. This is a planning decision tool, not a substitute for code compliance review or AHJ requirements.
+          Model: recommendation is based on life safety, threat pressure, power reliability, fire integration, door function, hardware type, fire-rated opening, egress-control behavior, release events, and standby power expectations. This is a planning decision tool, not a substitute for code compliance review or AHJ requirements.
         </p>
       </div>
 
@@ -381,7 +436,7 @@
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
   <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-002-physical-style"></script>
   <script src="/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-002-factory-closeout"></script>
-  <script src="./script.js?v=access-control-fail-safe-scope-foundation-001"></script>
+  <script src="./script.js?v=access-control-fail-safe-decision-model-002"></script>
   <script defer src="/assets/help.js?v=help-025"></script>
 </body>
 </html>

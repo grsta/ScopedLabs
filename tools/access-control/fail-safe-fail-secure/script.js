@@ -24,6 +24,11 @@
     powerLoss: $("powerLoss"),
     fire: $("fire"),
     threat: $("threat"),
+    hardwareType: $("hardwareType"),
+    fireRated: $("fireRated"),
+    egressControlled: $("egressControlled"),
+    releaseEvent: $("releaseEvent"),
+    standbyPower: $("standbyPower"),
     calc: $("calc"),
     reset: $("reset"),
     results: $("results"),
@@ -364,6 +369,9 @@
       confidence: core.confidence,
       score: core.score,
       summary: core.summary,
+      inputs: core.inputs || {},
+      decisionFlags: core.decisionFlags || [],
+      requiredActions: core.requiredActions || [],
       powerLossIntent: core.recommendation === "FAIL-SAFE" ? "fail-safe" : (core.recommendation === "FAIL-SECURE" ? "fail-secure" : "conditional"),
       updatedAt: new Date().toISOString()
     };
@@ -372,6 +380,8 @@
       ...scope,
       completedTools,
       powerLossIntent: completedTools[STEP].powerLossIntent,
+      failStateStatus: core.status,
+      failStateDecisionFlags: core.decisionFlags || [],
       status: core.activeScope.requiresAuthorityReview ? "AUTHORITY REVIEW" : core.status,
       updatedAt: new Date().toISOString()
     };
@@ -464,7 +474,12 @@
         { label: "Life Safety Priority", value: core.inputs.lifeLabel },
         { label: "Power Reliability", value: core.inputs.powerLossLabel },
         { label: "Fire Alarm Integration", value: core.inputs.fireLabel },
-        { label: "Threat Level", value: core.inputs.threatLabel }
+        { label: "Threat Level", value: core.inputs.threatLabel },
+        { label: "Hardware Type", value: core.inputs.hardwareTypeLabel },
+        { label: "Fire-Rated Opening", value: core.inputs.fireRatedLabel },
+        { label: "Egress Controlled by Access System", value: core.inputs.egressControlledLabel },
+        { label: "Required Release Event", value: core.inputs.releaseEventLabel },
+        { label: "Standby Power Expectation", value: core.inputs.standbyPowerLabel }
       ],
       outputs: core.outputs,
       assumptions: assumptionsForTool(),
@@ -946,6 +961,108 @@
     return "Do not finalize lock type yet. Escalate this door for code review and operational review before choosing reader placement or power assumptions.";
   }
 
+  function valueFromSelect(selectEl) {
+    return selectEl ? selectEl.value : "";
+  }
+
+  function buildFailSafeDecisionModel(base, model) {
+    const actions = [];
+    const flags = [];
+
+    let recommendation = base.recommendation;
+    let rationale = base.rationale;
+    let risk = base.risk;
+    let status = base.status;
+    let confidence = base.confidence;
+    const score = base.score;
+
+    const hardware = model.hardwareType;
+    const fireRated = model.fireRated;
+    const egressControlled = model.egressControlled;
+    const releaseEvent = model.releaseEvent;
+    const standbyPower = model.standbyPower;
+    const activeScope = model.activeScope;
+
+    if (hardware === "maglock") {
+      recommendation = "FAIL-SAFE";
+      status = "AUTHORITY REVIEW";
+      confidence = "MEDIUM";
+      rationale = "Maglock arrangements normally release when power is removed, so the planning direction is fail-safe, but the egress release sequence must be documented and reviewed.";
+      risk = "Improper release sequence or missing listed release controls can create an egress/code conflict.";
+      flags.push("Maglock release arrangement");
+      actions.push("Document sensor/request-to-exit, fire alarm, power-loss, and manual release behavior before continuing.");
+    }
+
+    if (hardware === "delayed-egress" || hardware === "special-locking") {
+      recommendation = "CONDITIONAL";
+      status = "AUTHORITY REVIEW";
+      confidence = "LOW";
+      rationale = "This is a special locking condition. It should not be treated as a normal fail-safe/fail-secure hardware choice.";
+      risk = "Special locking may require code-specific features, signage, timing, release logic, and AHJ approval.";
+      flags.push("Special locking condition");
+      actions.push("Route this opening to the Special Locking / High-Security branch and confirm AHJ/code requirements.");
+    }
+
+    if (egressControlled === "yes" && (releaseEvent === "unknown" || releaseEvent === "none")) {
+      recommendation = "CONDITIONAL";
+      status = "RISK";
+      confidence = "LOW";
+      rationale = "The access system appears to affect egress, but the required release event is not documented.";
+      risk = "Egress may not release under required emergency or power-loss conditions.";
+      flags.push("Egress release not documented");
+      actions.push("Define required release events before choosing reader, lock power, or panel capacity assumptions.");
+    }
+
+    if (fireRated === "yes" && hardware === "electric-strike" && recommendation === "FAIL-SAFE") {
+      recommendation = "FAIL-SECURE";
+      status = status === "RISK" ? "RISK" : "AUTHORITY REVIEW";
+      confidence = "MEDIUM";
+      rationale = "A fire-rated opening with an electric strike should be reviewed for positive latching/listing. The planning direction should not assume a fail-safe strike.";
+      risk = "A fail-safe strike assumption can conflict with fire-door latching/listing expectations.";
+      flags.push("Fire-rated electric strike review");
+      actions.push("Confirm listed fire-rated electric strike behavior and positive-latching requirements before finalizing hardware.");
+    }
+
+    if (fireRated === "yes" && releaseEvent === "none") {
+      status = status === "RISK" ? "RISK" : "WATCH";
+      flags.push("Fire-rated opening without documented release event");
+      actions.push("Confirm whether fire alarm or fire-protection release is required for this opening.");
+    }
+
+    if ([hardware, fireRated, egressControlled, releaseEvent, standbyPower].includes("unknown")) {
+      if (status === "COMPLETE") status = "WATCH";
+      flags.push("Incomplete hardware/release assumptions");
+      actions.push("Replace unknown values before treating the fail-state decision as complete.");
+    }
+
+    if (standbyPower === "none" && recommendation === "FAIL-SECURE" && egressControlled === "yes") {
+      status = "RISK";
+      flags.push("Fail-secure egress with no standby power");
+      actions.push("Confirm free mechanical egress or provide listed release/backup-power strategy before continuing.");
+    }
+
+    if (activeScope && activeScope.requiresAuthorityReview && status !== "RISK") {
+      status = "AUTHORITY REVIEW";
+      flags.push("Scope marked for authority review");
+      actions.push("Carry this opening into Summary as an authority-review item.");
+    }
+
+    if (!actions.length) {
+      actions.push("Carry this validated fail-state assumption into reader type and lock-power design.");
+    }
+
+    return {
+      recommendation,
+      rationale,
+      risk,
+      status,
+      confidence,
+      score,
+      flags,
+      actions
+    };
+  }
+
   function getStatusForRecommendation(recommendation, confidence, activeScope) {
     if (activeScope && activeScope.requiresAuthorityReview) return "AUTHORITY REVIEW";
     if (recommendation === "CONDITIONAL") return "WATCH";
@@ -960,6 +1077,11 @@
     const powerLoss = els.powerLoss.value;
     const fire = els.fire.value;
     const threat = els.threat.value;
+    const hardwareType = valueFromSelect(els.hardwareType);
+    const fireRated = valueFromSelect(els.fireRated);
+    const egressControlled = valueFromSelect(els.egressControlled);
+    const releaseEvent = valueFromSelect(els.releaseEvent);
+    const standbyPower = valueFromSelect(els.standbyPower);
     const activeScope = getActiveAccessScope();
 
     let score = 0;
@@ -981,17 +1103,24 @@
     if (threat === "high") score -= 3;
     if (threat === "med") score -= 1;
 
+    if (hardwareType === "maglock") score += 2;
+    if (hardwareType === "electric-strike" && fireRated === "yes") score -= 2;
+    if (hardwareType === "electrified-panic-trim" || hardwareType === "electric-latch-retraction") score += 1;
+    if (egressControlled === "yes") score += 2;
+    if (releaseEvent === "power-loss" || releaseEvent === "fire-alarm" || releaseEvent === "sprinkler" || releaseEvent === "multiple") score += 1;
+    if (standbyPower === "ups-generator") score -= 1;
+
     let recommendation;
     let rationale;
     let risk;
 
     if (score >= 2) {
       recommendation = "FAIL-SAFE";
-      rationale = "Life safety and egress reliability outweigh the need to stay locked during power loss.";
+      rationale = "Life safety, release behavior, or egress reliability outweigh the need to stay locked during power loss.";
       risk = "Exposure during outage or release conditions.";
     } else if (score <= -2) {
       recommendation = "FAIL-SECURE";
-      rationale = "Security retention outweighs automatic release behavior.";
+      rationale = "Security retention outweighs automatic release behavior under the stated assumptions.";
       risk = "Improper egress if not designed correctly.";
     } else {
       recommendation = "CONDITIONAL";
@@ -999,16 +1128,54 @@
       risk = "Inconsistent behavior across doors.";
     }
 
-    const confidence = getConfidence(score);
+    const baseConfidence = getConfidence(score);
+    const baseStatus = getStatusForRecommendation(recommendation, baseConfidence, activeScope);
+    const decision = buildFailSafeDecisionModel({
+      recommendation,
+      rationale,
+      risk,
+      confidence: baseConfidence,
+      status: baseStatus,
+      score
+    }, {
+      hardwareType,
+      fireRated,
+      egressControlled,
+      releaseEvent,
+      standbyPower,
+      activeScope
+    });
+
+    recommendation = decision.recommendation;
+    rationale = decision.rationale;
+    risk = decision.risk;
+
+    const confidence = decision.confidence;
+    const status = decision.status;
     const scoreMeaning = getScoreMeaning(score);
     const interpretation = buildInterpretation(recommendation);
-    const guidance = buildGuidance(recommendation);
-    const status = getStatusForRecommendation(recommendation, confidence, activeScope);
+    const guidance = buildGuidance(recommendation) + " " + decision.actions[0];
+
+    const modelInputs = {
+      doorTypeLabel: labelFromSelect(els.doorType),
+      lifeLabel: labelFromSelect(els.life),
+      powerLossLabel: labelFromSelect(els.powerLoss),
+      fireLabel: labelFromSelect(els.fire),
+      threatLabel: labelFromSelect(els.threat),
+      hardwareTypeLabel: labelFromSelect(els.hardwareType),
+      fireRatedLabel: labelFromSelect(els.fireRated),
+      egressControlledLabel: labelFromSelect(els.egressControlled),
+      releaseEventLabel: labelFromSelect(els.releaseEvent),
+      standbyPowerLabel: labelFromSelect(els.standbyPower)
+    };
 
     render([
       { label: "Recommendation", value: recommendation },
+      { label: "Status", value: status },
       { label: "Confidence", value: confidence },
       { label: "Why", value: rationale },
+      { label: "Decision Flags", value: decision.flags.length ? decision.flags.join(" | ") : "No special flags" },
+      { label: "Required Action", value: decision.actions.join(" ") },
       { label: "Score Meaning", value: scoreMeaning },
       { label: "Primary Risk", value: risk },
       { label: "Score", value: String(score) },
@@ -1020,11 +1187,19 @@
       recommendation,
       score,
       confidence,
+      status,
       doorType,
       life,
       powerLoss,
       fire,
       threat,
+      hardwareType,
+      fireRated,
+      egressControlled,
+      releaseEvent,
+      standbyPower,
+      decisionFlags: decision.flags,
+      requiredActions: decision.actions,
       activeScope: activeScope ? {
         id: activeScope.id,
         name: activeScope.name,
@@ -1046,14 +1221,10 @@
       risk,
       interpretation,
       guidance,
+      decisionFlags: decision.flags,
+      requiredActions: decision.actions,
       activeScope,
-      inputs: {
-        doorTypeLabel: labelFromSelect(els.doorType),
-        lifeLabel: labelFromSelect(els.life),
-        powerLossLabel: labelFromSelect(els.powerLoss),
-        fireLabel: labelFromSelect(els.fire),
-        threatLabel: labelFromSelect(els.threat)
-      }
+      inputs: modelInputs
     };
 
     currentReport = buildReportPayload({
@@ -1062,15 +1233,9 @@
       confidence,
       score,
       activeScope,
-      summary: `${recommendation} is the current planning recommendation with ${confidence.toLowerCase()} confidence. ${rationale}`,
+      summary: recommendation + " is the current planning recommendation with " + confidence.toLowerCase() + " confidence. " + rationale,
       interpretation,
-      inputs: {
-        doorTypeLabel: labelFromSelect(els.doorType),
-        lifeLabel: labelFromSelect(els.life),
-        powerLossLabel: labelFromSelect(els.powerLoss),
-        fireLabel: labelFromSelect(els.fire),
-        threatLabel: labelFromSelect(els.threat)
-      },
+      inputs: modelInputs,
       outputs: getRenderedRows()
     });
 
@@ -1080,6 +1245,9 @@
       confidence,
       score,
       summary: currentReport.summary,
+      inputs: modelInputs,
+      decisionFlags: decision.flags,
+      requiredActions: decision.actions,
       activeScope
     });
 
@@ -1088,12 +1256,18 @@
     updateExportControls();
   }
 
+
   function resetAll() {
     els.doorType.value = "interior";
     els.life.value = "high";
     els.powerLoss.value = "normal";
     els.fire.value = "yes";
     els.threat.value = "low";
+    if (els.hardwareType) els.hardwareType.value = "unknown";
+    if (els.fireRated) els.fireRated.value = "unknown";
+    if (els.egressControlled) els.egressControlled.value = "unknown";
+    if (els.releaseEvent) els.releaseEvent.value = "unknown";
+    if (els.standbyPower) els.standbyPower.value = "unknown";
 
     currentReport = null;
     invalidatePipelineResult();
@@ -1115,7 +1289,12 @@
       els.life,
       els.powerLoss,
       els.fire,
-      els.threat
+      els.threat,
+      els.hardwareType,
+      els.fireRated,
+      els.egressControlled,
+      els.releaseEvent,
+      els.standbyPower
     ].forEach((el) => {
       if (!el) return;
       el.addEventListener("change", invalidate);
