@@ -29,6 +29,10 @@
     results: $("results"),
     analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
+    activeScopeCard: $("activeAccessScopeCard"),
+    activeScopeTitle: $("activeAccessScopeTitle"),
+    activeScopeDescription: $("activeAccessScopeDescription"),
+    activeScopeMeta: $("activeAccessScopeMeta"),
     continueWrap: $("continue-wrap"),
     continueBtn: $("continue"),
     reportTitle: $("reportTitle"),
@@ -253,6 +257,128 @@
     };
   }
 
+  function titleCase(value) {
+    return String(value || "")
+      .replace(/[-_]+/g, " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+
+  function accessScopeState() {
+    return window.ScopedLabsAccessControlScopeState || null;
+  }
+
+  function getActiveAccessScope() {
+    const api = accessScopeState();
+    if (!api || typeof api.getActiveScope !== "function") return null;
+    return api.getActiveScope();
+  }
+
+  function readAccessScopeLedger() {
+    const api = accessScopeState();
+    if (!api || typeof api.readLedger !== "function") return null;
+    return api.readLedger();
+  }
+
+  function writeAccessScopeLedger(ledger) {
+    const api = accessScopeState();
+    if (!api || typeof api.writeLedger !== "function") return null;
+    return api.writeLedger(ledger);
+  }
+
+  function renderActiveScopeContext() {
+    const scope = getActiveAccessScope();
+
+    if (!els.activeScopeCard) return;
+
+    if (!scope) {
+      els.activeScopeCard.hidden = false;
+      if (els.activeScopeTitle) els.activeScopeTitle.textContent = "No active access scope selected";
+      if (els.activeScopeDescription) {
+        els.activeScopeDescription.textContent = "Create or select an access scope before using this tool so the result can be tied to the right door or zone.";
+      }
+      if (els.activeScopeMeta) {
+        els.activeScopeMeta.innerHTML = [
+          '<div><strong>Next Step</strong><span>Open Access Scope Planner</span></div>',
+          '<div><strong>Result Save</strong><span>Tool result will not be tied to a scope yet.</span></div>'
+        ].join("");
+      }
+      return;
+    }
+
+    els.activeScopeCard.hidden = false;
+
+    if (els.activeScopeTitle) {
+      els.activeScopeTitle.textContent = scope.name || "Active Access Scope";
+    }
+
+    if (els.activeScopeDescription) {
+      els.activeScopeDescription.textContent = titleCase(scope.scopeType) + " | " + titleCase(scope.doorFunction) + " | " + titleCase(scope.planningPath);
+    }
+
+    const statusText = scope.requiresAuthorityReview ? "Authority Review" : titleCase(scope.status || "Planning");
+    const statusClass = scope.requiresAuthorityReview ? "access-status-authority-text" : "access-status-complete-text";
+
+    if (els.activeScopeMeta) {
+      els.activeScopeMeta.innerHTML = [
+        '<div><strong>Opening</strong><span>' + escapeHtml(titleCase(scope.openingType)) + '</span></div>',
+        '<div><strong>Egress</strong><span>' + escapeHtml(titleCase(scope.egressRole)) + '</span></div>',
+        '<div><strong>Fire Release</strong><span>' + escapeHtml(titleCase(scope.fireRelease)) + '</span></div>',
+        '<div><strong>Status</strong><span class="' + statusClass + '">' + escapeHtml(statusText) + '</span></div>',
+        '<div><strong>Power Intent</strong><span>' + escapeHtml(titleCase(scope.powerLossIntent)) + '</span></div>',
+        '<div><strong>Lock Intent</strong><span>' + escapeHtml(titleCase(scope.lockIntent)) + '</span></div>',
+        '<div><strong>Threat</strong><span>' + escapeHtml(titleCase(scope.threatLevel)) + '</span></div>',
+        '<div><strong>Reader</strong><span>' + escapeHtml(titleCase(scope.readerIntent)) + '</span></div>'
+      ].join("");
+    }
+  }
+
+  function scopeContextForReport(scope) {
+    if (!scope) return [];
+    return [
+      { label: "Active Scope", value: scope.name || "Active Access Scope" },
+      { label: "Scope Type", value: titleCase(scope.scopeType) },
+      { label: "Opening Type", value: titleCase(scope.openingType) },
+      { label: "Door / Zone Function", value: titleCase(scope.doorFunction) },
+      { label: "Egress Role", value: titleCase(scope.egressRole) },
+      { label: "Free Egress", value: titleCase(scope.freeEgress) },
+      { label: "Fire Release", value: titleCase(scope.fireRelease) },
+      { label: "Power-Loss Intent", value: titleCase(scope.powerLossIntent) },
+      { label: "Lock Intent", value: titleCase(scope.lockIntent) },
+      { label: "Authority Review", value: scope.requiresAuthorityReview ? "Yes" : "No" }
+    ];
+  }
+
+  function publishFailSafeResultToScopeLedger(core) {
+    const ledger = readAccessScopeLedger();
+    if (!ledger || !Array.isArray(ledger.scopes) || !core.activeScope) return null;
+
+    const scopeIndex = ledger.scopes.findIndex((scope) => scope.id === core.activeScope.id);
+    if (scopeIndex < 0) return null;
+
+    const scope = ledger.scopes[scopeIndex];
+    const completedTools = scope.completedTools && typeof scope.completedTools === "object" ? scope.completedTools : {};
+
+    completedTools[STEP] = {
+      status: core.status,
+      recommendation: core.recommendation,
+      confidence: core.confidence,
+      score: core.score,
+      summary: core.summary,
+      powerLossIntent: core.recommendation === "FAIL-SAFE" ? "fail-safe" : (core.recommendation === "FAIL-SECURE" ? "fail-secure" : "conditional"),
+      updatedAt: new Date().toISOString()
+    };
+
+    ledger.scopes[scopeIndex] = {
+      ...scope,
+      completedTools,
+      powerLossIntent: completedTools[STEP].powerLossIntent,
+      status: core.activeScope.requiresAuthorityReview ? "AUTHORITY REVIEW" : core.status,
+      updatedAt: new Date().toISOString()
+    };
+
+    return writeAccessScopeLedger(ledger);
+  }
+
   function assumptionsForTool() {
     return [
       "This model is a planning aid for early door behavior review and does not replace code compliance review.",
@@ -332,6 +458,7 @@
       status: core.status,
       summary: core.summary,
       interpretation: core.interpretation,
+      scopeContext: scopeContextForReport(core.activeScope),
       inputs: [
         { label: "Door Type", value: core.inputs.doorTypeLabel },
         { label: "Life Safety Priority", value: core.inputs.lifeLabel },
@@ -346,6 +473,13 @@
   }
 
   function buildReportHTML(payload) {
+    const scopeRows = (payload.scopeContext || []).map((item) => `
+      <tr>
+        <td>${escapeHtml(item.label)}</td>
+        <td>${escapeHtml(item.value)}</td>
+      </tr>
+    `).join("");
+
     const inputRows = (payload.inputs || []).map((item) => `
       <tr>
         <td>${escapeHtml(item.label)}</td>
@@ -617,7 +751,14 @@
         </div>
       </section>
 
-      <section class="section">
+            <section class="section">
+        <h2>Active Scope Context</h2>
+        <table>
+          <tbody>${scopeRows || '<tr><td colspan="2">No active access scope was attached to this report.</td></tr>'}</tbody>
+        </table>
+      </section>
+
+<section class="section">
         <div class="grid">
           <div>
             <h2>Inputs</h2>
@@ -758,6 +899,7 @@
     invalidatePipelineResult();
     clearResults("Inputs changed. Press Evaluate to refresh results.");
     updateExportControls();
+    renderActiveScopeContext();
   }
 
   function getConfidence(score) {
@@ -804,11 +946,13 @@
     return "Do not finalize lock type yet. Escalate this door for code review and operational review before choosing reader placement or power assumptions.";
   }
 
-  function getStatusForRecommendation(recommendation, confidence) {
+  function getStatusForRecommendation(recommendation, confidence, activeScope) {
+    if (activeScope && activeScope.requiresAuthorityReview) return "AUTHORITY REVIEW";
     if (recommendation === "CONDITIONAL") return "WATCH";
     if (confidence === "LOW") return "WATCH";
-    return "HEALTHY";
+    return "COMPLETE";
   }
+
 
   function calculate() {
     const doorType = els.doorType.value;
@@ -816,6 +960,7 @@
     const powerLoss = els.powerLoss.value;
     const fire = els.fire.value;
     const threat = els.threat.value;
+    const activeScope = getActiveAccessScope();
 
     let score = 0;
 
@@ -858,7 +1003,7 @@
     const scoreMeaning = getScoreMeaning(score);
     const interpretation = buildInterpretation(recommendation);
     const guidance = buildGuidance(recommendation);
-    const status = getStatusForRecommendation(recommendation, confidence);
+    const status = getStatusForRecommendation(recommendation, confidence, activeScope);
 
     render([
       { label: "Recommendation", value: recommendation },
@@ -879,7 +1024,14 @@
       life,
       powerLoss,
       fire,
-      threat
+      threat,
+      activeScope: activeScope ? {
+        id: activeScope.id,
+        name: activeScope.name,
+        scopeType: activeScope.scopeType,
+        planningPath: activeScope.planningPath,
+        requiresAuthorityReview: activeScope.requiresAuthorityReview
+      } : null
     });
 
     showContinue();
@@ -894,6 +1046,7 @@
       risk,
       interpretation,
       guidance,
+      activeScope,
       inputs: {
         doorTypeLabel: labelFromSelect(els.doorType),
         lifeLabel: labelFromSelect(els.life),
@@ -905,6 +1058,10 @@
 
     currentReport = buildReportPayload({
       status,
+      recommendation,
+      confidence,
+      score,
+      activeScope,
       summary: `${recommendation} is the current planning recommendation with ${confidence.toLowerCase()} confidence. ${rationale}`,
       interpretation,
       inputs: {
@@ -917,6 +1074,16 @@
       outputs: getRenderedRows()
     });
 
+    publishFailSafeResultToScopeLedger({
+      status,
+      recommendation,
+      confidence,
+      score,
+      summary: currentReport.summary,
+      activeScope
+    });
+
+    renderActiveScopeContext();
     renderLocalAssistant(assistantPayload);
     updateExportControls();
   }
@@ -981,6 +1148,9 @@
     if (year) year.textContent = new Date().getFullYear();
 
     resetAll();
+    renderActiveScopeContext();
+
+    window.addEventListener("scopedlabs:access-control-scope-updated", renderActiveScopeContext);
 
     setTimeout(() => {
       updateExportControls();
