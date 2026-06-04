@@ -2,6 +2,7 @@
   "use strict";
 
   /* shared-export-027-section-titles */
+  /* shared-export-028-planner-sections */
   const DEFAULTS = {
     siteName: "ScopedLabs",
     siteTagline: "Engineering · Analysis · Tools",
@@ -904,9 +905,15 @@
           ? `<h3 class="extra-table-title">${escapeHtml(table.title)}</h3>`
           : "";
 
-        const tableClass = /physical security tool notes/i.test(String(section.title || table.title || ""))
-          ? "extra-export-table extra-export-table--physical-security-tool-notes"
-          : "extra-export-table";
+        const requestedClass = String(table.className || section.tableClass || "")
+          .replace(/[^a-zA-Z0-9_\-\s]/g, "")
+          .trim();
+
+        const tableClass = requestedClass
+          ? `extra-export-table ${requestedClass}`
+          : (/physical security tool notes/i.test(String(section.title || table.title || ""))
+            ? "extra-export-table extra-export-table--physical-security-tool-notes"
+            : "extra-export-table");
 
         return `
           ${tableTitleBlock}
@@ -917,9 +924,19 @@
         `;
       }).join("");
 
+      const headingBlock = section.suppressTitle
+        ? ""
+        : `
+          <div class="section-heading-row">
+            <h2>${escapeHtml(section.title)}</h2>
+            ${section.countLabel ? `<span class="section-count">${escapeHtml(section.countLabel)}</span>` : ""}
+          </div>
+          ${section.description ? `<p class="section-description">${escapeHtml(section.description)}</p>` : ""}
+        `;
+
       return `
         <section class="${section.compactSvg ? "section section--compact-svg" : "section"}">
-          ${section.suppressTitle ? "" : `<h2>${escapeHtml(section.title)}</h2>`}
+          ${headingBlock}
           ${textBlock}
           ${svgBlocks}
           ${tableBlocks}
@@ -1478,7 +1495,7 @@ if (shouldSuppressDefaultInterpretationBlock()) {
       align-items:center;
       justify-content:center;
       padding:8px 12px;
-      border-radius:999px;
+      border-radius:${toolbarButtonRadius};
       font-size:.82rem;
       font-weight:800;
       letter-spacing:.06em;
@@ -1507,6 +1524,30 @@ if (shouldSuppressDefaultInterpretationBlock()) {
       font-size:1rem;
       letter-spacing:.02em;
       text-transform:uppercase;
+    }
+    .section-heading-row{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:16px;
+      margin-bottom:4px;
+    }
+    .section-heading-row h2{
+      margin:0;
+    }
+    .section-count{
+      color:var(--accent);
+      font-size:.84rem;
+      font-weight:900;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      white-space:nowrap;
+    }
+    .section-description{
+      color:var(--muted);
+      margin:0 0 10px;
+      font-size:.94rem;
+      line-height:1.5;
     }
     .extra-table-title{
       margin:18px 0 8px;
@@ -1552,6 +1593,26 @@ if (shouldSuppressDefaultInterpretationBlock()) {
       table-layout:fixed;
     }
     /* shared-export-025-tool-notes-column-widths */
+    table.extra-export-table--planner td{
+      font-size:.91rem;
+    }
+    table.extra-export-table--planner th,
+    table.extra-export-table--planner td{
+      overflow-wrap:anywhere;
+    }
+    table.extra-export-table--planner td{
+      font-weight:650;
+    }
+    table.extra-export-table--planner td:first-child{
+      color:var(--ink);
+      font-weight:800;
+    }
+    table.extra-export-table--kv td:first-child{
+      width:28%;
+      color:var(--muted);
+      font-weight:650;
+    }
+
     table.extra-export-table--physical-security-tool-notes th:nth-child(1),
     table.extra-export-table--physical-security-tool-notes td:nth-child(1){
       width:18%;

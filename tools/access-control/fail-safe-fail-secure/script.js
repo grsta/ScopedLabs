@@ -546,58 +546,113 @@
       return row ? row.value : "";
     };
 
-    const tableRowsFromItems = (items) => {
-      return (items || [])
-        .filter((item) => item && item.label && item.value)
-        .map((item) => [item.label, item.value]);
+    const scopeValue = (label) => {
+      const row = (currentReport.scopeContext || []).find((item) => {
+        return item && String(item.label || "").trim().toLowerCase() === String(label || "").trim().toLowerCase();
+      });
+
+      return row ? row.value : "";
     };
 
-    const textSection = (title, text) => {
+    const textSection = (title, text, description) => {
       const value = String(text || "").trim();
       if (!value) return null;
-      return { title, text: value };
+      return {
+        title,
+        description: description || "",
+        text: value
+      };
     };
 
-    const scopeRows = tableRowsFromItems(currentReport.scopeContext);
+    const decisionStatus = outputValue("Status") || currentReport.status || "";
+    const recommendation = outputValue("Recommendation") || "";
+    const confidence = outputValue("Confidence") || "";
+    const score = outputValue("Score") || "";
+    const primaryRisk = outputValue("Primary Risk") || "";
+    const requiredAction = outputValue("Required Action") || "";
+    const scoreMeaning = outputValue("Score Meaning") || "";
+    const decisionFlags = outputValue("Decision Flags") || "";
 
-    const decisionSummaryLabels = [
-      "Recommendation",
-      "Status",
-      "Confidence",
-      "Score",
-      "Score Meaning",
-      "Primary Risk"
-    ];
+    const activeScopeName = scopeValue("Active Scope") || "No active scope attached";
+    const scopeType = scopeValue("Scope Type") || "Not documented";
+    const openingType = scopeValue("Opening Type") || "Not documented";
+    const doorFunction = scopeValue("Door / Zone Function") || "Not documented";
+    const egressRole = scopeValue("Egress Role") || "Not documented";
+    const fireRelease = scopeValue("Fire Release") || "Not documented";
+    const keySavedResult = [
+      recommendation ? "Recommendation: " + recommendation : "",
+      decisionStatus ? "Status: " + decisionStatus : "",
+      confidence ? "Confidence: " + confidence : ""
+    ].filter(Boolean).join(" | ");
 
-    const decisionOutputs = decisionSummaryLabels
-      .map((label) => ({ label, value: outputValue(label) }))
-      .filter((item) => String(item.value || "").trim());
-
-    const extraSections = [];
-
-    if (scopeRows.length) {
-      extraSections.push({
+    const extraSections = [
+      {
+        title: "Executive Summary",
+        text: currentReport.summary || ""
+      },
+      {
         title: "Active Scope Context",
+        description: "Access Control scope attached to this fail-state decision. This keeps the result tied to the correct door or zone.",
+        countLabel: activeScopeName === "No active scope attached" ? "0 ITEMS" : "1 ITEM",
+        tableClass: "extra-export-table--planner",
         tables: [
           {
-            headers: ["Context", "Value"],
-            rows: scopeRows
+            headers: ["Scope / Door", "Selected", "Status", "Checks", "Key Saved Result", "Next Action"],
+            rows: [[
+              activeScopeName + "\n" + scopeType + " | " + openingType + " | " + doorFunction,
+              activeScopeName === "No active scope attached" ? "Not Attached" : "Active Scope",
+              decisionStatus || "Pending",
+              "1",
+              keySavedResult || "No fail-state result saved yet.",
+              requiredAction || "Continue to Reader Type after the fail-state decision is documented."
+            ]]
           }
         ]
-      });
-    }
+      },
+      {
+        title: "Inputs",
+        description: "Decision inputs used for this fail-safe / fail-secure assessment.",
+        tableClass: "extra-export-table--kv",
+        tables: [
+          {
+            headers: ["Input", "Value"],
+            rows: (currentReport.inputs || []).map((item) => [item.label, item.value])
+          }
+        ]
+      },
+      {
+        title: "Decision Summary",
+        description: "Short decision facts only. Longer engineering guidance is separated below for readability.",
+        tableClass: "extra-export-table--planner",
+        tables: [
+          {
+            headers: ["Recommendation", "Status", "Confidence", "Score", "Primary Risk"],
+            rows: [[
+              recommendation || "Pending",
+              decisionStatus || "Pending",
+              confidence || "Not calculated",
+              score || "Not calculated",
+              primaryRisk || "No primary risk documented"
+            ]]
+          }
+        ]
+      }
+    ];
 
     [
-      textSection("Decision Flags", outputValue("Decision Flags")),
-      textSection("Required Action", outputValue("Required Action")),
-      textSection("Engineering Interpretation", outputValue("Engineering Interpretation") || currentReport.interpretation),
-      textSection("Actionable Guidance", outputValue("Actionable Guidance"))
+      textSection("Required Action", requiredAction, "Immediate action required before treating this decision as complete."),
+      textSection("Engineering Interpretation", outputValue("Engineering Interpretation") || currentReport.interpretation, "Engineering explanation for the selected fail-state direction."),
+      textSection("Actionable Guidance", outputValue("Actionable Guidance"), "Recommended next steps for reader selection, lock power, and panel planning."),
+      textSection("Decision Flags", decisionFlags, "Review flags carried forward into the Access Control summary."),
+      textSection("Score Meaning", scoreMeaning, "How the score should be interpreted for this door or zone.")
     ].filter(Boolean).forEach((section) => extraSections.push(section));
 
     return {
       ...currentReport,
       meta: getReportMeta(),
-      outputs: decisionOutputs,
+      summary: "",
+      inputs: [],
+      outputs: [],
       interpretation: "",
       extraSections,
       stackReportSections: true
