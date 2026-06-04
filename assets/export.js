@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  /* shared-export-026-custom-payload-stacked-sections */
+  /* shared-export-027-section-titles */
   const DEFAULTS = {
     siteName: "ScopedLabs",
     siteTagline: "Engineering · Analysis · Tools",
@@ -31,7 +31,9 @@
     customPayloadBuilder: null,
     payloadBuilder: null,
     stackReportSections: false,
-    squareToolbarButtons: false
+    squareToolbarButtons: false,
+    inputSectionTitle: "Inputs",
+    outputSectionTitle: "Calculated Outputs"
   };
 
   const state = {
@@ -1356,14 +1358,14 @@ if (shouldSuppressDefaultInterpretationBlock()) {
       <section class="section">
         <div class="${standardGridClass}">
           <div>
-            <h2>Inputs</h2>
+            <h2>${escapeHtml(state.options.inputSectionTitle || "Inputs")}</h2>
             <table>
               <thead><tr><th>Input</th><th>Value</th></tr></thead>
               <tbody>${inputRows}</tbody>
             </table>
           </div>
           <div>
-            <h2>Calculated Outputs</h2>
+            <h2>${escapeHtml(state.options.outputSectionTitle || "Calculated Outputs")}</h2>
             <table>
               <thead><tr><th>Output</th><th>Value</th></tr></thead>
               <tbody>${outputRows}</tbody>

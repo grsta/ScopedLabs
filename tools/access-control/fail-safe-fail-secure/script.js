@@ -538,9 +538,40 @@
     function getSharedExportPayload() {
     if (!currentReport) return null;
 
-    const scopeRows = (currentReport.scopeContext || [])
-      .filter((item) => item && item.label && item.value)
-      .map((item) => [item.label, item.value]);
+    const outputValue = (label) => {
+      const row = (currentReport.outputs || []).find((item) => {
+        return item && String(item.label || "").trim().toLowerCase() === String(label || "").trim().toLowerCase();
+      });
+
+      return row ? row.value : "";
+    };
+
+    const tableRowsFromItems = (items) => {
+      return (items || [])
+        .filter((item) => item && item.label && item.value)
+        .map((item) => [item.label, item.value]);
+    };
+
+    const textSection = (title, text) => {
+      const value = String(text || "").trim();
+      if (!value) return null;
+      return { title, text: value };
+    };
+
+    const scopeRows = tableRowsFromItems(currentReport.scopeContext);
+
+    const decisionSummaryLabels = [
+      "Recommendation",
+      "Status",
+      "Confidence",
+      "Score",
+      "Score Meaning",
+      "Primary Risk"
+    ];
+
+    const decisionOutputs = decisionSummaryLabels
+      .map((label) => ({ label, value: outputValue(label) }))
+      .filter((item) => String(item.value || "").trim());
 
     const extraSections = [];
 
@@ -556,9 +587,18 @@
       });
     }
 
+    [
+      textSection("Decision Flags", outputValue("Decision Flags")),
+      textSection("Required Action", outputValue("Required Action")),
+      textSection("Engineering Interpretation", outputValue("Engineering Interpretation") || currentReport.interpretation),
+      textSection("Actionable Guidance", outputValue("Actionable Guidance"))
+    ].filter(Boolean).forEach((section) => extraSections.push(section));
+
     return {
       ...currentReport,
       meta: getReportMeta(),
+      outputs: decisionOutputs,
+      interpretation: "",
       extraSections,
       stackReportSections: true
     };
