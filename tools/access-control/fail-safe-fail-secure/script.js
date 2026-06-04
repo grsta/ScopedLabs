@@ -554,6 +554,19 @@
       return row ? row.value : "";
     };
 
+    const toneForStatus = (value) => {
+      const text = String(value || "").toLowerCase();
+      if (text.includes("risk")) return "risk";
+      if (text.includes("authority")) return "authority";
+      if (text.includes("watch")) return "watch";
+      if (text.includes("complete")) return "complete";
+      return "";
+    };
+
+    const cell = (text, tone = "") => {
+      return { text: text || "", tone };
+    };
+
     const textSection = (title, text, description) => {
       const value = String(text || "").trim();
       if (!value) return null;
@@ -586,6 +599,9 @@
     const openingType = scopeValue("Opening Type") || "Not documented";
     const doorFunction = scopeValue("Door / Zone Function") || "Not documented";
 
+    const statusTone = toneForStatus(decisionStatus);
+    const hasActiveScope = activeScopeName !== "No active scope attached";
+
     const keySavedResult = [
       recommendation || "",
       decisionStatus || "",
@@ -604,15 +620,16 @@
       {
         title: "Active Scope Context",
         description: "Access Control scope attached to this fail-state decision. This keeps the result tied to the correct door or zone.",
-        countLabel: activeScopeName === "No active scope attached" ? "0 ITEMS" : "1 ITEM",
+        countLabel: hasActiveScope ? "1 ITEM" : "0 ITEMS",
+        countTone: "muted",
         tableClass: "extra-export-table--planner extra-export-table--access-scope",
         tables: [
           {
             headers: ["Scope / Door", "Selected", "Status", "Checks", "Key Saved Result", "Next Action"],
             rows: [[
               activeScopeName + "\n" + scopeType + " | " + openingType + " | " + doorFunction,
-              activeScopeName === "No active scope attached" ? "Not Attached" : "Active Scope",
-              decisionStatus || "Pending",
+              cell(hasActiveScope ? "Active Scope" : "Not Attached", hasActiveScope ? "active" : "muted"),
+              cell(decisionStatus || "Pending", statusTone || "muted"),
               "1",
               keySavedResult || "No saved result",
               scopeNextAction
@@ -640,7 +657,7 @@
             headers: ["Recommendation", "Status", "Confidence", "Score", "Primary Risk"],
             rows: [[
               recommendation || "Pending",
-              decisionStatus || "Pending",
+              cell(decisionStatus || "Pending", statusTone || "muted"),
               confidence || "Not calculated",
               score || "Not calculated",
               primaryRisk || "No primary risk documented"

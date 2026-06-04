@@ -4,6 +4,7 @@
   /* shared-export-027-section-titles */
   /* shared-export-028-planner-sections */
   /* shared-export-029-access-report-polish */
+  /* shared-export-030-semantic-report-tones */
   const DEFAULTS = {
     siteName: "ScopedLabs",
     siteTagline: "Engineering · Analysis · Tools",
@@ -889,6 +890,29 @@
         return `<div class="${svgWrapClass}">${svg}</div>`;
       }).join("");
 
+      function renderReportCell(cell) {
+        if (cell && typeof cell === "object" && !Array.isArray(cell)) {
+          const text = cell.text ?? cell.value ?? "";
+          const tone = String(cell.tone || "")
+            .replace(/[^a-zA-Z0-9_-]/g, "")
+            .trim();
+          const className = String(cell.className || "")
+            .replace(/[^a-zA-Z0-9_\-\s]/g, "")
+            .trim();
+
+          const classes = [
+            tone ? "report-tone report-tone--" + tone : "",
+            className
+          ].filter(Boolean).join(" ");
+
+          return classes
+            ? `<td class="${classes}">${escapeHtml(text)}</td>`
+            : `<td>${escapeHtml(text)}</td>`;
+        }
+
+        return `<td>${escapeHtml(cell)}</td>`;
+      }
+
       const tableBlocks = (section.tables || []).map((table) => {
         const headers = (table.headers || []).length
           ? table.headers
@@ -898,7 +922,7 @@
 
         const rowHtml = (table.rows || []).map((row) => `
           <tr>
-            ${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join("")}
+            ${row.map((cell) => renderReportCell(cell)).join("")}
           </tr>
         `).join("");
 
@@ -930,7 +954,7 @@
         : `
           <div class="section-heading-row">
             <h2>${escapeHtml(section.title)}</h2>
-            ${section.countLabel ? `<span class="section-count">${escapeHtml(section.countLabel)}</span>` : ""}
+            ${section.countLabel ? `<span class="section-count ${section.countTone ? "section-count--" + String(section.countTone).replace(/[^a-zA-Z0-9_-]/g, "") : ""}">${escapeHtml(section.countLabel)}</span>` : ""}
           </div>
           ${section.description ? `<p class="section-description">${escapeHtml(section.description)}</p>` : ""}
         `;
@@ -1543,6 +1567,28 @@ if (shouldSuppressDefaultInterpretationBlock()) {
       letter-spacing:.06em;
       text-transform:uppercase;
       white-space:nowrap;
+    }
+    .section-count--muted{
+      color:var(--muted);
+    }
+    .report-tone{
+      font-weight:900;
+    }
+    .report-tone--active,
+    .report-tone--complete,
+    .report-tone--safe{
+      color:var(--accent);
+    }
+    .report-tone--authority,
+    .report-tone--watch{
+      color:var(--watch);
+    }
+    .report-tone--risk{
+      color:var(--risk);
+    }
+    .report-tone--muted{
+      color:var(--muted);
+      font-weight:750;
     }
     .section-description{
       color:var(--muted);

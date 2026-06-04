@@ -49,8 +49,8 @@ const referencesReportShell = searchFiles
   .filter((rel) => rel !== "scripts/audit-access-control-export-ownership-v1.js")
   .filter((rel) => read(rel).includes("access-control-report-shell"));
 
-check("Fail-Safe cache bumped to export ownership lane", html.includes("access-control-fail-safe-export-ownership-013-report-polish") && html.includes("./script.js?v=access-control-fail-safe-export-ownership-013-report-polish"));
-check("Fail-Safe uses canonical export.js lane", html.includes("/assets/export.js?v=shared-export-029-access-report-polish"));
+check("Fail-Safe cache bumped to export ownership lane", html.includes("access-control-fail-safe-export-ownership-014-report-tones") && html.includes("./script.js?v=access-control-fail-safe-export-ownership-014-report-tones"));
+check("Fail-Safe uses canonical export.js lane", html.includes("/assets/export.js?v=shared-export-030-semantic-report-tones"));
 check("Fail-Safe does not load duplicate report shell", !html.includes("/assets/access-control-report-shell.js"));
 check("Duplicate Access Control report shell asset retired", !exists("assets/access-control-report-shell.js"));
 check("Old report shell audit retired", !exists("scripts/audit-access-control-report-shell-v1.js"));
@@ -69,6 +69,10 @@ check("Fail-Safe no longer opens report windows locally", !script.includes("wind
 check("Collapsed metadata dropdown remains", html.includes('id="reportMetadataMount"') && html.includes("data-report-metadata") && html.includes('data-collapsed="true"'));
 check("Manual metadata export grid absent", !html.includes('<div class="export-grid">'));
 check("Access Control tool polish remains loaded", html.includes("/assets/access-control-tool-polish.js"));
+check("Export.js supports semantic report cell tones", exportJs.includes("renderReportCell") && exportJs.includes("report-tone--authority") && exportJs.includes("report-tone--risk"));
+check("Export.js supports muted section counts", exportJs.includes("section-count--muted"));
+check("Fail-Safe report mutes item count", script.includes('countTone: "muted"'));
+check("Fail-Safe report colors Active Scope and Authority Review", script.includes('toneForStatus') && script.includes('cell(hasActiveScope ? "Active Scope"'));
 check("Export.js supports Planner-style extra section headings", exportJs.includes("section-heading-row") && exportJs.includes("section-count") && exportJs.includes("section-description"));
 check("Export.js supports Planner-style table classes", exportJs.includes("extra-export-table--planner") && exportJs.includes("extra-export-table--kv"));
 check("Fail-Safe suppresses standard calculator report sections", html.includes('"suppressStandardReportSections": true'));
