@@ -18,11 +18,13 @@ const script = read("tools/access-control/fail-safe-fail-secure/script.js");
 const shell = read("assets/access-control-report-shell.js");
 
 check("Fail-Safe cache bumped to report shell lane", html.includes("access-control-fail-safe-final-shell-009-report-shell") && html.includes("./script.js?v=access-control-fail-safe-final-shell-009-report-shell"));
-check("Reusable report shell asset exists", shell.includes("ScopedLabsAccessControlReportShell") && shell.includes("access-control-report-shell-001"));
-check("Fail-Safe loads report shell before tool script", html.includes("/assets/access-control-report-shell.js?v=access-control-report-shell-001") && html.indexOf("/assets/access-control-report-shell.js") < html.indexOf("./script.js?v=access-control-fail-safe-final-shell-009-report-shell"));
+check("Reusable report shell asset exists", shell.includes("ScopedLabsAccessControlReportShell") && shell.includes("access-control-report-shell-002-stacked-sections"));
+check("Fail-Safe loads report shell before tool script", html.includes("/assets/access-control-report-shell.js?v=access-control-report-shell-002-stacked-sections") && html.indexOf("/assets/access-control-report-shell.js") < html.indexOf("./script.js?v=access-control-fail-safe-final-shell-009-report-shell"));
 check("Report shell uses square toolbar buttons", shell.includes("border-radius:10px") && shell.includes("Print / Save PDF"));
 check("Report shell uses plain status text not pill", shell.includes(".report-status") && !shell.includes("status-pill"));
 check("Report shell table layout is fixed/wrapped", shell.includes("table-layout:fixed") && shell.includes("overflow-wrap:break-word"));
+check("Report shell stacks major sections", shell.includes(".report-grid{display:grid;grid-template-columns:1fr") && shell.includes("@media print") && shell.includes(".report-grid{grid-template-columns:1fr"));
+check("Report shell narrows label column for values", shell.includes(".report-table td:first-child{width:28%"));
 check("Tool report builder uses reusable shell", script.includes("ScopedLabsAccessControlReportShell.build"));
 check("Old inline status-pill removed from tool report builder", !script.includes("status-pill"));
 check("Old report grid class removed from tool report builder", !script.includes('class="grid"'));

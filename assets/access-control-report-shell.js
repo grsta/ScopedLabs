@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-report-shell-001";
+  const VERSION = "access-control-report-shell-002-stacked-sections";
 
   function statusClass(status) {
     const normalized = String(status || "").toLowerCase();
@@ -49,12 +49,12 @@
     .section h2{margin:0 0 10px;font-size:.93rem;letter-spacing:.06em;text-transform:uppercase;font-weight:950}
     .summary,.body-copy{border:1px solid var(--line);background:#fafcfb;border-radius:12px;padding:14px 16px;line-height:1.62}
     .project-details{display:grid;gap:6px;margin-top:10px;color:var(--muted);font-size:.94rem}
-    .report-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
+    .report-grid{display:grid;grid-template-columns:1fr;gap:18px;align-items:start}
     .report-table{width:100%;border-collapse:collapse;border:1px solid var(--line);font-size:.9rem;table-layout:fixed}
     .report-table th,.report-table td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;overflow-wrap:break-word;word-break:normal}
     .report-table th{background:#f7faf8;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:#26332d;font-weight:950}
     .report-table tr:last-child td{border-bottom:none}
-    .report-table td:first-child{width:34%;color:var(--muted);font-weight:650}
+    .report-table td:first-child{width:28%;color:var(--muted);font-weight:650}
     .report-table td:last-child{font-weight:760}
     .report-section-table{margin-top:8px}
     .assumptions{margin:0;padding-left:18px;line-height:1.7}
@@ -71,7 +71,7 @@
       .page{max-width:none;border:none;box-shadow:none}
       .toolbar{display:none!important}
       .report{padding:0}
-      .report-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+      .report-grid{grid-template-columns:1fr;gap:12px}
       .section{break-inside:avoid;page-break-inside:avoid}
       .report-table th,.report-table td{padding:7px 8px;font-size:.82rem}
     }`;
