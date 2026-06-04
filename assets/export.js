@@ -1,6 +1,7 @@
 (() => {
   "use strict";
 
+  /* shared-export-026-custom-payload-stacked-sections */
   const DEFAULTS = {
     siteName: "ScopedLabs",
     siteTagline: "Engineering · Analysis · Tools",
@@ -26,7 +27,11 @@
     readyStatusMessage: "",
     emptyExportOutputs: [],
     suppressStandardReportSections: false,
-    suppressHeaderStatusPill: false
+    suppressHeaderStatusPill: false,
+    customPayloadBuilder: null,
+    payloadBuilder: null,
+    stackReportSections: false,
+    squareToolbarButtons: false
   };
 
   const state = {
@@ -933,7 +938,62 @@
     return String(value).trim().toLowerCase() === "true";
   }
 
+  function resolveFunctionReference(reference) {
+    if (typeof reference === "function") return reference;
+    if (typeof reference !== "string" || !reference.trim()) return null;
+
+    return reference.split(".").reduce((target, key) => {
+      if (!target) return null;
+      return target[key] || null;
+    }, window);
+  }
+
+  function buildCustomPayload() {
+    const builder = resolveFunctionReference(state.options.customPayloadBuilder || state.options.payloadBuilder);
+    if (!builder) return null;
+
+    try {
+      const custom = builder({
+        options: state.options,
+        getMeta,
+        getInputRows,
+        getResultRows
+      });
+
+      if (!custom) return null;
+
+      return {
+        reportId: custom.reportId || makeReportId(state.options.reportPrefix),
+        generatedAt: custom.generatedAt || new Date().toISOString(),
+        category: custom.category || state.options.categoryLabel,
+        categorySlug: custom.categorySlug || state.options.categorySlug,
+        tool: custom.tool || state.options.toolLabel,
+        toolSlug: custom.toolSlug || state.options.toolSlug,
+        status: custom.status || "",
+        summary: custom.summary || "",
+        interpretation: custom.interpretation || "",
+        analysisSections: Array.isArray(custom.analysisSections) ? custom.analysisSections : [],
+        extraSections: Array.isArray(custom.extraSections) ? custom.extraSections : [],
+        inputs: Array.isArray(custom.inputs) ? custom.inputs : getInputRows(),
+        outputs: Array.isArray(custom.outputs) ? custom.outputs : getResultRows(),
+        assumptions: Array.isArray(custom.assumptions) ? custom.assumptions : state.options.assumptions,
+        chartImage: custom.chartImage || "",
+        stackReportSections: custom.stackReportSections === true,
+        meta: {
+          ...getMeta(),
+          ...(custom.meta || {})
+        }
+      };
+    } catch (err) {
+      console.warn("ScopedLabs custom export payload failed:", err);
+      return null;
+    }
+  }
+
   function buildPayload() {
+    const customPayload = buildCustomPayload();
+    if (customPayload) return customPayload;
+
     let outputs = getResultRows();
 
     if (!outputs.length && state.options.alwaysExportReady === true) {
@@ -1265,6 +1325,10 @@ if (shouldSuppressDefaultInterpretationBlock()) {
       // Engineering Interpretation remains the primary narrative section.
       const additionalAnalysisBlock = "";
 
+    const stackReportSections = state.options.stackReportSections === true || payload.stackReportSections === true;
+    const standardGridClass = stackReportSections ? "grid grid--stacked" : "grid";
+    const toolbarButtonRadius = state.options.squareToolbarButtons === true ? "10px" : "999px";
+
     const statusClass = String(payload.status || "").toLowerCase();
     const suppressStandardSections = state.options.suppressStandardReportSections === true;
     const suppressHeaderStatusPill = state.options.suppressHeaderStatusPill === true;
@@ -1290,7 +1354,7 @@ if (shouldSuppressDefaultInterpretationBlock()) {
 
     const standardInputsOutputsBlock = suppressStandardSections ? "" : `
       <section class="section">
-        <div class="grid">
+        <div class="${standardGridClass}">
           <div>
             <h2>Inputs</h2>
             <table>
@@ -1359,7 +1423,7 @@ if (shouldSuppressDefaultInterpretationBlock()) {
       border:1px solid #c9d8cf;
       background:#fff;
       color:var(--ink);
-      border-radius:999px;
+      border-radius:${toolbarButtonRadius};
       padding:10px 14px;
       font-weight:700;
       cursor:pointer;
@@ -1506,6 +1570,9 @@ if (shouldSuppressDefaultInterpretationBlock()) {
       grid-template-columns:repeat(2,minmax(0,1fr));
       gap:18px;
     }
+    .grid.grid--stacked{
+      grid-template-columns:1fr;
+    }
     table{
       width:100%;
       border-collapse:collapse;
@@ -1584,7 +1651,7 @@ if (shouldSuppressDefaultInterpretationBlock()) {
       .page{max-width:none;border:none;box-shadow:none}
       .toolbar{display:none !important}
       .report{padding:.18in .28in .24in}
-    
+
       .extra-svg-wrap,
       .extra-svg-wrap.print-low-ink-sentinel{
         background:#fff !important;
@@ -1596,7 +1663,7 @@ if (shouldSuppressDefaultInterpretationBlock()) {
         filter:invert(1) hue-rotate(180deg) saturate(.75) contrast(1.15) !important;
       }
 }
-  
+
     /* data-scopedlabs-wide-compact-svg-contract */
     .section--compact-svg,
     .section:has(.extra-svg-wrap--compact){

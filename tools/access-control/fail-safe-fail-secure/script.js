@@ -535,154 +535,40 @@
     };
   }
 
-  function buildReportHTML(payload) {
-    const scopeRows = (payload.scopeContext || []).map((item) => `
-      <tr>
-        <td>${escapeHtml(item.label)}</td>
-        <td>${escapeHtml(item.value)}</td>
-      </tr>
-    `).join("");
+    function getSharedExportPayload() {
+    if (!currentReport) return null;
 
-    const inputRows = (payload.inputs || []).map((item) => `
-      <tr>
-        <td>${escapeHtml(item.label)}</td>
-        <td>${escapeHtml(item.value)}</td>
-      </tr>
-    `).join("");
+    const scopeRows = (currentReport.scopeContext || [])
+      .filter((item) => item && item.label && item.value)
+      .map((item) => [item.label, item.value]);
 
-    const outputRows = (payload.outputs || []).map((item) => `
-      <tr>
-        <td>${escapeHtml(item.label)}</td>
-        <td>${escapeHtml(item.value)}</td>
-      </tr>
-    `).join("");
+    const extraSections = [];
 
-    const assumptions = (payload.assumptions || []).map((item) => `
-      <li>${escapeHtml(item)}</li>
-    `).join("");
-
-    const projectDetails = [
-      payload.meta?.projectName ? `<div><strong>Project:</strong> ${escapeHtml(payload.meta.projectName)}</div>` : "",
-      payload.meta?.clientName ? `<div><strong>Client:</strong> ${escapeHtml(payload.meta.clientName)}</div>` : "",
-      payload.meta?.preparedBy ? `<div><strong>Prepared By:</strong> ${escapeHtml(payload.meta.preparedBy)}</div>` : ""
-    ].filter(Boolean).join("");
-
-    const notesBlock = payload.meta?.customNotes
-      ? `
-      <section class="section">
-        <h2>Custom Notes</h2>
-        <div class="body-copy">${escapeHtml(payload.meta.customNotes).replace(/\n/g, "<br>")}</div>
-      </section>`
-      : "";
-
-    const title = escapeHtml(payload.meta?.reportTitle || payload.tool || "ScopedLabs Report");
-
-    const metaHtml = `
-      <div><strong>Category:</strong> ${escapeHtml(payload.category || "")}</div>
-      <div><strong>Tool:</strong> ${escapeHtml(payload.tool || "")}</div>
-      <div><strong>Generated:</strong> ${escapeHtml(formatDateTime(payload.generatedAt || ""))}</div>
-      <div><strong>Report ID:</strong> ${escapeHtml(payload.reportId || "")}</div>
-    `;
-
-    const bodyHtml = `
-      <section class="section">
-        <h2>Executive Summary</h2>
-        <div class="summary">
-          ${escapeHtml(payload.summary || "")}
-          <div class="project-details">${projectDetails}</div>
-        </div>
-      </section>
-
-      <section class="section">
-        <h2>Active Scope Context</h2>
-        <table class="report-table report-section-table">
-          <tbody>${scopeRows || '<tr><td colspan="2">No active access scope was attached to this report.</td></tr>'}</tbody>
-        </table>
-      </section>
-
-      <section class="section">
-        <div class="report-grid">
-          <div>
-            <h2>Inputs</h2>
-            <table class="report-table">
-              <thead>
-                <tr><th>Input</th><th>Value</th></tr>
-              </thead>
-              <tbody>${inputRows}</tbody>
-            </table>
-          </div>
-
-          <div>
-            <h2>Calculated Outputs</h2>
-            <table class="report-table">
-              <thead>
-                <tr><th>Output</th><th>Value</th></tr>
-              </thead>
-              <tbody>${outputRows}</tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <section class="section">
-        <h2>Engineering Interpretation</h2>
-        <div class="body-copy">${escapeHtml(payload.interpretation || "")}</div>
-      </section>
-
-      ${notesBlock}
-
-      <section class="section">
-        <h2>Assumptions</h2>
-        <div class="body-copy">
-          <ul class="assumptions">${assumptions}</ul>
-        </div>
-      </section>
-
-      <section class="section">
-        <h2>Disclaimer</h2>
-        <div class="body-copy">
-          ScopedLabs outputs are planning aids only and do not replace formal engineering review, code compliance review, AHJ review, site-specific validation, or manufacturer documentation.
-        </div>
-      </section>
-    `;
-
-    if (
-      window.ScopedLabsAccessControlReportShell &&
-      typeof window.ScopedLabsAccessControlReportShell.build === "function"
-    ) {
-      return window.ScopedLabsAccessControlReportShell.build({
-        title,
-        status: escapeHtml(payload.status || ""),
-        metaHtml,
-        bodyHtml
+    if (scopeRows.length) {
+      extraSections.push({
+        title: "Active Scope Context",
+        tables: [
+          {
+            headers: ["Context", "Value"],
+            rows: scopeRows
+          }
+        ]
       });
     }
 
-    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${title} ? ScopedLabs</title></head><body>${bodyHtml}</body></html>`;
+    return {
+      ...currentReport,
+      meta: getReportMeta(),
+      extraSections,
+      stackReportSections: true
+    };
   }
 
+  window.ScopedLabsAccessControlFailSafeExport = Object.freeze({
+    getPayload: getSharedExportPayload
+  });
 
-  function openReportWindow(payload) {
-    try {
-      const html = buildReportHTML(payload);
-      const blob = new Blob([html], { type: "text/html" });
-      const url = URL.createObjectURL(blob);
-      const win = window.open(url, "_blank");
-
-      if (!win) return false;
-
-      setTimeout(() => {
-        URL.revokeObjectURL(url);
-      }, 10000);
-
-      return true;
-    } catch (err) {
-      console.error("Export report open failed:", err);
-      return false;
-    }
-  }
-
-  function savePipelineResult(payload) {
+function savePipelineResult(payload) {
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
       category: CATEGORY,
       step: STEP,
