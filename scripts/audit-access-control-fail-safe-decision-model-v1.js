@@ -16,7 +16,7 @@ function check(name, ok, detail = "") {
 const html = read("tools/access-control/fail-safe-fail-secure/index.html");
 const script = read("tools/access-control/fail-safe-fail-secure/script.js");
 
-check("Fail-Safe cache bumped to decision model lane", html.includes("access-control-fail-safe-decision-model-002") && html.includes("./script.js?v=access-control-fail-safe-decision-model-002"));
+check("Fail-Safe cache bumped to visible status legend lane", html.includes("access-control-fail-safe-decision-model-003-visible-status-legend") && html.includes("./script.js?v=access-control-fail-safe-decision-model-003-visible-status-legend"));
 check("Hardware type input exists", html.includes('id="hardwareType"') && html.includes("Maglock / Electromagnetic Lock") && html.includes("Delayed Egress Locking"));
 check("Fire-rated opening input exists", html.includes('id="fireRated"') && html.includes("Fire-Rated Door Assembly"));
 check("Egress-control input exists", html.includes('id="egressControlled"') && html.includes("Free Mechanical Egress Remains"));
@@ -31,6 +31,13 @@ check("Report inputs include decision-model fields", script.includes("Hardware T
 check("Pipeline result carries decision model fields", script.includes("hardwareType,") && script.includes("decisionFlags: decision.flags") && script.includes("requiredActions: decision.actions"));
 check("Scope ledger carries fail-state status and flags", script.includes("failStateStatus") && script.includes("failStateDecisionFlags"));
 check("Reset and invalidate watch new inputs", script.includes('els.hardwareType.value = "unknown"') && script.includes("els.releaseEvent") && script.includes("els.standbyPower"));
+check("Visible status card exists", html.includes('id="failSafeStatusCard"') && html.includes("access-fail-safe-status-card"));
+check("Compact status legend exists", html.includes('id="failSafeStatusLegend"') && html.includes("Status Legend") && html.includes("Authority Review"));
+check("Legend uses plain text statuses", html.includes("access-tool-status-complete") && html.includes("access-tool-status-watch") && html.includes("access-tool-status-risk") && html.includes("access-tool-status-authority"));
+check("Visible status elements are tracked", script.includes('statusCard: $("failSafeStatusCard")') && script.includes('statusText: $("failSafeStatusText")'));
+check("Visible status renderer exists", script.includes("function renderVisibleDecisionStatus") && script.includes("normalizeStatusClass"));
+check("Visible status clears on invalidate", script.includes("clearVisibleDecisionStatus();") && script.includes("clearLocalAssistant();"));
+check("Calculation renders visible status", script.includes("renderVisibleDecisionStatus({") && script.includes("flags: decision.flags"));
 check("Foundation scope card remains", html.includes('id="activeAccessScopeCard"') && script.includes("renderActiveScopeContext"));
 
 console.log("\nAccess Control Fail-Safe decision model audit:");

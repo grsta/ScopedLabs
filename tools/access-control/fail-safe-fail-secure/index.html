@@ -10,7 +10,7 @@
     content="Determine correct door behavior based on life safety, threat level, and power conditions."
   />
 
-  <link rel="stylesheet" href="/assets/style.css?v=access-control-fail-safe-decision-model-002" />
+  <link rel="stylesheet" href="/assets/style.css?v=access-control-fail-safe-decision-model-003-visible-status-legend" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -139,6 +139,138 @@
     .access-status-watch-text {
       color: rgba(251,191,36,.95);
       font-weight: 950;
+    }
+
+
+    /* access-fail-safe-visible-status-legend-003 */
+    .access-fail-safe-status-card {
+      border: 1px solid rgba(125,255,152,.2);
+      background: rgba(255,255,255,.035);
+      border-radius: 16px;
+      padding: 16px;
+      margin-top: 14px;
+    }
+
+    .access-fail-safe-status-top {
+      align-items: flex-start;
+      display: flex;
+      gap: 16px;
+      justify-content: space-between;
+    }
+
+    .access-fail-safe-status-title {
+      color: rgba(226,232,240,.96);
+      font-size: 1.05rem;
+      font-weight: 900;
+      margin: 0;
+    }
+
+    .access-fail-safe-status-subtitle {
+      color: rgba(203,213,225,.72);
+      font-size: .9rem;
+      line-height: 1.45;
+      margin: 6px 0 0;
+    }
+
+    .access-fail-safe-status-text {
+      font-size: .82rem;
+      font-weight: 950;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .access-fail-safe-status-text.complete,
+    .access-tool-status-complete {
+      color: rgba(125,255,152,.96);
+      font-weight: 950;
+    }
+
+    .access-fail-safe-status-text.watch,
+    .access-fail-safe-status-text.authority,
+    .access-tool-status-watch,
+    .access-tool-status-authority {
+      color: rgba(250,204,21,.96);
+      font-weight: 950;
+    }
+
+    .access-fail-safe-status-text.risk,
+    .access-tool-status-risk {
+      color: rgba(248,113,113,.96);
+      font-weight: 950;
+    }
+
+    .access-fail-safe-status-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-top: 14px;
+    }
+
+    .access-fail-safe-status-item {
+      border: 1px solid rgba(148,163,184,.12);
+      border-radius: 12px;
+      padding: 10px;
+      background: rgba(0,0,0,.12);
+    }
+
+    .access-fail-safe-status-item strong {
+      color: rgba(203,213,225,.66);
+      display: block;
+      font-size: .68rem;
+      letter-spacing: .08em;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+    }
+
+    .access-fail-safe-status-item span {
+      color: rgba(226,232,240,.9);
+      display: block;
+      font-size: .88rem;
+      font-weight: 750;
+      line-height: 1.4;
+    }
+
+    .access-fail-safe-status-action {
+      border-left: 3px solid rgba(125,255,152,.72);
+      color: rgba(226,232,240,.88);
+      font-size: .9rem;
+      line-height: 1.5;
+      margin-top: 14px;
+      padding-left: 12px;
+    }
+
+    .access-tool-status-legend {
+      border: 1px solid rgba(148,163,184,.14);
+      background: rgba(255,255,255,.025);
+      border-radius: 14px;
+      margin-top: 12px;
+      padding: 12px;
+    }
+
+    .access-tool-status-legend h3 {
+      color: rgba(226,232,240,.9);
+      font-size: .82rem;
+      letter-spacing: .08em;
+      margin: 0 0 8px;
+      text-transform: uppercase;
+    }
+
+    .access-tool-status-legend-grid {
+      display: grid;
+      gap: 8px 14px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .access-tool-status-legend-grid div {
+      color: rgba(203,213,225,.72);
+      font-size: .82rem;
+      line-height: 1.42;
+    }
+
+    .access-tool-status-legend-grid strong {
+      display: inline-block;
+      margin-right: 5px;
     }
 
     @media (max-width: 860px) {
@@ -326,6 +458,47 @@
         <button id="reset" class="btn" type="button">Reset</button>
       </div>
 
+      <section id="failSafeStatusCard" class="access-fail-safe-status-card" hidden aria-live="polite">
+        <div class="access-fail-safe-status-top">
+          <div>
+            <h3 id="failSafeStatusTitle" class="access-fail-safe-status-title">Run the evaluation</h3>
+            <p id="failSafeStatusSubtitle" class="access-fail-safe-status-subtitle">
+              The result will show the recommended fail behavior, decision status, and next action.
+            </p>
+          </div>
+          <div id="failSafeStatusText" class="access-fail-safe-status-text watch">PENDING</div>
+        </div>
+        <div class="access-fail-safe-status-grid">
+          <div class="access-fail-safe-status-item">
+            <strong>Recommendation</strong>
+            <span id="failSafeStatusRecommendation">?</span>
+          </div>
+          <div class="access-fail-safe-status-item">
+            <strong>Confidence</strong>
+            <span id="failSafeStatusConfidence">?</span>
+          </div>
+          <div class="access-fail-safe-status-item">
+            <strong>Decision Flags</strong>
+            <span id="failSafeStatusFlags">?</span>
+          </div>
+          <div class="access-fail-safe-status-item">
+            <strong>Primary Risk</strong>
+            <span id="failSafeStatusRisk">?</span>
+          </div>
+        </div>
+        <div id="failSafeStatusAction" class="access-fail-safe-status-action">Run the evaluation to see the required action.</div>
+      </section>
+
+      <section id="failSafeStatusLegend" class="access-tool-status-legend" aria-label="Fail-Safe status legend">
+        <h3>Status Legend</h3>
+        <div class="access-tool-status-legend-grid">
+          <div><strong class="access-tool-status-complete">Complete</strong>Fail-state assumption is usable for the next design step.</div>
+          <div><strong class="access-tool-status-watch">Watch</strong>Assumptions are incomplete or need review before final report.</div>
+          <div><strong class="access-tool-status-risk">Risk</strong>Likely design conflict or missing required release behavior.</div>
+          <div><strong class="access-tool-status-authority">Authority Review</strong>AHJ/code/fire/life-safety review may be required.</div>
+        </div>
+      </section>
+
       <div id="accessControlLegacyResultsCard" class="card access-control-hidden-results-card" hidden aria-hidden="true" style="margin-top: 14px; background: rgba(0,0,0,.14);">
         <h3 class="h3" style="margin-top: 0;">Calculation Data Source</h3>
         <div id="results" class="results-grid" aria-live="polite">
@@ -436,7 +609,7 @@
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
   <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-002-physical-style"></script>
   <script src="/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-002-factory-closeout"></script>
-  <script src="./script.js?v=access-control-fail-safe-decision-model-002"></script>
+  <script src="./script.js?v=access-control-fail-safe-decision-model-003-visible-status-legend"></script>
   <script defer src="/assets/help.js?v=help-025"></script>
 </body>
 </html>

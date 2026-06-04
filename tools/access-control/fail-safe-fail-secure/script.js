@@ -32,6 +32,15 @@
     calc: $("calc"),
     reset: $("reset"),
     results: $("results"),
+    statusCard: $("failSafeStatusCard"),
+    statusTitle: $("failSafeStatusTitle"),
+    statusSubtitle: $("failSafeStatusSubtitle"),
+    statusText: $("failSafeStatusText"),
+    statusRecommendation: $("failSafeStatusRecommendation"),
+    statusConfidence: $("failSafeStatusConfidence"),
+    statusFlags: $("failSafeStatusFlags"),
+    statusRisk: $("failSafeStatusRisk"),
+    statusAction: $("failSafeStatusAction"),
     analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
     activeScopeCard: $("activeAccessScopeCard"),
@@ -406,6 +415,45 @@
   function hideContinue() {
     if (els.continueWrap) els.continueWrap.style.display = "none";
     if (els.continueBtn) els.continueBtn.disabled = true;
+  }
+
+  function normalizeStatusClass(status) {
+    const normalized = String(status || "").toLowerCase().replace(/\s+/g, "-");
+    if (normalized.includes("authority")) return "authority";
+    if (normalized.includes("risk")) return "risk";
+    if (normalized.includes("watch")) return "watch";
+    if (normalized.includes("complete")) return "complete";
+    return "watch";
+  }
+
+  function clearVisibleDecisionStatus() {
+    if (els.statusCard) els.statusCard.hidden = true;
+  }
+
+  function renderVisibleDecisionStatus(core) {
+    if (!els.statusCard) return;
+
+    const statusClass = normalizeStatusClass(core.status);
+    els.statusCard.hidden = false;
+
+    if (els.statusTitle) {
+      els.statusTitle.textContent = core.recommendation || "Decision Pending";
+    }
+
+    if (els.statusSubtitle) {
+      els.statusSubtitle.textContent = core.rationale || "Review the required action before continuing.";
+    }
+
+    if (els.statusText) {
+      els.statusText.textContent = core.status || "WATCH";
+      els.statusText.className = "access-fail-safe-status-text " + statusClass;
+    }
+
+    if (els.statusRecommendation) els.statusRecommendation.textContent = core.recommendation || "?";
+    if (els.statusConfidence) els.statusConfidence.textContent = core.confidence || "?";
+    if (els.statusFlags) els.statusFlags.textContent = core.flags && core.flags.length ? core.flags.join(" | ") : "No special flags";
+    if (els.statusRisk) els.statusRisk.textContent = core.risk || "?";
+    if (els.statusAction) els.statusAction.textContent = core.actions && core.actions.length ? core.actions.join(" ") : "Carry this result into the next Access Control design step.";
   }
 
   function render(rows) {
@@ -904,6 +952,7 @@
       els.results.innerHTML = `<div class="muted">${escapeHtml(message)}</div>`;
     }
 
+    clearVisibleDecisionStatus();
     clearLocalAssistant();
     clearAnalysis();
     hideContinue();
@@ -1168,6 +1217,16 @@
       releaseEventLabel: labelFromSelect(els.releaseEvent),
       standbyPowerLabel: labelFromSelect(els.standbyPower)
     };
+
+    renderVisibleDecisionStatus({
+      status,
+      recommendation,
+      confidence,
+      rationale,
+      risk,
+      flags: decision.flags,
+      actions: decision.actions
+    });
 
     render([
       { label: "Recommendation", value: recommendation },
