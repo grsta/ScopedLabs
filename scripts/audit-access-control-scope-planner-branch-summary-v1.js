@@ -24,7 +24,7 @@ const badDisplaySeparatorsGone =
   !script.includes("' ? threat: '") &&
   !script.includes("' ? traffic: '");
 
-check("Planner version bumped to print buttons bottom lane", index.includes("access-control-scope-planner-area-match-011-print-buttons-bottom"));
+check("Planner version bumped to print report tab lane", index.includes("access-control-scope-planner-area-match-012-print-report-tab"));
 check("Active scope card uses breadcrumb mini flow", script.includes("access-scope-mini-flow") && script.includes("branchLabel(key)") && script.includes("&rarr;"));
 check("Active scope card keeps branch classification", script.includes("function branchLabel(key)") && script.includes("Core Door Scope"));
 check("Summary has grouped branch helper", script.includes("function branchTable(key, items)"));

@@ -589,17 +589,157 @@
     window.location.href = scopePathUrl(nextActive && nextActive.planningPath);
   }
 
+
+  function buildAccessScopeSummaryReportHtml() {
+    const ledger = state()?.readLedger();
+    const scopes = Array.isArray(ledger?.scopes) ? ledger.scopes : [];
+    const generated = new Date().toLocaleString();
+    const reportId = "SL-AC-SCOPE-" + new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 12);
+    const summaryHtml = els.scopeSummary ? els.scopeSummary.innerHTML : "";
+
+    const statusText = scopes.some((scope) => scope.status === "RISK")
+      ? "RISK"
+      : (scopes.some((scope) => scope.status === "AUTHORITY REVIEW") ? "AUTHORITY REVIEW" : "PENDING");
+
+    const statusClass = statusText === "RISK"
+      ? "risk"
+      : (statusText === "AUTHORITY REVIEW" ? "authority" : "pending");
+
+    return '<!doctype html>' +
+'<html lang="en">' +
+'<head>' +
+'  <meta charset="utf-8" />' +
+'  <meta name="viewport" content="width=device-width,initial-scale=1" />' +
+'  <title>Access Control Scope Summary</title>' +
+'  <style>' +
+'    :root{' +
+'      --ink:#132018;' +
+'      --muted:#58645d;' +
+'      --line:#d9e3dc;' +
+'      --soft:#f7faf8;' +
+'      --accent:#1f7a3d;' +
+'      --accent-soft:#eaf7ef;' +
+'      --watch:#946200;' +
+'      --watch-soft:#fff7df;' +
+'      --risk:#a3362b;' +
+'      --risk-soft:#fff0ee;' +
+'      --authority:#946200;' +
+'      --authority-soft:#fff7df;' +
+'    }' +
+'    *{box-sizing:border-box}' +
+'    body{margin:0;padding:32px;background:#eef3ef;color:var(--ink);font-family:Inter,Segoe UI,Roboto,Arial,sans-serif}' +
+'    .page{max-width:1080px;margin:0 auto;background:#fff;border:1px solid var(--line);box-shadow:0 18px 48px rgba(22,33,26,.12)}' +
+'    .toolbar{display:flex;justify-content:flex-end;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:2}' +
+'    .toolbar button{border:1px solid var(--line);background:#fff;color:#132018;border-radius:999px;padding:9px 14px;font-weight:800;cursor:pointer}' +
+'    .report{padding:32px}' +
+'    .brand-row{display:flex;align-items:center;gap:10px;margin-bottom:4px}' +
+'    .brand-mark{width:24px;height:24px;border-radius:6px;display:inline-grid;place-items:center;background:#0b150f;color:#7dff9e;font-weight:950}' +
+'    .brand-name{font-size:1.15rem;font-weight:900;letter-spacing:.02em}' +
+'    .tagline{color:var(--muted);font-size:.95rem;margin-bottom:18px}' +
+'    .report-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:18px 0;margin-bottom:22px}' +
+'    .report-title{font-size:1.7rem;line-height:1.15;margin:0 0 6px}' +
+'    .report-meta{color:var(--muted);font-size:.95rem;line-height:1.6}' +
+'    .status-pill{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;border:1px solid transparent;white-space:nowrap;padding:8px 12px;font-size:.82rem}' +
+'    .pending{color:#4b5563;background:#f3f4f6;border-color:#d1d5db}' +
+'    .authority{color:var(--authority);background:var(--authority-soft);border-color:#f2dfad}' +
+'    .risk{color:var(--risk);background:var(--risk-soft);border-color:#f3c6c1}' +
+'    .access-scope-summary-rollup{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:18px}' +
+'    .access-scope-summary-metric{border:1px solid var(--line);background:#fafcfb;border-radius:14px;padding:12px;max-width:100%}' +
+'    .access-scope-summary-label{display:block;color:var(--muted);font-size:.72rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}' +
+'    .access-scope-summary-value{display:block;color:#111;font-size:1.25rem;font-weight:950}' +
+'    .access-scope-summary-note,.muted{color:var(--muted);font-size:.86rem;line-height:1.45}' +
+'    .access-status-legend{border-top:1px solid var(--line);padding-top:14px;margin-top:16px;margin-bottom:18px}' +
+'    .access-status-legend-title{font-size:.9rem;letter-spacing:.06em;text-transform:uppercase;margin:0 0 8px}' +
+'    .access-status-legend-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 18px}' +
+'    .access-status-legend-item{font-size:.84rem;color:var(--muted);line-height:1.35}' +
+'    .access-status-legend-item strong{display:inline-block;margin-right:6px}' +
+'    .access-status-active-text,.access-status-complete{color:var(--accent);font-weight:950}' +
+'    .access-status-watch,.access-status-authority{color:var(--watch);font-weight:950}' +
+'    .access-status-risk{color:var(--risk);font-weight:950}' +
+'    .access-status-planning,.access-status-pending,.access-status-muted-text{color:#4b5563;font-weight:850}' +
+'    .access-scope-warn,.access-authority-caution{border:1px solid #eadb9a;background:#fffdf2;border-radius:12px;padding:12px 14px;margin:12px 0;line-height:1.5}' +
+'    .access-scope-summary-branch{margin-top:24px;break-inside:avoid;page-break-inside:avoid}' +
+'    .access-scope-summary-branch-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:7px}' +
+'    .access-scope-summary-branch-head h3{font-size:1.1rem;margin:0}' +
+'    .access-scope-summary-branch-count{color:var(--accent);font-size:.8rem;font-weight:900;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}' +
+'    .access-scope-branch-description{color:var(--muted);font-size:.88rem;margin:0 0 10px;line-height:1.45}' +
+'    table.access-scope-summary-table{width:100%;border-collapse:collapse;border:1px solid var(--line);font-size:.84rem}' +
+'    .access-scope-summary-table th,.access-scope-summary-table td{padding:8px 8px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}' +
+'    .access-scope-summary-table th{background:#f7faf8;font-size:.66rem;text-transform:uppercase;letter-spacing:.06em}' +
+'    .access-scope-summary-table tr:last-child td{border-bottom:none}' +
+'    .access-scope-summary-actions{display:none !important}' +
+'    .foot{margin-top:26px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem;line-height:1.7}' +
+'    @media (max-width:900px){body{padding:14px}.report{padding:20px}.report-head{flex-direction:column}.access-scope-summary-rollup{grid-template-columns:1fr 1fr}}' +
+'    @media print{@page{margin:.55in}body{background:#fff;padding:0}.page{max-width:none;border:none;box-shadow:none}.toolbar{display:none !important}.report{padding:0}.access-scope-summary-rollup{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.access-scope-summary-branch{break-inside:avoid;page-break-inside:avoid}}' +
+'  </style>' +
+'</head>' +
+'<body>' +
+'  <div class="page">' +
+'    <div class="toolbar">' +
+'      <button type="button" onclick="window.print()">Print / Save PDF</button>' +
+'      <button type="button" onclick="window.close()">Close</button>' +
+'    </div>' +
+'    <div class="report">' +
+'      <div class="brand-row"><div class="brand-mark">S</div><div class="brand-name">ScopedLabs</div></div>' +
+'      <div class="tagline">Engineering - Analysis - Tools</div>' +
+'      <div class="report-head">' +
+'        <div>' +
+'          <h1 class="report-title">Access Control Scope Summary</h1>' +
+'          <div class="report-meta">' +
+'            <div><strong>Category:</strong> Access Control</div>' +
+'            <div><strong>Tool:</strong> Access Scope Planner</div>' +
+'            <div><strong>Generated:</strong> ' + escapeHtml(generated) + '</div>' +
+'            <div><strong>Report ID:</strong> ' + escapeHtml(reportId) + '</div>' +
+'          </div>' +
+'        </div>' +
+'        <div class="status-pill ' + statusClass + '">' + escapeHtml(statusText) + '</div>' +
+'      </div>' +
+'      <section class="section">' +
+'        <h2>Scope and Branch Summary</h2>' +
+         summaryHtml +
+'      </section>' +
+'      <section class="section">' +
+'        <h2>Disclaimer</h2>' +
+'        <div class="access-scope-warn">ScopedLabs tools are planning aids only and do not replace formal engineering review, code compliance review, AHJ/fire marshal review, manufacturer documentation, or project-specific professional judgment.</div>' +
+'      </section>' +
+'      <div class="foot">ScopedLabs Pro export for internal and client-facing documentation workflows.</div>' +
+'    </div>' +
+'  </div>' +
+'</body>' +
+'</html>';
+  }
+
+  function openAccessScopeSummaryReportWindow() {
+    try {
+      const reportHtml = buildAccessScopeSummaryReportHtml();
+      const blob = new Blob([reportHtml], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const win = window.open(url, "_blank");
+
+      if (!win) return false;
+
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      return true;
+    } catch (err) {
+      console.error("ScopedLabs access scope summary report open failed:", err);
+      return false;
+    }
+  }
+
+
   function printSummary() {
     const ledger = state()?.readLedger();
     if (!ledger || !Array.isArray(ledger.scopes) || !ledger.scopes.length) {
-      status("Save at least one scope before printing the summary.");
+      status("Save at least one scope before opening the summary report.");
       return;
     }
 
-    document.body.classList.add("print-access-scope-summary");
-    window.print();
-    window.setTimeout(() => document.body.classList.remove("print-access-scope-summary"), 500);
+    render();
+
+    const opened = openAccessScopeSummaryReportWindow();
+    status(opened ? "Access scope summary report opened in a new tab." : "Popup blocked or access scope summary report could not open.");
   }
+
 
   function buildClientSummary() {
     const ledger = state()?.readLedger();
