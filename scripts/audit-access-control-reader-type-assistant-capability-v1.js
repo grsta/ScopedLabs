@@ -82,6 +82,9 @@ check("Reader Type carry-forward includes environment", script.includes("environ
 check("Reader Type report uses Planner-style sections", script.includes('"Reader Recommendation"') && script.includes('"Inputs"') && !script.includes('"Carry-Forward Context"'));
 check("Reader Type report includes credential verification trail", script.includes('"Credential Verification Trail"') && script.includes('"Card Format / Facility Code"') && script.includes('"Existing Compatibility"'));
 check("Reader Type report includes active scope context", script.includes('"Active Scope Context"') && script.includes("Area / Scope") && script.includes("Opening / Door Count"));
+check("Reader Type renders visible active scope context", html.includes('id="activeScopeContextCard"') && script.includes("renderActiveScopeContext") && script.includes("getActiveScopeContext"));
+check("Reader Type active scope uses shared scope-state module", script.includes("ScopedLabsAccessControlScopeState") && script.includes("getActiveScope"));
+check("Reader Type new domain inputs invalidate results", script.includes("els.cardFormat") && script.includes("els.existingCred") && script.includes("addEventListener"));
 check("Reader Type page output uses improved recommendation shell", script.includes("reader-result-hero") && script.includes("reader-result-grid"));
 check("Reader Type report separates long guidance", script.includes('textSection("Engineering Interpretation"') && script.includes('textSection("Actionable Guidance"'));
 check("Reader Type report suppresses calculator dump", html.includes('"suppressStandardReportSections": true') && script.includes("inputs: []") && script.includes("outputs: []"));

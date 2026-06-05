@@ -70,6 +70,7 @@ check("Reader Type custom payload builder is configured", readerHtml.includes('"
 check("Reader Type payload suppresses generic calculator dump", readerHtml.includes('"suppressStandardReportSections": true') && readerScript.includes("inputs: []") && readerScript.includes("outputs: []"));
 check("Reader Type payload includes Reader Recommendation section", readerScript.includes('"Reader Recommendation"'));
 check("Reader Type payload includes active scope context", readerScript.includes('"Active Scope Context"') && readerScript.includes("Area / Scope") && readerScript.includes("Opening / Door Count"));
+check("Reader Type payload uses real active scope context object", readerScript.includes("activeScopeContext: getActiveScopeContext()") && readerScript.includes("currentReport.activeScopeContext"));
 check("Reader Type payload includes Credential Verification Trail section", readerScript.includes('"Credential Verification Trail"'));
 check("Reader Type payload includes credential format field", readerScript.includes("cardFormat") && readerScript.includes("Card Format / Facility Code"));
 check("Reader Type payload includes existing credential compatibility field", readerScript.includes("existingCred") && readerScript.includes("Existing Credential Compatibility"));

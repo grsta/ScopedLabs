@@ -35,6 +35,8 @@
     nextBtn: $("continue"),
     localAssistantMount: $("accessControlLocalAssistantMount"),
     flowNote: $("flow-note"),
+    activeScopeCard: $("activeScopeContextCard"),
+    activeScopeRows: $("activeScopeContextRows"),
     reportTitle: $("reportTitle"),
     projectName: $("projectName"),
     clientName: $("clientName"),
@@ -308,6 +310,75 @@
     setExportStatus("Recommendation ready. Open Export Report or Save Snapshot.");
   }
 
+  function labelizeSlug(value, fallback = "Not documented") {
+    const text = String(value || "").trim();
+    if (!text) return fallback;
+
+    return text
+      .replace(/[-_]+/g, " ")
+      .replace(/\s+/g, " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+
+  function getActiveScopeContext() {
+    const scopeApi = window.ScopedLabsAccessControlScopeState;
+    const activeScope = scopeApi && typeof scopeApi.getActiveScope === "function"
+      ? scopeApi.getActiveScope()
+      : null;
+    const metadata = scopeApi && typeof scopeApi.readMetadata === "function"
+      ? scopeApi.readMetadata()
+      : {};
+
+    const scopeName = activeScope?.name || activeScope?.scopeName || activeScope?.areaName || "";
+    const openingCount = activeScope?.openingCount || activeScope?.doorCount || activeScope?.openings || activeScope?.doors || "";
+    const openingType = activeScope?.openingType || activeScope?.scopeType || "";
+    const doorFunction = activeScope?.doorFunction || "";
+    const securityLevel = activeScope?.securityLevel || activeScope?.threatLevel || "";
+    const powerLossIntent = activeScope?.powerLossIntent || "";
+
+    return {
+      projectSite: metadata?.projectName || metadata?.projectLocation || "Not documented",
+      areaScope: scopeName || "No active scope selected",
+      openingDoorCount: openingCount ? String(openingCount) : "Not documented",
+      openingType: labelizeSlug(openingType),
+      doorFunction: labelizeSlug(doorFunction),
+      securityContext: labelizeSlug(securityLevel),
+      upstreamSource: activeScope ? "Scope Planner active scope" : "No Scope Planner context detected",
+      powerLossIntent: labelizeSlug(powerLossIntent),
+      hasActiveScope: !!activeScope
+    };
+  }
+
+  function renderActiveScopeContext() {
+    if (!els.activeScopeRows) return;
+
+    const scope = getActiveScopeContext();
+
+    const rows = [
+      ["Project / Site", scope.projectSite],
+      ["Area / Scope", scope.areaScope],
+      ["Opening / Door Count", scope.openingDoorCount],
+      ["Opening Type", scope.openingType],
+      ["Door Function", scope.doorFunction],
+      ["Security Context", scope.securityContext],
+      ["Power Loss Intent", scope.powerLossIntent],
+      ["Upstream Source", scope.upstreamSource]
+    ];
+
+    els.activeScopeRows.innerHTML = rows.map(([label, value]) => {
+      return `
+        <div class="result-row" data-scope-field="${escapeHtml(label)}" data-scope-value="${escapeHtml(value)}">
+          <span class="result-label">${escapeHtml(label)}</span>
+          <span class="result-value">${escapeHtml(value)}</span>
+        </div>
+      `;
+    }).join("");
+
+    if (els.activeScopeCard) {
+      els.activeScopeCard.dataset.scopeStatus = scope.hasActiveScope ? "active" : "missing";
+    }
+  }
+
   function getReportMeta() {
     return {
       reportTitle: (els.reportTitle?.value || "").trim() || "Reader Type Selector Assessment",
@@ -568,7 +639,8 @@
       ],
       outputs: core.outputs,
       assumptions: assumptionsForTool(),
-      meta: getReportMeta()
+      meta: getReportMeta(),
+      activeScopeContext: getActiveScopeContext()
     };
   }
 
@@ -635,11 +707,17 @@
     const interpretation = outputValue("Engineering Interpretation") || currentReport.interpretation || "";
     const guidance = outputValue("Actionable Guidance") || "";
 
+    const activeScope = currentReport.activeScopeContext || getActiveScopeContext();
+
     const activeScopeRows = [
-      ["Project / Site", inputValue("Project / Site") || inputValue("Project") || "Not documented"],
-      ["Area / Scope", inputValue("Area / Scope") || inputValue("Scope") || inputValue("Area") || "Not documented"],
-      ["Opening / Door Count", inputValue("Opening / Door Count") || inputValue("Door Count") || "Not documented"],
-      ["Upstream Source", "Scope Planner / Fail-Safe context"]
+      ["Project / Site", activeScope.projectSite || "Not documented"],
+      ["Area / Scope", activeScope.areaScope || "Not documented"],
+      ["Opening / Door Count", activeScope.openingDoorCount || "Not documented"],
+      ["Opening Type", activeScope.openingType || "Not documented"],
+      ["Door Function", activeScope.doorFunction || "Not documented"],
+      ["Security Context", activeScope.securityContext || "Not documented"],
+      ["Power Loss Intent", activeScope.powerLossIntent || "Not documented"],
+      ["Upstream Source", activeScope.upstreamSource || "Scope Planner / Fail-Safe context"]
     ];
 
     const extraSections = [
@@ -745,6 +823,7 @@
     hideContinue();
     clearResults("Inputs changed. Press Recommend to refresh results.");
     loadFlowContext();
+    renderActiveScopeContext();
     applyToolShellModules();
     updateExportControls();
   }
@@ -755,6 +834,8 @@
     if (els.env) els.env.value = "indoor";
     if (els.throughput) els.throughput.value = "standard";
     if (els.iface) els.iface.value = "wg";
+    if (els.cardFormat) els.cardFormat.value = "unknown";
+    if (els.existingCred) els.existingCred.value = "unknown";
 
     currentReport = null;
 
@@ -768,6 +849,7 @@
     hideContinue();
     clearResults("Run recommendation.");
     loadFlowContext();
+    renderActiveScopeContext();
     updateExportControls();
   }
 
@@ -988,10 +1070,7 @@
         verificationStatus: verificationHold.label,
         cautionarySteps: verificationHold.steps,
         requiredActions: guidanceParts,
-        activeScopeContext: {
-          source: "Scope Planner / Fail-Safe context",
-          note: "Reader Type decision applies to the active Access Control scope carried into this step."
-        },
+        activeScopeContext: getActiveScopeContext(),
         nextTool: "Lock Power Budget"
       }
     });
@@ -1060,7 +1139,9 @@
       els.cred,
       els.env,
       els.throughput,
-      els.iface
+      els.iface,
+      els.cardFormat,
+      els.existingCred
     ].forEach((el) => {
       if (!el) return;
       el.addEventListener("input", invalidate);
@@ -1107,6 +1188,7 @@
     hideContinue();
     clearResults("Run recommendation.");
     loadFlowContext();
+    renderActiveScopeContext();
     updateExportControls();
 
     setTimeout(() => {
