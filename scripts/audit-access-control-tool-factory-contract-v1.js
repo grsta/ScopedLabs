@@ -52,6 +52,7 @@ const accessControlFiles = [
 const retiredReportShellReferences = accessControlFiles
   .filter((rel) => rel !== "scripts/audit-access-control-tool-factory-contract-v1.js")
   .filter((rel) => rel !== "scripts/audit-access-control-export-ownership-v1.js")
+  .filter((rel) => rel !== "scripts/audit-access-control-reader-type-factory-contract-v1.js")
   .filter((rel) => read(rel).includes("access-control-report-shell"));
 
 section("Canonical shared/category modules");

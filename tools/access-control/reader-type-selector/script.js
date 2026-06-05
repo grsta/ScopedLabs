@@ -29,8 +29,9 @@
     reset: $("reset"),
     results: $("results"),
     analysis: $("analysis-copy"),
-    nextWrap: $("continue-wrap"),
+    nextStepRow: $("next-step-row"),
     nextBtn: $("continue"),
+    localAssistantMount: $("accessControlLocalAssistantMount"),
     flowNote: $("flow-note"),
     reportTitle: $("reportTitle"),
     projectName: $("projectName"),
@@ -263,13 +264,37 @@
   }
 
   function showContinue() {
-    if (els.nextWrap) els.nextWrap.style.display = "flex";
+    if (els.nextStepRow) els.nextStepRow.style.display = "flex";
     if (els.nextBtn) els.nextBtn.disabled = false;
   }
 
   function hideContinue() {
-    if (els.nextWrap) els.nextWrap.style.display = "none";
+    if (els.nextStepRow) els.nextStepRow.style.display = "none";
     if (els.nextBtn) els.nextBtn.disabled = true;
+  }
+
+  function clearLocalAssistant() {
+    if (window.ScopedLabsLocalAssistant && els.localAssistantMount) {
+      window.ScopedLabsLocalAssistant.clear(els.localAssistantMount);
+      return;
+    }
+
+    if (els.localAssistantMount) {
+      els.localAssistantMount.innerHTML = "";
+      els.localAssistantMount.hidden = true;
+    }
+  }
+
+  function renderLocalAssistant(core) {
+    const assistant = window.ScopedLabsLocalAssistant;
+    const adapters = window.ScopedLabsAccessControlToolAssistantAdapters;
+    const adapter = adapters && typeof adapters.getAdapter === "function" ? adapters.getAdapter(STEP) : null;
+
+    if (!assistant || !adapter || !els.localAssistantMount || typeof adapter.buildModel !== "function") {
+      return false;
+    }
+
+    return assistant.mount(els.localAssistantMount, adapter.buildModel(core));
   }
 
   function clearAnalysis() {
@@ -287,6 +312,7 @@
     }
 
     clearAnalysis();
+    clearLocalAssistant();
   }
 
   function render(rows) {
@@ -348,6 +374,17 @@
     return selectEl.options[selectEl.selectedIndex]?.textContent?.trim() || selectEl.value || "";
   }
 
+  function getPreviousStepData() {
+    try {
+      const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) return {};
+      return parsed.data || {};
+    } catch {
+      return {};
+    }
+  }
+
   function buildReportPayload(core) {
     return {
       reportId: makeReportId("SL-ACC-RTS"),
@@ -372,340 +409,104 @@
     };
   }
 
-  function buildReportHTML(payload) {
-    const inputRows = (payload.inputs || []).map((item) => `
-      <tr>
-        <td>${escapeHtml(item.label)}</td>
-        <td>${escapeHtml(item.value)}</td>
-      </tr>
-    `).join("");
+  function getSharedExportPayload() {
+    if (!currentReport) return null;
 
-    const outputRows = (payload.outputs || []).map((item) => `
-      <tr>
-        <td>${escapeHtml(item.label)}</td>
-        <td>${escapeHtml(item.value)}</td>
-      </tr>
-    `).join("");
+    const outputValue = (label) => {
+      const row = (currentReport.outputs || []).find((item) => {
+        return item && String(item.label || "").trim().toLowerCase() === String(label || "").trim().toLowerCase();
+      });
 
-    const assumptions = (payload.assumptions || []).map((item) => `
-      <li>${escapeHtml(item)}</li>
-    `).join("");
+      return row ? row.value : "";
+    };
 
-    const projectDetails = [
-      payload.meta?.projectName ? `<div><strong>Project:</strong> ${escapeHtml(payload.meta.projectName)}</div>` : "",
-      payload.meta?.clientName ? `<div><strong>Client:</strong> ${escapeHtml(payload.meta.clientName)}</div>` : "",
-      payload.meta?.preparedBy ? `<div><strong>Prepared By:</strong> ${escapeHtml(payload.meta.preparedBy)}</div>` : ""
-    ].filter(Boolean).join("");
+    const textSection = (title, text, description) => {
+      const value = String(text || "").trim();
+      if (!value) return null;
+      return { title, description: description || "", text: value };
+    };
 
-    const notesBlock = payload.meta?.customNotes
-      ? `
-        <section class="section">
-          <h2>Custom Notes</h2>
-          <div class="body-copy">${escapeHtml(payload.meta.customNotes).replace(/\n/g, "<br>")}</div>
-        </section>
-      `
-      : "";
+    const previous = getPreviousStepData();
+    const readerType = outputValue("Reader Type") || "Pending";
+    const interfaceChoice = outputValue("Interface") || "Pending";
+    const security = outputValue("Security") || "Pending";
+    const environment = outputValue("Environment") || "Pending";
+    const throughput = outputValue("Throughput") || "Pending";
+    const interpretation = outputValue("Engineering Interpretation") || currentReport.interpretation || "";
+    const guidance = outputValue("Actionable Guidance") || "";
 
-    const statusClass = String(payload.status || "").toLowerCase();
+    const failMode = previous.recommendation || previous.failStateRecommendation || "Not carried forward";
+    const failStatus = previous.status || previous.failStateStatus || "Not documented";
+    const powerLossIntent = previous.powerLossIntent || previous.powerLoss || "Not documented";
 
-    return `<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>${escapeHtml(payload.meta?.reportTitle || payload.tool || "ScopedLabs Report")} • ScopedLabs</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    :root{
-      --ink:#101715;
-      --muted:#52615c;
-      --line:#d7e2db;
-      --accent:#1d8f55;
-      --accent-soft:#eaf7f0;
-      --watch:#a66d00;
-      --watch-soft:#fff6df;
-      --risk:#b42318;
-      --risk-soft:#fff0ee;
-    }
-    *{box-sizing:border-box}
-    html,body{margin:0;padding:0;background:#eef2ef;color:var(--ink);font-family:Inter, Arial, sans-serif}
-    body{padding:28px}
-    .page{
-      max-width:980px;
-      margin:0 auto;
-      background:#fff;
-      border:1px solid var(--line);
-      box-shadow:0 18px 50px rgba(0,0,0,.08);
-    }
-    .toolbar{
-      display:flex;
-      justify-content:flex-end;
-      gap:10px;
-      padding:14px 18px;
-      border-bottom:1px solid var(--line);
-      background:#fbfcfb;
-    }
-    .toolbar button{
-      appearance:none;
-      border:1px solid #c9d8cf;
-      background:#fff;
-      color:var(--ink);
-      border-radius:999px;
-      padding:10px 14px;
-      font-weight:700;
-      cursor:pointer;
-    }
-    .toolbar button:hover{background:#f3f7f5}
-    .report{padding:28px 30px 32px}
-    .brand-row{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      margin-bottom:10px;
-    }
-    .brand-row img{
-      width:28px;
-      height:28px;
-      display:block;
-    }
-    .brand-name{
-      font-size:1.15rem;
-      font-weight:800;
-      letter-spacing:.02em;
-    }
-    .tagline{
-      color:var(--muted);
-      font-size:.95rem;
-      margin-bottom:18px;
-    }
-    .report-head{
-      display:flex;
-      justify-content:space-between;
-      gap:18px;
-      align-items:flex-start;
-      border-top:1px solid var(--line);
-      border-bottom:1px solid var(--line);
-      padding:18px 0;
-      margin-bottom:22px;
-    }
-    .report-title{
-      font-size:1.7rem;
-      line-height:1.15;
-      margin:0 0 6px;
-    }
-    .report-meta{
-      color:var(--muted);
-      font-size:.95rem;
-      line-height:1.6;
-    }
-    .status-pill{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding:8px 12px;
-      border-radius:999px;
-      font-size:.82rem;
-      font-weight:800;
-      letter-spacing:.06em;
-      text-transform:uppercase;
-      border:1px solid transparent;
-      white-space:nowrap;
-    }
-    .status-pill.healthy{
-      color:var(--accent);
-      background:var(--accent-soft);
-      border-color:#c9ead7;
-    }
-    .status-pill.watch{
-      color:var(--watch);
-      background:var(--watch-soft);
-      border-color:#f2dfad;
-    }
-    .status-pill.risk{
-      color:var(--risk);
-      background:var(--risk-soft);
-      border-color:#f3c6c1;
-    }
-    .section{margin-top:24px}
-    .section h2{
-      margin:0 0 10px;
-      font-size:1rem;
-      letter-spacing:.02em;
-      text-transform:uppercase;
-    }
-    .summary,
-    .body-copy{
-      border:1px solid var(--line);
-      background:#fafcfb;
-      border-radius:14px;
-      padding:16px 18px;
-      line-height:1.65;
-    }
-    .project-details{
-      display:grid;
-      gap:6px;
-      margin-top:10px;
-      color:var(--muted);
-      font-size:.95rem;
-    }
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:18px;
-    }
-    table{
-      width:100%;
-      border-collapse:collapse;
-      border:1px solid var(--line);
-      border-radius:14px;
-      overflow:hidden;
-      font-size:.95rem;
-    }
-    th,td{
-      padding:11px 12px;
-      border-bottom:1px solid var(--line);
-      vertical-align:top;
-    }
-    th{
-      text-align:left;
-      background:#f7faf8;
-      font-size:.82rem;
-      text-transform:uppercase;
-      letter-spacing:.06em;
-    }
-    tr:last-child td{border-bottom:none}
-    td:first-child{
-      width:42%;
-      color:var(--muted);
-    }
-    td:last-child{
-      font-weight:700;
-      text-align:left;
-    }
-    .assumptions{
-      margin:0;
-      padding-left:18px;
-      line-height:1.7;
-    }
-    .foot{
-      margin-top:26px;
-      padding-top:16px;
-      border-top:1px solid var(--line);
-      color:var(--muted);
-      font-size:.9rem;
-      line-height:1.7;
-    }
-    @media (max-width:760px){
-      body{padding:14px}
-      .report{padding:20px}
-      .report-head{flex-direction:column}
-      .grid{grid-template-columns:1fr}
-    }
-    @media print{
-      body{background:#fff;padding:0}
-      .page{max-width:none;border:none;box-shadow:none}
-      .toolbar{display:none !important}
-      .report{padding:0}
-    }
-  </style>
-</head>
-<body>
-  <div class="page">
-    <div class="toolbar">
-      <button type="button" onclick="window.print()">Print / Save PDF</button>
-      <button type="button" onclick="window.close()">Close</button>
-    </div>
+    const extraSections = [
+      {
+        title: "Executive Summary",
+        text: currentReport.summary || ""
+      },
+      {
+        title: "Carry-Forward Context",
+        description: "Door behavior carried from Fail-Safe / Fail-Secure into reader selection.",
+        countLabel: failMode === "Not carried forward" ? "0 ITEMS" : "1 ITEM",
+        countTone: "muted",
+        tableClass: "extra-export-table--planner extra-export-table--access-scope",
+        tables: [
+          {
+            headers: ["Previous Step", "Decision", "Status", "Power Loss Intent", "Next Action"],
+            rows: [[
+              "Fail-Safe / Fail-Secure",
+              failMode,
+              failStatus,
+              powerLossIntent,
+              "Carry reader type into Lock Power Budget."
+            ]]
+          }
+        ]
+      },
+      {
+        title: "Inputs",
+        description: "Reader selection assumptions used for this planning recommendation.",
+        tableClass: "extra-export-table--kv",
+        tables: [
+          {
+            headers: ["Input", "Value"],
+            rows: (currentReport.inputs || []).map((item) => [item.label, item.value])
+          }
+        ]
+      },
+      {
+        title: "Reader Recommendation",
+        description: "Short decision facts only. Engineering interpretation and guidance are separated below.",
+        tableClass: "extra-export-table--planner extra-export-table--decision",
+        tables: [
+          {
+            headers: ["Reader Type", "Interface", "Security", "Environment", "Throughput"],
+            rows: [[readerType, interfaceChoice, security, environment, throughput]]
+          }
+        ]
+      }
+    ];
 
-    <div class="report">
-      <div class="brand-row">
-        <img src="https://scopedlabs.com/assets/favicon/favicon-32x32.png?v=1" alt="">
-        <div class="brand-name">ScopedLabs</div>
-      </div>
-      <div class="tagline">Engineering · Analysis · Tools</div>
+    [
+      textSection("Engineering Interpretation", interpretation, "Why this reader strategy fits the selected security, environment, and throughput assumptions."),
+      textSection("Actionable Guidance", guidance, "What should be checked before carrying this reader strategy into Lock Power Budget.")
+    ].filter(Boolean).forEach((section) => extraSections.push(section));
 
-      <div class="report-head">
-        <div>
-          <h1 class="report-title">${escapeHtml(payload.meta?.reportTitle || payload.tool || "ScopedLabs Report")}</h1>
-          <div class="report-meta">
-            <div><strong>Category:</strong> ${escapeHtml(payload.category || "")}</div>
-            <div><strong>Tool:</strong> ${escapeHtml(payload.tool || "")}</div>
-            <div><strong>Generated:</strong> ${escapeHtml(formatDateTime(payload.generatedAt || ""))}</div>
-            <div><strong>Report ID:</strong> ${escapeHtml(payload.reportId || "")}</div>
-          </div>
-        </div>
-        <div class="status-pill ${statusClass}">${escapeHtml(payload.status || "")}</div>
-      </div>
-
-      <section class="section">
-        <h2>Executive Summary</h2>
-        <div class="summary">
-          ${escapeHtml(payload.summary || "")}
-          <div class="project-details">${projectDetails}</div>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="grid">
-          <div>
-            <h2>Inputs</h2>
-            <table>
-              <thead><tr><th>Input</th><th>Value</th></tr></thead>
-              <tbody>${inputRows}</tbody>
-            </table>
-          </div>
-          <div>
-            <h2>Calculated Outputs</h2>
-            <table>
-              <thead><tr><th>Output</th><th>Value</th></tr></thead>
-              <tbody>${outputRows}</tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <section class="section">
-        <h2>Engineering Interpretation</h2>
-        <div class="body-copy">${escapeHtml(payload.interpretation || "")}</div>
-      </section>
-
-      ${notesBlock}
-
-      <section class="section">
-        <h2>Assumptions</h2>
-        <div class="body-copy"><ul class="assumptions">${assumptions}</ul></div>
-      </section>
-
-      <section class="section">
-        <h2>Disclaimer</h2>
-        <div class="body-copy">
-          ScopedLabs outputs are planning aids only and do not replace formal engineering review, code compliance review, site-specific validation, manufacturer documentation, or platform compatibility review.
-        </div>
-      </section>
-
-      <div class="foot">
-        ScopedLabs Pro export preview for internal and client-facing documentation workflows.
-      </div>
-    </div>
-  </div>
-</body>
-</html>`;
+    return {
+      ...currentReport,
+      meta: getReportMeta(),
+      summary: "",
+      inputs: [],
+      outputs: [],
+      interpretation: "",
+      extraSections,
+      stackReportSections: true
+    };
   }
 
-  function openReportWindow(payload) {
-    try {
-      const html = buildReportHTML(payload);
-      const blob = new Blob([html], { type: "text/html" });
-      const url = URL.createObjectURL(blob);
-      const win = window.open(url, "_blank");
-
-      if (!win) return false;
-
-      setTimeout(() => URL.revokeObjectURL(url), 10000);
-      return true;
-    } catch (err) {
-      console.error("Export report open failed:", err);
-      return false;
-    }
-  }
+  window.ScopedLabsAccessControlReaderTypeExport = Object.freeze({
+    getPayload: getSharedExportPayload
+  });
 
   function loadFlowContext() {
     const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
@@ -769,6 +570,7 @@
     hideContinue();
     clearResults("Inputs changed. Press Recommend to refresh results.");
     loadFlowContext();
+    applyToolShellModules();
     updateExportControls();
   }
 
@@ -885,9 +687,31 @@
 
     showContinue();
 
+    const status = getStatus({ sec, iface, cred });
+    const summary = buildSummary({ reader, interfaceRec, security });
+
+    const assistantCore = {
+      status,
+      recommendation: reader,
+      interfaceChoice: interfaceRec,
+      security,
+      environment: envNote,
+      throughput: throughputNote,
+      interpretation,
+      guidance,
+      nextTool: "Lock Power Budget",
+      requiredActions: [
+        guidance,
+        "Confirm the selected reader interface is supported by the panel and reader hardware.",
+        "Carry this reader strategy into Lock Power Budget before panel capacity is finalized."
+      ]
+    };
+
+    renderLocalAssistant(assistantCore);
+
     currentReport = buildReportPayload({
-      status: getStatus({ sec, iface, cred }),
-      summary: buildSummary({ reader, interfaceRec, security }),
+      status,
+      summary,
       interpretation,
       inputs: {
         securityLevel: labelFromSelect(els.sec),
@@ -942,6 +766,17 @@
         updateExportControls("Export details updated.");
       });
     });
+  }
+
+  function applyToolShellModules() {
+    if (
+      window.ScopedLabsToolShell &&
+      typeof window.ScopedLabsToolShell.applyBackContinueShell === "function"
+    ) {
+      window.ScopedLabsToolShell.applyBackContinueShell({
+        rowId: "accessControlFlowActions"
+      });
+    }
   }
 
   function init() {

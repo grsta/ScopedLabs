@@ -1,11 +1,11 @@
 /* ScopedLabs Access Control Tool Assistant Adapters
-   Version: access-control-assistant-adapters-002-factory-closeout
+   Version: access-control-assistant-adapters-003-reader-type
    Purpose: category-specific local assistant model adapters. Dormant unless a tool explicitly calls one.
 */
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-assistant-adapters-002-factory-closeout";
+  const API_VERSION = "access-control-assistant-adapters-003-reader-type";
 
   function safeText(value) {
     return String(value ?? "");
@@ -53,11 +53,46 @@
     };
   }
 
+  function buildReaderTypeSelectorModel(data) {
+    const status = safeText(data.status || "WATCH");
+    const recommendation = safeText(data.recommendation || "Reader recommendation pending");
+    const iface = safeText(data.interfaceChoice || "Interface not documented");
+    const guidance = safeText(data.guidance || "Confirm reader interface, credential behavior, environmental rating, and user throughput before continuing.");
+
+    return {
+      category: "access-control",
+      tool: "reader-type-selector",
+      kicker: "Local Design Assistant",
+      title: "Reader Type Assistant",
+      status,
+      summary: recommendation + " is the current reader direction. Interface basis: " + iface + ".",
+      assumptionsTitle: "Assumptions",
+      actionsTitle: "Recommended Actions",
+      assumptions: [
+        "Reader type is being selected after the door fail-state decision has been documented.",
+        "Credential strategy, panel interface, environmental rating, and user flow must align with the access-control platform.",
+        "Reader choice should be carried into Lock Power Budget before panel capacity is finalized."
+      ],
+      actions: Array.isArray(data.requiredActions) && data.requiredActions.length
+        ? data.requiredActions
+        : [
+            guidance,
+            "Confirm OSDP/Wiegand support before committing to reader hardware.",
+            "Carry this reader strategy into Lock Power Budget."
+          ]
+    };
+  }
+
   const adapters = Object.freeze({
     "fail-safe-fail-secure": Object.freeze({
       slug: "fail-safe-fail-secure",
       title: "Fail-Safe / Fail-Secure Assistant",
       buildModel: buildFailSafeFailSecureModel
+    }),
+    "reader-type-selector": Object.freeze({
+      slug: "reader-type-selector",
+      title: "Reader Type Assistant",
+      buildModel: buildReaderTypeSelectorModel
     })
   });
 
