@@ -34,16 +34,17 @@ function exportConfigIsValid(source) {
   }
 }
 
-check("Reader Type page uses current factory lane", html.includes("access-control-reader-type-factory-021-cad-result-cells") && html.includes("./script.js?v=access-control-reader-type-factory-021-cad-result-cells"));
+check("Reader Type page uses current factory lane", html.includes("access-control-reader-type-factory-022-assistant-card-shell") && html.includes("./script.js?v=access-control-reader-type-factory-022-assistant-card-shell"));
 check("Reader Type declares Access Control tool identity", html.includes('data-category="access-control"') && html.includes('data-step="reader-type-selector"'));
 check("Reader Type opts into Access Control tool polish", html.includes('data-access-control-tool-polish="true"'));
 check("Reader Type loads canonical export.js", html.includes("/assets/export.js?v=shared-export-030-semantic-report-tones"));
 check("Reader Type loads report metadata module", html.includes("/assets/scopedlabs-report-metadata.js"));
 check("Reader Type loads tool shell module", html.includes("/assets/scopedlabs-tool-shell.js"));
 check("Reader Type loads local assistant renderer", html.includes("/assets/scopedlabs-local-assistant.js"));
+check("Reader Type loads rich assistant card shell version", html.includes("scopedlabs-local-assistant-009-rich-card-shell") && read("assets/scopedlabs-local-assistant.js").includes("scopedlabs-local-assistant-card--rich") && read("assets/scopedlabs-local-assistant.js").includes("border: 1px solid rgba(125,255,152,.16)") && read("assets/scopedlabs-local-assistant.js").includes("padding: 18px 20px"));
 check(
   "Reader Type uses rich assistant header proof version",
-  html.includes("scopedlabs-local-assistant-007-rich-render-polish") &&
+  html.includes("scopedlabs-local-assistant-009-rich-card-shell") &&
     read("assets/scopedlabs-local-assistant.js").includes("const pillRow = model.hideHeaderPills") &&
     read("assets/scopedlabs-local-assistant.js").includes("model.hideHeaderPills")
 );

@@ -55,7 +55,7 @@ check(
 check("Shared local assistant supports optional sections", read("assets/scopedlabs-local-assistant.js").includes("renderSections") && read("assets/scopedlabs-local-assistant.js").includes("assistant-section-grid"));
 check("Shared local assistant can hide duplicate standard lists", read("assets/scopedlabs-local-assistant.js").includes("hideStandardLists"));
 check("Shared local assistant avoids empty rich-section filler", !read("assets/scopedlabs-local-assistant.js").includes("No additional items recorded"));
-check("Shared local assistant injects rich-section card styles", read("assets/scopedlabs-local-assistant.js").includes("ensureRichAssistantStyles") && read("assets/scopedlabs-local-assistant.js").includes("scopedlabs-local-assistant-card--rich"));
+check("Shared local assistant injects rich-section card styles", read("assets/scopedlabs-local-assistant.js").includes("ensureRichAssistantStyles") && read("assets/scopedlabs-local-assistant.js").includes("scopedlabs-local-assistant-009-rich-card-shell"));
 check("Reader Type hides duplicate standard assistant lists", adapters.includes("hideStandardLists: true"));
 check("Reader Type rich assistant hides header pills", adapters.includes("hideHeaderPills: true") && read("assets/scopedlabs-local-assistant.js").includes("hideHeaderPills"));
 check(
