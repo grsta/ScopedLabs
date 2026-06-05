@@ -28,6 +28,7 @@ check(
 check("Reusable Access Control polish asset exists", polish.includes("ScopedLabsAccessControlToolPolish") && polish.includes("access-control-tool-polish-007-hide-fail-safe-assistant-flow-line"));
 check("Fail-Safe loads reusable polish asset", html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-007-hide-fail-safe-assistant-flow-line"));
 check("Page opts into Access Control tool polish", html.includes('data-access-control-tool-polish="true"'));
+check("Fail-Safe hydrates inputs from active scope", script.includes("access-control-fail-safe-scope-input-hydration-015") && script.includes("applyActiveScopeToInputs") && script.includes("mapScopeHardwareType"));
 check("Loose Best For sentence removed", !html.includes('class="tool-best-for"') && !html.includes("<strong>Best for:</strong>"));
 check("Intro title uses normalized class", html.includes("access-control-tool-card-title") && html.includes("This tool starts the Access Control design flow"));
 check("Polish module hides KB and assistant pill rows", polish.includes(".sl-help-card>.pill-row") && polish.includes(".scopedlabs-local-assistant-card>.pill-row"));

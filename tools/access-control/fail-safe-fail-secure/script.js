@@ -810,6 +810,166 @@ function savePipelineResult(payload) {
     return selectEl ? selectEl.value : "";
   }
 
+  // access-control-fail-safe-scope-input-hydration-015
+  function setSelectValue(selectEl, value) {
+    if (!selectEl || value === undefined || value === null) return false;
+
+    const normalized = String(value).trim();
+    if (!normalized) return false;
+
+    const option = Array.from(selectEl.options || []).find((item) => item.value === normalized);
+    if (!option) return false;
+
+    selectEl.value = normalized;
+    return true;
+  }
+
+  function mapScopeDoorType(scope) {
+    const scopeType = String(scope?.scopeType || "").toLowerCase();
+    const openingType = String(scope?.openingType || "").toLowerCase();
+    const locationType = String(scope?.locationType || "").toLowerCase();
+    const doorFunction = String(scope?.doorFunction || "").toLowerCase();
+
+    if (
+      openingType.includes("stairwell") ||
+      openingType.includes("exit") ||
+      doorFunction.includes("stairwell")
+    ) {
+      return "stairwell";
+    }
+
+    if (
+      doorFunction.includes("it") ||
+      doorFunction.includes("server") ||
+      scopeType.includes("high-security-room")
+    ) {
+      return "it";
+    }
+
+    if (
+      locationType.includes("exterior") ||
+      locationType.includes("perimeter") ||
+      locationType.includes("parking") ||
+      openingType.includes("gate") ||
+      openingType.includes("turnstile") ||
+      scopeType.includes("exterior-entry")
+    ) {
+      return "perimeter";
+    }
+
+    return "interior";
+  }
+
+  function mapScopeLifePriority(scope) {
+    const planningPath = String(scope?.planningPath || "").toLowerCase();
+    const egressRole = String(scope?.egressRole || "").toLowerCase();
+    const freeEgress = String(scope?.freeEgress || "").toLowerCase();
+    const fireRelease = String(scope?.fireRelease || "").toLowerCase();
+
+    if (
+      planningPath.includes("egress") ||
+      egressRole.includes("required") ||
+      egressRole.includes("exit") ||
+      egressRole.includes("stairwell") ||
+      egressRole.includes("corridor") ||
+      freeEgress === "no" ||
+      fireRelease === "yes"
+    ) {
+      return "high";
+    }
+
+    if (egressRole.includes("not-egress")) {
+      return "med";
+    }
+
+    return "high";
+  }
+
+  function mapScopeThreat(scope) {
+    const threat = String(scope?.threatLevel || "").toLowerCase();
+
+    if (threat === "high" || threat === "critical") return "high";
+    if (threat === "medium" || threat === "med") return "med";
+    return "low";
+  }
+
+  function mapScopeHardwareType(scope) {
+    const lockIntent = String(scope?.lockIntent || "").toLowerCase();
+
+    if (lockIntent === "electric-strike") return "electric-strike";
+    if (lockIntent === "maglock") return "maglock";
+    if (lockIntent === "electrified-lockset") return "electrified-lockset";
+    if (lockIntent === "electrified-panic") return "electrified-panic-trim";
+    if (lockIntent === "motorized-latch") return "electric-latch-retraction";
+    if (lockIntent === "delayed-egress") return "delayed-egress";
+    if (lockIntent === "gate-lock") return "special-locking";
+
+    return "unknown";
+  }
+
+  function mapScopeFireRated(scope) {
+    const fireRated = String(scope?.fireRated || "").toLowerCase();
+
+    if (fireRated === "yes") return "yes";
+    if (fireRated === "no") return "no";
+
+    return "unknown";
+  }
+
+  function mapScopeEgressControlled(scope) {
+    const lockIntent = String(scope?.lockIntent || "").toLowerCase();
+    const freeEgress = String(scope?.freeEgress || "").toLowerCase();
+    const egressRole = String(scope?.egressRole || "").toLowerCase();
+
+    if (
+      lockIntent === "maglock" ||
+      lockIntent === "delayed-egress" ||
+      lockIntent === "special-locking" ||
+      freeEgress === "no"
+    ) {
+      return "yes";
+    }
+
+    if (freeEgress === "yes") {
+      return "no";
+    }
+
+    if (egressRole.includes("not-egress")) {
+      return "no";
+    }
+
+    return "unknown";
+  }
+
+  function mapScopeReleaseEvent(scope) {
+    const fireRelease = String(scope?.fireRelease || "").toLowerCase();
+    const powerLossIntent = String(scope?.powerLossIntent || "").toLowerCase();
+
+    if (fireRelease === "yes") return "fire-alarm";
+    if (powerLossIntent === "fail-safe") return "power-loss";
+    if (fireRelease === "no") return "none";
+
+    return "unknown";
+  }
+
+  function applyActiveScopeToInputs() {
+    const activeScope = getActiveAccessScope();
+    if (!activeScope) return false;
+
+    setSelectValue(els.doorType, mapScopeDoorType(activeScope));
+    setSelectValue(els.life, mapScopeLifePriority(activeScope));
+    setSelectValue(els.powerLoss, "normal");
+    setSelectValue(els.fire, String(activeScope.fireRelease || "").toLowerCase() === "yes" ? "yes" : "no");
+    setSelectValue(els.threat, mapScopeThreat(activeScope));
+    setSelectValue(els.hardwareType, mapScopeHardwareType(activeScope));
+    setSelectValue(els.fireRated, mapScopeFireRated(activeScope));
+    setSelectValue(els.egressControlled, mapScopeEgressControlled(activeScope));
+    setSelectValue(els.releaseEvent, mapScopeReleaseEvent(activeScope));
+
+    return true;
+  }
+
+
   function buildFailSafeDecisionModel(base, model) {
     const actions = [];
     const flags = [];
@@ -1124,6 +1284,8 @@ function savePipelineResult(payload) {
     if (els.releaseEvent) els.releaseEvent.value = "unknown";
     if (els.standbyPower) els.standbyPower.value = "unknown";
 
+    applyActiveScopeToInputs();
+
     currentReport = null;
     invalidatePipelineResult();
     clearResults("Run the evaluation to see results.");
@@ -1196,7 +1358,10 @@ function savePipelineResult(payload) {
     applyToolShellModules();
     renderActiveScopeContext();
 
-    window.addEventListener("scopedlabs:access-control-scope-updated", renderActiveScopeContext);
+    window.addEventListener("scopedlabs:access-control-scope-updated", () => {
+      renderActiveScopeContext();
+      if (!currentReport) applyActiveScopeToInputs();
+    });
 
     setTimeout(() => {
       updateExportControls();

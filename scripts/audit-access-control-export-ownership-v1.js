@@ -51,7 +51,7 @@ const referencesReportShell = searchFiles
   .filter((rel) => rel !== "scripts/audit-access-control-reader-type-factory-contract-v1.js")
   .filter((rel) => read(rel).includes("access-control-report-shell"));
 
-check("Fail-Safe cache bumped to export ownership lane", html.includes("access-control-fail-safe-export-ownership-014-report-tones") && html.includes("./script.js?v=access-control-fail-safe-export-ownership-014-report-tones"));
+check("Fail-Safe cache points to current local script lane", html.includes("access-control-fail-safe-scope-input-hydration-015") && html.includes("./script.js?v=access-control-fail-safe-scope-input-hydration-015"));
 check("Fail-Safe uses canonical export.js lane", html.includes("/assets/export.js?v=shared-export-030-semantic-report-tones"));
 check("Fail-Safe does not load duplicate report shell", !html.includes("/assets/access-control-report-shell.js"));
 check("Duplicate Access Control report shell asset retired", !exists("assets/access-control-report-shell.js"));
