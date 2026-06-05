@@ -2,6 +2,20 @@
   "use strict";
 
   const VERSION = "access-control-output-shell-001-lock-power-visual-export";
+  const CONTRACT = Object.freeze({
+    marker: "ACCESS_CONTROL_OUTPUT_SHELL_CONTRACT_001",
+    role: "assistant-owned-output-visual-export-handoff",
+    category: "access-control",
+    currentProofTool: "lock-power-budget",
+    requiredMethods: Object.freeze(["register", "getChartImage", "attachExportGetter", "showVisual", "hideVisual"]),
+    outputPattern: Object.freeze({
+      visibleDecisionLayer: "assistant-shell",
+      visibleEngineeringLayer: "cad-visual",
+      hiddenDataLayer: "result-ledger",
+      exportHandoff: "chart-image-getter"
+    }),
+    futureCoreTargets: Object.freeze(["panel-capacity", "access-level-sizing"])
+  });
   const registry = new Map();
 
   function resolveEl(ref) {
@@ -89,6 +103,7 @@
 
   window.ScopedLabsAccessControlOutputShell = Object.freeze({
     VERSION,
+    CONTRACT,
     register,
     getChartImage,
     attachExportGetter,

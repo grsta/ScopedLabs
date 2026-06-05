@@ -85,6 +85,14 @@ check(
     html.includes('id="saveSnapshot"')
 );
 
+
+check(
+  "Output shell contract is exported",
+  moduleText.includes("ACCESS_CONTROL_OUTPUT_SHELL_CONTRACT_001") &&
+    moduleText.includes("CONTRACT,") &&
+    moduleText.includes('role: "assistant-owned-output-visual-export-handoff"')
+);
+
 console.log("\nAccess Control output shell module audit:");
 console.table(rows);
 
