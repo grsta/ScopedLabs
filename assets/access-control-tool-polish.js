@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-tool-polish-001";
+  const VERSION = "access-control-tool-polish-002-title-weight-match";
   const STYLE_ID = "access-control-tool-polish-styles";
 
   const FLOW_LABELS = {
@@ -28,8 +28,10 @@
       'body[data-category="access-control"][data-access-control-tool-polish="true"] .scopedlabs-local-assistant-card>.pill-row{display:none!important;}',
       'body[data-category="access-control"][data-access-control-tool-polish="true"] .sl-help-title,',
       'body[data-category="access-control"][data-access-control-tool-polish="true"] .access-control-tool-card-title,',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"] .card > h2.card-title,',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"] .access-scope-context-card > .h3,',
       'body[data-category="access-control"][data-access-control-tool-polish="true"] .scopedlabs-local-assistant-card .h2,',
-      'body[data-category="access-control"][data-access-control-tool-polish="true"] .access-fail-safe-export-card .h3{margin-top:0;color:rgba(246,255,248,.96);font-size:1.24rem;line-height:1.2;font-weight:900;letter-spacing:normal;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"] .access-fail-safe-export-card .h3{margin-top:0;color:rgba(246,255,248,.96);font-size:1.24rem;line-height:1.2;font-weight:700;letter-spacing:normal;}',
       'body[data-category="access-control"][data-access-control-tool-polish="true"] .access-control-tool-intro-card .muted,',
       'body[data-category="access-control"][data-access-control-tool-polish="true"] .sl-help-summary{font-size:.96rem;line-height:1.55;}',
       'body[data-category="access-control"][data-access-control-tool-polish="true"] .access-assistant-flow-line{color:rgba(203,213,225,.7);font-size:.78rem;font-weight:850;letter-spacing:.04em;margin:0 0 8px;text-transform:none;}',
