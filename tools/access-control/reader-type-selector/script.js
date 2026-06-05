@@ -51,6 +51,124 @@
 
   let currentReport = null;
 
+  function ensureReaderResultCadStyles() {
+    if (typeof document === "undefined" || document.getElementById("reader-type-result-cad-styles")) return;
+
+    const style = document.createElement("style");
+    style.id = "reader-type-result-cad-styles";
+    style.textContent = `
+      .reader-result-hero {
+        border: 1px solid rgba(125,255,152,.18);
+        background: rgba(125,255,152,.03);
+        border-radius: 14px;
+        padding: 14px 16px;
+        margin-bottom: 14px;
+      }
+
+      .reader-result-kicker {
+        color: rgba(190,255,205,.82);
+        font-size: .68rem;
+        font-weight: 760;
+        letter-spacing: .08em;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+      }
+
+      .reader-result-title {
+        color: rgba(226,232,240,.94);
+        font-size: 1.02rem;
+        font-weight: 760;
+        line-height: 1.25;
+      }
+
+      .reader-result-subtitle {
+        color: rgba(203,213,225,.78);
+        font-size: .86rem;
+        font-weight: 520;
+        margin-top: 6px;
+      }
+
+      .reader-result-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .reader-result-grid .result-row {
+        align-items: start;
+        border: 1px solid rgba(148,163,184,.12);
+        border-radius: 10px;
+        display: grid;
+        gap: 6px;
+        grid-template-columns: minmax(120px, .65fr) minmax(0, 1fr);
+        min-height: 0;
+        padding: 8px 10px;
+        background: rgba(255,255,255,.022);
+      }
+
+      .reader-result-grid .result-row--wide {
+        grid-column: 1 / -1;
+      }
+
+      .reader-result-grid .result-label {
+        color: rgba(203,213,225,.64);
+        font-size: .66rem;
+        font-weight: 720;
+        letter-spacing: .08em;
+        line-height: 1.25;
+        text-transform: uppercase;
+      }
+
+      .reader-result-grid .result-value {
+        color: rgba(226,232,240,.88);
+        font-size: .84rem;
+        font-weight: 720;
+        line-height: 1.35;
+        text-align: right;
+      }
+
+      .reader-result-grid .result-value[data-tone="active"] {
+        color: rgba(125,255,152,.92);
+      }
+
+      .reader-result-grid .result-value[data-tone="watch"] {
+        color: rgba(255,214,102,.94);
+      }
+
+      .reader-result-grid .result-value[data-tone="risk"] {
+        color: rgba(255,138,138,.94);
+      }
+
+      .reader-status-token--healthy {
+        color: rgba(125,255,152,.94);
+      }
+
+      .reader-status-token--watch {
+        color: rgba(255,214,102,.94);
+      }
+
+      .reader-status-token--risk {
+        color: rgba(255,138,138,.94);
+      }
+
+      @media (max-width: 760px) {
+        .reader-result-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .reader-result-grid .result-row {
+          grid-template-columns: 1fr;
+        }
+
+        .reader-result-grid .result-value {
+          text-align: left;
+        }
+      }
+    `;
+
+    document.head.appendChild(style);
+  }
+
   function ensureReaderTypeVerificationStyles() {
     if (typeof document === "undefined" || document.getElementById("reader-type-verification-styles")) return;
 
@@ -85,14 +203,6 @@
         margin: 0;
         padding-left: 20px;
       }
-
-      .reader-status-token--watch {
-        color: #ffd666;
-      }
-
-      .reader-status-token--risk {
-        color: #ff8a8a;
-      }
     `;
 
     document.head.appendChild(style);
@@ -106,7 +216,11 @@
 
     const status = match[1].toUpperCase();
     const rest = match[2] || "";
-    const toneClass = status === "RISK" ? "reader-status-token--risk" : status === "WATCH" ? "reader-status-token--watch" : "";
+    const toneClass =
+      status === "RISK" ? "reader-status-token--risk" :
+      status === "WATCH" ? "reader-status-token--watch" :
+      status === "HEALTHY" ? "reader-status-token--healthy" :
+      "";
 
     if (!toneClass) return escapeHtml(text);
 
@@ -437,8 +551,7 @@
     const l = String(label || "").toLowerCase();
     const v = String(value || "").toLowerCase();
 
-    if (l.includes("verification status") && v.includes("risk")) return "";
-    if (l.includes("verification status") && v.includes("watch")) return "";
+    if (l.includes("verification status")) return "";
     if (l.includes("cautionary") || l.includes("compatibility risk")) return v.includes("no major") ? "muted" : "watch";
     if (l.includes("card format") && (v.includes("unknown") || v.includes("csn") || v.includes("uid") || v.includes("26-bit"))) return "watch";
     if (l.includes("interface") && v.includes("osdp")) return "active";
@@ -474,6 +587,7 @@
     if (!els.results) return;
 
     ensureReaderTypeVerificationStyles();
+    ensureReaderResultCadStyles();
 
     const rowMap = new Map(rows.map((item) => [item.label, item.value]));
     const readerType = rowMap.get("Reader Type") || "Reader recommendation pending";

@@ -68,6 +68,8 @@ check("Reader Type assistant uses Next Step instead of duplicate Carry Forward",
 check("Reader Type local assistant receives guidance/actions", script.includes("renderLocalAssistant(assistantCore)") && script.includes("requiredActions"));
 check("Reader Type assistant displays credential verification trail", adapters.includes("Credential format basis") && adapters.includes("Existing credential compatibility") && adapters.includes("Compatibility risk"));
 check("Reader Type displays visible verification hold", script.includes("reader-verification-hold") && script.includes(": Confirm before continuing") && script.includes("Verification Status"));
+check("Reader Type result cells use CAD scope-card rhythm", script.includes("ensureReaderResultCadStyles") && script.includes("rgba(148,163,184,.12)") && script.includes("font-weight: 720"));
+check("Reader Type semantic status token includes healthy", script.includes("reader-status-token--healthy") && script.includes('status === "HEALTHY"'));
 check("Reader Type warning card uses text-tone treatment", script.includes("renderSemanticStatusText") && script.includes("reader-status-token--watch") && script.includes("labeledSemanticValue"));
 check("Reader Type warning card avoids amber filled panel", !script.includes("background: rgba(255, 191, 87, 0.09)") && !script.includes("border: 1px solid rgba(255, 191, 87, 0.38)"));
 check("Reader Type assistant includes verification required gate", adapters.includes("Verification Required") && adapters.includes("Do not treat this reader decision as final"));
