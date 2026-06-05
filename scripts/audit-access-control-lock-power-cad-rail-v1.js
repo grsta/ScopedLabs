@@ -15,7 +15,7 @@ const rows = [];
 const html = read("tools/access-control/lock-power-budget/index.html");
 const script = read("tools/access-control/lock-power-budget/script.js");
 
-check("Lock Power local script cache is visual output fix lane", html.includes("./script.js?v=access-control-lock-power-visual-output-fix-028"));
+check("Lock Power local script cache is output shell module lane", html.includes("./script.js?v=access-control-lock-power-output-shell-module-029"));
 check("Lock Power preserves chart DOM hook IDs", html.includes('id="chartWrap"') && html.includes('id="chart"'));
 check("Lock Power uses CAD rail mount, not canvas", html.includes("access-lock-power-cad-rail") && !html.includes('<canvas id="chart"></canvas>'));
 check("Lock Power includes CAD power rail styles", html.includes("access-lock-power-cad-power-rail-025"));
@@ -27,7 +27,7 @@ check("CAD renderer creates headroom bracket", script.includes("function headroo
 check("CAD renderer creates lock load bank", script.includes("function electricStrikeLoadSymbol") && script.includes("Lock Loads"));
 check("CAD renderer uses only existing calculated metrics", script.includes("metrics?.peak") && script.includes("metrics?.required") && script.includes("metrics?.watts") && script.includes("metrics?.utilizationPct"));
 check("CAD renderer remains report-safe SVG data image", script.includes("function getCadPowerRailImage") && script.includes("data:image/svg+xml;charset=utf-8"));
-check("renderChart uses CAD SVG rail", script.includes("els.chart.innerHTML = buildCadPowerRailSvg(metrics, { exportMode: false });"));
+check("renderChart uses CAD SVG rail", script.includes("renderVisualOutput(metrics);") && script.includes("shell.showVisual"));
 check("Export image uses CAD SVG rail", script.includes("getCadPowerRailImage(lastMetrics, { exportMode: true })"));
 check("Lock Power preserves core power formula", script.includes("const peak = effectiveSimul * amps;") && script.includes("const required = peak * (1 + headroom / 100);") && script.includes("const watts = required * voltage;"));
 check("Lock Power scope hydration remains present", script.includes("applyActiveScopeToInputs") && script.includes("mapScopeLockType") && script.includes("getScopeLockCount"));

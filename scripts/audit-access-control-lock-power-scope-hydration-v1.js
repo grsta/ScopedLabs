@@ -33,8 +33,8 @@ check(
 );
 
 check(
-  "Lock Power local script cache is current visual output fix lane",
-  html.includes("./script.js?v=access-control-lock-power-visual-output-fix-028")
+  "Lock Power local script cache is current output shell module lane",
+  html.includes("./script.js?v=access-control-lock-power-output-shell-module-029")
 );
 
 check(

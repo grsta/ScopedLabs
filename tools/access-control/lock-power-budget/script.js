@@ -357,6 +357,16 @@
 
     chart = null;
 
+    const shell = outputShell();
+    if (shell && typeof shell.hideVisual === "function") {
+      shell.hideVisual({
+        card: els.visualCard,
+        wrap: els.chartWrap,
+        target: els.chart
+      });
+      return;
+    }
+
     if (els.chart) {
       els.chart.innerHTML = "";
     }
@@ -1287,6 +1297,33 @@
   }
 
 
+  // access-control-lock-power-output-shell-module-029: shared visual shell owns CAD output visibility and export image handoff.
+  function outputShell() {
+    return window.ScopedLabsAccessControlOutputShell || null;
+  }
+
+  function attachOutputShellExport() {
+    const shell = outputShell();
+
+    if (shell && typeof shell.register === "function") {
+      shell.register(STEP, {
+        getChartImage: () => getCadPowerRailImage(lastMetrics, { exportMode: true })
+      });
+    }
+
+    if (shell && typeof shell.attachExportGetter === "function") {
+      shell.attachExportGetter(STEP, window.ScopedLabsExportConfig);
+      return true;
+    }
+
+    if (window.ScopedLabsExportConfig) {
+      window.ScopedLabsExportConfig.getChartImage = getExportChartImage;
+      return true;
+    }
+
+    return false;
+  }
+
   function clearLocalAssistant() {
     if (window.ScopedLabsLocalAssistant && els.localAssistantMount) {
       window.ScopedLabsLocalAssistant.clear(els.localAssistantMount);
@@ -1398,9 +1435,21 @@
   function renderVisualOutput(metrics) {
     if (!metrics || !els.chart || !els.chartWrap) return false;
 
+    const svg = buildCadPowerRailSvg(metrics, { exportMode: false });
+    const shell = outputShell();
+
+    if (shell && typeof shell.showVisual === "function") {
+      return shell.showVisual({
+        card: els.visualCard,
+        wrap: els.chartWrap,
+        target: els.chart,
+        html: svg
+      });
+    }
+
     if (els.visualCard) els.visualCard.hidden = false;
     els.chartWrap.hidden = false;
-    els.chart.innerHTML = buildCadPowerRailSvg(metrics, { exportMode: false });
+    els.chart.innerHTML = svg;
 
     return true;
   }
@@ -1410,9 +1459,8 @@
 
     if (!els.chart) return;
 
-    showChartWrap();
+    renderVisualOutput(metrics);
 
-    els.chart.innerHTML = buildCadPowerRailSvg(metrics, { exportMode: false });
     chart = {
       destroy() {
         if (els.chart) els.chart.innerHTML = "";
@@ -1487,7 +1535,7 @@
       });
     }
 
-    renderVisualOutput(metrics);
+    renderVisualOutput(lastMetrics);
 
     currentReport = buildCurrentReportPayload();
     renderLocalAssistant({
@@ -1554,6 +1602,7 @@
     if (year) year.textContent = new Date().getFullYear();
 
     reset();
+    attachOutputShellExport();
     applyShellModules();
 
     window.addEventListener("scopedlabs:access-control-scope-updated", () => {
@@ -1569,6 +1618,7 @@
     setTimeout(() => {
       unlockCategoryPage();
       updateExportControls();
+      attachOutputShellExport();
       applyShellModules();
     }, 400);
 

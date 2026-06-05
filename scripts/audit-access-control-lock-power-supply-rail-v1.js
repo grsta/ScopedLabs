@@ -15,12 +15,12 @@ const rows = [];
 const html = read("tools/access-control/lock-power-budget/index.html");
 const script = read("tools/access-control/lock-power-budget/script.js");
 
-check("Lock Power local script cache is visual output fix lane", html.includes("./script.js?v=access-control-lock-power-visual-output-fix-028"));
+check("Lock Power local script cache is output shell module lane", html.includes("./script.js?v=access-control-lock-power-output-shell-module-029"));
 check("Lock Power replaces old canvas chart with CAD SVG rail mount", html.includes('class="access-lock-power-cad-rail"') && !html.includes('<canvas id="chart"></canvas>'));
 check("Lock Power includes CAD power rail styles", html.includes("access-lock-power-cad-power-rail-025"));
 check("Lock Power script builds compact CAD rail SVG", script.includes("function buildCadPowerRailSvg") && script.includes("Lock Power Rail"));
 check("Lock Power exports CAD rail as SVG data image", script.includes("function getCadPowerRailImage") && script.includes("data:image/svg+xml;charset=utf-8"));
-check("Lock Power renderChart now renders CAD SVG rail", script.includes("els.chart.innerHTML = buildCadPowerRailSvg(metrics, { exportMode: false });"));
+check("Lock Power renderChart now renders CAD SVG rail", script.includes("renderVisualOutput(metrics);") && script.includes("shell.showVisual"));
 check("Old Power Stress Magnitude chart title removed", !script.includes("Power Stress Magnitude"));
 check("Lock Power preserves core power formula", script.includes("const peak = effectiveSimul * amps;") && script.includes("const required = peak * (1 + headroom / 100);") && script.includes("const watts = required * voltage;"));
 check("Lock Power scope hydration remains present", script.includes("applyActiveScopeToInputs") && script.includes("mapScopeLockType") && script.includes("getScopeLockCount"));

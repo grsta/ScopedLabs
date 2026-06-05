@@ -24,7 +24,7 @@ check("Lock Power loads Local Assistant module", html.includes("/assets/scopedla
 check("Lock Power loads Access Control assistant adapters", html.includes("/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-011-lock-power-budget-adapter"));
 check("Lock Power loads report metadata module", html.includes("/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes"));
 check("Lock Power loads Access Control polish module", html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-007-hide-fail-safe-assistant-flow-line"));
-check("Lock Power local script cache is visual output fix lane", html.includes("./script.js?v=access-control-lock-power-visual-output-fix-028"));
+check("Lock Power local script cache is output shell module lane", html.includes("./script.js?v=access-control-lock-power-output-shell-module-029"));
 
 check(
   "Lock Power has standard flow actions shell",
