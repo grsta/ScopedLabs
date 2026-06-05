@@ -1,5 +1,5 @@
 /* ScopedLabs Local Assistant
-   Version: scopedlabs-local-assistant-003-section-support
+   Version: scopedlabs-local-assistant-004-hide-standard-lists
    Purpose: generic local tool assistant renderer with the same visible card rhythm used by proven Physical Security local assistants.
    Notes:
    - Dormant by default.
@@ -10,7 +10,7 @@
 (function () {
   "use strict";
 
-  const API_VERSION = "scopedlabs-local-assistant-003-section-support";
+  const API_VERSION = "scopedlabs-local-assistant-004-hide-standard-lists";
 
   function safeText(value) {
     return String(value ?? "");
@@ -52,7 +52,8 @@
       actionsTitle: safeText(data.actionsTitle || "Recommended Actions"),
       assumptions: list(data.assumptions),
       actions: list(data.actions),
-      sections
+      sections,
+      hideStandardLists: data.hideStandardLists === true
     };
   }
 
@@ -91,7 +92,7 @@
   function renderHtml(modelInput) {
     const model = buildModel(modelInput);
     return '' +
-      '<section class="card tool-card scopedlabs-local-assistant-003-section-support access-control-local-assistant-card" data-local-assistant-category="' + escapeHtml(model.category) + '" data-local-assistant-tool="' + escapeHtml(model.tool) + '">' +
+      '<section class="card tool-card scopedlabs-local-assistant-004-hide-standard-lists access-control-local-assistant-card" data-local-assistant-category="' + escapeHtml(model.category) + '" data-local-assistant-tool="' + escapeHtml(model.tool) + '">' +
         '<div class="pill-row">' +
           '<span class="pill">' + escapeHtml(model.kicker) + '</span>' +
           '<span class="pill" data-status="' + escapeHtml(model.status) + '">' + escapeHtml(model.status) + '</span>' +

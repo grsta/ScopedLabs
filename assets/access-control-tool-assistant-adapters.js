@@ -1,11 +1,11 @@
 /* ScopedLabs Access Control Tool Assistant Adapters
-   Version: access-control-assistant-adapters-004-reader-guidance
+   Version: access-control-assistant-adapters-005-reader-dedupe
    Purpose: category-specific local assistant model adapters. Dormant unless a tool explicitly calls one.
 */
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-assistant-adapters-004-reader-guidance";
+  const API_VERSION = "access-control-assistant-adapters-005-reader-dedupe";
 
   function safeText(value) {
     return String(value ?? "");
@@ -72,10 +72,11 @@
       title: "Reader Type Assistant",
       status,
       summary,
+      hideStandardLists: true,
       sections: [
         {
           title: "Decision Basis",
-          body: "The reader choice is being judged by credential strategy, interface supervision, environment, throughput, and the downstream lock-power impact.",
+          body: "This explains why the current reader direction was selected from the inputs.",
           items: [
             "Reader direction: " + recommendation,
             "Interface basis: " + iface,
@@ -87,8 +88,8 @@
         {
           title: "Fix Path",
           body: interfaceWatch
-            ? "The main issue is not the reader body style; it is the signaling path. Wiegand can work, but it is weaker for new designs when supervised/encrypted options are available."
-            : "The selected interface is stronger for new designs. Keep compatibility, addressing, wiring, and panel support aligned before moving downstream.",
+            ? "This is the correction path. The reader body style can stay, but the signaling path should be reviewed because Wiegand is weaker for new supervised designs."
+            : "This is the verification path. The selected interface is stronger for new designs, but compatibility and addressing still need confirmation.",
           items: interfaceWatch
             ? [
                 "Confirm whether the access panel and reader line can support OSDP.",
@@ -105,7 +106,7 @@
         },
         {
           title: "Carry Forward",
-          body: "The next tool should not guess reader load or interface assumptions. Carry this reader strategy into Lock Power Budget.",
+          body: "This is what should move downstream. Lock Power Budget should receive the selected reader type, panel interface, and any legacy-interface warning.",
           items: [
             "Carry reader type into Lock Power Budget.",
             "Carry panel interface into Lock Power Budget.",
