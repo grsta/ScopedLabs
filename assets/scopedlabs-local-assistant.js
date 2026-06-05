@@ -1,5 +1,5 @@
 /* ScopedLabs Local Assistant
-   Version: scopedlabs-local-assistant-006-rich-header-proof
+   Version: scopedlabs-local-assistant-007-rich-render-polish
    Purpose: generic local tool assistant renderer with the same visible card rhythm used by proven Physical Security local assistants.
    Notes:
    - Dormant by default.
@@ -10,7 +10,7 @@
 (function () {
   "use strict";
 
-  const API_VERSION = "scopedlabs-local-assistant-006-rich-header-proof";
+  const API_VERSION = "scopedlabs-local-assistant-007-rich-render-polish";
 
   function safeText(value) {
     return String(value ?? "");
@@ -78,21 +78,70 @@
     return '<div class="assistant-grid assistant-section-grid">' +
       sections.map((section) => {
         const body = section.body
-          ? '<p class="muted">' + escapeHtml(section.body) + '</p>'
+          ? '<p class="muted assistant-section-body">' + escapeHtml(section.body) + '</p>'
+          : "";
+
+        const itemsHtml = Array.isArray(section.items) && section.items.length
+          ? renderList(section.items, "")
           : "";
 
         return '<div class="assistant-section-card">' +
           '<h3>' + escapeHtml(section.title || "Guidance") + '</h3>' +
           body +
-          renderList(section.items || [], "No additional items recorded.") +
+          itemsHtml +
         '</div>';
       }).join("") +
     '</div>';
   }
 
+  function ensureRichAssistantStyles() {
+    if (document.getElementById("scopedlabs-local-assistant-rich-styles")) return;
+
+    const style = document.createElement("style");
+    style.id = "scopedlabs-local-assistant-rich-styles";
+    style.textContent = `
+      .scopedlabs-local-assistant-card--rich {
+        border-radius: 18px;
+        overflow: hidden;
+      }
+
+      .scopedlabs-local-assistant-card--rich > h2 {
+        margin-top: 0;
+      }
+
+      .scopedlabs-local-assistant-card--rich .assistant-section-grid {
+        display: grid;
+        gap: 14px;
+        margin-top: 18px;
+      }
+
+      .scopedlabs-local-assistant-card--rich .assistant-section-card {
+        background: rgba(0, 0, 0, 0.12);
+        border: 1px solid rgba(120, 255, 120, 0.10);
+        border-radius: 14px;
+        padding: 14px 16px;
+      }
+
+      .scopedlabs-local-assistant-card--rich .assistant-section-card h3 {
+        margin: 0 0 10px;
+      }
+
+      .scopedlabs-local-assistant-card--rich .assistant-section-body {
+        margin: 0;
+      }
+
+      .scopedlabs-local-assistant-card--rich .assistant-section-body + ul {
+        margin-top: 10px;
+      }
+    `;
+
+    document.head.appendChild(style);
+  }
+
   function renderHtml(modelInput) {
     const model = buildModel(modelInput);
-    const richClass = model.sections && model.sections.length ? " scopedlabs-local-assistant-card--rich" : "";
+    ensureRichAssistantStyles();
+    const richClass = model.sections && model.sections.length ? " scopedlabs-local-assistant-007-rich-render-polish" : "";
     const pillRow = model.hideHeaderPills
       ? ""
       : '<div class="pill-row">' +
@@ -114,7 +163,7 @@
         '</div>';
 
     return '' +
-      '<div class="scopedlabs-local-assistant-card' + richClass + '">' +
+      '<div class="scopedlabs-local-assistant-007-rich-render-polish' + richClass + '">' +
         pillRow +
         '<h2>' + escapeHtml(model.title) + '</h2>' +
         '<p class="muted">' + escapeHtml(model.summary) + '</p>' +
