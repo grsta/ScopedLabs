@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-tool-polish-004-fail-safe-assistant-growth";
+  const VERSION = "access-control-tool-polish-005-fail-safe-assistant-panel-fit";
   const STYLE_ID = "access-control-tool-polish-styles";
 
   const FLOW_LABELS = {
@@ -36,6 +36,14 @@
       'body[data-category="access-control"][data-access-control-tool-polish="true"] .sl-help-summary{font-size:.96rem;line-height:1.55;}',
       '/* access-control-reader-type-chip-layout-003 */',
       '/* access-control-fail-safe-assistant-growth-004 */',
+      '/* access-control-fail-safe-assistant-panel-fit-005 */',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .access-control-local-assistant-mount{height:auto!important;max-height:none!important;overflow:visible!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .access-control-local-assistant-mount .scopedlabs-local-assistant-card{box-sizing:border-box!important;height:auto!important;max-height:none!important;overflow:visible!important;padding-bottom:20px!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .access-control-local-assistant-mount .assistant-grid{align-items:start!important;height:auto!important;max-height:none!important;overflow:visible!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .access-control-local-assistant-mount .assistant-panel{box-sizing:border-box!important;height:auto!important;max-height:none!important;min-height:0!important;min-width:0!important;overflow:visible!important;padding-bottom:18px!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .access-control-local-assistant-mount .assistant-panel ul{height:auto!important;max-height:none!important;margin-bottom:0!important;overflow:visible!important;padding-bottom:2px!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .access-control-local-assistant-mount .assistant-panel li{line-height:1.55!important;margin-bottom:8px!important;overflow-wrap:break-word!important;word-break:normal!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .access-control-local-assistant-mount .assistant-panel li:last-child{margin-bottom:0!important;}',
       'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .scopedlabs-local-assistant-card{height:auto!important;max-height:none!important;min-height:0!important;overflow:visible!important;}',
       'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .assistant-grid{align-items:stretch!important;height:auto!important;max-height:none!important;overflow:visible!important;}',
       'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .assistant-panel{height:auto!important;max-height:none!important;min-height:0!important;overflow:visible!important;}',
