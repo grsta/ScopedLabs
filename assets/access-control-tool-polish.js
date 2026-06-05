@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-tool-polish-005-fail-safe-assistant-panel-fit";
+  const VERSION = "access-control-tool-polish-006-fail-safe-rich-assistant-shell";
   const STYLE_ID = "access-control-tool-polish-styles";
 
   const FLOW_LABELS = {
@@ -37,6 +37,16 @@
       '/* access-control-reader-type-chip-layout-003 */',
       '/* access-control-fail-safe-assistant-growth-004 */',
       '/* access-control-fail-safe-assistant-panel-fit-005 */',
+      '/* access-control-fail-safe-rich-assistant-shell-006 */',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .access-control-local-assistant-mount .scopedlabs-local-assistant-card{background:rgba(0,0,0,.16)!important;border:1px solid rgba(125,255,152,.16)!important;border-radius:18px!important;box-shadow:0 18px 50px rgba(0,0,0,.18)!important;box-sizing:border-box!important;height:auto!important;max-height:none!important;overflow:visible!important;padding:18px 20px 20px!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .access-control-local-assistant-mount .scopedlabs-local-assistant-card > h2{margin-top:0!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .access-control-local-assistant-mount .assistant-grid{align-items:stretch!important;display:grid!important;gap:14px!important;height:auto!important;max-height:none!important;margin-top:18px!important;overflow:visible!important;}',
+      '@media (min-width:780px){body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .access-control-local-assistant-mount .assistant-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;}}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .access-control-local-assistant-mount .assistant-panel{background:rgba(0,0,0,.12)!important;border:1px solid rgba(120,255,120,.10)!important;border-radius:14px!important;box-sizing:border-box!important;height:auto!important;max-height:none!important;min-height:0!important;min-width:0!important;overflow:visible!important;padding:14px 16px!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .access-control-local-assistant-mount .assistant-panel h3{margin:0 0 10px!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .access-control-local-assistant-mount .assistant-panel ul{height:auto!important;max-height:none!important;margin:0!important;overflow:visible!important;padding-left:18px!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .access-control-local-assistant-mount .assistant-panel li{line-height:1.55!important;margin-bottom:8px!important;overflow-wrap:break-word!important;word-break:normal!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .access-control-local-assistant-mount .assistant-panel li:last-child{margin-bottom:0!important;}',
       'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .access-control-local-assistant-mount{height:auto!important;max-height:none!important;overflow:visible!important;}',
       'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .access-control-local-assistant-mount .scopedlabs-local-assistant-card{box-sizing:border-box!important;height:auto!important;max-height:none!important;overflow:visible!important;padding-bottom:20px!important;}',
       'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .access-control-local-assistant-mount .assistant-grid{align-items:start!important;height:auto!important;max-height:none!important;overflow:visible!important;}',
