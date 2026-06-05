@@ -25,8 +25,8 @@ check(
   Boolean(currentFailSafeVersion) && html.includes("./script.js?v=" + currentFailSafeVersion),
   currentFailSafeVersion || "missing local script cache"
 );
-check("Reusable Access Control polish asset exists", polish.includes("ScopedLabsAccessControlToolPolish") && polish.includes("access-control-tool-polish-002-title-weight-match"));
-check("Fail-Safe loads reusable polish asset", html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-002-title-weight-match"));
+check("Reusable Access Control polish asset exists", polish.includes("ScopedLabsAccessControlToolPolish") && polish.includes("access-control-tool-polish-003-reader-result-chip-layout"));
+check("Fail-Safe loads reusable polish asset", html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-003-reader-result-chip-layout"));
 check("Page opts into Access Control tool polish", html.includes('data-access-control-tool-polish="true"'));
 check("Loose Best For sentence removed", !html.includes('class="tool-best-for"') && !html.includes("<strong>Best for:</strong>"));
 check("Intro title uses normalized class", html.includes("access-control-tool-card-title") && html.includes("This tool starts the Access Control design flow"));
