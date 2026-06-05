@@ -47,6 +47,7 @@ const searchFiles = [
 const referencesReportShell = searchFiles
   .filter((rel) => rel !== "assets/access-control-report-shell.js")
   .filter((rel) => rel !== "scripts/audit-access-control-export-ownership-v1.js")
+  .filter((rel) => rel !== "scripts/audit-access-control-tool-factory-contract-v1.js")
   .filter((rel) => read(rel).includes("access-control-report-shell"));
 
 check("Fail-Safe cache bumped to export ownership lane", html.includes("access-control-fail-safe-export-ownership-014-report-tones") && html.includes("./script.js?v=access-control-fail-safe-export-ownership-014-report-tones"));
