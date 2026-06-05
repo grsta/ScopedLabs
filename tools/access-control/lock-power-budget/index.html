@@ -129,6 +129,62 @@
       width: 100%;
     }
 
+  
+    /* access-control-lock-power-assistant-output-shell-027 */
+    .access-lock-power-visual-card {
+      border-color: rgba(125,255,158,.16) !important;
+      background:
+        radial-gradient(circle at 14% 0%, rgba(125,255,158,.065), transparent 32%),
+        rgba(0,0,0,.14) !important;
+    }
+
+    .access-lock-power-visual-head {
+      align-items: center;
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .access-lock-power-visual-title {
+      margin: 0;
+    }
+
+    .access-lock-power-kicker {
+      color: rgba(154,255,175,.78);
+      font-size: .68rem;
+      font-weight: 800;
+      letter-spacing: .12em;
+      margin: 0 0 4px;
+      text-transform: uppercase;
+    }
+
+    .access-lock-power-visual-chip {
+      border: 1px solid rgba(125,255,158,.18);
+      border-radius: 10px;
+      color: rgba(226,232,240,.76);
+      font-size: .7rem;
+      font-weight: 800;
+      letter-spacing: .08em;
+      padding: 7px 10px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .access-lock-power-ledger-results,
+    .access-lock-power-ledger-results[hidden] {
+      border: 0 !important;
+      clip: rect(0 0 0 0) !important;
+      clip-path: inset(50%) !important;
+      height: 1px !important;
+      margin: -1px !important;
+      overflow: hidden !important;
+      padding: 0 !important;
+      position: absolute !important;
+      white-space: nowrap !important;
+      width: 1px !important;
+    }
+
   </style>
 </head>
 
@@ -258,23 +314,29 @@
         <button id="reset" class="btn" type="button">Reset</button>
       </div>
 
-      <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
-        <h3 class="h3" style="margin-top: 0;">Results</h3>
-        <div id="results" class="results-grid" aria-live="polite">
+      <section id="lockPowerVisualCard" class="card access-lock-power-visual-card" style="margin-top: 14px;" hidden>
+        <div class="access-lock-power-visual-head">
+          <div>
+            <p class="access-lock-power-kicker">Engineering visual</p>
+            <h3 class="h3 access-lock-power-visual-title">Power Distribution Rail</h3>
+          </div>
+          <span class="access-lock-power-visual-chip">Single active scope</span>
+        </div>
+
+        <div id="results" class="results-grid access-lock-power-ledger-results" aria-live="polite" data-result-ledger hidden>
           <div class="muted">Run calculation.</div>
         </div>
 
         <div id="analysis-copy" style="display:none;"></div>
 
         <div id="chartWrap" hidden class="access-lock-power-cad-rail-wrap" style="margin-top:16px;">
-  <div id="chart" class="access-lock-power-cad-rail" role="img" aria-label="Lock power supply capacity rail"></div>
-</div>
+          <div id="chart" class="access-lock-power-cad-rail" role="img" aria-label="Lock power CAD power rail diagram"></div>
+        </div>
 
         <p class="mini-note">
-          Model: peak load is based on simultaneous unlock demand, then reserve headroom is added to estimate the required supply capacity. This is planning math, not a substitute for manufacturer-specific surge or hold-current documentation.
+          The visible output is the assistant decision shell plus the CAD power rail. Structured result rows stay available as a hidden ledger for export, snapshot, pipeline, and summary handoff.
         </p>
-      </div>
-
+      </section>
       <div id="accessControlLocalAssistantMount" class="access-control-local-assistant-mount" hidden></div>
 
       <div id="accessControlFlowActions" class="access-control-flow-actions">
@@ -362,7 +424,7 @@
       window.ScopedLabsReportMetadata.init(document);
     }
   </script>
-  <script src="./script.js?v=access-control-lock-power-cad-label-cleanup-026"></script>
+  <script src="./script.js?v=access-control-lock-power-assistant-output-shell-027"></script>
   <script src="/assets/access-control-tool-polish.js?v=access-control-tool-polish-007-hide-fail-safe-assistant-flow-line"></script>
   <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>
 </body>

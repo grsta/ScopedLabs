@@ -36,6 +36,7 @@
     analysis: $("analysis-copy"),
     chart: $("chart"),
     chartWrap: $("chartWrap"),
+    visualCard: $("lockPowerVisualCard"),
     nextWrap: $("continue-wrap") || $("next-step-row"),
     nextBtn: $("continue"),
     flowNote: $("flow-note"),
@@ -340,11 +341,13 @@
   }
 
   function showChartWrap() {
+    if (els.visualCard) els.visualCard.hidden = false;
     if (els.chartWrap) els.chartWrap.hidden = false;
   }
 
   function hideChartWrap() {
     if (els.chartWrap) els.chartWrap.hidden = true;
+    if (els.visualCard) els.visualCard.hidden = true;
   }
 
   function destroyChart() {
@@ -1210,6 +1213,7 @@
     `;
   }
 
+  // access-control-lock-power-hidden-ledger-policy-027: #results is a hidden structured ledger; assistant + CAD rail own the visible output.
   function collectVisibleResults() {
     if (!els.results) return [];
 

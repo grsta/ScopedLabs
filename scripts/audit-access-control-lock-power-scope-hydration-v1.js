@@ -33,8 +33,8 @@ check(
 );
 
 check(
-  "Lock Power local script cache is current CAD label cleanup lane shell cleanup lane",
-  html.includes("./script.js?v=access-control-lock-power-cad-label-cleanup-026")
+  "Lock Power local script cache is current assistant output shell lane",
+  html.includes("./script.js?v=access-control-lock-power-assistant-output-shell-027")
 );
 
 check(
