@@ -1,11 +1,11 @@
 /* ScopedLabs Access Control Tool Assistant Adapters
-   Version: access-control-assistant-adapters-007-reader-header-proof
+   Version: access-control-assistant-adapters-008-reader-dedupe
    Purpose: category-specific local assistant model adapters. Dormant unless a tool explicitly calls one.
 */
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-assistant-adapters-007-reader-header-proof";
+  const API_VERSION = "access-control-assistant-adapters-008-reader-dedupe";
 
   function safeText(value) {
     return String(value ?? "");
@@ -77,14 +77,8 @@
       sections: [
         {
           title: "Decision Basis",
-          body: "This explains why the current reader direction was selected from the inputs.",
-          items: [
-            "Reader direction: " + recommendation,
-            "Interface basis: " + iface,
-            "Security basis: " + security,
-            "Environment basis: " + environment,
-            "Throughput basis: " + throughput
-          ]
+          body: "This recommendation balances credential strategy, interface supervision, environment, and throughput. The result is acceptable for planning, but the interface choice still needs review before lock-power assumptions are finalized.",
+          items: []
         },
         {
           title: "Fix Path",

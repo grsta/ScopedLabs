@@ -34,7 +34,7 @@ function exportConfigIsValid(source) {
   }
 }
 
-check("Reader Type page uses current factory lane", html.includes("access-control-reader-type-factory-010-assistant-header-fix") && html.includes("./script.js?v=access-control-reader-type-factory-010-assistant-header-fix"));
+check("Reader Type page uses current factory lane", html.includes("access-control-reader-type-factory-011-assistant-dedupe") && html.includes("./script.js?v=access-control-reader-type-factory-011-assistant-dedupe"));
 check("Reader Type declares Access Control tool identity", html.includes('data-category="access-control"') && html.includes('data-step="reader-type-selector"'));
 check("Reader Type opts into Access Control tool polish", html.includes('data-access-control-tool-polish="true"'));
 check("Reader Type loads canonical export.js", html.includes("/assets/export.js?v=shared-export-030-semantic-report-tones"));
@@ -47,7 +47,7 @@ check(
     read("assets/scopedlabs-local-assistant.js").includes("const pillRow = model.hideHeaderPills") &&
     read("assets/scopedlabs-local-assistant.js").includes("model.hideHeaderPills")
 );
-check("Reader Type loads Access Control assistant adapters", html.includes("/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-007-reader-header-proof"));
+check("Reader Type loads Access Control assistant adapters", html.includes("/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-008-reader-dedupe"));
 check("Reader Type loads Access Control scope state", html.includes("/assets/access-control-scope-state.js"));
 check("Reader Type loads Access Control tool polish", html.includes("/assets/access-control-tool-polish.js"));
 
