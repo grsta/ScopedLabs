@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-tool-polish-006-fail-safe-rich-assistant-shell";
+  const VERSION = "access-control-tool-polish-007-hide-fail-safe-assistant-flow-line";
   const STYLE_ID = "access-control-tool-polish-styles";
 
   const FLOW_LABELS = {
@@ -38,6 +38,8 @@
       '/* access-control-fail-safe-assistant-growth-004 */',
       '/* access-control-fail-safe-assistant-panel-fit-005 */',
       '/* access-control-fail-safe-rich-assistant-shell-006 */',
+      '/* access-control-hide-fail-safe-assistant-flow-line-007 */',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .access-control-local-assistant-mount .access-assistant-flow-line{display:none!important;}',
       'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .access-control-local-assistant-mount .scopedlabs-local-assistant-card{background:rgba(0,0,0,.16)!important;border:1px solid rgba(125,255,152,.16)!important;border-radius:18px!important;box-shadow:0 18px 50px rgba(0,0,0,.18)!important;box-sizing:border-box!important;height:auto!important;max-height:none!important;overflow:visible!important;padding:18px 20px 20px!important;}',
       'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .access-control-local-assistant-mount .scopedlabs-local-assistant-card > h2{margin-top:0!important;}',
       'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .access-control-local-assistant-mount .assistant-grid{align-items:stretch!important;display:grid!important;gap:14px!important;height:auto!important;max-height:none!important;margin-top:18px!important;overflow:visible!important;}',
