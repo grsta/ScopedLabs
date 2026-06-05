@@ -25,6 +25,8 @@
     env: $("env"),
     throughput: $("throughput"),
     iface: $("iface"),
+    cardFormat: $("cardFormat"),
+    existingCred: $("existingCred"),
     calc: $("calc"),
     reset: $("reset"),
     results: $("results"),
@@ -463,10 +465,12 @@
       interpretation: core.interpretation,
       inputs: [
         { label: "Security Level", value: core.inputs.securityLevel },
-        { label: "Credential Preference", value: core.inputs.credentialPreference },
+        { label: "Credential / Reader Technology", value: core.inputs.credentialTechnology },
+        { label: "Card Format / Facility Code", value: core.inputs.cardFormat },
+        { label: "Existing Credential Compatibility", value: core.inputs.existingCredentialCompatibility },
         { label: "Environment", value: core.inputs.environment },
         { label: "Throughput", value: core.inputs.throughput },
-        { label: "Panel Interface", value: core.inputs.interfaceChoice }
+        { label: "Panel Interface / Reader Protocol", value: core.inputs.interfaceChoice }
       ],
       outputs: core.outputs,
       assumptions: assumptionsForTool(),
@@ -485,6 +489,14 @@
       return row ? row.value : "";
     };
 
+    const inputValue = (label) => {
+      const row = (currentReport.inputs || []).find((item) => {
+        return item && String(item.label || "").trim().toLowerCase() === String(label || "").trim().toLowerCase();
+      });
+
+      return row ? row.value : "";
+    };
+
     const textSection = (title, text, description) => {
       const value = String(text || "").trim();
       if (!value) return null;
@@ -497,8 +509,8 @@
 
     const toneForInterface = (value) => {
       const text = String(value || "").toLowerCase();
-      if (text.includes("osdp")) return "active";
-      if (text.includes("wiegand")) return "watch";
+      if (text.includes("secure channel") || text.includes("osdp")) return "active";
+      if (text.includes("wiegand") || text.includes("unknown")) return "watch";
       return "";
     };
 
@@ -509,11 +521,21 @@
       return "";
     };
 
+    const toneForCredentialFormat = (value) => {
+      const text = String(value || "").toLowerCase();
+      if (text.includes("unknown") || text.includes("csn") || text.includes("uid") || text.includes("26-bit")) return "watch";
+      if (text.includes("managed") || text.includes("encrypted") || text.includes("corporate")) return "active";
+      return "";
+    };
+
     const readerType = outputValue("Reader Type") || "Pending";
     const interfaceChoice = outputValue("Interface") || "Pending";
     const security = outputValue("Security") || "Pending";
     const environment = outputValue("Environment") || "Pending";
     const throughput = outputValue("Throughput") || "Pending";
+    const cardFormat = outputValue("Credential Format / Facility Code") || inputValue("Card Format / Facility Code") || "Not documented";
+    const existingCompatibility = outputValue("Existing Credential Compatibility") || inputValue("Existing Credential Compatibility") || "Not documented";
+    const compatibilityRisk = outputValue("Compatibility Risk") || "No compatibility risk documented";
     const interpretation = outputValue("Engineering Interpretation") || currentReport.interpretation || "";
     const guidance = outputValue("Actionable Guidance") || "";
 
@@ -530,6 +552,21 @@
           {
             headers: ["Input", "Value"],
             rows: (currentReport.inputs || []).map((item) => [item.label, item.value])
+          }
+        ]
+      },
+      {
+        title: "Credential Verification Trail",
+        description: "Credential format, facility-code, and existing-card assumptions used by this recommendation.",
+        tableClass: "extra-export-table--planner extra-export-table--decision",
+        tables: [
+          {
+            headers: ["Card Format / Facility Code", "Existing Compatibility", "Compatibility Risk"],
+            rows: [[
+              cell(cardFormat, toneForCredentialFormat(cardFormat) || "muted"),
+              existingCompatibility,
+              cell(compatibilityRisk, toneForCredentialFormat(cardFormat) || "muted")
+            ]]
           }
         ]
       },
@@ -553,8 +590,8 @@
     ];
 
     [
-      textSection("Engineering Interpretation", interpretation, "Why this reader strategy fits the selected security, environment, and throughput assumptions."),
-      textSection("Actionable Guidance", guidance, "What should be checked before carrying this reader strategy into Lock Power Budget.")
+      textSection("Engineering Interpretation", interpretation, "Why this reader strategy fits the selected security, protocol, credential-format, environment, and throughput assumptions."),
+      textSection("Actionable Guidance", guidance, "What should be checked before carrying this reader strategy into Lock Power Budget and Summary.")
     ].filter(Boolean).forEach((section) => extraSections.push(section));
 
     return {
@@ -618,14 +655,17 @@
     updateExportControls();
   }
 
-  function getStatus({ sec, iface, cred }) {
+  function getStatus({ sec, iface, cred, cardFormat, existingCred }) {
+    if (cardFormat === "existing-unknown" && existingCred === "must-remain") return "WATCH";
+    if (cardFormat === "csn-uid" && sec === "high") return "RISK";
     if (sec === "high" && iface === "wg") return "WATCH";
-    if (sec === "high" && cred !== "multi") return "WATCH";
+    if (sec === "high" && cred !== "multi" && cred !== "card-pin" && cred !== "biometric") return "WATCH";
+    if (iface === "unknown") return "WATCH";
     return "HEALTHY";
   }
 
-  function buildSummary({ reader, interfaceRec, security }) {
-    return `${reader} is the current planning recommendation. ${security}. Interface recommendation: ${interfaceRec}.`;
+  function buildSummary({ reader, interfaceRec, security, cardFormatNote, compatibilityNote }) {
+    return `${reader} is the current planning recommendation. ${security}. Interface recommendation: ${interfaceRec}. Credential format basis: ${cardFormatNote}. Compatibility basis: ${compatibilityNote}.`;
   }
 
   function calc() {
@@ -634,56 +674,141 @@
     const env = els.env.value;
     const throughput = els.throughput.value;
     const iface = els.iface.value;
+    const cardFormat = els.cardFormat.value;
+    const existingCred = els.existingCred.value;
 
-    const interfaceRec =
-      iface === "osdp"
-        ? "OSDP (secure, supervised)"
-        : "Wiegand (legacy, not encrypted)";
+    const interfaceRecMap = {
+      unknown: "Protocol not selected yet",
+      wg: "Wiegand (legacy, not encrypted)",
+      osdp: "OSDP (supervised)",
+      "osdp-secure": "OSDP Secure Channel (supervised/encrypted)",
+      either: "Either supported; prefer OSDP Secure Channel when available"
+    };
+
+    const interfaceRec = interfaceRecMap[iface] || "Protocol not selected yet";
 
     let reader = "Smart card reader";
     if (cred === "mobile") reader = "Mobile credential reader";
     if (cred === "pin") reader = "Keypad reader";
-    if (cred === "multi") reader = "Multi-factor reader";
+    if (cred === "card-pin") reader = "Card + PIN reader";
+    if (cred === "biometric") reader = "Biometric reader";
+    if (cred === "long-range") reader = "Long-range / vehicle reader";
+    if (cred === "qr") reader = "QR / barcode visitor reader";
+    if (cred === "multi") reader = "Multi-technology / multi-factor reader";
 
     const security =
       sec === "high"
-        ? "Encrypted credentials + OSDP + MFA recommended"
+        ? "Higher-assurance credential + supervised protocol recommended"
         : sec === "med"
-          ? "Encrypted credentials recommended"
-          : "Standard credentials acceptable";
+          ? "Managed/encrypted credential preferred"
+          : "Standard credential strategy acceptable if compatibility is verified";
 
     const envNote =
       env === "harsh"
         ? "Use industrial/IP-rated reader"
         : env === "outdoor"
           ? "Use weather-rated reader"
-          : "Indoor-rated reader is fine";
+          : "Indoor-rated reader is acceptable";
 
     const throughputNote =
       throughput === "handsfree"
-        ? "Long-range / BLE readers required"
+        ? "Hands-free / BLE / long-range user flow"
         : throughput === "fast"
-          ? "Optimize for fast authentication"
+          ? "Optimize reader placement and credential presentation for throughput"
           : "Standard read speed acceptable";
 
-    let interpretation = "";
-    if (cred === "multi" || sec === "high") {
-      interpretation = "This door is being treated as a higher-assurance checkpoint, so reader choice should prioritize credential integrity and stronger supervision over convenience alone.";
-    } else if (throughput === "handsfree") {
-      interpretation = "This opening is being optimized for flow and convenience, which changes the reader decision away from standard wall-reader assumptions and toward faster user interaction patterns.";
-    } else {
-      interpretation = "The recommended reader type is balanced for normal access-control conditions, where security, usability, and environment all matter but none of them are extreme enough to dominate the design outright.";
+    const cardFormatMap = {
+      unknown: "Unknown / not verified",
+      "existing-known": "Existing facility code + bit format known",
+      "existing-unknown": "Existing credentials with unknown facility code / bit format",
+      "new-population": "New credential population",
+      "26-bit": "26-bit / common facility-code format",
+      "corp-1000": "35/37-bit Corporate 1000 style",
+      "csn-uid": "CSN / UID only",
+      "managed-encrypted": "Managed encrypted smart credential",
+      "mobile-tenant": "Mobile credential tenant / account"
+    };
+
+    const compatibilityMap = {
+      unknown: "Unknown / inventory not verified",
+      "must-remain": "Must support existing cards",
+      "new-allowed": "New credentials allowed",
+      "mixed-migration": "Mixed migration / phased replacement"
+    };
+
+    const cardFormatNote = cardFormatMap[cardFormat] || "Unknown / not verified";
+    const compatibilityNote = compatibilityMap[existingCred] || "Unknown / inventory not verified";
+
+    const risks = [];
+
+    if (existingCred === "must-remain" && cardFormat === "existing-unknown") {
+      risks.push("Existing credentials must remain, but facility code / bit format is unknown.");
     }
 
-    const guidance =
-      iface === "wg"
-        ? "If the panel can support it, consider moving away from Wiegand on new deployments so the reader decision does not lock the project into weaker signaling and less supervision."
-        : "OSDP is the stronger default here. Keep wiring, reader compatibility, and address planning aligned early so the interface choice stays clean through deployment.";
+    if (cardFormat === "unknown") {
+      risks.push("Credential format is not verified.");
+    }
+
+    if (cardFormat === "csn-uid") {
+      risks.push("CSN / UID-only credential use should not be treated as a strong security basis.");
+    }
+
+    if (cardFormat === "26-bit" && sec !== "low") {
+      risks.push("Common 26-bit formats can create duplication and lifecycle-control concerns.");
+    }
+
+    if (iface === "wg") {
+      risks.push("Wiegand is a legacy unsupervised reader interface.");
+    }
+
+    if (iface === "unknown") {
+      risks.push("Panel protocol is not selected.");
+    }
+
+    const compatibilityRisk = risks.length ? risks.join(" ") : "No major credential compatibility risk flagged.";
+
+    let interpretation = "";
+    if (risks.length) {
+      interpretation = "The reader recommendation is being limited by credential compatibility and protocol verification. Before hardware is finalized, confirm the card format, facility-code/bit-format basis, and panel reader protocol.";
+    } else if (cred === "multi" || cred === "card-pin" || cred === "biometric" || sec === "high") {
+      interpretation = "This door is being treated as a higher-assurance checkpoint, so reader choice should prioritize credential integrity, protocol supervision, and lifecycle control.";
+    } else if (throughput === "handsfree" || cred === "long-range") {
+      interpretation = "This opening is being optimized for user flow, so reader selection should account for range, credential presentation, and nuisance-read control.";
+    } else {
+      interpretation = "The recommended reader type is balanced for normal access-control conditions, with compatibility verification carried forward before lock-power and panel assumptions are finalized.";
+    }
+
+    const guidanceParts = [];
+
+    if (existingCred === "must-remain" && (cardFormat === "unknown" || cardFormat === "existing-unknown")) {
+      guidanceParts.push("Inventory existing cards and document facility code / bit format before selecting reader hardware.");
+    }
+
+    if (cardFormat === "csn-uid") {
+      guidanceParts.push("Avoid UID-only as the security decision basis for higher-security doors.");
+    }
+
+    if (iface === "wg") {
+      guidanceParts.push("If the panel can support it, prefer OSDP or OSDP Secure Channel for new supervised deployments.");
+    }
+
+    if (iface === "unknown") {
+      guidanceParts.push("Confirm panel reader protocol before carrying this result into Lock Power Budget.");
+    }
+
+    if (!guidanceParts.length) {
+      guidanceParts.push("Verify reader compatibility, credential enrollment path, and protocol support before carrying this result into Lock Power Budget.");
+    }
+
+    const guidance = guidanceParts.join(" ");
 
     render([
       { label: "Reader Type", value: reader },
       { label: "Interface", value: interfaceRec },
       { label: "Security", value: security },
+      { label: "Credential Format / Facility Code", value: cardFormatNote },
+      { label: "Existing Credential Compatibility", value: compatibilityNote },
+      { label: "Compatibility Risk", value: compatibilityRisk },
       { label: "Environment", value: envNote },
       { label: "Throughput", value: throughputNote },
       { label: "Engineering Interpretation", value: interpretation },
@@ -703,14 +828,25 @@
         environment: env,
         priority: sec,
         credential: cred,
-        interface: iface
+        credentialTechnology: cred,
+        cardFormat,
+        cardFormatNote,
+        facilityCodeStatus: cardFormat,
+        existingCredentialCompatibility: existingCred,
+        compatibilityNote,
+        compatibilityRisk,
+        interface: iface,
+        panelInterface: iface,
+        readerProtocol: iface,
+        requiredActions: guidanceParts,
+        nextTool: "Lock Power Budget"
       }
     });
 
     showContinue();
 
-    const status = getStatus({ sec, iface, cred });
-    const summary = buildSummary({ reader, interfaceRec, security });
+    const status = getStatus({ sec, iface, cred, cardFormat, existingCred });
+    const summary = buildSummary({ reader, interfaceRec, security, cardFormatNote, compatibilityNote });
 
     const assistantCore = {
       status,
@@ -719,18 +855,21 @@
       security,
       environment: envNote,
       throughput: throughputNote,
+      credentialTechnology: labelFromSelect(els.cred),
+      cardFormat: cardFormatNote,
+      existingCredentialCompatibility: compatibilityNote,
+      compatibilityRisk,
       interpretation,
       guidance,
       nextTool: "Lock Power Budget",
       requiredActions: [
         guidance,
-        "Confirm whether the access panel and reader hardware support the selected interface.",
-        "Document Wiegand as a legacy constraint if OSDP is available but not selected.",
-        "Carry reader type, interface, and credential assumptions into Lock Power Budget."
+        "Verify credential format, facility-code/bit-format, and existing-card compatibility before final reader selection.",
+        "Carry reader type, interface, credential technology, and credential-format assumptions into Lock Power Budget and Summary."
       ]
     };
 
-    renderLocalAssistant(assistantCore);
+    const currentRows = getRenderedRows();
 
     currentReport = buildReportPayload({
       status,
@@ -738,15 +877,19 @@
       interpretation,
       inputs: {
         securityLevel: labelFromSelect(els.sec),
-        credentialPreference: labelFromSelect(els.cred),
+        credentialTechnology: labelFromSelect(els.cred),
+        cardFormat: labelFromSelect(els.cardFormat),
+        existingCredentialCompatibility: labelFromSelect(els.existingCred),
         environment: labelFromSelect(els.env),
         throughput: labelFromSelect(els.throughput),
         interfaceChoice: labelFromSelect(els.iface)
       },
-      outputs: getRenderedRows()
+      outputs: currentRows
     });
 
     updateExportControls();
+
+    renderLocalAssistant(assistantCore);
   }
 
   function bindEvents() {

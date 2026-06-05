@@ -22,7 +22,9 @@ const adapters = read("assets/access-control-tool-assistant-adapters.js");
   "cred",
   "env",
   "throughput",
-  "iface"
+  "iface",
+  "cardFormat",
+  "existingCred",
 ].forEach((id) => {
   check("Input exists: " + id, html.includes('id="' + id + '"'));
 });
@@ -34,8 +36,12 @@ check("Reader Type names downstream Lock Power Budget", script.includes("Lock Po
 check("Reader Type decision logic considers security level", script.includes('sec === "high"') && script.includes("higher-assurance checkpoint"));
 check("Reader Type decision logic considers credential preference", script.includes('cred === "mobile"') && script.includes('cred === "multi"'));
 check("Reader Type decision logic considers environment", script.includes('env === "harsh"') && script.includes("industrial/IP-rated"));
-check("Reader Type decision logic considers throughput", script.includes('throughput === "handsfree"') && script.includes("Long-range / BLE"));
-check("Reader Type decision logic considers interface security", script.includes('iface === "osdp"') && script.includes("Wiegand"));
+check("Reader Type decision logic considers throughput", script.includes('throughput === "handsfree"') && script.includes("Hands-free / BLE / long-range user flow"));
+check("Reader Type decision logic considers interface security", script.includes('iface === "wg"') && script.includes("Wiegand"));
+check("Reader Type includes credential format / facility-code intelligence", script.includes("cardFormat") && script.includes("facility code") && script.includes("bit format"));
+check("Reader Type includes existing credential compatibility intelligence", script.includes("existingCred") && script.includes("Must support existing cards"));
+check("Reader Type flags unknown facility-code compatibility risk", script.includes("Existing credentials must remain") && script.includes("facility code / bit format is unknown"));
+check("Reader Type flags CSN / UID-only credential risk", script.includes("CSN / UID-only") && script.includes("UID-only"));
 
 check("Reader Type assistant adapter exists", adapters.includes("buildReaderTypeSelectorModel"));
 check("Reader Type adapter builds actions", adapters.includes("Reader Type Assistant") && adapters.includes("requiredActions"));
@@ -60,7 +66,8 @@ check(
 );
 check("Reader Type assistant uses Next Step instead of duplicate Carry Forward", adapters.includes('title: "Next Step"') && !adapters.includes('title: "Carry Forward"'));
 check("Reader Type local assistant receives guidance/actions", script.includes("renderLocalAssistant(assistantCore)") && script.includes("requiredActions"));
-check("Reader Type guidance tells user what to check next", script.includes("Confirm whether the access panel and reader hardware support the selected interface") && script.includes("Carry reader type, interface, and credential assumptions into Lock Power Budget"));
+check("Reader Type assistant displays credential verification trail", adapters.includes("Credential format basis") && adapters.includes("Existing credential compatibility") && adapters.includes("Compatibility risk"));
+check("Reader Type guidance tells user what to check next", script.includes("Verify credential format, facility-code/bit-format, and existing-card compatibility before final reader selection.") && script.includes("Carry reader type, interface, credential technology, and credential-format assumptions into Lock Power Budget and Summary."));
 
 check("Reader Type saves pipeline result", script.includes("ScopedLabsAnalyzer.writeFlow") && script.includes("readerType"));
 check("Reader Type carry-forward includes reader type", script.includes("readerType: reader"));
@@ -69,6 +76,7 @@ check("Reader Type carry-forward includes credential", script.includes("credenti
 check("Reader Type carry-forward includes environment", script.includes("environment: env"));
 
 check("Reader Type report uses Planner-style sections", script.includes('"Reader Recommendation"') && script.includes('"Inputs"') && !script.includes('"Carry-Forward Context"'));
+check("Reader Type report includes credential verification trail", script.includes('"Credential Verification Trail"') && script.includes('"Card Format / Facility Code"') && script.includes('"Existing Compatibility"'));
 check("Reader Type page output uses improved recommendation shell", script.includes("reader-result-hero") && script.includes("reader-result-grid"));
 check("Reader Type report separates long guidance", script.includes('textSection("Engineering Interpretation"') && script.includes('textSection("Actionable Guidance"'));
 check("Reader Type report suppresses calculator dump", html.includes('"suppressStandardReportSections": true') && script.includes("inputs: []") && script.includes("outputs: []"));

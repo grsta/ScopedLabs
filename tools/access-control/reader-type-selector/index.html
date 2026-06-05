@@ -63,7 +63,7 @@
       min-height: 1.45em;
     }
 
-    /* access-control-reader-type-factory-012-rich-assistant-render */
+    /* access-control-reader-type-factory-014-domain-payload */
     .reader-result-hero {
       background: rgba(120, 255, 120, 0.08);
       border: 1px solid rgba(120, 255, 120, 0.20);
@@ -204,12 +204,16 @@
         </label>
 
         <label class="field">
-          <span class="label">Credential Preference</span>
+          <span class="label">Credential / Reader Technology</span>
           <select id="cred">
             <option value="card">Card / Fob</option>
-            <option value="mobile">Mobile</option>
-            <option value="pin">PIN / keypad</option>
-            <option value="multi">Multi-factor</option>
+            <option value="mobile">Mobile Credential</option>
+            <option value="pin">PIN / Keypad</option>
+            <option value="card-pin">Card + PIN</option>
+            <option value="biometric">Biometric</option>
+            <option value="long-range">Long-range / Vehicle Reader</option>
+            <option value="qr">QR / Barcode Visitor Credential</option>
+            <option value="multi">Multi-technology / Multi-factor</option>
           </select>
         </label>
 
@@ -232,10 +236,38 @@
         </label>
 
         <label class="field">
-          <span class="label">Panel Interface</span>
+          <span class="label">Panel Interface / Reader Protocol</span>
           <select id="iface">
+            <option value="unknown">Unknown / Not selected yet</option>
             <option value="wg">Wiegand</option>
             <option value="osdp">OSDP</option>
+            <option value="osdp-secure">OSDP Secure Channel</option>
+            <option value="either">Either / Panel Supports Both</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Card Format / Facility Code</span>
+          <select id="cardFormat">
+            <option value="unknown">Unknown / Not verified</option>
+            <option value="existing-known">Existing facility code + bit format known</option>
+            <option value="existing-unknown">Existing credentials, facility code / bit format unknown</option>
+            <option value="new-population">New credential population</option>
+            <option value="26-bit">26-bit / common facility-code format</option>
+            <option value="corp-1000">35/37-bit Corporate 1000 style</option>
+            <option value="csn-uid">CSN / UID only</option>
+            <option value="managed-encrypted">Managed encrypted smart credential</option>
+            <option value="mobile-tenant">Mobile credential tenant / account</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Existing Credential Compatibility</span>
+          <select id="existingCred">
+            <option value="unknown">Unknown / inventory not verified</option>
+            <option value="must-remain">Must support existing cards</option>
+            <option value="new-allowed">New credentials allowed</option>
+            <option value="mixed-migration">Mixed migration / phased replacement</option>
           </select>
         </label>
       </div>
@@ -334,7 +366,7 @@
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
   <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-001"></script>
   <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-007-rich-render-polish"></script>
-  <script src="/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-008-reader-dedupe"></script>
+  <script src="/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-009-reader-domain"></script>
   <script src="/assets/access-control-scope-state.js?v=access-control-scope-state-001-area-pattern"></script>
   <script src="/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes"></script>
   <script data-access-reader-type-report-metadata-init>
@@ -343,7 +375,7 @@
     }
   </script>
   <script src="/assets/access-control-tool-polish.js?v=access-control-tool-polish-001"></script>
-  <script src="./script.js?v=access-control-reader-type-factory-012-rich-assistant-render"></script>
+  <script src="./script.js?v=access-control-reader-type-factory-014-domain-payload"></script>
   <script defer src="/assets/help.js?v=help-025"></script>
 </body>
 </html>

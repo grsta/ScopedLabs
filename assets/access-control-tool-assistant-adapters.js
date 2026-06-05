@@ -1,11 +1,11 @@
 /* ScopedLabs Access Control Tool Assistant Adapters
-   Version: access-control-assistant-adapters-008-reader-dedupe
+   Version: access-control-assistant-adapters-009-reader-domain
    Purpose: category-specific local assistant model adapters. Dormant unless a tool explicitly calls one.
 */
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-assistant-adapters-008-reader-dedupe";
+  const API_VERSION = "access-control-assistant-adapters-009-reader-domain";
 
   function safeText(value) {
     return String(value ?? "");
@@ -60,7 +60,10 @@
     const security = safeText(data.security || "Security basis not documented");
     const environment = safeText(data.environment || "Environment not documented");
     const throughput = safeText(data.throughput || "Throughput not documented");
-    const guidance = safeText(data.guidance || "Confirm reader interface, credential behavior, environmental rating, and user throughput before continuing.");
+    const cardFormat = safeText(data.cardFormat || "Card format / facility code not documented");
+    const existingCompatibility = safeText(data.existingCredentialCompatibility || "Existing credential compatibility not documented");
+    const compatibilityRisk = safeText(data.compatibilityRisk || "Credential compatibility risk not documented");
+    const guidance = safeText(data.guidance || "Confirm reader protocol, credential technology, facility-code/bit-format, existing-card compatibility, environmental rating, and user throughput before continuing.");
 
     const interfaceWatch = iface.toLowerCase().includes("wiegand");
     const summary = "Use the sections below to confirm the reader decision, correct interface concerns, and carry the right assumptions into Lock Power Budget.";
@@ -77,8 +80,12 @@
       sections: [
         {
           title: "Decision Basis",
-          body: "This recommendation balances credential strategy, interface supervision, environment, and throughput. The result is acceptable for planning, but the interface choice still needs review before lock-power assumptions are finalized.",
-          items: []
+          body: "This recommendation balances credential technology, reader protocol, card-format/facility-code status, existing-card compatibility, environment, and throughput. The result is acceptable for planning only if the credential verification trail is documented.",
+          items: [
+            "Credential format basis: " + cardFormat,
+            "Existing credential compatibility: " + existingCompatibility,
+            "Compatibility risk: " + compatibilityRisk
+          ]
         },
         {
           title: "Fix Path",

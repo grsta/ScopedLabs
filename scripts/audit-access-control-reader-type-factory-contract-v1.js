@@ -34,7 +34,7 @@ function exportConfigIsValid(source) {
   }
 }
 
-check("Reader Type page uses current factory lane", html.includes("access-control-reader-type-factory-012-rich-assistant-render") && html.includes("./script.js?v=access-control-reader-type-factory-012-rich-assistant-render"));
+check("Reader Type page uses current factory lane", html.includes("access-control-reader-type-factory-014-domain-payload") && html.includes("./script.js?v=access-control-reader-type-factory-014-domain-payload"));
 check("Reader Type declares Access Control tool identity", html.includes('data-category="access-control"') && html.includes('data-step="reader-type-selector"'));
 check("Reader Type opts into Access Control tool polish", html.includes('data-access-control-tool-polish="true"'));
 check("Reader Type loads canonical export.js", html.includes("/assets/export.js?v=shared-export-030-semantic-report-tones"));
@@ -47,13 +47,14 @@ check(
     read("assets/scopedlabs-local-assistant.js").includes("const pillRow = model.hideHeaderPills") &&
     read("assets/scopedlabs-local-assistant.js").includes("model.hideHeaderPills")
 );
-check("Reader Type loads Access Control assistant adapters", html.includes("/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-008-reader-dedupe"));
+check("Reader Type loads Access Control assistant adapters", html.includes("/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-009-reader-domain"));
 check("Reader Type loads Access Control scope state", html.includes("/assets/access-control-scope-state.js"));
 check("Reader Type loads Access Control tool polish", html.includes("/assets/access-control-tool-polish.js"));
 
 check("Reader Type keeps metadata dropdown mount", html.includes('id="reportMetadataMount"') && html.includes("data-report-metadata") && html.includes('data-collapsed="true"'));
 check("Reader Type export config is valid JavaScript", exportConfigIsValid(html));
 check("Reader Type export config closes ScopedLabsExportConfig object", extractExportConfigBlock(html).includes("window.ScopedLabsExportConfig = {") && extractExportConfigBlock(html).includes("};"));
+check("Reader Type has card format and compatibility inputs", html.includes('id="cardFormat"') && html.includes('id="existingCred"'));
 check("Reader Type uses custom export payload hook", html.includes('"customPayloadBuilder": "ScopedLabsAccessControlReaderTypeExport.getPayload"'));
 check("Reader Type requests Planner-style export sections", html.includes('"suppressStandardReportSections": true') && html.includes('"stackReportSections": true'));
 check("Reader Type requests square report toolbar buttons", html.includes('"squareToolbarButtons": true'));
