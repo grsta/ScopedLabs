@@ -113,24 +113,11 @@
   </header>
 
   <main class="container page">
-    <div class="crumbs">
-      <a href="/tools/">Tools</a>
-      <span class="sep">/</span>
-      <a href="/tools/access-control/">Access Control</a>
-      <span class="sep">/</span>
-      <span>Lock Power Budget</span>
-    </div>
-
-    <div class="pill-row" style="margin-top: 6px;">
-      <span class="pill pill--pro">Pro Tier</span>
-    </div>
-
     <h1>Lock Power Budget</h1>
 
     <div id="pipeline"></div>
 
     <section class="card access-control-tool-intro-card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-      <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
       <h2 class="h3 access-control-tool-card-title" style="margin-top: 0;">This tool continues the Access Control design flow</h2>
       <p class="muted" style="margin-bottom: 0;">
         Use this step to verify that the chosen lock strategy can be supported electrically before you move into panel sizing and long-term access structure design.
@@ -139,11 +126,6 @@
         This is where lock type, simultaneous unlock behavior, voltage, and supply headroom turn into a real power requirement instead of a rough assumption.
       </p>
     </section>
-
-    <p class="tool-best-for">
-      <strong>Best for:</strong> validating whether your locking hardware will overload a supply under real-world simultaneous unlock conditions.
-    </p>
-
     <div id="flow-note" class="flow-note" hidden></div>
 
     <section id="activeAccessScopeCard" class="card access-scope-context-card" style="margin-top: 18px;" hidden>
@@ -181,7 +163,7 @@
     </section>
 
     <section id="toolCard" class="card tool-card" style="margin-top: 18px;">
-      <h2 class="card-title" style="margin-top: 0;">Inputs</h2>
+      <h2 class="card-title" style="margin-top: 0;">Planning Inputs</h2>
 
       <div class="form-grid" style="margin-top: 14px;">
         <label class="field">
@@ -247,6 +229,14 @@
 
       <div id="accessControlLocalAssistantMount" class="access-control-local-assistant-mount" hidden></div>
 
+      <div id="accessControlFlowActions" class="access-control-flow-actions">
+        <a class="btn" href="/tools/access-control/">Back to Access Control</a>
+        <div id="continue-wrap" class="btn-row" style="display:none; margin-top:0;">
+          <div id="next-step-row" class="btn-row" style="margin:0;">
+            <button id="continue" class="btn btn-primary" disabled type="button">Continue &rarr; Panel Capacity</button>
+          </div>
+        </div>
+      </div>
       <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
         <div class="pill-row">
           <span class="pill pill--pro">Documentation & Export</span>
@@ -257,33 +247,14 @@
           Add optional project context and generate a clean documentation view that can be printed or saved as a PDF for client or internal use.
         </p>
 
-        <div class="export-grid">
-          <label class="field">
-            <span class="label">Report Title</span>
-            <input id="reportTitle" type="text" placeholder="Lock Power Budget Assessment" />
-          </label>
-
-          <label class="field">
-            <span class="label">Project Name</span>
-            <input id="projectName" type="text" placeholder="Project Name" />
-          </label>
-
-          <label class="field">
-            <span class="label">Client Name</span>
-            <input id="clientName" type="text" placeholder="Client / Site Name" />
-          </label>
-
-          <label class="field">
-            <span class="label">Prepared By</span>
-            <input id="preparedBy" type="text" placeholder="ScopedLabs Pro User" />
-          </label>
-
-          <label class="field full">
-            <span class="label">Custom Notes</span>
-            <textarea id="customNotes" placeholder="Optional notes, assumptions, field conditions, or design caveats to include in the report."></textarea>
-          </label>
-        </div>
-
+        <div
+          id="reportMetadataMount"
+          data-report-metadata
+          data-report-title="Report details"
+          data-report-copy="Optional metadata can be included in the generated report. Leave blank to use the default report naming."
+          data-report-fields="reportTitle,projectName,clientName,preparedBy,customNotes"
+          data-collapsed="true"
+        ></div>
         <div class="btn-row" style="margin-top: 14px;">
           <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Export Report</button>
           <button id="saveSnapshot" class="btn" type="button" disabled>Save Snapshot</button>
@@ -293,14 +264,6 @@
       </section>
     </section>
 
-    <div id="accessControlFlowActions" class="access-control-flow-actions">
-      <a class="btn" href="/tools/access-control/">Back to Access Control</a>
-      <div id="continue-wrap" class="btn-row" style="display:none; margin-top:0;">
-        <div id="next-step-row" class="btn-row" style="margin:0;">
-          <button id="continue" class="btn btn-primary" disabled type="button">Continue &rarr; Panel Capacity</button>
-        </div>
-      </div>
-    </div>
 
     <footer class="site-footer">
       <div class="muted">© <span data-year></span> ScopedLabs</div>
@@ -346,7 +309,12 @@
   <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
   <script src="/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-011-lock-power-budget-adapter"></script>
   <script src="/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes"></script>
-  <script src="./script.js?v=access-control-lock-power-shell-modules-022"></script>
+  <script data-access-lock-power-report-metadata-init>
+    if (window.ScopedLabsReportMetadata && typeof window.ScopedLabsReportMetadata.init === "function") {
+      window.ScopedLabsReportMetadata.init(document);
+    }
+  </script>
+  <script src="./script.js?v=access-control-lock-power-shell-cleanup-023"></script>
   <script src="/assets/access-control-tool-polish.js?v=access-control-tool-polish-007-hide-fail-safe-assistant-flow-line"></script>
   <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>
 </body>

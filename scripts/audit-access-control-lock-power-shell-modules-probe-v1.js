@@ -24,7 +24,7 @@ check("Lock Power loads Local Assistant module", html.includes("/assets/scopedla
 check("Lock Power loads Access Control assistant adapters", html.includes("/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-011-lock-power-budget-adapter"));
 check("Lock Power loads report metadata module", html.includes("/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes"));
 check("Lock Power loads Access Control polish module", html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-007-hide-fail-safe-assistant-flow-line"));
-check("Lock Power local script cache is shell probe lane", html.includes("./script.js?v=access-control-lock-power-shell-modules-022"));
+check("Lock Power local script cache is shell cleanup lane", html.includes("./script.js?v=access-control-lock-power-shell-cleanup-023"));
 
 check(
   "Lock Power has standard flow actions shell",
@@ -72,6 +72,21 @@ check(
   script.includes("applyActiveScopeToInputs") &&
     script.includes("mapScopeLockType") &&
     script.includes("getScopeLockCount")
+);
+
+
+check(
+  "Lock Power legacy top chrome removed",
+  !html.includes('<div class="crumbs">') &&
+    !html.includes("Part of a Design Flow") &&
+    !html.includes('<p class="tool-best-for">')
+);
+
+check(
+  "Lock Power uses shared report metadata mount",
+  html.includes('id="reportMetadataMount"') &&
+    html.includes("data-report-metadata") &&
+    !html.includes('<div class="export-grid">')
 );
 
 console.log("\nAccess Control Lock Power shell modules probe audit:");
