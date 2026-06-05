@@ -1,11 +1,11 @@
 /* ScopedLabs Access Control Tool Assistant Adapters
-   Version: access-control-assistant-adapters-005-reader-dedupe
+   Version: access-control-assistant-adapters-006-reader-clean
    Purpose: category-specific local assistant model adapters. Dormant unless a tool explicitly calls one.
 */
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-assistant-adapters-005-reader-dedupe";
+  const API_VERSION = "access-control-assistant-adapters-006-reader-clean";
 
   function safeText(value) {
     return String(value ?? "");
@@ -63,7 +63,7 @@
     const guidance = safeText(data.guidance || "Confirm reader interface, credential behavior, environmental rating, and user throughput before continuing.");
 
     const interfaceWatch = iface.toLowerCase().includes("wiegand");
-    const summary = recommendation + " is the current reader direction. Interface basis: " + iface + ".";
+    const summary = "Use the sections below to confirm the reader decision, correct interface concerns, and carry the right assumptions into Lock Power Budget.";
 
     return {
       category: "access-control",
@@ -73,6 +73,7 @@
       status,
       summary,
       hideStandardLists: true,
+      hideHeaderPills: true,
       sections: [
         {
           title: "Decision Basis",
@@ -105,12 +106,12 @@
               ]
         },
         {
-          title: "Carry Forward",
-          body: "This is what should move downstream. Lock Power Budget should receive the selected reader type, panel interface, and any legacy-interface warning.",
+          title: "Next Step",
+          body: "This is the handoff. Lock Power Budget needs the reader type, reader interface, and any legacy-interface warning so it does not guess load or wiring assumptions.",
           items: [
             "Carry reader type into Lock Power Budget.",
             "Carry panel interface into Lock Power Budget.",
-            "Carry environment rating into hardware notes.",
+            "Carry credential/security assumption into Summary.",
             "Carry any legacy interface warning into Summary."
           ]
         }
