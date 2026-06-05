@@ -62,7 +62,89 @@
       line-height: 1.45;
       min-height: 1.45em;
     }
-</style>
+
+    /* access-control-reader-type-factory-007-output-shell */
+    .reader-result-hero {
+      background: rgba(120, 255, 120, 0.08);
+      border: 1px solid rgba(120, 255, 120, 0.20);
+      border-radius: 16px;
+      padding: 14px 16px;
+    }
+
+    .reader-result-kicker {
+      color: rgba(255, 255, 255, 0.58);
+      font-size: 0.78rem;
+      font-weight: 850;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .reader-result-title {
+      color: rgba(246, 255, 248, 0.98);
+      font-size: 1.25rem;
+      font-weight: 900;
+      line-height: 1.2;
+      margin-top: 4px;
+    }
+
+    .reader-result-subtitle {
+      color: rgba(203, 213, 225, 0.78);
+      line-height: 1.5;
+      margin-top: 8px;
+    }
+
+    .reader-result-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-top: 14px;
+    }
+
+    .result-row {
+      background: rgba(0, 0, 0, 0.18);
+      border: 1px solid rgba(120, 255, 120, 0.13);
+      border-radius: 14px;
+      display: grid;
+      gap: 6px;
+      padding: 11px 12px;
+    }
+
+    .result-row.result-row--wide {
+      grid-column: 1 / -1;
+    }
+
+    .result-label,
+    .result-row .k {
+      color: rgba(255, 255, 255, 0.58);
+      font-size: 0.78rem;
+      font-weight: 850;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .result-value,
+    .result-row .v {
+      color: rgba(246, 255, 248, 0.94);
+      font-weight: 850;
+      line-height: 1.45;
+      text-align: left;
+    }
+
+    .result-value[data-tone="watch"] {
+      color: #facc15;
+    }
+
+    .result-value[data-tone="active"] {
+      color: #7dff98;
+    }
+
+    @media (max-width: 760px) {
+      .reader-result-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+  </style>
 </head>
 
 <body data-tier="free" data-category="access-control" data-step="reader-type-selector" data-lane="v1" data-access-control-tool-polish="true">
@@ -108,16 +190,7 @@
       </p>
     </section>
 <div id="flow-note" class="flow-note" hidden></div>
-
-    <section id="carryForwardCard" class="card access-reader-carry-card" hidden>
-      <h2 class="access-control-tool-card-title">Carry-Forward Context</h2>
-      <p class="muted" style="margin-bottom: 0;">
-        Reader selection should stay tied to the fail-state decision from the previous step.
-      </p>
-      <div id="carryForwardContent" class="access-reader-carry-grid"></div>
-    </section>
-
-    <section id="toolCard" class="card tool-card" style="margin-top: 18px;">
+<section id="toolCard" class="card tool-card" style="margin-top: 18px;">
       <h2 class="card-title" style="margin-top: 0;">Inputs</h2>
 
       <div class="form-grid" style="margin-top: 14px;">
@@ -260,8 +333,8 @@
 
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
   <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-001"></script>
-  <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-002-physical-style"></script>
-  <script src="/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-003-reader-type"></script>
+  <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-003-section-support"></script>
+  <script src="/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-004-reader-guidance"></script>
   <script src="/assets/access-control-scope-state.js?v=access-control-scope-state-001-area-pattern"></script>
   <script src="/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes"></script>
   <script data-access-reader-type-report-metadata-init>
@@ -270,7 +343,7 @@
     }
   </script>
   <script src="/assets/access-control-tool-polish.js?v=access-control-tool-polish-001"></script>
-  <script src="./script.js?v=access-control-reader-type-factory-004-page-shell"></script>
+  <script src="./script.js?v=access-control-reader-type-factory-007-output-shell"></script>
   <script defer src="/assets/help.js?v=help-025"></script>
 </body>
 </html>

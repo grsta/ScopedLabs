@@ -33,8 +33,6 @@
     nextBtn: $("continue"),
     localAssistantMount: $("accessControlLocalAssistantMount"),
     flowNote: $("flow-note"),
-    carryForwardCard: $("carryForwardCard"),
-    carryForwardContent: $("carryForwardContent"),
     reportTitle: $("reportTitle"),
     projectName: $("projectName"),
     clientName: $("clientName"),
@@ -317,20 +315,85 @@
     clearLocalAssistant();
   }
 
+  function toneForRenderedValue(label, value) {
+    const l = String(label || "").toLowerCase();
+    const v = String(value || "").toLowerCase();
+
+    if (l.includes("interface") && v.includes("osdp")) return "active";
+    if (l.includes("interface") && v.includes("wiegand")) return "watch";
+    if (l.includes("security") && (v.includes("encrypted") || v.includes("mfa") || v.includes("multi"))) return "active";
+    if (l.includes("reader type")) return "active";
+    return "";
+  }
+
+  function toneForRenderedValue(label, value) {
+    const l = String(label || "").toLowerCase();
+    const v = String(value || "").toLowerCase();
+
+    if (l.includes("interface") && v.includes("osdp")) return "active";
+    if (l.includes("interface") && v.includes("wiegand")) return "watch";
+    if (l.includes("security") && (v.includes("encrypted") || v.includes("mfa") || v.includes("multi"))) return "active";
+    if (l.includes("reader type")) return "active";
+    return "";
+  }
+
+  function toneForRenderedValue(label, value) {
+    const l = String(label || "").toLowerCase();
+    const v = String(value || "").toLowerCase();
+
+    if (l.includes("interface") && v.includes("osdp")) return "active";
+    if (l.includes("interface") && v.includes("wiegand")) return "watch";
+    if (l.includes("security") && (v.includes("encrypted") || v.includes("mfa") || v.includes("multi"))) return "active";
+    if (l.includes("reader type")) return "active";
+    return "";
+  }
+
   function render(rows) {
     if (!els.results) return;
 
-    els.results.innerHTML = "";
+    const rowMap = new Map(rows.map((item) => [item.label, item.value]));
+    const readerType = rowMap.get("Reader Type") || "Reader recommendation pending";
+    const interfaceValue = rowMap.get("Interface") || "Interface pending";
+    const interpretation = rowMap.get("Engineering Interpretation") || "";
+    const guidance = rowMap.get("Actionable Guidance") || "";
 
-    rows.forEach((r) => {
-      const div = document.createElement("div");
-      div.className = "result-row";
-      div.innerHTML = `
-        <span class="result-label">${escapeHtml(r.label)}</span>
-        <span class="result-value">${escapeHtml(r.value)}</span>
-      `;
-      els.results.appendChild(div);
+    const detailRows = rows.filter((item) => {
+      return item.label !== "Engineering Interpretation" && item.label !== "Actionable Guidance";
     });
+
+    const resultRows = detailRows.map((r) => {
+      const tone = toneForRenderedValue(r.label, r.value);
+      return `
+        <div class="result-row" data-result-label="${escapeHtml(r.label)}" data-result-value="${escapeHtml(r.value)}">
+          <span class="result-label">${escapeHtml(r.label)}</span>
+          <span class="result-value" ${tone ? `data-tone="${escapeHtml(tone)}"` : ""}>${escapeHtml(r.value)}</span>
+        </div>
+      `;
+    }).join("");
+
+    els.results.innerHTML = `
+      <div class="reader-result-hero">
+        <div class="reader-result-kicker">Current Reader Direction</div>
+        <div class="reader-result-title">${escapeHtml(readerType)}</div>
+        <div class="reader-result-subtitle">${escapeHtml(interfaceValue)}</div>
+      </div>
+
+      <div class="reader-result-grid">
+        ${resultRows}
+        ${interpretation ? `
+          <div class="result-row result-row--wide" data-result-label="Engineering Interpretation" data-result-value="${escapeHtml(interpretation)}">
+            <span class="result-label">Engineering Interpretation</span>
+            <span class="result-value">${escapeHtml(interpretation)}</span>
+          </div>
+        ` : ""}
+        ${guidance ? `
+          <div class="result-row result-row--wide" data-result-label="Actionable Guidance" data-result-value="${escapeHtml(guidance)}">
+            <span class="result-label">Actionable Guidance</span>
+            <span class="result-value">${escapeHtml(guidance)}</span>
+          </div>
+        ` : ""}
+      </div>
+    `;
   }
 
   function getRenderedRows() {
@@ -338,8 +401,8 @@
 
     return Array.from(els.results.querySelectorAll(".result-row"))
       .map((row) => {
-        const label = row.querySelector(".result-label")?.textContent?.trim() || "";
-        const value = row.querySelector(".result-value")?.textContent?.trim() || "";
+        const label = row.dataset.resultLabel || row.querySelector(".result-label")?.textContent?.trim() || "";
+        const value = row.dataset.resultValue || row.querySelector(".result-value")?.textContent?.trim() || "";
         return { label, value };
       })
       .filter((item) => item.label || item.value);
@@ -432,16 +495,6 @@
       return { text: text || "", tone };
     };
 
-    const toneForStatus = (value) => {
-      const text = String(value || "").toLowerCase();
-      if (text.includes("risk")) return "risk";
-      if (text.includes("authority")) return "authority";
-      if (text.includes("watch")) return "watch";
-      if (text.includes("complete") || text.includes("healthy")) return "complete";
-      if (text.includes("active")) return "active";
-      return "";
-    };
-
     const toneForInterface = (value) => {
       const text = String(value || "").toLowerCase();
       if (text.includes("osdp")) return "active";
@@ -456,7 +509,6 @@
       return "";
     };
 
-    const previous = getPreviousStepData();
     const readerType = outputValue("Reader Type") || "Pending";
     const interfaceChoice = outputValue("Interface") || "Pending";
     const security = outputValue("Security") || "Pending";
@@ -465,34 +517,10 @@
     const interpretation = outputValue("Engineering Interpretation") || currentReport.interpretation || "";
     const guidance = outputValue("Actionable Guidance") || "";
 
-    const failMode = previous.recommendation || previous.failStateRecommendation || "Not carried forward";
-    const failStatus = previous.status || previous.failStateStatus || "Not documented";
-    const powerLossIntent = previous.powerLossIntent || previous.powerLoss || "Not documented";
-    const hasCarryForward = failMode !== "Not carried forward";
-
     const extraSections = [
       {
         title: "Executive Summary",
         text: currentReport.summary || ""
-      },
-      {
-        title: "Carry-Forward Context",
-        description: "Door behavior carried from Fail-Safe / Fail-Secure into reader selection.",
-        countLabel: hasCarryForward ? "1 ITEM" : "0 ITEMS",
-        countTone: "muted",
-        tableClass: "extra-export-table--planner extra-export-table--access-scope",
-        tables: [
-          {
-            headers: ["Previous Step", "Decision", "Status", "Power Loss Intent", "Next Action"],
-            rows: [[
-              "Fail-Safe / Fail-Secure",
-              failMode,
-              cell(failStatus, toneForStatus(failStatus) || "muted"),
-              powerLossIntent,
-              "Carry reader type into Lock Power Budget."
-            ]]
-          }
-        ]
       },
       {
         title: "Inputs",
@@ -546,76 +574,10 @@
   });
 
   function loadFlowContext() {
-    const hideContext = () => {
-      if (els.flowNote) {
-        els.flowNote.hidden = true;
-        els.flowNote.innerHTML = "";
-      }
-
-      if (els.carryForwardCard) els.carryForwardCard.hidden = true;
-      if (els.carryForwardContent) els.carryForwardContent.innerHTML = "";
-    };
-
-    const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
-
-    if (!raw) {
-      hideContext();
-      return;
-    }
-
-    let parsed;
-
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      hideContext();
-      return;
-    }
-
-    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
-      hideContext();
-      return;
-    }
-
-    const d = parsed.data || {};
-    const rows = [];
-
-    if (d.recommendation || d.failStateRecommendation) {
-      rows.push(["Fail-State Decision", d.recommendation || d.failStateRecommendation]);
-    }
-
-    if (d.status || d.failStateStatus) {
-      rows.push(["Decision Status", d.status || d.failStateStatus]);
-    }
-
-    if (d.powerLossIntent || d.powerLoss) {
-      rows.push(["Power-Loss Intent", d.powerLossIntent || d.powerLoss]);
-    }
-
-    if (d.doorType) rows.push(["Door Type", d.doorType]);
-    if (d.hardwareType) rows.push(["Hardware Type", d.hardwareType]);
-    if (d.releaseEvent) rows.push(["Release Event", d.releaseEvent]);
-
-    if (!rows.length) {
-      hideContext();
-      return;
-    }
-
     if (els.flowNote) {
       els.flowNote.hidden = true;
       els.flowNote.innerHTML = "";
     }
-
-    if (els.carryForwardContent) {
-      els.carryForwardContent.innerHTML = rows.map(([label, value]) => `
-        <div class="access-reader-carry-row">
-          <div class="access-reader-carry-label">${escapeHtml(label)}</div>
-          <div class="access-reader-carry-value">${escapeHtml(value)}</div>
-        </div>
-      `).join("");
-    }
-
-    if (els.carryForwardCard) els.carryForwardCard.hidden = false;
   }
 
   function invalidate() {
@@ -762,8 +724,9 @@
       nextTool: "Lock Power Budget",
       requiredActions: [
         guidance,
-        "Confirm the selected reader interface is supported by the panel and reader hardware.",
-        "Carry this reader strategy into Lock Power Budget before panel capacity is finalized."
+        "Confirm whether the access panel and reader hardware support the selected interface.",
+        "Document Wiegand as a legacy constraint if OSDP is available but not selected.",
+        "Carry reader type, interface, and credential assumptions into Lock Power Budget."
       ]
     };
 

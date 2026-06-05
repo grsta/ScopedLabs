@@ -1,11 +1,11 @@
 /* ScopedLabs Access Control Tool Assistant Adapters
-   Version: access-control-assistant-adapters-003-reader-type
+   Version: access-control-assistant-adapters-004-reader-guidance
    Purpose: category-specific local assistant model adapters. Dormant unless a tool explicitly calls one.
 */
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-assistant-adapters-003-reader-type";
+  const API_VERSION = "access-control-assistant-adapters-004-reader-guidance";
 
   function safeText(value) {
     return String(value ?? "");
@@ -53,11 +53,17 @@
     };
   }
 
-  function buildReaderTypeSelectorModel(data) {
+    function buildReaderTypeSelectorModel(data) {
     const status = safeText(data.status || "WATCH");
     const recommendation = safeText(data.recommendation || "Reader recommendation pending");
     const iface = safeText(data.interfaceChoice || "Interface not documented");
+    const security = safeText(data.security || "Security basis not documented");
+    const environment = safeText(data.environment || "Environment not documented");
+    const throughput = safeText(data.throughput || "Throughput not documented");
     const guidance = safeText(data.guidance || "Confirm reader interface, credential behavior, environmental rating, and user throughput before continuing.");
+
+    const interfaceWatch = iface.toLowerCase().includes("wiegand");
+    const summary = recommendation + " is the current reader direction. Interface basis: " + iface + ".";
 
     return {
       category: "access-control",
@@ -65,9 +71,51 @@
       kicker: "Local Design Assistant",
       title: "Reader Type Assistant",
       status,
-      summary: recommendation + " is the current reader direction. Interface basis: " + iface + ".",
-      assumptionsTitle: "Assumptions",
-      actionsTitle: "Recommended Actions",
+      summary,
+      sections: [
+        {
+          title: "Decision Basis",
+          body: "The reader choice is being judged by credential strategy, interface supervision, environment, throughput, and the downstream lock-power impact.",
+          items: [
+            "Reader direction: " + recommendation,
+            "Interface basis: " + iface,
+            "Security basis: " + security,
+            "Environment basis: " + environment,
+            "Throughput basis: " + throughput
+          ]
+        },
+        {
+          title: "Fix Path",
+          body: interfaceWatch
+            ? "The main issue is not the reader body style; it is the signaling path. Wiegand can work, but it is weaker for new designs when supervised/encrypted options are available."
+            : "The selected interface is stronger for new designs. Keep compatibility, addressing, wiring, and panel support aligned before moving downstream.",
+          items: interfaceWatch
+            ? [
+                "Confirm whether the access panel and reader line can support OSDP.",
+                "If OSDP is available, prefer it for new supervised/encrypted deployments.",
+                "If Wiegand must remain, document it as a legacy/compatibility constraint before Lock Power Budget.",
+                "Do not let reader choice finalize panel assumptions until interface support is confirmed."
+              ]
+            : [
+                "Confirm OSDP reader addressing and supported cable topology.",
+                "Verify selected credentials match the site's lifecycle and security policy.",
+                "Carry reader power/interface assumptions into Lock Power Budget.",
+                "Keep platform-specific compatibility checks open until product selection."
+              ]
+        },
+        {
+          title: "Carry Forward",
+          body: "The next tool should not guess reader load or interface assumptions. Carry this reader strategy into Lock Power Budget.",
+          items: [
+            "Carry reader type into Lock Power Budget.",
+            "Carry panel interface into Lock Power Budget.",
+            "Carry environment rating into hardware notes.",
+            "Carry any legacy interface warning into Summary."
+          ]
+        }
+      ],
+      assumptionsTitle: "Planning Assumptions",
+      actionsTitle: "Next Actions",
       assumptions: [
         "Reader type is being selected after the door fail-state decision has been documented.",
         "Credential strategy, panel interface, environmental rating, and user flow must align with the access-control platform.",

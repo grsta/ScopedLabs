@@ -28,8 +28,7 @@ const adapters = read("assets/access-control-tool-assistant-adapters.js");
 });
 
 check("Reader Type reads previous Fail-Safe context", script.includes("getPreviousStepData") && script.includes("PREVIOUS_STEP"));
-check("Reader Type reports carry-forward context", script.includes('"Carry-Forward Context"') && script.includes("Fail-Safe / Fail-Secure"));
-check("Reader Type renders visible carry-forward card", script.includes("carryForwardCard") && script.includes("carryForwardContent") && script.includes("access-reader-carry-row"));
+check("Reader Type does not duplicate Scope Planner carry-forward context on page", script.includes("function loadFlowContext()") && !script.includes("access-reader-carry-row"));
 check("Reader Type names downstream Lock Power Budget", script.includes("Lock Power Budget") && script.includes('/tools/access-control/lock-power-budget/'));
 
 check("Reader Type decision logic considers security level", script.includes('sec === "high"') && script.includes("higher-assurance checkpoint"));
@@ -40,8 +39,10 @@ check("Reader Type decision logic considers interface security", script.includes
 
 check("Reader Type assistant adapter exists", adapters.includes("buildReaderTypeSelectorModel"));
 check("Reader Type adapter builds actions", adapters.includes("Reader Type Assistant") && adapters.includes("requiredActions"));
+check("Reader Type assistant model includes guidance sections", adapters.includes("Decision Basis") && adapters.includes("Fix Path") && adapters.includes("Carry Forward"));
+check("Shared local assistant supports optional sections", read("assets/scopedlabs-local-assistant.js").includes("renderSections") && read("assets/scopedlabs-local-assistant.js").includes("assistant-section-grid"));
 check("Reader Type local assistant receives guidance/actions", script.includes("renderLocalAssistant(assistantCore)") && script.includes("requiredActions"));
-check("Reader Type guidance tells user what to check next", script.includes("Confirm the selected reader interface") && script.includes("Carry this reader strategy into Lock Power Budget"));
+check("Reader Type guidance tells user what to check next", script.includes("Confirm whether the access panel and reader hardware support the selected interface") && script.includes("Carry reader type, interface, and credential assumptions into Lock Power Budget"));
 
 check("Reader Type saves pipeline result", script.includes("ScopedLabsAnalyzer.writeFlow") && script.includes("readerType"));
 check("Reader Type carry-forward includes reader type", script.includes("readerType: reader"));
@@ -49,10 +50,11 @@ check("Reader Type carry-forward includes interface", script.includes("interface
 check("Reader Type carry-forward includes credential", script.includes("credential: cred"));
 check("Reader Type carry-forward includes environment", script.includes("environment: env"));
 
-check("Reader Type report uses Planner-style sections", script.includes('"Reader Recommendation"') && script.includes('"Carry-Forward Context"') && script.includes('"Inputs"'));
+check("Reader Type report uses Planner-style sections", script.includes('"Reader Recommendation"') && script.includes('"Inputs"') && !script.includes('"Carry-Forward Context"'));
+check("Reader Type page output uses improved recommendation shell", script.includes("reader-result-hero") && script.includes("reader-result-grid"));
 check("Reader Type report separates long guidance", script.includes('textSection("Engineering Interpretation"') && script.includes('textSection("Actionable Guidance"'));
 check("Reader Type report suppresses calculator dump", html.includes('"suppressStandardReportSections": true') && script.includes("inputs: []") && script.includes("outputs: []"));
-check("Reader Type report uses semantic tones", script.includes("toneForStatus") && script.includes("toneForInterface") && script.includes("toneForSecurity") && script.includes("cell(readerType"));
+check("Reader Type report uses semantic tones", script.includes("toneForInterface") && script.includes("toneForSecurity") && script.includes("cell(readerType") && script.includes("cell(interfaceChoice") && script.includes("cell(security"));
 
 console.log("\nAccess Control Reader Type assistant capability audit:");
 console.table(rows);

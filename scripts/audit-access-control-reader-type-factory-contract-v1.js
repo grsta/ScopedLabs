@@ -34,14 +34,14 @@ function exportConfigIsValid(source) {
   }
 }
 
-check("Reader Type page uses current factory lane", html.includes("access-control-reader-type-factory-004-page-shell") && html.includes("./script.js?v=access-control-reader-type-factory-004-page-shell"));
+check("Reader Type page uses current factory lane", html.includes("access-control-reader-type-factory-007-output-shell") && html.includes("./script.js?v=access-control-reader-type-factory-007-output-shell"));
 check("Reader Type declares Access Control tool identity", html.includes('data-category="access-control"') && html.includes('data-step="reader-type-selector"'));
 check("Reader Type opts into Access Control tool polish", html.includes('data-access-control-tool-polish="true"'));
 check("Reader Type loads canonical export.js", html.includes("/assets/export.js?v=shared-export-030-semantic-report-tones"));
 check("Reader Type loads report metadata module", html.includes("/assets/scopedlabs-report-metadata.js"));
 check("Reader Type loads tool shell module", html.includes("/assets/scopedlabs-tool-shell.js"));
 check("Reader Type loads local assistant renderer", html.includes("/assets/scopedlabs-local-assistant.js"));
-check("Reader Type loads Access Control assistant adapters", html.includes("/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-003-reader-type"));
+check("Reader Type loads Access Control assistant adapters", html.includes("/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-004-reader-guidance"));
 check("Reader Type loads Access Control scope state", html.includes("/assets/access-control-scope-state.js"));
 check("Reader Type loads Access Control tool polish", html.includes("/assets/access-control-tool-polish.js"));
 
@@ -68,7 +68,15 @@ check("Reader Type has no loose Best For sentence", !html.includes('class="tool-
 check("Reader Type has no Documentation & Export pill text", !html.includes("Documentation & Export"));
 
 check("Reader Type local assistant mount exists", html.includes('id="accessControlLocalAssistantMount"'));
-check("Reader Type carry-forward context card exists", html.includes('id="carryForwardCard"') && html.includes('id="carryForwardContent"'));
+check(
+  "Reader Type uses improved recommendation output shell",
+  html.includes(".reader-result-hero") &&
+    html.includes(".reader-result-grid") &&
+    script.includes("reader-result-hero") &&
+    script.includes("reader-result-grid")
+);
+check("Reader Type has no old model mini-note", !html.includes('class="mini-note"'));
+check("Reader Type does not show redundant carry-forward card", !html.includes('id="carryForwardCard"') && !html.includes('id="carryForwardContent"'));
 check("Reader Type closes tool card before footer", /<\/section>\s*<footer class="site-footer">/.test(html));
 check("Reader Type closes main before scripts", /<\/main>\s*<script src="\/assets\/tool-flow\.js/.test(html));
 check("Reader Type old model mini-note removed", !html.includes('class="mini-note"'));
