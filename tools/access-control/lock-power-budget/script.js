@@ -348,9 +348,14 @@
   }
 
   function destroyChart() {
-    if (chart) {
+    if (chart && typeof chart.destroy === "function") {
       chart.destroy();
-      chart = null;
+    }
+
+    chart = null;
+
+    if (els.chart) {
+      els.chart.innerHTML = "";
     }
 
     hideChartWrap();
@@ -444,278 +449,129 @@
     return trimmed.length;
   }
 
-  function getChartImage() {
-    try {
-      if (chart && typeof chart.toBase64Image === "function") {
-        return chart.toBase64Image("image/png", 1);
-      }
-    } catch {}
 
-    return "";
+  function clampNumber(value, min, max) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return min;
+    return Math.max(min, Math.min(max, n));
   }
 
+  function formatAmp(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return "0.00 A";
+    return n.toFixed(2) + " A";
+  }
+
+  function formatWatt(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return "0.0 W";
+    return n.toFixed(1) + " W";
+  }
+
+  function buildSupplyRailSvg(metrics, options = {}) {
+    const peak = Number(metrics?.peak || 0);
+    const required = Number(metrics?.required || 0);
+    const watts = Number(metrics?.watts || 0);
+    const utilizationPct = Number(metrics?.utilizationPct || 0);
+    const reserve = Math.max(0, required - peak);
+    const reservePct = peak > 0 ? (reserve / peak) * 100 : 0;
+    const status = getStatus(utilizationPct);
+
+    const exportMode = options.exportMode === true;
+    const width = 1100;
+    const height = 330;
+    const railX = 92;
+    const railY = 150;
+    const railW = 880;
+    const railH = 22;
+    const maxA = Math.max(required * 1.22, peak * 1.35, 1);
+    const peakX = railX + clampNumber(peak / maxA, 0, 1) * railW;
+    const requiredX = railX + clampNumber(required / maxA, 0, 1) * railW;
+    const reserveW = Math.max(0, requiredX - peakX);
+
+    const bg = exportMode ? "#ffffff" : "rgba(0,0,0,0)";
+    const panel = exportMode ? "#f8fbf8" : "rgba(6,18,12,.72)";
+    const text = exportMode ? "#101715" : "rgba(238,255,244,.94)";
+    const muted = exportMode ? "#52615c" : "rgba(203,213,225,.72)";
+    const line = exportMode ? "#bed2c5" : "rgba(125,255,158,.28)";
+    const grid = exportMode ? "#dbe7df" : "rgba(125,255,158,.13)";
+    const green = exportMode ? "#1f9d57" : "rgba(125,255,158,.88)";
+    const greenSoft = exportMode ? "#dff5e8" : "rgba(125,255,158,.18)";
+    const amber = exportMode ? "#b7791f" : "rgba(255,204,102,.92)";
+    const amberSoft = exportMode ? "#fff3d6" : "rgba(255,204,102,.18)";
+    const red = exportMode ? "#b42318" : "rgba(255,105,105,.9)";
+    const redSoft = exportMode ? "#ffe2df" : "rgba(255,105,105,.16)";
+    const statusColor = status === "RISK" ? red : status === "WATCH" ? amber : green;
+    const statusSoft = status === "RISK" ? redSoft : status === "WATCH" ? amberSoft : greenSoft;
+
+    const lockType = String(els.lockType?.options?.[els.lockType.selectedIndex]?.text || els.lockType?.value || "Lock hardware");
+    const lockCount = String(els.locks?.value || "0");
+    const simultaneous = String(els.simul?.value || "0");
+    const ampsEach = String(els.amps?.value || "0");
+
+    const esc = (value) => escapeHtml(value);
+
+    return [
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Lock power supply capacity rail">',
+      '<rect x="0" y="0" width="' + width + '" height="' + height + '" rx="18" fill="' + bg + '"/>',
+      '<rect x="24" y="22" width="1052" height="286" rx="18" fill="' + panel + '" stroke="' + line + '"/>',
+
+      '<text x="52" y="60" fill="' + text + '" font-size="18" font-weight="800" font-family="Inter,Arial,sans-serif">Lock Power Supply Rail</text>',
+      '<text x="52" y="84" fill="' + muted + '" font-size="13" font-weight="600" font-family="Inter,Arial,sans-serif">Simultaneous lock event converted into peak load, reserve, and required supply capacity.</text>',
+
+      '<rect x="820" y="45" width="188" height="42" rx="12" fill="' + statusSoft + '" stroke="' + statusColor + '"/>',
+      '<text x="842" y="71" fill="' + statusColor + '" font-size="15" font-weight="900" font-family="Inter,Arial,sans-serif">' + esc(status) + ' · ' + utilizationPct.toFixed(0) + '% UTILIZATION</text>',
+
+      '<line x1="' + railX + '" y1="112" x2="' + (railX + railW) + '" y2="112" stroke="' + grid + '" stroke-width="1"/>',
+      '<line x1="' + railX + '" y1="194" x2="' + (railX + railW) + '" y2="194" stroke="' + grid + '" stroke-width="1"/>',
+
+      '<rect x="' + railX + '" y="' + railY + '" width="' + railW + '" height="' + railH + '" rx="11" fill="' + (exportMode ? "#eef5f0" : "rgba(255,255,255,.05)") + '" stroke="' + line + '"/>',
+      '<rect x="' + railX + '" y="' + railY + '" width="' + Math.max(3, peakX - railX).toFixed(1) + '" height="' + railH + '" rx="11" fill="' + greenSoft + '" stroke="' + green + '"/>',
+      '<rect x="' + peakX.toFixed(1) + '" y="' + railY + '" width="' + Math.max(3, reserveW).toFixed(1) + '" height="' + railH + '" rx="0" fill="' + amberSoft + '" stroke="' + amber + '"/>',
+
+      '<line x1="' + peakX.toFixed(1) + '" y1="116" x2="' + peakX.toFixed(1) + '" y2="206" stroke="' + green + '" stroke-width="2" stroke-dasharray="5 5"/>',
+      '<circle cx="' + peakX.toFixed(1) + '" cy="' + (railY + railH / 2) + '" r="6" fill="' + green + '" stroke="' + (exportMode ? "#ffffff" : "rgba(255,255,255,.92)") + '" stroke-width="2"/>',
+      '<text x="' + Math.max(railX, peakX - 70).toFixed(1) + '" y="106" fill="' + green + '" font-size="13" font-weight="800" font-family="Inter,Arial,sans-serif">PEAK LOAD</text>',
+      '<text x="' + Math.max(railX, peakX - 66).toFixed(1) + '" y="126" fill="' + text + '" font-size="14" font-weight="800" font-family="Inter,Arial,sans-serif">' + formatAmp(peak) + '</text>',
+
+      '<line x1="' + requiredX.toFixed(1) + '" y1="108" x2="' + requiredX.toFixed(1) + '" y2="218" stroke="' + statusColor + '" stroke-width="3"/>',
+      '<circle cx="' + requiredX.toFixed(1) + '" cy="' + (railY + railH / 2) + '" r="7" fill="' + statusColor + '" stroke="' + (exportMode ? "#ffffff" : "rgba(255,255,255,.95)") + '" stroke-width="2"/>',
+      '<text x="' + Math.min(railX + railW - 150, requiredX + 12).toFixed(1) + '" y="120" fill="' + statusColor + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif">REQUIRED SUPPLY</text>',
+      '<text x="' + Math.min(railX + railW - 150, requiredX + 12).toFixed(1) + '" y="140" fill="' + text + '" font-size="14" font-weight="800" font-family="Inter,Arial,sans-serif">' + formatAmp(required) + ' / ' + formatWatt(watts) + '</text>',
+
+      '<path d="M ' + peakX.toFixed(1) + ' 224 L ' + requiredX.toFixed(1) + ' 224" stroke="' + amber + '" stroke-width="2"/>',
+      '<path d="M ' + peakX.toFixed(1) + ' 218 L ' + peakX.toFixed(1) + ' 230" stroke="' + amber + '" stroke-width="2"/>',
+      '<path d="M ' + requiredX.toFixed(1) + ' 218 L ' + requiredX.toFixed(1) + ' 230" stroke="' + amber + '" stroke-width="2"/>',
+      '<text x="' + Math.max(railX, peakX + 12).toFixed(1) + '" y="248" fill="' + amber + '" font-size="13" font-weight="800" font-family="Inter,Arial,sans-serif">HEADROOM RESERVE: ' + formatAmp(reserve) + ' · ' + reservePct.toFixed(0) + '%</text>',
+
+      '<rect x="52" y="260" width="210" height="34" rx="10" fill="' + (exportMode ? "#eef7f1" : "rgba(125,255,158,.08)") + '" stroke="' + line + '"/>',
+      '<text x="68" y="282" fill="' + text + '" font-size="13" font-weight="800" font-family="Inter,Arial,sans-serif">' + esc(simultaneous) + ' simultaneous × ' + esc(ampsEach) + ' A</text>',
+
+      '<rect x="278" y="260" width="170" height="34" rx="10" fill="' + (exportMode ? "#f7faf8" : "rgba(255,255,255,.045)") + '" stroke="' + line + '"/>',
+      '<text x="294" y="282" fill="' + text + '" font-size="13" font-weight="800" font-family="Inter,Arial,sans-serif">' + esc(lockCount) + ' locks installed</text>',
+
+      '<rect x="464" y="260" width="250" height="34" rx="10" fill="' + (exportMode ? "#f7faf8" : "rgba(255,255,255,.045)") + '" stroke="' + line + '"/>',
+      '<text x="480" y="282" fill="' + text + '" font-size="13" font-weight="800" font-family="Inter,Arial,sans-serif">' + esc(lockType) + '</text>',
+
+      '<rect x="730" y="260" width="278" height="34" rx="10" fill="' + statusSoft + '" stroke="' + statusColor + '"/>',
+      '<text x="746" y="282" fill="' + statusColor + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif">Supply margin: ' + esc(status) + '</text>',
+      '</svg>'
+    ].join("");
+  }
+
+  function getSupplyRailImage(metrics, options = {}) {
+    if (!metrics) return "";
+    const svg = buildSupplyRailSvg(metrics, { exportMode: options.exportMode === true });
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  }
+
+  function getChartImage() {
+    return getSupplyRailImage(lastMetrics, { exportMode: true });
+  }
+
+
   function getExportChartImage() {
-    if (!lastMetrics || typeof Chart === "undefined") return getChartImage();
-
-    try {
-      const canvas = document.createElement("canvas");
-      canvas.width = 1200;
-      canvas.height = 620;
-
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return getChartImage();
-
-      const labels = [
-        "Peak Load",
-        "Required Supply",
-        "Power / 10",
-        "Utilization"
-      ];
-
-      const values = [
-        lastMetrics.peak,
-        lastMetrics.required,
-        lastMetrics.watts / 10,
-        lastMetrics.utilizationPct
-      ];
-
-      const displayValues = {
-        0: `${lastMetrics.peak.toFixed(2)} A`,
-        1: `${lastMetrics.required.toFixed(2)} A`,
-        2: `${lastMetrics.watts.toFixed(1)} W`,
-        3: `${lastMetrics.utilizationPct.toFixed(0)}%`
-      };
-
-      const referenceValue = 65;
-      const dominantIndex = values.indexOf(Math.max(...values));
-      const maxValue = Math.max(...values, referenceValue, 100);
-
-      let exportChart = null;
-
-      const bgPlugin = {
-        id: "exportBgPlugin",
-        beforeDraw(chartInstance) {
-          const { ctx, chartArea } = chartInstance;
-          if (!chartArea) return;
-
-          const { left, top, width, height, right, bottom } = chartArea;
-          const x = chartInstance.scales.x;
-
-          ctx.save();
-
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, chartInstance.width, chartInstance.height);
-
-          ctx.fillStyle = "#f8fbf9";
-          ctx.fillRect(left, top, width, height);
-
-          const healthyMax = Math.min(65, x.max);
-          const watchMax = Math.min(85, x.max);
-
-          if (healthyMax > 0) {
-            ctx.fillStyle = "rgba(34, 197, 94, 0.14)";
-            ctx.fillRect(left, top, x.getPixelForValue(healthyMax) - left, height);
-          }
-
-          if (watchMax > 65) {
-            ctx.fillStyle = "rgba(245, 158, 11, 0.14)";
-            ctx.fillRect(
-              x.getPixelForValue(65),
-              top,
-              x.getPixelForValue(watchMax) - x.getPixelForValue(65),
-              height
-            );
-          }
-
-          if (x.max > 85) {
-            ctx.fillStyle = "rgba(239, 68, 68, 0.12)";
-            ctx.fillRect(
-              x.getPixelForValue(85),
-              top,
-              right - x.getPixelForValue(85),
-              height
-            );
-          }
-
-          ctx.restore();
-        },
-        afterDatasetsDraw(chartInstance) {
-          const { ctx, chartArea, scales } = chartInstance;
-          if (!chartArea || !scales.x || !scales.y) return;
-
-          const x = scales.x;
-          const y = scales.y;
-          const { top, bottom } = chartArea;
-
-          ctx.save();
-
-          const rx = x.getPixelForValue(referenceValue);
-          ctx.strokeStyle = "#198754";
-          ctx.lineWidth = 3;
-          ctx.setLineDash([6, 5]);
-          ctx.beginPath();
-          ctx.moveTo(rx, top);
-          ctx.lineTo(rx, bottom);
-          ctx.stroke();
-          ctx.setLineDash([]);
-
-          ctx.fillStyle = "#1f2937";
-          ctx.font = "600 16px Arial";
-          ctx.fillText("Healthy Margin Floor", rx + 10, bottom - 12);
-
-          ctx.fillStyle = "#15803d";
-          ctx.font = "700 15px Arial";
-          ctx.fillText("Healthy", x.getPixelForValue(6), top + 18);
-
-          ctx.fillStyle = "#b45309";
-          ctx.fillText("Watch", x.getPixelForValue(69), top + 18);
-
-          ctx.fillStyle = "#b91c1c";
-          ctx.fillText("Risk", x.getPixelForValue(89), top + 18);
-
-          const dominantValue = values[dominantIndex];
-          const px = x.getPixelForValue(dominantValue);
-          const py = y.getPixelForValue(labels[dominantIndex]);
-
-          ctx.beginPath();
-          ctx.arc(px, py, 6, 0, Math.PI * 2);
-          ctx.fillStyle = "#ffffff";
-          ctx.fill();
-          ctx.strokeStyle = "#111827";
-          ctx.lineWidth = 2;
-          ctx.stroke();
-
-          ctx.fillStyle = "#1f2937";
-          ctx.font = "600 15px Arial";
-          ctx.fillText(displayValues[dominantIndex], Math.min(px + 10, chartArea.right - 120), py - 10);
-
-          ctx.restore();
-        }
-      };
-
-      exportChart = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "Power Budget Metrics",
-              data: values,
-              indexAxis: "y",
-              barThickness: 18,
-              maxBarThickness: 18,
-              barPercentage: 0.8,
-              categoryPercentage: 0.7,
-              borderRadius: 8,
-              borderSkipped: false,
-              borderWidth: 1.5,
-              backgroundColor: (context) => {
-                const i = context.dataIndex;
-                const v = context.raw;
-
-                if (i === dominantIndex) {
-                  if (v > 85) return "#dc2626";
-                  if (v > 65) return "#f59e0b";
-                  return "#22c55e";
-                }
-
-                if (v > 85) return "rgba(220, 38, 38, 0.55)";
-                if (v > 65) return "rgba(245, 158, 11, 0.50)";
-                return "rgba(59, 130, 246, 0.42)";
-              },
-              borderColor: (context) => {
-                const i = context.dataIndex;
-                const v = context.raw;
-
-                if (i === dominantIndex) {
-                  if (v > 85) return "#7f1d1d";
-                  if (v > 65) return "#92400e";
-                  return "#166534";
-                }
-
-                if (v > 85) return "#991b1b";
-                if (v > 65) return "#b45309";
-                return "#1d4ed8";
-              }
-            }
-          ]
-        },
-        options: {
-          responsive: false,
-          maintainAspectRatio: false,
-          animation: false,
-          indexAxis: "y",
-          layout: {
-            padding: {
-              top: 36,
-              right: 22,
-              bottom: 10,
-              left: 18
-            }
-          },
-          plugins: {
-            legend: { display: false },
-            tooltip: { enabled: false }
-          },
-          scales: {
-            x: {
-              beginAtZero: true,
-              suggestedMax: Math.ceil(maxValue * 1.08),
-              ticks: {
-                color: "#334155",
-                font: {
-                  size: 14,
-                  weight: "600"
-                }
-              },
-              grid: {
-                color: "rgba(15, 23, 42, 0.08)"
-              },
-              border: {
-                color: "rgba(15, 23, 42, 0.18)"
-              },
-              title: {
-                display: true,
-                text: "Power Stress Magnitude",
-                color: "#0f172a",
-                font: {
-                  size: 15,
-                  weight: "700"
-                }
-              }
-            },
-            y: {
-              ticks: {
-                color: "#0f172a",
-                font: {
-                  size: 15,
-                  weight: "700"
-                }
-              },
-              grid: {
-                display: false
-              },
-              border: {
-                color: "rgba(15, 23, 42, 0.18)"
-              }
-            }
-          }
-        },
-        plugins: [bgPlugin]
-      });
-
-      const dataUrl = canvas.toDataURL("image/png", 1);
-
-      if (exportChart) {
-        exportChart.destroy();
-        exportChart = null;
-      }
-
-      return dataUrl;
-    } catch (err) {
-      console.error("Export chart render failed:", err);
-      return getChartImage();
-    }
+    return getSupplyRailImage(lastMetrics, { exportMode: true });
   }
 
   function buildReportHTML(payload) {
@@ -1315,253 +1171,12 @@
 
     showChartWrap();
 
-    const labels = [
-      "Peak Load",
-      "Required Supply",
-      "Power / 10",
-      "Utilization"
-    ];
-
-    const values = [
-      metrics.peak,
-      metrics.required,
-      metrics.watts / 10,
-      metrics.utilizationPct
-    ];
-
-    const displayValues = {
-      0: `${metrics.peak.toFixed(2)} A`,
-      1: `${metrics.required.toFixed(2)} A`,
-      2: `${metrics.watts.toFixed(1)} W`,
-      3: `${metrics.utilizationPct.toFixed(0)}%`
-    };
-
-    const dominantIndex = values.indexOf(Math.max(...values));
-    const referenceValue = 65;
-    const chartMax = Math.max(100, Math.ceil(Math.max(...values, referenceValue, 85) * 1.12));
-
-    const chartBgPlugin = {
-      id: "chartBgPlugin",
-      beforeDraw(c) {
-        const { ctx, chartArea } = c;
-        if (!chartArea) return;
-
-        const { left, top, width, height } = chartArea;
-
-        ctx.save();
-        ctx.fillStyle = "rgba(255,255,255,0.05)";
-        ctx.fillRect(left, top, width, height);
-        ctx.restore();
+    els.chart.innerHTML = buildSupplyRailSvg(metrics, { exportMode: false });
+    chart = {
+      destroy() {
+        if (els.chart) els.chart.innerHTML = "";
       }
     };
-
-    const thresholdBandPlugin = {
-      id: "thresholdBandPlugin",
-      beforeDatasetsDraw(c) {
-        const { ctx, chartArea, scales } = c;
-        if (!chartArea || !scales.x) return;
-
-        const x = scales.x;
-        const { top, bottom, left, right } = chartArea;
-
-        const healthyMax = Math.min(65, x.max);
-        const watchMax = Math.min(85, x.max);
-
-        ctx.save();
-
-        if (healthyMax > 0) {
-          ctx.fillStyle = "rgba(46, 204, 113, 0.16)";
-          ctx.fillRect(left, top, x.getPixelForValue(healthyMax) - left, bottom - top);
-        }
-
-        if (watchMax > 65) {
-          ctx.fillStyle = "rgba(255, 200, 80, 0.13)";
-          ctx.fillRect(
-            x.getPixelForValue(65),
-            top,
-            x.getPixelForValue(watchMax) - x.getPixelForValue(65),
-            bottom - top
-          );
-        }
-
-        if (x.max > 85) {
-          ctx.fillStyle = "rgba(255, 90, 90, 0.13)";
-          ctx.fillRect(
-            x.getPixelForValue(85),
-            top,
-            right - x.getPixelForValue(85),
-            bottom - top
-          );
-        }
-
-        ctx.restore();
-      },
-      afterDatasetsDraw(c) {
-        const { ctx, chartArea, scales } = c;
-        if (!chartArea || !scales.x || !scales.y) return;
-
-        const x = scales.x;
-        const y = scales.y;
-        const { top, bottom } = chartArea;
-
-        ctx.save();
-
-        const rx = x.getPixelForValue(referenceValue);
-        ctx.strokeStyle = "rgba(120, 255, 170, 0.98)";
-        ctx.lineWidth = 3;
-        ctx.setLineDash([4, 4]);
-        ctx.beginPath();
-        ctx.moveTo(rx, top);
-        ctx.lineTo(rx, bottom);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        ctx.fillStyle = "rgba(220, 255, 235, 0.96)";
-        ctx.font = "600 11px sans-serif";
-        ctx.fillText("Healthy Margin Floor", rx + 8, bottom - 10);
-
-        ctx.fillStyle = "rgba(180, 255, 200, 0.82)";
-        ctx.font = "600 11px sans-serif";
-        ctx.fillText("Healthy", x.getPixelForValue(6), top + 14);
-
-        ctx.fillStyle = "rgba(255, 220, 140, 0.82)";
-        ctx.fillText("Watch", x.getPixelForValue(69), top + 14);
-
-        ctx.fillStyle = "rgba(255, 160, 160, 0.82)";
-        ctx.fillText("Risk", x.getPixelForValue(89), top + 14);
-
-        const dominantValue = values[dominantIndex];
-        const px = x.getPixelForValue(dominantValue);
-        const py = y.getPixelForValue(labels[dominantIndex]);
-
-        ctx.beginPath();
-        ctx.arc(px, py, 4.5, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(225, 255, 240, 1)";
-        ctx.fill();
-        ctx.strokeStyle = "rgba(120, 255, 170, 0.95)";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        ctx.fillStyle = "rgba(235, 248, 240, 0.92)";
-        ctx.font = "600 11px sans-serif";
-        ctx.fillText(displayValues[dominantIndex], Math.min(px + 8, chartArea.right - 110), py - 8);
-
-        ctx.restore();
-      }
-    };
-
-    chart = new Chart(els.chart, {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [
-          {
-            label: "Power Budget Metrics",
-            data: values,
-            barThickness: 16,
-            maxBarThickness: 16,
-            barPercentage: 0.8,
-            categoryPercentage: 0.7,
-            borderWidth: 2,
-            borderRadius: 8,
-            borderSkipped: false,
-            backgroundColor: (context) => {
-              const i = context.dataIndex;
-              const v = context.raw;
-
-              if (i === dominantIndex) {
-                if (v > 85) return "rgba(255, 92, 92, 1)";
-                if (v > 65) return "rgba(255, 188, 82, 1)";
-                return "rgba(120, 255, 170, 1)";
-              }
-
-              if (v > 85) return "rgba(255, 77, 77, 0.30)";
-              if (v > 65) return "rgba(255, 170, 51, 0.24)";
-              return "rgba(90, 170, 255, 0.15)";
-            },
-            borderColor: (context) => {
-              const i = context.dataIndex;
-              const v = context.raw;
-
-              if (i === dominantIndex) {
-                if (v > 85) return "rgba(255, 220, 220, 1)";
-                if (v > 65) return "rgba(255, 240, 210, 1)";
-                return "rgba(215, 255, 230, 1)";
-              }
-
-              return "rgba(120,170,200,0.18)";
-            }
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        indexAxis: "y",
-        animation: {
-          duration: 700,
-          easing: "easeOutQuart"
-        },
-        layout: {
-          padding: {
-            top: 28,
-            right: 12,
-            left: 10,
-            bottom: 0
-          }
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: "rgba(8, 18, 18, 0.96)",
-            titleColor: "#e8fff1",
-            bodyColor: "#d9f7e7",
-            borderColor: "rgba(100, 255, 180, 0.25)",
-            borderWidth: 1,
-            padding: 12,
-            callbacks: {
-              label(context) {
-                const i = context.dataIndex;
-                return ` ${displayValues[i]}`;
-              }
-            }
-          }
-        },
-        scales: {
-          x: {
-            beginAtZero: true,
-            suggestedMax: chartMax,
-            ticks: {
-              color: "rgba(220, 238, 230, 0.78)"
-            },
-            grid: {
-              color: "rgba(110, 160, 140, 0.10)"
-            },
-            title: {
-              display: true,
-              text: "Power Stress Magnitude",
-              color: "rgba(230, 255, 240, 0.92)"
-            }
-          },
-          y: {
-            ticks: {
-              color: "rgba(228, 245, 235, 0.92)"
-            },
-            grid: {
-              display: false
-            }
-          }
-        }
-      },
-      plugins: [chartBgPlugin, thresholdBandPlugin]
-    });
-
-    els.chart.style.width = "100%";
-    els.chart.style.height = "340px";
-
-    if (els.chart.parentElement) {
-      els.chart.parentElement.style.minHeight = "340px";
-    }
   }
 
   function calc() {
