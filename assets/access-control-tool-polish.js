@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-tool-polish-003-reader-result-chip-layout";
+  const VERSION = "access-control-tool-polish-004-fail-safe-assistant-growth";
   const STYLE_ID = "access-control-tool-polish-styles";
 
   const FLOW_LABELS = {
@@ -35,6 +35,11 @@
       'body[data-category="access-control"][data-access-control-tool-polish="true"] .access-control-tool-intro-card .muted,',
       'body[data-category="access-control"][data-access-control-tool-polish="true"] .sl-help-summary{font-size:.96rem;line-height:1.55;}',
       '/* access-control-reader-type-chip-layout-003 */',
+      '/* access-control-fail-safe-assistant-growth-004 */',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .scopedlabs-local-assistant-card{height:auto!important;max-height:none!important;min-height:0!important;overflow:visible!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .assistant-grid{align-items:stretch!important;height:auto!important;max-height:none!important;overflow:visible!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .assistant-panel{height:auto!important;max-height:none!important;min-height:0!important;overflow:visible!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="fail-safe-fail-secure"] .assistant-panel ul{height:auto!important;max-height:none!important;margin-bottom:0!important;overflow:visible!important;padding-bottom:0!important;}',
       'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="reader-type-selector"] .reader-result-grid .result-row{align-items:start!important;display:grid!important;gap:5px!important;grid-template-columns:1fr!important;justify-content:start!important;padding:10px!important;}',
       'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="reader-type-selector"] .reader-result-grid .result-label{color:rgba(203,213,225,.66)!important;display:block!important;font-size:.68rem!important;font-weight:720!important;letter-spacing:.08em!important;line-height:1.25!important;margin:0!important;text-align:left!important;text-transform:uppercase!important;}',
       'body[data-category="access-control"][data-access-control-tool-polish="true"][data-step="reader-type-selector"] .reader-result-grid .result-value{color:rgba(226,232,240,.9)!important;display:block!important;font-size:.88rem!important;font-weight:750!important;line-height:1.4!important;margin:0!important;text-align:left!important;}',
