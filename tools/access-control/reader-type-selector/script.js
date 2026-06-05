@@ -741,7 +741,7 @@
 
     return {
       status: cleanStatus,
-      label: cleanStatus + " ? Confirm before continuing",
+      label: cleanStatus + ": Confirm before continuing",
       body: "This reader decision should not be treated as final until the items below are verified or documented as known constraints.",
       steps: cleanSteps.length ? cleanSteps : [fallback]
     };
