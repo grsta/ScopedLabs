@@ -34,7 +34,7 @@ function exportConfigIsValid(source) {
   }
 }
 
-check("Reader Type page uses current factory lane", html.includes("access-control-reader-type-factory-016-watch-label-polish") && html.includes("./script.js?v=access-control-reader-type-factory-016-watch-label-polish"));
+check("Reader Type page uses current factory lane", html.includes("access-control-reader-type-factory-017-watch-text-tone") && html.includes("./script.js?v=access-control-reader-type-factory-017-watch-text-tone"));
 check("Reader Type declares Access Control tool identity", html.includes('data-category="access-control"') && html.includes('data-step="reader-type-selector"'));
 check("Reader Type opts into Access Control tool polish", html.includes('data-access-control-tool-polish="true"'));
 check("Reader Type loads canonical export.js", html.includes("/assets/export.js?v=shared-export-030-semantic-report-tones"));

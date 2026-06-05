@@ -68,6 +68,8 @@ check("Reader Type assistant uses Next Step instead of duplicate Carry Forward",
 check("Reader Type local assistant receives guidance/actions", script.includes("renderLocalAssistant(assistantCore)") && script.includes("requiredActions"));
 check("Reader Type assistant displays credential verification trail", adapters.includes("Credential format basis") && adapters.includes("Existing credential compatibility") && adapters.includes("Compatibility risk"));
 check("Reader Type displays visible verification hold", script.includes("reader-verification-hold") && script.includes(": Confirm before continuing") && script.includes("Verification Status"));
+check("Reader Type warning card uses text-tone treatment", script.includes("renderSemanticStatusText") && script.includes("reader-status-token--watch") && script.includes("labeledSemanticValue"));
+check("Reader Type warning card avoids amber filled panel", !script.includes("background: rgba(255, 191, 87, 0.09)") && !script.includes("border: 1px solid rgba(255, 191, 87, 0.38)"));
 check("Reader Type assistant includes verification required gate", adapters.includes("Verification Required") && adapters.includes("Do not treat this reader decision as final"));
 check("Reader Type guidance tells user what to check next", script.includes("Verify credential format, facility-code/bit-format, and existing-card compatibility before final reader selection.") && script.includes("Carry reader type, interface, credential technology, and credential-format assumptions into Lock Power Budget and Summary."));
 

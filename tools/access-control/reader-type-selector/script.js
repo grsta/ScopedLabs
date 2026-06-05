@@ -54,20 +54,20 @@
     style.id = "reader-type-verification-styles";
     style.textContent = `
       .reader-verification-hold {
-        border: 1px solid rgba(255, 191, 87, 0.38);
-        background: rgba(255, 191, 87, 0.09);
+        border: 1px solid rgba(120, 255, 120, 0.12);
+        background: rgba(0, 0, 0, 0.12);
         border-radius: 14px;
         padding: 14px 16px;
         margin: 0 0 16px;
       }
 
       .reader-verification-hold--risk {
-        border-color: rgba(255, 118, 118, 0.48);
-        background: rgba(255, 118, 118, 0.10);
+        border-color: rgba(120, 255, 120, 0.12);
+        background: rgba(0, 0, 0, 0.12);
       }
 
       .reader-verification-hold__label {
-        font-weight: 800;
+        font-weight: inherit;
         letter-spacing: 0.08em;
         text-transform: uppercase;
         margin-bottom: 8px;
@@ -81,9 +81,32 @@
         margin: 0;
         padding-left: 20px;
       }
+
+      .reader-status-token--watch {
+        color: #ffd666;
+      }
+
+      .reader-status-token--risk {
+        color: #ff8a8a;
+      }
     `;
 
     document.head.appendChild(style);
+  }
+
+  function renderSemanticStatusText(value) {
+    const text = String(value || "");
+    const match = text.match(/^(WATCH|RISK|HEALTHY):(.*)$/i);
+
+    if (!match) return escapeHtml(text);
+
+    const status = match[1].toUpperCase();
+    const rest = match[2] || "";
+    const toneClass = status === "RISK" ? "reader-status-token--risk" : status === "WATCH" ? "reader-status-token--watch" : "";
+
+    if (!toneClass) return escapeHtml(text);
+
+    return '<span class="' + toneClass + '">' + escapeHtml(status + ":") + '</span>' + escapeHtml(rest);
   }
 
   function escapeHtml(value) {
@@ -356,12 +379,22 @@
     clearLocalAssistant();
   }
 
+  function labeledSemanticValue(label, value) {
+    const l = String(label || "").toLowerCase();
+
+    if (l.includes("verification status")) {
+      return renderSemanticStatusText(value);
+    }
+
+    return escapeHtml(value);
+  }
+
   function toneForRenderedValue(label, value) {
     const l = String(label || "").toLowerCase();
     const v = String(value || "").toLowerCase();
 
-    if (l.includes("verification status") && v.includes("risk")) return "risk";
-    if (l.includes("verification status") && v.includes("watch")) return "watch";
+    if (l.includes("verification status") && v.includes("risk")) return "";
+    if (l.includes("verification status") && v.includes("watch")) return "";
     if (l.includes("cautionary") || l.includes("compatibility risk")) return v.includes("no major") ? "muted" : "watch";
     if (l.includes("card format") && (v.includes("unknown") || v.includes("csn") || v.includes("uid") || v.includes("26-bit"))) return "watch";
     if (l.includes("interface") && v.includes("osdp")) return "active";
@@ -413,7 +446,7 @@
       return `
         <div class="result-row" data-result-label="${escapeHtml(r.label)}" data-result-value="${escapeHtml(r.value)}">
           <span class="result-label">${escapeHtml(r.label)}</span>
-          <span class="result-value" ${tone ? `data-tone="${escapeHtml(tone)}"` : ""}>${escapeHtml(r.value)}</span>
+          <span class="result-value" ${tone ? `data-tone="${escapeHtml(tone)}"` : ""}>${labeledSemanticValue(r.label, r.value)}</span>
         </div>
       `;
     }).join("");
@@ -421,7 +454,7 @@
     const hold = verificationHold && verificationHold.status && verificationHold.status !== "HEALTHY"
       ? `
         <div class="reader-verification-hold reader-verification-hold--${escapeHtml(String(verificationHold.status).toLowerCase())}">
-          <div class="reader-verification-hold__label">${escapeHtml(verificationHold.label)}</div>
+          <div class="reader-verification-hold__label">${renderSemanticStatusText(verificationHold.label)}</div>
           <p class="reader-verification-hold__body">${escapeHtml(verificationHold.body)}</p>
           ${Array.isArray(verificationHold.steps) && verificationHold.steps.length ? `
             <ul>
