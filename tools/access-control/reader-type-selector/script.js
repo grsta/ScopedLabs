@@ -35,8 +35,10 @@
     nextBtn: $("continue"),
     localAssistantMount: $("accessControlLocalAssistantMount"),
     flowNote: $("flow-note"),
-    activeScopeCard: $("activeScopeContextCard"),
-    activeScopeRows: $("activeScopeContextRows"),
+    activeScopeCard: $("activeAccessScopeCard"),
+    activeScopeTitle: $("activeAccessScopeTitle"),
+    activeScopeDescription: $("activeAccessScopeDescription"),
+    activeScopeMeta: $("activeAccessScopeMeta"),
     reportTitle: $("reportTitle"),
     projectName: $("projectName"),
     clientName: $("clientName"),
@@ -310,73 +312,44 @@
     setExportStatus("Recommendation ready. Open Export Report or Save Snapshot.");
   }
 
-  function labelizeSlug(value, fallback = "Not documented") {
-    const text = String(value || "").trim();
-    if (!text) return fallback;
-
-    return text
-      .replace(/[-_]+/g, " ")
-      .replace(/\s+/g, " ")
-      .replace(/\b\w/g, (char) => char.toUpperCase());
-  }
-
   function getActiveScopeContext() {
     const scopeApi = window.ScopedLabsAccessControlScopeState;
-    const activeScope = scopeApi && typeof scopeApi.getActiveScope === "function"
-      ? scopeApi.getActiveScope()
-      : null;
-    const metadata = scopeApi && typeof scopeApi.readMetadata === "function"
-      ? scopeApi.readMetadata()
-      : {};
 
-    const scopeName = activeScope?.name || activeScope?.scopeName || activeScope?.areaName || "";
-    const openingCount = activeScope?.openingCount || activeScope?.doorCount || activeScope?.openings || activeScope?.doors || "";
-    const openingType = activeScope?.openingType || activeScope?.scopeType || "";
-    const doorFunction = activeScope?.doorFunction || "";
-    const securityLevel = activeScope?.securityLevel || activeScope?.threatLevel || "";
-    const powerLossIntent = activeScope?.powerLossIntent || "";
+    if (scopeApi && typeof scopeApi.buildScopeDisplayContext === "function") {
+      return scopeApi.buildScopeDisplayContext("Reader Type Selector");
+    }
 
     return {
-      projectSite: metadata?.projectName || metadata?.projectLocation || "Not documented",
-      areaScope: scopeName || "No active scope selected",
-      openingDoorCount: openingCount ? String(openingCount) : "Not documented",
-      openingType: labelizeSlug(openingType),
-      doorFunction: labelizeSlug(doorFunction),
-      securityContext: labelizeSlug(securityLevel),
-      upstreamSource: activeScope ? "Scope Planner active scope" : "No Scope Planner context detected",
-      powerLossIntent: labelizeSlug(powerLossIntent),
-      hasActiveScope: !!activeScope
+      projectSite: "Not documented",
+      areaScope: "No active scope selected",
+      openingDoorCount: "Not documented",
+      openingType: "Not documented",
+      doorFunction: "Not documented",
+      securityContext: "Not documented",
+      upstreamSource: "No Scope Planner context detected",
+      powerLossIntent: "Not documented",
+      hasActiveScope: false,
+      reportRows: [
+        { label: "Active Scope", value: "No active access scope selected" },
+        { label: "Scope Source", value: "No Scope Planner context detected" }
+      ]
     };
   }
 
   function renderActiveScopeContext() {
-    if (!els.activeScopeRows) return;
+    const scopeApi = window.ScopedLabsAccessControlScopeState;
 
-    const scope = getActiveScopeContext();
-
-    const rows = [
-      ["Project / Site", scope.projectSite],
-      ["Area / Scope", scope.areaScope],
-      ["Opening / Door Count", scope.openingDoorCount],
-      ["Opening Type", scope.openingType],
-      ["Door Function", scope.doorFunction],
-      ["Security Context", scope.securityContext],
-      ["Power Loss Intent", scope.powerLossIntent],
-      ["Upstream Source", scope.upstreamSource]
-    ];
-
-    els.activeScopeRows.innerHTML = rows.map(([label, value]) => {
-      return `
-        <div class="result-row" data-scope-field="${escapeHtml(label)}" data-scope-value="${escapeHtml(value)}">
-          <span class="result-label">${escapeHtml(label)}</span>
-          <span class="result-value">${escapeHtml(value)}</span>
-        </div>
-      `;
-    }).join("");
-
-    if (els.activeScopeCard) {
-      els.activeScopeCard.dataset.scopeStatus = scope.hasActiveScope ? "active" : "missing";
+    if (scopeApi && typeof scopeApi.renderScopeDisplay === "function") {
+      return scopeApi.renderScopeDisplay({
+        card: els.activeScopeCard,
+        title: els.activeScopeTitle,
+        description: els.activeScopeDescription,
+        meta: els.activeScopeMeta,
+        toolLabel: "Reader Type Selector"
+      });
     }
+
+    return getActiveScopeContext();
   }
 
   function getReportMeta() {
@@ -709,16 +682,18 @@
 
     const activeScope = currentReport.activeScopeContext || getActiveScopeContext();
 
-    const activeScopeRows = [
-      ["Project / Site", activeScope.projectSite || "Not documented"],
-      ["Area / Scope", activeScope.areaScope || "Not documented"],
-      ["Opening / Door Count", activeScope.openingDoorCount || "Not documented"],
-      ["Opening Type", activeScope.openingType || "Not documented"],
-      ["Door Function", activeScope.doorFunction || "Not documented"],
-      ["Security Context", activeScope.securityContext || "Not documented"],
-      ["Power Loss Intent", activeScope.powerLossIntent || "Not documented"],
-      ["Upstream Source", activeScope.upstreamSource || "Scope Planner / Fail-Safe context"]
-    ];
+    const activeScopeRows = Array.isArray(activeScope.reportRows) && activeScope.reportRows.length
+      ? activeScope.reportRows.map((item) => [item.label, item.value])
+      : [
+        ["Project / Site", activeScope.projectSite || "Not documented"],
+        ["Area / Scope", activeScope.areaScope || "Not documented"],
+        ["Opening / Door Count", activeScope.openingDoorCount || "Not documented"],
+        ["Opening Type", activeScope.openingType || "Not documented"],
+        ["Door Function", activeScope.doorFunction || "Not documented"],
+        ["Security Context", activeScope.securityContext || "Not documented"],
+        ["Power Loss Intent", activeScope.powerLossIntent || "Not documented"],
+        ["Upstream Source", activeScope.upstreamSource || "Scope Planner active scope"]
+      ];
 
     const extraSections = [
       {

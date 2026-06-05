@@ -1,11 +1,11 @@
 /* ScopedLabs Access Control Scope State
-   Version: access-control-scope-state-001-area-pattern
+   Version: access-control-scope-state-002-shared-display
    Purpose: Access Control door/scope ledger modeled after the proven Physical Security Area Planner state pattern.
 */
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-scope-state-001-area-pattern";
+  const API_VERSION = "access-control-scope-state-002-shared-display";
   const STORAGE_KEY = "scopedlabs:pipeline:access-control:scopes";
   const ACTIVE_KEY = "scopedlabs:pipeline:access-control:active-scope";
   const FLOW_KEY = "scopedlabs:pipeline:access-control:scope-planner";
@@ -259,6 +259,191 @@
     return writeLedger(ledger);
   }
 
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function titleCase(value) {
+    return String(value || "unknown")
+      .replace(/[-_]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(/\b\w/g, (char) => char.toUpperCase()) || "Unknown";
+  }
+
+  function ensureScopeDisplayStyles() {
+    if (typeof document === "undefined" || document.getElementById("access-control-scope-display-styles")) return;
+
+    const style = document.createElement("style");
+    style.id = "access-control-scope-display-styles";
+    style.textContent = `
+      .access-scope-context-card {
+        border-color: rgba(125,255,152,.22) !important;
+        background: rgba(125,255,152,.035) !important;
+      }
+
+      .access-scope-context-line {
+        color: rgba(190,255,205,.9);
+        font-size: .72rem;
+        font-weight: 950;
+        letter-spacing: .08em;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+      }
+
+      .access-scope-context-line .arrow {
+        color: rgba(125,255,152,.78);
+        padding: 0 5px;
+      }
+
+      .access-scope-context-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        margin-top: 10px;
+      }
+
+      .access-scope-context-grid div {
+        border: 1px solid rgba(148,163,184,.12);
+        border-radius: 10px;
+        padding: 8px;
+        background: rgba(255,255,255,.025);
+      }
+
+      .access-scope-context-grid strong {
+        color: rgba(203,213,225,.66);
+        display: block;
+        font-size: .66rem;
+        letter-spacing: .08em;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+      }
+
+      .access-scope-context-grid span {
+        color: rgba(226,232,240,.88);
+        font-size: .84rem;
+        font-weight: 750;
+        line-height: 1.3;
+      }
+
+      @media (max-width: 760px) {
+        .access-scope-context-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    `;
+
+    document.head.appendChild(style);
+  }
+
+  function buildScopeDisplayContext(toolLabel = "Access Control Tool") {
+    const scope = getActiveScope();
+    const metadata = readMetadata();
+
+    if (!scope) {
+      return {
+        hasActiveScope: false,
+        title: "No active access scope selected",
+        lineTarget: toolLabel,
+        description: "Create or select an access scope before using this tool so the result can be tied to the right door or zone.",
+        rows: [
+          ["Scope Source", "No Scope Planner context detected"],
+          ["Result Save", "Tool result will not be tied to a scope yet."]
+        ],
+        reportRows: [
+          { label: "Active Scope", value: "No active access scope selected" },
+          { label: "Scope Source", value: "No Scope Planner context detected" }
+        ],
+        projectSite: metadata.projectName || metadata.projectLocation || "Not documented",
+        areaScope: "No active scope selected",
+        openingDoorCount: "Not documented",
+        openingType: "Not documented",
+        doorFunction: "Not documented",
+        securityContext: "Not documented",
+        powerLossIntent: "Not documented",
+        upstreamSource: "No Scope Planner context detected"
+      };
+    }
+
+    const statusText = scope.requiresAuthorityReview ? "Authority Review" : titleCase(scope.status || "Planning");
+
+    return {
+      hasActiveScope: true,
+      id: scope.id,
+      title: scope.name || "Active Access Scope",
+      lineTarget: toolLabel,
+      description: titleCase(scope.scopeType) + " | " + titleCase(scope.doorFunction) + " | " + titleCase(scope.planningPath),
+      rows: [
+        ["Opening", titleCase(scope.openingType)],
+        ["Egress", titleCase(scope.egressRole)],
+        ["Fire Release", titleCase(scope.fireRelease)],
+        ["Status", statusText],
+        ["Power Intent", titleCase(scope.powerLossIntent)],
+        ["Lock Intent", titleCase(scope.lockIntent)],
+        ["Threat", titleCase(scope.threatLevel)],
+        ["Reader", titleCase(scope.readerIntent)]
+      ],
+      reportRows: [
+        { label: "Active Scope", value: scope.name || "Active Access Scope" },
+        { label: "Scope Type", value: titleCase(scope.scopeType) },
+        { label: "Opening Type", value: titleCase(scope.openingType) },
+        { label: "Door / Zone Function", value: titleCase(scope.doorFunction) },
+        { label: "Planning Path", value: titleCase(scope.planningPath) },
+        { label: "Egress Role", value: titleCase(scope.egressRole) },
+        { label: "Fire Release", value: titleCase(scope.fireRelease) },
+        { label: "Power Loss Intent", value: titleCase(scope.powerLossIntent) },
+        { label: "Lock Intent", value: titleCase(scope.lockIntent) },
+        { label: "Threat Level", value: titleCase(scope.threatLevel) },
+        { label: "Reader Intent", value: titleCase(scope.readerIntent) },
+        { label: "Status", value: statusText }
+      ],
+      projectSite: metadata.projectName || metadata.projectLocation || "Not documented",
+      areaScope: scope.name || "Active Access Scope",
+      openingDoorCount: String(scope.openingCount || scope.doorCount || scope.openings || scope.doors || "Not documented"),
+      openingType: titleCase(scope.openingType),
+      doorFunction: titleCase(scope.doorFunction),
+      securityContext: titleCase(scope.securityLevel || scope.threatLevel),
+      powerLossIntent: titleCase(scope.powerLossIntent),
+      upstreamSource: "Scope Planner active scope",
+      raw: scope
+    };
+  }
+
+  function renderScopeDisplay(config = {}) {
+    if (typeof document === "undefined") return null;
+
+    ensureScopeDisplayStyles();
+
+    const card = typeof config.card === "string" ? document.getElementById(config.card) : config.card;
+    const titleEl = typeof config.title === "string" ? document.getElementById(config.title) : config.title;
+    const descriptionEl = typeof config.description === "string" ? document.getElementById(config.description) : config.description;
+    const metaEl = typeof config.meta === "string" ? document.getElementById(config.meta) : config.meta;
+    const toolLabel = config.toolLabel || "Access Control Tool";
+
+    const context = buildScopeDisplayContext(toolLabel);
+
+    if (card) {
+      card.hidden = false;
+      card.dataset.scopeStatus = context.hasActiveScope ? "active" : "missing";
+    }
+
+    if (titleEl) titleEl.textContent = context.title;
+    if (descriptionEl) descriptionEl.textContent = context.description;
+
+    if (metaEl) {
+      metaEl.innerHTML = context.rows.map(([label, value]) => {
+        return '<div><strong>' + escapeHtml(label) + '</strong><span>' + escapeHtml(value) + '</span></div>';
+      }).join("");
+    }
+
+    return context;
+  }
+
   function clearAll() {
     sessionStorage.removeItem(STORAGE_KEY);
     sessionStorage.removeItem(ACTIVE_KEY);
@@ -285,6 +470,8 @@
     upsertScope,
     setActiveScope,
     removeScope,
+    buildScopeDisplayContext,
+    renderScopeDisplay,
     clearAll
   });
 })();

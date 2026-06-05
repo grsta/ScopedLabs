@@ -71,6 +71,7 @@ check("Reader Type payload suppresses generic calculator dump", readerHtml.inclu
 check("Reader Type payload includes Reader Recommendation section", readerScript.includes('"Reader Recommendation"'));
 check("Reader Type payload includes active scope context", readerScript.includes('"Active Scope Context"') && readerScript.includes("Area / Scope") && readerScript.includes("Opening / Door Count"));
 check("Reader Type payload uses real active scope context object", readerScript.includes("activeScopeContext: getActiveScopeContext()") && readerScript.includes("currentReport.activeScopeContext"));
+check("Reader Type payload uses shared active scope context builder", readerScript.includes("buildScopeDisplayContext") && read("assets/access-control-scope-state.js").includes("renderScopeDisplay"));
 check("Reader Type payload includes Credential Verification Trail section", readerScript.includes('"Credential Verification Trail"'));
 check("Reader Type payload includes credential format field", readerScript.includes("cardFormat") && readerScript.includes("Card Format / Facility Code"));
 check("Reader Type payload includes existing credential compatibility field", readerScript.includes("existingCred") && readerScript.includes("Existing Credential Compatibility"));
@@ -84,7 +85,7 @@ check("Reader Type ledger carries credential technology", readerScript.includes(
 check("Reader Type ledger carries facility-code/card-format status", readerScript.includes("facilityCodeStatus") && readerScript.includes("cardFormatNote"));
 check("Reader Type ledger carries existing credential compatibility", readerScript.includes("existingCredentialCompatibility"));
 check("Reader Type ledger carries compatibility risk", readerScript.includes("compatibilityRisk"));
-check("Reader Type ledger carries active scope context", readerScript.includes("activeScopeContext") && readerScript.includes("Scope Planner / Fail-Safe context"));
+check("Reader Type ledger carries active scope context", readerScript.includes("activeScopeContext: getActiveScopeContext()") && readerScript.includes("buildScopeDisplayContext"));
 check("Reader Type ledger carries next tool", readerScript.includes('nextTool: "Lock Power Budget"'));
 
 const visibleRows = rows.filter((row) => row.Status !== "----");
