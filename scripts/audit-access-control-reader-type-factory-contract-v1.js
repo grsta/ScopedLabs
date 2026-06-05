@@ -34,7 +34,7 @@ function exportConfigIsValid(source) {
   }
 }
 
-check("Reader Type page uses current factory lane", html.includes("access-control-reader-type-factory-003-report-tones") && html.includes("./script.js?v=access-control-reader-type-factory-003-report-tones"));
+check("Reader Type page uses current factory lane", html.includes("access-control-reader-type-factory-004-page-shell") && html.includes("./script.js?v=access-control-reader-type-factory-004-page-shell"));
 check("Reader Type declares Access Control tool identity", html.includes('data-category="access-control"') && html.includes('data-step="reader-type-selector"'));
 check("Reader Type opts into Access Control tool polish", html.includes('data-access-control-tool-polish="true"'));
 check("Reader Type loads canonical export.js", html.includes("/assets/export.js?v=shared-export-030-semantic-report-tones"));
@@ -61,12 +61,17 @@ check("Reader Type has no local buildReportHTML", !script.includes("function bui
 check("Reader Type has no local openReportWindow", !script.includes("function openReportWindow("));
 check("Reader Type does not open report window locally", !script.includes("window.open"));
 check("Reader Type has no manual export-grid metadata", !html.includes('<div class="export-grid">'));
+check("Reader Type has no stale export-grid CSS", !html.includes(".export-grid"));
 check("Reader Type has no retired continue-wrap", !html.includes('id="continue-wrap"') && !script.includes("continueWrap"));
 check("Reader Type does not load duplicate report shell", !html.includes("/assets/access-control-report-shell.js"));
 check("Reader Type has no loose Best For sentence", !html.includes('class="tool-best-for"') && !html.includes("<strong>Best for:</strong>"));
 check("Reader Type has no Documentation & Export pill text", !html.includes("Documentation & Export"));
 
 check("Reader Type local assistant mount exists", html.includes('id="accessControlLocalAssistantMount"'));
+check("Reader Type carry-forward context card exists", html.includes('id="carryForwardCard"') && html.includes('id="carryForwardContent"'));
+check("Reader Type closes tool card before footer", /<\/section>\s*<footer class="site-footer">/.test(html));
+check("Reader Type closes main before scripts", /<\/main>\s*<script src="\/assets\/tool-flow\.js/.test(html));
+check("Reader Type old model mini-note removed", !html.includes('class="mini-note"'));
 check("Reader Type adapter registered", adapters.includes('"reader-type-selector"') && adapters.includes("buildReaderTypeSelectorModel"));
 check("Reader Type exposes canonical export payload", script.includes("ScopedLabsAccessControlReaderTypeExport") && script.includes("getSharedExportPayload"));
 

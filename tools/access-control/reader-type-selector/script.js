@@ -33,6 +33,8 @@
     nextBtn: $("continue"),
     localAssistantMount: $("accessControlLocalAssistantMount"),
     flowNote: $("flow-note"),
+    carryForwardCard: $("carryForwardCard"),
+    carryForwardContent: $("carryForwardContent"),
     reportTitle: $("reportTitle"),
     projectName: $("projectName"),
     clientName: $("clientName"),
@@ -435,7 +437,7 @@
       if (text.includes("risk")) return "risk";
       if (text.includes("authority")) return "authority";
       if (text.includes("watch")) return "watch";
-      if (text.includes("complete")) return "complete";
+      if (text.includes("complete") || text.includes("healthy")) return "complete";
       if (text.includes("active")) return "active";
       return "";
     };
@@ -544,11 +546,20 @@
   });
 
   function loadFlowContext() {
+    const hideContext = () => {
+      if (els.flowNote) {
+        els.flowNote.hidden = true;
+        els.flowNote.innerHTML = "";
+      }
+
+      if (els.carryForwardCard) els.carryForwardCard.hidden = true;
+      if (els.carryForwardContent) els.carryForwardContent.innerHTML = "";
+    };
+
     const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
 
     if (!raw) {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
+      hideContext();
       return;
     }
 
@@ -557,40 +568,54 @@
     try {
       parsed = JSON.parse(raw);
     } catch {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
+      hideContext();
       return;
     }
 
     if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
+      hideContext();
       return;
     }
 
     const d = parsed.data || {};
-    const lines = [];
+    const rows = [];
 
-    if (d.recommendation) lines.push(`Fail Mode: <strong>${escapeHtml(d.recommendation)}</strong>`);
-    if (d.doorType) lines.push(`Door Type: <strong>${escapeHtml(d.doorType)}</strong>`);
-    if (d.life) lines.push(`Life Safety: <strong>${escapeHtml(d.life)}</strong>`);
-    if (d.threat) lines.push(`Threat: <strong>${escapeHtml(d.threat)}</strong>`);
-    if (d.powerLoss) lines.push(`Power Reliability: <strong>${escapeHtml(d.powerLoss)}</strong>`);
-    if (d.fire) lines.push(`Fire Integration: <strong>${escapeHtml(d.fire)}</strong>`);
+    if (d.recommendation || d.failStateRecommendation) {
+      rows.push(["Fail-State Decision", d.recommendation || d.failStateRecommendation]);
+    }
 
-    if (!lines.length) {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
+    if (d.status || d.failStateStatus) {
+      rows.push(["Decision Status", d.status || d.failStateStatus]);
+    }
+
+    if (d.powerLossIntent || d.powerLoss) {
+      rows.push(["Power-Loss Intent", d.powerLossIntent || d.powerLoss]);
+    }
+
+    if (d.doorType) rows.push(["Door Type", d.doorType]);
+    if (d.hardwareType) rows.push(["Hardware Type", d.hardwareType]);
+    if (d.releaseEvent) rows.push(["Release Event", d.releaseEvent]);
+
+    if (!rows.length) {
+      hideContext();
       return;
     }
 
-    els.flowNote.hidden = false;
-    els.flowNote.innerHTML = `
-      <strong>Flow Context</strong><br>
-      ${lines.join(" | ")}
-      <br><br>
-      Use that door-behavior decision to choose a reader style that fits the security need, environment, and user experience instead of selecting reader hardware in isolation.
-    `;
+    if (els.flowNote) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+    }
+
+    if (els.carryForwardContent) {
+      els.carryForwardContent.innerHTML = rows.map(([label, value]) => `
+        <div class="access-reader-carry-row">
+          <div class="access-reader-carry-label">${escapeHtml(label)}</div>
+          <div class="access-reader-carry-value">${escapeHtml(value)}</div>
+        </div>
+      `).join("");
+    }
+
+    if (els.carryForwardCard) els.carryForwardCard.hidden = false;
   }
 
   function invalidate() {

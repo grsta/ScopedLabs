@@ -29,6 +29,7 @@ const adapters = read("assets/access-control-tool-assistant-adapters.js");
 
 check("Reader Type reads previous Fail-Safe context", script.includes("getPreviousStepData") && script.includes("PREVIOUS_STEP"));
 check("Reader Type reports carry-forward context", script.includes('"Carry-Forward Context"') && script.includes("Fail-Safe / Fail-Secure"));
+check("Reader Type renders visible carry-forward card", script.includes("carryForwardCard") && script.includes("carryForwardContent") && script.includes("access-reader-carry-row"));
 check("Reader Type names downstream Lock Power Budget", script.includes("Lock Power Budget") && script.includes('/tools/access-control/lock-power-budget/'));
 
 check("Reader Type decision logic considers security level", script.includes('sec === "high"') && script.includes("higher-assurance checkpoint"));
