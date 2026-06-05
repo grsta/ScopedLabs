@@ -133,7 +133,40 @@
     observer.observe(document.body, { childList: true, subtree: true });
   }
 
-  function init() {
+
+  // access-control-export-card-polish-008
+  function applyExportCardPolish(root) {
+    const scope = root || document;
+    const body = document.body;
+
+    if (!body || body.getAttribute("data-category") !== "access-control") return;
+
+    const exportButtons = Array.from(scope.querySelectorAll("#exportReport, #saveSnapshot"));
+
+    exportButtons.forEach((button) => {
+      const card = button.closest(".card");
+      if (!card) return;
+
+      const pills = Array.from(card.querySelectorAll(".pill-row, .pill, .badge, [class*='pill']"));
+
+      pills.forEach((pill) => {
+        const text = String(pill.textContent || "").trim().toLowerCase();
+
+        if (
+          text === "documentation & export" ||
+          text === "documentation and export" ||
+          text === "export report" ||
+          text === "report details"
+        ) {
+          pill.setAttribute("data-access-control-export-decoration-hidden", "true");
+          pill.hidden = true;
+          pill.style.display = "none";
+        }
+      });
+    });
+  }
+
+function init() {
     if (!isAccessControlTool()) return;
     normalize(document);
     observe();
@@ -146,7 +179,8 @@
   });
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
+    document.addEventListener("DOMContentLoaded", () => applyExportCardPolish(document));
+  document.addEventListener("DOMContentLoaded", init);
   } else {
     init();
   }

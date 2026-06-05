@@ -123,6 +123,15 @@ check(
     lockPowerScript.includes("const watts = required * voltage;")
 );
 
+
+const polish = read("assets/access-control-tool-polish.js");
+
+check(
+  "Access Control export card decoration is module-owned",
+  polish.includes("function applyExportCardPolish") &&
+    polish.includes("data-access-control-export-decoration-hidden")
+);
+
 console.log("\nAccess Control output shell contract audit:");
 console.table(rows);
 

@@ -93,6 +93,13 @@ check(
     moduleText.includes('role: "assistant-owned-output-visual-export-handoff"')
 );
 
+
+check(
+  "Output shell remains separate from export card decoration polish",
+  !moduleText.includes("Documentation & Export") &&
+    !moduleText.includes("applyExportCardPolish")
+);
+
 console.log("\nAccess Control output shell module audit:");
 console.table(rows);
 

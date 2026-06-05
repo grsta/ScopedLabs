@@ -23,7 +23,7 @@ check("Lock Power loads Assistant Export module", html.includes("/assets/scopedl
 check("Lock Power loads Local Assistant module", html.includes("/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"));
 check("Lock Power loads Access Control assistant adapters", html.includes("/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-011-lock-power-budget-adapter"));
 check("Lock Power loads report metadata module", html.includes("/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes"));
-check("Lock Power loads Access Control polish module", html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-007-hide-fail-safe-assistant-flow-line"));
+check("Lock Power loads Access Control polish module", html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-008-hide-export-decoration-pill"));
 check("Lock Power local script cache is output shell module lane", html.includes("./script.js?v=access-control-lock-power-output-shell-module-029"));
 
 check(
@@ -87,6 +87,21 @@ check(
   html.includes('id="reportMetadataMount"') &&
     html.includes("data-report-metadata") &&
     !html.includes('<div class="export-grid">')
+);
+
+
+const polish = read("assets/access-control-tool-polish.js");
+
+check(
+  "Access Control polish owns export card decoration hiding",
+  polish.includes("function applyExportCardPolish") &&
+    polish.includes("data-access-control-export-decoration-hidden") &&
+    polish.includes("#exportReport, #saveSnapshot")
+);
+
+check(
+  "Lock Power shell probe expects current Access Control polish version",
+  html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-008-hide-export-decoration-pill")
 );
 
 console.log("\nAccess Control Lock Power shell modules probe audit:");
