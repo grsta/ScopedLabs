@@ -426,6 +426,34 @@
       return { title, description: description || "", text: value };
     };
 
+    const cell = (text, tone = "") => {
+      return { text: text || "", tone };
+    };
+
+    const toneForStatus = (value) => {
+      const text = String(value || "").toLowerCase();
+      if (text.includes("risk")) return "risk";
+      if (text.includes("authority")) return "authority";
+      if (text.includes("watch")) return "watch";
+      if (text.includes("complete")) return "complete";
+      if (text.includes("active")) return "active";
+      return "";
+    };
+
+    const toneForInterface = (value) => {
+      const text = String(value || "").toLowerCase();
+      if (text.includes("osdp")) return "active";
+      if (text.includes("wiegand")) return "watch";
+      return "";
+    };
+
+    const toneForSecurity = (value) => {
+      const text = String(value || "").toLowerCase();
+      if (text.includes("higher") || text.includes("encrypted") || text.includes("multi")) return "active";
+      if (text.includes("standard")) return "muted";
+      return "";
+    };
+
     const previous = getPreviousStepData();
     const readerType = outputValue("Reader Type") || "Pending";
     const interfaceChoice = outputValue("Interface") || "Pending";
@@ -438,6 +466,7 @@
     const failMode = previous.recommendation || previous.failStateRecommendation || "Not carried forward";
     const failStatus = previous.status || previous.failStateStatus || "Not documented";
     const powerLossIntent = previous.powerLossIntent || previous.powerLoss || "Not documented";
+    const hasCarryForward = failMode !== "Not carried forward";
 
     const extraSections = [
       {
@@ -447,7 +476,7 @@
       {
         title: "Carry-Forward Context",
         description: "Door behavior carried from Fail-Safe / Fail-Secure into reader selection.",
-        countLabel: failMode === "Not carried forward" ? "0 ITEMS" : "1 ITEM",
+        countLabel: hasCarryForward ? "1 ITEM" : "0 ITEMS",
         countTone: "muted",
         tableClass: "extra-export-table--planner extra-export-table--access-scope",
         tables: [
@@ -456,7 +485,7 @@
             rows: [[
               "Fail-Safe / Fail-Secure",
               failMode,
-              failStatus,
+              cell(failStatus, toneForStatus(failStatus) || "muted"),
               powerLossIntent,
               "Carry reader type into Lock Power Budget."
             ]]
@@ -481,7 +510,13 @@
         tables: [
           {
             headers: ["Reader Type", "Interface", "Security", "Environment", "Throughput"],
-            rows: [[readerType, interfaceChoice, security, environment, throughput]]
+            rows: [[
+              cell(readerType, readerType === "Pending" ? "muted" : "active"),
+              cell(interfaceChoice, toneForInterface(interfaceChoice) || "muted"),
+              cell(security, toneForSecurity(security) || "muted"),
+              environment,
+              throughput
+            ]]
           }
         ]
       }

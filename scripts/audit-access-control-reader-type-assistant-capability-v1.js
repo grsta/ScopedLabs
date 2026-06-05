@@ -51,6 +51,7 @@ check("Reader Type carry-forward includes environment", script.includes("environ
 check("Reader Type report uses Planner-style sections", script.includes('"Reader Recommendation"') && script.includes('"Carry-Forward Context"') && script.includes('"Inputs"'));
 check("Reader Type report separates long guidance", script.includes('textSection("Engineering Interpretation"') && script.includes('textSection("Actionable Guidance"'));
 check("Reader Type report suppresses calculator dump", html.includes('"suppressStandardReportSections": true') && script.includes("inputs: []") && script.includes("outputs: []"));
+check("Reader Type report uses semantic tones", script.includes("toneForStatus") && script.includes("toneForInterface") && script.includes("toneForSecurity") && script.includes("cell(readerType"));
 
 console.log("\nAccess Control Reader Type assistant capability audit:");
 console.table(rows);
