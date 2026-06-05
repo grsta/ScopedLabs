@@ -83,7 +83,7 @@
     }
   
     /* access-lock-power-supply-rail-024 */
-    .access-lock-power-rail-wrap {
+    .access-lock-power-cad-rail-wrap {
       min-height: 230px;
     }
 
@@ -98,6 +98,31 @@
     }
 
     .access-lock-power-rail svg {
+      display: block;
+      height: auto;
+      max-width: 100%;
+      width: 100%;
+    }
+
+  
+    /* access-lock-power-cad-power-rail-025 */
+    .access-lock-power-cad-rail-wrap {
+      min-height: 250px;
+    }
+
+    .access-lock-power-cad-rail {
+      border: 1px solid rgba(125,255,158,.16);
+      border-radius: 16px;
+      background:
+        linear-gradient(rgba(125,255,158,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(125,255,158,.035) 1px, transparent 1px),
+        radial-gradient(circle at 12% 0%, rgba(125,255,158,.07), transparent 34%),
+        rgba(0,0,0,.16);
+      background-size: 34px 34px, 34px 34px, auto, auto;
+      overflow: hidden;
+    }
+
+    .access-lock-power-cad-rail svg {
       display: block;
       height: auto;
       max-width: 100%;
@@ -241,8 +266,8 @@
 
         <div id="analysis-copy" style="display:none;"></div>
 
-        <div id="chartWrap" hidden class="access-lock-power-rail-wrap" style="margin-top:16px;">
-  <div id="chart" class="access-lock-power-rail" role="img" aria-label="Lock power supply capacity rail"></div>
+        <div id="chartWrap" hidden class="access-lock-power-cad-rail-wrap" style="margin-top:16px;">
+  <div id="chart" class="access-lock-power-cad-rail" role="img" aria-label="Lock power supply capacity rail"></div>
 </div>
 
         <p class="mini-note">
@@ -337,7 +362,7 @@
       window.ScopedLabsReportMetadata.init(document);
     }
   </script>
-  <script src="./script.js?v=access-control-lock-power-supply-rail-024"></script>
+  <script src="./script.js?v=access-control-lock-power-cad-power-rail-025"></script>
   <script src="/assets/access-control-tool-polish.js?v=access-control-tool-polish-007-hide-fail-safe-assistant-flow-line"></script>
   <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>
 </body>

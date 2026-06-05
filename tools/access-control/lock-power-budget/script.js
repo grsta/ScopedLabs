@@ -565,13 +565,237 @@
     return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
   }
 
+
+  // access-control-lock-power-cad-power-rail-025
+  function lockPowerClamp(value, min, max) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return min;
+    return Math.max(min, Math.min(max, n));
+  }
+
+  function lockPowerFormatAmp(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return "0.00 A";
+    return n.toFixed(2) + " A";
+  }
+
+  function lockPowerFormatWatt(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return "0.0 W";
+    return n.toFixed(1) + " W";
+  }
+
+  function lockPowerEsc(value) {
+    return escapeHtml(value === undefined || value === null ? "" : String(value));
+  }
+
+  function terminalPair(x, y, palette) {
+    return [
+      '<circle cx="' + x + '" cy="' + y + '" r="7" fill="' + palette.panel + '" stroke="' + palette.lineStrong + '" stroke-width="1.5"/>',
+      '<circle cx="' + x + '" cy="' + (y + 34) + '" r="7" fill="' + palette.panel + '" stroke="' + palette.lineStrong + '" stroke-width="1.5"/>',
+      '<text x="' + (x - 3) + '" y="' + (y + 5) + '" fill="' + palette.text + '" font-size="12" font-weight="900" font-family="Inter,Arial,sans-serif">+</text>',
+      '<text x="' + (x - 3) + '" y="' + (y + 39) + '" fill="' + palette.muted + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif">−</text>'
+    ].join("");
+  }
+
+  function accessPowerSupplySymbol(x, y, label, palette) {
+    return [
+      '<g aria-label="Power supply symbol">',
+      '<rect x="' + x + '" y="' + y + '" width="150" height="100" rx="10" fill="' + palette.block + '" stroke="' + palette.lineStrong + '" stroke-width="1.5"/>',
+      '<path d="M ' + (x + 16) + ' ' + (y + 22) + ' H ' + (x + 134) + ' M ' + (x + 16) + ' ' + (y + 78) + ' H ' + (x + 134) + '" stroke="' + palette.grid + '" stroke-width="1"/>',
+      '<text x="' + (x + 18) + '" y="' + (y + 36) + '" fill="' + palette.text + '" font-size="15" font-weight="900" font-family="Inter,Arial,sans-serif">' + lockPowerEsc(label) + '</text>',
+      '<text x="' + (x + 18) + '" y="' + (y + 58) + '" fill="' + palette.muted + '" font-size="11" font-weight="700" font-family="Inter,Arial,sans-serif">ACCESS POWER</text>',
+      '<text x="' + (x + 18) + '" y="' + (y + 76) + '" fill="' + palette.muted + '" font-size="11" font-weight="700" font-family="Inter,Arial,sans-serif">LISTED PSU / CTRL</text>',
+      terminalPair(x + 132, y + 34, palette),
+      '</g>'
+    ].join("");
+  }
+
+  function dcPowerRail(x1, x2, y, palette) {
+    return [
+      '<g aria-label="DC power rail">',
+      '<line x1="' + x1 + '" y1="' + y + '" x2="' + x2 + '" y2="' + y + '" stroke="' + palette.lineStrong + '" stroke-width="2"/>',
+      '<line x1="' + x1 + '" y1="' + (y + 34) + '" x2="' + x2 + '" y2="' + (y + 34) + '" stroke="' + palette.lineSoft + '" stroke-width="1.5" stroke-dasharray="6 6"/>',
+      '<path d="M ' + (x1 + 34) + ' ' + (y - 11) + ' H ' + (x2 - 32) + '" stroke="' + palette.green + '" stroke-width="1.5" stroke-dasharray="9 7"/>',
+      '<path d="M ' + (x2 - 32) + ' ' + (y - 11) + ' l -9 -5 M ' + (x2 - 32) + ' ' + (y - 11) + ' l -9 5" stroke="' + palette.green + '" stroke-width="1.5" stroke-linecap="round"/>',
+      '<text x="' + (x1 + 34) + '" y="' + (y - 20) + '" fill="' + palette.green + '" font-size="11" font-weight="800" font-family="Inter,Arial,sans-serif">CURRENT FLOW</text>',
+      '</g>'
+    ].join("");
+  }
+
+  function currentMarker(x, y, label, value, palette, tone) {
+    const color = tone === "required" ? palette.statusColor : palette.green;
+    const labelY = tone === "required" ? y - 70 : y - 58;
+    const chipW = tone === "required" ? 156 : 120;
+    const chipX = tone === "required" ? x + 12 : x - 60;
+
+    return [
+      '<g aria-label="' + lockPowerEsc(label) + ' marker">',
+      '<line x1="' + x.toFixed(1) + '" y1="' + (y - 42) + '" x2="' + x.toFixed(1) + '" y2="' + (y + 52) + '" stroke="' + color + '" stroke-width="' + (tone === "required" ? "2.5" : "1.8") + '" stroke-dasharray="' + (tone === "required" ? "0" : "5 5") + '"/>',
+      '<circle cx="' + x.toFixed(1) + '" cy="' + y + '" r="' + (tone === "required" ? "7" : "5") + '" fill="' + color + '" stroke="' + palette.card + '" stroke-width="2"/>',
+      '<line x1="' + x.toFixed(1) + '" y1="' + (y - 42) + '" x2="' + (tone === "required" ? x + 26 : x - 22).toFixed(1) + '" y2="' + labelY + '" stroke="' + color + '" stroke-width="1"/>',
+      '<rect x="' + chipX.toFixed(1) + '" y="' + (labelY - 25) + '" width="' + chipW + '" height="40" rx="9" fill="' + palette.card + '" stroke="' + color + '" stroke-width="1"/>',
+      '<text x="' + (chipX + 12).toFixed(1) + '" y="' + (labelY - 8) + '" fill="' + palette.muted + '" font-size="10" font-weight="800" font-family="Inter,Arial,sans-serif">' + lockPowerEsc(label).toUpperCase() + '</text>',
+      '<text x="' + (chipX + 12).toFixed(1) + '" y="' + (labelY + 8) + '" fill="' + color + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif">' + lockPowerEsc(value) + '</text>',
+      '</g>'
+    ].join("");
+  }
+
+  function headroomBracket(x1, x2, y, label, palette) {
+    const left = Math.min(x1, x2);
+    const right = Math.max(x1, x2);
+    const mid = left + ((right - left) / 2);
+    const safeWidth = Math.max(28, right - left);
+
+    return [
+      '<g aria-label="Headroom bracket">',
+      '<path d="M ' + left.toFixed(1) + ' ' + y + ' H ' + right.toFixed(1) + '" stroke="' + palette.amber + '" stroke-width="2"/>',
+      '<path d="M ' + left.toFixed(1) + ' ' + (y - 7) + ' V ' + (y + 7) + ' M ' + right.toFixed(1) + ' ' + (y - 7) + ' V ' + (y + 7) + '" stroke="' + palette.amber + '" stroke-width="2"/>',
+      '<rect x="' + (mid - Math.min(120, Math.max(80, safeWidth / 2))).toFixed(1) + '" y="' + (y + 13) + '" width="' + Math.min(240, Math.max(160, safeWidth)).toFixed(1) + '" height="28" rx="8" fill="' + palette.amberSoft + '" stroke="' + palette.amber + '" stroke-width="1"/>',
+      '<text x="' + (mid - Math.min(108, Math.max(68, safeWidth / 2 - 12))).toFixed(1) + '" y="' + (y + 32) + '" fill="' + palette.amberText + '" font-size="11" font-weight="900" font-family="Inter,Arial,sans-serif">' + lockPowerEsc(label) + '</text>',
+      '</g>'
+    ].join("");
+  }
+
+  function electricStrikeLoadSymbol(x, y, index, palette) {
+    const offset = index * 13;
+
+    return [
+      '<g aria-label="Electric lock load symbol">',
+      '<rect x="' + (x + offset) + '" y="' + (y + offset) + '" width="54" height="34" rx="5" fill="' + palette.block + '" stroke="' + palette.lineStrong + '" stroke-width="1"/>',
+      '<path d="M ' + (x + 11 + offset) + ' ' + (y + 8 + offset) + ' h 18 v 18 h -18 z" fill="none" stroke="' + palette.green + '" stroke-width="1.4"/>',
+      '<path d="M ' + (x + 34 + offset) + ' ' + (y + 9 + offset) + ' v 16 M ' + (x + 39 + offset) + ' ' + (y + 12 + offset) + ' v 10" stroke="' + palette.muted + '" stroke-width="1.2"/>',
+      '</g>'
+    ].join("");
+  }
+
+  function metricChip(x, y, label, value, palette, tone) {
+    const color = tone === "status" ? palette.statusColor : tone === "amber" ? palette.amber : palette.green;
+    const fill = tone === "status" ? palette.statusSoft : tone === "amber" ? palette.amberSoft : palette.card;
+
+    return [
+      '<rect x="' + x + '" y="' + y + '" width="178" height="42" rx="10" fill="' + fill + '" stroke="' + color + '" stroke-width="1"/>',
+      '<text x="' + (x + 12) + '" y="' + (y + 17) + '" fill="' + palette.muted + '" font-size="10" font-weight="800" font-family="Inter,Arial,sans-serif">' + lockPowerEsc(label).toUpperCase() + '</text>',
+      '<text x="' + (x + 12) + '" y="' + (y + 33) + '" fill="' + color + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif">' + lockPowerEsc(value) + '</text>'
+    ].join("");
+  }
+
+  function buildCadPowerRailSvg(metrics, options = {}) {
+    const peak = Number(metrics?.peak || 0);
+    const required = Number(metrics?.required || 0);
+    const watts = Number(metrics?.watts || 0);
+    const utilizationPct = Number(metrics?.utilizationPct || 0);
+
+    const reserve = Math.max(0, required - peak);
+    const reservePct = peak > 0 ? (reserve / peak) * 100 : 0;
+    const status = getStatus(utilizationPct);
+
+    const exportMode = options.exportMode === true;
+
+    const width = 1120;
+    const height = 360;
+
+    const palette = {
+      bg: exportMode ? "#ffffff" : "rgba(0,0,0,0)",
+      card: exportMode ? "#ffffff" : "rgba(4,14,10,.78)",
+      panel: exportMode ? "#f8fbf8" : "rgba(6,18,12,.72)",
+      block: exportMode ? "#f5faf7" : "rgba(9,31,19,.86)",
+      text: exportMode ? "#101715" : "rgba(238,255,244,.95)",
+      muted: exportMode ? "#54615d" : "rgba(203,213,225,.72)",
+      grid: exportMode ? "#dce8e1" : "rgba(125,255,158,.13)",
+      lineSoft: exportMode ? "#b8cabe" : "rgba(125,255,158,.24)",
+      lineStrong: exportMode ? "#668273" : "rgba(180,255,200,.52)",
+      green: exportMode ? "#1f9d57" : "rgba(125,255,158,.88)",
+      amber: exportMode ? "#b7791f" : "rgba(255,204,102,.92)",
+      amberText: exportMode ? "#8a5a10" : "rgba(255,225,150,.96)",
+      amberSoft: exportMode ? "#fff4d8" : "rgba(255,204,102,.13)",
+      red: exportMode ? "#b42318" : "rgba(255,105,105,.9)",
+      redSoft: exportMode ? "#ffe2df" : "rgba(255,105,105,.14)"
+    };
+
+    palette.statusColor = status === "RISK" ? palette.red : status === "WATCH" ? palette.amber : palette.green;
+    palette.statusSoft = status === "RISK" ? palette.redSoft : status === "WATCH" ? palette.amberSoft : exportMode ? "#e7f8ee" : "rgba(125,255,158,.12)";
+
+    const railX1 = 260;
+    const railX2 = 820;
+    const railY = 160;
+    const railW = railX2 - railX1;
+
+    const maxA = Math.max(required * 1.18, peak * 1.32, 1);
+    const peakX = railX1 + lockPowerClamp(peak / maxA, 0, 1) * railW;
+    const requiredX = railX1 + lockPowerClamp(required / maxA, 0, 1) * railW;
+
+    const voltage = String(els.voltage?.value || "12");
+    const supplyLabel = voltage ? voltage + "VDC PSU" : "Power Supply";
+    const lockCount = String(els.locks?.value || "0");
+    const simultaneous = String(els.simul?.value || "0");
+    const ampsEach = String(els.amps?.value || "0");
+    const lockType = String(els.lockType?.options?.[els.lockType.selectedIndex]?.text || els.lockType?.value || "Lock hardware");
+
+    const repeatedLocks = Math.max(1, Math.min(4, Number(lockCount) || 1));
+
+    const svg = [
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Low voltage access control lock power rail diagram">',
+      '<rect x="0" y="0" width="' + width + '" height="' + height + '" rx="18" fill="' + palette.bg + '"/>',
+      '<rect x="24" y="22" width="1072" height="316" rx="18" fill="' + palette.panel + '" stroke="' + palette.lineSoft + '"/>',
+
+      '<path d="M 54 72 H 1066 M 54 116 H 1066 M 54 250 H 1066 M 54 294 H 1066" stroke="' + palette.grid + '" stroke-width="1"/>',
+      '<path d="M 94 48 V 318 M 226 48 V 318 M 952 48 V 318" stroke="' + palette.grid + '" stroke-width="1"/>',
+
+      '<text x="54" y="58" fill="' + palette.text + '" font-size="18" font-weight="900" font-family="Inter,Arial,sans-serif">Lock Power Single-Line Diagram</text>',
+      '<text x="54" y="82" fill="' + palette.muted + '" font-size="12" font-weight="700" font-family="Inter,Arial,sans-serif">Power supply / controller output → DC rail → simultaneous lock load and required headroom.</text>',
+
+      '<rect x="884" y="48" width="166" height="38" rx="10" fill="' + palette.statusSoft + '" stroke="' + palette.statusColor + '"/>',
+      '<text x="902" y="72" fill="' + palette.statusColor + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif">' + lockPowerEsc(status) + ' · ' + utilizationPct.toFixed(0) + '% UTILIZATION</text>',
+
+      accessPowerSupplySymbol(66, 122, supplyLabel, palette),
+      dcPowerRail(220, 884, railY, palette),
+
+      '<line x1="216" y1="' + (railY + 17) + '" x2="220" y2="' + (railY + 17) + '" stroke="' + palette.lineStrong + '" stroke-width="1.2"/>',
+      '<line x1="884" y1="' + railY + '" x2="918" y2="' + railY + '" stroke="' + palette.lineStrong + '" stroke-width="2"/>',
+      '<line x1="884" y1="' + (railY + 34) + '" x2="918" y2="' + (railY + 34) + '" stroke="' + palette.lineSoft + '" stroke-width="1.4" stroke-dasharray="6 6"/>',
+
+      currentMarker(peakX, railY, "Peak load", lockPowerFormatAmp(peak), palette, "peak"),
+      currentMarker(requiredX, railY, "Required supply", lockPowerFormatAmp(required) + " / " + lockPowerFormatWatt(watts), palette, "required"),
+      headroomBracket(peakX, requiredX, railY + 72, lockPowerFormatAmp(reserve) + " reserve · " + reservePct.toFixed(0) + "% headroom", palette),
+
+      '<g aria-label="Lock load bank">',
+      '<rect x="922" y="122" width="144" height="112" rx="12" fill="' + palette.block + '" stroke="' + palette.lineStrong + '" stroke-width="1.4"/>',
+      '<text x="938" y="148" fill="' + palette.text + '" font-size="14" font-weight="900" font-family="Inter,Arial,sans-serif">' + lockPowerEsc(lockCount) + ' Lock Loads</text>',
+      '<text x="938" y="168" fill="' + palette.muted + '" font-size="10" font-weight="800" font-family="Inter,Arial,sans-serif">' + lockPowerEsc(lockType).toUpperCase() + '</text>',
+      electricStrikeLoadSymbol(940, 184, 0, palette),
+      repeatedLocks > 1 ? electricStrikeLoadSymbol(940, 184, 1, palette) : "",
+      repeatedLocks > 2 ? electricStrikeLoadSymbol(940, 184, 2, palette) : "",
+      repeatedLocks > 3 ? electricStrikeLoadSymbol(940, 184, 3, palette) : "",
+      '<text x="938" y="224" fill="' + palette.green + '" font-size="11" font-weight="900" font-family="Inter,Arial,sans-serif">' + lockPowerEsc(simultaneous) + ' simultaneous × ' + lockPowerEsc(ampsEach) + ' A</text>',
+      '</g>',
+
+      metricChip(66, 272, "Peak Load", lockPowerFormatAmp(peak), palette, "green"),
+      metricChip(256, 272, "Required Supply", lockPowerFormatAmp(required), palette, "status"),
+      metricChip(446, 272, "Power", lockPowerFormatWatt(watts), palette, "green"),
+      metricChip(636, 272, "Headroom Reserve", lockPowerFormatAmp(reserve), palette, "amber"),
+      metricChip(826, 272, "Status", status + " · " + utilizationPct.toFixed(0) + "%", palette, "status"),
+
+      '</svg>'
+    ].join("");
+
+    return svg;
+  }
+
+  function getCadPowerRailImage(metrics, options = {}) {
+    if (!metrics) return "";
+    const svg = buildCadPowerRailSvg(metrics, { exportMode: options.exportMode === true });
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  }
+
   function getChartImage() {
-    return getSupplyRailImage(lastMetrics, { exportMode: true });
+    return getCadPowerRailImage(lastMetrics, { exportMode: true });
   }
 
 
+
   function getExportChartImage() {
-    return getSupplyRailImage(lastMetrics, { exportMode: true });
+    return getCadPowerRailImage(lastMetrics, { exportMode: true });
   }
 
   function buildReportHTML(payload) {
@@ -1171,7 +1395,7 @@
 
     showChartWrap();
 
-    els.chart.innerHTML = buildSupplyRailSvg(metrics, { exportMode: false });
+    els.chart.innerHTML = buildCadPowerRailSvg(metrics, { exportMode: false });
     chart = {
       destroy() {
         if (els.chart) els.chart.innerHTML = "";

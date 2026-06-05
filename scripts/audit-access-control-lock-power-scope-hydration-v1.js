@@ -33,8 +33,8 @@ check(
 );
 
 check(
-  "Lock Power local script cache is current supply rail lane shell cleanup lane",
-  html.includes("./script.js?v=access-control-lock-power-supply-rail-024")
+  "Lock Power local script cache is current CAD power rail lane shell cleanup lane",
+  html.includes("./script.js?v=access-control-lock-power-cad-power-rail-025")
 );
 
 check(
