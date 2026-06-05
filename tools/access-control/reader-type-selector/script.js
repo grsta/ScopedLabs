@@ -47,6 +47,45 @@
 
   let currentReport = null;
 
+  function ensureReaderTypeVerificationStyles() {
+    if (typeof document === "undefined" || document.getElementById("reader-type-verification-styles")) return;
+
+    const style = document.createElement("style");
+    style.id = "reader-type-verification-styles";
+    style.textContent = `
+      .reader-verification-hold {
+        border: 1px solid rgba(255, 191, 87, 0.38);
+        background: rgba(255, 191, 87, 0.09);
+        border-radius: 14px;
+        padding: 14px 16px;
+        margin: 0 0 16px;
+      }
+
+      .reader-verification-hold--risk {
+        border-color: rgba(255, 118, 118, 0.48);
+        background: rgba(255, 118, 118, 0.10);
+      }
+
+      .reader-verification-hold__label {
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+
+      .reader-verification-hold__body {
+        margin: 0 0 10px;
+      }
+
+      .reader-verification-hold ul {
+        margin: 0;
+        padding-left: 20px;
+      }
+    `;
+
+    document.head.appendChild(style);
+  }
+
   function escapeHtml(value) {
     return String(value ?? "")
       .replace(/&/g, "&amp;")
@@ -321,6 +360,10 @@
     const l = String(label || "").toLowerCase();
     const v = String(value || "").toLowerCase();
 
+    if (l.includes("verification status") && v.includes("risk")) return "risk";
+    if (l.includes("verification status") && v.includes("watch")) return "watch";
+    if (l.includes("cautionary") || l.includes("compatibility risk")) return v.includes("no major") ? "muted" : "watch";
+    if (l.includes("card format") && (v.includes("unknown") || v.includes("csn") || v.includes("uid") || v.includes("26-bit"))) return "watch";
     if (l.includes("interface") && v.includes("osdp")) return "active";
     if (l.includes("interface") && v.includes("wiegand")) return "watch";
     if (l.includes("security") && (v.includes("encrypted") || v.includes("mfa") || v.includes("multi"))) return "active";
@@ -350,8 +393,10 @@
     return "";
   }
 
-  function render(rows) {
+  function render(rows, verificationHold = null) {
     if (!els.results) return;
+
+    ensureReaderTypeVerificationStyles();
 
     const rowMap = new Map(rows.map((item) => [item.label, item.value]));
     const readerType = rowMap.get("Reader Type") || "Reader recommendation pending";
@@ -373,7 +418,23 @@
       `;
     }).join("");
 
+    const hold = verificationHold && verificationHold.status && verificationHold.status !== "HEALTHY"
+      ? `
+        <div class="reader-verification-hold reader-verification-hold--${escapeHtml(String(verificationHold.status).toLowerCase())}">
+          <div class="reader-verification-hold__label">${escapeHtml(verificationHold.label)}</div>
+          <p class="reader-verification-hold__body">${escapeHtml(verificationHold.body)}</p>
+          ${Array.isArray(verificationHold.steps) && verificationHold.steps.length ? `
+            <ul>
+              ${verificationHold.steps.map((step) => `<li>${escapeHtml(step)}</li>`).join("")}
+            </ul>
+          ` : ""}
+        </div>
+      `
+      : "";
+
     els.results.innerHTML = `
+      ${hold}
+
       <div class="reader-result-hero">
         <div class="reader-result-kicker">Current Reader Direction</div>
         <div class="reader-result-title">${escapeHtml(readerType)}</div>
@@ -536,6 +597,8 @@
     const cardFormat = outputValue("Credential Format / Facility Code") || inputValue("Card Format / Facility Code") || "Not documented";
     const existingCompatibility = outputValue("Existing Credential Compatibility") || inputValue("Existing Credential Compatibility") || "Not documented";
     const compatibilityRisk = outputValue("Compatibility Risk") || "No compatibility risk documented";
+    const verificationStatus = outputValue("Verification Status") || currentReport.status || "Not documented";
+    const cautionarySteps = outputValue("Cautionary Steps") || "No cautionary steps documented";
     const interpretation = outputValue("Engineering Interpretation") || currentReport.interpretation || "";
     const guidance = outputValue("Actionable Guidance") || "";
 
@@ -561,8 +624,9 @@
         tableClass: "extra-export-table--planner extra-export-table--decision",
         tables: [
           {
-            headers: ["Card Format / Facility Code", "Existing Compatibility", "Compatibility Risk"],
+            headers: ["Verification Status", "Card Format / Facility Code", "Existing Compatibility", "Compatibility Risk"],
             rows: [[
+              cell(verificationStatus, String(verificationStatus).includes("RISK") ? "risk" : String(verificationStatus).includes("WATCH") ? "watch" : "muted"),
               cell(cardFormat, toneForCredentialFormat(cardFormat) || "muted"),
               existingCompatibility,
               cell(compatibilityRisk, toneForCredentialFormat(cardFormat) || "muted")
@@ -590,6 +654,7 @@
     ];
 
     [
+      textSection("Cautionary Steps", cautionarySteps, "Verification items that should be confirmed or documented before this reader decision is treated as final."),
       textSection("Engineering Interpretation", interpretation, "Why this reader strategy fits the selected security, protocol, credential-format, environment, and throughput assumptions."),
       textSection("Actionable Guidance", guidance, "What should be checked before carrying this reader strategy into Lock Power Budget and Summary.")
     ].filter(Boolean).forEach((section) => extraSections.push(section));
@@ -653,6 +718,33 @@
     clearResults("Run recommendation.");
     loadFlowContext();
     updateExportControls();
+  }
+
+  function buildVerificationHold(status, steps, compatibilityRisk) {
+    const cleanStatus = String(status || "HEALTHY").toUpperCase();
+    const cleanSteps = Array.isArray(steps)
+      ? steps.map((item) => String(item || "").trim()).filter(Boolean)
+      : [];
+
+    if (cleanStatus === "HEALTHY" && !cleanSteps.length) {
+      return {
+        status: cleanStatus,
+        label: "HEALTHY ? No cautionary hold flagged",
+        body: "No reader-protocol or credential-format hold is currently blocking the next step.",
+        steps: []
+      };
+    }
+
+    const fallback = compatibilityRisk && compatibilityRisk !== "No major credential compatibility risk flagged."
+      ? compatibilityRisk
+      : "Confirm credential format, facility-code/bit-format, existing-card compatibility, and panel reader protocol before continuing.";
+
+    return {
+      status: cleanStatus,
+      label: cleanStatus + " ? Confirm before continuing",
+      body: "This reader decision should not be treated as final until the items below are verified or documented as known constraints.",
+      steps: cleanSteps.length ? cleanSteps : [fallback]
+    };
   }
 
   function getStatus({ sec, iface, cred, cardFormat, existingCred }) {
@@ -801,19 +893,23 @@
     }
 
     const guidance = guidanceParts.join(" ");
+    const status = getStatus({ sec, iface, cred, cardFormat, existingCred });
+    const verificationHold = buildVerificationHold(status, guidanceParts, compatibilityRisk);
 
     render([
       { label: "Reader Type", value: reader },
+      { label: "Verification Status", value: verificationHold.label },
       { label: "Interface", value: interfaceRec },
       { label: "Security", value: security },
       { label: "Credential Format / Facility Code", value: cardFormatNote },
       { label: "Existing Credential Compatibility", value: compatibilityNote },
       { label: "Compatibility Risk", value: compatibilityRisk },
+      { label: "Cautionary Steps", value: verificationHold.steps.join(" ") },
       { label: "Environment", value: envNote },
       { label: "Throughput", value: throughputNote },
       { label: "Engineering Interpretation", value: interpretation },
       { label: "Actionable Guidance", value: guidance }
-    ]);
+    ], verificationHold);
 
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
       category: CATEGORY,
@@ -838,6 +934,8 @@
         interface: iface,
         panelInterface: iface,
         readerProtocol: iface,
+        verificationStatus: verificationHold.label,
+        cautionarySteps: verificationHold.steps,
         requiredActions: guidanceParts,
         nextTool: "Lock Power Budget"
       }
@@ -845,7 +943,6 @@
 
     showContinue();
 
-    const status = getStatus({ sec, iface, cred, cardFormat, existingCred });
     const summary = buildSummary({ reader, interfaceRec, security, cardFormatNote, compatibilityNote });
 
     const assistantCore = {
@@ -859,6 +956,8 @@
       cardFormat: cardFormatNote,
       existingCredentialCompatibility: compatibilityNote,
       compatibilityRisk,
+      verificationStatus: verificationHold.label,
+      verificationSteps: verificationHold.steps,
       interpretation,
       guidance,
       nextTool: "Lock Power Budget",

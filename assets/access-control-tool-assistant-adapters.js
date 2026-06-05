@@ -1,11 +1,11 @@
 /* ScopedLabs Access Control Tool Assistant Adapters
-   Version: access-control-assistant-adapters-009-reader-domain
+   Version: access-control-assistant-adapters-010-reader-verification-hold
    Purpose: category-specific local assistant model adapters. Dormant unless a tool explicitly calls one.
 */
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-assistant-adapters-009-reader-domain";
+  const API_VERSION = "access-control-assistant-adapters-010-reader-verification-hold";
 
   function safeText(value) {
     return String(value ?? "");
@@ -63,6 +63,10 @@
     const cardFormat = safeText(data.cardFormat || "Card format / facility code not documented");
     const existingCompatibility = safeText(data.existingCredentialCompatibility || "Existing credential compatibility not documented");
     const compatibilityRisk = safeText(data.compatibilityRisk || "Credential compatibility risk not documented");
+    const verificationStatus = safeText(data.verificationStatus || status);
+    const verificationSteps = Array.isArray(data.verificationSteps)
+      ? data.verificationSteps.map((item) => safeText(item)).filter(Boolean)
+      : [];
     const guidance = safeText(data.guidance || "Confirm reader protocol, credential technology, facility-code/bit-format, existing-card compatibility, environmental rating, and user throughput before continuing.");
 
     const interfaceWatch = iface.toLowerCase().includes("wiegand");
@@ -78,6 +82,11 @@
       hideStandardLists: true,
       hideHeaderPills: true,
       sections: [
+        ...(verificationStatus.includes("WATCH") || verificationStatus.includes("RISK") ? [{
+          title: "Verification Required",
+          body: "Do not treat this reader decision as final until these cautionary items are confirmed or documented as accepted constraints.",
+          items: verificationSteps.length ? verificationSteps : [guidance]
+        }] : []),
         {
           title: "Decision Basis",
           body: "This recommendation balances credential technology, reader protocol, card-format/facility-code status, existing-card compatibility, environment, and throughput. The result is acceptable for planning only if the credential verification trail is documented.",

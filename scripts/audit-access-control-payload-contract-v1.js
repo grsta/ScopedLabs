@@ -68,6 +68,8 @@ check("Reader Type payload includes Credential Verification Trail section", read
 check("Reader Type payload includes credential format field", readerScript.includes("cardFormat") && readerScript.includes("Card Format / Facility Code"));
 check("Reader Type payload includes existing credential compatibility field", readerScript.includes("existingCred") && readerScript.includes("Existing Credential Compatibility"));
 check("Reader Type payload includes compatibility risk", readerScript.includes("compatibilityRisk"));
+check("Reader Type payload carries verification hold status", readerScript.includes("verificationStatus") && readerScript.includes("Verification Status"));
+check("Reader Type payload carries cautionary steps", readerScript.includes("cautionarySteps") && readerScript.includes("Cautionary Steps"));
 check("Reader Type payload uses semantic tone cells", readerScript.includes("cell(readerType") && readerScript.includes("cell(interfaceChoice") && readerScript.includes("cell(cardFormat"));
 check("Reader Type ledger carries reader type", readerScript.includes("readerType: reader"));
 check("Reader Type ledger carries panel interface / protocol", readerScript.includes("panelInterface") && readerScript.includes("readerProtocol"));
