@@ -50,6 +50,12 @@ check("Shared local assistant supports optional sections", read("assets/scopedla
 check("Shared local assistant can hide duplicate standard lists", read("assets/scopedlabs-local-assistant.js").includes("hideStandardLists"));
 check("Reader Type hides duplicate standard assistant lists", adapters.includes("hideStandardLists: true"));
 check("Reader Type rich assistant hides header pills", adapters.includes("hideHeaderPills: true") && read("assets/scopedlabs-local-assistant.js").includes("hideHeaderPills"));
+check(
+  "Shared local assistant renderer suppresses pill row when requested",
+  read("assets/scopedlabs-local-assistant.js").includes("const pillRow = model.hideHeaderPills") &&
+    read("assets/scopedlabs-local-assistant.js").includes("pillRow +") &&
+    read("assets/scopedlabs-local-assistant.js").includes("standardLists")
+);
 check("Reader Type assistant uses Next Step instead of duplicate Carry Forward", adapters.includes('title: "Next Step"') && !adapters.includes('title: "Carry Forward"'));
 check("Reader Type local assistant receives guidance/actions", script.includes("renderLocalAssistant(assistantCore)") && script.includes("requiredActions"));
 check("Reader Type guidance tells user what to check next", script.includes("Confirm whether the access panel and reader hardware support the selected interface") && script.includes("Carry reader type, interface, and credential assumptions into Lock Power Budget"));

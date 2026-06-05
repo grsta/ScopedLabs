@@ -34,15 +34,20 @@ function exportConfigIsValid(source) {
   }
 }
 
-check("Reader Type page uses current factory lane", html.includes("access-control-reader-type-factory-009-assistant-clean") && html.includes("./script.js?v=access-control-reader-type-factory-009-assistant-clean"));
+check("Reader Type page uses current factory lane", html.includes("access-control-reader-type-factory-010-assistant-header-fix") && html.includes("./script.js?v=access-control-reader-type-factory-010-assistant-header-fix"));
 check("Reader Type declares Access Control tool identity", html.includes('data-category="access-control"') && html.includes('data-step="reader-type-selector"'));
 check("Reader Type opts into Access Control tool polish", html.includes('data-access-control-tool-polish="true"'));
 check("Reader Type loads canonical export.js", html.includes("/assets/export.js?v=shared-export-030-semantic-report-tones"));
 check("Reader Type loads report metadata module", html.includes("/assets/scopedlabs-report-metadata.js"));
 check("Reader Type loads tool shell module", html.includes("/assets/scopedlabs-tool-shell.js"));
 check("Reader Type loads local assistant renderer", html.includes("/assets/scopedlabs-local-assistant.js"));
-check("Reader Type loads clean rich assistant header support", html.includes("scopedlabs-local-assistant-005-clean-rich-header") && read("assets/scopedlabs-local-assistant.js").includes("hideHeaderPills"));
-check("Reader Type loads Access Control assistant adapters", html.includes("/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-006-reader-clean"));
+check(
+  "Reader Type uses rich assistant header proof version",
+  html.includes("scopedlabs-local-assistant-006-rich-header-proof") &&
+    read("assets/scopedlabs-local-assistant.js").includes("const pillRow = model.hideHeaderPills") &&
+    read("assets/scopedlabs-local-assistant.js").includes("model.hideHeaderPills")
+);
+check("Reader Type loads Access Control assistant adapters", html.includes("/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-007-reader-header-proof"));
 check("Reader Type loads Access Control scope state", html.includes("/assets/access-control-scope-state.js"));
 check("Reader Type loads Access Control tool polish", html.includes("/assets/access-control-tool-polish.js"));
 

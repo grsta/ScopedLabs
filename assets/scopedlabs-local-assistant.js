@@ -1,5 +1,5 @@
 /* ScopedLabs Local Assistant
-   Version: scopedlabs-local-assistant-005-clean-rich-header
+   Version: scopedlabs-local-assistant-006-rich-header-proof
    Purpose: generic local tool assistant renderer with the same visible card rhythm used by proven Physical Security local assistants.
    Notes:
    - Dormant by default.
@@ -10,7 +10,7 @@
 (function () {
   "use strict";
 
-  const API_VERSION = "scopedlabs-local-assistant-005-clean-rich-header";
+  const API_VERSION = "scopedlabs-local-assistant-006-rich-header-proof";
 
   function safeText(value) {
     return String(value ?? "");
@@ -92,20 +92,35 @@
 
   function renderHtml(modelInput) {
     const model = buildModel(modelInput);
+    const richClass = model.sections && model.sections.length ? " scopedlabs-local-assistant-card--rich" : "";
+    const pillRow = model.hideHeaderPills
+      ? ""
+      : '<div class="pill-row">' +
+          '<span class="pill pill--free">' + escapeHtml(model.kicker) + '</span>' +
+          '<span class="pill pill--status">' + escapeHtml(model.status) + '</span>' +
+        '</div>';
+
+    const standardLists = model.hideStandardLists
+      ? ""
+      : '<div class="assistant-grid">' +
+          '<div class="assistant-panel">' +
+            '<h3>' + escapeHtml(model.assumptionsTitle) + '</h3>' +
+            renderList(model.assumptions, "No assumptions recorded yet.") +
+          '</div>' +
+          '<div class="assistant-panel">' +
+            '<h3>' + escapeHtml(model.actionsTitle) + '</h3>' +
+            renderList(model.actions, "Run the tool to generate recommended actions.") +
+          '</div>' +
+        '</div>';
+
     return '' +
-      '<section class="card tool-card scopedlabs-local-assistant-005-clean-rich-header access-control-local-assistant-card" data-local-assistant-category="' + escapeHtml(model.category) + '" data-local-assistant-tool="' + escapeHtml(model.tool) + '">' +
-        '<div class="pill-row">' +
-          '<span class="pill">' + escapeHtml(model.kicker) + '</span>' +
-          '<span class="pill" data-status="' + escapeHtml(model.status) + '">' + escapeHtml(model.status) + '</span>' +
-        '</div>' +
-        '<h2 class="h2">' + escapeHtml(model.title) + '</h2>' +
+      '<div class="scopedlabs-local-assistant-card' + richClass + '">' +
+        pillRow +
+        '<h2>' + escapeHtml(model.title) + '</h2>' +
         '<p class="muted">' + escapeHtml(model.summary) + '</p>' +
         renderSections(model.sections) +
-        '<div class="assistant-grid">' +
-          '<div><h3>' + escapeHtml(model.assumptionsTitle) + '</h3>' + renderList(model.assumptions, "No assumptions recorded yet.") + '</div>' +
-          '<div><h3>' + escapeHtml(model.actionsTitle) + '</h3>' + renderList(model.actions, "No recommended actions yet.") + '</div>' +
-        '</div>' +
-      '</section>';
+        standardLists +
+      '</div>';
   }
 
   function mount(target, modelInput) {

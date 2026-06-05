@@ -1,11 +1,11 @@
 /* ScopedLabs Access Control Tool Assistant Adapters
-   Version: access-control-assistant-adapters-006-reader-clean
+   Version: access-control-assistant-adapters-007-reader-header-proof
    Purpose: category-specific local assistant model adapters. Dormant unless a tool explicitly calls one.
 */
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-assistant-adapters-006-reader-clean";
+  const API_VERSION = "access-control-assistant-adapters-007-reader-header-proof";
 
   function safeText(value) {
     return String(value ?? "");
