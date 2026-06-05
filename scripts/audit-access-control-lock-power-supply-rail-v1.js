@@ -15,10 +15,10 @@ const rows = [];
 const html = read("tools/access-control/lock-power-budget/index.html");
 const script = read("tools/access-control/lock-power-budget/script.js");
 
-check("Lock Power local script cache is CAD power rail lane", html.includes("./script.js?v=access-control-lock-power-cad-power-rail-025"));
+check("Lock Power local script cache is CAD label cleanup lane", html.includes("./script.js?v=access-control-lock-power-cad-label-cleanup-026"));
 check("Lock Power replaces old canvas chart with CAD SVG rail mount", html.includes('class="access-lock-power-cad-rail"') && !html.includes('<canvas id="chart"></canvas>'));
 check("Lock Power includes CAD power rail styles", html.includes("access-lock-power-cad-power-rail-025"));
-check("Lock Power script builds CAD rail SVG", script.includes("function buildCadPowerRailSvg") && script.includes("Lock Power Single-Line Diagram"));
+check("Lock Power script builds compact CAD rail SVG", script.includes("function buildCadPowerRailSvg") && script.includes("Lock Power Rail"));
 check("Lock Power exports CAD rail as SVG data image", script.includes("function getCadPowerRailImage") && script.includes("data:image/svg+xml;charset=utf-8"));
 check("Lock Power renderChart now renders CAD SVG rail", script.includes("els.chart.innerHTML = buildCadPowerRailSvg(metrics, { exportMode: false });"));
 check("Old Power Stress Magnitude chart title removed", !script.includes("Power Stress Magnitude"));

@@ -618,7 +618,7 @@
       '<line x1="' + x1 + '" y1="' + (y + 34) + '" x2="' + x2 + '" y2="' + (y + 34) + '" stroke="' + palette.lineSoft + '" stroke-width="1.5" stroke-dasharray="6 6"/>',
       '<path d="M ' + (x1 + 34) + ' ' + (y - 11) + ' H ' + (x2 - 32) + '" stroke="' + palette.green + '" stroke-width="1.5" stroke-dasharray="9 7"/>',
       '<path d="M ' + (x2 - 32) + ' ' + (y - 11) + ' l -9 -5 M ' + (x2 - 32) + ' ' + (y - 11) + ' l -9 5" stroke="' + palette.green + '" stroke-width="1.5" stroke-linecap="round"/>',
-      '<text x="' + (x1 + 34) + '" y="' + (y - 20) + '" fill="' + palette.green + '" font-size="11" font-weight="800" font-family="Inter,Arial,sans-serif">CURRENT FLOW</text>',
+      '<text x="' + (x1 + 34) + '" y="' + (y - 20) + '" fill="' + palette.green + '" font-size="10" font-weight="800" font-family="Inter,Arial,sans-serif">DC RAIL</text>',
       '</g>'
     ].join("");
   }
@@ -635,7 +635,7 @@
       '<circle cx="' + x.toFixed(1) + '" cy="' + y + '" r="' + (tone === "required" ? "7" : "5") + '" fill="' + color + '" stroke="' + palette.card + '" stroke-width="2"/>',
       '<line x1="' + x.toFixed(1) + '" y1="' + (y - 42) + '" x2="' + (tone === "required" ? x + 26 : x - 22).toFixed(1) + '" y2="' + labelY + '" stroke="' + color + '" stroke-width="1"/>',
       '<rect x="' + chipX.toFixed(1) + '" y="' + (labelY - 25) + '" width="' + chipW + '" height="40" rx="9" fill="' + palette.card + '" stroke="' + color + '" stroke-width="1"/>',
-      '<text x="' + (chipX + 12).toFixed(1) + '" y="' + (labelY - 8) + '" fill="' + palette.muted + '" font-size="10" font-weight="800" font-family="Inter,Arial,sans-serif">' + lockPowerEsc(label).toUpperCase() + '</text>',
+      '<text x="' + (chipX + 12).toFixed(1) + '" y="' + (labelY - 8) + '" fill="' + palette.muted + '" font-size="9" font-weight="800" font-family="Inter,Arial,sans-serif">' + lockPowerEsc(label).toUpperCase() + '</text>',
       '<text x="' + (chipX + 12).toFixed(1) + '" y="' + (labelY + 8) + '" fill="' + color + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif">' + lockPowerEsc(value) + '</text>',
       '</g>'
     ].join("");
@@ -651,8 +651,8 @@
       '<g aria-label="Headroom bracket">',
       '<path d="M ' + left.toFixed(1) + ' ' + y + ' H ' + right.toFixed(1) + '" stroke="' + palette.amber + '" stroke-width="2"/>',
       '<path d="M ' + left.toFixed(1) + ' ' + (y - 7) + ' V ' + (y + 7) + ' M ' + right.toFixed(1) + ' ' + (y - 7) + ' V ' + (y + 7) + '" stroke="' + palette.amber + '" stroke-width="2"/>',
-      '<rect x="' + (mid - Math.min(120, Math.max(80, safeWidth / 2))).toFixed(1) + '" y="' + (y + 13) + '" width="' + Math.min(240, Math.max(160, safeWidth)).toFixed(1) + '" height="28" rx="8" fill="' + palette.amberSoft + '" stroke="' + palette.amber + '" stroke-width="1"/>',
-      '<text x="' + (mid - Math.min(108, Math.max(68, safeWidth / 2 - 12))).toFixed(1) + '" y="' + (y + 32) + '" fill="' + palette.amberText + '" font-size="11" font-weight="900" font-family="Inter,Arial,sans-serif">' + lockPowerEsc(label) + '</text>',
+      '<rect x="' + (mid - 82).toFixed(1) + '" y="' + (y + 13) + '" width="164" height="28" rx="8" fill="' + palette.amberSoft + '" stroke="' + palette.amber + '" stroke-width="1"/>',
+      '<text x="' + (mid - 70).toFixed(1) + '" y="' + (y + 32) + '" fill="' + palette.amberText + '" font-size="10" font-weight="900" font-family="Inter,Arial,sans-serif">' + lockPowerEsc(label) + '</text>',
       '</g>'
     ].join("");
   }
@@ -680,6 +680,7 @@
     ].join("");
   }
 
+  // access-control-lock-power-compact-label-policy-026: compact card shows one active scope/load bank; multi-zone rollups belong in Summary.
   function buildCadPowerRailSvg(metrics, options = {}) {
     const peak = Number(metrics?.peak || 0);
     const required = Number(metrics?.required || 0);
@@ -732,7 +733,7 @@
     const ampsEach = String(els.amps?.value || "0");
     const lockType = String(els.lockType?.options?.[els.lockType.selectedIndex]?.text || els.lockType?.value || "Lock hardware");
 
-    const repeatedLocks = Math.max(1, Math.min(4, Number(lockCount) || 1));
+    const repeatedLocks = Math.max(1, Math.min(3, Number(lockCount) || 1));
 
     const svg = [
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Low voltage access control lock power rail diagram">',
@@ -742,11 +743,11 @@
       '<path d="M 54 72 H 1066 M 54 116 H 1066 M 54 250 H 1066 M 54 294 H 1066" stroke="' + palette.grid + '" stroke-width="1"/>',
       '<path d="M 94 48 V 318 M 226 48 V 318 M 952 48 V 318" stroke="' + palette.grid + '" stroke-width="1"/>',
 
-      '<text x="54" y="58" fill="' + palette.text + '" font-size="18" font-weight="900" font-family="Inter,Arial,sans-serif">Lock Power Single-Line Diagram</text>',
-      '<text x="54" y="82" fill="' + palette.muted + '" font-size="12" font-weight="700" font-family="Inter,Arial,sans-serif">Power supply / controller output → DC rail → simultaneous lock load and required headroom.</text>',
+      '<text x="54" y="58" fill="' + palette.text + '" font-size="18" font-weight="900" font-family="Inter,Arial,sans-serif">Lock Power Rail</text>',
+      '<text x="54" y="82" fill="' + palette.muted + '" font-size="12" font-weight="700" font-family="Inter,Arial,sans-serif">PSU / controller output → DC rail → active lock load → required reserve.</text>',
 
       '<rect x="884" y="48" width="166" height="38" rx="10" fill="' + palette.statusSoft + '" stroke="' + palette.statusColor + '"/>',
-      '<text x="902" y="72" fill="' + palette.statusColor + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif">' + lockPowerEsc(status) + ' · ' + utilizationPct.toFixed(0) + '% UTILIZATION</text>',
+      '<text x="902" y="72" fill="' + palette.statusColor + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif">' + lockPowerEsc(status) + ' · ' + utilizationPct.toFixed(0) + '%</text>',
 
       accessPowerSupplySymbol(66, 122, supplyLabel, palette),
       dcPowerRail(220, 884, railY, palette),
@@ -757,17 +758,17 @@
 
       currentMarker(peakX, railY, "Peak load", lockPowerFormatAmp(peak), palette, "peak"),
       currentMarker(requiredX, railY, "Required supply", lockPowerFormatAmp(required) + " / " + lockPowerFormatWatt(watts), palette, "required"),
-      headroomBracket(peakX, requiredX, railY + 72, lockPowerFormatAmp(reserve) + " reserve · " + reservePct.toFixed(0) + "% headroom", palette),
+      headroomBracket(peakX, requiredX, railY + 72, lockPowerFormatAmp(reserve) + " reserve", palette),
 
       '<g aria-label="Lock load bank">',
       '<rect x="922" y="122" width="144" height="112" rx="12" fill="' + palette.block + '" stroke="' + palette.lineStrong + '" stroke-width="1.4"/>',
-      '<text x="938" y="148" fill="' + palette.text + '" font-size="14" font-weight="900" font-family="Inter,Arial,sans-serif">' + lockPowerEsc(lockCount) + ' Lock Loads</text>',
-      '<text x="938" y="168" fill="' + palette.muted + '" font-size="10" font-weight="800" font-family="Inter,Arial,sans-serif">' + lockPowerEsc(lockType).toUpperCase() + '</text>',
+      '<text x="938" y="148" fill="' + palette.text + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif">' + lockPowerEsc(lockCount) + ' Lock Loads</text>',
+      '<text x="938" y="168" fill="' + palette.muted + '" font-size="9" font-weight="800" font-family="Inter,Arial,sans-serif">LOAD BANK</text>',
       electricStrikeLoadSymbol(940, 184, 0, palette),
       repeatedLocks > 1 ? electricStrikeLoadSymbol(940, 184, 1, palette) : "",
       repeatedLocks > 2 ? electricStrikeLoadSymbol(940, 184, 2, palette) : "",
-      repeatedLocks > 3 ? electricStrikeLoadSymbol(940, 184, 3, palette) : "",
-      '<text x="938" y="224" fill="' + palette.green + '" font-size="11" font-weight="900" font-family="Inter,Arial,sans-serif">' + lockPowerEsc(simultaneous) + ' simultaneous × ' + lockPowerEsc(ampsEach) + ' A</text>',
+      
+      '<text x="938" y="228" fill="' + palette.green + '" font-size="10" font-weight="900" font-family="Inter,Arial,sans-serif">' + lockPowerEsc(simultaneous) + ' active × ' + lockPowerEsc(ampsEach) + ' A</text>',
       '</g>',
 
       metricChip(66, 272, "Peak Load", lockPowerFormatAmp(peak), palette, "green"),
