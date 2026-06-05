@@ -15,7 +15,7 @@ const rows = [];
 const html = read("tools/access-control/lock-power-budget/index.html");
 const script = read("tools/access-control/lock-power-budget/script.js");
 
-check("Lock Power local script cache is assistant output shell lane", html.includes("./script.js?v=access-control-lock-power-assistant-output-shell-027"));
+check("Lock Power local script cache is visual output fix lane", html.includes("./script.js?v=access-control-lock-power-visual-output-fix-028"));
 check("Lock Power keeps required DOM hook IDs", html.includes('id="results"') && html.includes('id="chartWrap"') && html.includes('id="chart"') && html.includes('id="accessControlLocalAssistantMount"'));
 check("Lock Power visual card is hidden until calculation", html.includes('id="lockPowerVisualCard"') && html.includes('hidden'));
 check("Lock Power results are retained as hidden ledger", html.includes('access-lock-power-ledger-results') && html.includes('data-result-ledger') && html.includes('id="results"'));
@@ -27,6 +27,14 @@ check("Export/summary ledger still collects result rows", script.includes('query
 check("Lock Power preserves core power formula", script.includes("const peak = effectiveSimul * amps;") && script.includes("const required = peak * (1 + headroom / 100);") && script.includes("const watts = required * voltage;"));
 check("Lock Power assistant shell remains present", script.includes("renderLocalAssistant") && script.includes("applyShellModules"));
 check("Lock Power CAD rail remains present", script.includes("buildCadPowerRailSvg") && script.includes("getCadPowerRailImage"));
+
+
+check(
+  "Lock Power explicitly renders CAD visual output",
+  script.includes("function renderVisualOutput(metrics)") &&
+    script.includes("renderVisualOutput(metrics);") &&
+    script.includes("els.chart.innerHTML = buildCadPowerRailSvg(metrics, { exportMode: false });")
+);
 
 console.log("\nAccess Control Lock Power assistant output shell audit:");
 console.table(rows);

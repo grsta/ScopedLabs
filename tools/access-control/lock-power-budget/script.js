@@ -1393,6 +1393,18 @@
     return "The design stays well inside a healthy operating envelope. Peak unlock demand and reserved headroom remain balanced, which is what you want for stable lock behavior.";
   }
 
+
+  // access-control-lock-power-visual-output-fix-028
+  function renderVisualOutput(metrics) {
+    if (!metrics || !els.chart || !els.chartWrap) return false;
+
+    if (els.visualCard) els.visualCard.hidden = false;
+    els.chartWrap.hidden = false;
+    els.chart.innerHTML = buildCadPowerRailSvg(metrics, { exportMode: false });
+
+    return true;
+  }
+
   function renderChart(metrics) {
     destroyChart();
 
@@ -1474,6 +1486,8 @@
         }
       });
     }
+
+    renderVisualOutput(metrics);
 
     currentReport = buildCurrentReportPayload();
     renderLocalAssistant({

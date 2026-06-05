@@ -15,7 +15,7 @@ const rows = [];
 const html = read("tools/access-control/lock-power-budget/index.html");
 const script = read("tools/access-control/lock-power-budget/script.js");
 
-check("Lock Power local script cache is assistant output shell lane", html.includes("./script.js?v=access-control-lock-power-assistant-output-shell-027"));
+check("Lock Power local script cache is visual output fix lane", html.includes("./script.js?v=access-control-lock-power-visual-output-fix-028"));
 check("Lock Power replaces old canvas chart with CAD SVG rail mount", html.includes('class="access-lock-power-cad-rail"') && !html.includes('<canvas id="chart"></canvas>'));
 check("Lock Power includes CAD power rail styles", html.includes("access-lock-power-cad-power-rail-025"));
 check("Lock Power script builds compact CAD rail SVG", script.includes("function buildCadPowerRailSvg") && script.includes("Lock Power Rail"));
