@@ -146,6 +146,19 @@
 
     <div id="flow-note" class="flow-note" hidden></div>
 
+    <section id="activeAccessScopeCard" class="card access-scope-context-card" style="margin-top: 18px;" hidden>
+      <div class="access-scope-context-line">
+        <span>Active Scope</span>
+        <span class="arrow">&rarr;</span>
+        <span>Lock Power Budget</span>
+      </div>
+      <h2 class="h3" id="activeAccessScopeTitle" style="margin-top: 0;">No active access scope selected</h2>
+      <p class="muted" id="activeAccessScopeDescription" style="margin-bottom: 0;">
+        Create or select an access scope before using this tool so the result can be tied to the right door or zone.
+      </p>
+      <div id="activeAccessScopeMeta" class="access-scope-context-grid" aria-label="Active access scope context"></div>
+    </section>
+
     <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
       <div class="pill-row">
         <span class="pill pill--pro">Pro Tier</span>
@@ -300,6 +313,7 @@
   </main>
 
   <script src="/assets/tool-flow.js?v=ac-lock-010"></script>
+  <script src="/assets/access-control-scope-state.js?v=access-control-scope-state-002-shared-display"></script>
   <script src="/assets/catalog.js?v=ac-lock-010"></script>
   <script src="/assets/pipelines.js?v=ac-lock-010"></script>
   <script src="/assets/pipeline-state.js?v=ac-lock-010"></script>
@@ -322,7 +336,7 @@
   </script>
 
   <script src="/assets/export.js?v=shared-export-025-tool-notes-column-widths"></script>
-  <script src="./script.js?v=020"></script>
+  <script src="./script.js?v=access-control-lock-power-scope-hydration-021"></script>
   <script defer src="/assets/help.js?v=help-025"></script>
 </body>
 </html>

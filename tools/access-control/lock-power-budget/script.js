@@ -48,7 +48,11 @@
     customNotes: $("customNotes"),
     exportReport: $("exportReport"),
     saveSnapshot: $("saveSnapshot"),
-    exportStatus: $("exportStatus")
+    exportStatus: $("exportStatus"),
+    activeScopeCard: $("activeAccessScopeCard"),
+    activeScopeTitle: $("activeAccessScopeTitle"),
+    activeScopeDescription: $("activeAccessScopeDescription"),
+    activeScopeMeta: $("activeAccessScopeMeta")
   };
 
   function normalizeSlug(value) {
@@ -239,6 +243,99 @@
     if (els.lockedCard) els.lockedCard.style.display = "";
     if (els.toolCard) els.toolCard.style.display = "none";
     return false;
+  }
+
+
+  // access-control-lock-power-scope-hydration-021
+  function accessScopeState() {
+    return window.ScopedLabsAccessControlScopeState || null;
+  }
+
+  function getActiveAccessScope() {
+    const api = accessScopeState();
+    if (!api || typeof api.getActiveScope !== "function") return null;
+    return api.getActiveScope();
+  }
+
+  function renderActiveScopeContext() {
+    const api = accessScopeState();
+
+    if (api && typeof api.renderScopeDisplay === "function") {
+      return api.renderScopeDisplay({
+        card: els.activeScopeCard,
+        title: els.activeScopeTitle,
+        description: els.activeScopeDescription,
+        meta: els.activeScopeMeta,
+        toolLabel: "Lock Power Budget"
+      });
+    }
+
+    return null;
+  }
+
+  function setSelectValue(selectEl, value) {
+    if (!selectEl || value === undefined || value === null) return false;
+
+    const normalized = String(value).trim();
+    if (!normalized) return false;
+
+    const option = Array.from(selectEl.options || []).find((item) => item.value === normalized);
+    if (!option) return false;
+
+    selectEl.value = normalized;
+    return true;
+  }
+
+  function getPositiveInteger(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n <= 0) return 0;
+    return Math.max(1, Math.round(n));
+  }
+
+  function mapScopeLockType(scope) {
+    const lockIntent = String(scope?.lockIntent || "").toLowerCase();
+
+    if (lockIntent === "electric-strike") return "strike";
+    if (lockIntent === "maglock") return "mag";
+    if (lockIntent === "electrified-lockset") return "mortise";
+
+    return "";
+  }
+
+  function getScopeLockCount(scope) {
+    return getPositiveInteger(
+      scope?.openingCount ||
+      scope?.doorCount ||
+      scope?.openings ||
+      scope?.doors ||
+      0
+    );
+  }
+
+  function applyActiveScopeToInputs() {
+    const scope = getActiveAccessScope();
+    if (!scope) return false;
+
+    let applied = false;
+
+    const lockType = mapScopeLockType(scope);
+    if (lockType) {
+      applied = setSelectValue(els.lockType, lockType) || applied;
+    }
+
+    const lockCount = getScopeLockCount(scope);
+    if (lockCount && els.locks) {
+      els.locks.value = String(lockCount);
+      applied = true;
+    }
+
+    return applied;
+  }
+
+  function getActiveScopeExportContext() {
+    const api = accessScopeState();
+    if (!api || typeof api.buildScopeDisplayContext !== "function") return null;
+    return api.buildScopeDisplayContext("Lock Power Budget");
   }
 
   function showChartWrap() {
@@ -1098,7 +1195,8 @@
       outputs,
       assumptions: getAssumptions(),
       chartImage: getExportChartImage(),
-      meta: getReportMeta()
+      meta: getReportMeta(),
+      activeScopeContext: getActiveScopeExportContext()
     };
   }
 
@@ -1139,6 +1237,9 @@
     if (els.locks) els.locks.value = "8";
     if (els.simul) els.simul.value = "2";
     if (els.headroom) els.headroom.value = "25";
+
+    applyActiveScopeToInputs();
+    renderActiveScopeContext();
 
     invalidate("Run calculation.");
   }
@@ -1549,6 +1650,14 @@
     if (year) year.textContent = new Date().getFullYear();
 
     reset();
+
+    window.addEventListener("scopedlabs:access-control-scope-updated", () => {
+      renderActiveScopeContext();
+      if (!currentReport) {
+        applyActiveScopeToInputs();
+        invalidate("Run calculation.");
+      }
+    });
 
     unlockCategoryPage();
 
