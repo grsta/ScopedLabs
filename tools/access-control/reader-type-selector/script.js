@@ -635,10 +635,28 @@
     const interpretation = outputValue("Engineering Interpretation") || currentReport.interpretation || "";
     const guidance = outputValue("Actionable Guidance") || "";
 
+    const activeScopeRows = [
+      ["Project / Site", inputValue("Project / Site") || inputValue("Project") || "Not documented"],
+      ["Area / Scope", inputValue("Area / Scope") || inputValue("Scope") || inputValue("Area") || "Not documented"],
+      ["Opening / Door Count", inputValue("Opening / Door Count") || inputValue("Door Count") || "Not documented"],
+      ["Upstream Source", "Scope Planner / Fail-Safe context"]
+    ];
+
     const extraSections = [
       {
         title: "Executive Summary",
         text: currentReport.summary || ""
+      },
+      {
+        title: "Active Scope Context",
+        description: "Area, opening, and upstream planning context this reader recommendation applies to.",
+        tableClass: "extra-export-table--kv",
+        tables: [
+          {
+            headers: ["Scope Field", "Value"],
+            rows: activeScopeRows
+          }
+        ]
       },
       {
         title: "Inputs",
@@ -970,6 +988,10 @@
         verificationStatus: verificationHold.label,
         cautionarySteps: verificationHold.steps,
         requiredActions: guidanceParts,
+        activeScopeContext: {
+          source: "Scope Planner / Fail-Safe context",
+          note: "Reader Type decision applies to the active Access Control scope carried into this step."
+        },
         nextTool: "Lock Power Budget"
       }
     });

@@ -58,12 +58,18 @@ check("Fail-Safe ledger carries required actions", failSafeScript.includes("requ
 check("Fail-Safe ledger carries fail-state status", failSafeScript.includes("failStateStatus"));
 check("Fail-Safe ledger carries power-loss intent", failSafeScript.includes("powerLossIntent"));
 
+section("Category-wide downstream payload requirement");
+
+check("Downstream tools must preserve area/scope context", failSafeScript.includes('"Active Scope Context"') && readerScript.includes('"Active Scope Context"'));
+check("Downstream tools must preserve next-step payload handoff", failSafeScript.includes("requiredActions") && readerScript.includes("requiredActions") && readerScript.includes('nextTool: "Lock Power Budget"'));
+
 section("Reader Type payload contract");
 
 check("Reader Type export config is valid JavaScript", exportConfigIsValid(readerHtml));
 check("Reader Type custom payload builder is configured", readerHtml.includes('"customPayloadBuilder": "ScopedLabsAccessControlReaderTypeExport.getPayload"'));
 check("Reader Type payload suppresses generic calculator dump", readerHtml.includes('"suppressStandardReportSections": true') && readerScript.includes("inputs: []") && readerScript.includes("outputs: []"));
 check("Reader Type payload includes Reader Recommendation section", readerScript.includes('"Reader Recommendation"'));
+check("Reader Type payload includes active scope context", readerScript.includes('"Active Scope Context"') && readerScript.includes("Area / Scope") && readerScript.includes("Opening / Door Count"));
 check("Reader Type payload includes Credential Verification Trail section", readerScript.includes('"Credential Verification Trail"'));
 check("Reader Type payload includes credential format field", readerScript.includes("cardFormat") && readerScript.includes("Card Format / Facility Code"));
 check("Reader Type payload includes existing credential compatibility field", readerScript.includes("existingCred") && readerScript.includes("Existing Credential Compatibility"));
@@ -77,6 +83,7 @@ check("Reader Type ledger carries credential technology", readerScript.includes(
 check("Reader Type ledger carries facility-code/card-format status", readerScript.includes("facilityCodeStatus") && readerScript.includes("cardFormatNote"));
 check("Reader Type ledger carries existing credential compatibility", readerScript.includes("existingCredentialCompatibility"));
 check("Reader Type ledger carries compatibility risk", readerScript.includes("compatibilityRisk"));
+check("Reader Type ledger carries active scope context", readerScript.includes("activeScopeContext") && readerScript.includes("Scope Planner / Fail-Safe context"));
 check("Reader Type ledger carries next tool", readerScript.includes('nextTool: "Lock Power Budget"'));
 
 const visibleRows = rows.filter((row) => row.Status !== "----");
