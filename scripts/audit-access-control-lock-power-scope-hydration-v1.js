@@ -33,8 +33,8 @@ check(
 );
 
 check(
-  "Lock Power local script cache is current",
-  html.includes("./script.js?v=access-control-lock-power-scope-hydration-021")
+  "Lock Power local script cache is current shell module lane",
+  html.includes("./script.js?v=access-control-lock-power-shell-modules-022")
 );
 
 check(

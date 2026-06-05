@@ -84,7 +84,7 @@
   </style>
 </head>
 
-<body data-protected="true" data-tier="pro" data-category="access-control" data-step="lock-power-budget" data-lane="v1">
+<body data-protected="true" data-tier="pro" data-category="access-control" data-step="lock-power-budget" data-lane="v1" data-access-control-tool-polish="true">
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/" aria-label="ScopedLabs Home">
@@ -129,9 +129,9 @@
 
     <div id="pipeline"></div>
 
-    <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+    <section class="card access-control-tool-intro-card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
       <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
-      <h2 class="h3" style="margin-top: 0;">This tool continues the Access Control design flow</h2>
+      <h2 class="h3 access-control-tool-card-title" style="margin-top: 0;">This tool continues the Access Control design flow</h2>
       <p class="muted" style="margin-bottom: 0;">
         Use this step to verify that the chosen lock strategy can be supported electrically before you move into panel sizing and long-term access structure design.
       </p>
@@ -245,6 +245,8 @@
         </p>
       </div>
 
+      <div id="accessControlLocalAssistantMount" class="access-control-local-assistant-mount" hidden></div>
+
       <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
         <div class="pill-row">
           <span class="pill pill--pro">Documentation & Export</span>
@@ -291,10 +293,13 @@
       </section>
     </section>
 
-    <div id="continue-wrap" class="btn-row" style="display:none; margin-top:12px;">
-      <button id="continue" class="btn btn-primary" disabled type="button">
-        Continue → Panel Capacity
-      </button>
+    <div id="accessControlFlowActions" class="access-control-flow-actions">
+      <a class="btn" href="/tools/access-control/">Back to Access Control</a>
+      <div id="continue-wrap" class="btn-row" style="display:none; margin-top:0;">
+        <div id="next-step-row" class="btn-row" style="margin:0;">
+          <button id="continue" class="btn btn-primary" disabled type="button">Continue &rarr; Panel Capacity</button>
+        </div>
+      </div>
     </div>
 
     <footer class="site-footer">
@@ -335,9 +340,15 @@
     };
   </script>
 
-  <script src="/assets/export.js?v=shared-export-025-tool-notes-column-widths"></script>
-  <script src="./script.js?v=access-control-lock-power-scope-hydration-021"></script>
-  <script defer src="/assets/help.js?v=help-025"></script>
+  <script src="/assets/export.js?v=shared-export-030-semantic-report-tones"></script>
+  <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
+  <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-001"></script>
+  <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
+  <script src="/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-011-lock-power-budget-adapter"></script>
+  <script src="/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes"></script>
+  <script src="./script.js?v=access-control-lock-power-shell-modules-022"></script>
+  <script src="/assets/access-control-tool-polish.js?v=access-control-tool-polish-007-hide-fail-safe-assistant-flow-line"></script>
+  <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>
 </body>
 </html>
 

@@ -1,11 +1,11 @@
 /* ScopedLabs Access Control Tool Assistant Adapters
-   Version: access-control-assistant-adapters-010-reader-verification-hold
+   Version: access-control-assistant-adapters-011-lock-power-budget-adapter
    Purpose: category-specific local assistant model adapters. Dormant unless a tool explicitly calls one.
 */
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-assistant-adapters-010-reader-verification-hold";
+  const API_VERSION = "access-control-assistant-adapters-011-lock-power-budget-adapter";
 
   function safeText(value) {
     return String(value ?? "");
@@ -143,6 +143,76 @@
     };
   }
 
+
+  function buildLockPowerBudgetModel(data) {
+    const status = safeText(data.status || "WATCH");
+    const lockType = safeText(data.lockType || "lock hardware");
+    const lockCount = safeText(data.lockCount || "0");
+    const simultaneousUnlocks = safeText(data.simultaneousUnlocks || "0");
+    const peak = Number(data.peakLoadA || 0);
+    const required = Number(data.requiredSupplyA || 0);
+    const watts = Number(data.watts || 0);
+    const utilization = Number(data.utilizationPct || 0);
+    const guidance = safeText(data.guidance || "Verify supply capacity, listed hardware requirements, and field voltage drop before finalizing the lock power design.");
+    const insight = safeText(data.insight || "Power budget should be validated against manufacturer current data and real simultaneous unlock behavior.");
+
+    return {
+      category: "access-control",
+      tool: "lock-power-budget",
+      kicker: "Local Design Assistant",
+      title: "Lock Power Assistant",
+      status,
+      summary: "Use this result to verify whether the selected lock strategy has enough electrical margin before panel capacity is finalized.",
+      hideStandardLists: true,
+      hideHeaderPills: true,
+      sections: [
+        {
+          title: "Power Sizing Basis",
+          body: "The calculation converts simultaneous unlock demand into peak current, required supply capacity, and wattage after design headroom.",
+          items: [
+            "Lock type basis: " + lockType,
+            "Installed locks: " + lockCount,
+            "Simultaneous unlocks modeled: " + simultaneousUnlocks,
+            "Peak load: " + (Number.isFinite(peak) ? peak.toFixed(2) + " A" : "not available"),
+            "Required supply: " + (Number.isFinite(required) ? required.toFixed(2) + " A" : "not available"),
+            "Power budget: " + (Number.isFinite(watts) ? watts.toFixed(1) + " W" : "not available"),
+            "Utilization: " + (Number.isFinite(utilization) ? utilization.toFixed(0) + "%" : "not available")
+          ]
+        },
+        {
+          title: "Field Verification",
+          body: guidance,
+          items: [
+            "Verify manufacturer surge and hold-current values before final product selection.",
+            "Check voltage drop against actual cable length, conductor size, and lock location.",
+            "Confirm fire/life-safety release behavior and listed power supply requirements."
+          ]
+        },
+        {
+          title: "Next Step Handoff",
+          body: insight,
+          items: [
+            "Carry required supply and power status into Panel Capacity.",
+            "Keep reader power, lock power, and auxiliary devices separated unless a combined supply is intentional.",
+            "Document WATCH or RISK results in the final Access Control summary."
+          ]
+        }
+      ],
+      assumptionsTitle: "Planning Assumptions",
+      actionsTitle: "Next Actions",
+      assumptions: [
+        "Peak load is based on the modeled simultaneous unlock count.",
+        "Headroom is planning reserve, not a substitute for listed equipment requirements.",
+        "Final design must validate cable loss, fire release, and product-specific current draw."
+      ],
+      actions: [
+        guidance,
+        "Confirm voltage-drop and listed supply requirements before panel capacity is finalized.",
+        "Carry the power status into Panel Capacity and Summary."
+      ]
+    };
+  }
+
   const adapters = Object.freeze({
     "fail-safe-fail-secure": Object.freeze({
       slug: "fail-safe-fail-secure",
@@ -153,6 +223,11 @@
       slug: "reader-type-selector",
       title: "Reader Type Assistant",
       buildModel: buildReaderTypeSelectorModel
+    }),
+    "lock-power-budget": Object.freeze({
+      slug: "lock-power-budget",
+      title: "Lock Power Assistant",
+      buildModel: buildLockPowerBudgetModel
     })
   });
 

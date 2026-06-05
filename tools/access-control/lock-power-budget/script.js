@@ -36,7 +36,7 @@
     analysis: $("analysis-copy"),
     chart: $("chart"),
     chartWrap: $("chartWrap"),
-    nextWrap: $("continue-wrap"),
+    nextWrap: $("continue-wrap") || $("next-step-row"),
     nextBtn: $("continue"),
     flowNote: $("flow-note"),
     lockedCard: $("lockedCard"),
@@ -52,7 +52,8 @@
     activeScopeCard: $("activeAccessScopeCard"),
     activeScopeTitle: $("activeAccessScopeTitle"),
     activeScopeDescription: $("activeAccessScopeDescription"),
-    activeScopeMeta: $("activeAccessScopeMeta")
+    activeScopeMeta: $("activeAccessScopeMeta"),
+    localAssistantMount: $("accessControlLocalAssistantMount")
   };
 
   function normalizeSlug(value) {
@@ -1200,6 +1201,38 @@
     };
   }
 
+
+  function clearLocalAssistant() {
+    if (window.ScopedLabsLocalAssistant && els.localAssistantMount) {
+      window.ScopedLabsLocalAssistant.clear(els.localAssistantMount);
+      return;
+    }
+
+    if (els.localAssistantMount) {
+      els.localAssistantMount.innerHTML = "";
+      els.localAssistantMount.hidden = true;
+    }
+  }
+
+  function renderLocalAssistant(core) {
+    const assistant = window.ScopedLabsLocalAssistant;
+    const adapters = window.ScopedLabsAccessControlToolAssistantAdapters;
+    const adapter = adapters && typeof adapters.getAdapter === "function" ? adapters.getAdapter(STEP) : null;
+
+    if (!assistant || !adapter || !els.localAssistantMount || typeof adapter.buildModel !== "function") {
+      return false;
+    }
+
+    return assistant.mount(els.localAssistantMount, adapter.buildModel(core));
+  }
+
+  function applyShellModules() {
+    const shell = window.ScopedLabsToolShell;
+    if (shell && typeof shell.applyBackContinueShell === "function") {
+      shell.applyBackContinueShell({ rowId: "accessControlFlowActions" });
+    }
+  }
+
   function clearAnalysis() {
     if (window.ScopedLabsAnalyzer && els.analysis) {
       ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
@@ -1218,6 +1251,7 @@
 
     destroyChart();
     hideContinue();
+    clearLocalAssistant();
     clearAnalysis();
 
     if (els.results) {
@@ -1598,6 +1632,18 @@
     }
 
     currentReport = buildCurrentReportPayload();
+    renderLocalAssistant({
+      status,
+      lockType: els.lockType.value,
+      lockCount: locks,
+      simultaneousUnlocks: effectiveSimul,
+      peakLoadA: peak,
+      requiredSupplyA: required,
+      watts,
+      utilizationPct,
+      guidance,
+      insight
+    });
     updateExportControls();
     showContinue();
   }
@@ -1650,6 +1696,7 @@
     if (year) year.textContent = new Date().getFullYear();
 
     reset();
+    applyShellModules();
 
     window.addEventListener("scopedlabs:access-control-scope-updated", () => {
       renderActiveScopeContext();
@@ -1664,6 +1711,7 @@
     setTimeout(() => {
       unlockCategoryPage();
       updateExportControls();
+      applyShellModules();
     }, 400);
 
     setTimeout(() => {
