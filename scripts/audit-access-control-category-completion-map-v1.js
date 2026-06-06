@@ -91,6 +91,10 @@ for (const slug of dirs) {
     has(html, 'pill--pro">Pro Tier') ||
     has(html, "This tool continues the Access Control design flow");
 
+  const hasPipelineNav =
+    has(html, 'id="pipeline"') ||
+    has(html, "id='pipeline'");
+
   const hasChartJs =
     has(html, "chart.js") ||
     has(html, "<canvas") ||
@@ -146,6 +150,7 @@ for (const slug of dirs) {
     lane,
     scriptVersion: getScriptVersion(html),
     breadcrumbs: checkToken(!has(html, 'class="crumbs"')),
+    pipelineNav: checkToken(hasPipelineNav),
     sharedPolish: checkToken(isScopeEntry || (has(html, "access-control-tool-polish.js") && has(html, 'data-access-control-tool-polish="true"'))),
     decorativeCovered: checkToken(isScopeEntry || !hasDecorativeLabels || (has(html, "access-control-tool-polish.js") && has(html, 'data-access-control-tool-polish="true"'))),
     helperClutter: checkToken(!hasOldVisibleHelper || isAcceptedReference),
