@@ -43,7 +43,7 @@ check(
 
 check(
   "Lock Power loads current Access Control polish module",
-  html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-009-export-title-card-reference")
+  html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-010-page-chrome-pill-cleanup")
 );
 
 check(
@@ -80,7 +80,7 @@ check(
 
 check(
   "Lock Power loads export title card-reference polish module",
-  html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-009-export-title-card-reference")
+  html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-010-page-chrome-pill-cleanup")
 );
 
 console.log("\nAccess Control export card polish audit:");

@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-tool-polish-009-export-title-card-reference";
+  const VERSION = "access-control-tool-polish-010-page-chrome-pill-cleanup";
   const STYLE_ID = "access-control-tool-polish-styles";
 
   const FLOW_LABELS = {
@@ -84,6 +84,36 @@
     });
   }
 
+
+  // access-control-page-chrome-pill-cleanup-010
+  const DECORATIVE_PAGE_CHROME_PILLS = Object.freeze(new Set([
+    "pro tier",
+    "part of a design flow",
+    "documentation & export",
+    "documentation and export"
+  ]));
+
+  function cleanLabel(text) {
+    return String(text || "").replace(/\s+/g, " ").trim().toLowerCase();
+  }
+
+  function removeDecorativePageChromePills(root) {
+    const scope = root || document;
+    const body = document.body;
+
+    if (!body || body.getAttribute("data-category") !== "access-control") return;
+
+    scope.querySelectorAll(".pill, .badge, [class*='pill'], [class*='badge']").forEach((node) => {
+      const label = cleanLabel(node.textContent);
+
+      if (!DECORATIVE_PAGE_CHROME_PILLS.has(label)) return;
+
+      node.setAttribute("data-access-control-page-chrome-hidden", "true");
+      node.hidden = true;
+      node.style.display = "none";
+    });
+  }
+
   function addAssistantFlowLine(root) {
     const step = currentStep();
     const label = FLOW_LABELS[step] || "";
@@ -114,6 +144,7 @@
     const scope = root || document;
     injectStyles();
     removePillRows(scope);
+    removeDecorativePageChromePills(scope);
     addAssistantFlowLine(scope);
     applyExportCardPolish(scope);
     applyExportCardTitleRhythm(scope);
