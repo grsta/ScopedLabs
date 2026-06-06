@@ -343,6 +343,58 @@
             <option value="complex">Complex</option>
           </select>
         </label>
+
+        <!-- access-control-access-level-v2-inputs-022 -->
+        <label class="field">
+          <span class="label">Access Model Type</span>
+          <select id="accessModelType">
+            <option value="role-based" selected>Role-Based / Standard</option>
+            <option value="area-based">Area-Based / Zone Driven</option>
+            <option value="hybrid">Hybrid Role + Area</option>
+            <option value="exception-heavy">Exception-Heavy / One-Offs</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Turnover Pressure</span>
+          <select id="turnoverPressure">
+            <option value="low">Low / Stable Users</option>
+            <option value="normal" selected>Normal</option>
+            <option value="high">High / Frequent Changes</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Exception Groups</span>
+          <input id="exceptionGroups" type="number" value="0" min="0" step="1" />
+        </label>
+
+        <label class="field">
+          <span class="label">Restricted Zone Pressure</span>
+          <select id="restrictedZones">
+            <option value="low" selected>Low</option>
+            <option value="moderate">Moderate</option>
+            <option value="high">High / Many Sensitive Areas</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Schedule Change Pressure</span>
+          <select id="scheduleChangePressure">
+            <option value="stable">Stable</option>
+            <option value="normal" selected>Normal</option>
+            <option value="frequent">Frequent Changes</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Admin Governance</span>
+          <select id="adminGovernance">
+            <option value="strong">Strong Naming / Review Rules</option>
+            <option value="standard" selected>Standard</option>
+            <option value="weak">Weak / Informal Changes</option>
+          </select>
+        </label>
       </div>
 
       <div class="btn-row" style="margin-top: 14px;">
@@ -400,10 +452,7 @@
       </section>
 
     </section>
-
-    <div id="next-step-row"    </section>
-
-    <div id="complete-wrap" class="card" style="display:none;">
+<div id="complete-wrap" class="card" style="display:none;">
       <div style="font-weight:600;">✔ Pipeline Complete</div>
       <div style="opacity:.85;">You now have a full access control system design baseline.</div>
     </div>
@@ -452,7 +501,7 @@
   <script src="/assets/access-control-output-shell.js?v=access-control-output-shell-001-lock-power-visual-export"></script>
   <script src="/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-013-access-level-sizing"></script>
   <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
-  <script src="./script.js?v=access-control-access-level-output-contract-021"></script>
+  <script src="./script.js?v=access-control-access-level-v2-summary-carryover-022"></script>
   <script src="/assets/access-control-tool-polish.js?v=access-control-tool-polish-010-page-chrome-pill-cleanup"></script>
   <script defer src="/assets/help.js?v=help-025"></script>
 </body>

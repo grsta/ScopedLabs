@@ -1,11 +1,11 @@
 /* ScopedLabs Access Control Tool Assistant Adapters
-   Version: access-control-assistant-adapters-013-access-level-sizing
+   Version: access-control-assistant-adapters-014-access-level-v2
    Purpose: category-specific local assistant model adapters. Dormant unless a tool explicitly calls one.
 */
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-assistant-adapters-013-access-level-sizing";
+  const API_VERSION = "access-control-assistant-adapters-014-access-level-v2";
 
   function safeText(value) {
     return String(value ?? "");
@@ -300,6 +300,19 @@
     const overshoot = safeText(data.overshoot || "0");
     const threshold = safeText(data.thresholdMessage || "Threshold status pending.");
     const insight = safeText(data.insight || "Review role, area, schedule, and group structure before final rollout.");
+    const accessModelType = safeText(data.accessModelType || "Role-Based / Standard");
+    const turnoverPressure = safeText(data.turnoverPressure || "Normal");
+    const exceptionGroups = safeText(data.exceptionGroups || "0");
+    const restrictedZones = safeText(data.restrictedZones || "Low");
+    const scheduleChangePressure = safeText(data.scheduleChangePressure || "Normal");
+    const adminGovernance = safeText(data.adminGovernance || "Standard");
+    const recommendedActions = Array.isArray(data.recommendedActions) && data.recommendedActions.length
+      ? data.recommendedActions.map((item) => safeText(item)).filter(Boolean)
+      : [
+          threshold,
+          insight,
+          "Carry this access-level status into final Access Control documentation."
+        ];
 
     return {
       category: "access-control",
@@ -307,7 +320,7 @@
       kicker: "Local Design Assistant",
       title: "Access Level Assistant",
       status,
-      summary: "Use this result to decide whether the access-level model is maintainable before closing the Access Control flow.",
+      summary: safeText(data.assistantSummary || "Use this result to decide whether the access-level model is maintainable before closing the Access Control flow."),
       hideStandardLists: true,
       hideHeaderPills: true,
       sections: [
@@ -322,6 +335,18 @@
           ]
         },
         {
+          title: "V2 Pressure Sources",
+          body: "These context inputs explain why a raw access-level count can become easier or harder to administer.",
+          items: [
+            "Access Model: " + accessModelType,
+            "Turnover: " + turnoverPressure,
+            "Exception Groups: " + exceptionGroups,
+            "Restricted Zones: " + restrictedZones,
+            "Schedule Change Pressure: " + scheduleChangePressure,
+            "Governance: " + adminGovernance
+          ]
+        },
+        {
           title: "Threshold Review",
           body: threshold,
           items: [
@@ -332,27 +357,19 @@
           ]
         },
         {
-          title: "Closeout Guidance",
-          body: status === "RISK" ? "Simplify the access model before growth turns permission management into operational risk." : status === "WATCH" ? "Keep the structure, but document naming, grouping, and schedule rules before expansion." : "The access-level model is usable for the final Access Control handoff.",
-          items: [
-            "Reduce duplicate roles or overlapping areas if complexity pressure is high.",
-            "Consolidate schedules and door groups where possible.",
-            "Document the final role/area naming rules before the system is handed off."
-          ]
+          title: "Reduce Complexity",
+          body: status === "RISK" ? "Simplify the access model before growth turns permission management into operational risk." : status === "WATCH" ? "Keep the structure, but document naming, grouping, schedule, and exception rules before expansion." : "The access-level model is usable for the final Access Control handoff.",
+          items: recommendedActions
         }
       ],
       assumptionsTitle: "Planning Assumptions",
       actionsTitle: "Recommended Actions",
       assumptions: [
         "Role and area counts represent the active access model.",
-        "Schedules and door groups are treated as contributors to administration overhead.",
+        "Schedules, door groups, turnover, exception groups, restricted zones, and governance quality affect administration overhead.",
         "This result evaluates maintainability, not controller hardware capacity."
       ],
-      actions: [
-        threshold,
-        insight,
-        "Carry this access-level status into final Access Control documentation."
-      ]
+      actions: recommendedActions
     };
   }
 
@@ -376,6 +393,11 @@
       slug: "panel-capacity",
       title: "Panel Capacity Assistant",
       buildModel: buildPanelCapacityModel
+    }),
+    "access-level-sizing": Object.freeze({
+      slug: "access-level-sizing",
+      title: "Access Level Assistant",
+      buildModel: buildAccessLevelSizingModel
     })
   });
 

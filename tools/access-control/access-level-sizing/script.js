@@ -4,6 +4,8 @@
   const LANE = "v1";
   const PREVIOUS_STEP = "panel-capacity";
   const REPORT_SAVE_KEY = "scopedlabs:reports:access-control:access-level-sizing";
+  const ACCESS_CONTROL_SUMMARY_KEY = "scopedlabs:pipeline:access-control:summary";
+  const SUMMARY_CARRYOVER_KEY = "scopedlabs:pipeline:access-control:summary:access-level-sizing";
 
   const FLOW_KEYS = {
     "reader-type-selector": "scopedlabs:pipeline:access-control:reader-type-selector",
@@ -23,6 +25,12 @@
     schedules: $("schedules"),
     doorGroups: $("doorGroups"),
     complexity: $("complexity"),
+    accessModelType: $("accessModelType"),
+    turnoverPressure: $("turnoverPressure"),
+    exceptionGroups: $("exceptionGroups"),
+    restrictedZones: $("restrictedZones"),
+    scheduleChangePressure: $("scheduleChangePressure"),
+    adminGovernance: $("adminGovernance"),
     results: $("results"),
     analysis: $("analysis-copy"),
     scheduleCard: $("accessLevelScheduleCard"),
@@ -39,7 +47,8 @@
 
     exportReport: $("exportReport"),
     saveSnapshot: $("saveSnapshot"),
-    exportStatus: $("exportStatus")
+    exportStatus: $("exportStatus"),
+    localAssistantMount: $("accessControlLocalAssistantMount")
   };
 
 
@@ -77,21 +86,153 @@
     return '<tr><td>' + scheduleCell(group) + '</td><td>' + scheduleCell(metric) + '</td><td>' + value + '</td><td>' + scheduleCell(note) + '</td></tr>';
   }
 
+
+  // access-control-access-level-v2-summary-carryover-022
+  function selectedLabel(el) {
+    if (!el) return "";
+    const option = el.options && el.selectedIndex >= 0 ? el.options[el.selectedIndex] : null;
+    return option ? option.textContent.trim() : String(el.value || "");
+  }
+
+  function getAccessModelPressure(value) {
+    const accessModelPressure = value === "area-based" ? 1.04 : value === "hybrid" ? 1.12 : value === "exception-heavy" ? 1.26 : 1;
+    return accessModelPressure;
+  }
+
+  function getTurnoverPressureFactor(value) {
+    const turnoverPressureFactor = value === "high" ? 1.16 : value === "low" ? 0.96 : 1;
+    return turnoverPressureFactor;
+  }
+
+  function getExceptionPressure(count) {
+    const exceptionPressure = 1 + Math.min(10, Math.max(0, Number(count) || 0)) * 0.045;
+    return exceptionPressure;
+  }
+
+  function getRestrictedZonePressure(value) {
+    const restrictedZonePressure = value === "high" ? 1.2 : value === "moderate" ? 1.09 : 1;
+    return restrictedZonePressure;
+  }
+
+  function getScheduleChangePressureFactor(value) {
+    const scheduleChangePressureFactor = value === "frequent" ? 1.14 : value === "stable" ? 0.96 : 1;
+    return scheduleChangePressureFactor;
+  }
+
+  function getGovernanceRelief(value) {
+    const governanceRelief = value === "weak" ? 1.15 : value === "strong" ? 0.92 : 1;
+    return governanceRelief;
+  }
+
+  function readAccessLevelV2Context() {
+    return {
+      accessModelType: els.accessModelType ? els.accessModelType.value : "role-based",
+      accessModelTypeLabel: selectedLabel(els.accessModelType) || "Role-Based / Standard",
+      turnoverPressure: els.turnoverPressure ? els.turnoverPressure.value : "normal",
+      turnoverPressureLabel: selectedLabel(els.turnoverPressure) || "Normal",
+      exceptionGroups: Math.max(0, num(els.exceptionGroups ? els.exceptionGroups.value : 0)),
+      restrictedZones: els.restrictedZones ? els.restrictedZones.value : "low",
+      restrictedZonesLabel: selectedLabel(els.restrictedZones) || "Low",
+      scheduleChangePressure: els.scheduleChangePressure ? els.scheduleChangePressure.value : "normal",
+      scheduleChangePressureLabel: selectedLabel(els.scheduleChangePressure) || "Normal",
+      adminGovernance: els.adminGovernance ? els.adminGovernance.value : "standard",
+      adminGovernanceLabel: selectedLabel(els.adminGovernance) || "Standard"
+    };
+  }
+
+  function buildAccessLevelActions(metrics = {}) {
+    const recommendedActions = [];
+
+    if (metrics.status === "RISK") {
+      recommendedActions.push("Reduce role-area combinations before the model becomes harder to audit or support.");
+    } else if (metrics.status === "WATCH") {
+      recommendedActions.push("Document naming, role ownership, and change-control rules before adding more access levels.");
+    } else {
+      recommendedActions.push("Keep the access-level naming structure consistent as the system grows.");
+    }
+
+    if (metrics.exceptionGroups > 2 || metrics.accessModelType === "exception-heavy") {
+      recommendedActions.push("Convert repeated exception groups into governed roles instead of one-off access levels.");
+    }
+
+    if (metrics.restrictedZones === "high") {
+      recommendedActions.push("Separate restricted-zone permissions from general employee access to reduce accidental over-assignment.");
+    }
+
+    if (metrics.scheduleChangePressure === "frequent" || metrics.schedules > 5) {
+      recommendedActions.push("Consolidate schedules and use a small set of approved schedule templates.");
+    }
+
+    if (metrics.adminGovernance === "weak") {
+      recommendedActions.push("Assign an owner for access-level naming, approval, and periodic review before handoff.");
+    }
+
+    if (!recommendedActions.length) {
+      recommendedActions.push("Maintain current access-level structure and review after future area or role expansion.");
+    }
+
+    return recommendedActions;
+  }
+
+  function publishAccessLevelSummaryCarryover(payload) {
+    try {
+      const carryover = {
+        category: CATEGORY,
+        step: STEP,
+        tool: "Access Level Sizing",
+        generatedAt: new Date().toISOString(),
+        accessLevelStatus: payload.status,
+        totalAccessLevels: payload.totalAccessLevels,
+        recommendedLimit: payload.recommendedLimit,
+        overshoot: payload.overshoot,
+        adminLoadIndex: payload.adminLoadIndex,
+        scalingPressure: payload.scalingPressure,
+        roles: payload.roles,
+        areas: payload.areas,
+        schedules: payload.schedules,
+        groups: payload.groups,
+        complexityProfile: payload.complexityProfile,
+        accessModelType: payload.accessModelType,
+        turnoverPressure: payload.turnoverPressure,
+        exceptionGroups: payload.exceptionGroups,
+        restrictedZones: payload.restrictedZones,
+        scheduleChangePressure: payload.scheduleChangePressure,
+        adminGovernance: payload.adminGovernance,
+        assistantSummary: payload.assistantSummary,
+        recommendedActions: Array.isArray(payload.recommendedActions) ? payload.recommendedActions : []
+      };
+
+      localStorage.setItem(SUMMARY_CARRYOVER_KEY, JSON.stringify(carryover));
+      localStorage.setItem(ACCESS_CONTROL_SUMMARY_KEY, JSON.stringify({ accessLevelSizing: carryover }));
+      return carryover;
+    } catch (error) {
+      console.warn("Access Level summary carryover publish failed", error);
+      return null;
+    }
+  }
+
   function buildAccessLevelScheduleHtml(metrics = {}) {
     const status = String(metrics.status || "WATCH").toUpperCase();
     const riskLabel = metrics.riskLabel || "Complexity pending";
     const threshold = metrics.thresholdMessage || "Run analysis to evaluate threshold pressure.";
+    const actions = Array.isArray(metrics.recommendedActions) ? metrics.recommendedActions.join(" ") : "Review access-level structure before handoff.";
 
     const rows = [
-      accessLevelScheduleRow("Structure", "Access Levels", scheduleCell(metrics.total), "Modeled permission structure after role, area, schedule, group, and complexity factors."),
-      accessLevelScheduleRow("Structure", "Role-Area Combinations", scheduleCell(metrics.combinations), "Base role-to-area matrix before schedule and grouping pressure."),
+      accessLevelScheduleRow("Structure", "Access Levels", scheduleCell(metrics.total), "Modeled permission structure after base and V2 pressure factors."),
+      accessLevelScheduleRow("Structure", "Role-Area Combinations", scheduleCell(metrics.combinations), "Base role-to-area matrix before schedule, grouping, and context pressure."),
       accessLevelScheduleRow("Inputs", "Roles / Areas", scheduleCell(metrics.roles + " / " + metrics.areas), "Primary access model dimensions."),
       accessLevelScheduleRow("Inputs", "Schedules / Door Groups", scheduleCell(metrics.schedules + " / " + metrics.groups), "Operational modifiers that increase administration overhead."),
+      accessLevelScheduleRow("V2 Pressure", "Access Model", scheduleCell(metrics.accessModelTypeLabel), "Role-based models are easier to govern; exception-heavy models increase audit pressure."),
+      accessLevelScheduleRow("V2 Pressure", "Turnover", scheduleCell(metrics.turnoverPressureLabel), "Frequent user churn increases assignment and removal workload."),
+      accessLevelScheduleRow("V2 Pressure", "Exceptions", scheduleCell(metrics.exceptionGroups), "One-off groups increase long-term review and cleanup effort."),
+      accessLevelScheduleRow("V2 Pressure", "Restricted Zones", scheduleCell(metrics.restrictedZonesLabel), "Sensitive areas need cleaner separation and stronger approval rules."),
+      accessLevelScheduleRow("V2 Pressure", "Governance", scheduleCell(metrics.adminGovernanceLabel), "Naming, approval, and review practices can reduce or amplify administration pressure."),
       accessLevelScheduleRow("Pressure", "Scaling Pressure", scheduleCell(Number(metrics.scalingPressure || 0).toFixed(1)), "Access-level pressure normalized against roles plus areas."),
-      accessLevelScheduleRow("Pressure", "Admin Load Index", scheduleCell(Number(metrics.adminLoadIndex || 0).toFixed(1)), "Estimated day-to-day administration load from schedules, groups, and roles."),
+      accessLevelScheduleRow("Pressure", "Admin Load Index", scheduleCell(Number(metrics.adminLoadIndex || 0).toFixed(1)), "Estimated day-to-day administration load from schedules, groups, roles, exceptions, and governance."),
       accessLevelScheduleRow("Limit", "Recommended Limit", scheduleCell(metrics.recommendedLimit), "Recommended access-level ceiling for the selected complexity profile."),
       accessLevelScheduleRow("Limit", "Overshoot", scheduleCell(metrics.overshoot), threshold),
-      accessLevelScheduleRow("Decision", "Status", accessLevelStatusChip(status), status === "RISK" ? "Simplify access model before scale increases." : status === "WATCH" ? "Watch naming, grouping, and schedule growth before expansion." : "Structure is usable for the final Access Control handoff.")
+      accessLevelScheduleRow("Action", "Recommended Actions", scheduleCell(actions), "Simplification path for master-assistant summary and final handoff."),
+      accessLevelScheduleRow("Decision", "Status", accessLevelStatusChip(status), status === "RISK" ? "Simplify access model before scale increases." : status === "WATCH" ? "Watch naming, grouping, schedule, and exception growth before expansion." : "Structure is usable for the final Access Control handoff.")
     ];
 
     return [
@@ -514,17 +655,25 @@
         { label: "Areas", value: String(core.inputs.areas) },
         { label: "Schedules", value: String(core.inputs.schedules) },
         { label: "Door Groups", value: String(core.inputs.doorGroups) },
-        { label: "Complexity", value: core.inputs.complexityLabel }
+        { label: "Complexity", value: core.inputs.complexityLabel },
+        { label: "Access Model Type", value: core.inputs.accessModelTypeLabel },
+        { label: "Turnover Pressure", value: core.inputs.turnoverPressureLabel },
+        { label: "Exception Groups", value: String(core.inputs.exceptionGroups) },
+        { label: "Restricted Zones", value: core.inputs.restrictedZonesLabel },
+        { label: "Schedule Change Pressure", value: core.inputs.scheduleChangePressureLabel },
+        { label: "Admin Governance", value: core.inputs.adminGovernanceLabel }
       ],
       outputs: [
         { label: "Access Levels", value: String(core.outputs.total) },
         { label: "Role-Area Combinations", value: String(core.outputs.combinations) },
         { label: "Scaling Pressure", value: core.outputs.scalingPressure.toFixed(1) },
         { label: "Admin Load Index", value: core.outputs.adminLoadIndex.toFixed(1) },
+        { label: "V2 Pressure Factor", value: core.outputs.v2PressureFactor.toFixed(2) },
         { label: "Recommended Limit", value: String(core.outputs.recommendedLimit) },
         { label: "Complexity", value: core.outputs.riskLabel },
         { label: "Threshold Check", value: core.outputs.thresholdMessage },
-        { label: "Overshoot", value: String(core.outputs.overshoot) }
+        { label: "Overshoot", value: String(core.outputs.overshoot) },
+        { label: "Recommended Actions", value: (core.outputs.recommendedActions || []).join(" | ") }
       ],
       assumptions: assumptionsForTool(),
       chartImage: getAccessLevelVisualImage(),
@@ -931,6 +1080,12 @@
     if (els.schedules) els.schedules.value = 4;
     if (els.doorGroups) els.doorGroups.value = 0;
     if (els.complexity) els.complexity.value = "normal";
+    if (els.accessModelType) els.accessModelType.value = "role-based";
+    if (els.turnoverPressure) els.turnoverPressure.value = "normal";
+    if (els.exceptionGroups) els.exceptionGroups.value = 0;
+    if (els.restrictedZones) els.restrictedZones.value = "low";
+    if (els.scheduleChangePressure) els.scheduleChangePressure.value = "normal";
+    if (els.adminGovernance) els.adminGovernance.value = "standard";
 
     invalidate("Run analysis.");
   }
@@ -1045,8 +1200,9 @@
     const schedules = num(els.schedules.value);
     const groups = num(els.doorGroups.value);
     const complexity = els.complexity.value;
+    const v2 = readAccessLevelV2Context();
 
-    if (roles <= 0 || areas <= 0 || schedules < 0 || groups < 0) {
+    if (roles <= 0 || areas <= 0 || schedules < 0 || groups < 0 || v2.exceptionGroups < 0) {
       invalidate("Enter valid positive values, then run analysis.");
       return;
     }
@@ -1055,41 +1211,40 @@
     const complexityFactor = getComplexityFactor(complexity);
     const schedulePenalty = 1 + schedules * 0.1;
     const groupPenalty = 1 + groups * 0.05;
+    const baseTotal = Math.round(base * schedulePenalty * groupPenalty * complexityFactor);
 
-    const total = Math.round(base * schedulePenalty * groupPenalty * complexityFactor);
+    const accessModelPressure = getAccessModelPressure(v2.accessModelType);
+    const turnoverPressureFactor = getTurnoverPressureFactor(v2.turnoverPressure);
+    const exceptionPressure = getExceptionPressure(v2.exceptionGroups);
+    const restrictedZonePressure = getRestrictedZonePressure(v2.restrictedZones);
+    const scheduleChangePressureFactor = getScheduleChangePressureFactor(v2.scheduleChangePressure);
+    const governanceRelief = getGovernanceRelief(v2.adminGovernance);
+    const v2PressureFactor = accessModelPressure * turnoverPressureFactor * exceptionPressure * restrictedZonePressure * scheduleChangePressureFactor * governanceRelief;
+
+    const total = Math.round(baseTotal * v2PressureFactor);
     const combinations = base;
     const scalingPressure = total / Math.max(1, roles + areas);
     const recommendedLimit = getRecommendedLimit(complexity);
     const overshoot = Math.max(0, total - recommendedLimit);
-    const adminLoadIndex = Number(((schedules * 0.8) + (groups * 0.6) + (roles * 0.4)).toFixed(1));
+    const adminLoadIndex = Number(((schedules * 0.8) + (groups * 0.6) + (roles * 0.4) + (v2.exceptionGroups * 0.7) + (v2.restrictedZones === "high" ? 3 : v2.restrictedZones === "moderate" ? 1.5 : 0) + (v2.turnoverPressure === "high" ? 2.5 : 0) + (v2.adminGovernance === "weak" ? 2.5 : v2.adminGovernance === "strong" ? -1 : 0)).toFixed(1));
 
     const risk = getRisk(total);
 
     let thresholdMessage = "Structure remains below the recommended complexity limit.";
 
     if (total > recommendedLimit) {
-      thresholdMessage = `Design exceeds the recommended complexity limit by ${overshoot} levels.`;
+      thresholdMessage = "Design exceeds the recommended complexity limit by " + overshoot + " levels.";
     } else {
-      thresholdMessage = `Design remains ${recommendedLimit - total} levels under the recommended limit.`;
+      thresholdMessage = "Design remains " + (recommendedLimit - total) + " levels under the recommended limit.";
     }
 
-    els.results.innerHTML = [
-      row("Access Levels", total),
-      row("Role-Area Combinations", combinations),
-      row("Scaling Pressure", scalingPressure.toFixed(1)),
-      row("Admin Load Index", adminLoadIndex.toFixed(1)),
-      row("Recommended Limit", recommendedLimit),
-      row("Complexity", risk.label),
-      row("Threshold Check", thresholdMessage),
-      row("Engineering Insight", risk.insight)
-    ].join("");
-
-    const scheduleMetrics = {
+    const actionBasis = {
+      ...v2,
       roles,
       areas,
       schedules,
       groups,
-      complexityLabel: complexity.charAt(0).toUpperCase() + complexity.slice(1),
+      complexity,
       total,
       combinations,
       scalingPressure,
@@ -1098,7 +1253,42 @@
       overshoot,
       riskLabel: risk.label,
       thresholdMessage,
-      status: risk.status
+      status: risk.status,
+      accessModelPressure,
+      turnoverPressureFactor,
+      exceptionPressure,
+      restrictedZonePressure,
+      scheduleChangePressureFactor,
+      governanceRelief,
+      v2PressureFactor
+    };
+
+    const recommendedActions = buildAccessLevelActions(actionBasis);
+    const assistantSummary = risk.summary + " " + thresholdMessage;
+
+    els.results.innerHTML = [
+      row("Access Levels", total),
+      row("Role-Area Combinations", combinations),
+      row("Scaling Pressure", scalingPressure.toFixed(1)),
+      row("Admin Load Index", adminLoadIndex.toFixed(1)),
+      row("V2 Pressure Factor", v2PressureFactor.toFixed(2)),
+      row("Recommended Limit", recommendedLimit),
+      row("Complexity", risk.label),
+      row("Threshold Check", thresholdMessage),
+      row("Access Model", v2.accessModelTypeLabel),
+      row("Turnover", v2.turnoverPressureLabel),
+      row("Exceptions", v2.exceptionGroups),
+      row("Restricted Zones", v2.restrictedZonesLabel),
+      row("Governance", v2.adminGovernanceLabel),
+      row("Recommended Actions", recommendedActions.join(" | ")),
+      row("Engineering Insight", risk.insight)
+    ].join("");
+
+    const scheduleMetrics = {
+      ...actionBasis,
+      ...v2,
+      complexityLabel: complexity.charAt(0).toUpperCase() + complexity.slice(1),
+      recommendedActions
     };
 
     renderAccessLevelSchedule(scheduleMetrics);
@@ -1115,7 +1305,17 @@
       scalingPressure,
       adminLoadIndex,
       recommendedLimit,
-      overshoot
+      overshoot,
+      accessLevelStatus: risk.status,
+      totalAccessLevels: total,
+      accessModelType: v2.accessModelType,
+      turnoverPressure: v2.turnoverPressure,
+      exceptionGroups: v2.exceptionGroups,
+      restrictedZones: v2.restrictedZones,
+      scheduleChangePressure: v2.scheduleChangePressure,
+      adminGovernance: v2.adminGovernance,
+      assistantSummary,
+      recommendedActions
     };
 
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
@@ -1134,18 +1334,49 @@
         areas,
         schedules,
         doorGroups: groups,
-        complexityLabel: complexity.charAt(0).toUpperCase() + complexity.slice(1)
+        complexityLabel: complexity.charAt(0).toUpperCase() + complexity.slice(1),
+        accessModelTypeLabel: v2.accessModelTypeLabel,
+        turnoverPressureLabel: v2.turnoverPressureLabel,
+        exceptionGroups: v2.exceptionGroups,
+        restrictedZonesLabel: v2.restrictedZonesLabel,
+        scheduleChangePressureLabel: v2.scheduleChangePressureLabel,
+        adminGovernanceLabel: v2.adminGovernanceLabel
       },
       outputs: {
         total,
         combinations,
         scalingPressure,
         adminLoadIndex,
+        v2PressureFactor,
         recommendedLimit,
         riskLabel: risk.label,
         thresholdMessage,
-        overshoot
+        overshoot,
+        recommendedActions
       }
+    });
+
+    publishAccessLevelSummaryCarryover({
+      status: risk.status,
+      accessLevelStatus: risk.status,
+      totalAccessLevels: total,
+      recommendedLimit,
+      overshoot,
+      adminLoadIndex,
+      scalingPressure,
+      roles,
+      areas,
+      schedules,
+      groups,
+      complexityProfile: complexity,
+      accessModelType: v2.accessModelType,
+      turnoverPressure: v2.turnoverPressure,
+      exceptionGroups: v2.exceptionGroups,
+      restrictedZones: v2.restrictedZones,
+      scheduleChangePressure: v2.scheduleChangePressure,
+      adminGovernance: v2.adminGovernance,
+      assistantSummary,
+      recommendedActions
     });
 
     attachOutputShellExport();
@@ -1165,7 +1396,15 @@
       areas,
       schedules,
       groups,
-      complexity: complexity.charAt(0).toUpperCase() + complexity.slice(1)
+      complexity: complexity.charAt(0).toUpperCase() + complexity.slice(1),
+      accessModelType: v2.accessModelTypeLabel,
+      turnoverPressure: v2.turnoverPressureLabel,
+      exceptionGroups: v2.exceptionGroups,
+      restrictedZones: v2.restrictedZonesLabel,
+      scheduleChangePressure: v2.scheduleChangePressureLabel,
+      adminGovernance: v2.adminGovernanceLabel,
+      assistantSummary,
+      recommendedActions
     });
     updateExportControls();
   }
@@ -1183,7 +1422,13 @@
     els.areas,
     els.schedules,
     els.doorGroups,
-    els.complexity
+    els.complexity,
+    els.accessModelType,
+    els.turnoverPressure,
+    els.exceptionGroups,
+    els.restrictedZones,
+    els.scheduleChangePressure,
+    els.adminGovernance
   ].forEach((el) => {
     if (!el) return;
     el.addEventListener("input", () => invalidate());
