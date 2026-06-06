@@ -375,7 +375,7 @@
   }
 
 
-  // access-control-anti-passback-output-contract-021
+  // access-control-anti-passback-visible-output-kb-top-022
   function selectedLabel(el) {
     if (!el) return "";
     const option = el.options && el.selectedIndex >= 0 ? el.options[el.selectedIndex] : null;
@@ -440,6 +440,71 @@
     return "Anti-passback design is manageable for the current scope and can stay focused on practical perimeter control.";
   }
 
+
+  // access-control-anti-passback-visible-output-022
+  function forceRevealAntiPassbackOutput(html) {
+    if (els.outputSchedule && html !== undefined) {
+      els.outputSchedule.innerHTML = String(html || "");
+    }
+
+    if (els.outputCard) {
+      els.outputCard.hidden = false;
+      els.outputCard.removeAttribute("hidden");
+      els.outputCard.style.display = "";
+    }
+
+    if (els.outputSchedule) {
+      els.outputSchedule.hidden = false;
+      els.outputSchedule.removeAttribute("hidden");
+      els.outputSchedule.style.display = "";
+    }
+  }
+
+  function placeAntiPassbackKbGuide() {
+    const mount = document.getElementById("antiPassbackKbTopMount");
+    if (!mount) return false;
+
+    const candidates = Array.from(document.querySelectorAll("section.card, div.card, article.card, [data-kb-card], [data-help-card]"));
+
+    const card = candidates.find((node) => {
+      if (!node || node === mount || node.closest("#antiPassbackKbTopMount")) return false;
+      const text = String(node.textContent || "").replace(/\s+/g, " ").trim();
+      return /Anti-?Passback/i.test(text) && /Guide|Open KB Guide/i.test(text);
+    });
+
+    if (!card) return false;
+
+    mount.hidden = false;
+    mount.removeAttribute("hidden");
+    mount.style.display = "";
+
+    if (card.parentElement !== mount) {
+      mount.appendChild(card);
+    }
+
+    card.style.marginTop = "0";
+    return true;
+  }
+
+  function setupAntiPassbackKbPlacement() {
+    const run = () => placeAntiPassbackKbGuide();
+
+    run();
+    window.setTimeout(run, 100);
+    window.setTimeout(run, 500);
+    window.setTimeout(run, 1200);
+
+    if (typeof MutationObserver !== "function" || !document.body) return;
+
+    const observer = new MutationObserver(() => {
+      if (placeAntiPassbackKbGuide()) {
+        observer.disconnect();
+      }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+
   function renderAntiPassbackSchedule(metrics = {}) {
     const status = antiPassbackStatusFromRisk(metrics.operationalRisk);
     const actions = Array.isArray(metrics.recommendedActions) ? metrics.recommendedActions.join(" ") : "Review APB enforcement before final handoff.";
@@ -464,12 +529,13 @@
       '</tbody></table>'
     ].join("");
 
-    if (window.ScopedLabsAccessControlOutputShell && typeof window.ScopedLabsAccessControlOutputShell.showVisual === "function") {
-      window.ScopedLabsAccessControlOutputShell.showVisual({ card: els.outputCard, target: els.outputSchedule, html });
-    } else {
-      if (els.outputSchedule) els.outputSchedule.innerHTML = html;
-      showOutputCard();
+    const shell = window.ScopedLabsAccessControlOutputShell;
+
+    if (shell && typeof shell.showVisual === "function") {
+      shell.showVisual({ card: els.outputCard, target: els.outputSchedule, html });
     }
+
+    forceRevealAntiPassbackOutput(html);
 
     return html;
   }
@@ -499,7 +565,18 @@
   }
 
   function showContinue() {
-    if (els.continueWrap) els.continueWrap.hidden = false;
+    if (els.continueWrap) {
+      els.continueWrap.hidden = false;
+      els.continueWrap.removeAttribute("hidden");
+      els.continueWrap.style.display = "";
+    }
+
+    const continueLink = document.getElementById("continue");
+    if (continueLink) {
+      continueLink.hidden = false;
+      continueLink.removeAttribute("hidden");
+      continueLink.style.display = "";
+    }
   }
 
   function renderLocalAssistant(metrics = {}) {
@@ -831,6 +908,8 @@
       els.chart.parentElement.style.minHeight = "340px";
     }
   }
+
+  setupAntiPassbackKbPlacement();
 
   resetResults();
 })();

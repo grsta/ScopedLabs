@@ -181,6 +181,8 @@ check("Anti-Passback has no Chart.js dependency", !has(html, "chart.js") && !has
 check("Old canvas chart is removed", !has(html, "<canvas") && !has(html, 'id="chart"') && !has(script, "renderChart"), "chart");
 check("Old custom report builder is removed", !has(script, "buildReportHTML") && !has(script, "openReportWindow") && !has(script, "window.open"), "output");
 check("Compact Anti-Passback schedule/table is present", has(html, "Anti-Passback Decision Schedule") && has(script, "renderAntiPassbackSchedule"), "output");
+check("Visible Anti-Passback output is hardened after Calculate", has(script, "forceRevealAntiPassbackOutput") && has(script, "forceRevealAntiPassbackOutput(html);"), "output");
+check("Anti-Passback KB guide has top placement mount", has(html, 'id="antiPassbackKbTopMount"') && has(script, "setupAntiPassbackKbPlacement") && has(script, "placeAntiPassbackKbGuide"), "shell");
 
 check("Summary/master carryover key is declared", has(script, "SUMMARY_CARRYOVER_KEY") || has(script, "ACCESS_CONTROL_SUMMARY_KEY"), "carryover");
 check("Summary/master carryover writer exists", has(script, "publishAntiPassbackSummaryCarryover") || has(script, "publishAccessControlSummaryPayload"), "carryover");
