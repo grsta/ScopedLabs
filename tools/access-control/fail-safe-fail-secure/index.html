@@ -423,6 +423,33 @@
       margin-top: 4px;
     }
 
+
+
+    /* access-control-fail-safe-chip-fit-017 */
+    .fail-safe-decision-hero > div:last-child {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+
+    .fail-safe-decision-hero .fail-safe-status-chip {
+      display: inline-flex !important;
+      width: fit-content;
+      max-width: max-content;
+      min-width: 0;
+      flex: 0 0 auto;
+      align-self: flex-start;
+      justify-self: start;
+      margin-top: 0;
+    }
+
+    .fail-safe-decision-hero > div:last-child > span:not(.fail-safe-status-chip) {
+      display: block;
+      width: auto;
+      max-width: 100%;
+    }
+
     @media (max-width: 760px) {
       .fail-safe-decision-hero {
         grid-template-columns: 1fr;
