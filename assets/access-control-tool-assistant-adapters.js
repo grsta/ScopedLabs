@@ -1,11 +1,11 @@
 /* ScopedLabs Access Control Tool Assistant Adapters
-   Version: access-control-assistant-adapters-011-lock-power-budget-adapter
+   Version: access-control-assistant-adapters-012-panel-capacity-adapter
    Purpose: category-specific local assistant model adapters. Dormant unless a tool explicitly calls one.
 */
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-assistant-adapters-011-lock-power-budget-adapter";
+  const API_VERSION = "access-control-assistant-adapters-012-panel-capacity-adapter";
 
   function safeText(value) {
     return String(value ?? "");
@@ -213,6 +213,80 @@
     };
   }
 
+
+  function buildPanelCapacityModel(data) {
+    const status = safeText(data.status || "WATCH");
+    const doors = Number(data.doors || 0);
+    const targetDoors = Number(data.targetDoors || 0);
+    const panels = Number(data.panels || 0);
+    const expansions = Number(data.expansions || 0);
+    const panelCapacity = Number(data.panelCapacity || 0);
+    const spareDoors = Number(data.spareDoors || 0);
+    const readers = Number(data.readers || 0);
+    const totalInputs = Number(data.totalInputs || 0);
+    const totalOutputs = Number(data.totalOutputs || 0);
+    const loadPct = Number(data.loadPct || 0);
+    const expansionPct = Number(data.expansionPct || 0);
+    const guidance = safeText(data.guidance || "Verify controller capacity, expansion limits, licensing, and future growth before finalizing the panel architecture.");
+    const insight = safeText(data.insight || "Panel capacity should leave practical room for growth, maintenance changes, and platform-specific device limits.");
+
+    return {
+      category: "access-control",
+      tool: "panel-capacity",
+      kicker: "Local Design Assistant",
+      title: "Panel Capacity Assistant",
+      status,
+      summary: "Use this result to decide whether the modeled controller and expansion plan has enough capacity before access levels are sized.",
+      hideStandardLists: true,
+      hideHeaderPills: true,
+      sections: [
+        {
+          title: "Panel Sizing Basis",
+          body: "The calculation converts door count and spare target into required panel capacity, expansion modules, and remaining growth margin.",
+          items: [
+            "Doors modeled: " + (Number.isFinite(doors) ? doors : "not available"),
+            "Target doors with spare: " + (Number.isFinite(targetDoors) ? targetDoors : "not available"),
+            "Panels required: " + (Number.isFinite(panels) ? panels : "not available"),
+            "Expansion modules: " + (Number.isFinite(expansions) ? expansions : "not available"),
+            "Panel door capacity: " + (Number.isFinite(panelCapacity) ? panelCapacity : "not available"),
+            "Spare door capacity: " + (Number.isFinite(spareDoors) ? spareDoors : "not available")
+          ]
+        },
+        {
+          title: "Capacity Pressure",
+          body: guidance,
+          items: [
+            "System load: " + (Number.isFinite(loadPct) ? loadPct.toFixed(0) + "%" : "not available"),
+            "Expansion pressure: " + (Number.isFinite(expansionPct) ? expansionPct.toFixed(0) + "%" : "not available"),
+            "Total readers: " + (Number.isFinite(readers) ? readers : "not available"),
+            "Inputs / outputs: " + (Number.isFinite(totalInputs) ? totalInputs : "not available") + " / " + (Number.isFinite(totalOutputs) ? totalOutputs : "not available")
+          ]
+        },
+        {
+          title: "Next Step Handoff",
+          body: insight,
+          items: [
+            "Carry panel count, expansion pressure, and spare capacity into Access Level Sizing.",
+            "Confirm platform limits for readers, inputs, outputs, licensing, and door interfaces before hardware is finalized.",
+            "Document WATCH or RISK capacity results in the final Access Control summary."
+          ]
+        }
+      ],
+      assumptionsTitle: "Planning Assumptions",
+      actionsTitle: "Next Actions",
+      assumptions: [
+        "Panel count is based on modeled door capacity and configured spare percentage.",
+        "Expansion pressure assumes the selected base panel and expansion module capacities are valid for the target platform.",
+        "Final design must validate licensing, controller limits, cabinet space, power, network, and manufacturer-specific constraints."
+      ],
+      actions: [
+        guidance,
+        "Confirm platform-specific reader, input, output, and door limits before procurement.",
+        "Carry the capacity status into Access Level Sizing and Summary."
+      ]
+    };
+  }
+
   const adapters = Object.freeze({
     "fail-safe-fail-secure": Object.freeze({
       slug: "fail-safe-fail-secure",
@@ -228,6 +302,11 @@
       slug: "lock-power-budget",
       title: "Lock Power Assistant",
       buildModel: buildLockPowerBudgetModel
+    }),
+    "panel-capacity": Object.freeze({
+      slug: "panel-capacity",
+      title: "Panel Capacity Assistant",
+      buildModel: buildPanelCapacityModel
     })
   });
 
