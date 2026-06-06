@@ -18,10 +18,7 @@
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInR5cCI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <script defer src="/assets/auth.js?v=auth-magiclink-session-restore-0527"></script>
+<script defer src="/assets/auth.js?v=auth-magiclink-session-restore-0527"></script>
   <script defer src="/assets/app.js?v=0334"></script>
 
   <style>
@@ -83,6 +80,105 @@
         grid-template-columns: 1fr;
       }
     }
+
+    /* access-control-anti-passback-output-contract-021 */
+    .results-grid[data-result-ledger][hidden] {
+      display: none !important;
+    }
+
+    .apb-output-card {
+      margin-top: 14px;
+      background: rgba(0,0,0,.14);
+    }
+
+    .apb-decision-hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 14px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(120, 255, 120, 0.12);
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    .apb-decision-hero strong,
+    .apb-decision-hero span {
+      display: block;
+    }
+
+    .apb-decision-hero span {
+      margin-top: 4px;
+      color: rgba(255, 255, 255, 0.64);
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+
+    .apb-status-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 78px;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 0.78rem;
+      font-weight: 850;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+    }
+
+    .apb-status-chip[data-status="HEALTHY"] {
+      color: rgba(185, 255, 210, 0.95);
+      border-color: rgba(120,255,170,.24);
+      background: rgba(80,200,120,.10);
+    }
+
+    .apb-status-chip[data-status="WATCH"] {
+      color: rgba(255, 226, 160, 0.96);
+      border-color: rgba(255,200,90,.28);
+      background: rgba(255,190,70,.11);
+    }
+
+    .apb-status-chip[data-status="RISK"] {
+      color: rgba(255, 185, 185, 0.98);
+      border-color: rgba(255,110,110,.30);
+      background: rgba(255,90,90,.12);
+    }
+
+    .apb-summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    .apb-summary-table th,
+    .apb-summary-table td {
+      padding: 10px 11px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .apb-summary-table th {
+      color: rgba(255,255,255,.62);
+      font-size: .82rem;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+    }
+
+    .apb-summary-table td {
+      color: rgba(255,255,255,.84);
+      line-height: 1.45;
+    }
+
+    .apb-summary-table td:nth-child(3) {
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
   </style>
 </head>
 
@@ -115,25 +211,8 @@
   </header>
 
   <main class="container page">
-    <div class="crumbs">
-      <a href="/tools/">Tools</a>
-      <span class="sep">/</span>
-      <a href="/tools/access-control/">Access Control</a>
-      <span class="sep">/</span>
-      <span>Anti-Passback Zones</span>
-    </div>
-
-    <div class="pill-row" style="margin-top: 6px;">
-      <span class="pill pill--pro">Pro Tier</span>
-    </div>
-
-    <h1>Anti-Passback Zones</h1>
-
-    <p class="tool-best-for">
-      <strong>Best for:</strong> deciding whether anti-passback should stay simple at the perimeter or be segmented more aggressively without creating avoidable lockouts and admin overhead.
-    </p>
-
-    <section class="card tool-card" style="margin-top: 18px;">
+<h1>Anti-Passback Zones</h1>
+<section class="card tool-card" style="margin-top: 18px;">
       <h2 class="card-title" style="margin-top: 0;">Calculator</h2>
 
       <div class="form-grid" style="margin-top: 14px;">
@@ -175,69 +254,42 @@
         <button id="reset" class="btn" type="button">Reset</button>
       </div>
 
-      <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
-        <h3 class="h3" style="margin-top: 0;">Results</h3>
-        <div id="results" class="results-grid" aria-live="polite">
-          <div class="muted">Enter values and press Calculate.</div>
-        </div>
+            <div id="results" class="results-grid" data-result-ledger hidden aria-hidden="true" aria-live="polite">
+        <div class="muted">Enter values and press Calculate.</div>
+      </div>
 
-        <div id="chartWrap" hidden style="margin-top:16px; min-height:340px;">
-          <canvas id="chart"></canvas>
-        </div>
-
-        <p class="mini-note">
-          Model: recommended zones are derived from perimeter, interior segmentation, floor count, strategy, and enforcement type. This is a planning tool for APB structure, not a controller-specific rule engine.
+      <section id="antiPassbackOutputCard" class="card apb-output-card" hidden data-export-section data-export-section-title="Anti-Passback Decision Schedule">
+        <h3 class="h3" style="margin-top: 0;">Anti-Passback Decision Schedule</h3>
+        <p class="muted" style="margin-bottom: 0;">
+          Review APB zone count, pairing pressure, enforcement mode, and operational friction before carrying the design forward.
         </p>
+        <div id="antiPassbackSchedule" style="margin-top: 14px;"></div>
+      </section>
+
+      <section id="accessControlLocalAssistantMount" hidden aria-live="polite" style="margin-top: 14px;"></section>
+
+      <div class="btn-row flow-actions-row" data-sl-shell-back-continue="true" style="margin-top: 14px;">
+        <a class="btn" href="/tools/access-control/">Back to Access Control</a>
+        <div id="next-step-row" hidden>
+          <a id="continue" class="btn btn-primary" href="/tools/access-control/credential-format/">Continue to Credential Format</a>
+        </div>
       </div>
 
       <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
-        <div class="pill-row">
-          <span class="pill pill--pro">Documentation & Export</span>
-        </div>
-
-        <h3 class="h3" style="margin-top: 10px;">Export Report</h3>
+        <h3 class="h3" style="margin-top: 0;">Export Report</h3>
         <p class="muted" style="margin-bottom: 0;">
-          Add optional project context and generate a clean documentation view that can be printed or saved as a PDF for client or internal use.
+          Add optional project context and export this Anti-Passback decision schedule for documentation or client review.
         </p>
 
-        <div class="export-grid">
-          <label class="field">
-            <span class="label">Report Title</span>
-            <input id="reportTitle" type="text" placeholder="Anti-Passback Zone Assessment" />
-          </label>
-
-          <label class="field">
-            <span class="label">Project Name</span>
-            <input id="projectName" type="text" placeholder="Project Name" />
-          </label>
-
-          <label class="field">
-            <span class="label">Client Name</span>
-            <input id="clientName" type="text" placeholder="Client / Site Name" />
-          </label>
-
-          <label class="field">
-            <span class="label">Prepared By</span>
-            <input id="preparedBy" type="text" placeholder="ScopedLabs Pro User" />
-          </label>
-
-          <label class="field full">
-            <span class="label">Custom Notes</span>
-            <textarea id="customNotes" placeholder="Optional notes, assumptions, field conditions, or design caveats to include in the report."></textarea>
-          </label>
-        </div>
+        <div id="reportMetadataMount" data-report-metadata data-report-title="Report details" data-report-copy="Optional metadata can be included in the generated report. Leave blank to use default report naming." data-report-fields="reportTitle,projectName,clientName,preparedBy,customNotes"></div>
 
         <div class="btn-row" style="margin-top: 14px;">
-          <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Export Report</button>
+          <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Report</button>
           <button id="saveSnapshot" class="btn" type="button" disabled>Save Snapshot</button>
         </div>
 
         <div id="exportStatus" class="export-status"></div>
       </section>
-
-      <div class="btn-row" style="margin-top: 14px;">
-        <a class="btn" href="/tools/access-control/">Back to Access Control</a>
-      </div>
     </section>
     <footer class="site-footer">
     <div class="muted">© <span data-year></span> ScopedLabs</div>
@@ -271,11 +323,15 @@
   </script>
 
   <script src="/assets/export.js?v=shared-export-025-tool-notes-column-widths"></script>
-  <script src="./script.js?v=020"></script>
+  <script src="/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes"></script>
+  <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
+  <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-006-access-control"></script>
+  <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
+  <script src="/assets/access-control-output-shell.js?v=access-control-output-shell-001-lock-power-visual-export"></script>
+  <script src="/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-015-anti-passback"></script>
+  <script src="./script.js?v=access-control-anti-passback-output-contract-021"></script>
   <script src="/assets/access-control-tool-polish.js?v=access-control-tool-polish-010-page-chrome-pill-cleanup"></script>
   <script defer src="/assets/help.js?v=help-025"></script>
 </body>
 </html>
-
-
 

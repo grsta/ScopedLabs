@@ -1,11 +1,11 @@
 /* ScopedLabs Access Control Tool Assistant Adapters
-   Version: access-control-assistant-adapters-014-access-level-v2
+   Version: access-control-assistant-adapters-015-anti-passback
    Purpose: category-specific local assistant model adapters. Dormant unless a tool explicitly calls one.
 */
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-assistant-adapters-014-access-level-v2";
+  const API_VERSION = "access-control-assistant-adapters-015-anti-passback";
 
   function safeText(value) {
     return String(value ?? "");
@@ -373,7 +373,83 @@
     };
   }
 
+
+  function buildAntiPassbackZonesModel(data) {
+    const status = safeText(data.antiPassbackStatus || data.status || "WATCH");
+    const recommendedZones = safeText(data.recommendedZones || "0");
+    const pairedEntrances = safeText(data.pairedEntrances || "0");
+    const complexityIndex = safeText(data.complexityIndex || "0");
+    const enforcementExposure = safeText(data.enforcementExposure || "0");
+    const operationalRisk = safeText(data.operationalRisk || "LOW");
+    const recommendedMode = safeText(data.recommendedEnforcementMode || "SOFT");
+    const modeGuidance = safeText(data.modeRecommendation || "Review APB enforcement scope before deployment.");
+    const interpretation = safeText(data.interpretation || "Validate APB zones against platform behavior, reader placement, and operating procedures.");
+    const recommendedActions = Array.isArray(data.recommendedActions) && data.recommendedActions.length
+      ? data.recommendedActions.map((item) => safeText(item)).filter(Boolean)
+      : [
+          modeGuidance,
+          interpretation,
+          "Carry this APB decision into the final Access Control documentation."
+        ];
+
+    return {
+      category: "access-control",
+      tool: "anti-passback-zones",
+      kicker: "Local Design Assistant",
+      title: "Anti-Passback Assistant",
+      status,
+      summary: safeText(data.assistantSummary || "Use this result to decide whether APB enforcement should remain perimeter-focused or be segmented further."),
+      hideStandardLists: true,
+      hideHeaderPills: true,
+      sections: [
+        {
+          title: "Zone Structure",
+          body: "The APB model estimates zone count and paired-door pressure from perimeter, interior, floor, and strategy inputs.",
+          items: [
+            "Recommended zones: " + recommendedZones,
+            "Paired entrances: " + pairedEntrances,
+            "Zone strategy: " + safeText(data.strategyLabel || data.zoneStrategy || "Not documented"),
+            "APB type: " + safeText(data.typeLabel || data.apbType || "Not documented")
+          ]
+        },
+        {
+          title: "Enforcement Pressure",
+          body: "Hard APB can improve control but creates lockout, reset, visitor, and tailgating procedure requirements.",
+          items: [
+            "Operational risk: " + operationalRisk,
+            "Recommended enforcement mode: " + recommendedMode,
+            "Complexity index: " + complexityIndex,
+            "Enforcement exposure: " + enforcementExposure
+          ]
+        },
+        {
+          title: "Design Guidance",
+          body: modeGuidance,
+          items: [interpretation]
+        },
+        {
+          title: "Recommended Actions",
+          body: status === "RISK" ? "Simplify or stage APB enforcement before deployment." : status === "WATCH" ? "Proceed only with documented reset and exception handling." : "Current APB scope is usable for planning.",
+          items: recommendedActions
+        }
+      ],
+      assumptionsTitle: "Planning Assumptions",
+      actionsTitle: "Recommended Actions",
+      assumptions: [
+        "APB zones are planning estimates, not platform-specific rule programming.",
+        "Reader placement, door naming, and exception procedures must be validated before commissioning.",
+        "Hard APB has more operational friction than soft APB."
+      ],
+      actions: recommendedActions
+    };
+  }
+
   const adapters = Object.freeze({
+    "anti-passback-zones": Object.freeze({
+      slug: "anti-passback-zones",
+      title: "Anti-Passback Assistant",
+      buildModel: buildAntiPassbackZonesModel
+    }),
     "fail-safe-fail-secure": Object.freeze({
       slug: "fail-safe-fail-secure",
       title: "Fail-Safe / Fail-Secure Assistant",

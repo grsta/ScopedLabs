@@ -1,9 +1,11 @@
-﻿(() => {
+(() => {
   const CATEGORY = "access-control";
   const CATEGORY_LABEL = "Access Control";
   const TOOL = "anti-passback-zones";
   const TOOL_LABEL = "Anti-Passback Zones";
   const REPORT_SAVE_KEY = "scopedlabs:reports:access-control:anti-passback-zones";
+  const ACCESS_CONTROL_SUMMARY_KEY = "scopedlabs:pipeline:access-control:summary";
+  const SUMMARY_CARRYOVER_KEY = "scopedlabs:pipeline:access-control:summary:anti-passback-zones";
 
   const $ = (id) => document.getElementById(id);
 
@@ -69,21 +71,30 @@
     els.results.innerHTML = rows.join("");
   }
 
-  function showChartWrap() {
-    if (els.chartWrap) els.chartWrap.hidden = false;
+  function showOutputCard() {
+    if (els.outputCard) els.outputCard.hidden = false;
   }
 
-  function hideChartWrap() {
-    if (els.chartWrap) els.chartWrap.hidden = true;
+  function hideOutputCard() {
+    if (els.outputCard) els.outputCard.hidden = true;
+    if (els.outputSchedule) els.outputSchedule.innerHTML = "";
   }
 
-  function destroyChart() {
-    if (chart) {
-      chart.destroy();
-      chart = null;
+  function clearOutputShell() {
+    hideOutputCard();
+
+    if (window.ScopedLabsAccessControlOutputShell && typeof window.ScopedLabsAccessControlOutputShell.hideVisual === "function") {
+      window.ScopedLabsAccessControlOutputShell.hideVisual({ card: els.outputCard, target: els.outputSchedule });
     }
 
-    hideChartWrap();
+    if (window.ScopedLabsLocalAssistant && typeof window.ScopedLabsLocalAssistant.clear === "function") {
+      window.ScopedLabsLocalAssistant.clear(els.localAssistantMount);
+    } else if (els.localAssistantMount) {
+      els.localAssistantMount.hidden = true;
+      els.localAssistantMount.innerHTML = "";
+    }
+
+    if (els.continueWrap) els.continueWrap.hidden = true;
   }
 
   function hasStoredAuth() {
@@ -274,12 +285,15 @@
   }
 
   function getReportMeta() {
+    const metaApi = window.ScopedLabsReportMetadata;
+    const values = metaApi && typeof metaApi.read === "function" ? metaApi.read(document) : {};
+
     return {
-      reportTitle: (els.reportTitle?.value || "").trim() || "Anti-Passback Zone Assessment",
-      projectName: (els.projectName?.value || "").trim(),
-      clientName: (els.clientName?.value || "").trim(),
-      preparedBy: (els.preparedBy?.value || "").trim(),
-      customNotes: (els.customNotes?.value || "").trim()
+      reportTitle: (values.reportTitle || "").trim() || "Anti-Passback Zone Assessment",
+      projectName: (values.projectName || "").trim(),
+      clientName: (values.clientName || "").trim(),
+      preparedBy: (values.preparedBy || "").trim(),
+      customNotes: (values.customNotes || "").trim()
     };
   }
 
@@ -353,265 +367,192 @@
   }
 
   function getChartImage() {
-    try {
-      if (chart && typeof chart.toBase64Image === "function") {
-        return chart.toBase64Image("image/png", 1);
-      }
-    } catch {}
-
     return "";
   }
 
-  function getExportChartImage() {
-    if (!lastMetrics || typeof Chart === "undefined") return getChartImage();
+  function getOutputShellImage() {
+    return "";
+  }
 
+
+  // access-control-anti-passback-output-contract-021
+  function selectedLabel(el) {
+    if (!el) return "";
+    const option = el.options && el.selectedIndex >= 0 ? el.options[el.selectedIndex] : null;
+    return option ? option.textContent.trim() : String(el.value || "");
+  }
+
+  function scheduleCell(value) {
+    return escapeHtml(value == null || value === "" ? "—" : value);
+  }
+
+  function antiPassbackStatusFromRisk(risk) {
+    const value = String(risk || "").toUpperCase();
+    if (value === "HIGH") return "RISK";
+    if (value === "MODERATE") return "WATCH";
+    return "HEALTHY";
+  }
+
+  function antiPassbackStatusChip(status) {
+    const value = antiPassbackStatusFromRisk(status || "WATCH");
+    return '<span class="apb-status-chip" data-status="' + scheduleCell(value) + '">' + scheduleCell(value) + '</span>';
+  }
+
+  function antiPassbackScheduleRow(group, metric, value, note) {
+    return '<tr><td>' + scheduleCell(group) + '</td><td>' + scheduleCell(metric) + '</td><td>' + value + '</td><td>' + scheduleCell(note) + '</td></tr>';
+  }
+
+  function buildAntiPassbackActions(metrics = {}) {
+    const recommendedActions = [];
+    const status = antiPassbackStatusFromRisk(metrics.operationalRisk);
+
+    if (status === "RISK") {
+      recommendedActions.push("Reduce hard anti-passback scope or segment enforcement so lockout risk stays manageable.");
+    } else if (status === "WATCH") {
+      recommendedActions.push("Document APB reset, exception, visitor, and tailgating procedures before deployment.");
+    } else {
+      recommendedActions.push("Keep APB focused on the current perimeter/interior structure and review after expansion.");
+    }
+
+    if (metrics.type === "hard" && metrics.strategy === "strict") {
+      recommendedActions.push("Avoid global hard APB until operators can tolerate false lockouts and manual resets.");
+    }
+
+    if (Number(metrics.pairedEntrances || 0) > 8) {
+      recommendedActions.push("Validate IN/OUT reader pairing and door naming before commissioning.");
+    }
+
+    if (Number(metrics.floorZones || 0) > 0) {
+      recommendedActions.push("Confirm floor-to-floor movement rules so APB zones do not trap authorized users.");
+    }
+
+    if (Number(metrics.interiorZones || 0) > 4) {
+      recommendedActions.push("Keep interior APB segmentation limited to areas with clear security value.");
+    }
+
+    return recommendedActions;
+  }
+
+  function antiPassbackSummary(metrics = {}) {
+    const status = antiPassbackStatusFromRisk(metrics.operationalRisk);
+    if (status === "RISK") return "Anti-passback enforcement is heavy enough to create lockout and administrative risk if deployed globally.";
+    if (status === "WATCH") return "Anti-passback design is workable, but enforcement scope and exception procedures should be documented before deployment.";
+    return "Anti-passback design is manageable for the current scope and can stay focused on practical perimeter control.";
+  }
+
+  function renderAntiPassbackSchedule(metrics = {}) {
+    const status = antiPassbackStatusFromRisk(metrics.operationalRisk);
+    const actions = Array.isArray(metrics.recommendedActions) ? metrics.recommendedActions.join(" ") : "Review APB enforcement before final handoff.";
+
+    const html = [
+      '<div class="apb-decision-hero">',
+      '<div><strong>' + scheduleCell(metrics.operationalRisk || "LOW") + ' Operational Risk</strong><span>' + scheduleCell(metrics.assistantSummary || antiPassbackSummary(metrics)) + '</span></div>',
+      '<div>' + antiPassbackStatusChip(status) + '<span>Recommended zones: ' + scheduleCell(metrics.recommendedZones) + '</span></div>',
+      '</div>',
+      '<table class="apb-summary-table" data-apb-summary-table="true" data-export-table-title="Anti-Passback Decision Schedule"><thead><tr><th>Group</th><th>Metric</th><th>Value</th><th>Engineering Note</th></tr></thead><tbody>',
+      antiPassbackScheduleRow("Zone Structure", "Recommended Zones", scheduleCell(metrics.recommendedZones), "Total APB zones recommended from perimeter, interior, floor, and strategy inputs."),
+      antiPassbackScheduleRow("Zone Structure", "Perimeter Zones", scheduleCell(metrics.perimeterZones), "Baseline APB separation across the controlled perimeter."),
+      antiPassbackScheduleRow("Zone Structure", "Interior Zones", scheduleCell(metrics.interiorZones), metrics.interiorZones > 0 ? "Interior segmentation adds control but increases reset and exception handling." : "No major interior APB segmentation is modeled."),
+      antiPassbackScheduleRow("Zone Structure", "Floor Segments", scheduleCell(metrics.floorZones), metrics.floorZones > 0 ? "Floor segmentation requires clear movement rules between levels." : "Floor segmentation is not a major driver in this run."),
+      antiPassbackScheduleRow("Enforcement", "Paired Entrances", scheduleCell(metrics.pairedEntrances), "Estimated IN/OUT reader pairs that must stay logically aligned."),
+      antiPassbackScheduleRow("Enforcement", "Recommended Enforcement Mode", scheduleCell(metrics.recommendedEnforcementMode), metrics.type === "hard" ? "Hard APB can deny access; exception and reset procedures are required." : "Soft APB reduces lockout risk and is useful for alerting and investigation."),
+      antiPassbackScheduleRow("Calculated Load", "Complexity Index", scheduleCell(metrics.complexityIndex), Number(metrics.complexityIndex || 0) >= 9 ? "Complexity is high enough to require careful commissioning and documentation." : "Complexity is manageable for planning-level APB scope."),
+      antiPassbackScheduleRow("Calculated Load", "Enforcement Exposure", scheduleCell(metrics.enforcementExposure), Number(metrics.enforcementExposure || 0) >= 9 ? "Enforcement exposure is elevated; avoid unnecessary hard APB scope." : "Enforcement exposure is manageable for the selected APB type."),
+      antiPassbackScheduleRow("Decision", "Operational Risk", scheduleCell(metrics.operationalRisk), "Risk combines APB strategy, complexity, and enforcement type."),
+      antiPassbackScheduleRow("Action", "Recommended Actions", scheduleCell(actions), "Practical APB simplification path for summary review and final handoff."),
+      antiPassbackScheduleRow("Decision", "Status", antiPassbackStatusChip(status), status === "RISK" ? "Simplify or stage enforcement before deployment." : status === "WATCH" ? "Proceed with documented reset and exception handling." : "APB structure is usable for the current planning scope."),
+      '</tbody></table>'
+    ].join("");
+
+    if (window.ScopedLabsAccessControlOutputShell && typeof window.ScopedLabsAccessControlOutputShell.showVisual === "function") {
+      window.ScopedLabsAccessControlOutputShell.showVisual({ card: els.outputCard, target: els.outputSchedule, html });
+    } else {
+      if (els.outputSchedule) els.outputSchedule.innerHTML = html;
+      showOutputCard();
+    }
+
+    return html;
+  }
+
+  function attachOutputShellExport() {
+    const shell = window.ScopedLabsAccessControlOutputShell;
+    if (!shell) return false;
+
+    if (typeof shell.register === "function") {
+      shell.register(TOOL, {
+        getChartImage: getChartImage,
+        getVisualHtml: () => els.outputSchedule ? els.outputSchedule.innerHTML : ""
+      });
+    }
+
+    if (typeof shell.attachExportGetter === "function") {
+      shell.attachExportGetter(TOOL, window.ScopedLabsExportConfig);
+    }
+
+    return true;
+  }
+
+  function setupBackContinue() {
+    if (window.ScopedLabsToolShell && typeof window.ScopedLabsToolShell.applyBackContinueShell === "function") {
+      window.ScopedLabsToolShell.applyBackContinueShell({ rowId: "next-step-row" });
+    }
+  }
+
+  function showContinue() {
+    if (els.continueWrap) els.continueWrap.hidden = false;
+  }
+
+  function renderLocalAssistant(metrics = {}) {
+    const adaptersApi = window.ScopedLabsAccessControlToolAssistantAdapters;
+    const assistant = window.ScopedLabsLocalAssistant;
+    if (!assistant || !els.localAssistantMount) return false;
+
+    let model = metrics;
+    const adapter = adaptersApi && typeof adaptersApi.getAdapter === "function" ? adaptersApi.getAdapter(TOOL) : null;
+    if (adapter && typeof adapter.buildModel === "function") {
+      model = adapter.buildModel(metrics);
+    }
+
+    return assistant.mount(els.localAssistantMount, model);
+  }
+
+  function publishAntiPassbackSummaryCarryover(payload) {
     try {
-      const canvas = document.createElement("canvas");
-      canvas.width = 1200;
-      canvas.height = 620;
-
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return getChartImage();
-
-      const labels = [
-        "Recommended Zones",
-        "Paired Entrances",
-        "Complexity Index",
-        "Enforcement Exposure"
-      ];
-
-      const values = [
-        lastMetrics.recommendedZones,
-        lastMetrics.pairedEntrances,
-        lastMetrics.complexityIndex,
-        lastMetrics.enforcementExposure
-      ];
-
-      const referenceValue = 10;
-      const dominantIndex = values.indexOf(Math.max(...values));
-      const maxValue = Math.max(...values, referenceValue, 18);
-
-      let exportChart = null;
-
-      const bgPlugin = {
-        id: "exportBgPlugin",
-        beforeDraw(chartInstance) {
-          const { ctx, chartArea } = chartInstance;
-          if (!chartArea) return;
-
-          const { left, top, width, height, right, bottom } = chartArea;
-          const x = chartInstance.scales.x;
-
-          ctx.save();
-
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, chartInstance.width, chartInstance.height);
-
-          ctx.fillStyle = "#f8fbf9";
-          ctx.fillRect(left, top, width, height);
-
-          const healthyMax = Math.min(6, x.max);
-          const watchMax = Math.min(10, x.max);
-
-          if (healthyMax > 0) {
-            ctx.fillStyle = "rgba(34, 197, 94, 0.14)";
-            ctx.fillRect(left, top, x.getPixelForValue(healthyMax) - left, height);
-          }
-
-          if (watchMax > 6) {
-            ctx.fillStyle = "rgba(245, 158, 11, 0.14)";
-            ctx.fillRect(
-              x.getPixelForValue(6),
-              top,
-              x.getPixelForValue(watchMax) - x.getPixelForValue(6),
-              height
-            );
-          }
-
-          if (x.max > 10) {
-            ctx.fillStyle = "rgba(239, 68, 68, 0.12)";
-            ctx.fillRect(
-              x.getPixelForValue(10),
-              top,
-              right - x.getPixelForValue(10),
-              height
-            );
-          }
-
-          ctx.restore();
-        },
-        afterDatasetsDraw(chartInstance) {
-          const { ctx, chartArea, scales } = chartInstance;
-          if (!chartArea || !scales.x || !scales.y) return;
-
-          const x = scales.x;
-          const y = scales.y;
-          const { top, bottom } = chartArea;
-
-          ctx.save();
-
-          const rx = x.getPixelForValue(referenceValue);
-          ctx.strokeStyle = "#198754";
-          ctx.lineWidth = 3;
-          ctx.setLineDash([6, 5]);
-          ctx.beginPath();
-          ctx.moveTo(rx, top);
-          ctx.lineTo(rx, bottom);
-          ctx.stroke();
-          ctx.setLineDash([]);
-
-          ctx.fillStyle = "#1f2937";
-          ctx.font = "600 16px Arial";
-          ctx.fillText("Complexity Watch Limit", rx + 10, bottom - 12);
-
-          ctx.fillStyle = "#15803d";
-          ctx.font = "700 15px Arial";
-          ctx.fillText("Healthy", x.getPixelForValue(0.8), top + 18);
-
-          ctx.fillStyle = "#b45309";
-          ctx.fillText("Watch", x.getPixelForValue(6.8), top + 18);
-
-          ctx.fillStyle = "#b91c1c";
-          ctx.fillText("Risk", x.getPixelForValue(10.8), top + 18);
-
-          const dominantValue = values[dominantIndex];
-          const px = x.getPixelForValue(dominantValue);
-          const py = y.getPixelForValue(labels[dominantIndex]);
-
-          ctx.beginPath();
-          ctx.arc(px, py, 6, 0, Math.PI * 2);
-          ctx.fillStyle = "#ffffff";
-          ctx.fill();
-          ctx.strokeStyle = "#111827";
-          ctx.lineWidth = 2;
-          ctx.stroke();
-
-          ctx.restore();
-        }
+      const carryover = {
+        category: CATEGORY,
+        step: TOOL,
+        tool: TOOL_LABEL,
+        generatedAt: new Date().toISOString(),
+        antiPassbackStatus: payload.antiPassbackStatus,
+        recommendedZones: payload.recommendedZones,
+        perimeterZones: payload.perimeterZones,
+        interiorZones: payload.interiorZones,
+        floorZones: payload.floorZones,
+        pairedEntrances: payload.pairedEntrances,
+        complexityIndex: payload.complexityIndex,
+        enforcementExposure: payload.enforcementExposure,
+        operationalRisk: payload.operationalRisk,
+        recommendedEnforcementMode: payload.recommendedEnforcementMode,
+        zoneStrategy: payload.zoneStrategy,
+        apbType: payload.apbType,
+        assistantSummary: payload.assistantSummary,
+        recommendedActions: Array.isArray(payload.recommendedActions) ? payload.recommendedActions : []
       };
 
-      exportChart = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "APB Design Metrics",
-              data: values,
-              indexAxis: "y",
-              barThickness: 18,
-              maxBarThickness: 18,
-              barPercentage: 0.8,
-              categoryPercentage: 0.7,
-              borderRadius: 8,
-              borderSkipped: false,
-              borderWidth: 1.5,
-              backgroundColor: (context) => {
-                const i = context.dataIndex;
-                const v = context.raw;
-
-                if (i === dominantIndex) {
-                  if (v > 10) return "#dc2626";
-                  if (v > 6) return "#f59e0b";
-                  return "#22c55e";
-                }
-
-                if (v > 10) return "rgba(220, 38, 38, 0.55)";
-                if (v > 6) return "rgba(245, 158, 11, 0.50)";
-                return "rgba(59, 130, 246, 0.42)";
-              },
-              borderColor: (context) => {
-                const i = context.dataIndex;
-                const v = context.raw;
-
-                if (i === dominantIndex) {
-                  if (v > 10) return "#7f1d1d";
-                  if (v > 6) return "#92400e";
-                  return "#166534";
-                }
-
-                if (v > 10) return "#991b1b";
-                if (v > 6) return "#b45309";
-                return "#1d4ed8";
-              }
-            }
-          ]
-        },
-        options: {
-          responsive: false,
-          maintainAspectRatio: false,
-          animation: false,
-          indexAxis: "y",
-          layout: {
-            padding: {
-              top: 36,
-              right: 22,
-              bottom: 10,
-              left: 18
-            }
-          },
-          plugins: {
-            legend: { display: false },
-            tooltip: { enabled: false }
-          },
-          scales: {
-            x: {
-              beginAtZero: true,
-              suggestedMax: Math.ceil(maxValue * 1.08),
-              ticks: {
-                color: "#334155",
-                font: {
-                  size: 14,
-                  weight: "600"
-                }
-              },
-              grid: {
-                color: "rgba(15, 23, 42, 0.08)"
-              },
-              border: {
-                color: "rgba(15, 23, 42, 0.18)"
-              },
-              title: {
-                display: true,
-                text: "Operational Magnitude",
-                color: "#0f172a",
-                font: {
-                  size: 15,
-                  weight: "700"
-                }
-              }
-            },
-            y: {
-              ticks: {
-                color: "#0f172a",
-                font: {
-                  size: 15,
-                  weight: "700"
-                }
-              },
-              grid: {
-                display: false
-              },
-              border: {
-                color: "rgba(15, 23, 42, 0.18)"
-              }
-            }
-          }
-        },
-        plugins: [bgPlugin]
-      });
-
-      const dataUrl = canvas.toDataURL("image/png", 1);
-
-      if (exportChart) {
-        exportChart.destroy();
-        exportChart = null;
+      let summary = {};
+      try {
+        summary = JSON.parse(localStorage.getItem(ACCESS_CONTROL_SUMMARY_KEY) || "{}");
+      } catch {
+        summary = {};
       }
 
-      return dataUrl;
-    } catch (err) {
-      console.error("Export chart render failed:", err);
-      return getChartImage();
+      summary.antiPassbackZones = carryover;
+      localStorage.setItem(SUMMARY_CARRYOVER_KEY, JSON.stringify(carryover));
+      localStorage.setItem(ACCESS_CONTROL_SUMMARY_KEY, JSON.stringify(summary));
+      return carryover;
+    } catch (error) {
+      console.warn("Anti-Passback summary carryover publish failed", error);
+      return null;
     }
   }
 
@@ -634,375 +575,17 @@
         { label: "Entrances / Perimeter Doors", value: String(els.entrances.value) },
         { label: "Interior Controlled Areas", value: String(els.interiorAreas.value) },
         { label: "Floors / Levels", value: String(els.floors.value) },
-        { label: "Zone Strategy", value: els.strategy.options[els.strategy.selectedIndex]?.text || els.strategy.value },
-        { label: "APB Type", value: els.type.options[els.type.selectedIndex]?.text || els.type.value }
+        { label: "Zone Strategy", value: selectedLabel(els.strategy) || els.strategy.value },
+        { label: "APB Type", value: selectedLabel(els.type) || els.type.value }
       ],
       outputs,
       assumptions: getAssumptions(),
-      chartImage: getExportChartImage(),
+      chartImage: "",
       meta: getReportMeta()
     };
   }
 
-  function buildReportHTML(payload) {
-    const inputRows = (payload.inputs || []).map((item) => `
-      <tr>
-        <td>${escapeHtml(item.label)}</td>
-        <td>${escapeHtml(item.value)}</td>
-      </tr>
-    `).join("");
 
-    const outputRows = (payload.outputs || []).map((item) => `
-      <tr>
-        <td>${escapeHtml(item.label)}</td>
-        <td>${escapeHtml(item.value)}</td>
-      </tr>
-    `).join("");
-
-    const assumptions = (payload.assumptions || []).map((item) => `
-      <li>${escapeHtml(item)}</li>
-    `).join("");
-
-    const projectDetails = [
-      payload.meta?.projectName ? `<div><strong>Project:</strong> ${escapeHtml(payload.meta.projectName)}</div>` : "",
-      payload.meta?.clientName ? `<div><strong>Client:</strong> ${escapeHtml(payload.meta.clientName)}</div>` : "",
-      payload.meta?.preparedBy ? `<div><strong>Prepared By:</strong> ${escapeHtml(payload.meta.preparedBy)}</div>` : ""
-    ].filter(Boolean).join("");
-
-    const notesBlock = payload.meta?.customNotes
-      ? `
-        <section class="section">
-          <h2>Custom Notes</h2>
-          <div class="body-copy">${escapeHtml(payload.meta.customNotes).replace(/\n/g, "<br>")}</div>
-        </section>
-      `
-      : "";
-
-    const chartBlock = payload.chartImage
-      ? `
-        <section class="section">
-          <h2>Chart Snapshot</h2>
-          <div class="chart-wrap">
-            <img src="${payload.chartImage}" alt="Anti-Passback Zones chart">
-          </div>
-        </section>
-      `
-      : "";
-
-    const statusClass = String(payload.status || "").toLowerCase();
-
-    return `<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>${escapeHtml(payload.meta?.reportTitle || payload.tool || "ScopedLabs Report")} • ScopedLabs</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    :root{
-      --ink:#101715;
-      --muted:#52615c;
-      --line:#d7e2db;
-      --soft:#f5f8f6;
-      --accent:#1d8f55;
-      --accent-soft:#eaf7f0;
-      --watch:#a66d00;
-      --watch-soft:#fff6df;
-      --risk:#b42318;
-      --risk-soft:#fff0ee;
-    }
-    *{box-sizing:border-box}
-    html,body{margin:0;padding:0;background:#eef2ef;color:var(--ink);font-family:Inter, Arial, sans-serif}
-    body{padding:28px}
-    .page{
-      max-width:980px;
-      margin:0 auto;
-      background:#fff;
-      border:1px solid var(--line);
-      box-shadow:0 18px 50px rgba(0,0,0,.08);
-    }
-    .toolbar{
-      display:flex;
-      justify-content:flex-end;
-      gap:10px;
-      padding:14px 18px;
-      border-bottom:1px solid var(--line);
-      background:#fbfcfb;
-    }
-    .toolbar button{
-      appearance:none;
-      border:1px solid #c9d8cf;
-      background:#fff;
-      color:var(--ink);
-      border-radius:999px;
-      padding:10px 14px;
-      font-weight:700;
-      cursor:pointer;
-    }
-    .toolbar button:hover{background:#f3f7f5}
-    .report{padding:28px 30px 32px}
-    .brand-row{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      margin-bottom:10px;
-    }
-    .brand-row img{
-      width:28px;
-      height:28px;
-      display:block;
-    }
-    .brand-name{
-      font-size:1.15rem;
-      font-weight:800;
-      letter-spacing:.02em;
-    }
-    .tagline{
-      color:var(--muted);
-      font-size:.95rem;
-      margin-bottom:18px;
-    }
-    .report-head{
-      display:flex;
-      justify-content:space-between;
-      gap:18px;
-      align-items:flex-start;
-      border-top:1px solid var(--line);
-      border-bottom:1px solid var(--line);
-      padding:18px 0;
-      margin-bottom:22px;
-    }
-    .report-title{
-      font-size:1.7rem;
-      line-height:1.15;
-      margin:0 0 6px;
-    }
-    .report-meta{
-      color:var(--muted);
-      font-size:.95rem;
-      line-height:1.6;
-    }
-    .status-pill{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding:8px 12px;
-      border-radius:999px;
-      font-size:.82rem;
-      font-weight:800;
-      letter-spacing:.06em;
-      text-transform:uppercase;
-      border:1px solid transparent;
-      white-space:nowrap;
-    }
-    .status-pill.healthy{
-      color:var(--accent);
-      background:var(--accent-soft);
-      border-color:#c9ead7;
-    }
-    .status-pill.watch{
-      color:var(--watch);
-      background:var(--watch-soft);
-      border-color:#f2dfad;
-    }
-    .status-pill.risk{
-      color:var(--risk);
-      background:var(--risk-soft);
-      border-color:#f3c6c1;
-    }
-    .section{margin-top:24px}
-    .section h2{
-      margin:0 0 10px;
-      font-size:1rem;
-      letter-spacing:.02em;
-      text-transform:uppercase;
-    }
-    .summary,
-    .body-copy{
-      border:1px solid var(--line);
-      background:#fafcfb;
-      border-radius:14px;
-      padding:16px 18px;
-      line-height:1.65;
-    }
-    .project-details{
-      display:grid;
-      gap:6px;
-      margin-top:10px;
-      color:var(--muted);
-      font-size:.95rem;
-    }
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:18px;
-    }
-    table{
-      width:100%;
-      border-collapse:collapse;
-      border:1px solid var(--line);
-      border-radius:14px;
-      overflow:hidden;
-      font-size:.95rem;
-    }
-    th,td{
-      padding:11px 12px;
-      border-bottom:1px solid var(--line);
-      vertical-align:top;
-    }
-    th{
-      text-align:left;
-      background:#f7faf8;
-      font-size:.82rem;
-      text-transform:uppercase;
-      letter-spacing:.06em;
-    }
-    tr:last-child td{border-bottom:none}
-    td:first-child{
-      width:42%;
-      color:var(--muted);
-    }
-    td:last-child{
-      font-weight:700;
-      text-align:left;
-    }
-    .assumptions{
-      margin:0;
-      padding-left:18px;
-      line-height:1.7;
-    }
-    .chart-wrap{
-      border:1px solid var(--line);
-      border-radius:14px;
-      background:#fff;
-      padding:18px;
-      text-align:center;
-    }
-    .chart-wrap img{
-      max-width:100%;
-      height:auto;
-      display:inline-block;
-    }
-    .foot{
-      margin-top:26px;
-      padding-top:16px;
-      border-top:1px solid var(--line);
-      color:var(--muted);
-      font-size:.9rem;
-      line-height:1.7;
-    }
-    @media (max-width:760px){
-      body{padding:14px}
-      .report{padding:20px}
-      .report-head{flex-direction:column}
-      .grid{grid-template-columns:1fr}
-    }
-    @media print{
-      body{background:#fff;padding:0}
-      .page{max-width:none;border:none;box-shadow:none}
-      .toolbar{display:none !important}
-      .report{padding:0}
-    }
-  </style>
-</head>
-<body>
-  <div class="page">
-    <div class="toolbar">
-      <button type="button" onclick="window.print()">Print / Save PDF</button>
-      <button type="button" onclick="window.close()">Close</button>
-    </div>
-
-    <div class="report">
-      <div class="brand-row">
-        <img src="https://scopedlabs.com/assets/favicon/favicon-32x32.png?v=1" alt="">
-        <div class="brand-name">ScopedLabs</div>
-      </div>
-      <div class="tagline">Engineering · Analysis · Tools</div>
-
-      <div class="report-head">
-        <div>
-          <h1 class="report-title">${escapeHtml(payload.meta?.reportTitle || payload.tool || "ScopedLabs Report")}</h1>
-          <div class="report-meta">
-            <div><strong>Category:</strong> ${escapeHtml(payload.category || "")}</div>
-            <div><strong>Tool:</strong> ${escapeHtml(payload.tool || "")}</div>
-            <div><strong>Generated:</strong> ${escapeHtml(formatDateTime(payload.generatedAt || ""))}</div>
-            <div><strong>Report ID:</strong> ${escapeHtml(payload.reportId || "")}</div>
-          </div>
-        </div>
-        <div class="status-pill ${statusClass}">${escapeHtml(payload.status || "")}</div>
-      </div>
-
-      <section class="section">
-        <h2>Executive Summary</h2>
-        <div class="summary">
-          ${escapeHtml(payload.summary || "")}
-          <div class="project-details">${projectDetails}</div>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="grid">
-          <div>
-            <h2>Inputs</h2>
-            <table>
-              <thead><tr><th>Input</th><th>Value</th></tr></thead>
-              <tbody>${inputRows}</tbody>
-            </table>
-          </div>
-          <div>
-            <h2>Calculated Outputs</h2>
-            <table>
-              <thead><tr><th>Output</th><th>Value</th></tr></thead>
-              <tbody>${outputRows}</tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <section class="section">
-        <h2>Engineering Interpretation</h2>
-        <div class="body-copy">${escapeHtml(payload.interpretation || "")}</div>
-      </section>
-
-      ${chartBlock}
-      ${notesBlock}
-
-      <section class="section">
-        <h2>Assumptions</h2>
-        <div class="body-copy"><ul class="assumptions">${assumptions}</ul></div>
-      </section>
-
-      <section class="section">
-        <h2>Disclaimer</h2>
-        <div class="body-copy">
-          ScopedLabs outputs are planning aids only and do not replace formal engineering review, code compliance review, site-specific validation, manufacturer documentation, controller-specific rule testing, or operational policy review.
-        </div>
-      </section>
-
-      <div class="foot">
-        ScopedLabs Pro export preview for internal and client-facing documentation workflows.
-      </div>
-    </div>
-  </div>
-</body>
-</html>`;
-  }
-
-  function openReportWindow(payload) {
-    try {
-      const html = buildReportHTML(payload);
-      const blob = new Blob([html], { type: "text/html" });
-      const url = URL.createObjectURL(blob);
-      const win = window.open(url, "_blank");
-
-      if (!win) return false;
-
-      setTimeout(() => URL.revokeObjectURL(url), 10000);
-      return true;
-    } catch (err) {
-      console.error("Export report open failed:", err);
-      return false;
-    }
-  }
 
   function getStrategyFactor(strategy) {
     if (strategy === "minimal") return 0.65;
@@ -1087,249 +670,7 @@
     return "This anti-passback design stays relatively manageable. The recommended zone structure is restrained enough that APB can add useful control without becoming an administrative burden, especially if exemptions and emergency paths are planned cleanly.";
   }
 
-  function renderChart(metrics) {
-    destroyChart();
 
-    if (!els.chart) return;
-
-    showChartWrap();
-
-    const labels = [
-      "Recommended Zones",
-      "Paired Entrances",
-      "Complexity Index",
-      "Enforcement Exposure"
-    ];
-
-    const values = [
-      metrics.recommendedZones,
-      metrics.pairedEntrances,
-      metrics.complexityIndex,
-      metrics.enforcementExposure
-    ];
-
-    const dominantIndex = values.indexOf(Math.max(...values));
-    const referenceValue = 10;
-    const chartMax = Math.max(18, Math.ceil(Math.max(...values, referenceValue) * 1.2));
-
-    const chartBgPlugin = {
-      id: "chartBgPlugin",
-      beforeDraw(c) {
-        const { ctx, chartArea } = c;
-        if (!chartArea) return;
-
-        const { left, top, width, height } = chartArea;
-
-        ctx.save();
-        ctx.fillStyle = "rgba(255,255,255,0.05)";
-        ctx.fillRect(left, top, width, height);
-        ctx.restore();
-      }
-    };
-
-    const thresholdBandPlugin = {
-      id: "thresholdBandPlugin",
-      beforeDatasetsDraw(c) {
-        const { ctx, chartArea, scales } = c;
-        if (!chartArea || !scales.x) return;
-
-        const x = scales.x;
-        const { top, bottom, left, right } = chartArea;
-
-        const healthyMax = Math.min(6, x.max);
-        const watchMax = Math.min(10, x.max);
-
-        ctx.save();
-
-        if (healthyMax > 0) {
-          ctx.fillStyle = "rgba(46, 204, 113, 0.16)";
-          ctx.fillRect(left, top, x.getPixelForValue(healthyMax) - left, bottom - top);
-        }
-
-        if (watchMax > 6) {
-          ctx.fillStyle = "rgba(255, 200, 80, 0.13)";
-          ctx.fillRect(
-            x.getPixelForValue(6),
-            top,
-            x.getPixelForValue(watchMax) - x.getPixelForValue(6),
-            bottom - top
-          );
-        }
-
-        if (x.max > 10) {
-          ctx.fillStyle = "rgba(255, 90, 90, 0.13)";
-          ctx.fillRect(
-            x.getPixelForValue(10),
-            top,
-            right - x.getPixelForValue(10),
-            bottom - top
-          );
-        }
-
-        ctx.restore();
-      },
-      afterDatasetsDraw(c) {
-        const { ctx, chartArea, scales } = c;
-        if (!chartArea || !scales.x || !scales.y) return;
-
-        const x = scales.x;
-        const y = scales.y;
-        const { top, bottom } = chartArea;
-
-        ctx.save();
-
-        const rx = x.getPixelForValue(referenceValue);
-        ctx.strokeStyle = "rgba(120, 255, 170, 0.98)";
-        ctx.lineWidth = 3;
-        ctx.setLineDash([4, 4]);
-        ctx.beginPath();
-        ctx.moveTo(rx, top);
-        ctx.lineTo(rx, bottom);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        ctx.fillStyle = "rgba(220, 255, 235, 0.96)";
-        ctx.font = "600 11px sans-serif";
-        ctx.fillText("Complexity Watch Limit", rx + 8, bottom - 10);
-
-        ctx.fillStyle = "rgba(180, 255, 200, 0.82)";
-        ctx.font = "600 11px sans-serif";
-        ctx.fillText("Healthy", x.getPixelForValue(0.8), top + 14);
-
-        ctx.fillStyle = "rgba(255, 220, 140, 0.82)";
-        ctx.fillText("Watch", x.getPixelForValue(6.8), top + 14);
-
-        ctx.fillStyle = "rgba(255, 160, 160, 0.82)";
-        ctx.fillText("Risk", x.getPixelForValue(10.8), top + 14);
-
-        const dominantValue = values[dominantIndex];
-        const px = x.getPixelForValue(dominantValue);
-        const py = y.getPixelForValue(labels[dominantIndex]);
-
-        ctx.beginPath();
-        ctx.arc(px, py, 4.5, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(225, 255, 240, 1)";
-        ctx.fill();
-        ctx.strokeStyle = "rgba(120, 255, 170, 0.95)";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        ctx.restore();
-      }
-    };
-
-    chart = new Chart(els.chart, {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [
-          {
-            label: "APB Design Metrics",
-            data: values,
-            barThickness: 16,
-            maxBarThickness: 16,
-            barPercentage: 0.8,
-            categoryPercentage: 0.7,
-            borderWidth: 2,
-            borderRadius: 8,
-            borderSkipped: false,
-            backgroundColor: (context) => {
-              const i = context.dataIndex;
-              const v = context.raw;
-
-              if (i === dominantIndex) {
-                if (v > 10) return "rgba(255, 92, 92, 1)";
-                if (v > 6) return "rgba(255, 188, 82, 1)";
-                return "rgba(120, 255, 170, 1)";
-              }
-
-              if (v > 10) return "rgba(255, 77, 77, 0.30)";
-              if (v > 6) return "rgba(255, 170, 51, 0.24)";
-              return "rgba(90, 170, 255, 0.15)";
-            },
-            borderColor: (context) => {
-              const i = context.dataIndex;
-              const v = context.raw;
-
-              if (i === dominantIndex) {
-                if (v > 10) return "rgba(255, 220, 220, 1)";
-                if (v > 6) return "rgba(255, 240, 210, 1)";
-                return "rgba(215, 255, 230, 1)";
-              }
-
-              return "rgba(120,170,200,0.18)";
-            }
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        indexAxis: "y",
-        animation: {
-          duration: 700,
-          easing: "easeOutQuart"
-        },
-        layout: {
-          padding: {
-            top: 28,
-            right: 12,
-            left: 10,
-            bottom: 0
-          }
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: "rgba(8, 18, 18, 0.96)",
-            titleColor: "#e8fff1",
-            bodyColor: "#d9f7e7",
-            borderColor: "rgba(100, 255, 180, 0.25)",
-            borderWidth: 1,
-            padding: 12,
-            callbacks: {
-              label(context) {
-                return ` ${context.raw}`;
-              }
-            }
-          }
-        },
-        scales: {
-          x: {
-            beginAtZero: true,
-            suggestedMax: chartMax,
-            ticks: {
-              color: "rgba(220, 238, 230, 0.78)"
-            },
-            grid: {
-              color: "rgba(110, 160, 140, 0.10)"
-            },
-            title: {
-              display: true,
-              text: "Operational Magnitude",
-              color: "rgba(230, 255, 240, 0.92)"
-            }
-          },
-          y: {
-            ticks: {
-              color: "rgba(228, 245, 235, 0.92)"
-            },
-            grid: {
-              display: false
-            }
-          }
-        }
-      },
-      plugins: [chartBgPlugin, thresholdBandPlugin]
-    });
-
-    els.chart.style.width = "100%";
-    els.chart.style.height = "340px";
-
-    if (els.chart.parentElement) {
-      els.chart.parentElement.style.minHeight = "340px";
-    }
-  }
 
   function calc() {
     const entrances = Math.max(0, Math.floor(n("entrances")));
@@ -1372,6 +713,31 @@
       operationalRisk
     });
 
+    const metrics = {
+      entrances,
+      interior,
+      floors,
+      strategy,
+      type,
+      strategyLabel: selectedLabel(els.strategy),
+      typeLabel: selectedLabel(els.type),
+      recommendedZones: zoneBreakdown.total,
+      perimeterZones: zoneBreakdown.perimeterZones,
+      interiorZones: zoneBreakdown.interiorZones,
+      floorZones: zoneBreakdown.floorZones,
+      pairedEntrances,
+      complexityIndex,
+      enforcementExposure,
+      operationalRisk,
+      antiPassbackStatus: antiPassbackStatusFromRisk(operationalRisk),
+      recommendedEnforcementMode: recommendedType,
+      modeRecommendation,
+      interpretation
+    };
+
+    metrics.recommendedActions = buildAntiPassbackActions(metrics);
+    metrics.assistantSummary = antiPassbackSummary(metrics);
+
     render([
       row("Recommended Zones", zoneBreakdown.total),
       row("Perimeter Zones", zoneBreakdown.perimeterZones),
@@ -1379,22 +745,22 @@
       row("Floor Segments", zoneBreakdown.floorZones),
       row("Suggested Paired Entrances (IN/OUT)", pairedEntrances),
       row("APB Complexity Index", complexityIndex),
+      row("Enforcement Exposure", enforcementExposure),
       row("Operational Risk", operationalRisk),
       row("Recommended Enforcement Mode", recommendedType),
       row("Design Guidance", modeRecommendation),
+      row("Recommended Actions", metrics.recommendedActions.join(" | ")),
       row("Engineering Interpretation", interpretation)
     ]);
 
-    lastMetrics = {
-      recommendedZones: zoneBreakdown.total,
-      pairedEntrances,
-      complexityIndex,
-      enforcementExposure
-    };
-
-    renderChart(lastMetrics);
+    lastMetrics = metrics;
+    renderAntiPassbackSchedule(metrics);
+    renderLocalAssistant(metrics);
+    showContinue();
 
     currentReport = buildCurrentReportPayload();
+    publishAntiPassbackSummaryCarryover(metrics);
+    attachOutputShellExport();
     updateExportControls();
   }
 
@@ -1403,7 +769,7 @@
       els.results.innerHTML = `<div class="muted">${escapeHtml(message)}</div>`;
     }
 
-    destroyChart();
+    clearOutputShell();
     lastMetrics = null;
     currentReport = null;
     updateExportControls();

@@ -87,6 +87,8 @@ for (const slug of dirs) {
   const hasOldVisibleHelper =
     has(html, "Best for:") ||
     has(html, "tool-best-for") ||
+    has(html, "Documentation & Export") ||
+    has(html, 'pill--pro">Pro Tier') ||
     has(html, "This tool continues the Access Control design flow");
 
   const hasChartJs =
@@ -118,12 +120,25 @@ for (const slug of dirs) {
     has(html, "Access Level Complexity Schedule") ||
     has(html, "data-access-level-summary") ||
     has(html, "accessLevelSchedule") ||
-    has(script, "renderAccessLevelSchedule");
+    has(script, "renderAccessLevelSchedule") ||
+    has(html, "Anti-Passback Decision Schedule") ||
+    has(html, "data-apb-summary") ||
+    has(html, "antiPassbackSchedule") ||
+    has(script, "renderAntiPassbackSchedule");
+
+  const flowActionIndexes = [
+    html.indexOf('id="accessControlFlowActions"'),
+    html.indexOf('id="next-step-row"'),
+    html.indexOf('data-sl-shell-back-continue="true"')
+  ].filter((index) => index >= 0);
+
+  const flowActionIndex = flowActionIndexes.length ? Math.min(...flowActionIndexes) : -1;
+  const metadataIndex = html.indexOf('id="reportMetadataMount"');
 
   const hasFlowBeforeExport =
-    has(html, 'id="accessControlFlowActions"') &&
-    has(html, 'id="reportMetadataMount"') &&
-    html.indexOf('id="accessControlFlowActions"') < html.indexOf('id="reportMetadataMount"');
+    flowActionIndex >= 0 &&
+    metadataIndex >= 0 &&
+    flowActionIndex < metadataIndex;
 
   rows.push({
     slug,
@@ -136,7 +151,7 @@ for (const slug of dirs) {
     helperClutter: checkToken(!hasOldVisibleHelper || isAcceptedReference),
     assistantShell: checkToken(isScopeEntry || has(html, "accessControlLocalAssistantMount")),
     metadata: checkToken(isScopeEntry || has(html, "reportMetadataMount")),
-    flowActions: checkToken(isScopeEntry || has(html, "accessControlFlowActions")),
+    flowActions: checkToken(isScopeEntry || has(html, "accessControlFlowActions") || has(html, 'id="next-step-row"') || has(html, 'data-sl-shell-back-continue="true"')),
     flowBeforeExport: checkToken(isScopeEntry || !has(html, "reportMetadataMount") || hasFlowBeforeExport),
     outputShell: checkToken(isScopeEntry || isAcceptedReference || hasOutputShell),
     hiddenLedger: checkToken(isScopeEntry || isAcceptedReference || hasHiddenLedger),
@@ -188,7 +203,7 @@ console.log("5. Extract shared Access Control CAD/table primitives only after an
 
 console.log("\nSafety rule:");
 console.log("- This audit does not modify files.");
-console.log("- Fixers must be plan-only first and require Glenn confirmation before apply.");
+console.log("- Category-wide/global fixers must be plan-only first and require Glenn confirmation before apply; single-tool scoped patches may apply directly with clear scope and seatbelt checks.");
 
 const failCount = failures.length;
 console.log("\nSummary:");
