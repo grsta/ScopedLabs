@@ -211,6 +211,71 @@
     }
   }
 
+
+  // access-control-access-level-label-polish-023
+  function accessModelNote(value) {
+    if (value === "exception-heavy") return "Exception-heavy models create review debt quickly; repeated one-offs should become governed roles.";
+    if (value === "hybrid") return "Hybrid role and area logic is workable when ownership and naming rules are documented.";
+    if (value === "area-based") return "Area-based access can stay clean if zones are grouped consistently and not duplicated by role.";
+    return "Role-based structure is the easiest model to govern when roles remain reusable and clearly named.";
+  }
+
+  function turnoverNote(value) {
+    if (value === "high") return "High turnover increases add/remove workload and makes stale assignments more likely.";
+    if (value === "low") return "Low turnover reduces day-to-day administration pressure.";
+    return "Normal turnover is manageable if access reviews and naming rules stay consistent.";
+  }
+
+  function exceptionNote(count) {
+    const n = Number(count) || 0;
+    if (n <= 0) return "No exception groups are modeled; keep the standard role structure clean.";
+    if (n <= 2) return "A small number of exceptions is manageable if each one has an owner and review date.";
+    if (n <= 5) return "Exception groups are becoming a management driver; convert repeated exceptions into standard roles.";
+    return "Exception count is high; simplify the model before exceptions become the real access structure.";
+  }
+
+  function restrictedZoneNote(value) {
+    if (value === "high") return "Many sensitive areas need cleaner separation, stronger approval rules, and periodic review.";
+    if (value === "moderate") return "Moderate restricted-zone pressure should be isolated from broad employee access.";
+    return "Restricted-zone pressure is low; keep the model simple unless sensitive areas are added.";
+  }
+
+  function scheduleChangeNote(value, schedules) {
+    const count = Number(schedules) || 0;
+    if (value === "frequent") return "Frequent schedule changes can multiply access levels; use approved schedule templates.";
+    if (value === "stable" && count <= 3) return "Schedule pressure is stable; avoid creating special schedules unless required.";
+    if (count > 5) return "Schedule count is high enough to affect administration even without frequent changes.";
+    return "Schedule pressure is normal; keep schedule names and reuse rules documented.";
+  }
+
+  function governanceNote(value) {
+    if (value === "weak") return "Weak governance amplifies complexity; assign naming, approval, and review ownership.";
+    if (value === "strong") return "Strong governance reduces complexity risk because changes are named, approved, and reviewed.";
+    return "Standard governance is workable if naming and change-control rules are kept consistent.";
+  }
+
+  function accessStructureLoadNote(value) {
+    const n = Number(value) || 0;
+    if (n >= 10) return "Access structure load is high; simplify roles, areas, exceptions, or schedules before expansion.";
+    if (n >= 6) return "Access structure load is moderate; watch growth and keep permission groups reusable.";
+    return "Access structure load is manageable for the current role and area count.";
+  }
+
+  function adminMaintenanceLoadNote(value) {
+    const n = Number(value) || 0;
+    if (n >= 10) return "Maintenance load is high; daily administration will depend on clean ownership and review discipline.";
+    if (n >= 6) return "Maintenance load is moderate; keep schedules, exceptions, and naming rules under control.";
+    return "Maintenance load is manageable with normal access administration practices.";
+  }
+
+  function overshootNote(metrics = {}) {
+    const overshoot = Number(metrics.overshoot) || 0;
+    const remaining = Math.max(0, Number(metrics.recommendedLimit || 0) - Number(metrics.total || 0));
+
+    if (overshoot > 0) return "Design exceeds the recommended limit; reduce complexity before final handoff.";
+    return "Design remains " + remaining + " levels under the recommended limit.";
+  }
+
   function buildAccessLevelScheduleHtml(metrics = {}) {
     const status = String(metrics.status || "WATCH").toUpperCase();
     const riskLabel = metrics.riskLabel || "Complexity pending";
@@ -218,20 +283,20 @@
     const actions = Array.isArray(metrics.recommendedActions) ? metrics.recommendedActions.join(" ") : "Review access-level structure before handoff.";
 
     const rows = [
-      accessLevelScheduleRow("Structure", "Access Levels", scheduleCell(metrics.total), "Modeled permission structure after base and V2 pressure factors."),
-      accessLevelScheduleRow("Structure", "Role-Area Combinations", scheduleCell(metrics.combinations), "Base role-to-area matrix before schedule, grouping, and context pressure."),
+      accessLevelScheduleRow("Structure", "Access Levels", scheduleCell(metrics.total), "Modeled permission structure after base and context factors."),
+      accessLevelScheduleRow("Structure", "Role-Area Combinations", scheduleCell(metrics.combinations), "Base role-to-area matrix before schedules, groups, and context factors are applied."),
       accessLevelScheduleRow("Inputs", "Roles / Areas", scheduleCell(metrics.roles + " / " + metrics.areas), "Primary access model dimensions."),
-      accessLevelScheduleRow("Inputs", "Schedules / Door Groups", scheduleCell(metrics.schedules + " / " + metrics.groups), "Operational modifiers that increase administration overhead."),
-      accessLevelScheduleRow("V2 Pressure", "Access Model", scheduleCell(metrics.accessModelTypeLabel), "Role-based models are easier to govern; exception-heavy models increase audit pressure."),
-      accessLevelScheduleRow("V2 Pressure", "Turnover", scheduleCell(metrics.turnoverPressureLabel), "Frequent user churn increases assignment and removal workload."),
-      accessLevelScheduleRow("V2 Pressure", "Exceptions", scheduleCell(metrics.exceptionGroups), "One-off groups increase long-term review and cleanup effort."),
-      accessLevelScheduleRow("V2 Pressure", "Restricted Zones", scheduleCell(metrics.restrictedZonesLabel), "Sensitive areas need cleaner separation and stronger approval rules."),
-      accessLevelScheduleRow("V2 Pressure", "Governance", scheduleCell(metrics.adminGovernanceLabel), "Naming, approval, and review practices can reduce or amplify administration pressure."),
-      accessLevelScheduleRow("Pressure", "Scaling Pressure", scheduleCell(Number(metrics.scalingPressure || 0).toFixed(1)), "Access-level pressure normalized against roles plus areas."),
-      accessLevelScheduleRow("Pressure", "Admin Load Index", scheduleCell(Number(metrics.adminLoadIndex || 0).toFixed(1)), "Estimated day-to-day administration load from schedules, groups, roles, exceptions, and governance."),
+      accessLevelScheduleRow("Inputs", "Schedules / Door Groups", scheduleCell(metrics.schedules + " / " + metrics.groups), scheduleChangeNote(metrics.scheduleChangePressure, metrics.schedules)),
+      accessLevelScheduleRow("Context Factors", "Access Model", scheduleCell(metrics.accessModelTypeLabel), accessModelNote(metrics.accessModelType)),
+      accessLevelScheduleRow("Context Factors", "Turnover", scheduleCell(metrics.turnoverPressureLabel), turnoverNote(metrics.turnoverPressure)),
+      accessLevelScheduleRow("Context Factors", "Exceptions", scheduleCell(metrics.exceptionGroups), exceptionNote(metrics.exceptionGroups)),
+      accessLevelScheduleRow("Context Factors", "Restricted Zones", scheduleCell(metrics.restrictedZonesLabel), restrictedZoneNote(metrics.restrictedZones)),
+      accessLevelScheduleRow("Context Factors", "Governance", scheduleCell(metrics.adminGovernanceLabel), governanceNote(metrics.adminGovernance)),
+      accessLevelScheduleRow("Calculated Load", "Access Structure Load", scheduleCell(Number(metrics.scalingPressure || 0).toFixed(1)), accessStructureLoadNote(metrics.scalingPressure)),
+      accessLevelScheduleRow("Calculated Load", "Admin Maintenance Load", scheduleCell(Number(metrics.adminLoadIndex || 0).toFixed(1)), adminMaintenanceLoadNote(metrics.adminLoadIndex)),
       accessLevelScheduleRow("Limit", "Recommended Limit", scheduleCell(metrics.recommendedLimit), "Recommended access-level ceiling for the selected complexity profile."),
-      accessLevelScheduleRow("Limit", "Overshoot", scheduleCell(metrics.overshoot), threshold),
-      accessLevelScheduleRow("Action", "Recommended Actions", scheduleCell(actions), "Simplification path for master-assistant summary and final handoff."),
+      accessLevelScheduleRow("Limit", "Overshoot", scheduleCell(metrics.overshoot), overshootNote(metrics)),
+      accessLevelScheduleRow("Action", "Recommended Actions", scheduleCell(actions), "Practical simplification path for summary review and final handoff."),
       accessLevelScheduleRow("Decision", "Status", accessLevelStatusChip(status), status === "RISK" ? "Simplify access model before scale increases." : status === "WATCH" ? "Watch naming, grouping, schedule, and exception growth before expansion." : "Structure is usable for the final Access Control handoff.")
     ];
 
@@ -292,7 +357,7 @@
     const status = String(currentReport.status || "WATCH").toUpperCase();
     const accessLevels = getMetricValue("Access Levels") || "0";
     const combinations = getMetricValue("Role-Area Combinations") || "0";
-    const adminLoad = getMetricValue("Admin Load Index") || "0";
+    const adminLoad = getMetricValue("Admin Maintenance Load") || "0";
     const limit = getMetricValue("Recommended Limit") || "0";
     const riskLabel = getMetricValue("Complexity") || "Complexity pending";
     const threshold = getMetricValue("Threshold Check") || "Threshold pending";
@@ -666,8 +731,8 @@
       outputs: [
         { label: "Access Levels", value: String(core.outputs.total) },
         { label: "Role-Area Combinations", value: String(core.outputs.combinations) },
-        { label: "Scaling Pressure", value: core.outputs.scalingPressure.toFixed(1) },
-        { label: "Admin Load Index", value: core.outputs.adminLoadIndex.toFixed(1) },
+        { label: "Access Structure Load", value: core.outputs.scalingPressure.toFixed(1) },
+        { label: "Admin Maintenance Load", value: core.outputs.adminLoadIndex.toFixed(1) },
         { label: "V2 Pressure Factor", value: core.outputs.v2PressureFactor.toFixed(2) },
         { label: "Recommended Limit", value: String(core.outputs.recommendedLimit) },
         { label: "Complexity", value: core.outputs.riskLabel },
@@ -1269,8 +1334,8 @@
     els.results.innerHTML = [
       row("Access Levels", total),
       row("Role-Area Combinations", combinations),
-      row("Scaling Pressure", scalingPressure.toFixed(1)),
-      row("Admin Load Index", adminLoadIndex.toFixed(1)),
+      row("Access Structure Load", scalingPressure.toFixed(1)),
+      row("Admin Maintenance Load", adminLoadIndex.toFixed(1)),
       row("V2 Pressure Factor", v2PressureFactor.toFixed(2)),
       row("Recommended Limit", recommendedLimit),
       row("Complexity", risk.label),

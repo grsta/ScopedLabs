@@ -130,6 +130,8 @@ check("V2 pressure modifiers are present", has(script, "accessModelPressure") &&
 check("V2 reduce-complexity actions are present", has(script, "recommendedActions") && has(script, "buildAccessLevelActions"), "schedule");
 
 check("Compact schedule includes V2 pressure rows", has(script, "Access Model") && has(script, "Turnover") && has(script, "Exceptions") && has(script, "Restricted Zones") && has(script, "Governance"), "schedule");
+check("Visible schedule uses polished context/load labels", has(script, "Context Factors") && has(script, "Calculated Load") && has(script, "Access Structure Load") && has(script, "Admin Maintenance Load"), "schedule");
+check("Visible schedule uses condition-aware engineering notes", has(script, "accessModelNote") && has(script, "turnoverNote") && has(script, "exceptionNote") && has(script, "restrictedZoneNote") && has(script, "scheduleChangeNote") && has(script, "governanceNote"), "schedule");
 check("Local assistant receives V2 fields", has(script, "accessModelType") && has(script, "recommendedActions") && has(adapters, "Exception") && has(adapters, "Governance"), "assistant");
 
 check("Summary/master carryover key is declared", has(script, "ACCESS_CONTROL_SUMMARY_KEY") || has(script, "SUMMARY_CARRYOVER_KEY"), "carryover");

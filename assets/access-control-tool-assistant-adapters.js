@@ -331,7 +331,7 @@
             "Access levels: " + total,
             "Role-area combinations: " + combinations,
             "Scaling pressure: " + scalingPressure,
-            "Admin load index: " + adminLoadIndex
+            "Admin maintenance load: " + adminLoadIndex
           ]
         },
         {
