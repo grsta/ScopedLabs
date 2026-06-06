@@ -38,6 +38,7 @@
     analysis: $("analysis-copy"),
     chart: $("chart"),
     chartWrap: $("chartWrap"),
+    visualCard: $("panelCapacityVisualCard"),
     nextWrap: $("continue-wrap"),
     nextBtn: $("continue"),
     flowNote: $("flow-note"),
@@ -263,7 +264,7 @@
       chart = null;
     }
 
-    hideChartWrap();
+    clearOutputVisual();
   }
 
   function showContinue() {
@@ -364,268 +365,129 @@
     return "";
   }
 
-  function getExportChartImage() {
-    if (!lastMetrics || typeof Chart === "undefined") return getChartImage();
+    function numericMetric(value, fallback = 0) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : fallback;
+  }
 
-    try {
-      const canvas = document.createElement("canvas");
-      canvas.width = 1200;
-      canvas.height = 620;
+  function clampMetric(value, min, max) {
+    return Math.max(min, Math.min(max, numericMetric(value, min)));
+  }
 
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return getChartImage();
+  function svgDataUri(svg) {
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(String(svg || ""));
+  }
 
-      const labels = [
-        "System Load",
-        "Expansion Pressure",
-        "Panels x10",
-        "Readers"
-      ];
+  function buildPanelCapacityVisualSvg(metrics = {}, options = {}) {
+    const exportMode = !!options.exportMode;
+    const width = 1100;
+    const height = 430;
+    const loadPct = clampMetric(metrics.loadPct, 0, 140);
+    const expansionPct = clampMetric(metrics.expansionPct, 0, 120);
+    const panels = Math.max(0, Math.round(numericMetric(metrics.panels, 0)));
+    const expansions = Math.max(0, Math.round(numericMetric(metrics.expansions, 0)));
+    const readers = Math.max(0, Math.round(numericMetric(metrics.readers, 0)));
+    const targetDoors = Math.max(0, Math.round(numericMetric(metrics.targetDoors, 0)));
+    const panelCapacity = Math.max(0, Math.round(numericMetric(metrics.panelCapacity, 0)));
+    const spareDoors = Math.max(0, Math.round(numericMetric(metrics.spareDoors, 0)));
+    const status = String(metrics.status || getStatus(loadPct)).toUpperCase();
+    const safeStatus = status === "RISK" || status === "WATCH" ? status : "HEALTHY";
+    const statusColor = safeStatus === "RISK" ? "#f87171" : safeStatus === "WATCH" ? "#facc15" : "#7dff98";
+    const bg = exportMode ? "#071211" : "rgba(7,18,17,.92)";
+    const rail = exportMode ? "#18362f" : "rgba(125,255,152,.22)";
+    const muted = exportMode ? "#9fb7ad" : "rgba(203,213,225,.72)";
+    const text = exportMode ? "#eefaf2" : "rgba(246,255,248,.94)";
+    const panelCount = Math.max(1, Math.min(6, panels || 1));
+    const loadWidth = Math.min(520, Math.max(12, (Math.min(loadPct, 100) / 100) * 520));
+    const expansionWidth = Math.min(520, Math.max(12, (Math.min(expansionPct, 100) / 100) * 520));
+    const riskX = 110 + (0.85 * 520);
+    const watchX = 110 + (0.65 * 520);
 
-      const values = [
-        lastMetrics.loadPct,
-        lastMetrics.expansionPct,
-        lastMetrics.panels * 10,
-        lastMetrics.readers
-      ];
+    const panelBlocks = Array.from({ length: panelCount }, (_, index) => {
+      const x = 700 + (index % 3) * 102;
+      const y = 150 + Math.floor(index / 3) * 82;
 
-      const displayValues = {
-        0: `${lastMetrics.loadPct.toFixed(0)}%`,
-        1: `${lastMetrics.expansionPct.toFixed(0)}%`,
-        2: `${lastMetrics.panels} panels`,
-        3: `${lastMetrics.readers} readers`
-      };
+      return '<g><rect x="' + x + '" y="' + y + '" width="78" height="54" rx="10" fill="rgba(125,255,152,.10)" stroke="rgba(125,255,152,.45)"/><path d="M' + (x + 14) + ' ' + (y + 18) + 'h50M' + (x + 14) + ' ' + (y + 30) + 'h50M' + (x + 14) + ' ' + (y + 42) + 'h32" stroke="rgba(238,250,242,.42)" stroke-width="2"/><text x="' + (x + 39) + '" y="' + (y + 74) + '" text-anchor="middle" fill="' + muted + '" font-size="12" font-family="Inter,Arial,sans-serif">P' + (index + 1) + '</text></g>';
+    }).join("");
 
-      const referenceValue = 65;
-      const dominantIndex = values.indexOf(Math.max(...values));
-      const maxValue = Math.max(...values, referenceValue, 100);
+    return [
+      '<svg xmlns="http://www.w3.org/2000/svg" width="' + (exportMode ? width : "100%") + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Panel capacity engineering visual">',
+      '<rect width="' + width + '" height="' + height + '" rx="22" fill="' + bg + '"/>',
+      '<rect x="28" y="28" width="1044" height="374" rx="18" fill="rgba(255,255,255,.025)" stroke="rgba(125,255,152,.20)"/>',
+      '<text x="54" y="66" fill="' + text + '" font-size="22" font-weight="760" font-family="Inter,Arial,sans-serif">Panel Capacity Load Map</text>',
+      '<text x="54" y="94" fill="' + muted + '" font-size="13" font-family="Inter,Arial,sans-serif">Controller capacity, expansion pressure, and spare door margin</text>',
+      '<rect x="914" y="50" width="108" height="34" rx="17" fill="rgba(0,0,0,.28)" stroke="' + statusColor + '"/>',
+      '<text x="968" y="72" text-anchor="middle" fill="' + statusColor + '" font-size="13" font-weight="820" font-family="Inter,Arial,sans-serif">' + escapeHtml(safeStatus) + '</text>',
+      '<text x="110" y="142" fill="' + text + '" font-size="14" font-weight="760" font-family="Inter,Arial,sans-serif">System Load</text>',
+      '<rect x="110" y="158" width="520" height="28" rx="14" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.10)"/>',
+      '<rect x="110" y="158" width="' + loadWidth.toFixed(1) + '" height="28" rx="14" fill="' + statusColor + '" opacity=".86"/>',
+      '<line x1="' + watchX + '" y1="150" x2="' + watchX + '" y2="194" stroke="#facc15" stroke-dasharray="4 4" opacity=".74"/>',
+      '<line x1="' + riskX + '" y1="150" x2="' + riskX + '" y2="194" stroke="#f87171" stroke-dasharray="4 4" opacity=".74"/>',
+      '<text x="646" y="179" fill="' + text + '" font-size="18" font-weight="820" font-family="Inter,Arial,sans-serif">' + loadPct.toFixed(0) + '%</text>',
+      '<text x="110" y="232" fill="' + text + '" font-size="14" font-weight="760" font-family="Inter,Arial,sans-serif">Expansion Pressure</text>',
+      '<rect x="110" y="248" width="520" height="28" rx="14" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.10)"/>',
+      '<rect x="110" y="248" width="' + expansionWidth.toFixed(1) + '" height="28" rx="14" fill="rgba(250,204,21,.88)"/>',
+      '<text x="646" y="269" fill="' + text + '" font-size="18" font-weight="820" font-family="Inter,Arial,sans-serif">' + expansionPct.toFixed(0) + '%</text>',
+      '<line x1="690" y1="112" x2="690" y2="330" stroke="' + rail + '" stroke-width="3"/>',
+      '<circle cx="690" cy="112" r="7" fill="' + statusColor + '"/>',
+      '<text x="700" y="120" fill="' + muted + '" font-size="12" font-family="Inter,Arial,sans-serif">Controller rail</text>',
+      panelBlocks,
+      '<rect x="72" y="326" width="218" height="44" rx="14" fill="rgba(125,255,152,.08)" stroke="rgba(125,255,152,.22)"/>',
+      '<text x="92" y="353" fill="' + text + '" font-size="14" font-weight="760" font-family="Inter,Arial,sans-serif">' + panels + ' panels</text>',
+      '<text x="178" y="353" fill="' + muted + '" font-size="13" font-family="Inter,Arial,sans-serif">' + expansions + ' expansions</text>',
+      '<rect x="314" y="326" width="230" height="44" rx="14" fill="rgba(90,170,255,.07)" stroke="rgba(90,170,255,.20)"/>',
+      '<text x="334" y="353" fill="' + text + '" font-size="14" font-weight="760" font-family="Inter,Arial,sans-serif">' + targetDoors + '/' + panelCapacity + '</text>',
+      '<text x="420" y="353" fill="' + muted + '" font-size="13" font-family="Inter,Arial,sans-serif">target / capacity</text>',
+      '<rect x="568" y="326" width="220" height="44" rx="14" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.12)"/>',
+      '<text x="588" y="353" fill="' + text + '" font-size="14" font-weight="760" font-family="Inter,Arial,sans-serif">' + spareDoors + ' spare doors</text>',
+      '<text x="716" y="353" fill="' + muted + '" font-size="13" font-family="Inter,Arial,sans-serif">' + readers + ' readers</text>',
+      '</svg>'
+    ].join("");
+  }
 
-      let exportChart = null;
+  function renderOutputVisual(metrics) {
+    const svg = buildPanelCapacityVisualSvg(metrics);
+    const shell = outputShell();
 
-      const bgPlugin = {
-        id: "exportBgPlugin",
-        beforeDraw(chartInstance) {
-          const { ctx, chartArea } = chartInstance;
-          if (!chartArea) return;
-
-          const { left, top, width, height, right, bottom } = chartArea;
-          const x = chartInstance.scales.x;
-
-          ctx.save();
-
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, chartInstance.width, chartInstance.height);
-
-          ctx.fillStyle = "#f8fbf9";
-          ctx.fillRect(left, top, width, height);
-
-          const healthyMax = Math.min(65, x.max);
-          const watchMax = Math.min(85, x.max);
-
-          if (healthyMax > 0) {
-            ctx.fillStyle = "rgba(34, 197, 94, 0.14)";
-            ctx.fillRect(left, top, x.getPixelForValue(healthyMax) - left, height);
-          }
-
-          if (watchMax > 65) {
-            ctx.fillStyle = "rgba(245, 158, 11, 0.14)";
-            ctx.fillRect(
-              x.getPixelForValue(65),
-              top,
-              x.getPixelForValue(watchMax) - x.getPixelForValue(65),
-              height
-            );
-          }
-
-          if (x.max > 85) {
-            ctx.fillStyle = "rgba(239, 68, 68, 0.12)";
-            ctx.fillRect(
-              x.getPixelForValue(85),
-              top,
-              right - x.getPixelForValue(85),
-              height
-            );
-          }
-
-          ctx.restore();
-        },
-        afterDatasetsDraw(chartInstance) {
-          const { ctx, chartArea, scales } = chartInstance;
-          if (!chartArea || !scales.x || !scales.y) return;
-
-          const x = scales.x;
-          const y = scales.y;
-          const { top, bottom } = chartArea;
-
-          ctx.save();
-
-          const rx = x.getPixelForValue(referenceValue);
-          ctx.strokeStyle = "#198754";
-          ctx.lineWidth = 3;
-          ctx.setLineDash([6, 5]);
-          ctx.beginPath();
-          ctx.moveTo(rx, top);
-          ctx.lineTo(rx, bottom);
-          ctx.stroke();
-          ctx.setLineDash([]);
-
-          ctx.fillStyle = "#1f2937";
-          ctx.font = "600 16px Arial";
-          ctx.fillText("Healthy Capacity Floor", rx + 10, bottom - 12);
-
-          ctx.fillStyle = "#15803d";
-          ctx.font = "700 15px Arial";
-          ctx.fillText("Healthy", x.getPixelForValue(6), top + 18);
-
-          ctx.fillStyle = "#b45309";
-          ctx.fillText("Watch", x.getPixelForValue(69), top + 18);
-
-          ctx.fillStyle = "#b91c1c";
-          ctx.fillText("Risk", x.getPixelForValue(89), top + 18);
-
-          const dominantValue = values[dominantIndex];
-          const px = x.getPixelForValue(dominantValue);
-          const py = y.getPixelForValue(labels[dominantIndex]);
-
-          ctx.beginPath();
-          ctx.arc(px, py, 6, 0, Math.PI * 2);
-          ctx.fillStyle = "#ffffff";
-          ctx.fill();
-          ctx.strokeStyle = "#111827";
-          ctx.lineWidth = 2;
-          ctx.stroke();
-
-          ctx.fillStyle = "#1f2937";
-          ctx.font = "600 15px Arial";
-          ctx.fillText(displayValues[dominantIndex], Math.min(px + 10, chartArea.right - 120), py - 10);
-
-          ctx.restore();
-        }
-      };
-
-      exportChart = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "Panel Capacity Metrics",
-              data: values,
-              indexAxis: "y",
-              barThickness: 18,
-              maxBarThickness: 18,
-              barPercentage: 0.8,
-              categoryPercentage: 0.7,
-              borderRadius: 8,
-              borderSkipped: false,
-              borderWidth: 1.5,
-              backgroundColor: (context) => {
-                const i = context.dataIndex;
-                const v = context.raw;
-
-                if (i === dominantIndex) {
-                  if (v > 85) return "#dc2626";
-                  if (v > 65) return "#f59e0b";
-                  return "#22c55e";
-                }
-
-                if (v > 85) return "rgba(220, 38, 38, 0.55)";
-                if (v > 65) return "rgba(245, 158, 11, 0.50)";
-                return "rgba(59, 130, 246, 0.42)";
-              },
-              borderColor: (context) => {
-                const i = context.dataIndex;
-                const v = context.raw;
-
-                if (i === dominantIndex) {
-                  if (v > 85) return "#7f1d1d";
-                  if (v > 65) return "#92400e";
-                  return "#166534";
-                }
-
-                if (v > 85) return "#991b1b";
-                if (v > 65) return "#b45309";
-                return "#1d4ed8";
-              }
-            }
-          ]
-        },
-        options: {
-          responsive: false,
-          maintainAspectRatio: false,
-          animation: false,
-          indexAxis: "y",
-          layout: {
-            padding: {
-              top: 36,
-              right: 22,
-              bottom: 10,
-              left: 18
-            }
-          },
-          plugins: {
-            legend: { display: false },
-            tooltip: { enabled: false }
-          },
-          scales: {
-            x: {
-              beginAtZero: true,
-              suggestedMax: Math.ceil(maxValue * 1.08),
-              ticks: {
-                color: "#334155",
-                font: {
-                  size: 14,
-                  weight: "600"
-                }
-              },
-              grid: {
-                color: "rgba(15, 23, 42, 0.08)"
-              },
-              border: {
-                color: "rgba(15, 23, 42, 0.18)"
-              },
-              title: {
-                display: true,
-                text: "Capacity Stress Magnitude",
-                color: "#0f172a",
-                font: {
-                  size: 15,
-                  weight: "700"
-                }
-              }
-            },
-            y: {
-              ticks: {
-                color: "#0f172a",
-                font: {
-                  size: 15,
-                  weight: "700"
-                }
-              },
-              grid: {
-                display: false
-              },
-              border: {
-                color: "rgba(15, 23, 42, 0.18)"
-              }
-            }
-          }
-        },
-        plugins: [bgPlugin]
+    if (shell && typeof shell.showVisual === "function") {
+      return shell.showVisual({
+        card: els.visualCard,
+        wrap: els.chartWrap,
+        target: els.chart,
+        html: svg
       });
-
-      const dataUrl = canvas.toDataURL("image/png", 1);
-
-      if (exportChart) {
-        exportChart.destroy();
-        exportChart = null;
-      }
-
-      return dataUrl;
-    } catch (err) {
-      console.error("Export chart render failed:", err);
-      return getChartImage();
     }
+
+    if (els.chart) els.chart.innerHTML = svg;
+    if (els.chartWrap) els.chartWrap.hidden = false;
+    if (els.visualCard) els.visualCard.hidden = false;
+    return true;
+  }
+
+  function clearOutputVisual() {
+    const shell = outputShell();
+
+    if (shell && typeof shell.hideVisual === "function") {
+      return shell.hideVisual({
+        card: els.visualCard,
+        wrap: els.chartWrap,
+        target: els.chart
+      });
+    }
+
+    if (els.chart) els.chart.innerHTML = "";
+    if (els.chartWrap) els.chartWrap.hidden = true;
+    if (els.visualCard) els.visualCard.hidden = true;
+    return true;
+  }
+
+  function getPanelCapacityVisualImage(metrics, options = {}) {
+    if (!metrics) return getChartImage();
+    return svgDataUri(buildPanelCapacityVisualSvg(metrics, Object.assign({ exportMode: true }, options)));
+  }
+
+  function getExportChartImage() {
+    return getPanelCapacityVisualImage(lastMetrics, { exportMode: true });
   }
 
   function buildReportHTML(payload) {
@@ -989,52 +851,8 @@
 
   function loadFlowContext() {
     if (!els.flowNote) return;
-
-    const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
-
-    if (!raw) {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
-      return;
-    }
-
-    let parsed = null;
-
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
-      return;
-    }
-
-    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
-      return;
-    }
-
-    const d = parsed.data || {};
-    const lines = [];
-
-    if (Number.isFinite(Number(d.peakLoadA))) lines.push(`Peak Load: <strong>${Number(d.peakLoadA).toFixed(2)} A</strong>`);
-    if (Number.isFinite(Number(d.requiredSupplyA))) lines.push(`Required Supply: <strong>${Number(d.requiredSupplyA).toFixed(2)} A</strong>`);
-    if (Number.isFinite(Number(d.watts))) lines.push(`Power: <strong>${Number(d.watts).toFixed(1)} W</strong>`);
-    if (d.status) lines.push(`Power Status: <strong>${escapeHtml(d.status)}</strong>`);
-
-    if (!lines.length) {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
-      return;
-    }
-
-    els.flowNote.hidden = false;
-    els.flowNote.innerHTML = `
-      <strong>Flow Context</strong><br>
-      ${lines.join(" | ")}
-      <br><br>
-      Use that lock-power result as the basis for deciding how much controller and expansion capacity the full system really needs with growth margin included.
-    `;
+    els.flowNote.hidden = true;
+    els.flowNote.innerHTML = "";
   }
 
   function collectVisibleResults() {
@@ -1571,10 +1389,18 @@
       loadPct,
       expansionPct,
       panels,
-      readers
+      expansions,
+      readers,
+      totalInputs,
+      totalOutputs,
+      doors,
+      targetDoors,
+      panelCapacity,
+      spareDoors,
+      status
     };
 
-    renderChart(lastMetrics);
+    renderOutputVisual(lastMetrics);
 
     if (window.ScopedLabsAnalyzer) {
       ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {

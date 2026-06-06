@@ -88,7 +88,21 @@ check("All Access Control polish script loads use current cache", staleLoads.len
 check("Pages with decorative labels load and opt into shared polish", missingCoverage.length === 0, missingCoverage.map((item) => item.file + " -> " + item.label).join("; "));
 
 const panelHtml = read("tools/access-control/panel-capacity/index.html");
-check("Panel Capacity source still has decorative pills for module ownership", panelHtml.includes("Pro Tier") && panelHtml.includes("Part of a Design Flow"));
+check(
+  "Panel Capacity decorative labels are either removed or covered by shared polish",
+  (
+    !panelHtml.includes("Pro Tier") ||
+    (panelHtml.includes("/assets/access-control-tool-polish.js?v=" + currentVersion) && panelHtml.includes('data-access-control-tool-polish="true"'))
+  ) &&
+  (
+    !panelHtml.includes("Part of a Design Flow") ||
+    (panelHtml.includes("/assets/access-control-tool-polish.js?v=" + currentVersion) && panelHtml.includes('data-access-control-tool-polish="true"'))
+  ) &&
+  (
+    !panelHtml.includes("Documentation & Export") ||
+    (panelHtml.includes("/assets/access-control-tool-polish.js?v=" + currentVersion) && panelHtml.includes('data-access-control-tool-polish="true"'))
+  )
+);
 check("Panel Capacity loads current shared polish", panelHtml.includes("/assets/access-control-tool-polish.js?v=" + currentVersion));
 check("Panel Capacity opts into shared polish", panelHtml.includes('data-access-control-tool-polish="true"'));
 
