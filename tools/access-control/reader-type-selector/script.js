@@ -46,7 +46,10 @@
     customNotes: $("customNotes"),
     exportReport: $("exportReport"),
     saveSnapshot: $("saveSnapshot"),
-    exportStatus: $("exportStatus")
+    exportStatus: $("exportStatus"),
+    decisionCard: $("readerTypeDecisionCard"),
+    chartWrap: $("chartWrap"),
+    readerTypeSchedule: $("readerTypeSchedule")
   };
 
   let currentReport = null;
@@ -251,6 +254,156 @@
 
   function normalizeSlug(value) {
     return String(value ?? "").trim().toLowerCase();
+  }
+
+  // access-control-reader-type-output-contract-023
+  function outputShell() {
+    return window.ScopedLabsAccessControlOutputShell || null;
+  }
+
+  function findRowValue(rows, label) {
+    const target = String(label || "").trim().toLowerCase();
+    const row = Array.isArray(rows)
+      ? rows.find((item) => String(item?.label || "").trim().toLowerCase() === target)
+      : null;
+
+    return row ? row.value : "";
+  }
+
+  function statusFromVerification(value) {
+    const text = String(value || "").toUpperCase();
+    if (text.includes("RISK")) return "RISK";
+    if (text.includes("WATCH")) return "WATCH";
+    return "HEALTHY";
+  }
+
+  function statusChipHtml(status) {
+    const clean = String(status || "HEALTHY").toUpperCase();
+    const tone = clean === "RISK" ? "is-risk" : clean === "WATCH" ? "is-watch" : "is-healthy";
+    return '<span class="reader-type-status-chip ' + tone + '">' + escapeHtml(clean) + '</span>';
+  }
+
+  function scheduleRow(group, metric, value, note) {
+    return '<tr><td>' + escapeHtml(group) + '</td><td>' + escapeHtml(metric) + '</td><td>' + value + '</td><td>' + escapeHtml(note) + '</td></tr>';
+  }
+
+  function buildReaderTypeScheduleHtml(rows = [], verificationHold = null) {
+    const readerType = findRowValue(rows, "Reader Type") || "Reader recommendation pending";
+    const verification = findRowValue(rows, "Verification Status") || verificationHold?.label || "HEALTHY";
+    const status = verificationHold?.status || statusFromVerification(verification);
+    const interfaceValue = findRowValue(rows, "Interface") || "Interface pending";
+    const security = findRowValue(rows, "Security") || "Security basis pending";
+    const cardFormat = findRowValue(rows, "Credential Format / Facility Code") || "Credential format pending";
+    const existingCompatibility = findRowValue(rows, "Existing Credential Compatibility") || "Existing credential basis pending";
+    const compatibilityRisk = findRowValue(rows, "Compatibility Risk") || "Compatibility risk pending";
+    const environment = findRowValue(rows, "Environment") || "Environment pending";
+    const throughput = findRowValue(rows, "Throughput") || "Throughput pending";
+    const cautionarySteps = findRowValue(rows, "Cautionary Steps") || "No cautionary steps documented";
+    const interpretation = findRowValue(rows, "Engineering Interpretation") || "Reader decision interpretation pending.";
+    const guidance = findRowValue(rows, "Actionable Guidance") || "Verify reader compatibility before carrying forward.";
+
+    const tableRows = [
+      scheduleRow("Decision", "Reader Type", escapeHtml(readerType), "Primary reader technology recommendation."),
+      scheduleRow("Decision", "Verification Status", statusChipHtml(status), "Reader decision readiness before moving to lock power."),
+      scheduleRow("Protocol", "Reader Interface", escapeHtml(interfaceValue), "Panel reader signaling and supervision basis."),
+      scheduleRow("Security", "Credential Strategy", escapeHtml(security), "Credential assurance and authentication direction."),
+      scheduleRow("Credential", "Format / Facility Code", escapeHtml(cardFormat), "Format, facility-code, UID, tenant, or managed credential basis."),
+      scheduleRow("Migration", "Existing Compatibility", escapeHtml(existingCompatibility), "Existing-card support and migration condition."),
+      scheduleRow("Risk", "Compatibility Risk", escapeHtml(compatibilityRisk), "Known reader/credential/protocol constraints."),
+      scheduleRow("Site", "Environment / Throughput", escapeHtml(environment + " / " + throughput), "Reader rating and user-flow condition."),
+      scheduleRow("Action", "Cautionary Steps", escapeHtml(cautionarySteps), "Required verification before final hardware selection.")
+    ];
+
+    return [
+      '<div class="reader-type-decision-hero">',
+      '<div><strong>' + escapeHtml(readerType) + '</strong><span>' + escapeHtml(interfaceValue) + '</span></div>',
+      '<div>' + statusChipHtml(status) + '<span>' + escapeHtml(security) + '</span></div>',
+      '</div>',
+      '<table class="reader-type-summary-table" data-reader-type-summary-table="true"><thead><tr><th>Group</th><th>Metric</th><th>Value</th><th>Engineering Note</th></tr></thead><tbody>',
+      tableRows.join(""),
+      '</tbody></table>',
+      '<p class="mini-note"><strong>Engineering Interpretation:</strong> ' + escapeHtml(interpretation) + '</p>',
+      '<p class="mini-note"><strong>Actionable Guidance:</strong> ' + escapeHtml(guidance) + '</p>'
+    ].join("");
+  }
+
+  function renderReaderTypeSchedule(rows, verificationHold = null) {
+    const html = buildReaderTypeScheduleHtml(rows, verificationHold);
+    const shell = outputShell();
+
+    if (shell && typeof shell.showVisual === "function") {
+      return shell.showVisual({
+        card: els.decisionCard,
+        wrap: els.chartWrap,
+        target: els.readerTypeSchedule,
+        html
+      });
+    }
+
+    if (els.readerTypeSchedule) els.readerTypeSchedule.innerHTML = html;
+    if (els.chartWrap) els.chartWrap.hidden = false;
+    if (els.decisionCard) els.decisionCard.hidden = false;
+    return true;
+  }
+
+  function clearReaderTypeSchedule() {
+    const shell = outputShell();
+
+    if (shell && typeof shell.hideVisual === "function") {
+      return shell.hideVisual({
+        card: els.decisionCard,
+        wrap: els.chartWrap,
+        target: els.readerTypeSchedule
+      });
+    }
+
+    if (els.readerTypeSchedule) els.readerTypeSchedule.innerHTML = "";
+    if (els.chartWrap) els.chartWrap.hidden = true;
+    if (els.decisionCard) els.decisionCard.hidden = true;
+    return true;
+  }
+
+  function svgDataUri(svg) {
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(String(svg || ""));
+  }
+
+  function buildReaderTypeExportSvg() {
+    if (!currentReport) return "";
+
+    const outputValue = (label) => {
+      const target = String(label || "").trim().toLowerCase();
+      const row = (currentReport.outputs || []).find((item) => String(item?.label || "").trim().toLowerCase() === target);
+      return row ? row.value : "";
+    };
+
+    const status = statusFromVerification(outputValue("Verification Status") || currentReport.status);
+    const color = status === "RISK" ? "#b42318" : status === "WATCH" ? "#b7791f" : "#1f9d57";
+    const readerType = outputValue("Reader Type") || "Reader recommendation";
+    const iface = outputValue("Interface") || "Interface pending";
+    const security = outputValue("Security") || "Security basis pending";
+
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="360" viewBox="0 0 1100 360"><rect width="1100" height="360" rx="22" fill="#ffffff"/><rect x="36" y="34" width="1028" height="292" rx="18" fill="#f8fbf8" stroke="#b8cabe"/><text x="70" y="78" fill="#101715" font-size="24" font-weight="800" font-family="Inter,Arial,sans-serif">Reader Decision Schedule</text><rect x="870" y="54" width="130" height="38" rx="10" fill="#ffffff" stroke="' + color + '"/><text x="892" y="79" fill="' + color + '" font-size="14" font-weight="800" font-family="Inter,Arial,sans-serif">' + escapeHtml(status) + '</text><text x="70" y="138" fill="#1f9d57" font-size="20" font-weight="800" font-family="Inter,Arial,sans-serif">' + escapeHtml(readerType) + '</text><text x="70" y="180" fill="#54615d" font-size="16" font-family="Inter,Arial,sans-serif">' + escapeHtml(iface) + '</text><text x="70" y="222" fill="#54615d" font-size="16" font-family="Inter,Arial,sans-serif">' + escapeHtml(security) + '</text><path d="M70 258 H1016" stroke="#dce8e1"/><text x="70" y="292" fill="#54615d" font-size="14" font-family="Inter,Arial,sans-serif">Verify credential format, facility-code, existing-card support, and protocol before final hardware selection.</text></svg>';
+  }
+
+  function getReaderTypeVisualImage() {
+    const svg = buildReaderTypeExportSvg();
+    return svg ? svgDataUri(svg) : "";
+  }
+
+  function attachOutputShellExport() {
+    const shell = outputShell();
+    if (!shell || typeof shell.register !== "function") return false;
+
+    shell.register(STEP, {
+      getChartImage: getReaderTypeVisualImage,
+      getVisualHtml: () => els.readerTypeSchedule ? els.readerTypeSchedule.innerHTML : ""
+    });
+
+    if (typeof shell.attachExportGetter === "function") {
+      shell.attachExportGetter(STEP, window.ScopedLabsExportConfig);
+    }
+
+    return true;
   }
 
   function hasStoredAuth() {
@@ -533,6 +686,7 @@
       els.results.innerHTML = `<div class="muted">${escapeHtml(message)}</div>`;
     }
 
+    clearReaderTypeSchedule();
     clearAnalysis();
     clearLocalAssistant();
   }
@@ -589,65 +743,20 @@
     ensureReaderTypeVerificationStyles();
     ensureReaderResultCadStyles();
 
-    const rowMap = new Map(rows.map((item) => [item.label, item.value]));
-    const readerType = rowMap.get("Reader Type") || "Reader recommendation pending";
-    const interfaceValue = rowMap.get("Interface") || "Interface pending";
-    const interpretation = rowMap.get("Engineering Interpretation") || "";
-    const guidance = rowMap.get("Actionable Guidance") || "";
-
-    const detailRows = rows.filter((item) => {
-      return item.label !== "Engineering Interpretation" && item.label !== "Actionable Guidance";
-    });
+    const detailRows = rows.filter((item) => item && item.label && item.value);
 
     const resultRows = detailRows.map((r) => {
       const tone = toneForRenderedValue(r.label, r.value);
-      return `
-        <div class="result-row" data-result-label="${escapeHtml(r.label)}" data-result-value="${escapeHtml(r.value)}">
-          <span class="result-label">${escapeHtml(r.label)}</span>
-          <span class="result-value" ${tone ? `data-tone="${escapeHtml(tone)}"` : ""}>${labeledSemanticValue(r.label, r.value)}</span>
-        </div>
-      `;
+      return [
+        '<div class="result-row" data-result-label="' + escapeHtml(r.label) + '" data-result-value="' + escapeHtml(r.value) + '">',
+        '<span class="result-label">' + escapeHtml(r.label) + '</span>',
+        '<span class="result-value"' + (tone ? ' data-tone="' + escapeHtml(tone) + '"' : '') + '>' + labeledSemanticValue(r.label, r.value) + '</span>',
+        '</div>'
+      ].join("");
     }).join("");
 
-    const hold = verificationHold && verificationHold.status && verificationHold.status !== "HEALTHY"
-      ? `
-        <div class="reader-verification-hold reader-verification-hold--${escapeHtml(String(verificationHold.status).toLowerCase())}">
-          <div class="reader-verification-hold__label">${renderSemanticStatusText(verificationHold.label)}</div>
-          <p class="reader-verification-hold__body">${escapeHtml(verificationHold.body)}</p>
-          ${Array.isArray(verificationHold.steps) && verificationHold.steps.length ? `
-            <ul>
-              ${verificationHold.steps.map((step) => `<li>${escapeHtml(step)}</li>`).join("")}
-            </ul>
-          ` : ""}
-        </div>
-      `
-      : "";
-
-    els.results.innerHTML = `
-      ${hold}
-
-      <div class="reader-result-hero">
-        <div class="reader-result-kicker">Current Reader Direction</div>
-        <div class="reader-result-title">${escapeHtml(readerType)}</div>
-        <div class="reader-result-subtitle">${escapeHtml(interfaceValue)}</div>
-      </div>
-
-      <div class="reader-result-grid">
-        ${resultRows}
-        ${interpretation ? `
-          <div class="result-row result-row--wide" data-result-label="Engineering Interpretation" data-result-value="${escapeHtml(interpretation)}">
-            <span class="result-label">Engineering Interpretation</span>
-            <span class="result-value">${escapeHtml(interpretation)}</span>
-          </div>
-        ` : ""}
-        ${guidance ? `
-          <div class="result-row result-row--wide" data-result-label="Actionable Guidance" data-result-value="${escapeHtml(guidance)}">
-            <span class="result-label">Actionable Guidance</span>
-            <span class="result-value">${escapeHtml(guidance)}</span>
-          </div>
-        ` : ""}
-      </div>
-    `;
+    els.results.innerHTML = resultRows || '<div class="muted">Run recommendation.</div>';
+    renderReaderTypeSchedule(rows, verificationHold);
   }
 
   function getRenderedRows() {
@@ -1279,6 +1388,7 @@
     loadFlowContext();
     renderActiveScopeContext();
     updateExportControls();
+    attachOutputShellExport();
 
     setTimeout(() => {
       updateExportControls();
