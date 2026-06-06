@@ -1,3 +1,12 @@
+function moduleParses(text) {
+  try {
+    new Function(text);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
 const fs = require("fs");
 const path = require("path");
 
@@ -16,6 +25,8 @@ function check(name, ok, detail = "") {
 const html = read("tools/access-control/fail-safe-fail-secure/index.html");
 const script = read("tools/access-control/fail-safe-fail-secure/script.js");
 const polish = read("assets/access-control-tool-polish.js");
+const polishVersionMatch = polish.match(/const VERSION = "([^"]+)";/);
+const currentPolishVersion = polishVersionMatch ? polishVersionMatch[1] : "";
 
 const scriptVersionMatch = html.match(/\.\/script\.js\?v=(access-control-fail-safe-[^"]+)"/);
 const currentFailSafeVersion = scriptVersionMatch ? scriptVersionMatch[1] : "";
@@ -25,8 +36,21 @@ check(
   Boolean(currentFailSafeVersion) && html.includes("./script.js?v=" + currentFailSafeVersion),
   currentFailSafeVersion || "missing local script cache"
 );
-check("Reusable Access Control polish asset exists", polish.includes("ScopedLabsAccessControlToolPolish") && polish.includes("access-control-tool-polish-007-hide-fail-safe-assistant-flow-line"));
-check("Fail-Safe loads reusable polish asset", html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-007-hide-fail-safe-assistant-flow-line"));
+check(
+  "Reusable Access Control polish asset exists",
+  Boolean(currentPolishVersion) &&
+    moduleParses(polish) &&
+    polish.includes("ScopedLabsAccessControlToolPolish") &&
+    polish.includes("access-control-hide-fail-safe-assistant-flow-line-007") &&
+    polish.includes("function applyExportCardPolish") &&
+    polish.includes("function applyExportCardTitleRhythm"),
+  currentPolishVersion || "missing polish VERSION"
+);
+check(
+  "Fail-Safe loads reusable polish asset",
+  html.includes("/assets/access-control-tool-polish.js?v=" + currentPolishVersion),
+  currentPolishVersion || "missing polish VERSION"
+);
 check("Page opts into Access Control tool polish", html.includes('data-access-control-tool-polish="true"'));
 check("Fail-Safe hydrates inputs from active scope", script.includes("access-control-fail-safe-scope-input-hydration-015") && script.includes("applyActiveScopeToInputs") && script.includes("mapScopeHardwareType"));
 check("Loose Best For sentence removed", !html.includes('class="tool-best-for"') && !html.includes("<strong>Best for:</strong>"));
