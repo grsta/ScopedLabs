@@ -1,11 +1,11 @@
 /* ScopedLabs Access Control Tool Assistant Adapters
-   Version: access-control-assistant-adapters-012-panel-capacity-adapter
+   Version: access-control-assistant-adapters-013-access-level-sizing
    Purpose: category-specific local assistant model adapters. Dormant unless a tool explicitly calls one.
 */
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-assistant-adapters-012-panel-capacity-adapter";
+  const API_VERSION = "access-control-assistant-adapters-013-access-level-sizing";
 
   function safeText(value) {
     return String(value ?? "");
@@ -283,6 +283,75 @@
         guidance,
         "Confirm platform-specific reader, input, output, and door limits before procurement.",
         "Carry the capacity status into Access Level Sizing and Summary."
+      ]
+    };
+  }
+
+
+
+  function buildAccessLevelSizingModel(data) {
+    const status = safeText(data.status || "WATCH");
+    const riskLabel = safeText(data.riskLabel || "Complexity pending");
+    const total = safeText(data.total || "0");
+    const combinations = safeText(data.combinations || "0");
+    const scalingPressure = safeText(data.scalingPressure || "0");
+    const adminLoadIndex = safeText(data.adminLoadIndex || "0");
+    const recommendedLimit = safeText(data.recommendedLimit || "0");
+    const overshoot = safeText(data.overshoot || "0");
+    const threshold = safeText(data.thresholdMessage || "Threshold status pending.");
+    const insight = safeText(data.insight || "Review role, area, schedule, and group structure before final rollout.");
+
+    return {
+      category: "access-control",
+      tool: "access-level-sizing",
+      kicker: "Local Design Assistant",
+      title: "Access Level Assistant",
+      status,
+      summary: "Use this result to decide whether the access-level model is maintainable before closing the Access Control flow.",
+      hideStandardLists: true,
+      hideHeaderPills: true,
+      sections: [
+        {
+          title: "Complexity Basis",
+          body: "The model converts roles, areas, schedules, door groups, and complexity profile into access-level pressure.",
+          items: [
+            "Access levels: " + total,
+            "Role-area combinations: " + combinations,
+            "Scaling pressure: " + scalingPressure,
+            "Admin load index: " + adminLoadIndex
+          ]
+        },
+        {
+          title: "Threshold Review",
+          body: threshold,
+          items: [
+            "Complexity result: " + riskLabel,
+            "Recommended limit: " + recommendedLimit,
+            "Overshoot: " + overshoot,
+            insight
+          ]
+        },
+        {
+          title: "Closeout Guidance",
+          body: status === "RISK" ? "Simplify the access model before growth turns permission management into operational risk." : status === "WATCH" ? "Keep the structure, but document naming, grouping, and schedule rules before expansion." : "The access-level model is usable for the final Access Control handoff.",
+          items: [
+            "Reduce duplicate roles or overlapping areas if complexity pressure is high.",
+            "Consolidate schedules and door groups where possible.",
+            "Document the final role/area naming rules before the system is handed off."
+          ]
+        }
+      ],
+      assumptionsTitle: "Planning Assumptions",
+      actionsTitle: "Recommended Actions",
+      assumptions: [
+        "Role and area counts represent the active access model.",
+        "Schedules and door groups are treated as contributors to administration overhead.",
+        "This result evaluates maintainability, not controller hardware capacity."
+      ],
+      actions: [
+        threshold,
+        insight,
+        "Carry this access-level status into final Access Control documentation."
       ]
     };
   }
