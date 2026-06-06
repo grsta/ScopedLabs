@@ -280,6 +280,35 @@ check({
   evidence: snippetAround(html, "This tool continues the Access Control design flow") || snippetAround(html, "Use this step to translate door counts")
 });
 
+
+check({
+  label: "Panel Capacity breadcrumbs are removed from visible page chrome",
+  ok: !has(html, 'class="crumbs"'),
+  issueType: "decorativeChrome",
+  evidence: has(html, 'class="crumbs"') ? "breadcrumb source still present" : ""
+});
+
+check({
+  label: "Hidden result ledger cannot leak through results-grid CSS",
+  ok: has(html, "#results[data-result-ledger][hidden]") || has(html, "[data-result-ledger][hidden]"),
+  issueType: "hiddenLedger",
+  evidence: "Requires CSS display:none!important guard for hidden ledger."
+});
+
+check({
+  label: "Panel Capacity has compact visible capacity schedule",
+  ok: has(html, 'id="panelCapacityScheduleCard"') && has(html, 'id="panelCapacitySchedule"') && has(html, "data-panel-capacity-summary") && has(script, "function renderCapacitySchedule") && has(script, "panel-capacity-summary-table"),
+  issueType: "hiddenLedger",
+  evidence: "Visible results should be a compact schedule, not a tall result-row stack."
+});
+
+check({
+  label: "Panel Capacity visual is CAD architecture map, not Chart.js bar graph",
+  ok: !has(html, "chart.js") && !has(script, "new Chart(") && !has(script, "function renderChart(") && has(script, "PANEL_CAPACITY_CAD_ARCHITECTURE_MAP_023"),
+  issueType: "engineeringVisual",
+  evidence: "Requires local CAD SVG marker and no Chart.js constructor."
+});
+
 check({
   label: "Local assistant decision layer is wired",
   ok: has(html, 'id="accessControlLocalAssistantMount"') && has(script, "function renderLocalAssistant") && has(script, "renderLocalAssistant({") && inventory.adapters.ownsPanelModel,

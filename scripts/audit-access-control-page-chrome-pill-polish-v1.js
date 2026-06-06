@@ -106,6 +106,9 @@ check(
 check("Panel Capacity loads current shared polish", panelHtml.includes("/assets/access-control-tool-polish.js?v=" + currentVersion));
 check("Panel Capacity opts into shared polish", panelHtml.includes('data-access-control-tool-polish="true"'));
 
+check("Panel Capacity breadcrumbs removed from page chrome", !panelHtml.includes('class="crumbs"'));
+
+
 check(
   "Access Control category landing is intentionally excluded from tool chrome cleanup",
   !isAccessControlToolPage("tools/access-control/index.html")

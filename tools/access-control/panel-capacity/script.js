@@ -39,6 +39,8 @@
     chart: $("chart"),
     chartWrap: $("chartWrap"),
     visualCard: $("panelCapacityVisualCard"),
+    scheduleCard: $("panelCapacityScheduleCard"),
+    schedule: $("panelCapacitySchedule"),
     nextWrap: $("continue-wrap"),
     nextBtn: $("continue"),
     flowNote: $("flow-note"),
@@ -98,6 +100,50 @@
   function render(rows) {
     if (!els.results) return;
     els.results.innerHTML = rows.join("");
+  }
+
+  // access-control-panel-capacity-compact-schedule-023
+  function scheduleCell(value) {
+    return escapeHtml(value === undefined || value === null ? "" : String(value));
+  }
+
+  function scheduleStatusChip(status) {
+    const normalized = String(status || "HEALTHY").toUpperCase();
+    const tone = normalized === "RISK" ? "is-risk" : normalized === "WATCH" ? "is-watch" : "is-healthy";
+    return '<span class="panel-capacity-status-chip ' + tone + '">' + scheduleCell(normalized) + '</span>';
+  }
+
+  function scheduleRow(group, metric, value, note) {
+    return '<tr><td>' + scheduleCell(group) + '</td><td>' + scheduleCell(metric) + '</td><td>' + value + '</td><td>' + scheduleCell(note) + '</td></tr>';
+  }
+
+  function renderCapacitySchedule(metrics = {}) {
+    if (!els.schedule || !els.scheduleCard) return false;
+
+    const loadPct = numericMetric(metrics.loadPct, 0);
+    const expansionPct = numericMetric(metrics.expansionPct, 0);
+    const status = String(metrics.status || getStatus(loadPct)).toUpperCase();
+    const rows = [
+      scheduleRow("Architecture", "Panels Required", scheduleCell(metrics.panels), "Controller bays needed for target door count."),
+      scheduleRow("Architecture", "Expansion Modules", scheduleCell(metrics.expansions), "Expansion boards consumed across the planned panels."),
+      scheduleRow("Architecture", "Door Capacity", scheduleCell(metrics.panelCapacity), "Total panel door capacity after expansion assumptions."),
+      scheduleRow("Demand", "Target Doors", scheduleCell(metrics.targetDoors), "Door count after applying spare growth margin."),
+      scheduleRow("Demand", "Readers / I/O", scheduleCell(metrics.readers) + " / " + scheduleCell(metrics.totalInputs) + " / " + scheduleCell(metrics.totalOutputs), "Readers, inputs, and outputs for field coordination."),
+      scheduleRow("Reserve", "Spare Doors", scheduleCell(metrics.spareDoors), "Remaining door capacity after current door count."),
+      scheduleRow("Pressure", "System Load", scheduleCell(loadPct.toFixed(0)) + "%", "Watch threshold begins above 65%; risk begins above 85%."),
+      scheduleRow("Pressure", "Expansion Pressure", scheduleCell(expansionPct.toFixed(0)) + "%", "Expansion slot consumption across the controller group."),
+      scheduleRow("Decision", "Status", scheduleStatusChip(status), status === "RISK" ? "Split the system or add controller capacity." : status === "WATCH" ? "Plan growth paths before future adds consume reserve." : "Architecture has practical growth margin.")
+    ];
+
+    els.schedule.innerHTML = '<table class="panel-capacity-summary-table" data-panel-capacity-summary-table="true"><thead><tr><th>Group</th><th>Metric</th><th>Value</th><th>Engineering Note</th></tr></thead><tbody>' + rows.join("") + '</tbody></table>';
+    els.scheduleCard.hidden = false;
+    return true;
+  }
+
+  function clearCapacitySchedule() {
+    if (els.schedule) els.schedule.innerHTML = "";
+    if (els.scheduleCard) els.scheduleCard.hidden = true;
+    return true;
   }
 
   function hasStoredAuth() {
@@ -259,12 +305,13 @@
   }
 
   function destroyChart() {
-    if (chart) {
+    if (chart && typeof chart.destroy === "function") {
       chart.destroy();
-      chart = null;
     }
+    chart = null;
 
     clearOutputVisual();
+    clearCapacitySchedule();
   }
 
   function showContinue() {
@@ -379,68 +426,149 @@
   }
 
   function buildPanelCapacityVisualSvg(metrics = {}, options = {}) {
+    // PANEL_CAPACITY_CAD_ARCHITECTURE_MAP_023
     const exportMode = !!options.exportMode;
-    const width = 1100;
-    const height = 430;
+    const width = 1120;
+    const height = 380;
     const loadPct = clampMetric(metrics.loadPct, 0, 140);
     const expansionPct = clampMetric(metrics.expansionPct, 0, 120);
     const panels = Math.max(0, Math.round(numericMetric(metrics.panels, 0)));
     const expansions = Math.max(0, Math.round(numericMetric(metrics.expansions, 0)));
     const readers = Math.max(0, Math.round(numericMetric(metrics.readers, 0)));
+    const totalInputs = Math.max(0, Math.round(numericMetric(metrics.totalInputs, 0)));
+    const totalOutputs = Math.max(0, Math.round(numericMetric(metrics.totalOutputs, 0)));
     const targetDoors = Math.max(0, Math.round(numericMetric(metrics.targetDoors, 0)));
     const panelCapacity = Math.max(0, Math.round(numericMetric(metrics.panelCapacity, 0)));
     const spareDoors = Math.max(0, Math.round(numericMetric(metrics.spareDoors, 0)));
+    const maxExp = Math.max(1, Math.round(numericMetric(metrics.maxExp, 1)));
     const status = String(metrics.status || getStatus(loadPct)).toUpperCase();
-    const safeStatus = status === "RISK" || status === "WATCH" ? status : "HEALTHY";
-    const statusColor = safeStatus === "RISK" ? "#f87171" : safeStatus === "WATCH" ? "#facc15" : "#7dff98";
-    const bg = exportMode ? "#071211" : "rgba(7,18,17,.92)";
-    const rail = exportMode ? "#18362f" : "rgba(125,255,152,.22)";
-    const muted = exportMode ? "#9fb7ad" : "rgba(203,213,225,.72)";
-    const text = exportMode ? "#eefaf2" : "rgba(246,255,248,.94)";
-    const panelCount = Math.max(1, Math.min(6, panels || 1));
-    const loadWidth = Math.min(520, Math.max(12, (Math.min(loadPct, 100) / 100) * 520));
-    const expansionWidth = Math.min(520, Math.max(12, (Math.min(expansionPct, 100) / 100) * 520));
-    const riskX = 110 + (0.85 * 520);
-    const watchX = 110 + (0.65 * 520);
 
-    const panelBlocks = Array.from({ length: panelCount }, (_, index) => {
-      const x = 700 + (index % 3) * 102;
-      const y = 150 + Math.floor(index / 3) * 82;
+    const palette = {
+      bg: exportMode ? "#ffffff" : "rgba(0,0,0,0)",
+      panel: exportMode ? "#f8fbf8" : "rgba(4,14,10,.78)",
+      card: exportMode ? "#ffffff" : "rgba(6,18,12,.72)",
+      block: exportMode ? "#f5faf7" : "rgba(9,31,19,.86)",
+      text: exportMode ? "#101715" : "rgba(238,255,244,.95)",
+      muted: exportMode ? "#54615d" : "rgba(203,213,225,.72)",
+      grid: exportMode ? "#dce8e1" : "rgba(125,255,158,.13)",
+      lineSoft: exportMode ? "#b8cabe" : "rgba(125,255,158,.24)",
+      lineStrong: exportMode ? "#668273" : "rgba(180,255,200,.52)",
+      green: exportMode ? "#1f9d57" : "rgba(125,255,158,.88)",
+      amber: exportMode ? "#b7791f" : "rgba(255,204,102,.92)",
+      amberSoft: exportMode ? "#fff4d8" : "rgba(255,204,102,.13)",
+      red: exportMode ? "#b42318" : "rgba(255,105,105,.9)",
+      redSoft: exportMode ? "#ffe2df" : "rgba(255,105,105,.14)"
+    };
 
-      return '<g><rect x="' + x + '" y="' + y + '" width="78" height="54" rx="10" fill="rgba(125,255,152,.10)" stroke="rgba(125,255,152,.45)"/><path d="M' + (x + 14) + ' ' + (y + 18) + 'h50M' + (x + 14) + ' ' + (y + 30) + 'h50M' + (x + 14) + ' ' + (y + 42) + 'h32" stroke="rgba(238,250,242,.42)" stroke-width="2"/><text x="' + (x + 39) + '" y="' + (y + 74) + '" text-anchor="middle" fill="' + muted + '" font-size="12" font-family="Inter,Arial,sans-serif">P' + (index + 1) + '</text></g>';
-    }).join("");
+    palette.statusColor = status === "RISK" ? palette.red : status === "WATCH" ? palette.amber : palette.green;
+    palette.statusSoft = status === "RISK" ? palette.redSoft : status === "WATCH" ? palette.amberSoft : exportMode ? "#e7f8ee" : "rgba(125,255,158,.12)";
+
+    function esc(value) {
+      return escapeHtml(value === undefined || value === null ? "" : String(value));
+    }
+
+    function metricChip(x, y, label, value, tone) {
+      const color = tone === "status" ? palette.statusColor : tone === "amber" ? palette.amber : palette.green;
+      const fill = tone === "status" ? palette.statusSoft : tone === "amber" ? palette.amberSoft : palette.card;
+      return [
+        '<rect x="' + x + '" y="' + y + '" width="182" height="42" rx="10" fill="' + fill + '" stroke="' + color + '" stroke-width="1"/>',
+        '<text x="' + (x + 12) + '" y="' + (y + 17) + '" fill="' + palette.muted + '" font-size="10" font-weight="800" font-family="Inter,Arial,sans-serif">' + esc(label).toUpperCase() + '</text>',
+        '<text x="' + (x + 12) + '" y="' + (y + 33) + '" fill="' + color + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif">' + esc(value) + '</text>'
+      ].join("");
+    }
+
+    function expansionStrip(x, y, active, maxSlots) {
+      const slots = Math.max(1, Math.min(8, maxSlots));
+      const slotW = 13;
+      const gap = 5;
+      const used = Math.max(0, Math.min(slots, active));
+      const parts = [];
+      for (let i = 0; i < slots; i += 1) {
+        const sx = x + i * (slotW + gap);
+        const isUsed = i < used;
+        parts.push('<rect x="' + sx + '" y="' + y + '" width="' + slotW + '" height="18" rx="3" fill="' + (isUsed ? palette.amberSoft : palette.card) + '" stroke="' + (isUsed ? palette.amber : palette.lineSoft) + '" stroke-width="1"/>');
+      }
+      return parts.join("");
+    }
+
+    function panelModule(x, y, index, activeExp, maxSlots) {
+      return [
+        '<g aria-label="Panel ' + (index + 1) + ' controller bay">',
+        '<rect x="' + x + '" y="' + y + '" width="150" height="104" rx="12" fill="' + palette.block + '" stroke="' + palette.lineStrong + '" stroke-width="1.4"/>',
+        '<path d="M ' + (x + 16) + ' ' + (y + 24) + ' H ' + (x + 134) + ' M ' + (x + 16) + ' ' + (y + 50) + ' H ' + (x + 134) + ' M ' + (x + 16) + ' ' + (y + 76) + ' H ' + (x + 104) + '" stroke="' + palette.grid + '" stroke-width="1"/>',
+        '<text x="' + (x + 18) + '" y="' + (y + 22) + '" fill="' + palette.text + '" font-size="14" font-weight="900" font-family="Inter,Arial,sans-serif">PANEL ' + (index + 1) + '</text>',
+        '<text x="' + (x + 18) + '" y="' + (y + 44) + '" fill="' + palette.muted + '" font-size="10" font-weight="800" font-family="Inter,Arial,sans-serif">CTRL BAY</text>',
+        '<circle cx="' + (x + 126) + '" cy="' + (y + 36) + '" r="5" fill="' + palette.card + '" stroke="' + palette.green + '" stroke-width="1.4"/>',
+        '<circle cx="' + (x + 126) + '" cy="' + (y + 60) + '" r="5" fill="' + palette.card + '" stroke="' + palette.lineStrong + '" stroke-width="1.4"/>',
+        '<text x="' + (x + 18) + '" y="' + (y + 68) + '" fill="' + palette.muted + '" font-size="10" font-weight="800" font-family="Inter,Arial,sans-serif">EXPANSION SLOTS</text>',
+        expansionStrip(x + 18, y + 80, activeExp, maxSlots),
+        '<text x="' + (x + 18) + '" y="' + (y + 122) + '" fill="' + palette.muted + '" font-size="10" font-weight="800" font-family="Inter,Arial,sans-serif">' + activeExp + '/' + maxSlots + ' EXP USED</text>',
+        '</g>'
+      ].join("");
+    }
+
+    function loadBank(x, y) {
+      return [
+        '<g aria-label="Reader and I/O load bank">',
+        '<rect x="' + x + '" y="' + y + '" width="206" height="152" rx="13" fill="' + palette.block + '" stroke="' + palette.lineStrong + '" stroke-width="1.4"/>',
+        '<text x="' + (x + 18) + '" y="' + (y + 28) + '" fill="' + palette.text + '" font-size="14" font-weight="900" font-family="Inter,Arial,sans-serif">FIELD DEMAND</text>',
+        '<text x="' + (x + 18) + '" y="' + (y + 50) + '" fill="' + palette.muted + '" font-size="10" font-weight="800" font-family="Inter,Arial,sans-serif">READERS / INPUTS / OUTPUTS</text>',
+        '<path d="M ' + (x + 24) + ' ' + (y + 76) + ' H ' + (x + 182) + ' M ' + (x + 24) + ' ' + (y + 104) + ' H ' + (x + 182) + ' M ' + (x + 24) + ' ' + (y + 132) + ' H ' + (x + 182) + '" stroke="' + palette.grid + '" stroke-width="1"/>',
+        '<text x="' + (x + 32) + '" y="' + (y + 80) + '" fill="' + palette.green + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif">' + readers + ' READERS</text>',
+        '<text x="' + (x + 32) + '" y="' + (y + 108) + '" fill="' + palette.text + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif">' + totalInputs + ' INPUTS</text>',
+        '<text x="' + (x + 32) + '" y="' + (y + 136) + '" fill="' + palette.text + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif">' + totalOutputs + ' OUTPUTS</text>',
+        '</g>'
+      ].join("");
+    }
+
+    function pressureScale(x, y, label, pct, tone) {
+      const color = tone === "status" ? palette.statusColor : palette.amber;
+      const markerX = x + Math.min(1, pct / 100) * 260;
+      return [
+        '<g aria-label="' + esc(label) + ' pressure scale">',
+        '<text x="' + x + '" y="' + (y - 12) + '" fill="' + palette.muted + '" font-size="10" font-weight="800" font-family="Inter,Arial,sans-serif">' + esc(label).toUpperCase() + '</text>',
+        '<line x1="' + x + '" y1="' + y + '" x2="' + (x + 260) + '" y2="' + y + '" stroke="' + palette.lineSoft + '" stroke-width="2"/>',
+        '<line x1="' + (x + 169) + '" y1="' + (y - 9) + '" x2="' + (x + 169) + '" y2="' + (y + 9) + '" stroke="' + palette.amber + '" stroke-width="1" stroke-dasharray="4 4"/>',
+        '<line x1="' + (x + 221) + '" y1="' + (y - 9) + '" x2="' + (x + 221) + '" y2="' + (y + 9) + '" stroke="' + palette.red + '" stroke-width="1" stroke-dasharray="4 4"/>',
+        '<circle cx="' + markerX.toFixed(1) + '" cy="' + y + '" r="7" fill="' + color + '" stroke="' + palette.card + '" stroke-width="2"/>',
+        '<text x="' + (x + 274) + '" y="' + (y + 5) + '" fill="' + color + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif">' + pct.toFixed(0) + '%</text>',
+        '</g>'
+      ].join("");
+    }
+
+    const displayPanels = Math.max(1, Math.min(4, panels || 1));
+    const panelParts = [];
+    for (let i = 0; i < displayPanels; i += 1) {
+      const activeExp = Math.max(0, Math.min(maxExp, expansions - (i * maxExp)));
+      panelParts.push(panelModule(78 + i * 178, 120, i, activeExp, maxExp));
+    }
+    if (panels > displayPanels) {
+      panelParts.push('<text x="' + (78 + displayPanels * 178 + 8) + '" y="176" fill="' + palette.muted + '" font-size="12" font-weight="900" font-family="Inter,Arial,sans-serif">+' + (panels - displayPanels) + ' MORE</text>');
+    }
 
     return [
-      '<svg xmlns="http://www.w3.org/2000/svg" width="' + (exportMode ? width : "100%") + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Panel capacity engineering visual">',
-      '<rect width="' + width + '" height="' + height + '" rx="22" fill="' + bg + '"/>',
-      '<rect x="28" y="28" width="1044" height="374" rx="18" fill="rgba(255,255,255,.025)" stroke="rgba(125,255,152,.20)"/>',
-      '<text x="54" y="66" fill="' + text + '" font-size="22" font-weight="760" font-family="Inter,Arial,sans-serif">Panel Capacity Load Map</text>',
-      '<text x="54" y="94" fill="' + muted + '" font-size="13" font-family="Inter,Arial,sans-serif">Controller capacity, expansion pressure, and spare door margin</text>',
-      '<rect x="914" y="50" width="108" height="34" rx="17" fill="rgba(0,0,0,.28)" stroke="' + statusColor + '"/>',
-      '<text x="968" y="72" text-anchor="middle" fill="' + statusColor + '" font-size="13" font-weight="820" font-family="Inter,Arial,sans-serif">' + escapeHtml(safeStatus) + '</text>',
-      '<text x="110" y="142" fill="' + text + '" font-size="14" font-weight="760" font-family="Inter,Arial,sans-serif">System Load</text>',
-      '<rect x="110" y="158" width="520" height="28" rx="14" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.10)"/>',
-      '<rect x="110" y="158" width="' + loadWidth.toFixed(1) + '" height="28" rx="14" fill="' + statusColor + '" opacity=".86"/>',
-      '<line x1="' + watchX + '" y1="150" x2="' + watchX + '" y2="194" stroke="#facc15" stroke-dasharray="4 4" opacity=".74"/>',
-      '<line x1="' + riskX + '" y1="150" x2="' + riskX + '" y2="194" stroke="#f87171" stroke-dasharray="4 4" opacity=".74"/>',
-      '<text x="646" y="179" fill="' + text + '" font-size="18" font-weight="820" font-family="Inter,Arial,sans-serif">' + loadPct.toFixed(0) + '%</text>',
-      '<text x="110" y="232" fill="' + text + '" font-size="14" font-weight="760" font-family="Inter,Arial,sans-serif">Expansion Pressure</text>',
-      '<rect x="110" y="248" width="520" height="28" rx="14" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.10)"/>',
-      '<rect x="110" y="248" width="' + expansionWidth.toFixed(1) + '" height="28" rx="14" fill="rgba(250,204,21,.88)"/>',
-      '<text x="646" y="269" fill="' + text + '" font-size="18" font-weight="820" font-family="Inter,Arial,sans-serif">' + expansionPct.toFixed(0) + '%</text>',
-      '<line x1="690" y1="112" x2="690" y2="330" stroke="' + rail + '" stroke-width="3"/>',
-      '<circle cx="690" cy="112" r="7" fill="' + statusColor + '"/>',
-      '<text x="700" y="120" fill="' + muted + '" font-size="12" font-family="Inter,Arial,sans-serif">Controller rail</text>',
-      panelBlocks,
-      '<rect x="72" y="326" width="218" height="44" rx="14" fill="rgba(125,255,152,.08)" stroke="rgba(125,255,152,.22)"/>',
-      '<text x="92" y="353" fill="' + text + '" font-size="14" font-weight="760" font-family="Inter,Arial,sans-serif">' + panels + ' panels</text>',
-      '<text x="178" y="353" fill="' + muted + '" font-size="13" font-family="Inter,Arial,sans-serif">' + expansions + ' expansions</text>',
-      '<rect x="314" y="326" width="230" height="44" rx="14" fill="rgba(90,170,255,.07)" stroke="rgba(90,170,255,.20)"/>',
-      '<text x="334" y="353" fill="' + text + '" font-size="14" font-weight="760" font-family="Inter,Arial,sans-serif">' + targetDoors + '/' + panelCapacity + '</text>',
-      '<text x="420" y="353" fill="' + muted + '" font-size="13" font-family="Inter,Arial,sans-serif">target / capacity</text>',
-      '<rect x="568" y="326" width="220" height="44" rx="14" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.12)"/>',
-      '<text x="588" y="353" fill="' + text + '" font-size="14" font-weight="760" font-family="Inter,Arial,sans-serif">' + spareDoors + ' spare doors</text>',
-      '<text x="716" y="353" fill="' + muted + '" font-size="13" font-family="Inter,Arial,sans-serif">' + readers + ' readers</text>',
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="CAD-style panel capacity architecture map">',
+      '<rect x="0" y="0" width="' + width + '" height="' + height + '" rx="18" fill="' + palette.bg + '"/>',
+      '<rect x="24" y="22" width="1072" height="336" rx="18" fill="' + palette.panel + '" stroke="' + palette.lineSoft + '"/>',
+      '<path d="M 54 72 H 1066 M 54 112 H 1066 M 54 286 H 1066 M 54 324 H 1066" stroke="' + palette.grid + '" stroke-width="1"/>',
+      '<path d="M 94 48 V 338 M 740 48 V 338 M 956 48 V 338" stroke="' + palette.grid + '" stroke-width="1"/>',
+      '<text x="54" y="58" fill="' + palette.text + '" font-size="18" font-weight="900" font-family="Inter,Arial,sans-serif">Panel Architecture Map</text>',
+      '<text x="54" y="82" fill="' + palette.muted + '" font-size="12" font-weight="700" font-family="Inter,Arial,sans-serif">Controller bay → expansion slots → field reader/I/O demand → spare door capacity.</text>',
+      '<rect x="914" y="48" width="138" height="38" rx="10" fill="' + palette.statusSoft + '" stroke="' + palette.statusColor + '"/>',
+      '<text x="934" y="72" fill="' + palette.statusColor + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif">' + esc(status) + ' · ' + loadPct.toFixed(0) + '%</text>',
+      '<text x="78" y="112" fill="' + palette.green + '" font-size="10" font-weight="900" font-family="Inter,Arial,sans-serif">CONTROLLER GROUP</text>',
+      panelParts.join(""),
+      '<line x1="790" y1="172" x2="875" y2="172" stroke="' + palette.lineStrong + '" stroke-width="2"/>',
+      '<line x1="790" y1="204" x2="875" y2="204" stroke="' + palette.lineSoft + '" stroke-width="1.4" stroke-dasharray="6 6"/>',
+      '<text x="802" y="156" fill="' + palette.green + '" font-size="10" font-weight="900" font-family="Inter,Arial,sans-serif">I/O BUS</text>',
+      loadBank(878, 120),
+      pressureScale(78, 292, "System load", loadPct, "status"),
+      pressureScale(430, 292, "Expansion pressure", expansionPct, "amber"),
+      metricChip(78, 324, "Target / Capacity", targetDoors + ' / ' + panelCapacity, "green"),
+      metricChip(276, 324, "Spare Doors", spareDoors, "green"),
+      metricChip(474, 324, "Panels / Expansions", panels + ' / ' + expansions, "amber"),
+      metricChip(672, 324, "Readers / I-O", readers + ' / ' + totalInputs + '-' + totalOutputs, "green"),
+      metricChip(870, 324, "Status", status, "status"),
       '</svg>'
     ].join("");
   }
@@ -1063,260 +1191,8 @@
     return "Architecture is healthy. Existing panel and expansion assumptions leave practical room for growth and normal field changes.";
   }
 
-  function renderChart(metrics) {
-    destroyChart();
-
-    if (!els.chart) return;
-
-    showChartWrap();
-
-    const labels = [
-      "System Load",
-      "Expansion Pressure",
-      "Panels x10",
-      "Readers"
-    ];
-
-    const values = [
-      metrics.loadPct,
-      metrics.expansionPct,
-      metrics.panels * 10,
-      metrics.readers
-    ];
-
-    const displayValues = {
-      0: `${metrics.loadPct.toFixed(0)}%`,
-      1: `${metrics.expansionPct.toFixed(0)}%`,
-      2: `${metrics.panels} panels`,
-      3: `${metrics.readers} readers`
-    };
-
-    const dominantIndex = values.indexOf(Math.max(...values));
-    const referenceValue = 65;
-    const chartMax = Math.max(100, Math.ceil(Math.max(...values, referenceValue, 85) * 1.12));
-
-    const chartBgPlugin = {
-      id: "chartBgPlugin",
-      beforeDraw(c) {
-        const { ctx, chartArea } = c;
-        if (!chartArea) return;
-
-        const { left, top, width, height } = chartArea;
-
-        ctx.save();
-        ctx.fillStyle = "rgba(255,255,255,0.05)";
-        ctx.fillRect(left, top, width, height);
-        ctx.restore();
-      }
-    };
-
-    const thresholdBandPlugin = {
-      id: "thresholdBandPlugin",
-      beforeDatasetsDraw(c) {
-        const { ctx, chartArea, scales } = c;
-        if (!chartArea || !scales.x) return;
-
-        const x = scales.x;
-        const { top, bottom, left, right } = chartArea;
-
-        const healthyMax = Math.min(65, x.max);
-        const watchMax = Math.min(85, x.max);
-
-        ctx.save();
-
-        if (healthyMax > 0) {
-          ctx.fillStyle = "rgba(46, 204, 113, 0.16)";
-          ctx.fillRect(left, top, x.getPixelForValue(healthyMax) - left, bottom - top);
-        }
-
-        if (watchMax > 65) {
-          ctx.fillStyle = "rgba(255, 200, 80, 0.13)";
-          ctx.fillRect(
-            x.getPixelForValue(65),
-            top,
-            x.getPixelForValue(watchMax) - x.getPixelForValue(65),
-            bottom - top
-          );
-        }
-
-        if (x.max > 85) {
-          ctx.fillStyle = "rgba(255, 90, 90, 0.13)";
-          ctx.fillRect(
-            x.getPixelForValue(85),
-            top,
-            right - x.getPixelForValue(85),
-            bottom - top
-          );
-        }
-
-        ctx.restore();
-      },
-      afterDatasetsDraw(c) {
-        const { ctx, chartArea, scales } = c;
-        if (!chartArea || !scales.x || !scales.y) return;
-
-        const x = scales.x;
-        const y = scales.y;
-        const { top, bottom } = chartArea;
-
-        ctx.save();
-
-        const rx = x.getPixelForValue(referenceValue);
-        ctx.strokeStyle = "rgba(120, 255, 170, 0.98)";
-        ctx.lineWidth = 3;
-        ctx.setLineDash([4, 4]);
-        ctx.beginPath();
-        ctx.moveTo(rx, top);
-        ctx.lineTo(rx, bottom);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        ctx.fillStyle = "rgba(220, 255, 235, 0.96)";
-        ctx.font = "600 11px sans-serif";
-        ctx.fillText("Healthy Capacity Floor", rx + 8, bottom - 10);
-
-        ctx.fillStyle = "rgba(180, 255, 200, 0.82)";
-        ctx.font = "600 11px sans-serif";
-        ctx.fillText("Healthy", x.getPixelForValue(6), top + 14);
-
-        ctx.fillStyle = "rgba(255, 220, 140, 0.82)";
-        ctx.fillText("Watch", x.getPixelForValue(69), top + 14);
-
-        ctx.fillStyle = "rgba(255, 160, 160, 0.82)";
-        ctx.fillText("Risk", x.getPixelForValue(89), top + 14);
-
-        const dominantValue = values[dominantIndex];
-        const px = x.getPixelForValue(dominantValue);
-        const py = y.getPixelForValue(labels[dominantIndex]);
-
-        ctx.beginPath();
-        ctx.arc(px, py, 4.5, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(225, 255, 240, 1)";
-        ctx.fill();
-        ctx.strokeStyle = "rgba(120, 255, 170, 0.95)";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        ctx.fillStyle = "rgba(235, 248, 240, 0.92)";
-        ctx.font = "600 11px sans-serif";
-        ctx.fillText(displayValues[dominantIndex], Math.min(px + 8, chartArea.right - 110), py - 8);
-
-        ctx.restore();
-      }
-    };
-
-    chart = new Chart(els.chart, {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [
-          {
-            label: "Panel Capacity Metrics",
-            data: values,
-            barThickness: 16,
-            maxBarThickness: 16,
-            barPercentage: 0.8,
-            categoryPercentage: 0.7,
-            borderWidth: 2,
-            borderRadius: 8,
-            borderSkipped: false,
-            backgroundColor: (context) => {
-              const i = context.dataIndex;
-              const v = context.raw;
-
-              if (i === dominantIndex) {
-                if (v > 85) return "rgba(255, 92, 92, 1)";
-                if (v > 65) return "rgba(255, 188, 82, 1)";
-                return "rgba(120, 255, 170, 1)";
-              }
-
-              if (v > 85) return "rgba(255, 77, 77, 0.30)";
-              if (v > 65) return "rgba(255, 170, 51, 0.24)";
-              return "rgba(90, 170, 255, 0.15)";
-            },
-            borderColor: (context) => {
-              const i = context.dataIndex;
-              const v = context.raw;
-
-              if (i === dominantIndex) {
-                if (v > 85) return "rgba(255, 220, 220, 1)";
-                if (v > 65) return "rgba(255, 240, 210, 1)";
-                return "rgba(215, 255, 230, 1)";
-              }
-
-              return "rgba(120,170,200,0.18)";
-            }
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        indexAxis: "y",
-        animation: {
-          duration: 700,
-          easing: "easeOutQuart"
-        },
-        layout: {
-          padding: {
-            top: 28,
-            right: 12,
-            left: 10,
-            bottom: 0
-          }
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: "rgba(8, 18, 18, 0.96)",
-            titleColor: "#e8fff1",
-            bodyColor: "#d9f7e7",
-            borderColor: "rgba(100, 255, 180, 0.25)",
-            borderWidth: 1,
-            padding: 12,
-            callbacks: {
-              label(context) {
-                const i = context.dataIndex;
-                return ` ${displayValues[i]}`;
-              }
-            }
-          }
-        },
-        scales: {
-          x: {
-            beginAtZero: true,
-            suggestedMax: chartMax,
-            ticks: {
-              color: "rgba(220, 238, 230, 0.78)"
-            },
-            grid: {
-              color: "rgba(110, 160, 140, 0.10)"
-            },
-            title: {
-              display: true,
-              text: "Capacity Stress Magnitude",
-              color: "rgba(230, 255, 240, 0.92)"
-            }
-          },
-          y: {
-            ticks: {
-              color: "rgba(228, 245, 235, 0.92)"
-            },
-            grid: {
-              display: false
-            }
-          }
-        }
-      },
-      plugins: [chartBgPlugin, thresholdBandPlugin]
-    });
-
-    els.chart.style.width = "100%";
-    els.chart.style.height = "340px";
-
-    if (els.chart.parentElement) {
-      els.chart.parentElement.style.minHeight = "340px";
-    }
+  function renderLegacyChartFallback(metrics) {
+    return renderOutputVisual(metrics);
   }
 
   function calc() {
@@ -1397,10 +1273,17 @@
       targetDoors,
       panelCapacity,
       spareDoors,
-      status
+      status,
+      base,
+      exp,
+      maxExp,
+      spare,
+      perPanelCapacity,
+      baseCapacityTotal
     };
 
     renderOutputVisual(lastMetrics);
+    renderCapacitySchedule(lastMetrics);
 
     if (window.ScopedLabsAnalyzer) {
       ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
