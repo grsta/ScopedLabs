@@ -47,11 +47,11 @@ check("Panel Capacity loads Local Assistant module", html.includes("/assets/scop
 check("Panel Capacity loads Panel adapter cache", html.includes("/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-012-panel-capacity-adapter"));
 check("Panel Capacity loads report metadata module", html.includes("/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes"));
 check("Panel Capacity loads Access Control polish module", html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-010-page-chrome-pill-cleanup"));
-check("Panel Capacity local script cache is shell module lane", html.includes("./script.js?v=access-control-panel-capacity-cad-schedule-023"));
+check("Panel Capacity local script cache is shell module lane", html.includes("./script.js?v=access-control-panel-capacity-cad-schedule-024"));
 
 check("Panel Capacity script order keeps export before shell modules", order(html, "/assets/export.js?v=shared-export-030-semantic-report-tones", "/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"));
-check("Panel Capacity script order keeps assistant modules before local script", order(html, "/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-012-panel-capacity-adapter", "./script.js?v=access-control-panel-capacity-cad-schedule-023"));
-check("Panel Capacity script order keeps polish after local script", order(html, "./script.js?v=access-control-panel-capacity-cad-schedule-023", "/assets/access-control-tool-polish.js?v=access-control-tool-polish-010-page-chrome-pill-cleanup"));
+check("Panel Capacity script order keeps assistant modules before local script", order(html, "/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-012-panel-capacity-adapter", "./script.js?v=access-control-panel-capacity-cad-schedule-024"));
+check("Panel Capacity script order keeps polish after local script", order(html, "./script.js?v=access-control-panel-capacity-cad-schedule-024", "/assets/access-control-tool-polish.js?v=access-control-tool-polish-010-page-chrome-pill-cleanup"));
 
 check("Panel Capacity has local assistant mount", html.includes('id="accessControlLocalAssistantMount"'));
 check("Panel Capacity has shared report metadata mount", html.includes('id="reportMetadataMount"') && html.includes("data-report-metadata"));
@@ -61,7 +61,12 @@ check("Panel Capacity preserves results and chart IDs", html.includes('id="resul
 
 check("Panel Capacity has compact capacity schedule shell", html.includes('id="panelCapacityScheduleCard"') && html.includes('id="panelCapacitySchedule"') && script.includes("function renderCapacitySchedule"));
 check("Panel Capacity removed Chart.js dependency", !html.includes("chart.js") && !script.includes("new Chart(") && !script.includes("function renderChart("));
-check("Panel Capacity CAD architecture map marker exists", script.includes("PANEL_CAPACITY_CAD_ARCHITECTURE_MAP_023"));
+check("Panel Capacity CAD architecture map marker exists", script.includes("PANEL_CAPACITY_CAD_ARCHITECTURE_MAP_024"));
+
+check("Panel Capacity Back/Continue shell sits before Export Report", html.includes('id="accessControlFlowActions"') && html.includes('id="reportMetadataMount"') && html.indexOf('id="accessControlFlowActions"') < html.indexOf('id="reportMetadataMount"'));
+check("Panel Capacity CAD visual uses expanded drawing height", html.includes("min-height:460px") && script.includes("const height = 500;"));
+check("Panel Capacity expansion slot strip is fit-guarded", script.includes("const slotW = Math.max(7, Math.min(12"));
+
 
 
 check("Panel Capacity script applies Tool Shell modules", script.includes("function applyShellModules") && script.includes("applyBackContinueShell") && script.includes("accessControlFlowActions"));

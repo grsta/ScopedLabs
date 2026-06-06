@@ -304,9 +304,31 @@ check({
 
 check({
   label: "Panel Capacity visual is CAD architecture map, not Chart.js bar graph",
-  ok: !has(html, "chart.js") && !has(script, "new Chart(") && !has(script, "function renderChart(") && has(script, "PANEL_CAPACITY_CAD_ARCHITECTURE_MAP_023"),
+  ok: !has(html, "chart.js") && !has(script, "new Chart(") && !has(script, "function renderChart(") && has(script, "PANEL_CAPACITY_CAD_ARCHITECTURE_MAP_024"),
   issueType: "engineeringVisual",
   evidence: "Requires local CAD SVG marker and no Chart.js constructor."
+});
+
+
+check({
+  label: "Panel Capacity Back/Continue shell sits before Export Report",
+  ok: has(html, 'id="accessControlFlowActions"') && has(html, 'id="reportMetadataMount"') && html.indexOf('id="accessControlFlowActions"') < html.indexOf('id="reportMetadataMount"'),
+  issueType: "flow",
+  evidence: "Matches accepted Lock Power rhythm: assistant/flow actions before Export Report."
+});
+
+check({
+  label: "Panel Capacity CAD visual has expanded drawing height",
+  ok: has(html, "min-height:460px") && has(script, "const height = 500;") && has(script, "PANEL_CAPACITY_CAD_ARCHITECTURE_MAP_024"),
+  issueType: "engineeringVisual",
+  evidence: "Prevents cramped CAD labels and expansion-slot bleed."
+});
+
+check({
+  label: "Panel Capacity expansion slots are fit-guarded inside panel bays",
+  ok: has(script, "const slotW = Math.max(7, Math.min(12"),
+  issueType: "engineeringVisual",
+  evidence: "Expansion slot rectangles must fit inside each controller bay."
 });
 
 check({
