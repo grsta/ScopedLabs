@@ -110,7 +110,11 @@ for (const slug of dirs) {
     has(html, "Reader Decision Schedule") ||
     has(html, "data-reader-type-summary") ||
     has(html, "readerTypeSchedule") ||
-    has(script, "renderReaderTypeSchedule");
+    has(script, "renderReaderTypeSchedule") ||
+    has(html, "Fail-State Decision Schedule") ||
+    has(html, "data-fail-safe-summary") ||
+    has(html, "failSafeDecisionSchedule") ||
+    has(script, "renderFailSafeDecisionSchedule");
 
   const hasFlowBeforeExport =
     has(html, 'id="accessControlFlowActions"') &&

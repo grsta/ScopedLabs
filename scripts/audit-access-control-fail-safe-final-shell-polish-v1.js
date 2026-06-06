@@ -52,7 +52,7 @@ check(
   currentPolishVersion || "missing polish VERSION"
 );
 check("Page opts into Access Control tool polish", html.includes('data-access-control-tool-polish="true"'));
-check("Fail-Safe hydrates inputs from active scope", script.includes("access-control-fail-safe-scope-input-hydration-015") && script.includes("applyActiveScopeToInputs") && script.includes("mapScopeHardwareType"));
+check("Fail-Safe hydrates inputs from active scope", script.includes("applyActiveScopeToInputs") && script.includes("mapScopeHardwareType") && script.includes("publishFailSafeResultToScopeLedger"));
 check("Loose Best For sentence removed", !html.includes('class="tool-best-for"') && !html.includes("<strong>Best for:</strong>"));
 check("Intro title uses normalized class", html.includes("access-control-tool-card-title") && html.includes("This tool starts the Access Control design flow"));
 check("Polish module hides KB and assistant pill rows", polish.includes(".sl-help-card>.pill-row") && polish.includes(".scopedlabs-local-assistant-card>.pill-row"));
@@ -64,6 +64,9 @@ check("Manual expanded export grid is not present", !html.includes('<div class="
 check("Flow row shell contract remains", html.includes('id="accessControlFlowActions"') && html.includes('id="next-step-row"') && html.includes('id="continue"'));
 check("Old continue-wrap is absent", !html.includes('id="continue-wrap"') && !script.includes("continueWrap"));
 check("Visible status card remains", html.includes('id="failSafeStatusCard"') && script.includes("renderVisibleDecisionStatus"));
+check("Fail-Safe loads Access Control output shell", html.includes("/assets/access-control-output-shell.js"));
+check("Fail-Safe has hidden result ledger guard", html.includes("#results[data-result-ledger][hidden]") && html.includes("data-result-ledger"));
+check("Fail-Safe has compact decision schedule", html.includes('id="failSafeDecisionSchedule"') && script.includes("renderFailSafeDecisionSchedule"));
 check("Compact status legend remains", html.includes('id="failSafeStatusLegend"') && html.includes("Authority Review"));
 check("Export controls remain wired", html.includes('id="exportReport"') && html.includes('id="saveSnapshot"'));
 check("No Documentation & Export pill text remains", !html.includes("Documentation & Export"));

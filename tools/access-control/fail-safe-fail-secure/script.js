@@ -57,6 +57,9 @@
     exportReport: $("exportReport"),
     saveSnapshot: $("saveSnapshot"),
     exportStatus: $("exportStatus"),
+    decisionCard: $("failSafeDecisionCard"),
+    chartWrap: $("chartWrap"),
+    failSafeDecisionSchedule: $("failSafeDecisionSchedule"),
     localAssistantMount: $("accessControlLocalAssistantMount")
   };
 
@@ -86,6 +89,146 @@
 
   function normalizeSlug(value) {
     return String(value ?? "").trim().toLowerCase();
+  }
+
+  // access-control-fail-safe-output-contract-016
+  function outputShell() {
+    return window.ScopedLabsAccessControlOutputShell || null;
+  }
+
+  function findRowValue(rows, label) {
+    const target = String(label || "").trim().toLowerCase();
+    const row = Array.isArray(rows)
+      ? rows.find((item) => String(item?.label || "").trim().toLowerCase() === target)
+      : null;
+
+    return row ? row.value : "";
+  }
+
+  function failSafeStatusChip(status) {
+    const clean = String(status || "WATCH").toUpperCase();
+    const tone = clean.includes("RISK") ? "is-risk" : clean.includes("AUTHORITY") || clean.includes("WATCH") ? "is-watch" : "is-healthy";
+    return '<span class="fail-safe-status-chip ' + tone + '">' + escapeHtml(clean) + '</span>';
+  }
+
+  function failSafeScheduleRow(group, metric, value, note) {
+    return '<tr><td>' + escapeHtml(group) + '</td><td>' + escapeHtml(metric) + '</td><td>' + value + '</td><td>' + escapeHtml(note) + '</td></tr>';
+  }
+
+  function buildFailSafeDecisionScheduleHtml(rows = []) {
+    const recommendation = findRowValue(rows, "Recommendation") || "Decision pending";
+    const status = findRowValue(rows, "Status") || "WATCH";
+    const confidence = findRowValue(rows, "Confidence") || "Pending";
+    const rationale = findRowValue(rows, "Why") || "Decision rationale pending.";
+    const flags = findRowValue(rows, "Decision Flags") || "No special flags";
+    const requiredAction = findRowValue(rows, "Required Action") || "Document this decision before continuing.";
+    const scoreMeaning = findRowValue(rows, "Score Meaning") || "Score interpretation pending.";
+    const risk = findRowValue(rows, "Primary Risk") || "Risk basis pending.";
+    const score = findRowValue(rows, "Score") || "0";
+    const interpretation = findRowValue(rows, "Engineering Interpretation") || "Engineering interpretation pending.";
+    const guidance = findRowValue(rows, "Actionable Guidance") || "Verify the fail-state decision before final hardware selection.";
+
+    const tableRows = [
+      failSafeScheduleRow("Decision", "Recommendation", escapeHtml(recommendation), "Primary fail-state behavior for the selected opening."),
+      failSafeScheduleRow("Decision", "Status", failSafeStatusChip(status), "Readiness of this result before it is carried forward."),
+      failSafeScheduleRow("Decision", "Confidence", escapeHtml(confidence), "Confidence based on score and active scope context."),
+      failSafeScheduleRow("Reason", "Why", escapeHtml(rationale), "Main reason the recommendation moved in this direction."),
+      failSafeScheduleRow("Risk", "Primary Risk", escapeHtml(risk), "Risk to account for in hardware, power, egress, or security planning."),
+      failSafeScheduleRow("Flags", "Decision Flags", escapeHtml(flags), "Special release, fire-rated, or review conditions to verify."),
+      failSafeScheduleRow("Score", "Meaning / Score", escapeHtml(scoreMeaning + " / " + score), "Model pressure behind the fail-state recommendation."),
+      failSafeScheduleRow("Action", "Required Action", escapeHtml(requiredAction), "Action to complete before moving to reader type."),
+      failSafeScheduleRow("Guidance", "Actionable Guidance", escapeHtml(guidance), "Practical follow-through for design coordination.")
+    ];
+
+    return [
+      '<div class="fail-safe-decision-hero">',
+      '<div><strong>' + escapeHtml(recommendation) + '</strong><span>' + escapeHtml(rationale) + '</span></div>',
+      '<div>' + failSafeStatusChip(status) + '<span>Confidence: ' + escapeHtml(confidence) + '</span></div>',
+      '</div>',
+      '<table class="fail-safe-summary-table" data-fail-safe-summary-table="true"><thead><tr><th>Group</th><th>Metric</th><th>Value</th><th>Engineering Note</th></tr></thead><tbody>',
+      tableRows.join(""),
+      '</tbody></table>',
+      '<p class="mini-note"><strong>Engineering Interpretation:</strong> ' + escapeHtml(interpretation) + '</p>'
+    ].join("");
+  }
+
+  function renderFailSafeDecisionSchedule(rows) {
+    const html = buildFailSafeDecisionScheduleHtml(rows);
+    const shell = outputShell();
+
+    if (shell && typeof shell.showVisual === "function") {
+      return shell.showVisual({
+        card: els.decisionCard,
+        wrap: els.chartWrap,
+        target: els.failSafeDecisionSchedule,
+        html
+      });
+    }
+
+    if (els.failSafeDecisionSchedule) els.failSafeDecisionSchedule.innerHTML = html;
+    if (els.chartWrap) els.chartWrap.hidden = false;
+    if (els.decisionCard) els.decisionCard.hidden = false;
+    return true;
+  }
+
+  function clearFailSafeDecisionSchedule() {
+    const shell = outputShell();
+
+    if (shell && typeof shell.hideVisual === "function") {
+      return shell.hideVisual({
+        card: els.decisionCard,
+        wrap: els.chartWrap,
+        target: els.failSafeDecisionSchedule
+      });
+    }
+
+    if (els.failSafeDecisionSchedule) els.failSafeDecisionSchedule.innerHTML = "";
+    if (els.chartWrap) els.chartWrap.hidden = true;
+    if (els.decisionCard) els.decisionCard.hidden = true;
+    return true;
+  }
+
+  function svgDataUri(svg) {
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(String(svg || ""));
+  }
+
+  function buildFailSafeExportSvg() {
+    if (!currentReport) return "";
+
+    const outputValue = (label) => {
+      const target = String(label || "").trim().toLowerCase();
+      const row = (currentReport.outputs || []).find((item) => String(item?.label || "").trim().toLowerCase() === target);
+      return row ? row.value : "";
+    };
+
+    const recommendation = outputValue("Recommendation") || "Fail-state decision";
+    const status = outputValue("Status") || currentReport.status || "WATCH";
+    const confidence = outputValue("Confidence") || "Pending";
+    const risk = outputValue("Primary Risk") || "Risk basis pending";
+    const color = String(status).toUpperCase().includes("RISK") ? "#b42318" : String(status).toUpperCase().includes("WATCH") || String(status).toUpperCase().includes("AUTHORITY") ? "#b7791f" : "#1f9d57";
+
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="360" viewBox="0 0 1100 360"><rect width="1100" height="360" rx="22" fill="#ffffff"/><rect x="36" y="34" width="1028" height="292" rx="18" fill="#f8fbf8" stroke="#b8cabe"/><text x="70" y="78" fill="#101715" font-size="24" font-weight="800" font-family="Inter,Arial,sans-serif">Fail-State Decision Schedule</text><rect x="870" y="54" width="150" height="38" rx="10" fill="#ffffff" stroke="' + color + '"/><text x="892" y="79" fill="' + color + '" font-size="14" font-weight="800" font-family="Inter,Arial,sans-serif">' + escapeHtml(status) + '</text><text x="70" y="138" fill="#1f9d57" font-size="20" font-weight="800" font-family="Inter,Arial,sans-serif">' + escapeHtml(recommendation) + '</text><text x="70" y="180" fill="#54615d" font-size="16" font-family="Inter,Arial,sans-serif">Confidence: ' + escapeHtml(confidence) + '</text><text x="70" y="222" fill="#54615d" font-size="16" font-family="Inter,Arial,sans-serif">Primary Risk: ' + escapeHtml(risk) + '</text><path d="M70 258 H1016" stroke="#dce8e1"/><text x="70" y="292" fill="#54615d" font-size="14" font-family="Inter,Arial,sans-serif">Verify release behavior, AHJ/code requirements, egress control, and standby power before final hardware selection.</text></svg>';
+  }
+
+  function getFailSafeVisualImage() {
+    const svg = buildFailSafeExportSvg();
+    return svg ? svgDataUri(svg) : "";
+  }
+
+  function attachOutputShellExport() {
+    const shell = outputShell();
+    if (!shell || typeof shell.register !== "function") return false;
+
+    shell.register(STEP, {
+      getChartImage: getFailSafeVisualImage,
+      getVisualHtml: () => els.failSafeDecisionSchedule ? els.failSafeDecisionSchedule.innerHTML : ""
+    });
+
+    if (typeof shell.attachExportGetter === "function") {
+      shell.attachExportGetter(STEP, window.ScopedLabsExportConfig);
+    }
+
+    return true;
   }
 
   function hasStoredAuth() {
@@ -459,12 +602,14 @@
   function render(rows) {
     if (!els.results) return;
 
-    els.results.innerHTML = rows.map((r) => `
-      <div class="result-row">
-        <span class="result-label">${escapeHtml(r.label)}</span>
-        <span class="result-value">${escapeHtml(r.value)}</span>
-      </div>
-    `).join("");
+    els.results.innerHTML = rows.map((r) => [
+      '<div class="result-row" data-result-label="' + escapeHtml(r.label) + '" data-result-value="' + escapeHtml(r.value) + '">',
+      '<span class="result-label">' + escapeHtml(r.label) + '</span>',
+      '<span class="result-value">' + escapeHtml(r.value) + '</span>',
+      '</div>'
+    ].join("")).join("");
+
+    renderFailSafeDecisionSchedule(rows);
   }
 
   function getRenderedRows() {
@@ -748,6 +893,7 @@ function savePipelineResult(payload) {
       els.results.innerHTML = `<div class="muted">${escapeHtml(message)}</div>`;
     }
 
+    clearFailSafeDecisionSchedule();
     clearVisibleDecisionStatus();
     clearLocalAssistant();
     clearAnalysis();
@@ -1268,6 +1414,7 @@ function savePipelineResult(payload) {
 
     renderActiveScopeContext();
     renderLocalAssistant(assistantPayload);
+    attachOutputShellExport();
     updateExportControls();
   }
 
@@ -1355,6 +1502,7 @@ function savePipelineResult(payload) {
     if (year) year.textContent = new Date().getFullYear();
 
     resetAll();
+    attachOutputShellExport();
     applyToolShellModules();
     renderActiveScopeContext();
 
