@@ -9,6 +9,15 @@ function check(label, ok, detail = "") {
   if (!ok) failed = true;
 }
 
+function moduleParses(text) {
+  try {
+    new Function(text);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
 let failed = false;
 const rows = [];
 
@@ -23,7 +32,7 @@ check("Lock Power loads Assistant Export module", html.includes("/assets/scopedl
 check("Lock Power loads Local Assistant module", html.includes("/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"));
 check("Lock Power loads Access Control assistant adapters", html.includes("/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-011-lock-power-budget-adapter"));
 check("Lock Power loads report metadata module", html.includes("/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes"));
-check("Lock Power loads Access Control polish module", html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-008-hide-export-decoration-pill"));
+check("Lock Power loads Access Control polish module", html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-009-export-title-card-reference"));
 check("Lock Power local script cache is output shell module lane", html.includes("./script.js?v=access-control-lock-power-output-shell-module-029"));
 
 check(
@@ -101,7 +110,21 @@ check(
 
 check(
   "Lock Power shell probe expects current Access Control polish version",
-  html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-008-hide-export-decoration-pill")
+  html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-009-export-title-card-reference")
+);
+
+
+check(
+  "Access Control polish module parses as JavaScript",
+  moduleParses(polish)
+);
+
+
+check(
+  "Access Control polish owns export title card reference",
+  polish.includes("function applyExportCardTitleRhythm") &&
+    polish.includes("data-access-control-export-title-polished") &&
+    polish.includes("access-control-tool-card-title")
 );
 
 console.log("\nAccess Control Lock Power shell modules probe audit:");

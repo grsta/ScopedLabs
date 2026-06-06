@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-tool-polish-007-hide-fail-safe-assistant-flow-line";
+  const VERSION = "access-control-tool-polish-009-export-title-card-reference";
   const STYLE_ID = "access-control-tool-polish-styles";
 
   const FLOW_LABELS = {
@@ -111,9 +111,12 @@
 
   function normalize(root) {
     if (!isAccessControlTool()) return;
+    const scope = root || document;
     injectStyles();
-    removePillRows(root || document);
-    addAssistantFlowLine(root || document);
+    removePillRows(scope);
+    addAssistantFlowLine(scope);
+    applyExportCardPolish(scope);
+    applyExportCardTitleRhythm(scope);
   }
 
   function observe() {
@@ -133,6 +136,33 @@
     observer.observe(document.body, { childList: true, subtree: true });
   }
 
+
+  // access-control-export-title-card-reference-009
+  function applyExportCardTitleRhythm(root) {
+    const scope = root || document;
+    const body = document.body;
+
+    if (!body || body.getAttribute("data-category") !== "access-control") return;
+
+    const exportButtons = Array.from(scope.querySelectorAll("#exportReport, #saveSnapshot"));
+
+    exportButtons.forEach((button) => {
+      const card = button.closest(".card");
+      if (!card) return;
+
+      const heading = Array.from(card.querySelectorAll("h2, h3, .h2, .h3, .card-title")).find((candidate) => {
+        const text = String(candidate.textContent || "").trim().toLowerCase();
+        return text === "export report";
+      });
+
+      if (!heading) return;
+
+      heading.classList.add("access-control-tool-card-title");
+      heading.setAttribute("data-access-control-export-title-polished", "true");
+      heading.setAttribute("data-access-control-title-reference", "access-control-tool-card-title");
+      heading.style.marginTop = "0";
+    });
+  }
 
   // access-control-export-card-polish-008
   function applyExportCardPolish(root) {
@@ -179,8 +209,7 @@ function init() {
   });
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => applyExportCardPolish(document));
-  document.addEventListener("DOMContentLoaded", init);
+    document.addEventListener("DOMContentLoaded", init);
   } else {
     init();
   }

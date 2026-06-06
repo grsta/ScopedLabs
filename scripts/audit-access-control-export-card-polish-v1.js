@@ -9,6 +9,15 @@ function check(label, ok, detail = "") {
   if (!ok) failed = true;
 }
 
+function moduleParses(text) {
+  try {
+    new Function(text);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
 let failed = false;
 const rows = [];
 
@@ -34,7 +43,7 @@ check(
 
 check(
   "Lock Power loads current Access Control polish module",
-  html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-008-hide-export-decoration-pill")
+  html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-009-export-title-card-reference")
 );
 
 check(
@@ -46,6 +55,32 @@ check(
 check(
   "Lock Power still keeps report metadata mount",
   html.includes('id="reportMetadataMount"')
+);
+
+
+check(
+  "Access Control polish module parses as JavaScript",
+  moduleParses(polish)
+);
+
+
+check(
+  "Access Control polish owns export title card reference",
+  polish.includes("function applyExportCardTitleRhythm") &&
+    polish.includes("access-control-export-title-card-reference-009") &&
+    polish.includes("data-access-control-export-title-polished") &&
+    polish.includes("access-control-tool-card-title")
+);
+
+check(
+  "Export title rhythm uses existing shared card-title class",
+  polish.includes('heading.classList.add("access-control-tool-card-title")') &&
+    polish.includes('data-access-control-title-reference", "access-control-tool-card-title"')
+);
+
+check(
+  "Lock Power loads export title card-reference polish module",
+  html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-009-export-title-card-reference")
 );
 
 console.log("\nAccess Control export card polish audit:");
