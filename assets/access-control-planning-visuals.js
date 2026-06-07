@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-007-graph-title-weight";
+  const VERSION = "access-control-planning-visuals-008-elevator-reader";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -342,6 +342,87 @@
 
 
 
+
+
+  function buildElevatorReaderSvg(metrics = {}) {
+    const tone = statusTone(metrics.status || metrics.systemStatus);
+    const statusText = statusLabel(metrics.status || metrics.systemStatus);
+    const cars = Math.max(0, Number(metrics.carReaders || 0));
+    const dcs = Math.max(0, Number(metrics.dcsAdd || 0));
+    const complexity = Math.max(0, Number(metrics.complexityIndex || 0));
+    const pressure = clamp(complexity / 100, 0.04, 1);
+    const pressureTone = complexity > 90 ? "risk" : complexity > 55 ? "watch" : "safe";
+    const dcsTone = dcs > 0 ? "watch" : "safe";
+    const placement = metrics.placementLabel || metrics.placement || "?";
+    const dest = metrics.destLabel || metrics.destinationControl || "?";
+    const bankCount = Math.max(1, Math.min(6, Math.round(Number(metrics.banks || 1))));
+    const carCount = Math.max(1, Math.min(8, Math.round(Number(metrics.cars || cars || 1))));
+
+    function carNode(index) {
+      const x = 70 + (index % 4) * 46;
+      const y = 126 + Math.floor(index / 4) * 50;
+      return [
+        '<rect x="' + x + '" y="' + y + '" width="30" height="38" rx="4" fill="rgba(120,255,120,.07)" stroke="rgba(125,255,152,.36)" />',
+        '<path d="M' + (x + 15) + ' ' + (y + 5) + ' V' + (y + 33) + '" stroke="rgba(203,213,225,.24)" stroke-width="1" />',
+        '<circle cx="' + (x + 23) + '" cy="' + (y + 20) + '" r="2" fill="rgba(125,255,152,.78)" />'
+      ].join('');
+    }
+
+    function bankNode(index) {
+      const x = 378 + index * 44;
+      return [
+        '<g>',
+        '<rect x="' + x + '" y="134" width="26" height="64" rx="5" fill="rgba(120,170,255,.06)" stroke="rgba(120,255,170,.28)" />',
+        '<path d="M' + (x + 7) + ' 151 H' + (x + 19) + ' M' + (x + 7) + ' 166 H' + (x + 19) + ' M' + (x + 7) + ' 181 H' + (x + 19) + '" stroke="rgba(203,213,225,.40)" stroke-width="1" />',
+        '</g>'
+      ].join('');
+    }
+
+    return [
+      '<div class="access-control-planning-visual-shell" data-access-control-modern-visual="elevator-reader-count">',
+      '<svg viewBox="0 0 760 388" role="img" aria-label="Elevator reader count pressure visual" xmlns="http://www.w3.org/2000/svg">',
+      '<defs><pattern id="accGridElevatorV8" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="rgba(120,255,120,.045)" stroke-width="1"/></pattern></defs>',
+      '<rect x="24" y="24" width="712" height="340" rx="16" fill="rgba(0,0,0,.10)" stroke="rgba(120,255,120,.12)" />',
+      '<rect x="36" y="36" width="688" height="316" rx="12" fill="url(#accGridElevatorV8)" stroke="rgba(120,255,120,.07)" />',
+      '<text x="52" y="62" font-size="11" fill="rgba(180,255,200,.68)" letter-spacing="1.4">ELEVATOR READER COUNT</text>',
+      '<text x="52" y="84" font-size="19" fill="rgba(246,255,248,.96)" font-weight="650">Reader load, DCS adders, and integration pressure</text>',
+      statusBadge(statusText, tone, 616, 51),
+      '<text x="72" y="114" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">CAR / CAB READERS</text>',
+      Array.from({ length: carCount }, (_, index) => carNode(index)).join(''),
+      cars > carCount ? '<text x="260" y="162" font-size="11" fill="rgba(203,213,225,.66)">+' + escapeHtml(Math.round(cars - carCount)) + '</text>' : '',
+      '<path d="M300 166 H350" stroke="rgba(203,213,225,.24)" stroke-width="1.2" stroke-dasharray="5 6" />',
+      '<text x="378" y="114" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">BANK / LOBBY TOUCHPOINTS</text>',
+      Array.from({ length: bankCount }, (_, index) => bankNode(index)).join(''),
+      '<rect x="598" y="138" width="74" height="46" rx="8" fill="' + toneFill(dcsTone) + '" stroke="' + toneStroke(dcsTone) + '" />',
+      '<text x="635" y="157" text-anchor="middle" font-size="9" fill="rgba(203,213,225,.66)" letter-spacing=".8">DCS ADD</text>',
+      '<text x="635" y="176" text-anchor="middle" font-size="14" fill="rgba(238,255,244,.94)" font-weight="900">' + escapeHtml(dcs) + '</text>',
+      '<path d="M112 226 H648" stroke="rgba(203,213,225,.24)" stroke-width="1.2" stroke-dasharray="6 7" />',
+      '<path d="M112 226 C214 202, 300 246, 382 226 S548 204, 648 226" fill="none" stroke="rgba(125,255,152,.38)" stroke-width="1.4" />',
+      '<circle cx="112" cy="226" r="5" fill="rgba(125,255,152,.20)" stroke="rgba(125,255,152,.72)" />',
+      '<circle cx="382" cy="226" r="5" fill="rgba(125,255,152,.20)" stroke="rgba(125,255,152,.72)" />',
+      '<circle cx="648" cy="226" r="5" fill="rgba(125,255,152,.20)" stroke="rgba(125,255,152,.72)" />',
+      '<text x="112" y="244" font-size="10" fill="rgba(203,213,225,.58)" text-anchor="middle">cars</text>',
+      '<text x="382" y="244" font-size="10" fill="rgba(203,213,225,.58)" text-anchor="middle">banks / lobby</text>',
+      '<text x="648" y="244" font-size="10" fill="rgba(203,213,225,.58)" text-anchor="middle">integration</text>',
+      pressureRail("integration pressure", pressure, 52, 282, 220, pressureTone),
+      metricChip("total readers", String(metrics.totalReaders ?? "?"), 296, 272, 126),
+      metricChip("in car", String(metrics.carReaders ?? "?"), 436, 272, 92),
+      metricChip("lobby", String(metrics.lobbyReaders ?? "?"), 542, 272, 86),
+      '<rect x="52" y="320" width="286" height="28" rx="8" fill="rgba(0,0,0,.16)" stroke="rgba(120,255,120,.10)" />',
+      '<text x="62" y="337" font-size="9" fill="rgba(203,213,225,.62)" letter-spacing=".7">PLACEMENT</text>',
+      '<text x="132" y="337" font-size="10" fill="rgba(238,255,244,.90)" font-weight="800">' + escapeHtml(placement) + '</text>',
+      '<rect x="356" y="320" width="272" height="28" rx="8" fill="rgba(0,0,0,.16)" stroke="rgba(120,255,120,.10)" />',
+      '<text x="366" y="337" font-size="9" fill="rgba(203,213,225,.62)" letter-spacing=".7">DESTINATION CONTROL</text>',
+      '<text x="498" y="337" font-size="10" fill="rgba(238,255,244,.90)" font-weight="800">' + escapeHtml(dest) + '</text>',
+      '</svg>',
+      '<p class="sl-vis-note"><strong>Visual note:</strong> Elevator Reader Count is a specialty planning branch. Use the visual to compare car readers, lobby/bank touchpoints, DCS adders, and integration pressure before final elevator coordination.</p>',
+      '</div>'
+    ].join("");
+  }
+
+  function renderElevatorReader(options = {}) {
+    return show(options, buildElevatorReaderSvg(options.metrics || {}));
+  }
   function buildAntiPassbackSvg(metrics = {}) {
     const tone = statusTone(metrics.status || metrics.operationalRisk);
     const statusText = statusLabel(metrics.status || metrics.operationalRisk);
@@ -433,6 +514,8 @@
     renderDoorCount,
     renderAntiPassback,
     buildAntiPassbackSvg,
+    renderElevatorReader,
+    buildElevatorReaderSvg,
     hide,
     getDataUri,
     svgToDataUri

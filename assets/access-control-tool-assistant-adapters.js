@@ -1,11 +1,11 @@
 /* ScopedLabs Access Control Tool Assistant Adapters
-   Version: access-control-assistant-adapters-018-anti-passback
+   Version: access-control-assistant-adapters-019-elevator-reader
    Purpose: category-specific local assistant model adapters. Dormant unless a tool explicitly calls one.
 */
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-assistant-adapters-018-anti-passback";
+  const API_VERSION = "access-control-assistant-adapters-019-elevator-reader";
 
   function safeText(value) {
     return String(value ?? "");
@@ -599,6 +599,76 @@
       ]
     };
   }
+
+
+  function buildElevatorReaderCountModel(data) {
+    const status = safeText(data.status || data.systemStatus || "PENDING");
+    const total = safeText(data.totalReaders ?? "pending");
+    const cars = safeText(data.carReaders ?? "pending");
+    const lobby = safeText(data.lobbyReaders ?? "pending");
+    const dcs = safeText(data.dcsAdd ?? "pending");
+    const complexity = safeText(data.complexityIndex ?? "pending");
+    const placement = safeText(data.placementLabel || data.placement || "pending");
+    const dest = safeText(data.destLabel || data.destinationControl || "pending");
+    const guidance = safeText(data.guidance || "Coordinate elevator reader placement with the elevator contractor and access-control platform before procurement.");
+    const insight = safeText(data.insight || data.interpretation || "Run the calculator to generate elevator reader guidance.");
+
+    return {
+      category: "access-control",
+      tool: "elevator-reader-count",
+      kicker: "Local Design Assistant",
+      title: "Elevator Reader Assistant",
+      status,
+      summary: "Use this specialty-branch result to estimate elevator reader magnitude, DCS impact, and integration complexity before final elevator coordination.",
+      hideStandardLists: true,
+      hideHeaderPills: true,
+      sections: [
+        {
+          title: "Reader Count Basis",
+          body: guidance,
+          items: [
+            "Estimated total readers: " + total,
+            "In-car readers: " + cars,
+            "Lobby / bank readers: " + lobby,
+            "DCS adders: " + dcs,
+            "Complexity index: " + complexity,
+            "Placement strategy: " + placement,
+            "Destination control: " + dest
+          ]
+        },
+        {
+          title: "Coordination Review",
+          body: insight,
+          items: [
+            "Confirm whether access decisions happen in the car, at the lobby/kiosk, or both.",
+            "Coordinate fire service, emergency override, visitor flow, and destination-control behavior with the elevator contractor.",
+            "Use the result as planning magnitude, not a controller-specific elevator interface schedule."
+          ]
+        },
+        {
+          title: "Summary Role",
+          body: "Elevator Reader Count is a specialty Access Control branch. It is not part of the core pipeline, but its result should be available to the category summary when used.",
+          items: [
+            "Contribution type: specialty-branch",
+            "Summary group: Specialty / What-if Branches",
+            "Pipeline state: optional specialty branch"
+          ]
+        }
+      ],
+      assumptionsTitle: "Planning Assumptions",
+      actionsTitle: "Recommended Actions",
+      assumptions: [
+        "Reader count is estimated from cars, banks, secured floors, DCS presence, and reader placement strategy.",
+        "Final elevator access design must be validated with the elevator contractor and selected access-control platform.",
+        "Emergency override, fire service, and owner operating policy can change the practical reader strategy."
+      ],
+      actions: [
+        guidance,
+        "Confirm DCS/kiosk behavior and reader placement before procurement.",
+        "Include the specialty-branch result in the Access Control summary when elevator access is part of the design narrative."
+      ]
+    };
+  }
   const adapters = Object.freeze({
     "fail-safe-fail-secure": Object.freeze({
       slug: "fail-safe-fail-secure",
@@ -644,6 +714,11 @@
       slug: "anti-passback-zones",
       title: "Anti-Passback Assistant",
       buildModel: buildAntiPassbackZonesModel
+    }),
+    "elevator-reader-count": Object.freeze({
+      slug: "elevator-reader-count",
+      title: "Elevator Reader Assistant",
+      buildModel: buildElevatorReaderCountModel
     })
   });
 

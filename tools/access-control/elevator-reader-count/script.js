@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
   const CATEGORY = "access-control";
   const CATEGORY_LABEL = "Access Control";
   const TOOL = "elevator-reader-count";
@@ -22,6 +22,12 @@
     reset: $("reset"),
     chart: $("chart"),
     chartWrap: $("chartWrap"),
+    visualCard: $("elevatorReaderVisualCard"),
+    scheduleCard: $("elevatorReaderScheduleCard"),
+    schedule: $("elevatorReaderSchedule"),
+    localAssistantMount: $("accessControlLocalAssistantMount"),
+    flowActions: $("accessControlFlowActions"),
+    reportActions: $("elevatorReaderReportActions"),
     reportTitle: $("reportTitle"),
     projectName: $("projectName"),
     clientName: $("clientName"),
@@ -69,11 +75,14 @@
   }
 
   function destroyChart() {
-    if (chart) {
+    if (chart && typeof chart.destroy === "function") {
       chart.destroy();
-      chart = null;
     }
 
+    chart = null;
+    clearOutputVisual();
+    clearElevatorSchedule();
+    clearLocalAssistant();
     hideChartWrap();
   }
 
@@ -343,278 +352,213 @@
     ];
   }
 
-  function getChartImage() {
-    try {
-      if (chart && typeof chart.toBase64Image === "function") {
-        return chart.toBase64Image("image/png", 1);
-      }
-    } catch {}
 
-    return "";
+
+  function planningVisuals() {
+    return window.ScopedLabsAccessControlPlanningVisuals || null;
   }
 
-  function getExportChartImage() {
-    if (!lastMetrics || typeof Chart === "undefined") return getChartImage();
+  function outputShell() {
+    return window.ScopedLabsAccessControlOutputShell || null;
+  }
+
+  function attachOutputShellExport() {
+    const shell = outputShell();
+
+    if (shell && typeof shell.register === "function") {
+      shell.register(TOOL, {
+        getChartImage: getExportChartImage
+      });
+    }
+
+    if (shell && typeof shell.attachExportGetter === "function") {
+      shell.attachExportGetter(TOOL, window.ScopedLabsExportConfig);
+      return true;
+    }
+
+    if (window.ScopedLabsExportConfig) {
+      window.ScopedLabsExportConfig.getChartImage = getExportChartImage;
+      return true;
+    }
+
+    return false;
+  }
+
+  function placeElevatorReaderReportActions() {
+    const mount = document.getElementById("reportMetadataMount");
+    const actions = els.reportActions;
+    if (!mount || !actions) return false;
+
+    const details = mount.querySelector(".sl-report-meta") || mount.querySelector("details") || mount;
+    if (actions.parentElement !== details) {
+      details.appendChild(actions);
+    }
+
+    return true;
+  }
+
+  function applyShellModules() {
+    const shell = window.ScopedLabsToolShell;
+    if (shell && typeof shell.applyBackContinueShell === "function") {
+      shell.applyBackContinueShell({ rowId: "accessControlFlowActions" });
+    }
+  }
+
+  function clearOutputVisual() {
+    const shell = outputShell();
+
+    if (shell && typeof shell.hideVisual === "function") {
+      return shell.hideVisual({
+        card: els.visualCard,
+        wrap: els.chartWrap,
+        target: els.chart
+      });
+    }
+
+    if (els.chart) els.chart.innerHTML = "";
+    if (els.chartWrap) els.chartWrap.hidden = true;
+    if (els.visualCard) els.visualCard.hidden = true;
+    return true;
+  }
+
+  function renderOutputVisual(metrics) {
+    const visuals = planningVisuals();
+
+    if (visuals && typeof visuals.renderElevatorReader === "function") {
+      return visuals.renderElevatorReader({
+        card: els.visualCard,
+        wrap: els.chartWrap,
+        target: els.chart,
+        metrics
+      });
+    }
+
+    return false;
+  }
+
+  function getElevatorReaderVisualImage(metrics, options = {}) {
+    const visuals = planningVisuals();
+    if (!metrics || !visuals || typeof visuals.buildElevatorReaderSvg !== "function") return "";
+
+    if (typeof visuals.svgToDataUri === "function") {
+      return visuals.svgToDataUri(visuals.buildElevatorReaderSvg(metrics, Object.assign({ exportMode: true }, options)));
+    }
+
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(visuals.buildElevatorReaderSvg(metrics, Object.assign({ exportMode: true }, options)));
+  }
+
+  function clearElevatorSchedule() {
+    if (els.schedule) els.schedule.innerHTML = "";
+    if (els.scheduleCard) els.scheduleCard.hidden = true;
+  }
+
+  function renderElevatorReaderSchedule(metrics) {
+    const schedule = window.ScopedLabsAccessControlDecisionSchedule;
+    if (!schedule || typeof schedule.render !== "function" || !els.schedule) return false;
+
+    const rows = [
+      { group: "Reader Model", metric: "Total Readers", value: metrics.totalReaders, note: "Estimated total reader count for the selected elevator strategy." },
+      { group: "Reader Model", metric: "Car / Lobby / DCS", value: metrics.carReaders + " / " + metrics.lobbyReaders + " / " + metrics.dcsAdd, note: "Shows how the selected placement and DCS setting drive reader count." },
+      { group: "Scope", metric: "Cars / Banks / Floors", value: metrics.cars + " / " + metrics.banks + " / " + metrics.floors, note: "Elevator scope inputs used for planning magnitude." },
+      { group: "Pressure", metric: "Complexity Index", value: metrics.complexityIndex, note: "Used to flag elevator coordination and integration pressure." },
+      { group: "Decision", metric: "Placement", value: metrics.placementLabel, note: metrics.guidance },
+      { group: "Decision", metric: "Destination Control", value: metrics.destLabel, note: metrics.insight }
+    ];
+
+    schedule.render({
+      card: els.scheduleCard,
+      wrap: els.schedule,
+      target: els.schedule,
+      title: "Elevator Reader Decision Schedule",
+      summary: "Specialty-branch elevator reader schedule for reader count, DCS adders, and integration pressure.",
+      status: metrics.status,
+      statusDetail: metrics.complexityIndex + " complexity index",
+      interpretation: metrics.insight,
+      exportTableTitle: "Elevator Reader Decision Schedule",
+      tableDataAttr: 'data-elevator-reader-summary="true" data-access-control-decision-schedule="true"',
+      rows
+    });
+
+    if (els.scheduleCard) els.scheduleCard.hidden = false;
+    return true;
+  }
+
+  function clearLocalAssistant() {
+    if (window.ScopedLabsLocalAssistant && els.localAssistantMount) {
+      window.ScopedLabsLocalAssistant.clear(els.localAssistantMount);
+      return true;
+    }
+
+    if (els.localAssistantMount) {
+      els.localAssistantMount.innerHTML = "";
+      els.localAssistantMount.hidden = true;
+    }
+
+    return false;
+  }
+
+  function renderLocalAssistant(metrics) {
+    const assistant = window.ScopedLabsLocalAssistant;
+    const adapters = window.ScopedLabsAccessControlToolAssistantAdapters;
+    const adapter = adapters && typeof adapters.getAdapter === "function"
+      ? adapters.getAdapter(TOOL)
+      : null;
+
+    if (!assistant || !adapter || !els.localAssistantMount || typeof adapter.buildModel !== "function") {
+      return false;
+    }
+
+    return assistant.mount(els.localAssistantMount, adapter.buildModel(metrics));
+  }
+
+  function publishElevatorReaderSummaryContribution(metrics) {
+    if (!metrics) return false;
 
     try {
-      const canvas = document.createElement("canvas");
-      canvas.width = 1200;
-      canvas.height = 620;
+      const key = "scopedlabs:access-control:summary-contributions:v1";
+      const raw = localStorage.getItem(key);
+      const ledger = raw ? JSON.parse(raw) : {};
+      const tools = ledger && typeof ledger === "object" && ledger.tools && typeof ledger.tools === "object" ? ledger.tools : {};
 
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return getChartImage();
-
-      const labels = [
-        "Total Readers",
-        "Cars Impact",
-        "Lobby Impact",
-        "Complexity"
-      ];
-
-      const values = [
-        lastMetrics.totalReaders,
-        lastMetrics.carReaders,
-        lastMetrics.lobbyReaders + lastMetrics.dcsAdd,
-        lastMetrics.complexityIndex
-      ];
-
-      const displayValues = {
-        0: `${lastMetrics.totalReaders} readers`,
-        1: `${lastMetrics.carReaders} in-car`,
-        2: `${lastMetrics.lobbyReaders + lastMetrics.dcsAdd} lobby/DCS`,
-        3: `${lastMetrics.complexityIndex} complexity`
-      };
-
-      const referenceValue = 30;
-      const dominantIndex = values.indexOf(Math.max(...values));
-      const maxValue = Math.max(...values, referenceValue, 100);
-
-      let exportChart = null;
-
-      const bgPlugin = {
-        id: "exportBgPlugin",
-        beforeDraw(chartInstance) {
-          const { ctx, chartArea } = chartInstance;
-          if (!chartArea) return;
-
-          const { left, top, width, height, right, bottom } = chartArea;
-          const x = chartInstance.scales.x;
-
-          ctx.save();
-
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, chartInstance.width, chartInstance.height);
-
-          ctx.fillStyle = "#f8fbf9";
-          ctx.fillRect(left, top, width, height);
-
-          const healthyMax = Math.min(30, x.max);
-          const watchMax = Math.min(55, x.max);
-
-          if (healthyMax > 0) {
-            ctx.fillStyle = "rgba(34, 197, 94, 0.14)";
-            ctx.fillRect(left, top, x.getPixelForValue(healthyMax) - left, height);
-          }
-
-          if (watchMax > 30) {
-            ctx.fillStyle = "rgba(245, 158, 11, 0.14)";
-            ctx.fillRect(
-              x.getPixelForValue(30),
-              top,
-              x.getPixelForValue(watchMax) - x.getPixelForValue(30),
-              height
-            );
-          }
-
-          if (x.max > 55) {
-            ctx.fillStyle = "rgba(239, 68, 68, 0.12)";
-            ctx.fillRect(
-              x.getPixelForValue(55),
-              top,
-              right - x.getPixelForValue(55),
-              height
-            );
-          }
-
-          ctx.restore();
-        },
-        afterDatasetsDraw(chartInstance) {
-          const { ctx, chartArea, scales } = chartInstance;
-          if (!chartArea || !scales.x || !scales.y) return;
-
-          const x = scales.x;
-          const y = scales.y;
-          const { top, bottom } = chartArea;
-
-          ctx.save();
-
-          const rx = x.getPixelForValue(referenceValue);
-          ctx.strokeStyle = "#198754";
-          ctx.lineWidth = 3;
-          ctx.setLineDash([6, 5]);
-          ctx.beginPath();
-          ctx.moveTo(rx, top);
-          ctx.lineTo(rx, bottom);
-          ctx.stroke();
-          ctx.setLineDash([]);
-
-          ctx.fillStyle = "#1f2937";
-          ctx.font = "600 16px Arial";
-          ctx.fillText("Planning Watch Limit", rx + 10, bottom - 12);
-
-          ctx.fillStyle = "#15803d";
-          ctx.font = "700 15px Arial";
-          ctx.fillText("Healthy", x.getPixelForValue(4), top + 18);
-
-          ctx.fillStyle = "#b45309";
-          ctx.fillText("Watch", x.getPixelForValue(34), top + 18);
-
-          ctx.fillStyle = "#b91c1c";
-          ctx.fillText("Risk", x.getPixelForValue(59), top + 18);
-
-          const dominantValue = values[dominantIndex];
-          const px = x.getPixelForValue(dominantValue);
-          const py = y.getPixelForValue(labels[dominantIndex]);
-
-          ctx.beginPath();
-          ctx.arc(px, py, 6, 0, Math.PI * 2);
-          ctx.fillStyle = "#ffffff";
-          ctx.fill();
-          ctx.strokeStyle = "#111827";
-          ctx.lineWidth = 2;
-          ctx.stroke();
-
-          ctx.fillStyle = "#1f2937";
-          ctx.font = "600 15px Arial";
-          ctx.fillText(displayValues[dominantIndex], Math.min(px + 10, chartArea.right - 120), py - 10);
-
-          ctx.restore();
+      tools[TOOL] = {
+        category: CATEGORY,
+        toolSlug: TOOL,
+        toolLabel: TOOL_LABEL,
+        contributionType: "specialty-branch",
+        summaryGroup: "Specialty / What-if Branches",
+        status: metrics.status,
+        summary: getSummaryFromResults(collectVisibleResults()),
+        interpretation: metrics.insight,
+        updatedAt: new Date().toISOString(),
+        metrics: {
+          totalReaders: metrics.totalReaders,
+          carReaders: metrics.carReaders,
+          lobbyReaders: metrics.lobbyReaders,
+          dcsAdd: metrics.dcsAdd,
+          complexityIndex: metrics.complexityIndex,
+          placement: metrics.placementLabel,
+          destinationControl: metrics.destLabel
         }
       };
 
-      exportChart = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "Elevator Reader Metrics",
-              data: values,
-              indexAxis: "y",
-              barThickness: 18,
-              maxBarThickness: 18,
-              barPercentage: 0.8,
-              categoryPercentage: 0.7,
-              borderRadius: 8,
-              borderSkipped: false,
-              borderWidth: 1.5,
-              backgroundColor: (context) => {
-                const i = context.dataIndex;
-                const v = context.raw;
-
-                if (i === dominantIndex) {
-                  if (v > 55) return "#dc2626";
-                  if (v > 30) return "#f59e0b";
-                  return "#22c55e";
-                }
-
-                if (v > 55) return "rgba(220, 38, 38, 0.55)";
-                if (v > 30) return "rgba(245, 158, 11, 0.50)";
-                return "rgba(59, 130, 246, 0.42)";
-              },
-              borderColor: (context) => {
-                const i = context.dataIndex;
-                const v = context.raw;
-
-                if (i === dominantIndex) {
-                  if (v > 55) return "#7f1d1d";
-                  if (v > 30) return "#92400e";
-                  return "#166534";
-                }
-
-                if (v > 55) return "#991b1b";
-                if (v > 30) return "#b45309";
-                return "#1d4ed8";
-              }
-            }
-          ]
-        },
-        options: {
-          responsive: false,
-          maintainAspectRatio: false,
-          animation: false,
-          indexAxis: "y",
-          layout: {
-            padding: {
-              top: 36,
-              right: 22,
-              bottom: 10,
-              left: 18
-            }
-          },
-          plugins: {
-            legend: { display: false },
-            tooltip: { enabled: false }
-          },
-          scales: {
-            x: {
-              beginAtZero: true,
-              suggestedMax: Math.ceil(maxValue * 1.08),
-              ticks: {
-                color: "#334155",
-                font: {
-                  size: 14,
-                  weight: "600"
-                }
-              },
-              grid: {
-                color: "rgba(15, 23, 42, 0.08)"
-              },
-              border: {
-                color: "rgba(15, 23, 42, 0.18)"
-              },
-              title: {
-                display: true,
-                text: "Planning Magnitude",
-                color: "#0f172a",
-                font: {
-                  size: 15,
-                  weight: "700"
-                }
-              }
-            },
-            y: {
-              ticks: {
-                color: "#0f172a",
-                font: {
-                  size: 15,
-                  weight: "700"
-                }
-              },
-              grid: {
-                display: false
-              },
-              border: {
-                color: "rgba(15, 23, 42, 0.18)"
-              }
-            }
-          }
-        },
-        plugins: [bgPlugin]
-      });
-
-      const dataUrl = canvas.toDataURL("image/png", 1);
-
-      if (exportChart) {
-        exportChart.destroy();
-        exportChart = null;
-      }
-
-      return dataUrl;
-    } catch (err) {
-      console.error("Export chart render failed:", err);
-      return getChartImage();
+      localStorage.setItem(key, JSON.stringify({ ...ledger, category: CATEGORY, tools }));
+      return true;
+    } catch {
+      return false;
     }
+  }
+  function getChartImage() {
+    const shell = outputShell();
+    if (shell && typeof shell.getChartImage === "function") {
+      const image = shell.getChartImage(TOOL);
+      if (image) return image;
+    }
+
+    return getExportChartImage();
+  }
+
+  function getExportChartImage() {
+    return getElevatorReaderVisualImage(lastMetrics);
   }
 
   function buildCurrentReportPayload() {
@@ -1048,262 +992,6 @@
     return "This is a clean elevator reader design with limited deployment overhead and predictable control behavior.";
   }
 
-  function renderChart(data) {
-    destroyChart();
-
-    if (!els.chart) return;
-
-    showChartWrap();
-
-    const labels = [
-      "Total Readers",
-      "Cars Impact",
-      "Lobby Impact",
-      "Complexity"
-    ];
-
-    const values = [
-      data.totalReaders,
-      data.carReaders,
-      data.lobbyReaders + data.dcsAdd,
-      data.complexityIndex
-    ];
-
-    const displayValues = {
-      0: `${data.totalReaders} readers`,
-      1: `${data.carReaders} in-car`,
-      2: `${data.lobbyReaders + data.dcsAdd} lobby/DCS`,
-      3: `${data.complexityIndex} complexity`
-    };
-
-    const dominantIndex = values.indexOf(Math.max(...values));
-    const referenceValue = 30;
-    const chartMax = Math.max(100, Math.ceil(Math.max(...values, referenceValue, 60) * 1.12));
-
-    const chartBgPlugin = {
-      id: "chartBgPlugin",
-      beforeDraw(c) {
-        const { ctx, chartArea } = c;
-        if (!chartArea) return;
-
-        const { left, top, width, height } = chartArea;
-
-        ctx.save();
-        ctx.fillStyle = "rgba(255,255,255,0.05)";
-        ctx.fillRect(left, top, width, height);
-        ctx.restore();
-      }
-    };
-
-    const thresholdBandPlugin = {
-      id: "thresholdBandPlugin",
-      beforeDatasetsDraw(c) {
-        const { ctx, chartArea, scales } = c;
-        if (!chartArea || !scales.x) return;
-
-        const x = scales.x;
-        const { top, bottom, left, right } = chartArea;
-
-        const healthyMax = Math.min(30, x.max);
-        const watchMax = Math.min(55, x.max);
-
-        ctx.save();
-
-        if (healthyMax > 0) {
-          ctx.fillStyle = "rgba(46, 204, 113, 0.16)";
-          ctx.fillRect(left, top, x.getPixelForValue(healthyMax) - left, bottom - top);
-        }
-
-        if (watchMax > 30) {
-          ctx.fillStyle = "rgba(255, 200, 80, 0.13)";
-          ctx.fillRect(
-            x.getPixelForValue(30),
-            top,
-            x.getPixelForValue(watchMax) - x.getPixelForValue(30),
-            bottom - top
-          );
-        }
-
-        if (x.max > 55) {
-          ctx.fillStyle = "rgba(255, 90, 90, 0.13)";
-          ctx.fillRect(
-            x.getPixelForValue(55),
-            top,
-            right - x.getPixelForValue(55),
-            bottom - top
-          );
-        }
-
-        ctx.restore();
-      },
-      afterDatasetsDraw(c) {
-        const { ctx, chartArea, scales } = c;
-        if (!chartArea || !scales.x || !scales.y) return;
-
-        const x = scales.x;
-        const y = scales.y;
-        const { top, bottom } = chartArea;
-
-        ctx.save();
-
-        const rx = x.getPixelForValue(referenceValue);
-        ctx.strokeStyle = "rgba(120, 255, 170, 0.98)";
-        ctx.lineWidth = 3;
-        ctx.setLineDash([4, 4]);
-        ctx.beginPath();
-        ctx.moveTo(rx, top);
-        ctx.lineTo(rx, bottom);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        ctx.fillStyle = "rgba(220, 255, 235, 0.96)";
-        ctx.font = "600 11px sans-serif";
-        ctx.fillText("Planning Watch Limit", rx + 8, bottom - 10);
-
-        ctx.fillStyle = "rgba(180, 255, 200, 0.82)";
-        ctx.font = "600 11px sans-serif";
-        ctx.fillText("Healthy", x.getPixelForValue(4), top + 14);
-
-        ctx.fillStyle = "rgba(255, 220, 140, 0.82)";
-        ctx.fillText("Watch", x.getPixelForValue(34), top + 14);
-
-        ctx.fillStyle = "rgba(255, 160, 160, 0.82)";
-        ctx.fillText("Risk", x.getPixelForValue(59), top + 14);
-
-        const dominantValue = values[dominantIndex];
-        const px = x.getPixelForValue(dominantValue);
-        const py = y.getPixelForValue(labels[dominantIndex]);
-
-        ctx.beginPath();
-        ctx.arc(px, py, 4.5, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(225, 255, 240, 1)";
-        ctx.fill();
-        ctx.strokeStyle = "rgba(120, 255, 170, 0.95)";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        ctx.fillStyle = "rgba(235, 248, 240, 0.92)";
-        ctx.font = "600 11px sans-serif";
-        ctx.fillText(displayValues[dominantIndex], Math.min(px + 8, chartArea.right - 110), py - 8);
-
-        ctx.restore();
-      }
-    };
-
-    chart = new Chart(els.chart, {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [
-          {
-            label: "Elevator Reader Metrics",
-            data: values,
-            barThickness: 16,
-            maxBarThickness: 16,
-            barPercentage: 0.8,
-            categoryPercentage: 0.7,
-            borderWidth: 2,
-            borderRadius: 8,
-            borderSkipped: false,
-            backgroundColor: (context) => {
-              const i = context.dataIndex;
-              const v = context.raw;
-
-              if (i === dominantIndex) {
-                if (v > 55) return "rgba(255, 92, 92, 1)";
-                if (v > 30) return "rgba(255, 188, 82, 1)";
-                return "rgba(120, 255, 170, 1)";
-              }
-
-              if (v > 55) return "rgba(255, 77, 77, 0.30)";
-              if (v > 30) return "rgba(255, 170, 51, 0.24)";
-              return "rgba(90, 170, 255, 0.15)";
-            },
-            borderColor: (context) => {
-              const i = context.dataIndex;
-              const v = context.raw;
-
-              if (i === dominantIndex) {
-                if (v > 55) return "rgba(255, 220, 220, 1)";
-                if (v > 30) return "rgba(255, 240, 210, 1)";
-                return "rgba(215, 255, 230, 1)";
-              }
-
-              return "rgba(120,170,200,0.18)";
-            }
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        indexAxis: "y",
-        animation: {
-          duration: 700,
-          easing: "easeOutQuart"
-        },
-        layout: {
-          padding: {
-            top: 28,
-            right: 12,
-            left: 10,
-            bottom: 0
-          }
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: "rgba(8, 18, 18, 0.96)",
-            titleColor: "#e8fff1",
-            bodyColor: "#d9f7e7",
-            borderColor: "rgba(100, 255, 180, 0.25)",
-            borderWidth: 1,
-            padding: 12,
-            callbacks: {
-              label(context) {
-                const i = context.dataIndex;
-                return ` ${displayValues[i]}`;
-              }
-            }
-          }
-        },
-        scales: {
-          x: {
-            beginAtZero: true,
-            suggestedMax: chartMax,
-            ticks: {
-              color: "rgba(220, 238, 230, 0.78)"
-            },
-            grid: {
-              color: "rgba(110, 160, 140, 0.10)"
-            },
-            title: {
-              display: true,
-              text: "Planning Magnitude",
-              color: "rgba(230, 255, 240, 0.92)"
-            }
-          },
-          y: {
-            ticks: {
-              color: "rgba(228, 245, 235, 0.92)"
-            },
-            grid: {
-              display: false
-            }
-          }
-        }
-      },
-      plugins: [chartBgPlugin, thresholdBandPlugin]
-    });
-
-    els.chart.style.width = "100%";
-    els.chart.style.height = "340px";
-
-    if (els.chart.parentElement) {
-      els.chart.parentElement.style.minHeight = "340px";
-    }
-  }
-
   function calc() {
     const cars = Math.max(0, Math.floor(n("cars")));
     const banks = Math.max(1, Math.floor(n("banks")));
@@ -1376,14 +1064,29 @@
     ].join("");
 
     lastMetrics = {
+      cars,
+      banks,
+      floors,
+      dest,
+      destLabel: els.dest.options[els.dest.selectedIndex]?.text || dest,
+      placement,
+      placementLabel: els.placement.options[els.placement.selectedIndex]?.text || placement,
       totalReaders,
       carReaders,
       lobbyReaders,
       dcsAdd,
-      complexityIndex
+      complexityIndex,
+      status,
+      systemStatus: status,
+      guidance,
+      insight,
+      interpretation: insight
     };
 
-    renderChart(lastMetrics);
+    renderOutputVisual(lastMetrics);
+    renderElevatorReaderSchedule(lastMetrics);
+    renderLocalAssistant(lastMetrics);
+    publishElevatorReaderSummaryContribution(lastMetrics);
 
     currentReport = buildCurrentReportPayload();
     updateExportControls();
@@ -1413,6 +1116,10 @@
 
     resetResults("Enter values and press Calculate.");
   }
+
+  placeElevatorReaderReportActions();
+  applyShellModules();
+  attachOutputShellExport();
 
   if (els.calc) {
     els.calc.addEventListener("click", calc);
@@ -1449,12 +1156,7 @@
   });
 
   if (els.chart) {
-    els.chart.style.width = "100%";
-    els.chart.style.height = "340px";
-
-    if (els.chart.parentElement) {
-      els.chart.parentElement.style.minHeight = "340px";
-    }
+    // Modern SVG visual sizing is owned by the shared planning visual module.
   }
 
   reset();
