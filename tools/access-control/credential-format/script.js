@@ -165,7 +165,7 @@
   }
 
 
-  // access-control-credential-format-output-contract-022-shell-alignment
+  // access-control-credential-format-output-contract-023-shared-schedule
 
   // access-control-credential-format-shell-alignment-022
   function placeCredentialFormatReportActions() {
@@ -216,41 +216,47 @@
     const assessment = metrics.fit || "Credential format review";
     const interpretation = metrics.interpretation || "Run the calculator to generate credential-format guidance.";
     const summary = metrics.summary || "Run the calculator to generate the credential format assessment.";
+    const schedule = window.ScopedLabsAccessControlDecisionSchedule;
 
-    const tableRows = [
-      credentialFormatScheduleRow("Format", "Format Type", scheduleCell(metrics.formatLabel), "Selected credential numbering model."),
-      credentialFormatScheduleRow("Format", "Facility Code Digits", scheduleCell(metrics.fcDigits), "Used for decimal facility-code capacity."),
-      credentialFormatScheduleRow("Format", "Card Number Digits", scheduleCell(metrics.cardDigits), "Used for decimal card-number capacity."),
-      credentialFormatScheduleRow("Format", "Bit Length", scheduleCell(metrics.bits + "-bit"), "Used for binary capacity approximation."),
-      credentialFormatScheduleRow("Capacity", "Estimated Badge Population", scheduleCell(metrics.population), "Expected active or planned badge population."),
-      credentialFormatScheduleRow("Capacity", "Decimal Capacity", scheduleCell(metrics.totalDecimalLabel), "Facility-code capacity multiplied by card-number capacity."),
-      credentialFormatScheduleRow("Capacity", "Binary Capacity", scheduleCell(metrics.totalBinaryLabel), "Planning approximation after basic parity allowance."),
-      credentialFormatScheduleRow("Decision", "Capacity Used", scheduleCell(capacityUsed), "Primary planning pressure indicator."),
-      credentialFormatScheduleRow("Decision", "Assessment", scheduleCell(assessment), "Credential format fit for the modeled badge population."),
-      credentialFormatScheduleRow("Decision", "Status", credentialFormatStatusChip(status), statusLabel === "RISK" ? "Select a larger or better partitioned credential format before rollout." : statusLabel === "WATCH" ? "Document format boundaries and migration/growth assumptions." : "Credential format has usable planning headroom."),
-      credentialFormatScheduleRow("Summary", "Contribution", scheduleCell("Supplemental Planning Tools"), "Included in Access Control summary when this non-pipeline tool is used.")
+    const rows = [
+      { group: "Format", metric: "Format Type", value: metrics.formatLabel, note: "Selected credential numbering model." },
+      { group: "Format", metric: "Facility Code Digits", value: metrics.fcDigits, note: "Used for decimal facility-code capacity." },
+      { group: "Format", metric: "Card Number Digits", value: metrics.cardDigits, note: "Used for decimal card-number capacity." },
+      { group: "Format", metric: "Bit Length", value: metrics.bits + "-bit", note: "Used for binary capacity approximation." },
+      { group: "Capacity", metric: "Estimated Badge Population", value: metrics.population, note: "Expected active or planned badge population." },
+      { group: "Capacity", metric: "Decimal Capacity", value: metrics.totalDecimalLabel, note: "Facility-code capacity multiplied by card-number capacity." },
+      { group: "Capacity", metric: "Binary Capacity", value: metrics.totalBinaryLabel, note: "Planning approximation after basic parity allowance." },
+      { group: "Decision", metric: "Capacity Used", value: capacityUsed, note: "Primary planning pressure indicator." },
+      { group: "Decision", metric: "Assessment", value: assessment, note: "Credential format fit for the modeled badge population." },
+      { group: "Decision", metric: "Status", valueHtml: schedule && typeof schedule.statusChip === "function" ? schedule.statusChip(status) : credentialFormatStatusChip(status), note: statusLabel === "RISK" ? "Select a larger or better partitioned credential format before rollout." : statusLabel === "WATCH" ? "Document format boundaries and migration/growth assumptions." : "Credential format has usable planning headroom." },
+      { group: "Summary", metric: "Contribution", value: "Supplemental Planning Tools", note: "Included in Access Control summary when this non-pipeline tool is used." }
     ];
 
-    const html = [
-      '<div class="credential-format-decision-hero">',
-      '<div><strong>' + scheduleCell(assessment) + '</strong><span>' + scheduleCell(summary) + '</span></div>',
-      '<div>' + credentialFormatStatusChip(status) + '<span>Capacity used: ' + scheduleCell(capacityUsed) + '</span></div>',
-      '</div>',
-      '<table class="credential-format-summary-table" data-credential-format-summary-table="true" data-export-table-title="Credential Format Decision Schedule"><thead><tr><th>Group</th><th>Metric</th><th>Value</th><th>Engineering Note</th></tr></thead><tbody>',
-      tableRows.join(""),
-      '</tbody></table>',
-      '<p class="mini-note"><strong>Engineering Interpretation:</strong> ' + scheduleCell(interpretation) + '</p>'
-    ].join("");
-
-    const shell = window.ScopedLabsAccessControlOutputShell;
-    if (shell && typeof shell.showVisual === "function") {
-      shell.showVisual({ card: els.decisionCard, wrap: els.chartWrap, target: els.schedule, html });
-    } else {
-      if (els.schedule) els.schedule.innerHTML = html;
-      if (els.chartWrap) els.chartWrap.hidden = false;
-      if (els.decisionCard) els.decisionCard.hidden = false;
+    if (schedule && typeof schedule.render === "function") {
+      return schedule.render({
+        card: els.decisionCard,
+        wrap: els.chartWrap,
+        target: els.schedule,
+        title: assessment,
+        summary,
+        status,
+        statusDetail: "Capacity used: " + capacityUsed,
+        rows,
+        interpretation,
+        exportTableTitle: "Credential Format Decision Schedule",
+        tableDataAttr: 'data-credential-format-summary-table="true" data-access-control-decision-schedule="true"'
+      });
     }
 
+    const html = [
+      '<table data-credential-format-summary-table="true" data-export-table-title="Credential Format Decision Schedule"><thead><tr><th>Group</th><th>Metric</th><th>Value</th><th>Engineering Note</th></tr></thead><tbody>',
+      rows.map((row) => credentialFormatScheduleRow(row.group, row.metric, row.valueHtml || scheduleCell(row.value), row.note)).join(""),
+      '</tbody></table>'
+    ].join("");
+
+    if (els.schedule) els.schedule.innerHTML = html;
+    if (els.chartWrap) els.chartWrap.hidden = false;
+    if (els.decisionCard) els.decisionCard.hidden = false;
     return html;
   }
 

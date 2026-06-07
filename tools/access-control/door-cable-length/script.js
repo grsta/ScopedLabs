@@ -775,7 +775,7 @@
   }
 
 
-  // access-control-door-cable-output-contract-021
+  // access-control-door-cable-output-contract-022-shared-schedule
   function scheduleCell(value) {
     return escapeHtml(value == null || value === "" ? "—" : value);
   }
@@ -827,42 +827,48 @@
     const statusLabel = String(status).toUpperCase() === "HEALTHY" ? "SAFE" : String(status || "PENDING").toUpperCase();
     const summary = metrics.summary || "Door cable routing review generated from the selected distance, slack, door count, and run strategy.";
     const interpretation = metrics.insight || "Run the calculator to generate door cable routing guidance.";
+    const schedule = window.ScopedLabsAccessControlDecisionSchedule;
 
-    const tableRows = [
-      doorCableScheduleRow("Inputs", "Straight-Line Distance", scheduleCell(metrics.distanceLabel), "Base field distance before routing factor and slack."),
-      doorCableScheduleRow("Inputs", "Routing Factor", scheduleCell(metrics.routingLabel), "Routing overhead for open, mixed, or constrained pathways."),
-      doorCableScheduleRow("Inputs", "Service Slack", scheduleCell(metrics.slackLabel), "Additional slack per door for serviceability."),
-      doorCableScheduleRow("Inputs", "Door Count", scheduleCell(metrics.doors), "Number of openings included in this cable estimate."),
-      doorCableScheduleRow("Inputs", "Run Strategy", scheduleCell(metrics.runLabel), "Single combined cable or separate cable paths per opening."),
-      doorCableScheduleRow("Calculated Load", "Routed Distance per Door", scheduleCell(metrics.routedLabel), "Straight-line distance after routing factor."),
-      doorCableScheduleRow("Calculated Load", "Estimated Total per Door", scheduleCell(metrics.perDoorTotalLabel), "Per-door cable quantity after routing, slack, and run strategy."),
-      doorCableScheduleRow("Calculated Load", "Estimated Total Cable", scheduleCell(metrics.totalAllDoorsLabel), "Total planning quantity for all modeled doors."),
-      doorCableScheduleRow("Calculated Load", "Cable Density", scheduleCell(metrics.cableDensityLabel), "Routing pressure indicator compared with straight-line distance."),
-      doorCableScheduleRow("Decision", "Install Difficulty", scheduleCell(metrics.difficulty), "Planning-level routing difficulty."),
-      doorCableScheduleRow("Decision", "Status", doorCableStatusChip(status), statusLabel === "RISK" ? "Reduce routing distance, split pathways, or move hardware closer before final layout." : statusLabel === "WATCH" ? "Proceed with documented pathway assumptions and installation review." : "Routing quantity is usable for the current planning scope."),
-      doorCableScheduleRow("Summary", "Contribution", scheduleCell("Supplemental Planning Tools"), "Included in Access Control summary when this non-pipeline tool is used.")
+    const rows = [
+      { group: "Inputs", metric: "Straight-Line Distance", value: metrics.distanceLabel, note: "Base field distance before routing factor and slack." },
+      { group: "Inputs", metric: "Routing Factor", value: metrics.routingLabel, note: "Routing overhead for open, mixed, or constrained pathways." },
+      { group: "Inputs", metric: "Service Slack", value: metrics.slackLabel, note: "Additional slack per door for serviceability." },
+      { group: "Inputs", metric: "Door Count", value: metrics.doors, note: "Number of openings included in this cable estimate." },
+      { group: "Inputs", metric: "Run Strategy", value: metrics.runLabel, note: "Single combined cable or separate cable paths per opening." },
+      { group: "Calculated Load", metric: "Routed Distance per Door", value: metrics.routedLabel, note: "Straight-line distance after routing factor." },
+      { group: "Calculated Load", metric: "Estimated Total per Door", value: metrics.perDoorTotalLabel, note: "Per-door cable quantity after routing, slack, and run strategy." },
+      { group: "Calculated Load", metric: "Estimated Total Cable", value: metrics.totalAllDoorsLabel, note: "Total planning quantity for all modeled doors." },
+      { group: "Calculated Load", metric: "Cable Density", value: metrics.cableDensityLabel, note: "Routing pressure indicator compared with straight-line distance." },
+      { group: "Decision", metric: "Install Difficulty", value: metrics.difficulty, note: "Planning-level routing difficulty." },
+      { group: "Decision", metric: "Status", valueHtml: schedule && typeof schedule.statusChip === "function" ? schedule.statusChip(status) : doorCableStatusChip(status), note: statusLabel === "RISK" ? "Reduce routing distance, split pathways, or move hardware closer before final layout." : statusLabel === "WATCH" ? "Proceed with documented pathway assumptions and installation review." : "Routing quantity is usable for the current planning scope." },
+      { group: "Summary", metric: "Contribution", value: "Supplemental Planning Tools", note: "Included in Access Control summary when this non-pipeline tool is used." }
     ];
 
-    const html = [
-      '<div class="door-cable-decision-hero">',
-      '<div><strong>' + scheduleCell(metrics.difficulty || "Door cable routing review") + ' routing difficulty</strong><span>' + scheduleCell(summary) + '</span></div>',
-      '<div>' + doorCableStatusChip(status) + '<span>Total cable: ' + scheduleCell(metrics.totalAllDoorsLabel) + '</span></div>',
-      '</div>',
-      '<table class="door-cable-summary-table" data-door-cable-summary-table="true" data-export-table-title="Door Cable Routing Schedule"><thead><tr><th>Group</th><th>Metric</th><th>Value</th><th>Engineering Note</th></tr></thead><tbody>',
-      tableRows.join(""),
-      '</tbody></table>',
-      '<p class="mini-note"><strong>Engineering Interpretation:</strong> ' + scheduleCell(interpretation) + '</p>'
-    ].join("");
-
-    const shell = window.ScopedLabsAccessControlOutputShell;
-    if (shell && typeof shell.showVisual === "function") {
-      shell.showVisual({ card: els.decisionCard, wrap: els.scheduleWrap, target: els.schedule, html });
-    } else {
-      if (els.schedule) els.schedule.innerHTML = html;
-      if (els.scheduleWrap) els.scheduleWrap.hidden = false;
-      if (els.decisionCard) els.decisionCard.hidden = false;
+    if (schedule && typeof schedule.render === "function") {
+      return schedule.render({
+        card: els.decisionCard,
+        wrap: els.scheduleWrap,
+        target: els.schedule,
+        title: (metrics.difficulty || "Door cable routing review") + " routing difficulty",
+        summary,
+        status,
+        statusDetail: "Total cable: " + (metrics.totalAllDoorsLabel || "—"),
+        rows,
+        interpretation,
+        exportTableTitle: "Door Cable Routing Schedule",
+        tableDataAttr: 'data-door-cable-summary-table="true" data-access-control-decision-schedule="true"'
+      });
     }
 
+    const html = [
+      '<table data-door-cable-summary-table="true" data-export-table-title="Door Cable Routing Schedule"><thead><tr><th>Group</th><th>Metric</th><th>Value</th><th>Engineering Note</th></tr></thead><tbody>',
+      rows.map((row) => doorCableScheduleRow(row.group, row.metric, row.valueHtml || scheduleCell(row.value), row.note)).join(""),
+      '</tbody></table>'
+    ].join("");
+
+    if (els.schedule) els.schedule.innerHTML = html;
+    if (els.scheduleWrap) els.scheduleWrap.hidden = false;
+    if (els.decisionCard) els.decisionCard.hidden = false;
     return html;
   }
 

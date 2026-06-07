@@ -81,6 +81,7 @@ const polishPath = path.join("assets", "access-control-tool-polish.js");
 const outputShellPath = path.join("assets", "access-control-output-shell.js");
 const adapterPath = path.join("assets", "access-control-tool-assistant-adapters.js");
 const categoryNavPath = path.join("assets", "access-control-category-nav.js");
+const decisionSchedulePath = path.join("assets", "access-control-decision-schedule.js");
 const toolShellPath = path.join("assets", "scopedlabs-tool-shell.js");
 const localAssistantPath = path.join("assets", "scopedlabs-local-assistant.js");
 const reportMetadataPath = path.join("assets", "scopedlabs-report-metadata.js");
@@ -90,6 +91,7 @@ const polish = exists(polishPath) ? read(polishPath) : "";
 const outputShell = exists(outputShellPath) ? read(outputShellPath) : "";
 const adapters = exists(adapterPath) ? read(adapterPath) : "";
 const categoryNav = exists(categoryNavPath) ? read(categoryNavPath) : "";
+const decisionSchedule = exists(decisionSchedulePath) ? read(decisionSchedulePath) : "";
 const toolShell = exists(toolShellPath) ? read(toolShellPath) : "";
 const localAssistant = exists(localAssistantPath) ? read(localAssistantPath) : "";
 const reportMetadata = exists(reportMetadataPath) ? read(reportMetadataPath) : "";
@@ -182,9 +184,13 @@ for (const slug of dirs) {
     has(html, 'id="flow-note"') ||
     has(html, "id='flow-note'");
 
+  const hasSharedDecisionSchedule =
+    has(html, "access-control-decision-schedule.js") &&
+    has(script, "ScopedLabsAccessControlDecisionSchedule");
+
   const hasOutputShell =
     has(html, "access-control-output-shell.js") &&
-    has(script, "showVisual");
+    (has(script, "showVisual") || has(script, "ScopedLabsAccessControlDecisionSchedule"));
 
   const hasHiddenLedger =
     has(html, "data-result-ledger") &&
@@ -211,6 +217,7 @@ for (const slug of dirs) {
     has(html, "antiPassbackSchedule") ||
     has(script, "renderAntiPassbackSchedule") ||
     has(html, "Door Cable Routing Schedule") ||
+    has(html, "data-access-control-decision-schedule") ||
     has(html, "data-door-cable-summary") ||
     has(html, "door-cable-summary-wrap") ||
     has(script, "renderDoorCableLengthSchedule") ||
@@ -289,6 +296,7 @@ const moduleRows = [
   { module: "access-control-output-shell.js", exists: exists(outputShellPath), parses: moduleParses(outputShell), owns: "visible visual lifecycle / hidden ledger / export image handoff" },
   { module: "access-control-tool-assistant-adapters.js", exists: exists(adapterPath), parses: moduleParses(adapters), owns: "assistant decision model adapters" },
   { module: "access-control-category-nav.js", exists: exists(categoryNavPath), parses: moduleParses(categoryNav), owns: "non-pipeline tool path nav / breadcrumb replacement" },
+  { module: "access-control-decision-schedule.js", exists: exists(decisionSchedulePath), parses: moduleParses(decisionSchedule), owns: "shared access-control decision schedule renderer" },
   { module: "scopedlabs-tool-shell.js", exists: exists(toolShellPath), parses: moduleParses(toolShell), owns: "tool shell diagnostics / standard page helpers" },
   { module: "scopedlabs-local-assistant.js", exists: exists(localAssistantPath), parses: moduleParses(localAssistant), owns: "local assistant card renderer" },
   { module: "scopedlabs-report-metadata.js", exists: exists(reportMetadataPath), parses: moduleParses(reportMetadata), owns: "report metadata context mount" },
