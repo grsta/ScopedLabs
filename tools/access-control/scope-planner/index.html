@@ -7,7 +7,7 @@
   <meta name="description" content="Define access control doors, door groups, access zones, elevator banks, and egress scopes before running downstream access control planning tools." />
   <meta name="robots" content="noindex,follow" />
 
-  <link rel="stylesheet" href="/assets/style.css?v=access-control-scope-planner-elevator-seed-015-bank-labels" />
+  <link rel="stylesheet" href="/assets/style.css?v=access-control-scope-planner-elevator-seed-016-topology" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
@@ -906,14 +906,23 @@
         <section id="elevatorReaderSeedCard" class="card access-elevator-reader-seed-card" hidden data-elevator-reader-seed-card>
           <div class="access-elevator-reader-seed-line">Elevator branch starter</div>
           <h3 class="h3" style="margin-top: 8px;">Elevator Reader Count starter questions</h3>
-          <p class="muted" style="margin-bottom: 0;">These answers seed the Elevator Reader Count branch. Treat an elevator bank as the scoped object, then define how many elevator cars/cabs are in that bank.</p>
+          <p class="muted" style="margin-bottom: 0;">These answers seed the Elevator Reader Count branch. Define whether this scope is one bank, multiple banks, separate elevator locations, or a mixed/custom elevator condition.</p>
           <div class="access-elevator-reader-seed-grid">
             <label class="field">
-              <span class="label">Cars / Cabs in This Bank</span>
+              <span class="label">Elevator Scope Type</span>
+              <select id="elevatorTopology">
+                <option value="single-bank" selected>Single elevator bank</option>
+                <option value="multiple-banks">Multiple elevator banks</option>
+                <option value="separate-elevators">Separate individual elevators / locations</option>
+                <option value="mixed-custom">Mixed / custom elevator scope</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="label">Cars / Cabs per Bank or Location</span>
               <input id="elevatorCars" type="number" min="0" step="1" value="4" />
             </label>
             <label class="field">
-              <span class="label">Elevator Banks in Scope</span>
+              <span class="label">Bank / Location Count</span>
               <input id="elevatorBanks" type="number" min="1" step="1" value="1" />
             </label>
             <label class="field">
@@ -1080,11 +1089,11 @@
   <script src="/assets/pipeline.js?v=access-control-specialty-pipeline-009-summary-core"></script>
   <script src="/assets/access-control-scope-state.js?v=access-control-scope-state-001-area-pattern"></script>
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
-  <script src="./script.js?v=access-control-scope-planner-elevator-seed-015-bank-labels"></script>
+  <script src="./script.js?v=access-control-scope-planner-elevator-seed-016-topology"></script>
   <script>
     window.ScopedLabsToolShell?.applyBackContinueShell?.({ rowId: "accessScopePlannerFlowActions" });
   </script>
   <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>
-  <!-- access-control-scope-planner-elevator-seed-015-bank-labels -->
+  <!-- access-control-scope-planner-elevator-seed-016-topology -->
 </body>
 </html>

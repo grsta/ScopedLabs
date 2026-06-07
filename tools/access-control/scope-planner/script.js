@@ -11,6 +11,7 @@
     scopeType: $("scopeType"),
     planningPath: $("planningPath"),
     elevatorReaderSeedCard: $("elevatorReaderSeedCard"),
+    elevatorTopology: $("elevatorTopology"),
     elevatorCars: $("elevatorCars"),
     elevatorBanks: $("elevatorBanks"),
     elevatorSecuredFloors: $("elevatorSecuredFloors"),
@@ -198,6 +199,7 @@
     return {
       contract: SPECIAL_LOCKING_SEED_CONTRACT,
       sourceMode: "scope-planner",
+      topology: normalizeElevatorTopology(scope.elevatorTopology || (Number(scope.elevatorBanks || scope.banks || 1) > 1 ? "multiple-banks" : "single-bank")),
       openingCount: Math.max(1, Number(scope.specialLockingOpeningCount || scope.openingCount || scope.doorCount || 1) || 1),
       lockingType,
       egressImpact,
@@ -212,6 +214,7 @@
 
     return {
       ...seed,
+      topology: normalizeElevatorTopology(els.elevatorTopology?.value || seed.topology),
       openingCount: Math.max(0, Math.round(Number(els.specialLockingOpeningCount?.value || seed.openingCount || 1) || 0)),
       lockingType: els.specialLockingLockingType?.value || seed.lockingType,
       egressImpact: els.specialLockingEgressImpact?.value || seed.egressImpact,
@@ -291,6 +294,20 @@
     return String(value || "") === "elevator-bank";
   }
 
+
+  function normalizeElevatorTopology(value) {
+    const key = String(value || "").trim();
+    return ["single-bank", "multiple-banks", "separate-elevators", "mixed-custom"].includes(key) ? key : "single-bank";
+  }
+
+  function elevatorTopologyLabel(value) {
+    const key = normalizeElevatorTopology(value);
+    if (key === "multiple-banks") return "Multiple elevator banks";
+    if (key === "separate-elevators") return "Separate individual elevators / locations";
+    if (key === "mixed-custom") return "Mixed / custom elevator scope";
+    return "Single elevator bank";
+  }
+
   function defaultElevatorReaderSeedFromScope(scope = {}) {
     const highSecurity = scope.securityLevel === "high" || scope.securityLevel === "critical";
     const traffic = scope.trafficLevel || "normal";
@@ -329,6 +346,7 @@
   function hydrateElevatorReaderSeed(scope = {}) {
     const seed = scope.branchSeeds?.elevatorReader || scope.elevatorReaderSeed || defaultElevatorReaderSeedFromScope(scope);
 
+    if (els.elevatorTopology) els.elevatorTopology.value = normalizeElevatorTopology(seed.topology);
     if (els.elevatorCars) els.elevatorCars.value = String(seed.cars || 4);
     if (els.elevatorBanks) els.elevatorBanks.value = String(seed.banks || 1);
     if (els.elevatorSecuredFloors) els.elevatorSecuredFloors.value = String(seed.floors || 0);
@@ -359,6 +377,7 @@
         elevatorReader: seed
       },
       elevatorReaderSeed: seed,
+      elevatorTopology: seed.topology,
       elevatorCars: seed.cars,
       elevatorBanks: seed.banks,
       elevatorSecuredFloors: seed.floors
@@ -1119,6 +1138,14 @@
 
     bindEvents();
     render();
+  }
+
+  if (els.elevatorTopology) {
+    els.elevatorTopology.addEventListener("change", () => {
+      if (els.elevatorTopology.value === "separate-elevators" && els.elevatorCars && Number(els.elevatorCars.value || 0) > 1) {
+        els.elevatorCars.value = "1";
+      }
+    });
   }
 
   window.ScopedLabsAccessControlScopePlannerBranchSeeds = Object.freeze({

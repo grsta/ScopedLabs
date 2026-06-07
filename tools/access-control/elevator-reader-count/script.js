@@ -12,6 +12,7 @@
   let lastMetrics = null;
 
   const els = {
+    topology: $("topology"),
     cars: $("cars"),
     banks: $("banks"),
     floors: $("floors"),
@@ -71,7 +72,9 @@
 
   function normalizeElevatorReaderSeed(seed = {}) {
     return {
+      topology: elevatorTopologyLabel(seed.topology),
       contract: seed.contract || ELEVATOR_READER_SEED_CONTRACT,
+      topology: normalizeElevatorTopology(seed.topology),
       cars: Math.max(0, Math.round(Number(seed.cars || 0) || 0)),
       banks: Math.max(1, Math.round(Number(seed.banks || 1) || 1)),
       floors: Math.max(0, Math.round(Number(seed.floors || 0) || 0)),
@@ -159,9 +162,10 @@
     const labels = elevatorReaderSeedLabels(seed);
     const rows = [
       ["Scope Type", context.scopeType],
-      ["Cars", String(seed.cars ?? "")],
-      ["Banks", String(seed.banks ?? "")],
-      ["Secured Floors", String(seed.floors ?? "")],
+      ["Elevator Topology", labels.topology],
+      ["Bank / Location Count", String(seed.banks ?? "")],
+      ["Cars / Cabs per Bank or Location", String(seed.cars ?? "")],
+      ["Secured Floors Served", String(seed.floors ?? "")],
       ["Destination Control", labels.dest],
       ["Reader Placement", labels.placement],
       ["Tenant Separation", labels.tenantSeparation],
@@ -188,6 +192,7 @@
     if (!context || !context.seed) return false;
 
     const seed = context.seed;
+    setSelectValue(els.topology, seed.topology);
     if (els.cars) els.cars.value = String(seed.cars || 0);
     if (els.banks) els.banks.value = String(seed.banks || 1);
     if (els.floors) els.floors.value = String(seed.floors || 0);
@@ -612,7 +617,7 @@
     const rows = [
       { group: "Reader Model", metric: "Total Readers", value: metrics.totalReaders, note: "Estimated total reader count for the selected elevator strategy." },
       { group: "Reader Model", metric: "Car / Lobby / DCS", value: metrics.carReaders + " / " + metrics.lobbyReaders + " / " + metrics.dcsAdd, note: "Shows how the selected placement and DCS setting drive reader count." },
-      { group: "Scope", metric: "Cars / Banks / Floors", value: metrics.cars + " / " + metrics.banks + " / " + metrics.floors, note: "Elevator scope inputs used for planning magnitude." },
+      { group: "Scope", metric: "Topology / Count / Floors", value: metrics.topologyLabel + " / " + metrics.banks + " / " + metrics.floors, note: "Topology, bank/location count, and secured floors used for reader-count planning magnitude." },
       { group: "Pressure", metric: "Complexity Index", value: metrics.complexityIndex, note: "Used to flag elevator coordination and integration pressure." },
       { group: "Decision", metric: "Placement", value: metrics.placementLabel, note: metrics.guidance },
       { group: "Decision", metric: "Destination Control", value: metrics.destLabel, note: metrics.insight }
@@ -690,6 +695,7 @@
           dcsAdd: metrics.dcsAdd,
           complexityIndex: metrics.complexityIndex,
           placement: metrics.placementLabel,
+          topology: metrics.topologyLabel,
           destinationControl: metrics.destLabel,
           scopeSeed: activeElevatorSeedContext ? { scopeId: activeElevatorSeedContext.scopeId, scopeName: activeElevatorSeedContext.scopeName, source: activeElevatorSeedContext.source } : null
         }
@@ -732,9 +738,10 @@
       interpretation: getInterpretationFromResults(outputs),
       inputs: [
         { label: "Scope Planner Source", value: activeElevatorSeedContext ? activeElevatorSeedContext.scopeName + " / " + activeElevatorSeedContext.source : "Standalone elevator branch" },
-        { label: "Elevator Cars", value: String(els.cars.value) },
-        { label: "Elevator Banks (groups)", value: String(els.banks.value) },
-        { label: "Secured Floors", value: String(els.floors.value) },
+        { label: "Elevator Scope Type", value: els.topology?.options[els.topology.selectedIndex]?.text || els.topology?.value || "Single elevator bank" },
+        { label: "Cars / Cabs per Bank or Location", value: String(els.cars.value) },
+        { label: "Bank / Location Count", value: String(els.banks.value) },
+        { label: "Secured Floors Served", value: String(els.floors.value) },
         { label: "Destination Control System?", value: els.dest.options[els.dest.selectedIndex]?.text || els.dest.value },
         { label: "Reader Placement", value: els.placement.options[els.placement.selectedIndex]?.text || els.placement.value }
       ],
@@ -1106,6 +1113,20 @@
     }
   }
 
+
+  function normalizeElevatorTopology(value) {
+    const key = String(value || "").trim();
+    return ["single-bank", "multiple-banks", "separate-elevators", "mixed-custom"].includes(key) ? key : "single-bank";
+  }
+
+  function elevatorTopologyLabel(value) {
+    const key = normalizeElevatorTopology(value);
+    if (key === "multiple-banks") return "Multiple elevator banks";
+    if (key === "separate-elevators") return "Separate individual elevators / locations";
+    if (key === "mixed-custom") return "Mixed / custom elevator scope";
+    return "Single elevator bank";
+  }
+
   function getPerBankReaders(floors) {
     return floors > 12 ? 2 : 1;
   }
@@ -1149,15 +1170,18 @@
   }
 
   function calc() {
-    const cars = Math.max(0, Math.floor(n("cars")));
-    const banks = Math.max(1, Math.floor(n("banks")));
+    const topology = normalizeElevatorTopology(els.topology?.value);
+    const carsPerGroup = Math.max(0, Math.floor(n("cars")));
+    const scopeCountInput = Math.max(1, Math.floor(n("banks")));
+    const banks = topology === "single-bank" ? 1 : scopeCountInput;
+    const cars = carsPerGroup * banks;
     const floors = Math.max(0, Math.floor(n("floors")));
     const dest = els.dest.value;
     const placement = els.placement.value;
 
     if (cars <= 0) {
       if (els.results) {
-        els.results.innerHTML = row("Error", "Enter Elevator Cars > 0");
+        els.results.innerHTML = row("Error", "Enter Cars / Cabs per Bank or Location > 0");
       }
 
       destroyChart();
@@ -1204,9 +1228,11 @@
     const insight = getInsight(status, dest, totalReaders);
 
     els.results.innerHTML = [
-      row("Cars", cars),
-      row("Banks", banks),
-      row("Secured Floors", floors),
+      row("Elevator Scope Type", elevatorTopologyLabel(topology)),
+      row("Bank / Location Count", banks),
+      row("Cars / Cabs per Bank or Location", carsPerGroup),
+      row("Total Cars / Cabs", cars),
+      row("Secured Floors Served", floors),
       row("Destination Control", dest === "yes" ? "YES" : "NO"),
       row("Placement", placement.toUpperCase()),
       row("Car Readers (est.)", carReaders),
@@ -1220,6 +1246,9 @@
     ].join("");
 
     lastMetrics = {
+      topology,
+      topologyLabel: elevatorTopologyLabel(topology),
+      carsPerGroup,
       cars,
       banks,
       floors,
@@ -1264,7 +1293,8 @@
   }
 
   function reset() {
-    if (els.cars) els.cars.value = 6;
+    if (els.topology) els.topology.value = "multiple-banks";
+    if (els.cars) els.cars.value = 3;
     if (els.banks) els.banks.value = 2;
     if (els.floors) els.floors.value = 8;
     if (els.dest) els.dest.value = "no";
@@ -1288,6 +1318,7 @@
   }
 
   [
+    els.topology,
     els.cars,
     els.banks,
     els.floors,
