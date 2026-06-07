@@ -37,7 +37,10 @@
     assistantMount: $("accessControlLocalAssistantMount"),
     flowActions: $("accessControlFlowActions"),
     reportMetadataMount: $("reportMetadataMount"),
-    reportActions: $("doorCableReportActions")
+    reportActions: $("doorCableReportActions"),
+    visualCard: $("doorCablePlanningVisualCard"),
+    visualWrap: $("doorCablePlanningVisualWrap"),
+    visualMount: $("doorCablePlanningVisual")
   };
 
   function n(id) {
@@ -352,17 +355,11 @@
   }
 
   function getChartImage() {
-    try {
-      if (chart && typeof chart.toBase64Image === "function") {
-        return chart.toBase64Image("image/png", 1);
-      }
-    } catch {}
-
-    return "";
+    return getDoorCablePlanningVisualImage();
   }
 
   function getExportChartImage() {
-    return "";
+    return getDoorCablePlanningVisualImage();
   }
 
   function buildCurrentReportPayload() {
@@ -397,7 +394,7 @@
       ],
       outputs,
       assumptions: getAssumptions(),
-      chartImage: "",
+      chartImage: getDoorCablePlanningVisualImage(),
       meta: getReportMeta()
     };
   }
@@ -775,7 +772,7 @@
   }
 
 
-  // access-control-door-cable-output-contract-022-shared-schedule
+  // access-control-door-cable-output-contract-023-modern-visual
   function scheduleCell(value) {
     return escapeHtml(value == null || value === "" ? "—" : value);
   }
@@ -820,6 +817,38 @@
       "Confirm the actual pathway before procurement or installation.",
       "Carry this result into the Access Control summary as supplemental routing context."
     ];
+  }
+
+
+  // access-control-door-cable-modern-visual-023
+  function renderDoorCablePlanningVisual(metrics = {}) {
+    const visuals = window.ScopedLabsAccessControlPlanningVisuals;
+    if (!visuals || typeof visuals.renderDoorCable !== "function") return false;
+
+    return visuals.renderDoorCable({
+      card: els.visualCard,
+      wrap: els.visualWrap,
+      target: els.visualMount,
+      metrics
+    });
+  }
+
+  function clearDoorCablePlanningVisual() {
+    const visuals = window.ScopedLabsAccessControlPlanningVisuals;
+    if (visuals && typeof visuals.hide === "function") {
+      visuals.hide({ card: els.visualCard, wrap: els.visualWrap, target: els.visualMount });
+      return;
+    }
+
+    if (els.visualMount) els.visualMount.innerHTML = "";
+    if (els.visualWrap) els.visualWrap.hidden = true;
+    if (els.visualCard) els.visualCard.hidden = true;
+  }
+
+  function getDoorCablePlanningVisualImage() {
+    const visuals = window.ScopedLabsAccessControlPlanningVisuals;
+    if (!visuals || typeof visuals.getDataUri !== "function") return "";
+    return visuals.getDataUri(els.visualMount);
   }
 
   function renderDoorCableLengthSchedule(metrics = {}) {
@@ -993,7 +1022,7 @@
 
     return shell.register(TOOL, {
       getChartImage() {
-        return "";
+        return getDoorCablePlanningVisualImage();
       },
       attachExportGetter() {
         return false;
@@ -1141,6 +1170,7 @@
     lastMetrics = metrics;
 
     renderDoorCableLengthSchedule(metrics);
+    renderDoorCablePlanningVisual(metrics);
     renderDoorCableLengthAssistant(metrics);
     publishDoorCableLengthSummaryContribution(metrics);
 
@@ -1155,6 +1185,7 @@
 
     destroyChart();
     clearDoorCableLengthSchedule();
+    clearDoorCablePlanningVisual();
     clearDoorCableLengthAssistant();
     lastMetrics = null;
     currentReport = null;

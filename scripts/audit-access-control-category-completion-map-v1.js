@@ -82,6 +82,7 @@ const outputShellPath = path.join("assets", "access-control-output-shell.js");
 const adapterPath = path.join("assets", "access-control-tool-assistant-adapters.js");
 const categoryNavPath = path.join("assets", "access-control-category-nav.js");
 const decisionSchedulePath = path.join("assets", "access-control-decision-schedule.js");
+const planningVisualsPath = path.join("assets", "access-control-planning-visuals.js");
 const toolShellPath = path.join("assets", "scopedlabs-tool-shell.js");
 const localAssistantPath = path.join("assets", "scopedlabs-local-assistant.js");
 const reportMetadataPath = path.join("assets", "scopedlabs-report-metadata.js");
@@ -92,6 +93,7 @@ const outputShell = exists(outputShellPath) ? read(outputShellPath) : "";
 const adapters = exists(adapterPath) ? read(adapterPath) : "";
 const categoryNav = exists(categoryNavPath) ? read(categoryNavPath) : "";
 const decisionSchedule = exists(decisionSchedulePath) ? read(decisionSchedulePath) : "";
+const planningVisuals = exists(planningVisualsPath) ? read(planningVisualsPath) : "";
 const toolShell = exists(toolShellPath) ? read(toolShellPath) : "";
 const localAssistant = exists(localAssistantPath) ? read(localAssistantPath) : "";
 const reportMetadata = exists(reportMetadataPath) ? read(reportMetadataPath) : "";
@@ -162,6 +164,14 @@ for (const slug of dirs) {
     has(html, "<canvas") ||
     has(script, "new Chart(") ||
     has(script, "function renderChart(");
+
+  const visualRequired = slug === "door-cable-length" || slug === "door-count-planner";
+  const hasModernPlanningVisual =
+    has(html, "access-control-planning-visuals.js") &&
+    has(html, "data-access-control-modern-visual") &&
+    has(script, "ScopedLabsAccessControlPlanningVisuals") &&
+    has(script, "getChartImage()") &&
+    has(script, "chartImage: get");
 
   const hasToolShellContract =
     has(html, "scopedlabs-tool-shell.js");
@@ -296,6 +306,7 @@ for (const slug of dirs) {
     hiddenLedger: checkToken(isScopeEntry || isAcceptedReference || hasHiddenLedger),
     summaryReady: checkToken(hasSummaryReadyContribution),
     oldChart: checkToken(isScopeEntry || isAcceptedReference || !hasChartJs),
+    modernVisual: checkToken(!visualRequired || hasModernPlanningVisual),
     compactOutput: checkToken(isScopeEntry || isAcceptedReference || hasCompactSchedule),
     next: recommendedNext({ slug, lane })
   });
@@ -307,6 +318,7 @@ const moduleRows = [
   { module: "access-control-tool-assistant-adapters.js", exists: exists(adapterPath), parses: moduleParses(adapters), owns: "assistant decision model adapters" },
   { module: "access-control-category-nav.js", exists: exists(categoryNavPath), parses: moduleParses(categoryNav), owns: "non-pipeline tool path nav / breadcrumb replacement" },
   { module: "access-control-decision-schedule.js", exists: exists(decisionSchedulePath), parses: moduleParses(decisionSchedule), owns: "shared access-control decision schedule renderer" },
+  { module: "access-control-planning-visuals.js", exists: exists(planningVisualsPath), parses: moduleParses(planningVisuals), owns: "shared modern planning visuals for tools that previously had charts" },
   { module: "scopedlabs-tool-shell.js", exists: exists(toolShellPath), parses: moduleParses(toolShell), owns: "tool shell diagnostics / standard page helpers" },
   { module: "scopedlabs-local-assistant.js", exists: exists(localAssistantPath), parses: moduleParses(localAssistant), owns: "local assistant card renderer" },
   { module: "scopedlabs-report-metadata.js", exists: exists(reportMetadataPath), parses: moduleParses(reportMetadata), owns: "report metadata context mount" },

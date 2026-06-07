@@ -36,7 +36,10 @@
     assistantMount: $("accessControlLocalAssistantMount"),
     flowActions: $("accessControlFlowActions"),
     reportMetadataMount: $("reportMetadataMount"),
-    reportActions: $("doorCountReportActions")
+    reportActions: $("doorCountReportActions"),
+    visualCard: $("doorCountPlanningVisualCard"),
+    visualWrap: $("doorCountPlanningVisualWrap"),
+    visualMount: $("doorCountPlanningVisual")
   };
 
   function n(id) {
@@ -357,17 +360,11 @@
   }
 
   function getChartImage() {
-    try {
-      if (chart && typeof chart.toBase64Image === "function") {
-        return chart.toBase64Image("image/png", 1);
-      }
-    } catch {}
-
-    return "";
+    return getDoorCountPlanningVisualImage();
   }
 
   function getExportChartImage() {
-    return "";
+    return getDoorCountPlanningVisualImage();
   }
 
   function buildCurrentReportPayload() {
@@ -401,7 +398,7 @@
       ],
       outputs,
       assumptions: getAssumptions(),
-      chartImage: "",
+      chartImage: getDoorCountPlanningVisualImage(),
       meta: getReportMeta()
     };
   }
@@ -767,7 +764,7 @@
   }
 
 
-  // access-control-door-count-output-contract-021
+  // access-control-door-count-output-contract-022-modern-visual
   function doorCountStatusFromComplexity(complexityIndex) {
     return getStatus(complexityIndex);
   }
@@ -794,6 +791,38 @@
       "Confirm whether future expansion, high-security areas, or compliance requirements change the count.",
       "Carry this result into the Access Control summary as supplemental scope context."
     ];
+  }
+
+
+  // access-control-door-count-modern-visual-022
+  function renderDoorCountPlanningVisual(metrics = {}) {
+    const visuals = window.ScopedLabsAccessControlPlanningVisuals;
+    if (!visuals || typeof visuals.renderDoorCount !== "function") return false;
+
+    return visuals.renderDoorCount({
+      card: els.visualCard,
+      wrap: els.visualWrap,
+      target: els.visualMount,
+      metrics
+    });
+  }
+
+  function clearDoorCountPlanningVisual() {
+    const visuals = window.ScopedLabsAccessControlPlanningVisuals;
+    if (visuals && typeof visuals.hide === "function") {
+      visuals.hide({ card: els.visualCard, wrap: els.visualWrap, target: els.visualMount });
+      return;
+    }
+
+    if (els.visualMount) els.visualMount.innerHTML = "";
+    if (els.visualWrap) els.visualWrap.hidden = true;
+    if (els.visualCard) els.visualCard.hidden = true;
+  }
+
+  function getDoorCountPlanningVisualImage() {
+    const visuals = window.ScopedLabsAccessControlPlanningVisuals;
+    if (!visuals || typeof visuals.getDataUri !== "function") return "";
+    return visuals.getDataUri(els.visualMount);
   }
 
   function renderDoorCountPlanningSchedule(metrics = {}) {
@@ -964,7 +993,7 @@
 
     return shell.register(TOOL, {
       getChartImage() {
-        return "";
+        return getDoorCountPlanningVisualImage();
       },
       attachExportGetter() {
         return false;
@@ -1112,6 +1141,7 @@
     lastMetrics = metrics;
 
     renderDoorCountPlanningSchedule(metrics);
+    renderDoorCountPlanningVisual(metrics);
     renderDoorCountAssistant(metrics);
     publishDoorCountSummaryContribution(metrics);
 
@@ -1126,6 +1156,7 @@
 
     destroyChart();
     clearDoorCountPlanningSchedule();
+    clearDoorCountPlanningVisual();
     clearDoorCountAssistant();
     lastMetrics = null;
     currentReport = null;
