@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-004-door-count-fit";
+  const VERSION = "access-control-planning-visuals-005-control-mode-fit";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -289,14 +289,14 @@
     function controlModeBlock(label, x, y, w, h) {
       const lines = wrapLabel(label, 22, 2);
       const tspans = lines.map((line, index) => {
-        const dy = index === 0 ? 0 : 13;
+        const dy = index === 0 ? 0 : 12;
         return '<tspan x="' + (x + 12) + '" dy="' + dy + '">' + escapeHtml(line) + '</tspan>';
       }).join('');
       return [
         '<g>',
         '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="10" fill="rgba(0,0,0,.14)" stroke="rgba(120,255,120,.10)" />',
-        '<text x="' + (x + 12) + '" y="' + (y + 16) + '" font-size="9" fill="rgba(203,213,225,.62)" letter-spacing=".8">CONTROL MODE</text>',
-        '<text x="' + (x + 12) + '" y="' + (y + 32) + '" font-size="11" fill="rgba(238,255,244,.90)" font-weight="800">' + tspans + '</text>',
+        '<text x="' + (x + 12) + '" y="' + (y + 15) + '" font-size="9" fill="rgba(203,213,225,.62)" letter-spacing=".8">CONTROL MODE</text>',
+        '<text x="' + (x + 12) + '" y="' + (y + 30) + '" font-size="10.5" fill="rgba(238,255,244,.90)" font-weight="800">' + tspans + '</text>',
         '</g>'
       ].join('');
     }
@@ -333,7 +333,7 @@
       metricChip("total doors", String(metrics.doors ?? doors ?? "?"), 296, 248, 110),
       metricChip("readers", String(metrics.readers ?? readers ?? "?"), 420, 248, 100),
       metricChip("complexity", String(metrics.complexityIndex ?? complexity ?? "?"), 534, 248, 116),
-      controlModeBlock(metrics.bothSidesLabel || "?", 534, 296, 182, 40),
+      controlModeBlock(metrics.bothSidesLabel || "?", 534, 292, 182, 52),
       '</svg>',
       '<p class="sl-vis-note"><strong>Visual note:</strong> Interior and high-security values are weighted planning contributions. The final controlled-door total is rounded after the weighted values are added, so rounded component labels may not equal the final total.</p>',
       '</div>'

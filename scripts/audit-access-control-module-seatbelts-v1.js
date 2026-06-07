@@ -34,7 +34,7 @@ function parses(rel) {
   }
 }
 
-const version = 'access-control-planning-visuals-004-door-count-fit';
+const version = 'access-control-planning-visuals-005-control-mode-fit';
 
 const moduleRel = 'assets/access-control-planning-visuals.js';
 const doorCountHtmlRel = 'tools/access-control/door-count-planner/index.html';
