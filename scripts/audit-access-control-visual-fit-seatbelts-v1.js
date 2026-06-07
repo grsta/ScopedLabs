@@ -168,6 +168,8 @@ pages.forEach((rel) => {
   });
 });
 
+check("Controlled door opening icon primitive exists", moduleText.includes("function controlledDoorOpeningIcon"));
+check("Special Locking renderer uses shared controlled door icon", moduleText.includes("function buildSpecialLockingSvg") && moduleText.includes("controlledDoorOpeningIcon({"));
 check("Special Locking taller-card renderer is protected", (() => {
   const renderer = renderersBySlug.get("special-locking-scope");
   if (!renderer) return false;

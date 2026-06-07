@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-013-special-locking-door-icons";
+  const VERSION = "access-control-planning-visuals-014-controlled-door-icon-library";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -63,6 +63,57 @@
     if (tone === "risk") return "rgba(255,170,170,.96)";
     if (tone === "watch") return "rgba(255,220,130,.96)";
     return "rgba(125,255,152,.96)";
+  }
+
+
+  function controlledDoorOpeningIcon(options = {}) {
+    const x = Number(options.x || 0);
+    const y = Number(options.y || 0);
+    const scale = Number(options.scale || 1);
+    const label = options.label || "";
+    const tone = options.tone || "safe";
+
+    const stroke = toneStroke(tone);
+    const fill = toneFill(tone);
+    const readerStroke = tone === "risk" ? "rgba(255,170,170,.72)" : tone === "watch" ? "rgba(255,220,130,.72)" : "rgba(125,255,152,.70)";
+    const readerFill = tone === "risk" ? "rgba(255,105,105,.18)" : tone === "watch" ? "rgba(255,204,102,.18)" : "rgba(120,255,120,.16)";
+
+    function sx(value) {
+      return Math.round((x + value * scale) * 10) / 10;
+    }
+
+    function sy(value) {
+      return Math.round((y + value * scale) * 10) / 10;
+    }
+
+    function sw(value) {
+      return Math.round(value * scale * 10) / 10;
+    }
+
+    const labelText = label
+      ? '<text x="' + sx(31) + '" y="' + sy(70) + '" font-size="' + sw(8) + '" fill="rgba(203,213,225,.58)" text-anchor="middle">' + escapeHtml(label) + '</text>'
+      : "";
+
+    return [
+      '<g class="sl-controlled-door-icon" aria-label="controlled door opening">',
+      '<rect x="' + sx(4) + '" y="' + sy(2) + '" width="' + sw(54) + '" height="' + sw(56) + '" rx="' + sw(5) + '" fill="rgba(0,0,0,.10)" stroke="rgba(120,255,120,.10)" />',
+
+      '<path d="M' + sx(14) + ' ' + sy(55) + ' V' + sy(14) + ' H' + sx(48) + ' V' + sy(55) + '" fill="none" stroke="rgba(203,213,225,.48)" stroke-width="' + sw(1.3) + '" />',
+      '<path d="M' + sx(14) + ' ' + sy(55) + ' L' + sx(42) + ' ' + sy(43) + ' V' + sy(12) + '" fill="none" stroke="' + stroke + '" stroke-width="' + sw(1.4) + '" />',
+      '<path d="M' + sx(14) + ' ' + sy(55) + ' A' + sw(36) + ' ' + sw(36) + ' 0 0 1 ' + sx(48) + ' ' + sy(36) + '" fill="none" stroke="rgba(203,213,225,.36)" stroke-width="' + sw(1.1) + '" stroke-dasharray="' + sw(4) + ' ' + sw(5) + '" />',
+
+      '<circle cx="' + sx(27) + '" cy="' + sy(40) + '" r="' + sw(4.8) + '" fill="rgba(0,0,0,.18)" stroke="rgba(203,213,225,.58)" stroke-width="' + sw(1.1) + '" />',
+      '<path d="M' + sx(30) + ' ' + sy(40) + ' H' + sx(48) + '" fill="none" stroke="rgba(203,213,225,.68)" stroke-width="' + sw(1.4) + '" stroke-linecap="round" />',
+
+      '<rect x="' + sx(-6) + '" y="' + sy(24) + '" width="' + sw(10) + '" height="' + sw(22) + '" rx="' + sw(2) + '" fill="' + readerFill + '" stroke="' + readerStroke + '" stroke-width="' + sw(1.1) + '" />',
+      '<path d="M' + sx(-2) + ' ' + sy(33) + ' q' + sw(4) + ' ' + sw(4) + ' 0 ' + sw(8) + ' M' + sx(-6) + ' ' + sy(32) + ' q' + sw(8) + ' ' + sw(6) + ' 0 ' + sw(12) + '" fill="none" stroke="' + readerStroke + '" stroke-width="' + sw(1) + '" stroke-linecap="round" />',
+
+      '<rect x="' + sx(47) + '" y="' + sy(18) + '" width="' + sw(7) + '" height="' + sw(15) + '" rx="' + sw(1.2) + '" fill="rgba(203,213,225,.08)" stroke="rgba(203,213,225,.42)" stroke-width="' + sw(1) + '" />',
+      '<rect x="' + sx(47) + '" y="' + sy(46) + '" width="' + sw(7) + '" height="' + sw(9) + '" rx="' + sw(1.2) + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + sw(1) + '" />',
+
+      labelText,
+      '</g>'
+    ].join("");
   }
 
   function metricChip(label, value, x, y, w) {
@@ -361,22 +412,17 @@
     const overridePlan = metrics.overridePlanLabel || metrics.overridePlan || "?";
 
     function openingNode(index) {
-      const x = 74 + (index % 4) * 58;
-      const y = 146 + Math.floor(index / 4) * 50;
+      const x = 72 + (index % 4) * 62;
+      const y = 140 + Math.floor(index / 4) * 56;
       const label = "OP " + (index + 1);
 
-      return [
-        '<g aria-label="controlled opening ' + (index + 1) + '">',
-        '<rect x="' + x + '" y="' + y + '" width="40" height="38" rx="5" fill="rgba(120,255,120,.050)" stroke="rgba(125,255,152,.30)" />',
-        '<path d="M' + (x + 10) + ' ' + (y + 30) + ' H' + (x + 30) + '" stroke="rgba(203,213,225,.38)" stroke-width="1" />',
-        '<path d="M' + (x + 12) + ' ' + (y + 30) + ' V' + (y + 9) + ' H' + (x + 27) + '" fill="none" stroke="rgba(203,213,225,.44)" stroke-width="1.2" />',
-        '<path d="M' + (x + 12) + ' ' + (y + 30) + ' L' + (x + 28) + ' ' + (y + 22) + ' V' + (y + 7) + '" fill="none" stroke="rgba(125,255,152,.58)" stroke-width="1.2" />',
-        '<path d="M' + (x + 12) + ' ' + (y + 30) + ' A20 20 0 0 1 ' + (x + 31) + ' ' + (y + 20) + '" fill="none" stroke="rgba(125,255,152,.24)" stroke-width="1" stroke-dasharray="3 4" />',
-        '<rect x="' + (x + 31) + '" y="' + (y + 16) + '" width="4" height="8" rx="1.5" fill="rgba(255,204,102,.24)" stroke="rgba(255,204,102,.62)" />',
-        '<circle cx="' + (x + 27) + '" cy="' + (y + 22) + '" r="1.6" fill="rgba(125,255,152,.78)" />',
-        '<text x="' + (x + 20) + '" y="' + (y + 47) + '" font-size="7.5" fill="rgba(203,213,225,.58)" text-anchor="middle">' + label + '</text>',
-        '</g>'
-      ].join('');
+      return controlledDoorOpeningIcon({
+        x,
+        y,
+        scale: 0.72,
+        label,
+        tone: pressureTone
+      });
     }
 
     function authorityBlock(label, value, x, y, w, toneName) {
@@ -618,6 +664,7 @@
   }
 
   window.ScopedLabsAccessControlPlanningVisuals = Object.freeze({
+    controlledDoorOpeningIcon,
     VERSION,
     renderDoorCable,
     renderDoorCount,
