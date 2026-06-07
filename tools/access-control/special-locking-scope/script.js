@@ -20,6 +20,10 @@
     exceptionMode: $("exceptionMode"),
     syncOpeningExceptions: $("syncOpeningExceptions"),
     openingExceptionsWrap: $("openingExceptionsWrap"),
+    scopeSeedContextCard: $("scopeSeedContextCard"),
+    scopeSeedContextTitle: $("scopeSeedContextTitle"),
+    scopeSeedContextDescription: $("scopeSeedContextDescription"),
+    scopeSeedContextGrid: $("scopeSeedContextGrid"),
     results: $("results"),
     calc: $("calc"),
     reset: $("reset"),
@@ -492,6 +496,119 @@
     return exceptions.map((item) => "#" + item.openingNumber + " " + item.status + " - " + item.driverSummary).join("; ");
   }
 
+
+  const SPECIAL_LOCKING_SEED_KEY = "scopedlabs:pipeline:access-control:special-locking-seed";
+  const SPECIAL_LOCKING_SEED_CONTRACT = "scopedlabs.access-control.branch-seed.special-locking.v1";
+  let activeScopeSeedContext = null;
+
+  function safeJsonParse(text, fallback = null) {
+    try {
+      return text ? JSON.parse(text) : fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
+  function readStoredSpecialLockingSeed() {
+    try {
+      return safeJsonParse(sessionStorage.getItem(SPECIAL_LOCKING_SEED_KEY), null) || safeJsonParse(localStorage.getItem(SPECIAL_LOCKING_SEED_KEY), null);
+    } catch {
+      return null;
+    }
+  }
+
+  function normalizeSpecialLockingSeed(seed = {}) {
+    return {
+      contract: seed.contract || SPECIAL_LOCKING_SEED_CONTRACT,
+      openingCount: Math.max(0, Math.round(Number(seed.openingCount || 1) || 0)),
+      lockingType: seed.lockingType || "maglock",
+      egressImpact: seed.egressImpact || "unknown",
+      releaseLogic: seed.releaseLogic || "needed",
+      authorityReview: seed.authorityReview || "likely",
+      overridePlan: seed.overridePlan || "documented"
+    };
+  }
+
+  function getScopeSeedContext() {
+    const scopeApi = window.ScopedLabsAccessControlScopeState;
+    const activeScope = scopeApi && typeof scopeApi.getActiveScope === "function" ? scopeApi.getActiveScope() : null;
+    const stored = readStoredSpecialLockingSeed();
+    const activeSeed = activeScope?.branchSeeds?.specialLocking || activeScope?.specialLockingSeed || null;
+    const storedMatches = stored && (!activeScope || !stored.scopeId || stored.scopeId === activeScope.id);
+    const seed = activeSeed || (storedMatches ? stored.seed : null);
+
+    if (!seed) return null;
+
+    return {
+      contract: SPECIAL_LOCKING_SEED_CONTRACT,
+      source: "Access Scope Planner",
+      scopeId: activeScope?.id || stored?.scopeId || "",
+      scopeName: activeScope?.name || stored?.scopeName || "Access Scope",
+      scopeType: activeScope?.scopeType || stored?.scopeType || "special-locking-scope",
+      planningPath: activeScope?.planningPath || stored?.planningPath || "special-locking-scope",
+      seed: normalizeSpecialLockingSeed(seed),
+      rawScope: activeScope || null
+    };
+  }
+
+  function renderScopeSeedContext(context) {
+    if (!els.scopeSeedContextCard) return;
+
+    if (!context) {
+      els.scopeSeedContextCard.hidden = true;
+      return;
+    }
+
+    activeScopeSeedContext = context;
+    els.scopeSeedContextCard.hidden = false;
+
+    if (els.scopeSeedContextTitle) els.scopeSeedContextTitle.textContent = context.scopeName || "Access Scope Planner seed";
+    if (els.scopeSeedContextDescription) {
+      els.scopeSeedContextDescription.textContent = "Starter assumptions were imported from the Access Scope Planner. Edit anything here if the specialty review needs a different default.";
+    }
+
+    const seed = context.seed || {};
+    const rows = [
+      ["Scope Type", context.scopeType],
+      ["Openings", String(seed.openingCount ?? "")],
+      ["Locking", optionLabel("lockingType", seed.lockingType, seed.lockingType)],
+      ["Egress", optionLabel("egressImpact", seed.egressImpact, seed.egressImpact)],
+      ["Release", optionLabel("releaseLogic", seed.releaseLogic, seed.releaseLogic)],
+      ["Review", optionLabel("authorityReview", seed.authorityReview, seed.authorityReview)],
+      ["Override", optionLabel("overridePlan", seed.overridePlan, seed.overridePlan)],
+      ["Source", context.source]
+    ];
+
+    if (els.scopeSeedContextGrid) {
+      els.scopeSeedContextGrid.innerHTML = rows.map(([label, value]) => '<div><strong>' + escapeHtml(label) + '</strong><span>' + escapeHtml(value || "Not documented") + '</span></div>').join("");
+    }
+  }
+
+  function setSelectValue(el, value) {
+    if (!el || value === undefined || value === null) return;
+    const wanted = String(value);
+    if (Array.from(el.options || []).some((option) => option.value === wanted)) el.value = wanted;
+  }
+
+  function applySpecialLockingScopeSeed() {
+    const context = getScopeSeedContext();
+    renderScopeSeedContext(context);
+
+    if (!context || !context.seed) return false;
+
+    const seed = context.seed;
+    if (els.openingCount) els.openingCount.value = String(seed.openingCount || 1);
+    setSelectValue(els.lockingType, seed.lockingType);
+    setSelectValue(els.egressImpact, seed.egressImpact);
+    setSelectValue(els.releaseLogic, seed.releaseLogic);
+    setSelectValue(els.authorityReview, seed.authorityReview);
+    setSelectValue(els.overridePlan, seed.overridePlan);
+    if (els.exceptionMode) els.exceptionMode.value = "no";
+
+    renderOpeningExceptionRows();
+    return true;
+  }
+
   function planningVisuals() {
     return window.ScopedLabsAccessControlPlanningVisuals || null;
   }
@@ -707,6 +824,7 @@
           openingExceptionSummary: metrics.exceptionSummary,
           openingStatusCounts: metrics.openingStatusCounts,
           openingDetails: (metrics.openingDetails || []).map((item) => ({ openingNumber: item.openingNumber, label: item.label, status: item.status, riskScore: item.riskScore, isException: item.isException, driverSummary: item.driverSummary })),
+          scopeSeed: activeScopeSeedContext ? { scopeId: activeScopeSeedContext.scopeId, scopeName: activeScopeSeedContext.scopeName, source: activeScopeSeedContext.source } : null,
           riskScore: metrics.riskScore
         }
       };
@@ -935,6 +1053,7 @@
       summary: getSpecialLockingReportSummary(lastMetrics || {}, outputs),
       interpretation: getInterpretationFromResults(outputs),
       inputs: [
+        { label: "Scope Planner Source", value: activeScopeSeedContext ? activeScopeSeedContext.scopeName + " / " + activeScopeSeedContext.source : "Standalone specialty branch" },
         { label: "Special Locking Openings", value: String(els.openingCount?.value || "") },
         { label: "Locking / Security Condition", value: selectedText(els.lockingType) },
         { label: "Egress Path Impact", value: selectedText(els.egressImpact) },
@@ -950,6 +1069,7 @@
       stackReportSections: true,
       chartImage: "",
       openingDetails: lastMetrics?.openingDetails || [],
+      scopeSeedContext: activeScopeSeedContext,
       meta: getReportMeta()
     };
   }
@@ -1110,6 +1230,7 @@
     clearOutputVisual();
     clearSpecialLockingSchedule();
     clearLocalAssistant();
+    applySpecialLockingScopeSeed();
     updateExportControls();
   }
 
@@ -1137,6 +1258,7 @@
   applyShellModules();
   attachOutputShellExport();
   reset();
+  applySpecialLockingScopeSeed();
 
   [els.openingCount, els.lockingType, els.egressImpact, els.releaseLogic, els.authorityReview, els.overridePlan, els.exceptionMode, els.openingExceptionsWrap].forEach((el) => {
     if (el) el.addEventListener("input", handleInputChange);

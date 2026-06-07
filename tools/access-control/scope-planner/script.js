@@ -10,6 +10,13 @@
         scopeName: $("scopeName"),
     scopeType: $("scopeType"),
     planningPath: $("planningPath"),
+    specialLockingSeedCard: $("specialLockingSeedCard"),
+    specialLockingOpeningCount: $("specialLockingOpeningCount"),
+    specialLockingLockingType: $("specialLockingLockingType"),
+    specialLockingEgressImpact: $("specialLockingEgressImpact"),
+    specialLockingReleaseLogic: $("specialLockingReleaseLogic"),
+    specialLockingAuthorityReview: $("specialLockingAuthorityReview"),
+    specialLockingOverridePlan: $("specialLockingOverridePlan"),
     openingType: $("openingType"),
     locationType: $("locationType"),
     doorFunction: $("doorFunction"),
@@ -126,12 +133,154 @@
   }
 
 
+
+  const SPECIAL_LOCKING_SEED_KEY = "scopedlabs:pipeline:access-control:special-locking-seed";
+  const SPECIAL_LOCKING_SEED_CONTRACT = "scopedlabs.access-control.branch-seed.special-locking.v1";
+
+  function isSpecialLockingPlanningPath(value) {
+    return ["special-locking-scope", "high-security-door", "egress-review"].includes(String(value || ""));
+  }
+
+  function scopeFromBasicFormOnly() {
+    return {
+      name: els.scopeName?.value || "Access Scope",
+      scopeType: els.scopeType?.value || "single-door",
+      planningPath: els.planningPath?.value || "core-door",
+      openingType: els.openingType?.value || "single-door",
+      locationType: els.locationType?.value || "interior",
+      doorFunction: els.doorFunction?.value || "staff-entry",
+      egressRole: els.egressRole?.value || "unknown",
+      freeEgress: els.freeEgress?.value || "unknown",
+      fireRated: els.fireRated?.value || "unknown",
+      fireRelease: els.fireRelease?.value || "unknown",
+      powerLossIntent: els.powerLossIntent?.value || "unknown",
+      lockIntent: els.lockIntent?.value || "unknown",
+      readerIntent: els.readerIntent?.value || "card-or-fob",
+      securityLevel: els.securityLevel?.value || "standard",
+      threatLevel: els.threatLevel?.value || "medium",
+      trafficLevel: els.trafficLevel?.value || "normal"
+    };
+  }
+
+  function defaultSpecialLockingSeedFromScope(scope = {}) {
+    const security = scope.securityLevel || "standard";
+    const lockIntent = scope.lockIntent || "unknown";
+    const freeEgress = scope.freeEgress || "unknown";
+    const egressRole = scope.egressRole || "unknown";
+    const fireRelease = scope.fireRelease || "unknown";
+    const scopeType = scope.scopeType || "single-door";
+
+    const lockingType = lockIntent === "maglock"
+      ? "maglock"
+      : (scopeType === "high-security-room" || security === "high" || security === "critical" ? "high-security-room" : "controlled-egress");
+
+    const egressImpact = freeEgress === "no" || ["required-egress", "exit-door", "stairwell-egress", "corridor-egress"].includes(egressRole)
+      ? "yes"
+      : (freeEgress === "unknown" || egressRole === "unknown" ? "unknown" : "no");
+
+    const releaseLogic = fireRelease === "yes"
+      ? "needed"
+      : (fireRelease === "unknown" ? "needed" : "not-applicable");
+
+    const authorityReview = scope.requiresAuthorityReview || egressImpact !== "no" || releaseLogic === "needed"
+      ? "likely"
+      : "not-flagged";
+
+    return {
+      contract: SPECIAL_LOCKING_SEED_CONTRACT,
+      sourceMode: "scope-planner",
+      openingCount: Math.max(1, Number(scope.specialLockingOpeningCount || scope.openingCount || scope.doorCount || 1) || 1),
+      lockingType,
+      egressImpact,
+      releaseLogic,
+      authorityReview,
+      overridePlan: "documented"
+    };
+  }
+
+  function collectSpecialLockingSeed() {
+    const seed = defaultSpecialLockingSeedFromScope(scopeFromBasicFormOnly());
+
+    return {
+      ...seed,
+      openingCount: Math.max(0, Math.round(Number(els.specialLockingOpeningCount?.value || seed.openingCount || 1) || 0)),
+      lockingType: els.specialLockingLockingType?.value || seed.lockingType,
+      egressImpact: els.specialLockingEgressImpact?.value || seed.egressImpact,
+      releaseLogic: els.specialLockingReleaseLogic?.value || seed.releaseLogic,
+      authorityReview: els.specialLockingAuthorityReview?.value || seed.authorityReview,
+      overridePlan: els.specialLockingOverridePlan?.value || seed.overridePlan,
+      updatedAt: new Date().toISOString()
+    };
+  }
+
+  function hydrateSpecialLockingSeed(scope = {}) {
+    const seed = scope.branchSeeds?.specialLocking || scope.specialLockingSeed || defaultSpecialLockingSeedFromScope(scope);
+
+    if (els.specialLockingOpeningCount) els.specialLockingOpeningCount.value = String(seed.openingCount || 1);
+    if (els.specialLockingLockingType) els.specialLockingLockingType.value = seed.lockingType || "high-security-room";
+    if (els.specialLockingEgressImpact) els.specialLockingEgressImpact.value = seed.egressImpact || "no";
+    if (els.specialLockingReleaseLogic) els.specialLockingReleaseLogic.value = seed.releaseLogic || "not-applicable";
+    if (els.specialLockingAuthorityReview) els.specialLockingAuthorityReview.value = seed.authorityReview || "not-flagged";
+    if (els.specialLockingOverridePlan) els.specialLockingOverridePlan.value = seed.overridePlan || "documented";
+  }
+
+  function updateSpecialLockingSeedCard() {
+    if (!els.specialLockingSeedCard) return;
+    const show = isSpecialLockingPlanningPath(els.planningPath?.value) || els.scopeType?.value === "high-security-room" || els.freeEgress?.value === "no" || els.lockIntent?.value === "maglock";
+    els.specialLockingSeedCard.hidden = !show;
+    els.specialLockingSeedCard.dataset.seedActive = show ? "true" : "false";
+    if (show) hydrateSpecialLockingSeed(scopeFromBasicFormOnly());
+  }
+
+  function decorateScopeWithSpecialLockingSeed(scope) {
+    if (!scope || !isSpecialLockingPlanningPath(scope.planningPath)) return scope;
+    const seed = collectSpecialLockingSeed();
+
+    return {
+      ...scope,
+      branchSeedContract: SPECIAL_LOCKING_SEED_CONTRACT,
+      branchSeeds: {
+        ...(scope.branchSeeds || {}),
+        specialLocking: seed
+      },
+      specialLockingSeed: seed,
+      openingCount: seed.openingCount
+    };
+  }
+
+  function writeSpecialLockingBranchSeed(scope) {
+    if (!scope || !isSpecialLockingPlanningPath(scope.planningPath)) return false;
+
+    const seed = scope.branchSeeds?.specialLocking || scope.specialLockingSeed || collectSpecialLockingSeed();
+    const payload = {
+      contract: SPECIAL_LOCKING_SEED_CONTRACT,
+      category: "access-control",
+      branchTool: "special-locking-scope",
+      sourceTool: "scope-planner",
+      scopeId: scope.id,
+      scopeName: scope.name,
+      scopeType: scope.scopeType,
+      planningPath: scope.planningPath,
+      seed,
+      updatedAt: new Date().toISOString()
+    };
+
+    try {
+      sessionStorage.setItem(SPECIAL_LOCKING_SEED_KEY, JSON.stringify(payload));
+      localStorage.setItem(SPECIAL_LOCKING_SEED_KEY, JSON.stringify(payload));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   function branchKey(scope) {
     if (!scope) return "core";
     if (scope.scopeType === "elevator-bank" || scope.planningPath === "elevator-bank") return "elevator";
     if (scope.scopeType === "anti-passback-zone" || scope.planningPath === "anti-passback-zone") return "antiPassback";
     if (
       scope.scopeType === "high-security-room" ||
+      scope.planningPath === "special-locking-scope" ||
       scope.planningPath === "high-security-door" ||
       scope.planningPath === "egress-review" ||
       scope.scopeType === "egress-path" ||
@@ -185,7 +334,7 @@
     if (!scope) return "Save a scope before continuing.";
     if (branchKey(scope) === "elevator") return "Run Elevator Reader Count when this specialty lane is ready.";
     if (branchKey(scope) === "antiPassback") return "Run Anti-Passback Zones when this specialty lane is ready.";
-    if (branchKey(scope) === "special") return "Resolve authority-review assumptions before final design approval.";
+    if (branchKey(scope) === "special") return scope.planningPath === "special-locking-scope" ? "Open Special Locking with this scope seed." : "Resolve authority-review assumptions before final design approval.";
     return "Continue to Fail-Safe / Fail-Secure.";
   }
 
@@ -198,12 +347,14 @@
   function scopePathContinueLabel(value) {
     if (value === "elevator-bank") return "Elevator Reader Count";
     if (value === "anti-passback-zone") return "Anti-Passback Zones";
+    if (value === "special-locking-scope") return "Special Locking / High-Security Scope";
     return "Fail-Safe / Fail-Secure";
   }
 
   function scopePathUrl(value) {
     if (value === "elevator-bank") return "/tools/access-control/elevator-reader-count/";
     if (value === "anti-passback-zone") return "/tools/access-control/anti-passback-zones/";
+    if (value === "special-locking-scope") return "/tools/access-control/special-locking-scope/";
     return NEXT_URL;
   }
 
@@ -240,7 +391,7 @@
   }
 
   function scopeFromForm() {
-    return {
+    const scope = {
       id: editingScopeId || undefined,
       name: els.scopeName?.value || "Access Scope",
       scopeType: els.scopeType?.value || "single-door",
@@ -263,6 +414,8 @@
       notes: els.scopeNotes?.value || "",
       sourceMode: "scope-planner"
     };
+
+    return decorateScopeWithSpecialLockingSeed(scope);
   }
 
   function hydrateScopeForm(scope) {
@@ -287,6 +440,8 @@
     if (els.controllerGroup) els.controllerGroup.value = scope.controllerGroup || "unassigned";
     if (els.restrictions) els.restrictions.value = scope.restrictions || "";
     if (els.scopeNotes) els.scopeNotes.value = Array.isArray(scope.notes) ? scope.notes.join("\n") : "";
+    hydrateSpecialLockingSeed(scope);
+    updateSpecialLockingSeedCard();
   }
 
   function clearScopeForm(name = "Main Entry Door") {
@@ -310,6 +465,8 @@
     if (els.controllerGroup) els.controllerGroup.value = "unassigned";
     if (els.restrictions) els.restrictions.value = "";
     if (els.scopeNotes) els.scopeNotes.value = "";
+    hydrateSpecialLockingSeed(scopeFromBasicFormOnly());
+    updateSpecialLockingSeedCard();
   }
 
   function validateScopeForm() {
@@ -334,6 +491,8 @@
     api.writeLedger(ledger);
 
     editingScopeId = normalized.id;
+    const savedActive = getActiveScopeFromLedger(ledger) || normalized;
+    writeSpecialLockingBranchSeed(savedActive);
     status(normalized.name + " saved as the active access scope.");
     render();
     return true;
@@ -586,6 +745,7 @@
 
     const nextLedger = api.readLedger();
     const nextActive = getActiveScopeFromLedger(nextLedger);
+    writeSpecialLockingBranchSeed(nextActive);
     window.location.href = scopePathUrl(nextActive && nextActive.planningPath);
   }
 
@@ -797,6 +957,13 @@
     els.continueBtn?.addEventListener("click", continueFlow);
     els.printSummary?.addEventListener("click", printSummary);
     els.copySummary?.addEventListener("click", copySummary);
+    els.planningPath?.addEventListener("change", updateSpecialLockingSeedCard);
+    els.scopeType?.addEventListener("change", updateSpecialLockingSeedCard);
+    els.egressRole?.addEventListener("change", updateSpecialLockingSeedCard);
+    els.freeEgress?.addEventListener("change", updateSpecialLockingSeedCard);
+    els.fireRelease?.addEventListener("change", updateSpecialLockingSeedCard);
+    els.lockIntent?.addEventListener("change", updateSpecialLockingSeedCard);
+    els.securityLevel?.addEventListener("change", updateSpecialLockingSeedCard);
 
     els.scopeList?.addEventListener("click", (event) => {
       const useBtn = event.target.closest("[data-scope-use]");
@@ -824,6 +991,13 @@
     bindEvents();
     render();
   }
+
+  window.ScopedLabsAccessControlScopePlannerBranchSeeds = Object.freeze({
+    key: SPECIAL_LOCKING_SEED_KEY,
+    contract: SPECIAL_LOCKING_SEED_CONTRACT,
+    collectSpecialLockingSeed,
+    writeSpecialLockingBranchSeed
+  });
 
   window.addEventListener("DOMContentLoaded", () => {
     const year = document.querySelector("[data-year]");

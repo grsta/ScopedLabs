@@ -25,7 +25,7 @@ const coreLabelsPresent = [
   "Access Level"
 ].every((token) => pipelines.includes(token));
 
-check("Planner cache bumped to print report tab lane", index.includes("access-control-scope-planner-area-match-012-print-report-tab"));
+check("Planner cache bumped to Special Locking seed lane", index.includes("access-control-scope-planner-special-locking-seed-013"));
 check("Planner loads refreshed shared pipeline assets", index.includes("pipelines.js?v=access-control-specialty-pipeline-009-summary-core") && index.includes("pipeline.js?v=access-control-specialty-pipeline-009-summary-core"));
 check("Pipeline renderer has category-aware grouped copy", pipelineJs.includes("const groupedFlowCopy") && pipelineJs.includes('category === "access-control"'));
 check("Access foundation copy is present", pipelineJs.includes("Create or select the access scope being planned."));
@@ -37,6 +37,7 @@ check("Access core pipeline includes Summary", pipelines.includes('id: "access-c
 check("Access pipeline includes elevator specialty branch", pipelines.includes('id: "elevator-bank-scope"') && pipelines.includes("Elevator Bank Scope"));
 check("Access pipeline includes anti-passback specialty branch", pipelines.includes('id: "anti-passback-zone"') && pipelines.includes("Anti-Passback Zone"));
 check("Access pipeline includes special locking specialty branch", pipelines.includes('id: "special-locking-scope"') && pipelines.includes("Special Locking / High-Security Scope") && pipelines.includes("/tools/access-control/special-locking-scope/"));
+check("Scope Planner can route directly to Special Locking", index.includes('value="special-locking-scope"') && index.includes("Special Locking / High-Security starter questions"));
 check("Specialty branches are optional", pipelines.includes("optional: true") && pipelines.includes('flowGroup: "optional-specialty-zone"'));
 
 console.log("\nAccess Control pipeline specialty branches audit:");

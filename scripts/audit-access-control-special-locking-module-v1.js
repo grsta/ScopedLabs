@@ -48,6 +48,7 @@ check("Special Locking loads local assistant and adapter modules", html.includes
 check("Special Locking loads report metadata module", html.includes("/assets/scopedlabs-report-metadata.js") && html.includes('id="reportMetadataMount"'));
 check("Special Locking keeps KB top anchor", html.includes('id="flow-note"'));
 check("Special Locking keeps category nav", html.includes('data-access-control-category-nav="true"') && html.includes("/assets/access-control-category-nav.js"));
+check("Special Locking imports Scope Planner seed", html.includes("/assets/access-control-scope-state.js") && html.includes('id="scopeSeedContextCard"') && script.includes("applySpecialLockingScopeSeed") && script.includes("SPECIAL_LOCKING_SEED_KEY"));
 check("Special Locking pipeline branch points to tool", pipelines.includes('id: "special-locking-scope"') && pipelines.includes("/tools/access-control/special-locking-scope/"));
 check("Special Locking has flow actions before metadata", html.indexOf('id="accessControlFlowActions"') > -1 && html.indexOf('id="reportMetadataMount"') > html.indexOf('id="accessControlFlowActions"'));
 check("Special Locking report actions are metadata/dropdown owned", html.includes('data-report-actions') && script.includes("placeSpecialLockingReportActions"));
@@ -71,7 +72,7 @@ check("Special Locking assistant adapter exists", adapters.includes("buildSpecia
 
 check("Special Locking has no Chart.js CDN", !html.includes("chart.js"));
 check("Special Locking has no canvas chart", !html.includes("<canvas") && html.includes('class="access-control-output-visual"'));
-check("Special Locking uses modern local script cache", html.includes("./script.js?v=access-control-special-locking-exceptions-005-export-visual-table-fit"));
+check("Special Locking uses modern local script cache", html.includes("./script.js?v=access-control-special-locking-exceptions-006-scope-seed"));
 
 console.log("\nAccess Control Special Locking module audit:");
 console.table(rows);

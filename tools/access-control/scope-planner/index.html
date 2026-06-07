@@ -7,7 +7,7 @@
   <meta name="description" content="Define access control doors, door groups, access zones, elevator banks, and egress scopes before running downstream access control planning tools." />
   <meta name="robots" content="noindex,follow" />
 
-  <link rel="stylesheet" href="/assets/style.css?v=access-control-scope-planner-area-match-012-print-report-tab" />
+  <link rel="stylesheet" href="/assets/style.css?v=access-control-scope-planner-special-locking-seed-013" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
@@ -457,6 +457,34 @@
       white-space: nowrap;
     }
 
+
+    .access-special-locking-seed-card {
+      margin-top: 14px;
+      background: rgba(0,0,0,.13);
+      border-color: rgba(255,220,130,.18);
+    }
+
+    .access-special-locking-seed-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .access-special-locking-seed-line {
+      color: rgba(255,226,150,.88);
+      font-size: .74rem;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 860px) {
+      .access-special-locking-seed-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
     @media (max-width: 860px) {
       .access-scope-ledger-grid,
       .access-scope-meta,
@@ -692,6 +720,7 @@
               <option value="core-door" selected>Core Door - start at Fail-Safe / Fail-Secure</option>
               <option value="egress-review">Egress Review Scope - flag authority review</option>
               <option value="high-security-door">High-Security Door - flag extra review</option>
+              <option value="special-locking-scope">Special Locking / High-Security Scope - open specialty branch</option>
               <option value="elevator-bank">Elevator Bank - open Elevator Reader Count</option>
               <option value="anti-passback-zone">Anti-Passback Zone - open Anti-Passback Zones</option>
             </select>
@@ -845,6 +874,61 @@
           </div>
         </div>
 
+
+        <section id="specialLockingSeedCard" class="card access-special-locking-seed-card" hidden data-special-locking-seed-card>
+          <div class="access-special-locking-seed-line">Specialty branch starter</div>
+          <h3 class="h3" style="margin-top: 8px;">Special Locking / High-Security starter questions</h3>
+          <p class="muted" style="margin-bottom: 0;">These answers seed the Special Locking branch. The specialty tool still handles per-opening exceptions, status rollup, schedule, and export details.</p>
+          <div class="access-special-locking-seed-grid">
+            <label class="field">
+              <span class="label">Special Locking Openings</span>
+              <input id="specialLockingOpeningCount" type="number" min="0" step="1" value="1" />
+            </label>
+            <label class="field">
+              <span class="label">Default Locking / Security Condition</span>
+              <select id="specialLockingLockingType">
+                <option value="maglock">Maglock / electromagnetic lock</option>
+                <option value="delayed-egress">Delayed egress locking</option>
+                <option value="controlled-egress">Controlled egress / special locking</option>
+                <option value="security-interlock">Security interlock / mantrap</option>
+                <option value="high-security-room" selected>High-security room / secured suite</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="label">Default Egress Path Impact</span>
+              <select id="specialLockingEgressImpact">
+                <option value="yes">Yes - affects egress path</option>
+                <option value="no" selected>No - security-side only</option>
+                <option value="unknown">Unknown / requires review</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="label">Default Fire / Emergency Release</span>
+              <select id="specialLockingReleaseLogic">
+                <option value="confirmed">Confirmed release sequence</option>
+                <option value="needed">Release sequence needs coordination</option>
+                <option value="not-applicable" selected>Not applicable / no release tie-in expected</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="label">Default Authority Review</span>
+              <select id="specialLockingAuthorityReview">
+                <option value="required">AHJ / code review required</option>
+                <option value="likely">Likely review item</option>
+                <option value="not-flagged" selected>Not currently flagged</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="label">Default Override / Monitoring</span>
+              <select id="specialLockingOverridePlan">
+                <option value="documented" selected>Documented operator override</option>
+                <option value="partial">Partial / needs procedure</option>
+                <option value="missing">Missing or undefined</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
         <div class="btn-row" style="margin-top: 14px;">
           <button id="saveScope" class="btn btn-primary" type="button">Save / Update Scope</button>
           <button id="newScope" class="btn" type="button">Add Another Scope</button>
@@ -909,11 +993,11 @@
   <script src="/assets/pipeline.js?v=access-control-specialty-pipeline-009-summary-core"></script>
   <script src="/assets/access-control-scope-state.js?v=access-control-scope-state-001-area-pattern"></script>
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
-  <script src="./script.js?v=access-control-scope-planner-area-match-012-print-report-tab"></script>
+  <script src="./script.js?v=access-control-scope-planner-special-locking-seed-013"></script>
   <script>
     window.ScopedLabsToolShell?.applyBackContinueShell?.({ rowId: "accessScopePlannerFlowActions" });
   </script>
   <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>
-  <!-- access-control-scope-planner-area-match-012-print-report-tab -->
+  <!-- access-control-scope-planner-special-locking-seed-013 -->
 </body>
 </html>
