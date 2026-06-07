@@ -1170,6 +1170,21 @@
     return 0;
   }
 
+
+  function syncElevatorTopologyControls() {
+    syncElevatorTopologyControls();
+    const topology = normalizeElevatorTopology(els.topology?.value);
+    const isSingleBank = topology === "single-bank";
+
+    if (els.banks) {
+      if (isSingleBank) els.banks.value = "1";
+      els.banks.disabled = isSingleBank;
+      els.banks.title = isSingleBank
+        ? "Single elevator bank uses one bank group. Put the elevator count in Cars / Cabs per Bank or Location."
+        : "For multiple banks or separate elevator locations, this count drives reader quantity.";
+    }
+  }
+
   function getPerBankReaders(floors) {
     return floors > 12 ? 2 : 1;
   }
@@ -1347,8 +1362,12 @@
     if (els.placement) els.placement.value = "car";
 
     applyElevatorReaderScopeSeed();
+    syncElevatorTopologyControls();
     resetResults("Enter values and press Calculate.");
   }
+
+  if (els.topology) els.topology.addEventListener("change", syncElevatorTopologyControls);
+  syncElevatorTopologyControls();
 
   placeElevatorReaderReportActions();
   applyShellModules();

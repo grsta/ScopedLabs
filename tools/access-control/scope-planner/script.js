@@ -333,6 +333,20 @@
     return 0;
   }
 
+
+  function syncScopePlannerElevatorTopologyControls() {
+    const topology = normalizeElevatorTopology(els.elevatorTopology?.value);
+    const isSingleBank = topology === "single-bank";
+
+    if (els.elevatorBanks) {
+      if (isSingleBank) els.elevatorBanks.value = "1";
+      els.elevatorBanks.disabled = isSingleBank;
+      els.elevatorBanks.title = isSingleBank
+        ? "Single elevator bank uses one bank group. Put the elevator count in Cars / Cabs per Bank or Location."
+        : "For multiple banks or separate elevator locations, this count drives reader quantity.";
+    }
+  }
+
   function defaultElevatorReaderSeedFromScope(scope = {}) {
     const highSecurity = scope.securityLevel === "high" || scope.securityLevel === "critical";
     const traffic = scope.trafficLevel || "normal";
@@ -376,6 +390,7 @@
     const seed = scope.branchSeeds?.elevatorReader || scope.elevatorReaderSeed || defaultElevatorReaderSeedFromScope(scope);
 
     if (els.elevatorTopology) els.elevatorTopology.value = normalizeElevatorTopology(seed.topology);
+    syncScopePlannerElevatorTopologyControls();
     if (els.elevatorCars) els.elevatorCars.value = String(seed.cars || 4);
     if (els.elevatorBanks) els.elevatorBanks.value = String(seed.banks || 1);
     if (els.elevatorSecuredFloors) els.elevatorSecuredFloors.value = String(seed.floors || 0);
@@ -398,6 +413,7 @@
 
   function decorateScopeWithElevatorReaderSeed(scope) {
     if (!scope || !isElevatorPlanningPath(scope.planningPath)) return scope;
+    syncScopePlannerElevatorTopologyControls();
     const seed = collectElevatorReaderSeed();
 
     return {
@@ -1190,6 +1206,9 @@
       els.elevatorDcsCredentialPoints.value = String(defaultElevatorDcsCredentialPoints(els.elevatorDcsMode.value, els.elevatorTopology?.value, banks));
     });
   }
+
+  if (els.elevatorTopology) els.elevatorTopology.addEventListener("change", syncScopePlannerElevatorTopologyControls);
+  syncScopePlannerElevatorTopologyControls();
 
   window.ScopedLabsAccessControlScopePlannerBranchSeeds = Object.freeze({
     key: SPECIAL_LOCKING_SEED_KEY,
