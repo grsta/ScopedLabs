@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-003-engineering-visuals";
+  const VERSION = "access-control-planning-visuals-004-door-count-fit";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -220,6 +220,8 @@
   function buildDoorCountSvg(metrics = {}) {
     const tone = statusTone(metrics.status);
     const statusText = statusLabel(metrics.status);
+    const perimeter = Math.max(0, Number(metrics.perimeterDoors || 0));
+
     function contributionValue(raw, fallback) {
       const direct = Number(raw);
       if (Number.isFinite(direct)) return Math.max(0, direct);
@@ -234,14 +236,28 @@
       return Math.abs(num - Math.round(num)) < 0.05 ? String(Math.round(num)) : num.toFixed(1);
     }
 
-    const perimeter = Math.max(0, Number(metrics.perimeterDoors || 0));
-    const zones = contributionValue(metrics.zoneBase, metrics.zoneBaseLabel);
-    const high = contributionValue(metrics.highsecAdd, metrics.highsecAddLabel);
-    const doors = Math.max(1, Number(metrics.doors || Math.round(perimeter + zones + high) || 1));
-    const readers = Math.max(0, Number(metrics.readers || 0));
-    const complexity = Math.max(0, Number(metrics.complexityIndex || 0));
-    const pressure = clamp(complexity / 140, 0.04, 1);
-    const pressureTone = pressure > .72 ? "risk" : pressure > .45 ? "watch" : "safe";
+    function wrapLabel(text, maxLen, maxLines) {
+      const source = String(text || "?").trim();
+      if (!source) return ["?"];
+      const words = source.split(/\s+/);
+      const lines = [];
+      let line = "";
+      words.forEach((word) => {
+        const candidate = line ? line + " " + word : word;
+        if (candidate.length <= maxLen || !line) {
+          line = candidate;
+          return;
+        }
+        lines.push(line);
+        line = word;
+      });
+      if (line) lines.push(line);
+      if (lines.length <= maxLines) return lines;
+      const trimmed = lines.slice(0, maxLines);
+      const last = trimmed[maxLines - 1];
+      trimmed[maxLines - 1] = last.length > maxLen - 1 ? last.slice(0, maxLen - 1) + "?" : last + "?";
+      return trimmed;
+    }
 
     function doorTicks(value, x, y, toneName) {
       const count = Math.max(1, Math.min(8, Math.round(Number(value || 0))));
@@ -259,29 +275,52 @@
       return ticks.join("");
     }
 
-    function groupRow(label, value, x, y, toneName) {
+    function groupRow(label, displayValue, numericValue, x, y, toneName) {
       return [
         '<g>',
         '<rect x="' + x + '" y="' + y + '" width="202" height="64" rx="10" fill="rgba(0,0,0,.14)" stroke="rgba(120,255,120,.10)" />',
         '<text x="' + (x + 12) + '" y="' + (y + 18) + '" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".7">' + escapeHtml(label).toUpperCase() + '</text>',
-        '<text x="' + (x + 184) + '" y="' + (y + 19) + '" font-size="15" fill="rgba(238,255,244,.94)" font-weight="900" text-anchor="end">' + escapeHtml(value) + '</text>',
-        doorTicks(value, x + 14, y + 28, toneName),
+        '<text x="' + (x + 184) + '" y="' + (y + 19) + '" font-size="15" fill="rgba(238,255,244,.94)" font-weight="900" text-anchor="end">' + escapeHtml(displayValue) + '</text>',
+        doorTicks(numericValue, x + 14, y + 28, toneName),
         '</g>'
       ].join("");
     }
 
+    function controlModeBlock(label, x, y, w, h) {
+      const lines = wrapLabel(label, 22, 2);
+      const tspans = lines.map((line, index) => {
+        const dy = index === 0 ? 0 : 13;
+        return '<tspan x="' + (x + 12) + '" dy="' + dy + '">' + escapeHtml(line) + '</tspan>';
+      }).join('');
+      return [
+        '<g>',
+        '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="10" fill="rgba(0,0,0,.14)" stroke="rgba(120,255,120,.10)" />',
+        '<text x="' + (x + 12) + '" y="' + (y + 16) + '" font-size="9" fill="rgba(203,213,225,.62)" letter-spacing=".8">CONTROL MODE</text>',
+        '<text x="' + (x + 12) + '" y="' + (y + 32) + '" font-size="11" fill="rgba(238,255,244,.90)" font-weight="800">' + tspans + '</text>',
+        '</g>'
+      ].join('');
+    }
+
+    const zones = contributionValue(metrics.zoneBase, metrics.zoneBaseLabel);
+    const high = contributionValue(metrics.highsecAdd, metrics.highsecAddLabel);
+    const doors = Math.max(1, Number(metrics.doors || Math.round(perimeter + zones + high) || 1));
+    const readers = Math.max(0, Number(metrics.readers || 0));
+    const complexity = Math.max(0, Number(metrics.complexityIndex || 0));
+    const pressure = clamp(complexity / 140, 0.04, 1);
+    const pressureTone = pressure > .72 ? "risk" : pressure > .45 ? "watch" : "safe";
+
     return [
       '<div class="access-control-planning-visual-shell" data-access-control-modern-visual="door-count-planner">',
-      '<svg viewBox="0 0 760 342" role="img" aria-label="Door count planning pressure visual" xmlns="http://www.w3.org/2000/svg">',
-      '<defs><pattern id="accGridDoorCountV3" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="rgba(120,255,120,.045)" stroke-width="1"/></pattern></defs>',
-      '<rect x="24" y="24" width="712" height="294" rx="16" fill="rgba(0,0,0,.10)" stroke="rgba(120,255,120,.12)" />',
-      '<rect x="36" y="36" width="688" height="270" rx="12" fill="url(#accGridDoorCountV3)" stroke="rgba(120,255,120,.07)" />',
+      '<svg viewBox="0 0 760 388" role="img" aria-label="Door count planning pressure visual" xmlns="http://www.w3.org/2000/svg">',
+      '<defs><pattern id="accGridDoorCountV4" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="rgba(120,255,120,.045)" stroke-width="1"/></pattern></defs>',
+      '<rect x="24" y="24" width="712" height="340" rx="16" fill="rgba(0,0,0,.10)" stroke="rgba(120,255,120,.12)" />',
+      '<rect x="36" y="36" width="688" height="316" rx="12" fill="url(#accGridDoorCountV4)" stroke="rgba(120,255,120,.07)" />',
       '<text x="52" y="62" font-size="11" fill="rgba(180,255,200,.68)" letter-spacing="1.4">DOOR SCHEDULE LOAD</text>',
       '<text x="52" y="84" font-size="19" fill="rgba(246,255,248,.96)" font-weight="800">Controlled doors, readers, and segmentation pressure</text>',
       statusBadge(statusText, tone, 616, 51),
-      groupRow("Perimeter", contributionLabel(perimeter), 52, 112, "safe"),
-      groupRow("Interior zones", contributionLabel(zones), 279, 112, "safe"),
-      groupRow("High-security", contributionLabel(high), 506, 112, high > 0 ? "watch" : "safe"),
+      groupRow("Perimeter", contributionLabel(perimeter), perimeter, 52, 112, "safe"),
+      groupRow("Interior zones", contributionLabel(zones), zones, 279, 112, "safe"),
+      groupRow("High-security", contributionLabel(high), high, 506, 112, high > 0 ? "watch" : "safe"),
       '<path d="M112 206 H648" stroke="rgba(203,213,225,.24)" stroke-width="1.2" stroke-dasharray="6 7" />',
       '<path d="M112 206 C214 184, 300 228, 382 206 S548 186, 648 206" fill="none" stroke="rgba(125,255,152,.38)" stroke-width="1.4" />',
       '<circle cx="112" cy="206" r="5" fill="rgba(125,255,152,.20)" stroke="rgba(125,255,152,.72)" />',
@@ -291,11 +330,10 @@
       '<text x="382" y="224" font-size="10" fill="rgba(203,213,225,.58)" text-anchor="middle">controller grouping</text>',
       '<text x="648" y="224" font-size="10" fill="rgba(203,213,225,.58)" text-anchor="middle">reader count</text>',
       pressureRail("complexity pressure", pressure, 52, 258, 220, pressureTone),
-      metricChip("total doors", String(metrics.doors ?? "?"), 296, 248, 110),
-      metricChip("readers", String(metrics.readers ?? "?"), 420, 248, 100),
-      metricChip("complexity", String(metrics.complexityIndex ?? "?"), 534, 248, 116),
-      '<text x="650" y="262" font-size="9" fill="rgba(203,213,225,.62)" letter-spacing=".8">CONTROL MODE</text>',
-      '<text x="650" y="280" font-size="12" fill="rgba(238,255,244,.90)" font-weight="800" text-anchor="start">' + escapeHtml(metrics.bothSidesLabel || "?") + '</text>',
+      metricChip("total doors", String(metrics.doors ?? doors ?? "?"), 296, 248, 110),
+      metricChip("readers", String(metrics.readers ?? readers ?? "?"), 420, 248, 100),
+      metricChip("complexity", String(metrics.complexityIndex ?? complexity ?? "?"), 534, 248, 116),
+      controlModeBlock(metrics.bothSidesLabel || "?", 534, 296, 182, 40),
       '</svg>',
       '<p class="sl-vis-note"><strong>Visual note:</strong> Interior and high-security values are weighted planning contributions. The final controlled-door total is rounded after the weighted values are added, so rounded component labels may not equal the final total.</p>',
       '</div>'

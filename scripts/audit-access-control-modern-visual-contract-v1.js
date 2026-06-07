@@ -28,7 +28,7 @@ function moduleParses(text) {
   }
 }
 
-const version = 'access-control-planning-visuals-003-engineering-visuals';
+const version = 'access-control-planning-visuals-004-door-count-fit';
 const visualModule = read('assets/access-control-planning-visuals.js');
 
 check('Planning visual module exists', exists('assets/access-control-planning-visuals.js'));
@@ -79,6 +79,10 @@ tools.forEach((tool) => {
   check(tool.name + ' keeps report metadata dropdown', html.includes('id="reportMetadataMount"') && html.includes('data-report-metadata') && html.includes('data-collapsed="true"'));
   check(tool.name + ' moves export/snapshot actions into dropdown', html.includes('id="' + tool.reportActions + '"') && html.includes('data-report-actions') && script.includes('appendChild(els.reportActions)'));
   check(tool.name + ' has no user-facing legacy chart canvas', !html.includes('id="chart"') && !html.includes('<canvas'));
+  if (tool.name === 'Door Count Planner') {
+    check('Door Count Planner script passes raw weighted zone contribution', script.includes('zoneBase:'));
+    check('Door Count Planner script passes raw weighted high-security contribution', script.includes('highsecAdd:'));
+  }
 });
 
 console.log('\nAccess Control modern visual contract audit:');
