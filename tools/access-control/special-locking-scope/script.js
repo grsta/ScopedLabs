@@ -371,7 +371,7 @@
 
       rows.push([
         '<div class="access-control-opening-exception-row" data-opening-exception-row data-opening-index="' + index + '">',
-        '<label class="access-control-exception-toggle"><input type="checkbox" data-exception-enabled' + (draft.enabled ? ' checked' : '') + '><span>#' + index + ' exception</span></label>',
+        '<label class="access-control-exception-toggle"><input type="checkbox" data-exception-enabled' + (draft.enabled ? ' checked' : '') + '><span><strong>Flag #' + index + ' as exception</strong><small>Use this row instead of group defaults</small></span></label>',
         '<label class="access-control-exception-row-field"><span class="access-control-exception-mini-label">Label</span><input type="text" data-exception-label value="' + escapeHtml(draft.label || ("Opening #" + index)) + '"></label>',
         '<label class="access-control-exception-row-field"><span class="access-control-exception-mini-label">Locking</span>' + exceptionSelectHtml("lockingType", draft.lockingType) + '</label>',
         '<label class="access-control-exception-row-field"><span class="access-control-exception-mini-label">Egress</span>' + exceptionSelectHtml("egressImpact", draft.egressImpact) + '</label>',
