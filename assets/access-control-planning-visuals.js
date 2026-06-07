@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-008-elevator-reader";
+  const VERSION = "access-control-planning-visuals-009-elevator-bank-labels";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -391,7 +391,7 @@
       Array.from({ length: carCount }, (_, index) => carNode(index)).join(''),
       cars > carCount ? '<text x="260" y="162" font-size="11" fill="rgba(203,213,225,.66)">+' + escapeHtml(Math.round(cars - carCount)) + '</text>' : '',
       '<path d="M300 166 H350" stroke="rgba(203,213,225,.24)" stroke-width="1.2" stroke-dasharray="5 6" />',
-      '<text x="378" y="114" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">BANK / LOBBY TOUCHPOINTS</text>',
+      '<text x="378" y="114" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">ELEVATOR BANK GROUPS</text>',
       Array.from({ length: bankCount }, (_, index) => bankNode(index)).join(''),
       '<rect x="598" y="138" width="74" height="46" rx="8" fill="' + toneFill(dcsTone) + '" stroke="' + toneStroke(dcsTone) + '" />',
       '<text x="635" y="157" text-anchor="middle" font-size="9" fill="rgba(203,213,225,.66)" letter-spacing=".8">DCS ADD</text>',
@@ -402,7 +402,7 @@
       '<circle cx="382" cy="226" r="5" fill="rgba(125,255,152,.20)" stroke="rgba(125,255,152,.72)" />',
       '<circle cx="648" cy="226" r="5" fill="rgba(125,255,152,.20)" stroke="rgba(125,255,152,.72)" />',
       '<text x="112" y="244" font-size="10" fill="rgba(203,213,225,.58)" text-anchor="middle">cars</text>',
-      '<text x="382" y="244" font-size="10" fill="rgba(203,213,225,.58)" text-anchor="middle">banks / lobby</text>',
+      '<text x="382" y="244" font-size="10" fill="rgba(203,213,225,.58)" text-anchor="middle">bank groups</text>',
       '<text x="648" y="244" font-size="10" fill="rgba(203,213,225,.58)" text-anchor="middle">integration</text>',
       pressureRail("integration pressure", pressure, 52, 282, 220, pressureTone),
       metricChip("total readers", String(metrics.totalReaders ?? "?"), 296, 272, 126),
@@ -415,7 +415,7 @@
       '<text x="366" y="337" font-size="9" fill="rgba(203,213,225,.62)" letter-spacing=".7">DESTINATION CONTROL</text>',
       '<text x="498" y="337" font-size="10" fill="rgba(238,255,244,.90)" font-weight="800">' + escapeHtml(dest) + '</text>',
       '</svg>',
-      '<p class="sl-vis-note"><strong>Visual note:</strong> Elevator Reader Count is a specialty planning branch. Use the visual to compare car readers, lobby/bank touchpoints, DCS adders, and integration pressure before final elevator coordination.</p>',
+      '<p class="sl-vis-note"><strong>Visual note:</strong> Elevator bank groups are scope markers, not lobby reader counts. Use the visual to compare car readers, actual lobby readers, DCS adders, and integration pressure before final elevator coordination.</p>',
       '</div>'
     ].join("");
   }
