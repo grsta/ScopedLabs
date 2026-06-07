@@ -25,7 +25,7 @@ const coreLabelsPresent = [
   "Access Level"
 ].every((token) => pipelines.includes(token));
 
-check("Planner cache bumped to Elevator seed lane", index.includes("access-control-scope-planner-elevator-seed-022-banks-singles-inputs"));
+check("Planner cache bumped to Elevator seed lane", index.includes("access-control-scope-planner-elevator-seed-023-banks-singles-hotfix"));
 check("Planner loads refreshed shared pipeline assets", index.includes("pipelines.js?v=access-control-specialty-pipeline-009-summary-core") && index.includes("pipeline.js?v=access-control-specialty-pipeline-009-summary-core"));
 check("Pipeline renderer has category-aware grouped copy", pipelineJs.includes("const groupedFlowCopy") && pipelineJs.includes('category === "access-control"'));
 check("Access foundation copy is present", pipelineJs.includes("Create or select the access scope being planned."));

@@ -1198,8 +1198,11 @@
   }
 
   function setElevatorFieldHidden(el, hidden) {
-    const field = el?.closest ? (el.closest("[data-elevator-generic-count-field]") || el.closest("[data-mixed-elevator-field]") || el.closest(".field")) : null;
-    if (field) field.hidden = Boolean(hidden);
+    const field = el?.closest ? el.closest(".field") : null;
+    if (!field) return;
+    field.hidden = Boolean(hidden);
+    field.style.display = hidden ? "none" : "";
+    field.setAttribute("aria-hidden", hidden ? "true" : "false");
   }
 
   function syncElevatorTopologyControls() {
@@ -1207,12 +1210,9 @@
     const isSingleBank = rawTopology === "single-bank";
     const isBanksPlusSingles = rawTopology === "mixed-custom";
 
-    function setFieldHidden(el, hidden) {
-      setElevatorFieldHidden(el, hidden);
-    }
-
     if (els.cars) {
       setFieldHidden(els.cars, isBanksPlusSingles);
+      els.cars.disabled = false;
       els.cars.readOnly = false;
       els.cars.title = isBanksPlusSingles
         ? "Banks + single elevators uses Cars / Cabs per Bank Group."
@@ -1231,13 +1231,14 @@
           : "For multiple banks or single elevator locations, this count drives reader quantity.";
     }
 
-    const banksPlusSingleFields = [
+    const bankGroups = Math.max(0, Math.round(Number(els.mixedBankGroups?.value || 0) || 0));
+    const singleLocations = Math.max(0, Math.round(Number(els.mixedSeparateLocations?.value || 0) || 0));
+
+    [
       els.mixedBankGroups,
       els.mixedCarsPerBank,
       els.mixedSeparateLocations
-    ];
-
-    banksPlusSingleFields.forEach((el) => setFieldHidden(el, !isBanksPlusSingles));
+    ].forEach((el) => setFieldHidden(el, !isBanksPlusSingles));
 
     if (els.mixedCarsPerSeparateLocation) {
       els.mixedCarsPerSeparateLocation.value = "1";
@@ -1245,9 +1246,11 @@
     }
 
     if (isBanksPlusSingles && els.banks) {
-      const groups = Math.max(0, Math.round(numberFromElement(els.mixedBankGroups, 0)));
-      const singles = Math.max(0, Math.round(numberFromElement(els.mixedSeparateLocations, 0)));
-      els.banks.value = String(Math.max(1, groups + singles));
+      els.banks.value = String(Math.max(1, bankGroups + singleLocations));
+    }
+
+    function setFieldHidden(el, hidden) {
+      setElevatorFieldHidden(el, hidden);
     }
   }
 
@@ -1294,6 +1297,8 @@
   }
 
   function calc() {
+    syncElevatorTopologyControls();
+
     const topology = normalizeElevatorTopology(els.topology?.value);
     const isMixedTopology = topology === "mixed-custom";
     const carsPerGroup = Math.max(0, Math.floor(n("cars")));
@@ -1463,7 +1468,19 @@
   applyElevatorReaderScopeSeed();
 
   if (els.calc) {
-    els.calc.addEventListener("click", calc);
+    els.calc.addEventListener("click", (event) => {
+      if (event && typeof event.preventDefault === "function") event.preventDefault();
+
+      try {
+        syncElevatorTopologyControls();
+        calc();
+      } catch (error) {
+        console.error("Elevator Reader calculate failed:", error);
+        if (els.results) {
+          els.results.innerHTML = row("Error", "Calculator runtime error. Recheck elevator inputs and refresh the page if this persists.");
+        }
+      }
+    });
   }
 
   if (els.reset) {

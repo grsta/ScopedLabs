@@ -344,8 +344,11 @@
   }
 
   function setElevatorFieldHidden(el, hidden) {
-    const field = el?.closest ? (el.closest("[data-elevator-generic-count-field]") || el.closest("[data-mixed-elevator-field]") || el.closest(".field")) : null;
-    if (field) field.hidden = Boolean(hidden);
+    const field = el?.closest ? el.closest(".field") : null;
+    if (!field) return;
+    field.hidden = Boolean(hidden);
+    field.style.display = hidden ? "none" : "";
+    field.setAttribute("aria-hidden", hidden ? "true" : "false");
   }
 
   function syncScopePlannerElevatorTopologyControls() {
@@ -353,12 +356,9 @@
     const isSingleBank = rawTopology === "single-bank";
     const isBanksPlusSingles = rawTopology === "mixed-custom";
 
-    function setFieldHidden(el, hidden) {
-      setElevatorFieldHidden(el, hidden);
-    }
-
     if (els.elevatorCars) {
-      setFieldHidden(els.elevatorCars, isBanksPlusSingles);
+      setElevatorFieldHidden(els.elevatorCars, isBanksPlusSingles);
+      els.elevatorCars.disabled = false;
       els.elevatorCars.readOnly = false;
       els.elevatorCars.title = isBanksPlusSingles
         ? "Banks + single elevators uses Cars / Cabs per Bank Group."
@@ -369,7 +369,7 @@
       if (isSingleBank) els.elevatorBanks.value = "1";
       els.elevatorBanks.disabled = false;
       els.elevatorBanks.readOnly = isSingleBank || isBanksPlusSingles;
-      setFieldHidden(els.elevatorBanks, isBanksPlusSingles);
+      setElevatorFieldHidden(els.elevatorBanks, isBanksPlusSingles);
       els.elevatorBanks.title = isSingleBank
         ? "Single elevator bank uses one bank group. Put the elevator count in Cars / Cabs per Bank or Location."
         : isBanksPlusSingles
@@ -377,23 +377,22 @@
           : "For multiple banks or single elevator locations, this count drives reader quantity.";
     }
 
-    const banksPlusSingleFields = [
+    const bankGroups = Math.max(0, Math.round(Number(els.elevatorMixedBankGroups?.value || 0) || 0));
+    const singleLocations = Math.max(0, Math.round(Number(els.elevatorMixedSeparateLocations?.value || 0) || 0));
+
+    [
       els.elevatorMixedBankGroups,
       els.elevatorMixedCarsPerBank,
       els.elevatorMixedSeparateLocations
-    ];
-
-    banksPlusSingleFields.forEach((el) => setFieldHidden(el, !isBanksPlusSingles));
+    ].forEach((el) => setElevatorFieldHidden(el, !isBanksPlusSingles));
 
     if (els.elevatorMixedCarsPerSeparateLocation) {
       els.elevatorMixedCarsPerSeparateLocation.value = "1";
-      setFieldHidden(els.elevatorMixedCarsPerSeparateLocation, true);
+      setElevatorFieldHidden(els.elevatorMixedCarsPerSeparateLocation, true);
     }
 
     if (isBanksPlusSingles && els.elevatorBanks) {
-      const groups = Math.max(0, Math.round(numberFromInput(els.elevatorMixedBankGroups, 0)));
-      const singles = Math.max(0, Math.round(numberFromInput(els.elevatorMixedSeparateLocations, 0)));
-      els.elevatorBanks.value = String(Math.max(1, groups + singles));
+      els.elevatorBanks.value = String(Math.max(1, bankGroups + singleLocations));
     }
   }
 
