@@ -185,6 +185,8 @@ check("Visual module exports CAD controlled door icon primitive", moduleText.inc
 check("Special Locking visual explains Watch source", moduleText.includes("SOURCE: LOCKING SCOPE") && moduleText.includes("Overall status can remain Watch"));
 check("Special Locking line graph uses dynamic tones", moduleText.includes("toneStroke(pathTone)") && moduleText.includes("egressNodeTone") && moduleText.includes("releaseNodeTone"));
 check("Special Locking visual supports item-level exception tones", moduleText.includes("function openingTone(index)") && moduleText.includes("openingTones") && moduleText.includes("miniMetric(\"exceptions\"") && moduleText.includes("hiddenOpeningTone"));
+check("Elevator Reader visual uses CAD elevator and reader primitives", moduleText.includes("function cadElevatorBankIcon") && moduleText.includes("function cadAccessReaderIcon") && moduleText.includes("cadElevatorBankIcon({") && moduleText.includes("cadAccessReaderIcon({"));
+check("Elevator Reader CAD primitives are exported", moduleText.includes("cadElevatorBankIcon,") && moduleText.includes("cadAccessReaderIcon,"));
 console.log("\nAccess Control visual fit seatbelt audit:");
 console.table(rows);
 

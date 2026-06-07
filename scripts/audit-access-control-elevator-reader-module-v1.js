@@ -52,6 +52,11 @@ check("Elevator Reader report actions are metadata/dropdown owned", html.include
 
 check("Elevator Reader has output visual shell", html.includes("access-control-output-shell.js") && html.includes('data-output-visual-owner="access-control-output-shell"'));
 check("Elevator Reader has modern planning visual module", html.includes("access-control-planning-visuals.js") && visuals.includes("renderElevatorReader") && visuals.includes("buildElevatorReaderSvg"));
+check("Elevator Reader CAD primitives exist", visuals.includes("function cadElevatorBankIcon") && visuals.includes("function cadAccessReaderIcon"));
+check("Elevator Reader uses shared CAD elevator and reader icons", visuals.includes("cadElevatorBankIcon({") && visuals.includes("cadAccessReaderIcon({"));
+check("Elevator Reader CAD primitives are exported", visuals.includes("cadElevatorBankIcon,") && visuals.includes("cadAccessReaderIcon,"));
+check("Elevator Reader CAD primitives are SVG-only", !visuals.includes("<image ") && !visuals.includes("href=\"data:image"));
+
 check("Elevator Reader script renders through shared visual module", script.includes("ScopedLabsAccessControlPlanningVisuals") && script.includes("renderElevatorReader"));
 check("Elevator Reader exports modern SVG visual image", script.includes("getElevatorReaderVisualImage") && script.includes("getExportChartImage"));
 check("Elevator Reader has compact decision schedule", html.includes("Elevator Reader Decision Schedule") && html.includes("data-elevator-reader-summary") && script.includes("renderElevatorReaderSchedule"));

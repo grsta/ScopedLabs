@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-033-special-locking-exceptions";
+  const VERSION = "access-control-planning-visuals-034-elevator-cad-icons";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -113,6 +113,88 @@
       '</g>'
     ].join("");
   }
+
+  function cadAccessReaderIcon(options = {}) {
+    const x = Number(options.x || 0);
+    const y = Number(options.y || 0);
+    const scale = Number(options.scale || 1);
+    const tone = options.tone || "safe";
+    const label = options.label == null ? "" : String(options.label);
+    const line = toneStroke(tone);
+    const fill = toneFill(tone);
+    const glow = tone === "risk" ? "rgba(255,170,170,.80)" : tone === "watch" ? "rgba(255,220,130,.82)" : "rgba(92,255,245,.84)";
+
+    function sx(value) {
+      return Math.round((x + value * scale) * 10) / 10;
+    }
+
+    function sy(value) {
+      return Math.round((y + value * scale) * 10) / 10;
+    }
+
+    function sw(value) {
+      return Math.round(value * scale * 10) / 10;
+    }
+
+    return [
+      '<g class="sl-cad-access-reader-icon" data-cad-icon="access-reader" aria-label="CAD access reader">',
+      '<rect x="' + sx(0) + '" y="' + sy(0) + '" width="' + sw(74) + '" height="' + sw(126) + '" rx="' + sw(13) + '" fill="rgba(0,0,0,.24)" stroke="rgba(226,232,240,.62)" stroke-width="' + sw(1.4) + '" />',
+      '<rect x="' + sx(8) + '" y="' + sy(8) + '" width="' + sw(58) + '" height="' + sw(110) + '" rx="' + sw(9) + '" fill="' + fill + '" stroke="' + line + '" stroke-width="' + sw(1) + '" />',
+      '<rect x="' + sx(29) + '" y="' + sy(19) + '" width="' + sw(16) + '" height="' + sw(4) + '" rx="' + sw(2) + '" fill="' + glow + '" />',
+      '<circle cx="' + sx(37) + '" cy="' + sy(74) + '" r="' + sw(3.3) + '" fill="' + glow + '" />',
+      '<path d="M' + sx(25) + ' ' + sy(64) + ' q' + sw(-10) + ' ' + sw(10) + ' 0 ' + sw(20) + ' M' + sx(49) + ' ' + sy(64) + ' q' + sw(10) + ' ' + sw(10) + ' 0 ' + sw(20) + ' M' + sx(19) + ' ' + sy(58) + ' q' + sw(-16) + ' ' + sw(16) + ' 0 ' + sw(32) + ' M' + sx(55) + ' ' + sy(58) + ' q' + sw(16) + ' ' + sw(16) + ' 0 ' + sw(32) + '" fill="none" stroke="' + glow + '" stroke-width="' + sw(1.05) + '" stroke-linecap="round" />',
+      label ? '<text x="' + sx(37) + '" y="' + sy(112) + '" font-size="' + sw(11) + '" fill="rgba(238,255,244,.88)" font-weight="900" text-anchor="middle">' + escapeHtml(label) + '</text>' : '',
+      '</g>'
+    ].join("");
+  }
+
+  function cadElevatorBankIcon(options = {}) {
+    const x = Number(options.x || 0);
+    const y = Number(options.y || 0);
+    const scale = Number(options.scale || 1);
+    const tone = options.tone || "safe";
+    const cars = Math.max(1, Math.min(3, Math.round(Number(options.cars || 3))));
+    const label = options.label == null ? "" : String(options.label);
+    const signal = tone === "risk" ? "rgba(255,170,170,.78)" : tone === "watch" ? "rgba(255,220,130,.80)" : "rgba(92,255,245,.78)";
+
+    function sx(value) {
+      return Math.round((x + value * scale) * 10) / 10;
+    }
+
+    function sy(value) {
+      return Math.round((y + value * scale) * 10) / 10;
+    }
+
+    function sw(value) {
+      return Math.round(value * scale * 10) / 10;
+    }
+
+    function cab(index) {
+      const cx = 18 + index * 64;
+      return [
+        '<rect x="' + sx(cx) + '" y="' + sy(50) + '" width="' + sw(48) + '" height="' + sw(88) + '" fill="rgba(0,0,0,.10)" stroke="rgba(226,232,240,.62)" stroke-width="' + sw(1.1) + '" />',
+        '<path d="M' + sx(cx + 24) + ' ' + sy(52) + ' V' + sy(138) + '" stroke="rgba(226,232,240,.50)" stroke-width="' + sw(1) + '" />',
+        '<rect x="' + sx(cx + 10) + '" y="' + sy(32) + '" width="' + sw(28) + '" height="' + sw(15) + '" fill="rgba(0,0,0,.20)" stroke="rgba(226,232,240,.45)" stroke-width="' + sw(.9) + '" />',
+        '<path d="M' + sx(cx + 17) + ' ' + sy(42) + ' l' + sw(4) + ' ' + sw(-7) + ' l' + sw(4) + ' ' + sw(7) + ' M' + sx(cx + 31) + ' ' + sy(35) + ' l' + sw(4) + ' ' + sw(7) + ' l' + sw(4) + ' ' + sw(-7) + '" fill="none" stroke="' + signal + '" stroke-width="' + sw(1) + '" stroke-linecap="round" stroke-linejoin="round" />'
+      ].join("");
+    }
+
+    const width = 36 + cars * 64;
+
+    return [
+      '<g class="sl-cad-elevator-bank-icon" data-cad-icon="elevator-bank" aria-label="CAD elevator bank">',
+      '<path d="M' + sx(0) + ' ' + sy(140) + ' H' + sx(width + 20) + '" stroke="rgba(226,232,240,.58)" stroke-width="' + sw(1.3) + '" />',
+      '<rect x="' + sx(8) + '" y="' + sy(18) + '" width="' + sw(width) + '" height="' + sw(122) + '" fill="rgba(0,0,0,.055)" stroke="rgba(226,232,240,.54)" stroke-width="' + sw(1.1) + '" />',
+      Array.from({ length: cars }, (_, index) => cab(index)).join(""),
+      '<rect x="' + sx(width + 22) + '" y="' + sy(76) + '" width="' + sw(14) + '" height="' + sw(36) + '" fill="rgba(0,0,0,.16)" stroke="rgba(226,232,240,.42)" stroke-width="' + sw(.9) + '" />',
+      '<circle cx="' + sx(width + 29) + '" cy="' + sy(88) + '" r="' + sw(4) + '" fill="rgba(0,0,0,.20)" stroke="' + signal + '" stroke-width="' + sw(.9) + '" />',
+      '<circle cx="' + sx(width + 29) + '" cy="' + sy(101) + '" r="' + sw(4) + '" fill="rgba(0,0,0,.20)" stroke="' + signal + '" stroke-width="' + sw(.9) + '" />',
+      '<path d="M' + sx(width + 26.5) + ' ' + sy(89) + ' l' + sw(2.5) + ' ' + sw(-3) + ' l' + sw(2.5) + ' ' + sw(3) + ' M' + sx(width + 26.5) + ' ' + sy(100) + ' l' + sw(2.5) + ' ' + sw(3) + ' l' + sw(2.5) + ' ' + sw(-3) + '" fill="none" stroke="' + signal + '" stroke-width="' + sw(.75) + '" stroke-linecap="round" stroke-linejoin="round" />',
+      label ? '<text x="' + sx(width / 2 + 8) + '" y="' + sy(15) + '" font-size="' + sw(12) + '" fill="rgba(238,255,244,.88)" font-weight="900" text-anchor="middle">' + escapeHtml(label) + '</text>' : '',
+      '</g>'
+    ].join("");
+  }
+
 
   function metricChip(label, value, x, y, w) {
     return [
@@ -538,26 +620,18 @@
     const placement = metrics.placementLabel || metrics.placement || "?";
     const dest = metrics.destLabel || metrics.destinationControl || "?";
     const bankCount = Math.max(1, Math.min(6, Math.round(Number(metrics.banks || 1))));
+    const bankVisibleCount = Math.max(1, Math.min(3, bankCount));
     const carCount = Math.max(1, Math.min(8, Math.round(Number(metrics.cars || cars || 1))));
 
     function carNode(index) {
-      const x = 70 + (index % 4) * 46;
-      const y = 126 + Math.floor(index / 4) * 50;
-      return [
-        '<rect x="' + x + '" y="' + y + '" width="30" height="38" rx="4" fill="rgba(120,255,120,.07)" stroke="rgba(125,255,152,.36)" />',
-        '<path d="M' + (x + 15) + ' ' + (y + 5) + ' V' + (y + 33) + '" stroke="rgba(203,213,225,.24)" stroke-width="1" />',
-        '<circle cx="' + (x + 23) + '" cy="' + (y + 20) + '" r="2" fill="rgba(125,255,152,.78)" />'
-      ].join('');
+      const x = 72 + (index % 4) * 48;
+      const y = 124 + Math.floor(index / 4) * 48;
+      return cadAccessReaderIcon({ x, y, scale: 0.28, tone: pressureTone, label: String(index + 1) });
     }
 
     function bankNode(index) {
-      const x = 378 + index * 44;
-      return [
-        '<g>',
-        '<rect x="' + x + '" y="134" width="26" height="64" rx="5" fill="rgba(120,170,255,.06)" stroke="rgba(120,255,170,.28)" />',
-        '<path d="M' + (x + 7) + ' 151 H' + (x + 19) + ' M' + (x + 7) + ' 166 H' + (x + 19) + ' M' + (x + 7) + ' 181 H' + (x + 19) + '" stroke="rgba(203,213,225,.40)" stroke-width="1" />',
-        '</g>'
-      ].join('');
+      const x = 370 + index * 86;
+      return cadElevatorBankIcon({ x, y: 124, scale: 0.36, tone: pressureTone, cars: 1, label: "B" + (index + 1) });
     }
 
     return [
@@ -574,7 +648,8 @@
       cars > carCount ? '<text x="260" y="162" font-size="11" fill="rgba(203,213,225,.66)">+' + escapeHtml(Math.round(cars - carCount)) + '</text>' : '',
       '<path d="M300 166 H350" stroke="rgba(203,213,225,.24)" stroke-width="1.2" stroke-dasharray="5 6" />',
       '<text x="378" y="114" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">ELEVATOR BANK GROUPS</text>',
-      Array.from({ length: bankCount }, (_, index) => bankNode(index)).join(''),
+      Array.from({ length: bankVisibleCount }, (_, index) => bankNode(index)).join(''),
+      bankCount > bankVisibleCount ? '<text x="646" y="162" font-size="11" fill="rgba(203,213,225,.66)">+' + escapeHtml(Math.round(bankCount - bankVisibleCount)) + ' bank</text>' : '',
       '<rect x="598" y="138" width="74" height="46" rx="8" fill="' + toneFill(dcsTone) + '" stroke="' + toneStroke(dcsTone) + '" />',
       '<text x="635" y="157" text-anchor="middle" font-size="9" fill="rgba(203,213,225,.66)" letter-spacing=".8">DCS ADD</text>',
       '<text x="635" y="176" text-anchor="middle" font-size="14" fill="rgba(238,255,244,.94)" font-weight="900">' + escapeHtml(dcs) + '</text>',
@@ -692,6 +767,8 @@
 
   window.ScopedLabsAccessControlPlanningVisuals = Object.freeze({
     cadControlledDoorOpeningIcon,
+    cadAccessReaderIcon,
+    cadElevatorBankIcon,
     VERSION,
     renderDoorCable,
     renderDoorCount,
