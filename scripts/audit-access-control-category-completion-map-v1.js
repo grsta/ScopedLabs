@@ -38,6 +38,30 @@ function checkToken(value) {
   return value ? "SAFE" : "FAIL";
 }
 
+const TOOL_CONTRACTS = {
+  "scope-planner": { navMode: "pipeline", contributionType: "core-pipeline", summaryGroup: "Core Access Pipeline" },
+  "fail-safe-fail-secure": { navMode: "pipeline", contributionType: "core-pipeline", summaryGroup: "Core Access Pipeline" },
+  "reader-type-selector": { navMode: "pipeline", contributionType: "core-pipeline", summaryGroup: "Core Access Pipeline" },
+  "lock-power-budget": { navMode: "pipeline", contributionType: "core-pipeline", summaryGroup: "Core Access Pipeline" },
+  "panel-capacity": { navMode: "pipeline", contributionType: "core-pipeline", summaryGroup: "Core Access Pipeline" },
+  "access-level-sizing": { navMode: "pipeline", contributionType: "core-pipeline", summaryGroup: "Core Access Pipeline" },
+
+  "credential-format": { navMode: "category", contributionType: "supplemental", summaryGroup: "Supplemental Planning Tools" },
+  "door-cable-length": { navMode: "category", contributionType: "supplemental", summaryGroup: "Supplemental Planning Tools" },
+  "door-count-planner": { navMode: "category", contributionType: "supplemental", summaryGroup: "Supplemental Planning Tools" },
+
+  "anti-passback-zones": { navMode: "category", contributionType: "specialty-branch", summaryGroup: "Specialty / What-if Branches" },
+  "elevator-reader-count": { navMode: "category", contributionType: "specialty-branch", summaryGroup: "Specialty / What-if Branches" }
+};
+
+function contractFor(slug) {
+  return TOOL_CONTRACTS[slug] || {
+    navMode: "category",
+    contributionType: "supplemental",
+    summaryGroup: "Supplemental Planning Tools"
+  };
+}
+
 function laneFor(slug, html, script) {
   if (slug === "panel-capacity") return "accepted-output-shell-reference";
   if (slug === "lock-power-budget") return "accepted-output-shell-reference";
@@ -56,10 +80,12 @@ function recommendedNext(row) {
 const polishPath = path.join("assets", "access-control-tool-polish.js");
 const outputShellPath = path.join("assets", "access-control-output-shell.js");
 const adapterPath = path.join("assets", "access-control-tool-assistant-adapters.js");
+const categoryNavPath = path.join("assets", "access-control-category-nav.js");
 
 const polish = exists(polishPath) ? read(polishPath) : "";
 const outputShell = exists(outputShellPath) ? read(outputShellPath) : "";
 const adapters = exists(adapterPath) ? read(adapterPath) : "";
+const categoryNav = exists(categoryNavPath) ? read(categoryNavPath) : "";
 
 const rows = [];
 
@@ -76,6 +102,7 @@ for (const slug of dirs) {
   const html = read(htmlPath);
   const script = exists(scriptPath) ? read(scriptPath) : "";
   const lane = laneFor(slug, html, script);
+  const contract = contractFor(slug);
   const isAcceptedReference = lane === "accepted-output-shell-reference";
   const isScopeEntry = lane === "special-scope-entry";
 
@@ -107,14 +134,18 @@ for (const slug of dirs) {
     has(html, "data-step=") &&
     has(html, "data-lane=");
 
+  const hasRealPipelineNav =
+    hasPipelineMount &&
+    hasPipelineRenderer &&
+    hasPipelineMetadata;
+
   const hasCategoryNav =
     hasPipelineMount &&
     has(html, "data-access-control-category-nav") &&
     has(html, "/assets/access-control-category-nav.js");
 
   const hasFlowNav =
-    (hasPipelineMount && hasPipelineRenderer && hasPipelineMetadata) ||
-    hasCategoryNav;
+    contract.navMode === "pipeline" ? hasRealPipelineNav : hasCategoryNav;
 
   const hasChartJs =
     has(html, "chart.js") ||
@@ -151,6 +182,15 @@ for (const slug of dirs) {
     has(html, "antiPassbackSchedule") ||
     has(script, "renderAntiPassbackSchedule");
 
+  const hasSummaryReadyContribution =
+    (slug === "scope-planner" && (has(script, "ScopedLabsAccessControlScopeState") || has(script, "accessScopeLedger") || has(script, "final Access Control summary"))) ||
+    has(script, "publishAccessLevelSummaryCarryover") ||
+    has(script, "publishFailSafeResultToScopeLedger") ||
+    (hasHiddenLedger &&
+      (has(script, "currentReport") || has(script, "lastMetrics") || has(script, "register(")) &&
+      (has(script, "summary") || has(script, "interpretation") || has(script, "currentReport") || has(script, "lastMetrics") || has(script, "register(")) &&
+      (has(script, "summary") || has(script, "interpretation") || has(script, "recommendedActions") || has(html, "data-export-table-title")));
+
   const flowActionIndexes = [
     html.indexOf('id="accessControlFlowActions"'),
     html.indexOf('id="next-step-row"'),
@@ -169,6 +209,9 @@ for (const slug of dirs) {
     slug,
     title: getH1(html),
     lane,
+    navMode: contract.navMode,
+    contributionType: contract.contributionType,
+    summaryGroup: contract.summaryGroup,
     scriptVersion: getScriptVersion(html),
     breadcrumbs: checkToken(!has(html, 'class="crumbs"')),
     flowNav: checkToken(hasFlowNav),
@@ -181,6 +224,7 @@ for (const slug of dirs) {
     flowBeforeExport: checkToken(isScopeEntry || !has(html, "reportMetadataMount") || hasFlowBeforeExport),
     outputShell: checkToken(isScopeEntry || isAcceptedReference || hasOutputShell),
     hiddenLedger: checkToken(isScopeEntry || isAcceptedReference || hasHiddenLedger),
+    summaryReady: checkToken(hasSummaryReadyContribution),
     oldChart: checkToken(isScopeEntry || isAcceptedReference || !hasChartJs),
     compactOutput: checkToken(isScopeEntry || isAcceptedReference || hasCompactSchedule),
     next: recommendedNext({ slug, lane })
@@ -190,7 +234,8 @@ for (const slug of dirs) {
 const moduleRows = [
   { module: "access-control-tool-polish.js", exists: exists(polishPath), parses: moduleParses(polish), owns: "page chrome / decorative pills / export card polish" },
   { module: "access-control-output-shell.js", exists: exists(outputShellPath), parses: moduleParses(outputShell), owns: "visible visual lifecycle / hidden ledger / export image handoff" },
-  { module: "access-control-tool-assistant-adapters.js", exists: exists(adapterPath), parses: moduleParses(adapters), owns: "assistant decision model adapters" }
+  { module: "access-control-tool-assistant-adapters.js", exists: exists(adapterPath), parses: moduleParses(adapters), owns: "assistant decision model adapters" },
+  { module: "access-control-category-nav.js", exists: exists(categoryNavPath), parses: moduleParses(categoryNav), owns: "non-pipeline tool path nav / breadcrumb replacement" }
 ];
 
 console.log("\nAccess Control shared module inventory:");
@@ -222,9 +267,9 @@ if (!failures.length) {
 
 console.log("\nRecommended rollout:");
 console.log("1. Keep Lock Power and Panel Capacity as accepted output-shell references.");
-console.log("2. Bring legacy calculator tools through page chrome + shell + output contract.");
-console.log("3. Bring advanced shell tools through output contract where appropriate.");
-console.log("4. Treat Scope Planner as a special entry/planner, not a standard calculator output page.");
+console.log("2. Keep core pipeline tools on real pipeline nav/state; keep non-pipeline tools on TOOL PATH category nav.");
+console.log("3. Bring every tool through the same modern shell: assistant, metadata, output shell, hidden ledger, and summary-ready contribution.");
+console.log("4. Use contributionType to separate core-pipeline, supplemental, and specialty-branch summary sections.");
 console.log("5. Extract shared Access Control CAD/table primitives only after another tool proves the repeated pattern.");
 
 console.log("\nSafety rule:");
