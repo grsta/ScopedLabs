@@ -1,11 +1,11 @@
 /* ScopedLabs Access Control Tool Assistant Adapters
-   Version: access-control-assistant-adapters-015-credential-format
+   Version: access-control-assistant-adapters-016-door-cable
    Purpose: category-specific local assistant model adapters. Dormant unless a tool explicitly calls one.
 */
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-assistant-adapters-015-credential-format";
+  const API_VERSION = "access-control-assistant-adapters-016-door-cable";
 
   function safeText(value) {
     return String(value ?? "");
@@ -426,6 +426,60 @@
     };
   }
 
+
+
+  function buildDoorCableLengthModel(data) {
+    const status = safeText(data.status || "PENDING");
+    const difficulty = safeText(data.difficulty || "Routing review");
+    const totalCable = safeText(data.totalAllDoorsLabel || "pending");
+    const perDoor = safeText(data.perDoorTotalLabel || "pending");
+    const density = safeText(data.cableDensityLabel || "pending");
+    const insight = safeText(data.insight || "Run the calculator to generate door cable routing guidance.");
+    const actions = Array.isArray(data.recommendedActions) ? data.recommendedActions.map(safeText).filter(Boolean) : [
+      "Confirm actual field routing before procurement or installation.",
+      "Document service slack, pathway assumptions, and total cable quantity in the project handoff.",
+      "Include this supplemental result in the Access Control summary when used."
+    ];
+
+    return {
+      category: "access-control",
+      tool: "door-cable-length",
+      kicker: "Local Design Assistant",
+      title: "Door Cable Assistant",
+      status,
+      summary: safeText(data.summary || difficulty),
+      sections: [
+        {
+          title: "Routing Load",
+          body: insight,
+          items: [
+            "Total cable: " + totalCable,
+            "Per-door cable: " + perDoor,
+            "Cable density: " + density,
+            "Difficulty: " + difficulty
+          ]
+        },
+        {
+          title: "Summary Role",
+          body: "Door Cable Length is a supplemental Access Control tool. It is not part of the real pipeline, but its result should be available to the category summary and future Gold reporting.",
+          items: [
+            "Contribution type: supplemental",
+            "Summary group: Supplemental Planning Tools",
+            "Pipeline state: not used"
+          ]
+        }
+      ],
+      assumptionsTitle: "Planning Assumptions",
+      actionsTitle: "Recommended Actions",
+      assumptions: [
+        "Cable estimates are based on straight-line distance, routing factor, service slack, door count, and run strategy.",
+        "Actual routing, pathway fill, service loops, installer methods, and field conditions can change final quantities.",
+        "Final cable quantities should be verified before procurement and installation."
+      ],
+      actions
+    };
+  }
+
   const adapters = Object.freeze({
     "fail-safe-fail-secure": Object.freeze({
       slug: "fail-safe-fail-secure",
@@ -456,6 +510,11 @@
       slug: "credential-format",
       title: "Credential Format Assistant",
       buildModel: buildCredentialFormatModel
+    }),
+    "door-cable-length": Object.freeze({
+      slug: "door-cable-length",
+      title: "Door Cable Assistant",
+      buildModel: buildDoorCableLengthModel
     })
   });
 

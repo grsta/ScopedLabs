@@ -210,6 +210,10 @@ for (const slug of dirs) {
     has(html, "data-apb-summary") ||
     has(html, "antiPassbackSchedule") ||
     has(script, "renderAntiPassbackSchedule") ||
+    has(html, "Door Cable Routing Schedule") ||
+    has(html, "data-door-cable-summary") ||
+    has(html, "door-cable-summary-wrap") ||
+    has(script, "renderDoorCableLengthSchedule") ||
     has(html, "Credential Format Decision Schedule") ||
     has(html, "data-credential-format-summary") ||
     has(html, "credential-format-summary-wrap") ||
@@ -221,8 +225,15 @@ for (const slug of dirs) {
     has(script, "contributionType: \"supplemental\"") &&
     has(script, "Supplemental Planning Tools");
 
+  const hasDoorCableLengthSummaryContribution =
+    slug === "door-cable-length" &&
+    has(script, "publishDoorCableLengthSummaryContribution") &&
+    has(script, "contributionType: \"supplemental\"") &&
+    has(script, "Supplemental Planning Tools");
+
   const hasSummaryReadyContribution =
     hasCredentialFormatSummaryContribution ||
+    hasDoorCableLengthSummaryContribution ||
     (slug === "scope-planner" && (has(script, "ScopedLabsAccessControlScopeState") || has(script, "accessScopeLedger") || has(script, "final Access Control summary"))) ||
     has(script, "publishAccessLevelSummaryCarryover") ||
     has(script, "publishFailSafeResultToScopeLedger") ||

@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
   const CATEGORY = "access-control";
   const CATEGORY_LABEL = "Access Control";
   const TOOL = "door-cable-length";
@@ -30,7 +30,14 @@
     customNotes: $("customNotes"),
     exportReport: $("exportReport"),
     saveSnapshot: $("saveSnapshot"),
-    exportStatus: $("exportStatus")
+    exportStatus: $("exportStatus"),
+    decisionCard: $("doorCableDecisionCard"),
+    scheduleWrap: $("doorCableScheduleWrap"),
+    schedule: $("doorCableSchedule"),
+    assistantMount: $("accessControlLocalAssistantMount"),
+    flowActions: $("accessControlFlowActions"),
+    reportMetadataMount: $("reportMetadataMount"),
+    reportActions: $("doorCableReportActions")
   };
 
   function n(id) {
@@ -355,273 +362,17 @@
   }
 
   function getExportChartImage() {
-    if (!lastMetrics || typeof Chart === "undefined") return getChartImage();
-
-    try {
-      const canvas = document.createElement("canvas");
-      canvas.width = 1200;
-      canvas.height = 620;
-
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return getChartImage();
-
-      const labels = [
-        "Per-Door Cable",
-        "Routing Loss %",
-        "Cable Density",
-        "Total Cable / 100"
-      ];
-
-      const values = [
-        lastMetrics.perDoorTotal,
-        lastMetrics.routingLossPct,
-        lastMetrics.cableDensity * 40,
-        lastMetrics.totalAllDoors / 100
-      ];
-
-      const displayNote = {
-        0: `${lastMetrics.perDoorTotal.toFixed(1)} ft`,
-        1: `${lastMetrics.routingLossPct.toFixed(0)}%`,
-        2: `${lastMetrics.cableDensity.toFixed(2)}`,
-        3: `${lastMetrics.totalAllDoors.toFixed(0)} ft total`
-      };
-
-      const referenceValue = 220;
-      const dominantIndex = values.indexOf(Math.max(...values));
-      const maxValue = Math.max(...values, referenceValue, 300);
-
-      let exportChart = null;
-
-      const bgPlugin = {
-        id: "exportBgPlugin",
-        beforeDraw(chartInstance) {
-          const { ctx, chartArea } = chartInstance;
-          if (!chartArea) return;
-
-          const { left, top, width, height, right, bottom } = chartArea;
-          const x = chartInstance.scales.x;
-
-          ctx.save();
-
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, chartInstance.width, chartInstance.height);
-
-          ctx.fillStyle = "#f8fbf9";
-          ctx.fillRect(left, top, width, height);
-
-          const healthyMax = Math.min(160, x.max);
-          const watchMax = Math.min(220, x.max);
-
-          if (healthyMax > 0) {
-            ctx.fillStyle = "rgba(34, 197, 94, 0.14)";
-            ctx.fillRect(left, top, x.getPixelForValue(healthyMax) - left, height);
-          }
-
-          if (watchMax > 160) {
-            ctx.fillStyle = "rgba(245, 158, 11, 0.14)";
-            ctx.fillRect(
-              x.getPixelForValue(160),
-              top,
-              x.getPixelForValue(watchMax) - x.getPixelForValue(160),
-              height
-            );
-          }
-
-          if (x.max > 220) {
-            ctx.fillStyle = "rgba(239, 68, 68, 0.12)";
-            ctx.fillRect(
-              x.getPixelForValue(220),
-              top,
-              right - x.getPixelForValue(220),
-              height
-            );
-          }
-
-          ctx.restore();
-        },
-        afterDatasetsDraw(chartInstance) {
-          const { ctx, chartArea, scales } = chartInstance;
-          if (!chartArea || !scales.x || !scales.y) return;
-
-          const x = scales.x;
-          const y = scales.y;
-          const { top, bottom } = chartArea;
-
-          ctx.save();
-
-          const rx = x.getPixelForValue(referenceValue);
-          ctx.strokeStyle = "#198754";
-          ctx.lineWidth = 3;
-          ctx.setLineDash([6, 5]);
-          ctx.beginPath();
-          ctx.moveTo(rx, top);
-          ctx.lineTo(rx, bottom);
-          ctx.stroke();
-          ctx.setLineDash([]);
-
-          ctx.fillStyle = "#1f2937";
-          ctx.font = "600 16px Arial";
-          ctx.fillText("Install Watch Limit", rx + 10, bottom - 12);
-
-          ctx.fillStyle = "#15803d";
-          ctx.font = "700 15px Arial";
-          ctx.fillText("Healthy", x.getPixelForValue(8), top + 18);
-
-          ctx.fillStyle = "#b45309";
-          ctx.fillText("Watch", x.getPixelForValue(168), top + 18);
-
-          ctx.fillStyle = "#b91c1c";
-          ctx.fillText("Risk", x.getPixelForValue(228), top + 18);
-
-          const dominantValue = values[dominantIndex];
-          const px = x.getPixelForValue(dominantValue);
-          const py = y.getPixelForValue(labels[dominantIndex]);
-
-          ctx.beginPath();
-          ctx.arc(px, py, 6, 0, Math.PI * 2);
-          ctx.fillStyle = "#ffffff";
-          ctx.fill();
-          ctx.strokeStyle = "#111827";
-          ctx.lineWidth = 2;
-          ctx.stroke();
-
-          ctx.fillStyle = "#1f2937";
-          ctx.font = "600 15px Arial";
-          ctx.fillText(displayNote[dominantIndex], Math.min(px + 10, chartArea.right - 120), py - 10);
-
-          ctx.restore();
-        }
-      };
-
-      exportChart = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "Cable Planning Metrics",
-              data: values,
-              indexAxis: "y",
-              barThickness: 18,
-              maxBarThickness: 18,
-              barPercentage: 0.8,
-              categoryPercentage: 0.7,
-              borderRadius: 8,
-              borderSkipped: false,
-              borderWidth: 1.5,
-              backgroundColor: (context) => {
-                const i = context.dataIndex;
-                const v = context.raw;
-
-                if (i === dominantIndex) {
-                  if (v > 220) return "#dc2626";
-                  if (v > 160) return "#f59e0b";
-                  return "#22c55e";
-                }
-
-                if (v > 220) return "rgba(220, 38, 38, 0.55)";
-                if (v > 160) return "rgba(245, 158, 11, 0.50)";
-                return "rgba(59, 130, 246, 0.42)";
-              },
-              borderColor: (context) => {
-                const i = context.dataIndex;
-                const v = context.raw;
-
-                if (i === dominantIndex) {
-                  if (v > 220) return "#7f1d1d";
-                  if (v > 160) return "#92400e";
-                  return "#166534";
-                }
-
-                if (v > 220) return "#991b1b";
-                if (v > 160) return "#b45309";
-                return "#1d4ed8";
-              }
-            }
-          ]
-        },
-        options: {
-          responsive: false,
-          maintainAspectRatio: false,
-          animation: false,
-          indexAxis: "y",
-          layout: {
-            padding: {
-              top: 36,
-              right: 22,
-              bottom: 10,
-              left: 18
-            }
-          },
-          plugins: {
-            legend: { display: false },
-            tooltip: { enabled: false }
-          },
-          scales: {
-            x: {
-              beginAtZero: true,
-              suggestedMax: Math.ceil(maxValue * 1.08),
-              ticks: {
-                color: "#334155",
-                font: {
-                  size: 14,
-                  weight: "600"
-                }
-              },
-              grid: {
-                color: "rgba(15, 23, 42, 0.08)"
-              },
-              border: {
-                color: "rgba(15, 23, 42, 0.18)"
-              },
-              title: {
-                display: true,
-                text: "Installation Magnitude",
-                color: "#0f172a",
-                font: {
-                  size: 15,
-                  weight: "700"
-                }
-              }
-            },
-            y: {
-              ticks: {
-                color: "#0f172a",
-                font: {
-                  size: 15,
-                  weight: "700"
-                }
-              },
-              grid: {
-                display: false
-              },
-              border: {
-                color: "rgba(15, 23, 42, 0.18)"
-              }
-            }
-          }
-        },
-        plugins: [bgPlugin]
-      });
-
-      const dataUrl = canvas.toDataURL("image/png", 1);
-
-      if (exportChart) {
-        exportChart.destroy();
-        exportChart = null;
-      }
-
-      return dataUrl;
-    } catch (err) {
-      console.error("Export chart render failed:", err);
-      return getChartImage();
-    }
+    return "";
   }
 
   function buildCurrentReportPayload() {
     const outputs = collectVisibleResults();
 
     if (!outputs.length) return null;
+
+    const status = lastMetrics?.status || getStatusFromResults(outputs);
+    const summary = lastMetrics?.summary || getSummaryFromResults(outputs);
+    const interpretation = lastMetrics?.insight || getInterpretationFromResults(outputs);
 
     return {
       reportId: makeReportId("SL-ACC-CABLE"),
@@ -630,9 +381,12 @@
       categorySlug: CATEGORY,
       tool: TOOL_LABEL,
       toolSlug: TOOL,
-      status: getStatusFromResults(outputs),
-      summary: getSummaryFromResults(outputs),
-      interpretation: getInterpretationFromResults(outputs),
+      status,
+      summary,
+      interpretation,
+      contributionType: "supplemental",
+      summaryGroup: "Supplemental Planning Tools",
+      metrics: lastMetrics || {},
       inputs: [
         { label: "Straight-Line Distance (ft)", value: String(els.distance.value) },
         { label: "Routing Factor", value: els.routing.options[els.routing.selectedIndex]?.text || els.routing.value },
@@ -643,7 +397,7 @@
       ],
       outputs,
       assumptions: getAssumptions(),
-      chartImage: getExportChartImage(),
+      chartImage: "",
       meta: getReportMeta()
     };
   }
@@ -1020,6 +774,253 @@
     }
   }
 
+
+  // access-control-door-cable-output-contract-021
+  function scheduleCell(value) {
+    return escapeHtml(value == null || value === "" ? "—" : value);
+  }
+
+  function doorCableStatusFromDifficulty(difficulty) {
+    const value = String(difficulty || "").toUpperCase();
+    if (value === "HIGH") return "RISK";
+    if (value === "MODERATE") return "WATCH";
+    return "HEALTHY";
+  }
+
+  function doorCableStatusChip(status) {
+    const clean = String(status || "PENDING").toUpperCase();
+    const display = clean === "HEALTHY" ? "SAFE" : clean;
+    const tone = clean.includes("RISK") ? "is-risk" : clean.includes("WATCH") ? "is-watch" : "is-healthy";
+    return '<span class="door-cable-status-chip ' + tone + '">' + escapeHtml(display) + '</span>';
+  }
+
+  function doorCableScheduleRow(group, metric, value, note) {
+    return '<tr><td>' + escapeHtml(group) + '</td><td>' + escapeHtml(metric) + '</td><td>' + value + '</td><td>' + escapeHtml(note) + '</td></tr>';
+  }
+
+  function recommendedDoorCableActions(status, metrics = {}) {
+    if (status === "RISK") {
+      return [
+        "Move control hardware closer to the door group or split pathways before rough-in.",
+        "Review pathway fill, pull-box access, cable type, and service loop assumptions with the installer.",
+        "Document high-effort routing in the Access Control summary before final handoff."
+      ];
+    }
+
+    if (status === "WATCH") {
+      return [
+        "Keep routing controlled and label pathway assumptions before field install.",
+        "Verify service slack, spare capacity, and pathway congestion for the selected routing factor.",
+        "Carry this result into the Access Control summary as supplemental routing context."
+      ];
+    }
+
+    return [
+      "Document the estimated cable quantity and routing assumptions in the project handoff.",
+      "Confirm the actual pathway before procurement or installation.",
+      "Carry this result into the Access Control summary as supplemental routing context."
+    ];
+  }
+
+  function renderDoorCableLengthSchedule(metrics = {}) {
+    const status = metrics.status || doorCableStatusFromDifficulty(metrics.difficulty);
+    const statusLabel = String(status).toUpperCase() === "HEALTHY" ? "SAFE" : String(status || "PENDING").toUpperCase();
+    const summary = metrics.summary || "Door cable routing review generated from the selected distance, slack, door count, and run strategy.";
+    const interpretation = metrics.insight || "Run the calculator to generate door cable routing guidance.";
+
+    const tableRows = [
+      doorCableScheduleRow("Inputs", "Straight-Line Distance", scheduleCell(metrics.distanceLabel), "Base field distance before routing factor and slack."),
+      doorCableScheduleRow("Inputs", "Routing Factor", scheduleCell(metrics.routingLabel), "Routing overhead for open, mixed, or constrained pathways."),
+      doorCableScheduleRow("Inputs", "Service Slack", scheduleCell(metrics.slackLabel), "Additional slack per door for serviceability."),
+      doorCableScheduleRow("Inputs", "Door Count", scheduleCell(metrics.doors), "Number of openings included in this cable estimate."),
+      doorCableScheduleRow("Inputs", "Run Strategy", scheduleCell(metrics.runLabel), "Single combined cable or separate cable paths per opening."),
+      doorCableScheduleRow("Calculated Load", "Routed Distance per Door", scheduleCell(metrics.routedLabel), "Straight-line distance after routing factor."),
+      doorCableScheduleRow("Calculated Load", "Estimated Total per Door", scheduleCell(metrics.perDoorTotalLabel), "Per-door cable quantity after routing, slack, and run strategy."),
+      doorCableScheduleRow("Calculated Load", "Estimated Total Cable", scheduleCell(metrics.totalAllDoorsLabel), "Total planning quantity for all modeled doors."),
+      doorCableScheduleRow("Calculated Load", "Cable Density", scheduleCell(metrics.cableDensityLabel), "Routing pressure indicator compared with straight-line distance."),
+      doorCableScheduleRow("Decision", "Install Difficulty", scheduleCell(metrics.difficulty), "Planning-level routing difficulty."),
+      doorCableScheduleRow("Decision", "Status", doorCableStatusChip(status), statusLabel === "RISK" ? "Reduce routing distance, split pathways, or move hardware closer before final layout." : statusLabel === "WATCH" ? "Proceed with documented pathway assumptions and installation review." : "Routing quantity is usable for the current planning scope."),
+      doorCableScheduleRow("Summary", "Contribution", scheduleCell("Supplemental Planning Tools"), "Included in Access Control summary when this non-pipeline tool is used.")
+    ];
+
+    const html = [
+      '<div class="door-cable-decision-hero">',
+      '<div><strong>' + scheduleCell(metrics.difficulty || "Door cable routing review") + ' routing difficulty</strong><span>' + scheduleCell(summary) + '</span></div>',
+      '<div>' + doorCableStatusChip(status) + '<span>Total cable: ' + scheduleCell(metrics.totalAllDoorsLabel) + '</span></div>',
+      '</div>',
+      '<table class="door-cable-summary-table" data-door-cable-summary-table="true" data-export-table-title="Door Cable Routing Schedule"><thead><tr><th>Group</th><th>Metric</th><th>Value</th><th>Engineering Note</th></tr></thead><tbody>',
+      tableRows.join(""),
+      '</tbody></table>',
+      '<p class="mini-note"><strong>Engineering Interpretation:</strong> ' + scheduleCell(interpretation) + '</p>'
+    ].join("");
+
+    const shell = window.ScopedLabsAccessControlOutputShell;
+    if (shell && typeof shell.showVisual === "function") {
+      shell.showVisual({ card: els.decisionCard, wrap: els.scheduleWrap, target: els.schedule, html });
+    } else {
+      if (els.schedule) els.schedule.innerHTML = html;
+      if (els.scheduleWrap) els.scheduleWrap.hidden = false;
+      if (els.decisionCard) els.decisionCard.hidden = false;
+    }
+
+    return html;
+  }
+
+  function clearDoorCableLengthSchedule() {
+    const shell = window.ScopedLabsAccessControlOutputShell;
+    if (shell && typeof shell.hideVisual === "function") {
+      shell.hideVisual({ card: els.decisionCard, wrap: els.scheduleWrap, target: els.schedule });
+      return;
+    }
+
+    if (els.schedule) els.schedule.innerHTML = "";
+    if (els.scheduleWrap) els.scheduleWrap.hidden = true;
+    if (els.decisionCard) els.decisionCard.hidden = true;
+  }
+
+  function buildDoorCableLengthAssistantFallback(metrics = {}) {
+    const status = metrics.status || doorCableStatusFromDifficulty(metrics.difficulty);
+    return {
+      category: CATEGORY,
+      tool: TOOL,
+      kicker: "Local Design Assistant",
+      title: "Door Cable Assistant",
+      status,
+      summary: metrics.summary || "Door cable routing guidance is ready for this supplemental tool result.",
+      sections: [
+        {
+          title: "Routing Pressure",
+          body: metrics.insight || "Cable routing pressure will appear here after calculation.",
+          items: [
+            "Total cable: " + (metrics.totalAllDoorsLabel || "—"),
+            "Per-door cable: " + (metrics.perDoorTotalLabel || "—"),
+            "Cable density: " + (metrics.cableDensityLabel || "—"),
+            "Difficulty: " + (metrics.difficulty || "—")
+          ]
+        },
+        {
+          title: "Summary Role",
+          body: "Door Cable Length is a supplemental Access Control tool. It is not part of the real pipeline, but its result should be available to the category summary and future Gold reporting.",
+          items: [
+            "Contribution type: supplemental",
+            "Summary group: Supplemental Planning Tools",
+            "Pipeline state: not used"
+          ]
+        }
+      ],
+      assumptionsTitle: "Planning Assumptions",
+      actionsTitle: "Recommended Actions",
+      assumptions: getAssumptions(),
+      actions: metrics.recommendedActions || recommendedDoorCableActions(status, metrics)
+    };
+  }
+
+  function renderDoorCableLengthAssistant(metrics = {}) {
+    if (!els.assistantMount) return false;
+
+    const api = window.ScopedLabsLocalAssistant;
+    if (!api || typeof api.mount !== "function") return false;
+
+    const registry = window.ScopedLabsAccessControlToolAssistantAdapters;
+    const adapter = registry && typeof registry.getAdapter === "function" ? registry.getAdapter(TOOL) : null;
+    const model = adapter && typeof adapter.buildModel === "function"
+      ? adapter.buildModel(metrics)
+      : buildDoorCableLengthAssistantFallback(metrics);
+
+    return api.mount(els.assistantMount, model);
+  }
+
+  function clearDoorCableLengthAssistant() {
+    const api = window.ScopedLabsLocalAssistant;
+    if (api && typeof api.clear === "function" && els.assistantMount) {
+      api.clear(els.assistantMount);
+      return;
+    }
+
+    if (els.assistantMount) {
+      els.assistantMount.innerHTML = "";
+      els.assistantMount.hidden = true;
+    }
+  }
+
+  function publishDoorCableLengthSummaryContribution(metrics = {}) {
+    const contribution = {
+      category: CATEGORY,
+      slug: TOOL,
+      title: TOOL_LABEL,
+      contributionType: "supplemental",
+      summaryGroup: "Supplemental Planning Tools",
+      status: metrics.status || doorCableStatusFromDifficulty(metrics.difficulty),
+      summary: metrics.summary || "Door cable routing result ready.",
+      metrics: {
+        straightLineDistance: metrics.distance,
+        routingFactor: metrics.routingFactor,
+        serviceSlack: metrics.slack,
+        doors: metrics.doors,
+        runStrategy: metrics.runLabel,
+        separateCables: metrics.cables,
+        estimatedTotalCable: metrics.totalAllDoorsLabel,
+        estimatedTotalPerDoor: metrics.perDoorTotalLabel,
+        cableDensity: metrics.cableDensityLabel,
+        installDifficulty: metrics.difficulty
+      },
+      notes: [
+        metrics.insight || "Door cable length should be verified against actual routing, pathway constraints, service loops, and field conditions.",
+        "Supplemental tool: included in summary when used, but not part of real pipeline state."
+      ],
+      updatedAt: new Date().toISOString()
+    };
+
+    window.ScopedLabsAccessControlSummaryContributions = window.ScopedLabsAccessControlSummaryContributions || {};
+    window.ScopedLabsAccessControlSummaryContributions[contribution.slug] = contribution;
+
+    try {
+      localStorage.setItem("scopedlabs:access-control:summary:door-cable-length", JSON.stringify(contribution));
+    } catch {}
+
+    return contribution;
+  }
+
+  function registerDoorCableLengthOutputShell() {
+    const shell = window.ScopedLabsAccessControlOutputShell;
+    if (!shell || typeof shell.register !== "function") return false;
+
+    return shell.register(TOOL, {
+      getChartImage() {
+        return "";
+      },
+      attachExportGetter() {
+        return false;
+      }
+    });
+  }
+
+  function placeDoorCableReportActions() {
+    if (!els.reportMetadataMount || !els.reportActions) return false;
+
+    const details = els.reportMetadataMount.querySelector("details.sl-report-meta") || els.reportMetadataMount.querySelector("details");
+    if (!details) return false;
+
+    if (els.reportActions.parentElement !== details) {
+      details.appendChild(els.reportActions);
+    }
+
+    els.reportActions.hidden = false;
+    els.reportActions.removeAttribute("hidden");
+    els.reportActions.style.display = "";
+    return true;
+  }
+
+  function setupDoorCableReportActions() {
+    const run = () => placeDoorCableReportActions();
+
+    run();
+    window.setTimeout(run, 50);
+    window.setTimeout(run, 250);
+
+    document.addEventListener("scopedlabs:report-metadata-ready", run);
+  }
+
   function getDifficulty(perDoorTotal, cableDensity, totalAllDoors) {
     if (perDoorTotal > 350 || cableDensity > 3.2 || totalAllDoors > 4000) return "HIGH";
     if (perDoorTotal > 220 || cableDensity > 2.0 || totalAllDoors > 2000) return "MODERATE";
@@ -1054,260 +1055,9 @@
     return "Cable design is clean and efficient. Install should be straightforward with minimal overhead.";
   }
 
-  function renderChart(metrics) {
+  function renderDoorCableLengthLegacyChartDisabled() {
     destroyChart();
-
-    if (!els.chart) return;
-
-    showChartWrap();
-
-    const labels = [
-      "Per-Door Cable",
-      "Routing Loss %",
-      "Cable Density",
-      "Total Cable / 100"
-    ];
-
-    const values = [
-      metrics.perDoorTotal,
-      metrics.routingLossPct,
-      metrics.cableDensity * 40,
-      metrics.totalAllDoors / 100
-    ];
-
-    const displayNote = {
-      0: `${metrics.perDoorTotal.toFixed(1)} ft`,
-      1: `${metrics.routingLossPct.toFixed(0)}%`,
-      2: `${metrics.cableDensity.toFixed(2)}`,
-      3: `${metrics.totalAllDoors.toFixed(0)} ft total`
-    };
-
-    const dominantIndex = values.indexOf(Math.max(...values));
-    const referenceValue = 220;
-    const chartMax = Math.max(300, Math.ceil(Math.max(...values, referenceValue) * 1.12));
-
-    const chartBgPlugin = {
-      id: "chartBgPlugin",
-      beforeDraw(c) {
-        const { ctx, chartArea } = c;
-        if (!chartArea) return;
-
-        const { left, top, width, height } = chartArea;
-
-        ctx.save();
-        ctx.fillStyle = "rgba(255,255,255,0.05)";
-        ctx.fillRect(left, top, width, height);
-        ctx.restore();
-      }
-    };
-
-    const thresholdBandPlugin = {
-      id: "thresholdBandPlugin",
-      beforeDatasetsDraw(c) {
-        const { ctx, chartArea, scales } = c;
-        if (!chartArea || !scales.x) return;
-
-        const x = scales.x;
-        const { top, bottom, left, right } = chartArea;
-
-        const healthyMax = Math.min(160, x.max);
-        const watchMax = Math.min(220, x.max);
-
-        ctx.save();
-
-        if (healthyMax > 0) {
-          ctx.fillStyle = "rgba(46, 204, 113, 0.16)";
-          ctx.fillRect(left, top, x.getPixelForValue(healthyMax) - left, bottom - top);
-        }
-
-        if (watchMax > 160) {
-          ctx.fillStyle = "rgba(255, 200, 80, 0.13)";
-          ctx.fillRect(
-            x.getPixelForValue(160),
-            top,
-            x.getPixelForValue(watchMax) - x.getPixelForValue(160),
-            bottom - top
-          );
-        }
-
-        if (x.max > 220) {
-          ctx.fillStyle = "rgba(255, 90, 90, 0.13)";
-          ctx.fillRect(
-            x.getPixelForValue(220),
-            top,
-            right - x.getPixelForValue(220),
-            bottom - top
-          );
-        }
-
-        ctx.restore();
-      },
-      afterDatasetsDraw(c) {
-        const { ctx, chartArea, scales } = c;
-        if (!chartArea || !scales.x || !scales.y) return;
-
-        const x = scales.x;
-        const y = scales.y;
-        const { top, bottom } = chartArea;
-
-        ctx.save();
-
-        const rx = x.getPixelForValue(referenceValue);
-        ctx.strokeStyle = "rgba(120, 255, 170, 0.98)";
-        ctx.lineWidth = 3;
-        ctx.setLineDash([4, 4]);
-        ctx.beginPath();
-        ctx.moveTo(rx, top);
-        ctx.lineTo(rx, bottom);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        ctx.fillStyle = "rgba(220, 255, 235, 0.96)";
-        ctx.font = "600 11px sans-serif";
-        ctx.fillText("Install Watch Limit", rx + 8, bottom - 10);
-
-        ctx.fillStyle = "rgba(180, 255, 200, 0.82)";
-        ctx.font = "600 11px sans-serif";
-        ctx.fillText("Healthy", x.getPixelForValue(8), top + 14);
-
-        ctx.fillStyle = "rgba(255, 220, 140, 0.82)";
-        ctx.fillText("Watch", x.getPixelForValue(168), top + 14);
-
-        ctx.fillStyle = "rgba(255, 160, 160, 0.82)";
-        ctx.fillText("Risk", x.getPixelForValue(228), top + 14);
-
-        const dominantValue = values[dominantIndex];
-        const px = x.getPixelForValue(dominantValue);
-        const py = y.getPixelForValue(labels[dominantIndex]);
-
-        ctx.beginPath();
-        ctx.arc(px, py, 4.5, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(225, 255, 240, 1)";
-        ctx.fill();
-        ctx.strokeStyle = "rgba(120, 255, 170, 0.95)";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        ctx.fillStyle = "rgba(235, 248, 240, 0.92)";
-        ctx.font = "600 11px sans-serif";
-        ctx.fillText(displayNote[dominantIndex], Math.min(px + 8, chartArea.right - 80), py - 8);
-
-        ctx.restore();
-      }
-    };
-
-    chart = new Chart(els.chart, {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [
-          {
-            label: "Cable Planning Metrics",
-            data: values,
-            barThickness: 16,
-            maxBarThickness: 16,
-            barPercentage: 0.8,
-            categoryPercentage: 0.7,
-            borderWidth: 2,
-            borderRadius: 8,
-            borderSkipped: false,
-            backgroundColor: (context) => {
-              const i = context.dataIndex;
-              const v = context.raw;
-
-              if (i === dominantIndex) {
-                if (v > 220) return "rgba(255, 92, 92, 1)";
-                if (v > 160) return "rgba(255, 188, 82, 1)";
-                return "rgba(120, 255, 170, 1)";
-              }
-
-              if (v > 220) return "rgba(255, 77, 77, 0.30)";
-              if (v > 160) return "rgba(255, 170, 51, 0.24)";
-              return "rgba(90, 170, 255, 0.15)";
-            },
-            borderColor: (context) => {
-              const i = context.dataIndex;
-              const v = context.raw;
-
-              if (i === dominantIndex) {
-                if (v > 220) return "rgba(255, 220, 220, 1)";
-                if (v > 160) return "rgba(255, 240, 210, 1)";
-                return "rgba(215, 255, 230, 1)";
-              }
-
-              return "rgba(120,170,200,0.18)";
-            }
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        indexAxis: "y",
-        animation: {
-          duration: 700,
-          easing: "easeOutQuart"
-        },
-        layout: {
-          padding: {
-            top: 28,
-            right: 12,
-            left: 10,
-            bottom: 0
-          }
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: "rgba(8, 18, 18, 0.96)",
-            titleColor: "#e8fff1",
-            bodyColor: "#d9f7e7",
-            borderColor: "rgba(100, 255, 180, 0.25)",
-            borderWidth: 1,
-            padding: 12,
-            callbacks: {
-              label(context) {
-                const i = context.dataIndex;
-                return ` ${displayNote[i]}`;
-              }
-            }
-          }
-        },
-        scales: {
-          x: {
-            beginAtZero: true,
-            suggestedMax: chartMax,
-            ticks: {
-              color: "rgba(220, 238, 230, 0.78)"
-            },
-            grid: {
-              color: "rgba(110, 160, 140, 0.10)"
-            },
-            title: {
-              display: true,
-              text: "Installation Magnitude",
-              color: "rgba(230, 255, 240, 0.92)"
-            }
-          },
-          y: {
-            ticks: {
-              color: "rgba(228, 245, 235, 0.92)"
-            },
-            grid: {
-              display: false
-            }
-          }
-        }
-      },
-      plugins: [chartBgPlugin, thresholdBandPlugin]
-    });
-
-    els.chart.style.width = "100%";
-    els.chart.style.height = "340px";
-
-    if (els.chart.parentElement) {
-      els.chart.parentElement.style.minHeight = "340px";
-    }
+    return false;
   }
 
   function calc() {
@@ -1329,27 +1079,64 @@
     const difficulty = getDifficulty(perDoorTotal, cableDensity, totalAllDoors);
     const recommendation = getRecommendation(difficulty, runs, distance);
     const insight = getInsight(difficulty);
+    const status = doorCableStatusFromDifficulty(difficulty);
+    const runLabel = runs === "multi" ? "Multiple separate cable paths" : "Single combined cable";
+    const routingLabel = els.routing.options[els.routing.selectedIndex]?.text || String(routingFactor);
+    const summary = difficulty === "HIGH"
+      ? "Cable routing is high-effort and should be simplified before final layout."
+      : difficulty === "MODERATE"
+        ? "Cable routing is workable, but pathway discipline and installation review are important."
+        : "Cable routing is clean and usable for planning.";
+
+    const metrics = {
+      distance,
+      routing,
+      routingFactor,
+      routingLabel,
+      slack,
+      doors,
+      runs,
+      runLabel,
+      cables,
+      routed,
+      routingLossPct,
+      perDoorSingle,
+      perDoorTotal,
+      totalAllDoors,
+      cableDensity,
+      difficulty,
+      recommendation,
+      insight,
+      status,
+      summary,
+      recommendedActions: recommendedDoorCableActions(status),
+      distanceLabel: distance.toFixed(1) + " ft",
+      slackLabel: slack.toFixed(1) + " ft",
+      routedLabel: routed.toFixed(1) + " ft",
+      perDoorSingleLabel: perDoorSingle.toFixed(1) + " ft",
+      perDoorTotalLabel: perDoorTotal.toFixed(1) + " ft",
+      totalAllDoorsLabel: totalAllDoors.toFixed(1) + " ft",
+      routingLossPctLabel: routingLossPct.toFixed(0) + "%",
+      cableDensityLabel: cableDensity.toFixed(2)
+    };
 
     els.results.innerHTML = [
-      row("Routed Distance (per door)", `${routed.toFixed(1)} ft`),
-      row("Routing Loss", `${routingLossPct.toFixed(0)}%`),
-      row("Estimated Run (single cable)", `${perDoorSingle.toFixed(1)} ft`),
-      row("Estimated Total per Door", `${perDoorTotal.toFixed(1)} ft`),
-      row("Estimated Total Cable", `${totalAllDoors.toFixed(1)} ft`),
-      row("Cable Density", cableDensity.toFixed(2)),
+      row("Routed Distance (per door)", metrics.routedLabel),
+      row("Routing Loss", metrics.routingLossPctLabel),
+      row("Estimated Run (single cable)", metrics.perDoorSingleLabel),
+      row("Estimated Total per Door", metrics.perDoorTotalLabel),
+      row("Estimated Total Cable", metrics.totalAllDoorsLabel),
+      row("Cable Density", metrics.cableDensityLabel),
       row("Install Difficulty", difficulty),
       row("Design Guidance", recommendation),
       row("Engineering Insight", insight)
     ].join("");
 
-    lastMetrics = {
-      perDoorTotal,
-      routingLossPct,
-      cableDensity,
-      totalAllDoors
-    };
+    lastMetrics = metrics;
 
-    renderChart(lastMetrics);
+    renderDoorCableLengthSchedule(metrics);
+    renderDoorCableLengthAssistant(metrics);
+    publishDoorCableLengthSummaryContribution(metrics);
 
     currentReport = buildCurrentReportPayload();
     updateExportControls();
@@ -1357,10 +1144,12 @@
 
   function resetResults(message = "Enter values and press Calculate.") {
     if (els.results) {
-      els.results.innerHTML = `<div class="muted">${escapeHtml(message)}</div>`;
+      els.results.innerHTML = '<div class="muted">' + escapeHtml(message) + '</div>';
     }
 
     destroyChart();
+    clearDoorCableLengthSchedule();
+    clearDoorCableLengthAssistant();
     lastMetrics = null;
     currentReport = null;
     updateExportControls();
@@ -1431,6 +1220,7 @@
       els.chart.parentElement.style.minHeight = "340px";
     }
   }
-
+  setupDoorCableReportActions();
+  registerDoorCableLengthOutputShell();
   reset();
 })();
