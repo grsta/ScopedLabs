@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-025-special-locking-openingicons-fix";
+  const VERSION = "access-control-planning-visuals-026-special-locking-cache-refresh";
 
   function clamp(value, min, max) {
     const num = Number(value);
