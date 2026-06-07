@@ -11,7 +11,7 @@
   />
   <meta name="robots" content="noindex,follow" />
 
-  <link rel="stylesheet" href="/assets/style.css?v=access-control-elevator-reader-output-contract-028-mixed-scope-drivers" />
+  <link rel="stylesheet" href="/assets/style.css?v=access-control-elevator-reader-output-contract-029-banks-singles" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -211,7 +211,7 @@
             <option value="single-bank">Single elevator bank (count auto-set to 1)</option>
             <option value="multiple-banks" selected>Multiple elevator banks</option>
             <option value="separate-elevators">Separate individual elevators / locations</option>
-            <option value="mixed-custom">Mixed / custom elevator scope</option>
+            <option value="mixed-custom">Banks + single elevators</option>
           </select>
         </label>
 
@@ -227,19 +227,19 @@
 
 
         <label class="field" data-mixed-elevator-field hidden>
-          <span class="label">Mixed Bank Groups</span>
+          <span class="label">Elevator Bank Groups</span>
           <input id="mixedBankGroups" type="number" min="0" step="1" value="1" />
         </label>
         <label class="field" data-mixed-elevator-field hidden>
-          <span class="label">Cars / Cabs per Mixed Bank</span>
+          <span class="label">Cars / Cabs per Bank Group</span>
           <input id="mixedCarsPerBank" type="number" min="0" step="1" value="2" />
         </label>
         <label class="field" data-mixed-elevator-field hidden>
-          <span class="label">Separate Elevator Locations</span>
+          <span class="label">Single Elevator Locations</span>
           <input id="mixedSeparateLocations" type="number" min="0" step="1" value="1" />
         </label>
         <label class="field" data-mixed-elevator-field hidden>
-          <span class="label">Cars / Cabs per Separate Location</span>
+          <span class="label">Cars / Cabs per Single Location</span>
           <input id="mixedCarsPerSeparateLocation" type="number" min="0" step="1" value="1" />
         </label>
 
@@ -255,7 +255,7 @@
             <option value="shared-bank">Shared lobby dispatch for this bank</option>
             <option value="per-bank">Per-bank dispatch terminals</option>
             <option value="separate-location">Separate-location dispatch terminals</option>
-            <option value="mixed-custom">Mixed / custom DCS credential points</option>
+            <option value="mixed-custom">Custom DCS credential points</option>
           </select>
         </label>
         <label class="field">
@@ -359,7 +359,7 @@
   <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-001"></script>
   <script src="/assets/access-control-output-shell.js?v=access-control-output-shell-001-lock-power-visual-export"></script>
   <script src="/assets/access-control-decision-schedule.js?v=access-control-decision-schedule-001-shared-shell"></script>
-  <script src="/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-038-elevator-mixed-drivers"></script>
+  <script src="/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-039-elevator-banks-singles"></script>
   <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
   <script src="/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-021-special-locking-exceptions"></script>
   <script src="/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes"></script>
@@ -368,7 +368,7 @@
       window.ScopedLabsReportMetadata.init(document);
     }
   </script>
-  <script src="./script.js?v=access-control-elevator-reader-output-contract-028-mixed-scope-drivers"></script>
+  <script src="./script.js?v=access-control-elevator-reader-output-contract-029-banks-singles"></script>
   <script src="/assets/access-control-category-nav.js?v=access-control-category-nav-001-tool-path"></script>
   <script src="/assets/access-control-tool-polish.js?v=access-control-tool-polish-010-page-chrome-pill-cleanup"></script>
   <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>

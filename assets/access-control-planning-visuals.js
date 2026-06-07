@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-038-elevator-mixed-drivers";
+  const VERSION = "access-control-planning-visuals-039-elevator-banks-singles";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -640,13 +640,13 @@
     const bankVisibleCount = Math.max(1, Math.min(3, bankCount));
     const hiddenElevatorGroups = Math.max(0, bankCount - bankVisibleCount);
     const elevatorGroupLabel = isMixedElevatorTopology
-      ? "BANKS + LOCATIONS"
+      ? "BANKS + SINGLES"
       : (isSeparateElevatorTopology ? (bankCount === 1 ? "ELEVATOR / LOCATION" : "ELEVATOR LOCATIONS") : (isSingleElevatorTopology ? "ELEVATOR / LOCATION" : (bankCount === 1 ? "ELEVATOR BANK GROUP" : "ELEVATOR BANK GROUPS")));
-    const lineGroupLabel = isMixedElevatorTopology ? "banks + locations" : (isSeparateElevatorTopology ? "locations" : (isSingleElevatorTopology ? "location" : "bank groups"));
+    const lineGroupLabel = isMixedElevatorTopology ? "banks + singles" : (isSeparateElevatorTopology ? "locations" : (isSingleElevatorTopology ? "location" : "bank groups"));
     const elevatorOverflowUnit = isMixedElevatorTopology
-      ? (hiddenElevatorGroups === 1 ? "scope group" : "scope groups")
+      ? (hiddenElevatorGroups === 1 ? "bank/single group" : "bank/single groups")
       : (isSeparateElevatorTopology ? (hiddenElevatorGroups === 1 ? "elevator location" : "elevator locations") : (isSingleElevatorTopology ? (hiddenElevatorGroups === 1 ? "elevator" : "elevators") : (hiddenElevatorGroups === 1 ? "bank group" : "bank groups")));
-    const elevatorOverflowLabel = hiddenElevatorGroups > 0 ? "+" + hiddenElevatorGroups + " " + elevatorOverflowUnit : "";
+    const elevatorOverflowLabel = hiddenElevatorGroups > 0 ? "+" + hiddenElevatorGroups + " more" : "";
     const carCount = Math.max(1, Math.min(8, Math.round(Number(metrics.cars || cars || 1))));
     const carOverflowLabel = cars > carCount ? "+" + Math.round(cars - carCount) : "";
 
@@ -672,11 +672,13 @@
       statusBadge(statusText, tone, 616, 51),
       '<text x="72" y="114" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">CAR / CAB READERS</text>',
       Array.from({ length: carCount }, (_, index) => carNode(index)).join(''),
-      carOverflowLabel ? '<text x="278" y="204" text-anchor="middle" font-size="11" fill="' + statusLineStroke + '">' + escapeHtml(carOverflowLabel) + '</text>' : '',
+      carOverflowLabel ? '<rect x="246" y="188" width="64" height="19" rx="7" fill="' + statusLineFill + '" stroke="' + statusLineStroke + '" opacity=".86" />' : '',
+      carOverflowLabel ? '<text x="278" y="201" text-anchor="middle" font-size="11" fill="' + statusLineStroke + '" font-weight="850">' + escapeHtml(carOverflowLabel) + '</text>' : '',
       '<path d="M300 166 H350" stroke="rgba(203,213,225,.24)" stroke-width="1.2" stroke-dasharray="5 6" />',
       '<text x="378" y="114" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">' + escapeHtml(elevatorGroupLabel) + '</text>',
       Array.from({ length: bankVisibleCount }, (_, index) => bankNode(index)).join(''),
-      elevatorOverflowLabel ? '<text x="512" y="198" text-anchor="middle" font-size="11" fill="' + statusLineStroke + '">' + escapeHtml(elevatorOverflowLabel) + '</text>' : '',
+      elevatorOverflowLabel ? '<rect x="458" y="184" width="108" height="19" rx="7" fill="' + statusLineFill + '" stroke="' + statusLineStroke + '" opacity=".86" />' : '',
+      elevatorOverflowLabel ? '<text x="512" y="197" text-anchor="middle" font-size="11" fill="' + statusLineStroke + '" font-weight="850">' + escapeHtml(elevatorOverflowLabel) + '</text>' : '',
       '<rect x="632" y="118" width="74" height="46" rx="8" fill="' + toneFill(dcsTone) + '" stroke="' + toneStroke(dcsTone) + '" />',
       '<text x="669" y="137" text-anchor="middle" font-size="9" fill="rgba(203,213,225,.66)" letter-spacing=".8">DCS READERS</text>',
       '<text x="669" y="156" text-anchor="middle" font-size="14" fill="rgba(238,255,244,.94)" font-weight="900">' + escapeHtml(dcs) + '</text>',
@@ -699,7 +701,7 @@
       '<text x="366" y="337" font-size="9" fill="rgba(203,213,225,.62)" letter-spacing=".7">DCS MODE</text>',
       '<text x="498" y="337" font-size="10" fill="rgba(238,255,244,.90)" font-weight="800">' + escapeHtml(compactDcsModeLabel) + '</text>',
       '</svg>',
-      '<p class="sl-vis-note"><strong>Visual note:</strong> Elevator bank groups are scope markers, not lobby reader counts. Use the visual to compare car readers, actual lobby readers, DCS reader points, and integration pressure before final elevator coordination.</p>',
+      '<p class="sl-vis-note"><strong>Visual note:</strong> Elevator bank groups and single elevator locations are scope markers, not lobby reader counts. Use the visual to compare car readers, actual lobby readers, DCS reader points, and integration pressure before final elevator coordination.</p>',
       '</div>'
     ].join("");
   }
