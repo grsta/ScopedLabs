@@ -68,7 +68,7 @@ check("Elevator Reader removed Chart.js CDN", !html.includes("chart.js"));
 check("Elevator Reader removed canvas chart", !html.includes("<canvas") && html.includes('class="access-control-output-visual"'));
 check("Elevator Reader removed legacy Chart.js renderer", !script.includes("new Chart(") && !script.includes("function renderChart("));
 check("Elevator Reader keeps canonical export engine", html.includes("/assets/export.js?v=shared-export-030-semantic-report-tones"));
-check("Elevator Reader local script cache is modernized", html.includes("./script.js?v=access-control-elevator-reader-output-contract-022-scope-seed"));
+check("Elevator Reader local script cache is modernized", html.includes("./script.js?v=access-control-elevator-reader-output-contract-023-bank-labels"));
 
 console.log("\nAccess Control Elevator Reader module audit:");
 console.table(rows);
