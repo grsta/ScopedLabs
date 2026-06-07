@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-023-special-locking-opening-count-icons";
+  const VERSION = "access-control-planning-visuals-025-special-locking-openingicons-fix";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -399,6 +399,7 @@
     const tone = statusTone(metrics.status || metrics.authorityLevel);
     const statusText = statusLabel(metrics.status || metrics.authorityLevel);
     const openings = Math.max(0, Number(metrics.openingCount || 0));
+    const openingCount = Math.round(openings);
     const riskScore = Math.max(0, Number(metrics.riskScore || 0));
     const pressure = clamp(riskScore / 100, 0.04, 1);
     const pressureTone = riskScore >= 75 ? "risk" : riskScore >= 45 ? "watch" : "safe";
