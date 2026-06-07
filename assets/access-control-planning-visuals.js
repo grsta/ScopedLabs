@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-032-special-locking-dynamic-path-colors";
+  const VERSION = "access-control-planning-visuals-033-special-locking-exceptions";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -402,6 +402,20 @@
     const riskScore = Math.max(0, Number(metrics.riskScore || 0));
     const pressure = clamp(riskScore / 100, 0.04, 1);
     const pressureTone = riskScore >= 75 ? "risk" : riskScore >= 45 ? "watch" : "safe";
+    const openingTones = Array.isArray(metrics.openingTones) ? metrics.openingTones.filter(Boolean) : [];
+    const exceptionCount = Math.max(0, Number(metrics.exceptionCount || 0));
+
+    function highestOpeningTone(items) {
+      if (items.includes("risk")) return "risk";
+      if (items.includes("watch")) return "watch";
+      return pressureTone;
+    }
+
+    function openingTone(index) {
+      return openingTones[index] || pressureTone;
+    }
+
+    const hiddenOpeningTone = highestOpeningTone(openingTones.slice(4));
 
     const lockingType = metrics.lockingTypeLabel || metrics.lockingType || "?";
     const egressImpact = metrics.egressImpactLabel || metrics.egressImpact || "?";
@@ -452,7 +466,7 @@
       : releaseCheckToneList.includes("watch")
         ? "watch"
         : pressureTone;
-    const openingNodeTone = pressureTone;
+    const openingNodeTone = highestOpeningTone(openingTones);
     const egressNodeTone = egressTone;
     const releaseNodeTone = releaseTone;
 
@@ -471,11 +485,11 @@
 
       '<rect x="52" y="108" width="300" height="252" rx="12" fill="rgba(0,0,0,.13)" stroke="rgba(120,255,120,.10)" />',
       '<text x="70" y="132" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">FLAGGED OPENINGS</text>',
-      Math.round(openings) > 0 ? cadControlledDoorOpeningIcon({ x: 76, y: 164, scale: 0.36, tone: pressureTone }) : '',
-      Math.round(openings) > 1 ? cadControlledDoorOpeningIcon({ x: 122, y: 164, scale: 0.36, tone: pressureTone }) : '',
-      Math.round(openings) > 2 ? cadControlledDoorOpeningIcon({ x: 168, y: 164, scale: 0.36, tone: pressureTone }) : '',
-      Math.round(openings) > 3 ? cadControlledDoorOpeningIcon({ x: 214, y: 164, scale: 0.36, tone: pressureTone }) : '',
-      Math.round(openings) > 4 ? '<text x="272" y="180" font-size="9" fill="rgba(255,220,130,.82)" font-weight="800">+' + escapeHtml(String(Math.round(openings) - 4)) + ' more</text>' : '',
+      Math.round(openings) > 0 ? cadControlledDoorOpeningIcon({ x: 76, y: 164, scale: 0.36, tone: openingTone(0) }) : '',
+      Math.round(openings) > 1 ? cadControlledDoorOpeningIcon({ x: 122, y: 164, scale: 0.36, tone: openingTone(1) }) : '',
+      Math.round(openings) > 2 ? cadControlledDoorOpeningIcon({ x: 168, y: 164, scale: 0.36, tone: openingTone(2) }) : '',
+      Math.round(openings) > 3 ? cadControlledDoorOpeningIcon({ x: 214, y: 164, scale: 0.36, tone: openingTone(3) }) : '',
+      Math.round(openings) > 4 ? '<text x="272" y="180" font-size="9" fill="' + toneStroke(hiddenOpeningTone) + '" font-weight="800">+' + escapeHtml(String(Math.round(openings) - 4)) + ' more</text>' : '',
       '<text x="198" y="132" font-size="8" fill="rgba(203,213,225,.58)" letter-spacing=".65">CONTROLLED OPENINGS</text>',
       '<text x="198" y="148" font-size="10.5" fill="rgba(238,255,244,.90)" font-weight="800">' + escapeHtml(String(openings)) + ' flagged</text>',
 
@@ -501,6 +515,7 @@
       '<text x="132" y="403" font-size="10.5" fill="rgba(238,255,244,.90)" font-weight="800">' + escapeHtml(lockingType) + '</text>',
       miniMetric("openings", String(metrics.openingCount ?? "?"), 402, 384, 92),
       miniMetric("risk score", String(metrics.riskScore ?? "?"), 506, 384, 104, pressureTone),
+      miniMetric("exceptions", String(exceptionCount), 622, 384, 80, exceptionCount ? "watch" : "safe"),
 
       '</svg>',
       '<p class="sl-vis-note"><strong>Visual note:</strong> Special locking is a specialty planning branch. Use the visual to flag openings that need authority review, release coordination, egress validation, and documented override procedures before final design. Overall status can remain Watch when locking or high-security scope creates planning pressure even when individual release checks are clear.</p>',

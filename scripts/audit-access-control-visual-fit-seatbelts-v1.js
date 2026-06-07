@@ -184,6 +184,7 @@ check("CAD icon contract audit exists", fs.existsSync(path.join(root, "scripts/a
 check("Visual module exports CAD controlled door icon primitive", moduleText.includes("cadControlledDoorOpeningIcon,"));
 check("Special Locking visual explains Watch source", moduleText.includes("SOURCE: LOCKING SCOPE") && moduleText.includes("Overall status can remain Watch"));
 check("Special Locking line graph uses dynamic tones", moduleText.includes("toneStroke(pathTone)") && moduleText.includes("egressNodeTone") && moduleText.includes("releaseNodeTone"));
+check("Special Locking visual supports item-level exception tones", moduleText.includes("function openingTone(index)") && moduleText.includes("openingTones") && moduleText.includes("miniMetric(\"exceptions\"") && moduleText.includes("hiddenOpeningTone"));
 console.log("\nAccess Control visual fit seatbelt audit:");
 console.table(rows);
 

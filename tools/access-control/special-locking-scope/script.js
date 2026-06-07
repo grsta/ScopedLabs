@@ -17,6 +17,9 @@
     releaseLogic: $("releaseLogic"),
     authorityReview: $("authorityReview"),
     overridePlan: $("overridePlan"),
+    exceptionMode: $("exceptionMode"),
+    syncOpeningExceptions: $("syncOpeningExceptions"),
+    openingExceptionsWrap: $("openingExceptionsWrap"),
     results: $("results"),
     calc: $("calc"),
     reset: $("reset"),
@@ -245,10 +248,236 @@
 
   function getAssumptions() {
     return [
-      "Special locking review is based on opening count, locking condition, egress impact, release logic, authority review status, and override planning.",
+      "Special locking review is based on opening count, locking condition, egress impact, release logic, authority review status, override planning, and optional per-opening exceptions.",
       "This output is a planning aid for identifying coordination and authority-review pressure.",
       "Final legality, release behavior, signage, emergency operation, and inspection acceptance must be validated with the AHJ, project code team, and selected hardware/platform."
     ];
+  }
+
+
+  const GROUP_DEFAULT = "__group__";
+
+  const SPECIAL_LOCKING_OPTIONS = Object.freeze({
+    lockingType: Object.freeze([
+      { value: "maglock", label: "Maglock / electromagnetic lock" },
+      { value: "delayed-egress", label: "Delayed egress locking" },
+      { value: "controlled-egress", label: "Controlled egress / special locking" },
+      { value: "security-interlock", label: "Security interlock / mantrap" },
+      { value: "high-security-room", label: "High-security room / secured suite" }
+    ]),
+    egressImpact: Object.freeze([
+      { value: "yes", label: "Yes - affects egress path" },
+      { value: "no", label: "No - security-side only" },
+      { value: "unknown", label: "Unknown / requires review" }
+    ]),
+    releaseLogic: Object.freeze([
+      { value: "confirmed", label: "Confirmed release sequence" },
+      { value: "needed", label: "Release sequence needs coordination" },
+      { value: "not-applicable", label: "Not applicable / no release tie-in expected" }
+    ]),
+    authorityReview: Object.freeze([
+      { value: "required", label: "AHJ / code review required" },
+      { value: "likely", label: "Likely review item" },
+      { value: "not-flagged", label: "Not currently flagged" }
+    ]),
+    overridePlan: Object.freeze([
+      { value: "documented", label: "Documented operator override" },
+      { value: "partial", label: "Partial / needs procedure" },
+      { value: "missing", label: "Missing or undefined" }
+    ])
+  });
+
+  function optionLabel(field, value, fallback = "") {
+    const list = SPECIAL_LOCKING_OPTIONS[field] || [];
+    const item = list.find((entry) => entry.value === value);
+    return item ? item.label : fallback || String(value || "");
+  }
+
+  function statusToneName(status) {
+    const clean = String(status || "").toUpperCase();
+    if (clean === "RISK") return "risk";
+    if (clean === "WATCH") return "watch";
+    return "safe";
+  }
+
+  function statusRank(status) {
+    const clean = String(status || "").toUpperCase();
+    if (clean === "RISK") return 3;
+    if (clean === "WATCH") return 2;
+    return 1;
+  }
+
+  function highestStatus(statuses) {
+    return statuses.reduce((best, status) => statusRank(status) > statusRank(best) ? status : best, "HEALTHY");
+  }
+
+  function currentOpeningCount() {
+    return Math.max(0, Math.round(n("openingCount")));
+  }
+
+  function exceptionModeEnabled() {
+    return els.exceptionMode && els.exceptionMode.value === "yes";
+  }
+
+  function exceptionSelectHtml(field, selected) {
+    const options = ['<option value="' + GROUP_DEFAULT + '">Use group default</option>'].concat(
+      (SPECIAL_LOCKING_OPTIONS[field] || []).map((entry) => '<option value="' + escapeHtml(entry.value) + '"' + (entry.value === selected ? ' selected' : '') + '>' + escapeHtml(entry.label) + '</option>')
+    );
+
+    return '<select data-exception-field="' + escapeHtml(field) + '">' + options.join("") + '</select>';
+  }
+
+  function readOpeningExceptionDrafts() {
+    const drafts = new Map();
+    const wrap = els.openingExceptionsWrap;
+    if (!wrap) return drafts;
+
+    Array.from(wrap.querySelectorAll("[data-opening-exception-row]")).forEach((rowEl) => {
+      const openingNumber = Number(rowEl.getAttribute("data-opening-index"));
+      if (!Number.isFinite(openingNumber) || openingNumber < 1) return;
+
+      const draft = {
+        openingNumber,
+        enabled: !!rowEl.querySelector("[data-exception-enabled]")?.checked,
+        label: rowEl.querySelector("[data-exception-label]")?.value || "Opening #" + openingNumber
+      };
+
+      Array.from(rowEl.querySelectorAll("[data-exception-field]")).forEach((fieldEl) => {
+        draft[fieldEl.getAttribute("data-exception-field")] = fieldEl.value || GROUP_DEFAULT;
+      });
+
+      drafts.set(openingNumber, draft);
+    });
+
+    return drafts;
+  }
+
+  function renderOpeningExceptionRows() {
+    const wrap = els.openingExceptionsWrap;
+    if (!wrap) return false;
+
+    if (!exceptionModeEnabled()) {
+      wrap.innerHTML = "";
+      wrap.hidden = true;
+      return true;
+    }
+
+    const count = currentOpeningCount();
+    const previous = readOpeningExceptionDrafts();
+    const rows = [];
+
+    for (let index = 1; index <= count; index += 1) {
+      const draft = previous.get(index) || { openingNumber: index, enabled: false, label: "Opening #" + index };
+
+      rows.push([
+        '<div class="access-control-opening-exception-row" data-opening-exception-row data-opening-index="' + index + '">',
+        '<label class="access-control-exception-toggle"><input type="checkbox" data-exception-enabled' + (draft.enabled ? ' checked' : '') + '><span>#' + index + ' exception</span></label>',
+        '<label class="access-control-exception-row-field"><span class="access-control-exception-mini-label">Label</span><input type="text" data-exception-label value="' + escapeHtml(draft.label || ("Opening #" + index)) + '"></label>',
+        '<label class="access-control-exception-row-field"><span class="access-control-exception-mini-label">Locking</span>' + exceptionSelectHtml("lockingType", draft.lockingType) + '</label>',
+        '<label class="access-control-exception-row-field"><span class="access-control-exception-mini-label">Egress</span>' + exceptionSelectHtml("egressImpact", draft.egressImpact) + '</label>',
+        '<label class="access-control-exception-row-field"><span class="access-control-exception-mini-label">Release</span>' + exceptionSelectHtml("releaseLogic", draft.releaseLogic) + '</label>',
+        '<label class="access-control-exception-row-field"><span class="access-control-exception-mini-label">Review</span>' + exceptionSelectHtml("authorityReview", draft.authorityReview) + '</label>',
+        '<label class="access-control-exception-row-field"><span class="access-control-exception-mini-label">Override</span>' + exceptionSelectHtml("overridePlan", draft.overridePlan) + '</label>',
+        '</div>'
+      ].join(""));
+    }
+
+    wrap.innerHTML = rows.length ? rows.join("") : '<div class="mini-note">Set the opening count above, then sync opening rows.</div>';
+    wrap.hidden = false;
+    return true;
+  }
+
+  function getOpeningExceptionRecords() {
+    if (!exceptionModeEnabled()) return [];
+
+    return Array.from(readOpeningExceptionDrafts().values()).filter((item) => item.enabled).map((item) => ({
+      openingNumber: item.openingNumber,
+      label: item.label || "Opening #" + item.openingNumber,
+      lockingType: item.lockingType || GROUP_DEFAULT,
+      egressImpact: item.egressImpact || GROUP_DEFAULT,
+      releaseLogic: item.releaseLogic || GROUP_DEFAULT,
+      authorityReview: item.authorityReview || GROUP_DEFAULT,
+      overridePlan: item.overridePlan || GROUP_DEFAULT
+    }));
+  }
+
+  function mergeOpeningValues(defaults, exception) {
+    const merged = { ...defaults, openingCount: 1 };
+    if (!exception) return merged;
+
+    ["lockingType", "egressImpact", "releaseLogic", "authorityReview", "overridePlan"].forEach((field) => {
+      if (exception[field] && exception[field] !== GROUP_DEFAULT) merged[field] = exception[field];
+    });
+
+    return merged;
+  }
+
+  function openingDriverSummary(values, isException) {
+    const drivers = [];
+    if (values.egressImpact === "yes") drivers.push("egress path");
+    if (values.egressImpact === "unknown") drivers.push("egress review");
+    if (values.releaseLogic === "needed") drivers.push("release coordination");
+    if (values.authorityReview === "required") drivers.push("AHJ review");
+    if (values.authorityReview === "likely") drivers.push("likely review");
+    if (values.overridePlan === "missing") drivers.push("missing override");
+    if (values.overridePlan === "partial") drivers.push("partial override");
+    if (isException && !drivers.length) drivers.push("different locking/security condition");
+    return drivers.length ? drivers.join(", ") : "group defaults clear";
+  }
+
+  function buildOpeningDetails(defaults) {
+    if (!exceptionModeEnabled()) return [];
+
+    const count = currentOpeningCount();
+    const exceptions = new Map(getOpeningExceptionRecords().map((item) => [item.openingNumber, item]));
+    const details = [];
+
+    for (let index = 1; index <= count; index += 1) {
+      const exception = exceptions.get(index) || null;
+      const values = mergeOpeningValues(defaults, exception);
+      const riskScore = riskWeights(values);
+      const status = classify(riskScore);
+
+      details.push({
+        openingNumber: index,
+        label: exception?.label || "Opening #" + index,
+        isException: !!exception,
+        values,
+        riskScore,
+        status,
+        tone: statusToneName(status),
+        lockingTypeLabel: optionLabel("lockingType", values.lockingType, values.lockingType),
+        egressImpactLabel: optionLabel("egressImpact", values.egressImpact, values.egressImpact),
+        releaseLogicLabel: optionLabel("releaseLogic", values.releaseLogic, values.releaseLogic),
+        authorityReviewLabel: optionLabel("authorityReview", values.authorityReview, values.authorityReview),
+        overridePlanLabel: optionLabel("overridePlan", values.overridePlan, values.overridePlan),
+        driverSummary: openingDriverSummary(values, !!exception)
+      });
+    }
+
+    return details;
+  }
+
+  function openingStatusCounts(details) {
+    const counts = { safe: 0, watch: 0, risk: 0 };
+    details.forEach((item) => {
+      if (item.status === "RISK") counts.risk += 1;
+      else if (item.status === "WATCH") counts.watch += 1;
+      else counts.safe += 1;
+    });
+    return counts;
+  }
+
+  function openingRollupLabel(counts) {
+    if (!counts) return "Group defaults only";
+    return counts.safe + " safe / " + counts.watch + " watch / " + counts.risk + " risk";
+  }
+
+  function openingExceptionSummary(details) {
+    const exceptions = details.filter((item) => item.isException);
+    if (!exceptionModeEnabled()) return "Group defaults applied to all openings.";
+    if (!exceptions.length) return "Per-opening rows reviewed; no exceptions flagged.";
+    return exceptions.map((item) => "#" + item.openingNumber + " " + item.status + " - " + item.driverSummary).join("; ");
   }
 
   function planningVisuals() {
@@ -359,7 +588,9 @@
 
     const rows = [
       { group: "Scope", metric: "Flagged Openings", value: metrics.openingCount, note: "Openings requiring special locking or high-security review." },
-      { group: "Scope", metric: "Locking Condition", value: metrics.lockingTypeLabel, note: "Selected locking or security condition." },
+      { group: "Scope", metric: "Opening Exceptions", value: metrics.exceptionCount || 0, note: metrics.exceptionSummary || "Group defaults applied." },
+      { group: "Scope", metric: "Opening Rollup", value: metrics.openingRollupLabel || "Group defaults only", note: "Safe / Watch / Risk distribution when per-opening exceptions are reviewed." },
+      { group: "Scope", metric: "Locking Condition", value: metrics.lockingTypeLabel, note: "Selected group default locking or security condition." },
       { group: "Life Safety", metric: "Egress Impact", value: metrics.egressImpactLabel, note: "Whether the condition affects the egress path." },
       { group: "Life Safety", metric: "Release Logic", value: metrics.releaseLogicLabel, note: "Fire alarm, emergency release, or power-loss release coordination status." },
       { group: "Authority", metric: "Authority Review", value: metrics.authorityReviewLabel, note: "AHJ/code review expectation." },
@@ -367,18 +598,29 @@
       { group: "Pressure", metric: "Risk Score", value: metrics.riskScore, note: metrics.interpretation }
     ];
 
+    const openingRows = Array.isArray(metrics.openingDetails) ? metrics.openingDetails.filter((item) => item.isException).map((item) => ({
+      group: "Opening Exceptions",
+      metric: "#" + item.openingNumber + " " + item.label,
+      valueHtml: schedule.statusChip(item.status),
+      note: item.driverSummary + "; locking: " + item.lockingTypeLabel + "; egress: " + item.egressImpactLabel + "; release: " + item.releaseLogicLabel + "; review: " + item.authorityReviewLabel + "; override: " + item.overridePlanLabel
+    })) : [];
+
+    if (!openingRows.length && metrics.exceptionMode === "yes") {
+      openingRows.push({ group: "Opening Exceptions", metric: "Reviewed Rows", value: "No exceptions flagged", note: "Every reviewed opening currently follows the group defaults." });
+    }
+
     schedule.render({
       card: els.scheduleCard,
       wrap: els.schedule,
       target: els.schedule,
       title: "Special Locking Decision Schedule",
-      summary: "Specialty-branch schedule for special locking, egress impact, release coordination, and authority-review pressure.",
+      summary: "Specialty-branch schedule for special locking, egress impact, release coordination, authority-review pressure, and per-opening exceptions.",
       status: metrics.status,
       statusDetail: metrics.riskScore + " risk score",
       interpretation: metrics.interpretation,
       exportTableTitle: "Special Locking Decision Schedule",
       tableDataAttr: 'data-special-locking-summary="true" data-access-control-decision-schedule="true"',
-      rows
+      rows: rows.concat(openingRows)
     });
 
     if (els.scheduleCard) els.scheduleCard.hidden = false;
@@ -435,6 +677,12 @@
           releaseLogic: metrics.releaseLogicLabel,
           authorityReview: metrics.authorityReviewLabel,
           overridePlan: metrics.overridePlanLabel,
+          exceptionMode: metrics.exceptionMode,
+          exceptionCount: metrics.exceptionCount,
+          openingRollup: metrics.openingRollupLabel,
+          openingExceptionSummary: metrics.exceptionSummary,
+          openingStatusCounts: metrics.openingStatusCounts,
+          openingDetails: (metrics.openingDetails || []).map((item) => ({ openingNumber: item.openingNumber, label: item.label, status: item.status, riskScore: item.riskScore, isException: item.isException, driverSummary: item.driverSummary })),
           riskScore: metrics.riskScore
         }
       };
@@ -466,11 +714,14 @@
         { label: "Egress Path Impact", value: selectedText(els.egressImpact) },
         { label: "Fire Alarm / Emergency Release", value: selectedText(els.releaseLogic) },
         { label: "Authority Review Status", value: selectedText(els.authorityReview) },
-        { label: "Monitoring / Override Plan", value: selectedText(els.overridePlan) }
+        { label: "Monitoring / Override Plan", value: selectedText(els.overridePlan) },
+        { label: "Opening Exception Mode", value: exceptionModeEnabled() ? "Per-opening exceptions reviewed" : "Group defaults only" },
+        { label: "Opening Exception Summary", value: lastMetrics?.exceptionSummary || "Group defaults applied to all openings." }
       ],
       outputs,
       assumptions: getAssumptions(),
       chartImage: getExportChartImage(),
+      openingDetails: lastMetrics?.openingDetails || [],
       meta: getReportMeta()
     };
   }
@@ -546,10 +797,19 @@
       overridePlan: els.overridePlan?.value || "partial"
     };
 
-    const riskScore = riskWeights(values);
-    const status = classify(riskScore);
+    if (exceptionModeEnabled()) renderOpeningExceptionRows();
+
+    const baseRiskScore = riskWeights(values);
+    const openingDetails = buildOpeningDetails(values);
+    const openingCounts = openingDetails.length ? openingStatusCounts(openingDetails) : null;
+    const openingMaxScore = openingDetails.reduce((max, item) => Math.max(max, item.riskScore || 0), 0);
+    const riskScore = Math.max(baseRiskScore, openingMaxScore);
+    const status = highestStatus([classify(baseRiskScore)].concat(openingDetails.map((item) => item.status)));
+    const exceptionCount = openingDetails.filter((item) => item.isException).length;
+    const openingRollup = openingRollupLabel(openingCounts);
+    const exceptionSummary = openingExceptionSummary(openingDetails);
     const guidance = guidanceFor(status, values);
-    const interpretation = interpretationFor(status, values);
+    const interpretation = interpretationFor(status, values) + (exceptionCount ? " Per-opening exceptions flagged: " + exceptionSummary + "." : "");
 
     const metrics = {
       ...values,
@@ -559,6 +819,14 @@
       authorityReviewLabel: selectedText(els.authorityReview),
       overridePlanLabel: selectedText(els.overridePlan),
       riskScore,
+      baseRiskScore,
+      exceptionMode: exceptionModeEnabled() ? "yes" : "no",
+      exceptionCount,
+      exceptionSummary,
+      openingDetails,
+      openingStatusCounts: openingCounts,
+      openingRollupLabel: openingRollup,
+      openingTones: openingDetails.map((item) => item.tone),
       status,
       authorityLevel: status,
       guidance,
@@ -571,6 +839,8 @@
       row("Flagged Openings", metrics.openingCount),
       row("Authority Status", status),
       row("Risk Score", riskScore),
+      row("Opening Exceptions", metrics.exceptionSummary),
+      row("Opening Rollup", metrics.openingRollupLabel),
       row("Locking Condition", metrics.lockingTypeLabel),
       row("Egress Impact", metrics.egressImpactLabel),
       row("Release Logic", metrics.releaseLogicLabel),
@@ -602,6 +872,8 @@
     if (els.releaseLogic) els.releaseLogic.value = "needed";
     if (els.authorityReview) els.authorityReview.value = "required";
     if (els.overridePlan) els.overridePlan.value = "partial";
+    if (els.exceptionMode) els.exceptionMode.value = "no";
+    renderOpeningExceptionRows();
 
     lastMetrics = null;
     currentReport = null;
@@ -638,10 +910,26 @@
   attachOutputShellExport();
   reset();
 
-  [els.openingCount, els.lockingType, els.egressImpact, els.releaseLogic, els.authorityReview, els.overridePlan].forEach((el) => {
+  [els.openingCount, els.lockingType, els.egressImpact, els.releaseLogic, els.authorityReview, els.overridePlan, els.exceptionMode, els.openingExceptionsWrap].forEach((el) => {
     if (el) el.addEventListener("input", handleInputChange);
     if (el) el.addEventListener("change", handleInputChange);
   });
+
+  if (els.openingCount) {
+    els.openingCount.addEventListener("input", renderOpeningExceptionRows);
+    els.openingCount.addEventListener("change", renderOpeningExceptionRows);
+  }
+
+  if (els.exceptionMode) {
+    els.exceptionMode.addEventListener("change", renderOpeningExceptionRows);
+  }
+
+  if (els.syncOpeningExceptions) {
+    els.syncOpeningExceptions.addEventListener("click", () => {
+      renderOpeningExceptionRows();
+      handleInputChange();
+    });
+  }
 
   if (els.calc) els.calc.addEventListener("click", calc);
   if (els.reset) els.reset.addEventListener("click", reset);

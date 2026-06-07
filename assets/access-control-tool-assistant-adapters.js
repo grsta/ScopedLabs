@@ -1,11 +1,11 @@
 /* ScopedLabs Access Control Tool Assistant Adapters
-   Version: access-control-assistant-adapters-020-special-locking
+   Version: access-control-assistant-adapters-021-special-locking-exceptions
    Purpose: category-specific local assistant model adapters. Dormant unless a tool explicitly calls one.
 */
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-assistant-adapters-020-special-locking";
+  const API_VERSION = "access-control-assistant-adapters-021-special-locking-exceptions";
 
   function safeText(value) {
     return String(value ?? "");
@@ -680,6 +680,9 @@
     const review = safeText(data.authorityReviewLabel || data.authorityReview || "pending");
     const overridePlan = safeText(data.overridePlanLabel || data.overridePlan || "pending");
     const riskScore = safeText(data.riskScore ?? "pending");
+    const exceptionCount = safeText(data.exceptionCount ?? 0);
+    const openingRollup = safeText(data.openingRollupLabel || data.openingRollup || "Group defaults only");
+    const exceptionSummary = safeText(data.exceptionSummary || data.openingExceptionSummary || "Group defaults applied to all openings.");
     const guidance = safeText(data.guidance || "Confirm release behavior, authority review, signage, and operator override procedures before procurement.");
     const interpretation = safeText(data.interpretation || "Run the calculator to generate special locking guidance.");
 
@@ -698,6 +701,9 @@
           body: guidance,
           items: [
             "Flagged openings: " + openings,
+            "Exception openings: " + exceptionCount,
+            "Opening rollup: " + openingRollup,
+            "Exception summary: " + exceptionSummary,
             "Locking condition: " + lockingType,
             "Egress impact: " + egress,
             "Release logic: " + release,
@@ -728,7 +734,7 @@
       assumptionsTitle: "Planning Assumptions",
       actionsTitle: "Recommended Actions",
       assumptions: [
-        "Special locking review is based on opening count, locking condition, egress impact, release logic, authority review status, and override planning.",
+        "Special locking review is based on group defaults plus optional per-opening exceptions for locking, egress, release, authority review, and override planning.",
         "Final legality and release behavior must be validated with the AHJ, applicable code, and selected access-control/electrical hardware.",
         "Life-safety interfaces, signage, emergency release devices, and operating policy can change whether the design is acceptable."
       ],

@@ -57,13 +57,17 @@ check("Special Locking has modern planning visual module", html.includes("access
 check("Special Locking script renders through shared visual module", script.includes("ScopedLabsAccessControlPlanningVisuals") && script.includes("renderSpecialLocking"));
 check("Special Locking exports modern SVG visual image", script.includes("getSpecialLockingVisualImage") && script.includes("getExportChartImage"));
 check("Special Locking has compact decision schedule", html.includes("Special Locking Decision Schedule") && html.includes("data-special-locking-summary") && script.includes("renderSpecialLockingSchedule"));
+check("Special Locking has per-opening exception UI", html.includes('id="openingExceptionsCard"') && html.includes('id="exceptionMode"') && html.includes('id="openingExceptionsWrap"'));
+check("Special Locking calculates per-opening exception model", script.includes("buildOpeningDetails") && script.includes("openingDetails") && script.includes("exceptionCount") && script.includes("openingRollupLabel"));
+check("Special Locking visual supports per-opening tones", visuals.includes("openingTone(0)") && visuals.includes("openingTones") && visuals.includes("exceptions"));
+check("Special Locking assistant includes exception summary", adapters.includes("exceptionSummary") && adapters.includes("Opening rollup"));
 check("Special Locking has hidden result ledger", html.includes("data-result-ledger") && html.includes("#results[data-result-ledger][hidden]"));
 check("Special Locking publishes specialty summary contribution", script.includes("publishSpecialLockingSummaryContribution") && script.includes('contributionType: "specialty-branch"') && script.includes("Specialty / What-if Branches"));
 check("Special Locking assistant adapter exists", adapters.includes("buildSpecialLockingScopeModel") && adapters.includes('"special-locking-scope"'));
 
 check("Special Locking has no Chart.js CDN", !html.includes("chart.js"));
 check("Special Locking has no canvas chart", !html.includes("<canvas") && html.includes('class="access-control-output-visual"'));
-check("Special Locking uses modern local script cache", html.includes("./script.js?v=access-control-special-locking-output-contract-001"));
+check("Special Locking uses modern local script cache", html.includes("./script.js?v=access-control-special-locking-exceptions-001"));
 
 console.log("\nAccess Control Special Locking module audit:");
 console.table(rows);

@@ -44,13 +44,13 @@ check("Panel Capacity loads Tool Shell module", html.includes("/assets/scopedlab
 check("Panel Capacity loads Assistant Export module", html.includes("/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-001"));
 check("Panel Capacity loads Access Control output shell", html.includes("/assets/access-control-output-shell.js?v=access-control-output-shell-001-lock-power-visual-export"));
 check("Panel Capacity loads Local Assistant module", html.includes("/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"));
-check("Panel Capacity loads Panel adapter cache", html.includes("/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-020-special-locking"));
+check("Panel Capacity loads Panel adapter cache", html.includes("/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-021-special-locking-exceptions"));
 check("Panel Capacity loads report metadata module", html.includes("/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes"));
 check("Panel Capacity loads Access Control polish module", html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-010-page-chrome-pill-cleanup"));
 check("Panel Capacity local script cache is shell module lane", html.includes("./script.js?v=access-control-panel-capacity-cad-schedule-024"));
 
 check("Panel Capacity script order keeps export before shell modules", order(html, "/assets/export.js?v=shared-export-030-semantic-report-tones", "/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"));
-check("Panel Capacity script order keeps assistant modules before local script", order(html, "/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-020-special-locking", "./script.js?v=access-control-panel-capacity-cad-schedule-024"));
+check("Panel Capacity script order keeps assistant modules before local script", order(html, "/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-021-special-locking-exceptions", "./script.js?v=access-control-panel-capacity-cad-schedule-024"));
 check("Panel Capacity script order keeps polish after local script", order(html, "./script.js?v=access-control-panel-capacity-cad-schedule-024", "/assets/access-control-tool-polish.js?v=access-control-tool-polish-010-page-chrome-pill-cleanup"));
 
 check("Panel Capacity has local assistant mount", html.includes('id="accessControlLocalAssistantMount"'));
