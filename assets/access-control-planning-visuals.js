@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-005-control-mode-fit";
+  const VERSION = "access-control-planning-visuals-006-specialty-apb";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -340,6 +340,85 @@
     ].join("");
   }
 
+
+
+  function buildAntiPassbackSvg(metrics = {}) {
+    const tone = statusTone(metrics.status || metrics.operationalRisk);
+    const statusText = statusLabel(metrics.status || metrics.operationalRisk);
+    const zones = Math.max(0, Number(metrics.recommendedZones || 0));
+    const paired = Math.max(0, Number(metrics.pairedEntrances || 0));
+    const complexity = Math.max(0, Number(metrics.complexityIndex || 0));
+    const exposure = Math.max(0, Number(metrics.enforcementExposure || 0));
+    const pressure = clamp(complexity / 18, 0.04, 1);
+    const exposureRatio = clamp(exposure / 18, 0.04, 1);
+    const pressureTone = complexity >= 12 ? "risk" : complexity >= 9 ? "watch" : "safe";
+    const strategy = metrics.strategyLabel || "?";
+    const mode = metrics.typeLabel || metrics.recommendedType || "?";
+
+    function zoneNode(index) {
+      const cols = 5;
+      const x = 72 + (index % cols) * 54;
+      const y = 126 + Math.floor(index / cols) * 42;
+      return [
+        '<rect x="' + x + '" y="' + y + '" width="36" height="24" rx="5" fill="rgba(120,255,120,.075)" stroke="rgba(125,255,152,.36)" />',
+        '<text x="' + (x + 18) + '" y="' + (y + 16) + '" text-anchor="middle" font-size="10" fill="rgba(238,255,244,.88)" font-weight="800">Z' + (index + 1) + '</text>'
+      ].join('');
+    }
+
+    function pairedGate(index) {
+      const x = 394 + index * 42;
+      return [
+        '<g>',
+        '<rect x="' + x + '" y="136" width="18" height="54" rx="4" fill="rgba(255,204,102,.09)" stroke="rgba(255,204,102,.40)" />',
+        '<path d="M' + (x + 5) + ' 150 H' + (x + 13) + ' M' + (x + 5) + ' 165 H' + (x + 13) + ' M' + (x + 5) + ' 180 H' + (x + 13) + '" stroke="rgba(255,235,170,.48)" stroke-width="1" />',
+        '</g>'
+      ].join('');
+    }
+
+    const zoneCount = Math.max(2, Math.min(10, Math.round(zones || 2)));
+    const pairCount = Math.max(1, Math.min(6, Math.round(paired || 1)));
+
+    return [
+      '<div class="access-control-planning-visual-shell" data-access-control-modern-visual="anti-passback-zones">',
+      '<svg viewBox="0 0 760 388" role="img" aria-label="Anti-passback zoning pressure visual" xmlns="http://www.w3.org/2000/svg">',
+      '<defs><pattern id="accGridApbV6" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="rgba(120,255,120,.045)" stroke-width="1"/></pattern></defs>',
+      '<rect x="24" y="24" width="712" height="340" rx="16" fill="rgba(0,0,0,.10)" stroke="rgba(120,255,120,.12)" />',
+      '<rect x="36" y="36" width="688" height="316" rx="12" fill="url(#accGridApbV6)" stroke="rgba(120,255,120,.07)" />',
+      '<text x="52" y="62" font-size="11" fill="rgba(180,255,200,.68)" letter-spacing="1.4">ANTI-PASSBACK ZONES</text>',
+      '<text x="52" y="84" font-size="19" fill="rgba(246,255,248,.96)" font-weight="800">Zone structure, paired transitions, and enforcement pressure</text>',
+      statusBadge(statusText, tone, 616, 51),
+      '<text x="72" y="114" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">ZONE MODEL</text>',
+      Array.from({ length: zoneCount }, (_, index) => zoneNode(index)).join(''),
+      zones > zoneCount ? '<text x="342" y="176" font-size="11" fill="rgba(203,213,225,.66)">+' + escapeHtml(Math.round(zones - zoneCount)) + '</text>' : '',
+      '<path d="M338 164 H382" stroke="rgba(203,213,225,.24)" stroke-width="1.2" stroke-dasharray="5 6" />',
+      '<text x="392" y="114" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">PAIRED IN / OUT READS</text>',
+      Array.from({ length: pairCount }, (_, index) => pairedGate(index)).join(''),
+      paired > pairCount ? '<text x="660" y="166" font-size="11" fill="rgba(203,213,225,.66)">+' + escapeHtml(Math.round(paired - pairCount)) + '</text>' : '',
+      '<path d="M112 226 H648" stroke="rgba(203,213,225,.24)" stroke-width="1.2" stroke-dasharray="6 7" />',
+      '<path d="M112 226 C210 202, 308 246, 382 226 S540 204, 648 226" fill="none" stroke="rgba(125,255,152,.38)" stroke-width="1.4" />',
+      '<circle cx="112" cy="226" r="5" fill="rgba(125,255,152,.20)" stroke="rgba(125,255,152,.72)" />',
+      '<circle cx="382" cy="226" r="5" fill="rgba(125,255,152,.20)" stroke="rgba(125,255,152,.72)" />',
+      '<circle cx="648" cy="226" r="5" fill="rgba(125,255,152,.20)" stroke="rgba(125,255,152,.72)" />',
+      '<text x="112" y="244" font-size="10" fill="rgba(203,213,225,.58)" text-anchor="middle">zones</text>',
+      '<text x="382" y="244" font-size="10" fill="rgba(203,213,225,.58)" text-anchor="middle">transitions</text>',
+      '<text x="648" y="244" font-size="10" fill="rgba(203,213,225,.58)" text-anchor="middle">policy friction</text>',
+      pressureRail("complexity pressure", pressure, 52, 282, 220, pressureTone),
+      pressureRail("enforcement exposure", exposureRatio, 296, 282, 190, pressureTone),
+      metricChip("zones", String(metrics.recommendedZones ?? "?"), 506, 272, 82),
+      metricChip("paired", String(metrics.pairedEntrances ?? "?"), 600, 272, 82),
+      '<rect x="506" y="320" width="176" height="28" rx="8" fill="rgba(0,0,0,.16)" stroke="rgba(120,255,120,.10)" />',
+      '<text x="516" y="337" font-size="9" fill="rgba(203,213,225,.62)" letter-spacing=".7">MODE</text>',
+      '<text x="564" y="337" font-size="10" fill="rgba(238,255,244,.90)" font-weight="800">' + escapeHtml(mode) + '</text>',
+      '<text x="52" y="337" font-size="10" fill="rgba(203,213,225,.62)">Strategy: ' + escapeHtml(strategy) + '</text>',
+      '</svg>',
+      '<p class="sl-vis-note"><strong>Visual note:</strong> Anti-passback is a specialty planning branch. Use the visual to compare zone count, paired transitions, complexity pressure, and operational exposure before enforcing APB rules in the platform.</p>',
+      '</div>'
+    ].join("");
+  }
+
+  function renderAntiPassback(options = {}) {
+    return show(options, buildAntiPassbackSvg(options.metrics || {}));
+  }
   function renderDoorCable(options = {}) {
     return show(options, buildDoorCableSvg(options.metrics || {}));
   }
@@ -352,6 +431,8 @@
     VERSION,
     renderDoorCable,
     renderDoorCount,
+    renderAntiPassback,
+    buildAntiPassbackSvg,
     hide,
     getDataUri,
     svgToDataUri

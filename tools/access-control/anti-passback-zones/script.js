@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
   const CATEGORY = "access-control";
   const CATEGORY_LABEL = "Access Control";
   const TOOL = "anti-passback-zones";
@@ -22,6 +22,12 @@
     reset: $("reset"),
     chart: $("chart"),
     chartWrap: $("chartWrap"),
+    visualCard: $("antiPassbackVisualCard"),
+    scheduleCard: $("antiPassbackScheduleCard"),
+    schedule: $("antiPassbackSchedule"),
+    localAssistantMount: $("accessControlLocalAssistantMount"),
+    flowActions: $("accessControlFlowActions"),
+    reportActions: $("antiPassbackReportActions"),
     reportTitle: $("reportTitle"),
     projectName: $("projectName"),
     clientName: $("clientName"),
@@ -78,11 +84,14 @@
   }
 
   function destroyChart() {
-    if (chart) {
+    if (chart && typeof chart.destroy === "function") {
       chart.destroy();
-      chart = null;
     }
 
+    chart = null;
+    clearOutputVisual();
+    clearAntiPassbackSchedule();
+    clearLocalAssistant();
     hideChartWrap();
   }
 
@@ -352,267 +361,211 @@
     ];
   }
 
-  function getChartImage() {
-    try {
-      if (chart && typeof chart.toBase64Image === "function") {
-        return chart.toBase64Image("image/png", 1);
-      }
-    } catch {}
 
-    return "";
+
+  function planningVisuals() {
+    return window.ScopedLabsAccessControlPlanningVisuals || null;
   }
 
-  function getExportChartImage() {
-    if (!lastMetrics || typeof Chart === "undefined") return getChartImage();
+  function outputShell() {
+    return window.ScopedLabsAccessControlOutputShell || null;
+  }
+
+  function attachOutputShellExport() {
+    const shell = outputShell();
+
+    if (shell && typeof shell.register === "function") {
+      shell.register(TOOL, {
+        getChartImage: getExportChartImage
+      });
+    }
+
+    if (shell && typeof shell.attachExportGetter === "function") {
+      shell.attachExportGetter(TOOL, window.ScopedLabsExportConfig);
+      return true;
+    }
+
+    if (window.ScopedLabsExportConfig) {
+      window.ScopedLabsExportConfig.getChartImage = getExportChartImage;
+      return true;
+    }
+
+    return false;
+  }
+
+  function placeAntiPassbackReportActions() {
+    const mount = document.getElementById("reportMetadataMount");
+    const actions = els.reportActions;
+    if (!mount || !actions) return false;
+
+    const details = mount.querySelector(".sl-report-meta") || mount.querySelector("details") || mount;
+    if (actions.parentElement !== details) {
+      details.appendChild(actions);
+    }
+
+    return true;
+  }
+
+  function applyShellModules() {
+    const shell = window.ScopedLabsToolShell;
+    if (shell && typeof shell.applyBackContinueShell === "function") {
+      shell.applyBackContinueShell({ rowId: "accessControlFlowActions" });
+    }
+  }
+
+  function clearOutputVisual() {
+    const shell = outputShell();
+
+    if (shell && typeof shell.hideVisual === "function") {
+      return shell.hideVisual({
+        card: els.visualCard,
+        wrap: els.chartWrap,
+        target: els.chart
+      });
+    }
+
+    if (els.chart) els.chart.innerHTML = "";
+    if (els.chartWrap) els.chartWrap.hidden = true;
+    if (els.visualCard) els.visualCard.hidden = true;
+    return true;
+  }
+
+  function renderOutputVisual(metrics) {
+    const visuals = planningVisuals();
+
+    if (visuals && typeof visuals.renderAntiPassback === "function") {
+      return visuals.renderAntiPassback({
+        card: els.visualCard,
+        wrap: els.chartWrap,
+        target: els.chart,
+        metrics
+      });
+    }
+
+    return false;
+  }
+
+  function getAntiPassbackVisualImage(metrics, options = {}) {
+    const visuals = planningVisuals();
+    if (!metrics || !visuals || typeof visuals.buildAntiPassbackSvg !== "function") return "";
+
+    if (typeof visuals.svgToDataUri === "function") {
+      return visuals.svgToDataUri(visuals.buildAntiPassbackSvg(metrics, Object.assign({ exportMode: true }, options)));
+    }
+
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(visuals.buildAntiPassbackSvg(metrics, Object.assign({ exportMode: true }, options)));
+  }
+
+  function clearAntiPassbackSchedule() {
+    if (els.schedule) els.schedule.innerHTML = "";
+    if (els.scheduleCard) els.scheduleCard.hidden = true;
+  }
+
+  function renderAntiPassbackSchedule(metrics) {
+    const schedule = window.ScopedLabsAccessControlDecisionSchedule;
+    if (!schedule || typeof schedule.render !== "function" || !els.schedule) return false;
+
+    const rows = [
+      { group: "Zone Model", metric: "Recommended Zones", value: metrics.recommendedZones, note: "Total APB zones derived from perimeter, interior, and floor segmentation." },
+      { group: "Zone Model", metric: "Perimeter / Interior / Floors", value: metrics.perimeterZones + " / " + metrics.interiorZones + " / " + metrics.floorZones, note: "Shows which part of the scope is driving the zone count." },
+      { group: "Transitions", metric: "Paired Entrances", value: metrics.pairedEntrances, note: "Estimated IN/OUT reader transitions needed for the selected APB type." },
+      { group: "Pressure", metric: "Complexity Index", value: metrics.complexityIndex, note: "Used to flag APB administration and nuisance-lockout pressure." },
+      { group: "Pressure", metric: "Enforcement Exposure", value: metrics.enforcementExposure, note: "Higher values mean more chances for missed-read or override handling." },
+      { group: "Decision", metric: "Recommended Mode", value: metrics.recommendedType, note: metrics.modeRecommendation }
+    ];
+
+    schedule.render({
+      card: els.scheduleCard,
+      wrap: els.schedule,
+      target: els.schedule,
+      title: "Anti-Passback Decision Schedule",
+      summary: "Specialty-branch APB schedule for zone structure, paired transitions, and enforcement pressure.",
+      status: metrics.status,
+      statusDetail: metrics.operationalRisk + " operational risk",
+      interpretation: metrics.interpretation,
+      exportTableTitle: "Anti-Passback Decision Schedule",
+      tableDataAttr: 'data-apb-summary="true" data-access-control-decision-schedule="true"',
+      rows
+    });
+
+    if (els.scheduleCard) els.scheduleCard.hidden = false;
+    return true;
+  }
+
+  function clearLocalAssistant() {
+    if (window.ScopedLabsLocalAssistant && els.localAssistantMount) {
+      window.ScopedLabsLocalAssistant.clear(els.localAssistantMount);
+      return true;
+    }
+
+    if (els.localAssistantMount) {
+      els.localAssistantMount.innerHTML = "";
+      els.localAssistantMount.hidden = true;
+    }
+
+    return false;
+  }
+
+  function renderLocalAssistant(metrics) {
+    const assistant = window.ScopedLabsLocalAssistant;
+    const adapters = window.ScopedLabsAccessControlToolAssistantAdapters;
+    const adapter = adapters && typeof adapters.getAdapter === "function"
+      ? adapters.getAdapter(TOOL)
+      : null;
+
+    if (!assistant || !adapter || !els.localAssistantMount || typeof adapter.buildModel !== "function") {
+      return false;
+    }
+
+    return assistant.mount(els.localAssistantMount, adapter.buildModel(metrics));
+  }
+
+  function publishAntiPassbackSummaryContribution(metrics) {
+    if (!metrics) return false;
 
     try {
-      const canvas = document.createElement("canvas");
-      canvas.width = 1200;
-      canvas.height = 620;
+      const key = "scopedlabs:access-control:summary-contributions:v1";
+      const raw = localStorage.getItem(key);
+      const ledger = raw ? JSON.parse(raw) : {};
+      const tools = ledger && typeof ledger === "object" && ledger.tools && typeof ledger.tools === "object" ? ledger.tools : {};
 
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return getChartImage();
-
-      const labels = [
-        "Recommended Zones",
-        "Paired Entrances",
-        "Complexity Index",
-        "Enforcement Exposure"
-      ];
-
-      const values = [
-        lastMetrics.recommendedZones,
-        lastMetrics.pairedEntrances,
-        lastMetrics.complexityIndex,
-        lastMetrics.enforcementExposure
-      ];
-
-      const referenceValue = 10;
-      const dominantIndex = values.indexOf(Math.max(...values));
-      const maxValue = Math.max(...values, referenceValue, 18);
-
-      let exportChart = null;
-
-      const bgPlugin = {
-        id: "exportBgPlugin",
-        beforeDraw(chartInstance) {
-          const { ctx, chartArea } = chartInstance;
-          if (!chartArea) return;
-
-          const { left, top, width, height, right, bottom } = chartArea;
-          const x = chartInstance.scales.x;
-
-          ctx.save();
-
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, chartInstance.width, chartInstance.height);
-
-          ctx.fillStyle = "#f8fbf9";
-          ctx.fillRect(left, top, width, height);
-
-          const healthyMax = Math.min(6, x.max);
-          const watchMax = Math.min(10, x.max);
-
-          if (healthyMax > 0) {
-            ctx.fillStyle = "rgba(34, 197, 94, 0.14)";
-            ctx.fillRect(left, top, x.getPixelForValue(healthyMax) - left, height);
-          }
-
-          if (watchMax > 6) {
-            ctx.fillStyle = "rgba(245, 158, 11, 0.14)";
-            ctx.fillRect(
-              x.getPixelForValue(6),
-              top,
-              x.getPixelForValue(watchMax) - x.getPixelForValue(6),
-              height
-            );
-          }
-
-          if (x.max > 10) {
-            ctx.fillStyle = "rgba(239, 68, 68, 0.12)";
-            ctx.fillRect(
-              x.getPixelForValue(10),
-              top,
-              right - x.getPixelForValue(10),
-              height
-            );
-          }
-
-          ctx.restore();
-        },
-        afterDatasetsDraw(chartInstance) {
-          const { ctx, chartArea, scales } = chartInstance;
-          if (!chartArea || !scales.x || !scales.y) return;
-
-          const x = scales.x;
-          const y = scales.y;
-          const { top, bottom } = chartArea;
-
-          ctx.save();
-
-          const rx = x.getPixelForValue(referenceValue);
-          ctx.strokeStyle = "#198754";
-          ctx.lineWidth = 3;
-          ctx.setLineDash([6, 5]);
-          ctx.beginPath();
-          ctx.moveTo(rx, top);
-          ctx.lineTo(rx, bottom);
-          ctx.stroke();
-          ctx.setLineDash([]);
-
-          ctx.fillStyle = "#1f2937";
-          ctx.font = "600 16px Arial";
-          ctx.fillText("Complexity Watch Limit", rx + 10, bottom - 12);
-
-          ctx.fillStyle = "#15803d";
-          ctx.font = "700 15px Arial";
-          ctx.fillText("Healthy", x.getPixelForValue(0.8), top + 18);
-
-          ctx.fillStyle = "#b45309";
-          ctx.fillText("Watch", x.getPixelForValue(6.8), top + 18);
-
-          ctx.fillStyle = "#b91c1c";
-          ctx.fillText("Risk", x.getPixelForValue(10.8), top + 18);
-
-          const dominantValue = values[dominantIndex];
-          const px = x.getPixelForValue(dominantValue);
-          const py = y.getPixelForValue(labels[dominantIndex]);
-
-          ctx.beginPath();
-          ctx.arc(px, py, 6, 0, Math.PI * 2);
-          ctx.fillStyle = "#ffffff";
-          ctx.fill();
-          ctx.strokeStyle = "#111827";
-          ctx.lineWidth = 2;
-          ctx.stroke();
-
-          ctx.restore();
+      tools[TOOL] = {
+        category: CATEGORY,
+        toolSlug: TOOL,
+        toolLabel: TOOL_LABEL,
+        contributionType: "specialty-branch",
+        summaryGroup: "Specialty / What-if Branches",
+        status: metrics.status,
+        summary: getSummaryFromResults(collectVisibleResults()),
+        interpretation: metrics.interpretation,
+        updatedAt: new Date().toISOString(),
+        metrics: {
+          recommendedZones: metrics.recommendedZones,
+          pairedEntrances: metrics.pairedEntrances,
+          complexityIndex: metrics.complexityIndex,
+          operationalRisk: metrics.operationalRisk,
+          recommendedType: metrics.recommendedType
         }
       };
 
-      exportChart = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "APB Design Metrics",
-              data: values,
-              indexAxis: "y",
-              barThickness: 18,
-              maxBarThickness: 18,
-              barPercentage: 0.8,
-              categoryPercentage: 0.7,
-              borderRadius: 8,
-              borderSkipped: false,
-              borderWidth: 1.5,
-              backgroundColor: (context) => {
-                const i = context.dataIndex;
-                const v = context.raw;
-
-                if (i === dominantIndex) {
-                  if (v > 10) return "#dc2626";
-                  if (v > 6) return "#f59e0b";
-                  return "#22c55e";
-                }
-
-                if (v > 10) return "rgba(220, 38, 38, 0.55)";
-                if (v > 6) return "rgba(245, 158, 11, 0.50)";
-                return "rgba(59, 130, 246, 0.42)";
-              },
-              borderColor: (context) => {
-                const i = context.dataIndex;
-                const v = context.raw;
-
-                if (i === dominantIndex) {
-                  if (v > 10) return "#7f1d1d";
-                  if (v > 6) return "#92400e";
-                  return "#166534";
-                }
-
-                if (v > 10) return "#991b1b";
-                if (v > 6) return "#b45309";
-                return "#1d4ed8";
-              }
-            }
-          ]
-        },
-        options: {
-          responsive: false,
-          maintainAspectRatio: false,
-          animation: false,
-          indexAxis: "y",
-          layout: {
-            padding: {
-              top: 36,
-              right: 22,
-              bottom: 10,
-              left: 18
-            }
-          },
-          plugins: {
-            legend: { display: false },
-            tooltip: { enabled: false }
-          },
-          scales: {
-            x: {
-              beginAtZero: true,
-              suggestedMax: Math.ceil(maxValue * 1.08),
-              ticks: {
-                color: "#334155",
-                font: {
-                  size: 14,
-                  weight: "600"
-                }
-              },
-              grid: {
-                color: "rgba(15, 23, 42, 0.08)"
-              },
-              border: {
-                color: "rgba(15, 23, 42, 0.18)"
-              },
-              title: {
-                display: true,
-                text: "Operational Magnitude",
-                color: "#0f172a",
-                font: {
-                  size: 15,
-                  weight: "700"
-                }
-              }
-            },
-            y: {
-              ticks: {
-                color: "#0f172a",
-                font: {
-                  size: 15,
-                  weight: "700"
-                }
-              },
-              grid: {
-                display: false
-              },
-              border: {
-                color: "rgba(15, 23, 42, 0.18)"
-              }
-            }
-          }
-        },
-        plugins: [bgPlugin]
-      });
-
-      const dataUrl = canvas.toDataURL("image/png", 1);
-
-      if (exportChart) {
-        exportChart.destroy();
-        exportChart = null;
-      }
-
-      return dataUrl;
-    } catch (err) {
-      console.error("Export chart render failed:", err);
-      return getChartImage();
+      localStorage.setItem(key, JSON.stringify({ ...ledger, category: CATEGORY, tools }));
+      return true;
+    } catch {
+      return false;
     }
+  }
+  function getChartImage() {
+    const shell = outputShell();
+    if (shell && typeof shell.getChartImage === "function") {
+      const image = shell.getChartImage(TOOL);
+      if (image) return image;
+    }
+
+    return getExportChartImage();
+  }
+
+  function getExportChartImage() {
+    return getAntiPassbackVisualImage(lastMetrics);
   }
 
   function buildCurrentReportPayload() {
@@ -1087,250 +1040,6 @@
     return "This anti-passback design stays relatively manageable. The recommended zone structure is restrained enough that APB can add useful control without becoming an administrative burden, especially if exemptions and emergency paths are planned cleanly.";
   }
 
-  function renderChart(metrics) {
-    destroyChart();
-
-    if (!els.chart) return;
-
-    showChartWrap();
-
-    const labels = [
-      "Recommended Zones",
-      "Paired Entrances",
-      "Complexity Index",
-      "Enforcement Exposure"
-    ];
-
-    const values = [
-      metrics.recommendedZones,
-      metrics.pairedEntrances,
-      metrics.complexityIndex,
-      metrics.enforcementExposure
-    ];
-
-    const dominantIndex = values.indexOf(Math.max(...values));
-    const referenceValue = 10;
-    const chartMax = Math.max(18, Math.ceil(Math.max(...values, referenceValue) * 1.2));
-
-    const chartBgPlugin = {
-      id: "chartBgPlugin",
-      beforeDraw(c) {
-        const { ctx, chartArea } = c;
-        if (!chartArea) return;
-
-        const { left, top, width, height } = chartArea;
-
-        ctx.save();
-        ctx.fillStyle = "rgba(255,255,255,0.05)";
-        ctx.fillRect(left, top, width, height);
-        ctx.restore();
-      }
-    };
-
-    const thresholdBandPlugin = {
-      id: "thresholdBandPlugin",
-      beforeDatasetsDraw(c) {
-        const { ctx, chartArea, scales } = c;
-        if (!chartArea || !scales.x) return;
-
-        const x = scales.x;
-        const { top, bottom, left, right } = chartArea;
-
-        const healthyMax = Math.min(6, x.max);
-        const watchMax = Math.min(10, x.max);
-
-        ctx.save();
-
-        if (healthyMax > 0) {
-          ctx.fillStyle = "rgba(46, 204, 113, 0.16)";
-          ctx.fillRect(left, top, x.getPixelForValue(healthyMax) - left, bottom - top);
-        }
-
-        if (watchMax > 6) {
-          ctx.fillStyle = "rgba(255, 200, 80, 0.13)";
-          ctx.fillRect(
-            x.getPixelForValue(6),
-            top,
-            x.getPixelForValue(watchMax) - x.getPixelForValue(6),
-            bottom - top
-          );
-        }
-
-        if (x.max > 10) {
-          ctx.fillStyle = "rgba(255, 90, 90, 0.13)";
-          ctx.fillRect(
-            x.getPixelForValue(10),
-            top,
-            right - x.getPixelForValue(10),
-            bottom - top
-          );
-        }
-
-        ctx.restore();
-      },
-      afterDatasetsDraw(c) {
-        const { ctx, chartArea, scales } = c;
-        if (!chartArea || !scales.x || !scales.y) return;
-
-        const x = scales.x;
-        const y = scales.y;
-        const { top, bottom } = chartArea;
-
-        ctx.save();
-
-        const rx = x.getPixelForValue(referenceValue);
-        ctx.strokeStyle = "rgba(120, 255, 170, 0.98)";
-        ctx.lineWidth = 3;
-        ctx.setLineDash([4, 4]);
-        ctx.beginPath();
-        ctx.moveTo(rx, top);
-        ctx.lineTo(rx, bottom);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        ctx.fillStyle = "rgba(220, 255, 235, 0.96)";
-        ctx.font = "600 11px sans-serif";
-        ctx.fillText("Complexity Watch Limit", rx + 8, bottom - 10);
-
-        ctx.fillStyle = "rgba(180, 255, 200, 0.82)";
-        ctx.font = "600 11px sans-serif";
-        ctx.fillText("Healthy", x.getPixelForValue(0.8), top + 14);
-
-        ctx.fillStyle = "rgba(255, 220, 140, 0.82)";
-        ctx.fillText("Watch", x.getPixelForValue(6.8), top + 14);
-
-        ctx.fillStyle = "rgba(255, 160, 160, 0.82)";
-        ctx.fillText("Risk", x.getPixelForValue(10.8), top + 14);
-
-        const dominantValue = values[dominantIndex];
-        const px = x.getPixelForValue(dominantValue);
-        const py = y.getPixelForValue(labels[dominantIndex]);
-
-        ctx.beginPath();
-        ctx.arc(px, py, 4.5, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(225, 255, 240, 1)";
-        ctx.fill();
-        ctx.strokeStyle = "rgba(120, 255, 170, 0.95)";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        ctx.restore();
-      }
-    };
-
-    chart = new Chart(els.chart, {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [
-          {
-            label: "APB Design Metrics",
-            data: values,
-            barThickness: 16,
-            maxBarThickness: 16,
-            barPercentage: 0.8,
-            categoryPercentage: 0.7,
-            borderWidth: 2,
-            borderRadius: 8,
-            borderSkipped: false,
-            backgroundColor: (context) => {
-              const i = context.dataIndex;
-              const v = context.raw;
-
-              if (i === dominantIndex) {
-                if (v > 10) return "rgba(255, 92, 92, 1)";
-                if (v > 6) return "rgba(255, 188, 82, 1)";
-                return "rgba(120, 255, 170, 1)";
-              }
-
-              if (v > 10) return "rgba(255, 77, 77, 0.30)";
-              if (v > 6) return "rgba(255, 170, 51, 0.24)";
-              return "rgba(90, 170, 255, 0.15)";
-            },
-            borderColor: (context) => {
-              const i = context.dataIndex;
-              const v = context.raw;
-
-              if (i === dominantIndex) {
-                if (v > 10) return "rgba(255, 220, 220, 1)";
-                if (v > 6) return "rgba(255, 240, 210, 1)";
-                return "rgba(215, 255, 230, 1)";
-              }
-
-              return "rgba(120,170,200,0.18)";
-            }
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        indexAxis: "y",
-        animation: {
-          duration: 700,
-          easing: "easeOutQuart"
-        },
-        layout: {
-          padding: {
-            top: 28,
-            right: 12,
-            left: 10,
-            bottom: 0
-          }
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: "rgba(8, 18, 18, 0.96)",
-            titleColor: "#e8fff1",
-            bodyColor: "#d9f7e7",
-            borderColor: "rgba(100, 255, 180, 0.25)",
-            borderWidth: 1,
-            padding: 12,
-            callbacks: {
-              label(context) {
-                return ` ${context.raw}`;
-              }
-            }
-          }
-        },
-        scales: {
-          x: {
-            beginAtZero: true,
-            suggestedMax: chartMax,
-            ticks: {
-              color: "rgba(220, 238, 230, 0.78)"
-            },
-            grid: {
-              color: "rgba(110, 160, 140, 0.10)"
-            },
-            title: {
-              display: true,
-              text: "Operational Magnitude",
-              color: "rgba(230, 255, 240, 0.92)"
-            }
-          },
-          y: {
-            ticks: {
-              color: "rgba(228, 245, 235, 0.92)"
-            },
-            grid: {
-              display: false
-            }
-          }
-        }
-      },
-      plugins: [chartBgPlugin, thresholdBandPlugin]
-    });
-
-    els.chart.style.width = "100%";
-    els.chart.style.height = "340px";
-
-    if (els.chart.parentElement) {
-      els.chart.parentElement.style.minHeight = "340px";
-    }
-  }
-
   function calc() {
     const entrances = Math.max(0, Math.floor(n("entrances")));
     const interior = Math.max(0, Math.floor(n("interiorAreas")));
@@ -1387,12 +1096,27 @@
 
     lastMetrics = {
       recommendedZones: zoneBreakdown.total,
+      perimeterZones: zoneBreakdown.perimeterZones,
+      interiorZones: zoneBreakdown.interiorZones,
+      floorZones: zoneBreakdown.floorZones,
       pairedEntrances,
       complexityIndex,
-      enforcementExposure
+      enforcementExposure,
+      operationalRisk,
+      recommendedType,
+      modeRecommendation,
+      interpretation,
+      strategy,
+      strategyLabel: els.strategy.options[els.strategy.selectedIndex]?.text || strategy,
+      type,
+      typeLabel: els.type.options[els.type.selectedIndex]?.text || type,
+      status: operationalRisk === "HIGH" ? "RISK" : operationalRisk === "MODERATE" ? "WATCH" : "HEALTHY"
     };
 
-    renderChart(lastMetrics);
+    renderOutputVisual(lastMetrics);
+    renderAntiPassbackSchedule(lastMetrics);
+    renderLocalAssistant(lastMetrics);
+    publishAntiPassbackSummaryContribution(lastMetrics);
 
     currentReport = buildCurrentReportPayload();
     updateExportControls();
@@ -1422,6 +1146,10 @@
 
     resetResults("Enter values and press Calculate.");
   }
+
+  placeAntiPassbackReportActions();
+  applyShellModules();
+  attachOutputShellExport();
 
   if (els.calc) {
     els.calc.addEventListener("click", calc);
@@ -1458,12 +1186,7 @@
   });
 
   if (els.chart) {
-    els.chart.style.width = "100%";
-    els.chart.style.height = "340px";
-
-    if (els.chart.parentElement) {
-      els.chart.parentElement.style.minHeight = "340px";
-    }
+    // Modern SVG visual sizing is owned by the shared planning visual module.
   }
 
   resetResults();

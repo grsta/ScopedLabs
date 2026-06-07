@@ -1,11 +1,11 @@
 /* ScopedLabs Access Control Tool Assistant Adapters
-   Version: access-control-assistant-adapters-017-door-count
+   Version: access-control-assistant-adapters-018-anti-passback
    Purpose: category-specific local assistant model adapters. Dormant unless a tool explicitly calls one.
 */
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-assistant-adapters-017-door-count";
+  const API_VERSION = "access-control-assistant-adapters-018-anti-passback";
 
   function safeText(value) {
     return String(value ?? "");
@@ -533,6 +533,72 @@
     };
   }
 
+
+
+  function buildAntiPassbackZonesModel(data) {
+    const status = safeText(data.status || "PENDING");
+    const zones = safeText(data.recommendedZones ?? "pending");
+    const paired = safeText(data.pairedEntrances ?? "pending");
+    const complexity = safeText(data.complexityIndex ?? "pending");
+    const risk = safeText(data.operationalRisk || status);
+    const mode = safeText(data.recommendedType || data.mode || "pending");
+    const guidance = safeText(data.modeRecommendation || data.guidance || "Review anti-passback enforcement scope before enabling hard deny behavior.");
+    const interpretation = safeText(data.interpretation || "Run the calculator to generate anti-passback guidance.");
+
+    return {
+      category: "access-control",
+      tool: "anti-passback-zones",
+      kicker: "Local Design Assistant",
+      title: "Anti-Passback Assistant",
+      status,
+      summary: "Use this specialty-branch result to decide whether APB enforcement is operationally manageable before final access-control documentation.",
+      hideStandardLists: true,
+      hideHeaderPills: true,
+      sections: [
+        {
+          title: "Zone Enforcement Basis",
+          body: guidance,
+          items: [
+            "Recommended zones: " + zones,
+            "Paired IN/OUT entrances: " + paired,
+            "Complexity index: " + complexity,
+            "Operational risk: " + risk,
+            "Recommended enforcement mode: " + mode
+          ]
+        },
+        {
+          title: "Operational Review",
+          body: interpretation,
+          items: [
+            "Confirm reader placement supports reliable direction-of-travel records.",
+            "Document exceptions for missed reads, emergency egress, visitor flow, and guard overrides.",
+            "Use hard APB only where operations can tolerate lockout handling."
+          ]
+        },
+        {
+          title: "Summary Role",
+          body: "Anti-Passback Zones is a specialty Access Control branch. It is not part of the core pipeline, but its result should be available to the category summary when used.",
+          items: [
+            "Contribution type: specialty-branch",
+            "Summary group: Specialty / What-if Branches",
+            "Pipeline state: optional specialty branch"
+          ]
+        }
+      ],
+      assumptionsTitle: "Planning Assumptions",
+      actionsTitle: "Recommended Actions",
+      assumptions: [
+        "APB zone estimates are based on perimeter doors, interior controlled areas, floor count, zone strategy, and APB type.",
+        "Final APB behavior must be validated in the selected access-control platform.",
+        "Emergency paths, override procedure, visitor handling, and missed reads can change whether hard APB is practical."
+      ],
+      actions: [
+        guidance,
+        "Confirm bidirectional reader coverage and exception handling before enabling APB denial.",
+        "Include the specialty-branch result in the Access Control summary when APB is part of the design narrative."
+      ]
+    };
+  }
   const adapters = Object.freeze({
     "fail-safe-fail-secure": Object.freeze({
       slug: "fail-safe-fail-secure",
@@ -573,6 +639,11 @@
       slug: "door-count-planner",
       title: "Door Count Assistant",
       buildModel: buildDoorCountPlannerModel
+    }),
+    "anti-passback-zones": Object.freeze({
+      slug: "anti-passback-zones",
+      title: "Anti-Passback Assistant",
+      buildModel: buildAntiPassbackZonesModel
     })
   });
 
