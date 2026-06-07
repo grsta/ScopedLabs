@@ -220,10 +220,24 @@
   function buildDoorCountSvg(metrics = {}) {
     const tone = statusTone(metrics.status);
     const statusText = statusLabel(metrics.status);
+    function contributionValue(raw, fallback) {
+      const direct = Number(raw);
+      if (Number.isFinite(direct)) return Math.max(0, direct);
+      const backfill = Number(fallback);
+      if (Number.isFinite(backfill)) return Math.max(0, backfill);
+      return 0;
+    }
+
+    function contributionLabel(value) {
+      const num = Number(value);
+      if (!Number.isFinite(num)) return "?";
+      return Math.abs(num - Math.round(num)) < 0.05 ? String(Math.round(num)) : num.toFixed(1);
+    }
+
     const perimeter = Math.max(0, Number(metrics.perimeterDoors || 0));
-    const zones = Math.max(0, Number(metrics.zoneBaseLabel || metrics.zoneBase || 0));
-    const high = Math.max(0, Number(metrics.highsecAddLabel || metrics.highsecAdd || 0));
-    const doors = Math.max(1, Number(metrics.doors || perimeter + zones + high || 1));
+    const zones = contributionValue(metrics.zoneBase, metrics.zoneBaseLabel);
+    const high = contributionValue(metrics.highsecAdd, metrics.highsecAddLabel);
+    const doors = Math.max(1, Number(metrics.doors || Math.round(perimeter + zones + high) || 1));
     const readers = Math.max(0, Number(metrics.readers || 0));
     const complexity = Math.max(0, Number(metrics.complexityIndex || 0));
     const pressure = clamp(complexity / 140, 0.04, 1);
@@ -265,9 +279,9 @@
       '<text x="52" y="62" font-size="11" fill="rgba(180,255,200,.68)" letter-spacing="1.4">DOOR SCHEDULE LOAD</text>',
       '<text x="52" y="84" font-size="19" fill="rgba(246,255,248,.96)" font-weight="800">Controlled doors, readers, and segmentation pressure</text>',
       statusBadge(statusText, tone, 616, 51),
-      groupRow("Perimeter", perimeter, 52, 112, "safe"),
-      groupRow("Interior zones", zones, 279, 112, "safe"),
-      groupRow("High-security", high, 506, 112, high > 0 ? "watch" : "safe"),
+      groupRow("Perimeter", contributionLabel(perimeter), 52, 112, "safe"),
+      groupRow("Interior zones", contributionLabel(zones), 279, 112, "safe"),
+      groupRow("High-security", contributionLabel(high), 506, 112, high > 0 ? "watch" : "safe"),
       '<path d="M112 206 H648" stroke="rgba(203,213,225,.24)" stroke-width="1.2" stroke-dasharray="6 7" />',
       '<path d="M112 206 C214 184, 300 228, 382 206 S548 186, 648 206" fill="none" stroke="rgba(125,255,152,.38)" stroke-width="1.4" />',
       '<circle cx="112" cy="206" r="5" fill="rgba(125,255,152,.20)" stroke="rgba(125,255,152,.72)" />',
@@ -283,7 +297,7 @@
       '<text x="650" y="262" font-size="9" fill="rgba(203,213,225,.62)" letter-spacing=".8">CONTROL MODE</text>',
       '<text x="650" y="280" font-size="12" fill="rgba(238,255,244,.90)" font-weight="800" text-anchor="start">' + escapeHtml(metrics.bothSidesLabel || "?") + '</text>',
       '</svg>',
-      '<p class="sl-vis-note"><strong>Visual note:</strong> The door schedule visual is a planning summary. It shows which door groups are driving reader count and segmentation pressure before controller placement or final hardware scheduling.</p>',
+      '<p class="sl-vis-note"><strong>Visual note:</strong> Interior and high-security values are weighted planning contributions. The final controlled-door total is rounded after the weighted values are added, so rounded component labels may not equal the final total.</p>',
       '</div>'
     ].join("");
   }
