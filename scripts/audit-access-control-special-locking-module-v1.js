@@ -61,13 +61,15 @@ check("Special Locking has per-opening exception UI", html.includes('id="opening
 check("Special Locking calculates per-opening exception model", script.includes("buildOpeningDetails") && script.includes("openingDetails") && script.includes("exceptionCount") && script.includes("openingRollupLabel"));
 check("Special Locking visual supports per-opening tones", visuals.includes("openingTone(0)") && visuals.includes("openingTones") && visuals.includes("exceptions"));
 check("Special Locking assistant includes exception summary", adapters.includes("exceptionSummary") && adapters.includes("Opening rollup"));
+check("Special Locking export has exception parity sections", script.includes("buildSpecialLockingExportSections") && script.includes("Flagged Opening Exception Schedule") && script.includes("Opening Status Map"));
+check("Special Locking export uses custom payload builder", script.includes("customPayloadBuilder = getSpecialLockingExportPayload") && script.includes("stackReportSections: true"));
 check("Special Locking has hidden result ledger", html.includes("data-result-ledger") && html.includes("#results[data-result-ledger][hidden]"));
 check("Special Locking publishes specialty summary contribution", script.includes("publishSpecialLockingSummaryContribution") && script.includes('contributionType: "specialty-branch"') && script.includes("Specialty / What-if Branches"));
 check("Special Locking assistant adapter exists", adapters.includes("buildSpecialLockingScopeModel") && adapters.includes('"special-locking-scope"'));
 
 check("Special Locking has no Chart.js CDN", !html.includes("chart.js"));
 check("Special Locking has no canvas chart", !html.includes("<canvas") && html.includes('class="access-control-output-visual"'));
-check("Special Locking uses modern local script cache", html.includes("./script.js?v=access-control-special-locking-exceptions-003-checkbox-multi"));
+check("Special Locking uses modern local script cache", html.includes("./script.js?v=access-control-special-locking-exceptions-004-export-parity"));
 
 console.log("\nAccess Control Special Locking module audit:");
 console.table(rows);

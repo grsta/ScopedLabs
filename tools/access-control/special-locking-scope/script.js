@@ -509,11 +509,23 @@
 
     if (shell && typeof shell.attachExportGetter === "function") {
       shell.attachExportGetter(TOOL, window.ScopedLabsExportConfig);
+      if (window.ScopedLabsExportConfig) {
+        window.ScopedLabsExportConfig.customPayloadBuilder = getSpecialLockingExportPayload;
+        window.ScopedLabsExportConfig.payloadBuilder = getSpecialLockingExportPayload;
+        window.ScopedLabsExportConfig.stackReportSections = true;
+        window.ScopedLabsExportConfig.inputSectionTitle = "Group Default Inputs";
+        window.ScopedLabsExportConfig.outputSectionTitle = "Decision Summary";
+      }
       return true;
     }
 
     if (window.ScopedLabsExportConfig) {
       window.ScopedLabsExportConfig.getChartImage = getExportChartImage;
+      window.ScopedLabsExportConfig.customPayloadBuilder = getSpecialLockingExportPayload;
+      window.ScopedLabsExportConfig.payloadBuilder = getSpecialLockingExportPayload;
+      window.ScopedLabsExportConfig.stackReportSections = true;
+      window.ScopedLabsExportConfig.inputSectionTitle = "Group Default Inputs";
+      window.ScopedLabsExportConfig.outputSectionTitle = "Decision Summary";
       return true;
     }
 
@@ -706,6 +718,187 @@
     }
   }
 
+
+  function reportToneFromStatus(status) {
+    const clean = String(status || "").toUpperCase();
+    if (clean === "RISK") return "risk";
+    if (clean === "WATCH") return "watch";
+    return "safe";
+  }
+
+  function reportToneCell(status) {
+    const clean = String(status || "HEALTHY").toUpperCase();
+    return { text: clean, tone: reportToneFromStatus(clean) };
+  }
+
+  function getSpecialLockingStatusSource(metrics = {}) {
+    const status = String(metrics.status || "HEALTHY").toUpperCase();
+    const details = Array.isArray(metrics.openingDetails) ? metrics.openingDetails : [];
+    const flagged = details.filter((item) => item && item.isException);
+    const riskFlags = flagged.filter((item) => item.status === "RISK");
+    const watchFlags = flagged.filter((item) => item.status === "WATCH");
+
+    if (riskFlags.length) {
+      return "Opening exception authority pressure: " + riskFlags.map((item) => "#" + item.openingNumber + " " + item.label).join(", ");
+    }
+
+    if (watchFlags.length && status === "WATCH") {
+      return "Opening exception review pressure: " + watchFlags.map((item) => "#" + item.openingNumber + " " + item.label).join(", ");
+    }
+
+    if (status === "RISK") return "Authority review / release coordination pressure";
+    if (status === "WATCH") return "Locking scope / review pressure";
+    return "Release checks clear";
+  }
+
+  function exportOpeningMode(item) {
+    return item && item.isException ? "Flagged exception" : "Group default";
+  }
+
+  function compactOpeningNote(item) {
+    if (!item) return "";
+    return item.driverSummary || (item.isException ? "Flagged opening exception" : "Uses group defaults");
+  }
+
+  function buildSpecialLockingExportSections(metrics = {}, outputs = []) {
+    const details = Array.isArray(metrics.openingDetails) ? metrics.openingDetails : [];
+    const flagged = details.filter((item) => item && item.isException);
+    const counts = metrics.openingStatusCounts || (details.length ? openingStatusCounts(details) : null);
+    const status = String(metrics.status || getStatusFromResults(outputs) || "HEALTHY").toUpperCase();
+    const statusTone = reportToneFromStatus(status);
+    const source = getSpecialLockingStatusSource(metrics);
+    const rollup = metrics.openingRollupLabel || openingRollupLabel(counts);
+    const exceptionSummary = metrics.exceptionSummary || openingExceptionSummary(details);
+    const exceptionCount = Number(metrics.exceptionCount || flagged.length || 0);
+
+    const groupDefaultRows = [
+      ["Flagged Openings", String(metrics.openingCount ?? els.openingCount?.value ?? ""), "Openings included in this specialty branch."],
+      ["Default Locking Condition", metrics.lockingTypeLabel || selectedText(els.lockingType), "Applied to openings that are not flagged as exceptions."],
+      ["Default Egress Impact", metrics.egressImpactLabel || selectedText(els.egressImpact), "Default life-safety assumption for unflagged openings."],
+      ["Default Release Logic", metrics.releaseLogicLabel || selectedText(els.releaseLogic), "Default release/emergency operation assumption."],
+      ["Default Authority Review", metrics.authorityReviewLabel || selectedText(els.authorityReview), "Default AHJ/code review expectation."],
+      ["Default Override Plan", metrics.overridePlanLabel || selectedText(els.overridePlan), "Default operator override / monitoring expectation."],
+      ["Status Source", source, "Explains why the report status is Safe, Watch, or Risk."],
+      ["Risk Score", String(metrics.riskScore ?? "pending"), "Highest group/default or per-opening exception pressure."]
+    ];
+
+    const rollupRows = [
+      ["Exception Mode", metrics.exceptionMode === "yes" ? "Per-opening exceptions reviewed" : "Group defaults only", "How the opening group was evaluated."],
+      ["Exception Count", String(exceptionCount), "Checked rows that override the group defaults."],
+      ["Opening Rollup", rollup, "Safe / Watch / Risk distribution across reviewed openings."],
+      ["Exception Summary", exceptionSummary, "Flagged opening drivers from the live tool."],
+      ["Overall Status", reportToneCell(status), source]
+    ];
+
+    const openingMapRows = details.length
+      ? details.map((item) => [
+          "#" + item.openingNumber,
+          item.label || "Opening #" + item.openingNumber,
+          exportOpeningMode(item),
+          reportToneCell(item.status),
+          String(item.riskScore ?? ""),
+          compactOpeningNote(item)
+        ])
+      : [["Group", "All openings", "Group default", reportToneCell(status), String(metrics.riskScore ?? ""), exceptionSummary]];
+
+    const sections = [
+      {
+        title: "Special Locking Scope Summary",
+        description: "Group defaults, status source, and exception rollup from the live Special Locking branch.",
+        countLabel: status + " / score " + String(metrics.riskScore ?? "pending"),
+        countTone: statusTone,
+        tables: [
+          {
+            title: "Group Default Assumptions",
+            className: "extra-export-table--kv",
+            headers: ["Item", "Value", "Report Note"],
+            rows: groupDefaultRows
+          },
+          {
+            title: "Opening Exception Rollup",
+            className: "extra-export-table--decision",
+            headers: ["Metric", "Value", "Note"],
+            rows: rollupRows
+          }
+        ]
+      },
+      {
+        title: "Opening Status Map",
+        description: "Every reviewed opening is listed so checked exceptions and group-default openings remain traceable in the printout.",
+        countLabel: rollup,
+        countTone: counts?.risk ? "risk" : counts?.watch ? "watch" : statusTone,
+        tables: [
+          {
+            title: "Per-Opening Status",
+            className: "extra-export-table--decision",
+            headers: ["Opening", "Label", "Mode", "Status", "Score", "Driver"],
+            rows: openingMapRows
+          }
+        ]
+      }
+    ];
+
+    if (flagged.length) {
+      sections.push({
+        title: "Flagged Opening Exception Schedule",
+        description: "Only checked exception rows are listed here. These are the openings that override the group defaults.",
+        countLabel: String(flagged.length) + " exception" + (flagged.length === 1 ? "" : "s"),
+        countTone: flagged.some((item) => item.status === "RISK") ? "risk" : flagged.some((item) => item.status === "WATCH") ? "watch" : "safe",
+        tables: [
+          {
+            title: "Checked Opening Exceptions",
+            className: "extra-export-table--decision",
+            headers: ["Opening", "Label", "Status", "Score", "Drivers", "Locking", "Egress", "Release", "Review", "Override"],
+            rows: flagged.map((item) => [
+              "#" + item.openingNumber,
+              item.label || "Opening #" + item.openingNumber,
+              reportToneCell(item.status),
+              String(item.riskScore ?? ""),
+              item.driverSummary || "Flagged opening exception",
+              item.lockingTypeLabel || "",
+              item.egressImpactLabel || "",
+              item.releaseLogicLabel || "",
+              item.authorityReviewLabel || "",
+              item.overridePlanLabel || ""
+            ])
+          }
+        ]
+      });
+    } else if (metrics.exceptionMode === "yes") {
+      sections.push({
+        title: "Flagged Opening Exception Schedule",
+        description: "Per-opening rows were reviewed, but no checked exceptions currently override the group defaults.",
+        countLabel: "0 exceptions",
+        countTone: "safe",
+        tables: [
+          {
+            title: "Checked Opening Exceptions",
+            className: "extra-export-table--decision",
+            headers: ["Opening", "Label", "Status", "Note"],
+            rows: [["-", "No checked rows", reportToneCell("HEALTHY"), "All reviewed rows currently use the group defaults."]]
+          }
+        ]
+      });
+    }
+
+    return sections;
+  }
+
+  function getSpecialLockingReportSummary(metrics = {}, outputs = []) {
+    const base = getSummaryFromResults(outputs);
+    if (!metrics || !metrics.openingDetails) return base;
+
+    const source = getSpecialLockingStatusSource(metrics);
+    const rollup = metrics.openingRollupLabel || "Group defaults only";
+    const exceptionCount = Number(metrics.exceptionCount || 0);
+
+    return base + " Status source: " + source + ". Opening rollup: " + rollup + ". Exception openings: " + exceptionCount + ".";
+  }
+
+  function getSpecialLockingExportPayload() {
+    return currentReport || buildCurrentReportPayload();
+  }
+
   function buildCurrentReportPayload() {
     const outputs = collectVisibleResults();
     if (!outputs.length) return null;
@@ -718,7 +911,7 @@
       tool: TOOL_LABEL,
       toolSlug: TOOL,
       status: getStatusFromResults(outputs),
-      summary: getSummaryFromResults(outputs),
+      summary: getSpecialLockingReportSummary(lastMetrics || {}, outputs),
       interpretation: getInterpretationFromResults(outputs),
       inputs: [
         { label: "Special Locking Openings", value: String(els.openingCount?.value || "") },
@@ -732,6 +925,8 @@
       ],
       outputs,
       assumptions: getAssumptions(),
+      extraSections: buildSpecialLockingExportSections(lastMetrics || {}, outputs),
+      stackReportSections: true,
       chartImage: getExportChartImage(),
       openingDetails: lastMetrics?.openingDetails || [],
       meta: getReportMeta()
@@ -977,6 +1172,7 @@
     reset,
     getChartImage,
     getExportChartImage,
+    getSpecialLockingExportPayload,
     getCurrentReport: () => currentReport
   });
 })();
