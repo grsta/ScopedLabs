@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-015-cad-icon-contract";
+  const VERSION = "access-control-planning-visuals-016-reference-door-icon";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -70,13 +70,12 @@
     const x = Number(options.x || 0);
     const y = Number(options.y || 0);
     const scale = Number(options.scale || 1);
-    const label = options.label || "";
     const tone = options.tone || "safe";
 
-    const stroke = toneStroke(tone);
-    const fill = toneFill(tone);
-    const readerStroke = tone === "risk" ? "rgba(255,170,170,.72)" : tone === "watch" ? "rgba(255,220,130,.72)" : "rgba(125,255,152,.70)";
-    const readerFill = tone === "risk" ? "rgba(255,105,105,.18)" : tone === "watch" ? "rgba(255,204,102,.18)" : "rgba(120,255,120,.16)";
+    const toneLine = toneStroke(tone);
+    const toneFillValue = toneFill(tone);
+    const readerLine = tone === "risk" ? "rgba(255,170,170,.72)" : tone === "watch" ? "rgba(255,220,130,.72)" : "rgba(125,255,152,.72)";
+    const readerFillValue = tone === "risk" ? "rgba(255,105,105,.12)" : tone === "watch" ? "rgba(255,204,102,.14)" : "rgba(120,255,120,.12)";
 
     function sx(value) {
       return Math.round((x + value * scale) * 10) / 10;
@@ -90,28 +89,27 @@
       return Math.round(value * scale * 10) / 10;
     }
 
-    const labelText = label
-      ? '<text x="' + sx(31) + '" y="' + sy(70) + '" font-size="' + sw(8) + '" fill="rgba(203,213,225,.58)" text-anchor="middle">' + escapeHtml(label) + '</text>'
-      : "";
-
     return [
-      '<g class="sl-controlled-door-icon" aria-label="controlled door opening">',
-      '<rect x="' + sx(4) + '" y="' + sy(2) + '" width="' + sw(54) + '" height="' + sw(56) + '" rx="' + sw(5) + '" fill="rgba(0,0,0,.10)" stroke="rgba(120,255,120,.10)" />',
+      '<g class="sl-cad-controlled-door-icon" data-cad-icon="controlled-door-opening" aria-label="CAD controlled door opening">',
 
-      '<path d="M' + sx(14) + ' ' + sy(55) + ' V' + sy(14) + ' H' + sx(48) + ' V' + sy(55) + '" fill="none" stroke="rgba(203,213,225,.48)" stroke-width="' + sw(1.3) + '" />',
-      '<path d="M' + sx(14) + ' ' + sy(55) + ' L' + sx(42) + ' ' + sy(43) + ' V' + sy(12) + '" fill="none" stroke="' + stroke + '" stroke-width="' + sw(1.4) + '" />',
-      '<path d="M' + sx(14) + ' ' + sy(55) + ' A' + sw(36) + ' ' + sw(36) + ' 0 0 1 ' + sx(48) + ' ' + sy(36) + '" fill="none" stroke="rgba(203,213,225,.36)" stroke-width="' + sw(1.1) + '" stroke-dasharray="' + sw(4) + ' ' + sw(5) + '" />',
+      '<rect x="' + sx(30) + '" y="' + sy(4) + '" width="' + sw(102) + '" height="' + sw(142) + '" fill="rgba(0,0,0,.06)" stroke="rgba(203,213,225,.48)" stroke-width="' + sw(1.2) + '" />',
+      '<path d="M' + sx(38) + ' ' + sy(146) + ' V' + sy(16) + ' H' + sx(124) + ' V' + sy(146) + '" fill="none" stroke="rgba(203,213,225,.66)" stroke-width="' + sw(1.2) + '" />',
+      '<path d="M' + sx(30) + ' ' + sy(4) + ' L' + sx(38) + ' ' + sy(16) + ' M' + sx(132) + ' ' + sy(4) + ' L' + sx(124) + ' ' + sy(16) + ' M' + sx(30) + ' ' + sy(146) + ' L' + sx(38) + ' ' + sy(146) + ' M' + sx(132) + ' ' + sy(146) + ' L' + sx(124) + ' ' + sy(146) + '" fill="none" stroke="rgba(148,213,210,.44)" stroke-width="' + sw(1) + '" />',
 
-      '<circle cx="' + sx(27) + '" cy="' + sy(40) + '" r="' + sw(4.8) + '" fill="rgba(0,0,0,.18)" stroke="rgba(203,213,225,.58)" stroke-width="' + sw(1.1) + '" />',
-      '<path d="M' + sx(30) + ' ' + sy(40) + ' H' + sx(48) + '" fill="none" stroke="rgba(203,213,225,.68)" stroke-width="' + sw(1.4) + '" stroke-linecap="round" />',
+      '<path d="M' + sx(38) + ' ' + sy(146) + ' V' + sy(74) + '" fill="none" stroke="' + toneLine + '" stroke-width="' + sw(1.4) + '" />',
+      '<path d="M' + sx(38) + ' ' + sy(146) + ' A' + sw(82) + ' ' + sw(82) + ' 0 0 0 ' + sx(118) + ' ' + sy(138) + '" fill="none" stroke="rgba(203,213,225,.48)" stroke-width="' + sw(1.1) + '" stroke-dasharray="' + sw(6) + ' ' + sw(5) + '" />',
+      '<path d="M' + sx(38) + ' ' + sy(146) + ' L' + sx(118) + ' ' + sy(146) + '" stroke="rgba(203,213,225,.46)" stroke-width="' + sw(1) + '" />',
 
-      '<rect x="' + sx(-6) + '" y="' + sy(24) + '" width="' + sw(10) + '" height="' + sw(22) + '" rx="' + sw(2) + '" fill="' + readerFill + '" stroke="' + readerStroke + '" stroke-width="' + sw(1.1) + '" />',
-      '<path d="M' + sx(-2) + ' ' + sy(33) + ' q' + sw(4) + ' ' + sw(4) + ' 0 ' + sw(8) + ' M' + sx(-6) + ' ' + sy(32) + ' q' + sw(8) + ' ' + sw(6) + ' 0 ' + sw(12) + '" fill="none" stroke="' + readerStroke + '" stroke-width="' + sw(1) + '" stroke-linecap="round" />',
+      '<circle cx="' + sx(48) + '" cy="' + sy(86) + '" r="' + sw(5.2) + '" fill="rgba(0,0,0,.14)" stroke="rgba(203,213,225,.70)" stroke-width="' + sw(1.1) + '" />',
+      '<path d="M' + sx(52) + ' ' + sy(86) + ' H' + sx(75) + '" fill="none" stroke="rgba(203,213,225,.78)" stroke-width="' + sw(1.6) + '" stroke-linecap="round" />',
 
-      '<rect x="' + sx(47) + '" y="' + sy(18) + '" width="' + sw(7) + '" height="' + sw(15) + '" rx="' + sw(1.2) + '" fill="rgba(203,213,225,.08)" stroke="rgba(203,213,225,.42)" stroke-width="' + sw(1) + '" />',
-      '<rect x="' + sx(47) + '" y="' + sy(46) + '" width="' + sw(7) + '" height="' + sw(9) + '" rx="' + sw(1.2) + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + sw(1) + '" />',
+      '<rect x="' + sx(14) + '" y="' + sy(58) + '" width="' + sw(12) + '" height="' + sw(30) + '" rx="' + sw(2.4) + '" fill="' + readerFillValue + '" stroke="' + readerLine + '" stroke-width="' + sw(1.1) + '" />',
+      '<path d="M' + sx(18) + ' ' + sy(64) + ' H' + sx(22) + '" stroke="' + readerLine + '" stroke-width="' + sw(1.1) + '" stroke-linecap="round" />',
+      '<path d="M' + sx(18) + ' ' + sy(75) + ' q' + sw(4) + ' ' + sw(5) + ' 0 ' + sw(10) + ' M' + sx(14) + ' ' + sy(73) + ' q' + sw(8) + ' ' + sw(8) + ' 0 ' + sw(16) + ' M' + sx(10) + ' ' + sy(71) + ' q' + sw(12) + ' ' + sw(11) + ' 0 ' + sw(22) + '" fill="none" stroke="' + readerLine + '" stroke-width="' + sw(1) + '" stroke-linecap="round" />',
 
-      labelText,
+      '<rect x="' + sx(122) + '" y="' + sy(42) + '" width="' + sw(7) + '" height="' + sw(18) + '" fill="rgba(203,213,225,.06)" stroke="rgba(203,213,225,.50)" stroke-width="' + sw(1) + '" />',
+      '<rect x="' + sx(122) + '" y="' + sy(104) + '" width="' + sw(7) + '" height="' + sw(18) + '" fill="' + toneFillValue + '" stroke="' + toneLine + '" stroke-width="' + sw(1) + '" />',
+
       '</g>'
     ].join("");
   }
@@ -465,7 +463,9 @@
 
       '<rect x="52" y="108" width="300" height="252" rx="12" fill="rgba(0,0,0,.13)" stroke="rgba(120,255,120,.10)" />',
       '<text x="70" y="132" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">FLAGGED OPENINGS</text>',
-      Array.from({ length: shownOpenings }, (_, index) => openingNode(index)).join(''),
+      cadControlledDoorOpeningIcon({ x: 76, y: 138, scale: 1.28, tone: pressureTone }),
+      '<text x="214" y="170" font-size="9" fill="rgba(203,213,225,.58)" letter-spacing=".7">CONTROLLED OPENING</text>',
+      '<text x="214" y="189" font-size="12" fill="rgba(238,255,244,.90)" font-weight="800">' + escapeHtml(String(openings)) + ' flagged</text>',
       openings > shownOpenings ? '<text x="292" y="178" font-size="11" fill="rgba(203,213,225,.66)">+' + escapeHtml(Math.round(openings - shownOpenings)) + '</text>' : '',
 
       '<path d="M92 276 H308" stroke="rgba(203,213,225,.22)" stroke-width="1.2" stroke-dasharray="6 7" />',
