@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-011-special-locking-polish";
+  const VERSION = "access-control-planning-visuals-012-special-locking-taller-card";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -400,43 +400,43 @@
 
     return [
       '<div class="access-control-planning-visual-shell" data-access-control-modern-visual="special-locking-scope">',
-      '<svg viewBox="0 0 760 420" role="img" aria-label="Special locking authority review pressure visual" xmlns="http://www.w3.org/2000/svg">',
+      '<svg viewBox="0 0 760 470" role="img" aria-label="Special locking authority review pressure visual" xmlns="http://www.w3.org/2000/svg">',
       '<defs><pattern id="accGridSpecialLockingV11" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="rgba(120,255,120,.040)" stroke-width="1"/></pattern></defs>',
 
-      '<rect x="24" y="24" width="712" height="372" rx="16" fill="rgba(0,0,0,.10)" stroke="rgba(120,255,120,.12)" />',
-      '<rect x="36" y="36" width="688" height="348" rx="12" fill="url(#accGridSpecialLockingV11)" stroke="rgba(120,255,120,.07)" />',
+      '<rect x="24" y="24" width="712" height="424" rx="16" fill="rgba(0,0,0,.10)" stroke="rgba(120,255,120,.12)" />',
+      '<rect x="36" y="36" width="688" height="400" rx="12" fill="url(#accGridSpecialLockingV11)" stroke="rgba(120,255,120,.07)" />',
 
       '<text x="52" y="62" font-size="11" fill="rgba(180,255,200,.68)" letter-spacing="1.4">SPECIAL LOCKING / HIGH-SECURITY SCOPE</text>',
       '<text x="52" y="84" font-size="18" fill="rgba(246,255,248,.96)" font-weight="650">Authority review and release coordination</text>',
       statusBadge(statusText, tone, 616, 51),
 
-      '<rect x="52" y="108" width="300" height="212" rx="12" fill="rgba(0,0,0,.13)" stroke="rgba(120,255,120,.10)" />',
+      '<rect x="52" y="108" width="300" height="252" rx="12" fill="rgba(0,0,0,.13)" stroke="rgba(120,255,120,.10)" />',
       '<text x="70" y="132" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">FLAGGED OPENINGS</text>',
       Array.from({ length: shownOpenings }, (_, index) => openingNode(index)).join(''),
       openings > shownOpenings ? '<text x="292" y="178" font-size="11" fill="rgba(203,213,225,.66)">+' + escapeHtml(Math.round(openings - shownOpenings)) + '</text>' : '',
 
-      '<path d="M92 256 H308" stroke="rgba(203,213,225,.22)" stroke-width="1.2" stroke-dasharray="6 7" />',
-      '<path d="M92 256 C154 236, 246 276, 308 256" fill="none" stroke="rgba(125,255,152,.34)" stroke-width="1.3" />',
-      '<circle cx="92" cy="256" r="4.8" fill="rgba(125,255,152,.18)" stroke="rgba(125,255,152,.70)" />',
-      '<circle cx="200" cy="256" r="4.8" fill="rgba(255,204,102,.14)" stroke="rgba(255,204,102,.58)" />',
-      '<circle cx="308" cy="256" r="4.8" fill="rgba(255,105,105,.12)" stroke="rgba(255,105,105,.50)" />',
-      '<text x="92" y="274" font-size="9.5" fill="rgba(203,213,225,.56)" text-anchor="middle">opening</text>',
-      '<text x="200" y="274" font-size="9.5" fill="rgba(203,213,225,.56)" text-anchor="middle">egress</text>',
-      '<text x="308" y="274" font-size="9.5" fill="rgba(203,213,225,.56)" text-anchor="middle">release</text>',
-      pressureRail("authority pressure", pressure, 76, 296, 232, pressureTone),
+      '<path d="M92 276 H308" stroke="rgba(203,213,225,.22)" stroke-width="1.2" stroke-dasharray="6 7" />',
+      '<path d="M92 276 C154 256, 246 296, 308 276" fill="none" stroke="rgba(125,255,152,.34)" stroke-width="1.3" />',
+      '<circle cx="92" cy="276" r="4.8" fill="rgba(125,255,152,.18)" stroke="rgba(125,255,152,.70)" />',
+      '<circle cx="200" cy="276" r="4.8" fill="rgba(255,204,102,.14)" stroke="rgba(255,204,102,.58)" />',
+      '<circle cx="308" cy="276" r="4.8" fill="rgba(255,105,105,.12)" stroke="rgba(255,105,105,.50)" />',
+      '<text x="92" y="294" font-size="9.5" fill="rgba(203,213,225,.56)" text-anchor="middle">opening</text>',
+      '<text x="200" y="294" font-size="9.5" fill="rgba(203,213,225,.56)" text-anchor="middle">egress</text>',
+      '<text x="308" y="294" font-size="9.5" fill="rgba(203,213,225,.56)" text-anchor="middle">release</text>',
+      pressureRail("authority pressure", pressure, 76, 322, 232, pressureTone),
 
-      '<rect x="380" y="108" width="322" height="212" rx="12" fill="rgba(0,0,0,.13)" stroke="rgba(120,255,120,.10)" />',
+      '<rect x="380" y="108" width="322" height="252" rx="12" fill="rgba(0,0,0,.13)" stroke="rgba(120,255,120,.10)" />',
       '<text x="398" y="132" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">AUTHORITY / RELEASE CHECKS</text>',
       authorityBlock("egress", egressImpact, 398, 146, 286, egressTone),
-      authorityBlock("release", releaseLogic, 398, 194, 286, releaseTone),
-      authorityBlock("review", authorityReview, 398, 242, 286, reviewTone),
-      authorityBlock("override", overridePlan, 398, 290, 286, overrideTone),
+      authorityBlock("release", releaseLogic, 398, 202, 286, releaseTone),
+      authorityBlock("review", authorityReview, 398, 254, 286, reviewTone),
+      authorityBlock("override", overridePlan, 398, 306, 286, overrideTone),
 
-      '<rect x="52" y="340" width="650" height="32" rx="10" fill="rgba(0,0,0,.16)" stroke="rgba(120,255,120,.10)" />',
-      '<text x="68" y="360" font-size="8.5" fill="rgba(203,213,225,.62)" letter-spacing=".7">LOCKING</text>',
-      '<text x="132" y="360" font-size="10.5" fill="rgba(238,255,244,.90)" font-weight="800">' + escapeHtml(lockingType) + '</text>',
-      miniMetric("openings", String(metrics.openingCount ?? "?"), 402, 341, 92),
-      miniMetric("risk score", String(metrics.riskScore ?? "?"), 506, 341, 104, pressureTone),
+      '<rect x="52" y="382" width="650" height="34" rx="10" fill="rgba(0,0,0,.16)" stroke="rgba(120,255,120,.10)" />',
+      '<text x="68" y="403" font-size="8.5" fill="rgba(203,213,225,.62)" letter-spacing=".7">LOCKING</text>',
+      '<text x="132" y="403" font-size="10.5" fill="rgba(238,255,244,.90)" font-weight="800">' + escapeHtml(lockingType) + '</text>',
+      miniMetric("openings", String(metrics.openingCount ?? "?"), 402, 384, 92),
+      miniMetric("risk score", String(metrics.riskScore ?? "?"), 506, 384, 104, pressureTone),
 
       '</svg>',
       '<p class="sl-vis-note"><strong>Visual note:</strong> Special locking is a specialty planning branch. Use the visual to flag openings that need authority review, release coordination, egress validation, and documented override procedures before final design.</p>',
