@@ -67,7 +67,7 @@ check("Special Locking assistant adapter exists", adapters.includes("buildSpecia
 
 check("Special Locking has no Chart.js CDN", !html.includes("chart.js"));
 check("Special Locking has no canvas chart", !html.includes("<canvas") && html.includes('class="access-control-output-visual"'));
-check("Special Locking uses modern local script cache", html.includes("./script.js?v=access-control-special-locking-exceptions-002-labeled-exceptions"));
+check("Special Locking uses modern local script cache", html.includes("./script.js?v=access-control-special-locking-exceptions-003-checkbox-multi"));
 
 console.log("\nAccess Control Special Locking module audit:");
 console.table(rows);

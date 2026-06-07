@@ -352,6 +352,17 @@
     return drafts;
   }
 
+  function syncExceptionCheckboxStates() {
+    const wrap = els.openingExceptionsWrap;
+    if (!wrap) return;
+
+    Array.from(wrap.querySelectorAll("[data-opening-exception-row]")).forEach((rowEl) => {
+      const enabled = !!rowEl.querySelector("[data-exception-enabled]")?.checked;
+      rowEl.classList.toggle("is-exception-enabled", enabled);
+      rowEl.setAttribute("data-exception-active", enabled ? "true" : "false");
+    });
+  }
+
   function renderOpeningExceptionRows() {
     const wrap = els.openingExceptionsWrap;
     if (!wrap) return false;
@@ -371,7 +382,7 @@
 
       rows.push([
         '<div class="access-control-opening-exception-row" data-opening-exception-row data-opening-index="' + index + '">',
-        '<label class="access-control-exception-toggle"><input type="checkbox" data-exception-enabled' + (draft.enabled ? ' checked' : '') + '><span><strong>Flag #' + index + ' as exception</strong><small>Use this row instead of group defaults</small></span></label>',
+        '<label class="access-control-exception-toggle"><input type="checkbox" data-exception-enabled' + (draft.enabled ? ' checked' : '') + '><span><strong>Flag #' + index + ' as exception</strong><small>Checked rows override group defaults</small></span></label>',
         '<label class="access-control-exception-row-field"><span class="access-control-exception-mini-label">Label</span><input type="text" data-exception-label value="' + escapeHtml(draft.label || ("Opening #" + index)) + '"></label>',
         '<label class="access-control-exception-row-field"><span class="access-control-exception-mini-label">Locking</span>' + exceptionSelectHtml("lockingType", draft.lockingType) + '</label>',
         '<label class="access-control-exception-row-field"><span class="access-control-exception-mini-label">Egress</span>' + exceptionSelectHtml("egressImpact", draft.egressImpact) + '</label>',
@@ -384,6 +395,7 @@
 
     wrap.innerHTML = rows.length ? rows.join("") : '<div class="mini-note">Set the opening count above, then sync opening rows.</div>';
     wrap.hidden = false;
+    syncExceptionCheckboxStates();
     return true;
   }
 
@@ -929,6 +941,23 @@
       renderOpeningExceptionRows();
       handleInputChange();
     });
+  }
+
+  function handleExceptionCheckboxChange(event) {
+    const target = event.target;
+    if (!target || !target.matches || !target.matches("[data-exception-enabled]")) return;
+
+    syncExceptionCheckboxStates();
+
+    if (lastMetrics) {
+      calc();
+    } else {
+      handleInputChange();
+    }
+  }
+
+  if (els.openingExceptionsWrap) {
+    els.openingExceptionsWrap.addEventListener("change", handleExceptionCheckboxChange);
   }
 
   if (els.calc) els.calc.addEventListener("click", calc);
