@@ -52,6 +52,7 @@ check("Elevator Reader calculates total cars from topology model", script.includ
 check("Elevator Reader auto-sets single-bank count to one", html.includes("Single elevator bank (count auto-set to 1)") && script.includes("function syncElevatorTopologyControls") && script.includes("els.banks.readOnly = isSingleBank"));
 check("Elevator Reader treats DCS as count driver", html.includes('id="dcsMode"') && html.includes('id="dcsCredentialPoints"') && script.includes("defaultElevatorDcsCredentialPoints") && script.includes("const dcsAdd = dcsCredentialPoints"));
 check("Elevator Reader supports bank plus single elevator drivers", html.includes('id="mixedBankGroups"') && html.includes('id="mixedSeparateLocations"') && html.includes("Single Elevator Locations") && html.includes("Cars / Cabs per Bank Group") && script.includes("isMixedTopology") && script.includes("bankedCars") && script.includes("separateCars"));
+check("Elevator Reader hides generic bank inputs for banks plus singles", html.includes("data-elevator-generic-count-field") && script.includes("setElevatorFieldHidden") && script.includes("setFieldHidden(els.cars, isBanksPlusSingles)") && script.includes("setFieldHidden(els.banks, isBanksPlusSingles)"));
 
 check("Elevator Reader has flow actions before metadata", html.indexOf('id="accessControlFlowActions"') > -1 && html.indexOf('id="reportMetadataMount"') > html.indexOf('id="accessControlFlowActions"'));
 check("Elevator Reader report actions are metadata/dropdown owned", html.includes('data-report-actions') && script.includes("placeElevatorReaderReportActions"));
@@ -86,7 +87,7 @@ check("Elevator Reader removed Chart.js CDN", !html.includes("chart.js"));
 check("Elevator Reader removed canvas chart", !html.includes("<canvas") && html.includes('class="access-control-output-visual"'));
 check("Elevator Reader removed legacy Chart.js renderer", !script.includes("new Chart(") && !script.includes("function renderChart("));
 check("Elevator Reader keeps canonical export engine", html.includes("/assets/export.js?v=shared-export-030-semantic-report-tones"));
-check("Elevator Reader local script cache is modernized", html.includes("./script.js?v=access-control-elevator-reader-output-contract-029-banks-singles"));
+check("Elevator Reader local script cache is modernized", html.includes("./script.js?v=access-control-elevator-reader-output-contract-030-banks-singles-inputs"));
 
 console.log("\nAccess Control Elevator Reader module audit:");
 console.table(rows);

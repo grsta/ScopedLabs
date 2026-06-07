@@ -343,21 +343,25 @@
     return Number.isFinite(value) ? value : fallback;
   }
 
+  function setElevatorFieldHidden(el, hidden) {
+    const field = el?.closest ? (el.closest("[data-elevator-generic-count-field]") || el.closest("[data-mixed-elevator-field]") || el.closest(".field")) : null;
+    if (field) field.hidden = Boolean(hidden);
+  }
+
   function syncScopePlannerElevatorTopologyControls() {
     const rawTopology = String(els.elevatorTopology?.value || "");
     const isSingleBank = rawTopology === "single-bank";
     const isBanksPlusSingles = rawTopology === "mixed-custom";
 
     function setFieldHidden(el, hidden) {
-      const field = el?.closest ? el.closest(".field") : null;
-      if (field) field.hidden = Boolean(hidden);
+      setElevatorFieldHidden(el, hidden);
     }
 
     if (els.elevatorCars) {
       setFieldHidden(els.elevatorCars, isBanksPlusSingles);
       els.elevatorCars.readOnly = false;
       els.elevatorCars.title = isBanksPlusSingles
-        ? "Banks + single elevators uses the bank-group fields below."
+        ? "Banks + single elevators uses Cars / Cabs per Bank Group."
         : "Cars or cabs in the selected bank/location model.";
     }
 

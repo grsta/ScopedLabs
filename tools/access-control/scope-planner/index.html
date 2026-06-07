@@ -7,7 +7,7 @@
   <meta name="description" content="Define access control doors, door groups, access zones, elevator banks, and egress scopes before running downstream access control planning tools." />
   <meta name="robots" content="noindex,follow" />
 
-  <link rel="stylesheet" href="/assets/style.css?v=access-control-scope-planner-elevator-seed-021-banks-singles" />
+  <link rel="stylesheet" href="/assets/style.css?v=access-control-scope-planner-elevator-seed-022-banks-singles-inputs" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
@@ -908,7 +908,7 @@
           <h3 class="h3" style="margin-top: 8px;">Elevator Reader Count starter questions</h3>
           <p class="muted" style="margin-bottom: 0;">These answers seed the Elevator Reader Count branch. Define whether the elevator scope is a bank, multiple banks, single elevator locations, or banks plus single elevators. Banked cars and single elevators are counted separately.</p>
           <div class="access-elevator-reader-seed-grid">
-            <label class="field">
+            <label class="field" data-elevator-generic-count-field>
               <span class="label">Elevator Scope Type</span>
               <select id="elevatorTopology">
                 <option value="single-bank" selected>Single elevator bank (count auto-set to 1)</option>
@@ -917,7 +917,7 @@
                 <option value="mixed-custom">Banks + single elevators</option>
               </select>
             </label>
-            <label class="field">
+            <label class="field" data-elevator-generic-count-field>
               <span class="label">Cars / Cabs per Bank or Location</span>
               <input id="elevatorCars" type="number" min="0" step="1" value="4" />
             </label>
@@ -1114,11 +1114,11 @@
   <script src="/assets/pipeline.js?v=access-control-specialty-pipeline-009-summary-core"></script>
   <script src="/assets/access-control-scope-state.js?v=access-control-scope-state-001-area-pattern"></script>
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
-  <script src="./script.js?v=access-control-scope-planner-elevator-seed-021-banks-singles"></script>
+  <script src="./script.js?v=access-control-scope-planner-elevator-seed-022-banks-singles-inputs"></script>
   <script>
     window.ScopedLabsToolShell?.applyBackContinueShell?.({ rowId: "accessScopePlannerFlowActions" });
   </script>
   <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>
-  <!-- access-control-scope-planner-elevator-seed-021-banks-singles -->
+  <!-- access-control-scope-planner-elevator-seed-022-banks-singles-inputs -->
 </body>
 </html>
