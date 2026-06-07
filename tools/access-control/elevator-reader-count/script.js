@@ -17,6 +17,10 @@
     floors: $("floors"),
     dest: $("dest"),
     placement: $("placement"),
+    scopeSeedContextCard: $("scopeSeedContextCard"),
+    scopeSeedContextTitle: $("scopeSeedContextTitle"),
+    scopeSeedContextDescription: $("scopeSeedContextDescription"),
+    scopeSeedContextGrid: $("scopeSeedContextGrid"),
     results: $("results"),
     calc: $("calc"),
     reset: $("reset"),
@@ -42,6 +46,155 @@
     const el = $(id);
     const v = el ? parseFloat(String(el.value ?? "").trim()) : NaN;
     return Number.isFinite(v) ? v : 0;
+  }
+
+
+  const ELEVATOR_READER_SEED_KEY = "scopedlabs:pipeline:access-control:elevator-reader-seed";
+  const ELEVATOR_READER_SEED_CONTRACT = "scopedlabs.access-control.branch-seed.elevator-reader.v1";
+  let activeElevatorSeedContext = null;
+
+  function safeJsonParse(text, fallback = null) {
+    try {
+      return text ? JSON.parse(text) : fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
+  function readStoredElevatorReaderSeed() {
+    try {
+      return safeJsonParse(sessionStorage.getItem(ELEVATOR_READER_SEED_KEY), null) || safeJsonParse(localStorage.getItem(ELEVATOR_READER_SEED_KEY), null);
+    } catch {
+      return null;
+    }
+  }
+
+  function normalizeElevatorReaderSeed(seed = {}) {
+    return {
+      contract: seed.contract || ELEVATOR_READER_SEED_CONTRACT,
+      cars: Math.max(0, Math.round(Number(seed.cars || 0) || 0)),
+      banks: Math.max(1, Math.round(Number(seed.banks || 1) || 1)),
+      floors: Math.max(0, Math.round(Number(seed.floors || 0) || 0)),
+      dest: seed.dest || "no",
+      placement: seed.placement || "car",
+      tenantSeparation: seed.tenantSeparation || "none",
+      emergencyOverride: seed.emergencyOverride || "review",
+      highSecurityConnection: seed.highSecurityConnection || "no"
+    };
+  }
+
+  function seedChoiceLabel(list, value, fallback = "") {
+    const found = list.find((item) => item.value === value);
+    return found ? found.label : (fallback || String(value || ""));
+  }
+
+  function elevatorReaderSeedLabels(seed = {}) {
+    return {
+      dest: seedChoiceLabel([
+        { value: "no", label: "No (traditional buttons)" },
+        { value: "yes", label: "Yes (DCS / kiosks)" }
+      ], seed.dest, seed.dest),
+      placement: seedChoiceLabel([
+        { value: "car", label: "Inside each car" },
+        { value: "lobby", label: "In lobby (per bank)" },
+        { value: "both", label: "Both (lobby + car)" }
+      ], seed.placement, seed.placement),
+      tenantSeparation: seedChoiceLabel([
+        { value: "none", label: "No tenant separation expected" },
+        { value: "review", label: "Tenant separation needs review" },
+        { value: "yes", label: "Tenant separation required" }
+      ], seed.tenantSeparation, seed.tenantSeparation),
+      emergencyOverride: seedChoiceLabel([
+        { value: "documented", label: "Documented fire service / override plan" },
+        { value: "review", label: "Fire service / override coordination needs review" },
+        { value: "missing", label: "Override coordination missing or undefined" }
+      ], seed.emergencyOverride, seed.emergencyOverride),
+      highSecurityConnection: seedChoiceLabel([
+        { value: "no", label: "No high-security connection" },
+        { value: "review", label: "Connected to restricted areas / review" },
+        { value: "yes", label: "Serves high-security floors or areas" }
+      ], seed.highSecurityConnection, seed.highSecurityConnection)
+    };
+  }
+
+  function getElevatorReaderSeedContext() {
+    const scopeApi = window.ScopedLabsAccessControlScopeState;
+    const activeScope = scopeApi && typeof scopeApi.getActiveScope === "function" ? scopeApi.getActiveScope() : null;
+    const stored = readStoredElevatorReaderSeed();
+    const activeSeed = activeScope?.branchSeeds?.elevatorReader || activeScope?.elevatorReaderSeed || null;
+    const storedMatches = stored && (!activeScope || !stored.scopeId || stored.scopeId === activeScope.id);
+    const seed = activeSeed || (storedMatches ? stored.seed : null);
+
+    if (!seed) return null;
+
+    return {
+      contract: ELEVATOR_READER_SEED_CONTRACT,
+      source: "Access Scope Planner",
+      scopeId: activeScope?.id || stored?.scopeId || "",
+      scopeName: activeScope?.name || stored?.scopeName || "Elevator Bank Scope",
+      scopeType: activeScope?.scopeType || stored?.scopeType || "elevator-bank",
+      planningPath: activeScope?.planningPath || stored?.planningPath || "elevator-bank",
+      seed: normalizeElevatorReaderSeed(seed),
+      rawScope: activeScope || null
+    };
+  }
+
+  function renderElevatorSeedContext(context) {
+    if (!els.scopeSeedContextCard) return;
+
+    if (!context) {
+      els.scopeSeedContextCard.hidden = true;
+      return;
+    }
+
+    activeElevatorSeedContext = context;
+    els.scopeSeedContextCard.hidden = false;
+
+    if (els.scopeSeedContextTitle) els.scopeSeedContextTitle.textContent = context.scopeName || "Elevator Bank Scope";
+    if (els.scopeSeedContextDescription) {
+      els.scopeSeedContextDescription.textContent = "Starter assumptions were imported from the Access Scope Planner. Edit anything here if this elevator bank needs a different reader model.";
+    }
+
+    const seed = context.seed || {};
+    const labels = elevatorReaderSeedLabels(seed);
+    const rows = [
+      ["Scope Type", context.scopeType],
+      ["Cars", String(seed.cars ?? "")],
+      ["Banks", String(seed.banks ?? "")],
+      ["Secured Floors", String(seed.floors ?? "")],
+      ["Destination Control", labels.dest],
+      ["Reader Placement", labels.placement],
+      ["Tenant Separation", labels.tenantSeparation],
+      ["Override", labels.emergencyOverride],
+      ["High-Security", labels.highSecurityConnection],
+      ["Source", context.source]
+    ];
+
+    if (els.scopeSeedContextGrid) {
+      els.scopeSeedContextGrid.innerHTML = rows.map(([label, value]) => '<div><strong>' + escapeHtml(label) + '</strong><span>' + escapeHtml(value || "Not documented") + '</span></div>').join("");
+    }
+  }
+
+  function setSelectValue(el, value) {
+    if (!el || value === undefined || value === null) return;
+    const wanted = String(value);
+    if (Array.from(el.options || []).some((option) => option.value === wanted)) el.value = wanted;
+  }
+
+  function applyElevatorReaderScopeSeed() {
+    const context = getElevatorReaderSeedContext();
+    renderElevatorSeedContext(context);
+
+    if (!context || !context.seed) return false;
+
+    const seed = context.seed;
+    if (els.cars) els.cars.value = String(seed.cars || 0);
+    if (els.banks) els.banks.value = String(seed.banks || 1);
+    if (els.floors) els.floors.value = String(seed.floors || 0);
+    setSelectValue(els.dest, seed.dest);
+    setSelectValue(els.placement, seed.placement);
+
+    return true;
   }
 
   function normalizeSlug(value) {
@@ -537,7 +690,8 @@
           dcsAdd: metrics.dcsAdd,
           complexityIndex: metrics.complexityIndex,
           placement: metrics.placementLabel,
-          destinationControl: metrics.destLabel
+          destinationControl: metrics.destLabel,
+          scopeSeed: activeElevatorSeedContext ? { scopeId: activeElevatorSeedContext.scopeId, scopeName: activeElevatorSeedContext.scopeName, source: activeElevatorSeedContext.source } : null
         }
       };
 
@@ -577,6 +731,7 @@
       summary: getSummaryFromResults(outputs),
       interpretation: getInterpretationFromResults(outputs),
       inputs: [
+        { label: "Scope Planner Source", value: activeElevatorSeedContext ? activeElevatorSeedContext.scopeName + " / " + activeElevatorSeedContext.source : "Standalone elevator branch" },
         { label: "Elevator Cars", value: String(els.cars.value) },
         { label: "Elevator Banks (groups)", value: String(els.banks.value) },
         { label: "Secured Floors", value: String(els.floors.value) },
@@ -586,6 +741,7 @@
       outputs,
       assumptions: getAssumptions(),
       chartImage: getExportChartImage(),
+      scopeSeedContext: activeElevatorSeedContext,
       meta: getReportMeta()
     };
   }
@@ -1114,12 +1270,14 @@
     if (els.dest) els.dest.value = "no";
     if (els.placement) els.placement.value = "car";
 
+    applyElevatorReaderScopeSeed();
     resetResults("Enter values and press Calculate.");
   }
 
   placeElevatorReaderReportActions();
   applyShellModules();
   attachOutputShellExport();
+  applyElevatorReaderScopeSeed();
 
   if (els.calc) {
     els.calc.addEventListener("click", calc);

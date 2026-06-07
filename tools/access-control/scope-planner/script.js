@@ -10,6 +10,15 @@
         scopeName: $("scopeName"),
     scopeType: $("scopeType"),
     planningPath: $("planningPath"),
+    elevatorReaderSeedCard: $("elevatorReaderSeedCard"),
+    elevatorCars: $("elevatorCars"),
+    elevatorBanks: $("elevatorBanks"),
+    elevatorSecuredFloors: $("elevatorSecuredFloors"),
+    elevatorDestinationControl: $("elevatorDestinationControl"),
+    elevatorReaderPlacement: $("elevatorReaderPlacement"),
+    elevatorTenantSeparation: $("elevatorTenantSeparation"),
+    elevatorEmergencyOverride: $("elevatorEmergencyOverride"),
+    elevatorHighSecurityConnection: $("elevatorHighSecurityConnection"),
     specialLockingSeedCard: $("specialLockingSeedCard"),
     specialLockingOpeningCount: $("specialLockingOpeningCount"),
     specialLockingLockingType: $("specialLockingLockingType"),
@@ -274,6 +283,124 @@
     }
   }
 
+
+  const ELEVATOR_READER_SEED_KEY = "scopedlabs:pipeline:access-control:elevator-reader-seed";
+  const ELEVATOR_READER_SEED_CONTRACT = "scopedlabs.access-control.branch-seed.elevator-reader.v1";
+
+  function isElevatorPlanningPath(value) {
+    return String(value || "") === "elevator-bank";
+  }
+
+  function defaultElevatorReaderSeedFromScope(scope = {}) {
+    const highSecurity = scope.securityLevel === "high" || scope.securityLevel === "critical";
+    const traffic = scope.trafficLevel || "normal";
+
+    return {
+      contract: ELEVATOR_READER_SEED_CONTRACT,
+      sourceMode: "scope-planner",
+      cars: Math.max(1, Number(scope.elevatorCars || scope.cars || 4) || 4),
+      banks: Math.max(1, Number(scope.elevatorBanks || scope.banks || 1) || 1),
+      floors: Math.max(0, Number(scope.elevatorSecuredFloors || scope.floors || (highSecurity ? 2 : 6)) || 0),
+      dest: scope.elevatorDestinationControl || (traffic === "high" || traffic === "very-high" ? "yes" : "no"),
+      placement: scope.elevatorReaderPlacement || (highSecurity ? "both" : "car"),
+      tenantSeparation: scope.elevatorTenantSeparation || (scope.scopeType === "elevator-bank" ? "review" : "none"),
+      emergencyOverride: scope.elevatorEmergencyOverride || "review",
+      highSecurityConnection: scope.elevatorHighSecurityConnection || (highSecurity ? "yes" : "no")
+    };
+  }
+
+  function collectElevatorReaderSeed() {
+    const seed = defaultElevatorReaderSeedFromScope(scopeFromBasicFormOnly());
+
+    return {
+      ...seed,
+      cars: Math.max(0, Math.round(Number(els.elevatorCars?.value || seed.cars || 0) || 0)),
+      banks: Math.max(1, Math.round(Number(els.elevatorBanks?.value || seed.banks || 1) || 1)),
+      floors: Math.max(0, Math.round(Number(els.elevatorSecuredFloors?.value || seed.floors || 0) || 0)),
+      dest: els.elevatorDestinationControl?.value || seed.dest,
+      placement: els.elevatorReaderPlacement?.value || seed.placement,
+      tenantSeparation: els.elevatorTenantSeparation?.value || seed.tenantSeparation,
+      emergencyOverride: els.elevatorEmergencyOverride?.value || seed.emergencyOverride,
+      highSecurityConnection: els.elevatorHighSecurityConnection?.value || seed.highSecurityConnection,
+      updatedAt: new Date().toISOString()
+    };
+  }
+
+  function hydrateElevatorReaderSeed(scope = {}) {
+    const seed = scope.branchSeeds?.elevatorReader || scope.elevatorReaderSeed || defaultElevatorReaderSeedFromScope(scope);
+
+    if (els.elevatorCars) els.elevatorCars.value = String(seed.cars || 4);
+    if (els.elevatorBanks) els.elevatorBanks.value = String(seed.banks || 1);
+    if (els.elevatorSecuredFloors) els.elevatorSecuredFloors.value = String(seed.floors || 0);
+    if (els.elevatorDestinationControl) els.elevatorDestinationControl.value = seed.dest || "no";
+    if (els.elevatorReaderPlacement) els.elevatorReaderPlacement.value = seed.placement || "car";
+    if (els.elevatorTenantSeparation) els.elevatorTenantSeparation.value = seed.tenantSeparation || "none";
+    if (els.elevatorEmergencyOverride) els.elevatorEmergencyOverride.value = seed.emergencyOverride || "review";
+    if (els.elevatorHighSecurityConnection) els.elevatorHighSecurityConnection.value = seed.highSecurityConnection || "no";
+  }
+
+  function updateElevatorReaderSeedCard() {
+    if (!els.elevatorReaderSeedCard) return;
+    const show = isElevatorPlanningPath(els.planningPath?.value) || els.scopeType?.value === "elevator-bank";
+    els.elevatorReaderSeedCard.hidden = !show;
+    els.elevatorReaderSeedCard.dataset.seedActive = show ? "true" : "false";
+    if (show) hydrateElevatorReaderSeed(scopeFromBasicFormOnly());
+  }
+
+  function decorateScopeWithElevatorReaderSeed(scope) {
+    if (!scope || !isElevatorPlanningPath(scope.planningPath)) return scope;
+    const seed = collectElevatorReaderSeed();
+
+    return {
+      ...scope,
+      branchSeedContract: ELEVATOR_READER_SEED_CONTRACT,
+      branchSeeds: {
+        ...(scope.branchSeeds || {}),
+        elevatorReader: seed
+      },
+      elevatorReaderSeed: seed,
+      elevatorCars: seed.cars,
+      elevatorBanks: seed.banks,
+      elevatorSecuredFloors: seed.floors
+    };
+  }
+
+  function writeElevatorReaderBranchSeed(scope) {
+    if (!scope || !isElevatorPlanningPath(scope.planningPath)) return false;
+
+    const seed = scope.branchSeeds?.elevatorReader || scope.elevatorReaderSeed || collectElevatorReaderSeed();
+    const payload = {
+      contract: ELEVATOR_READER_SEED_CONTRACT,
+      category: "access-control",
+      branchTool: "elevator-reader-count",
+      sourceTool: "scope-planner",
+      scopeId: scope.id,
+      scopeName: scope.name,
+      scopeType: scope.scopeType,
+      planningPath: scope.planningPath,
+      seed,
+      updatedAt: new Date().toISOString()
+    };
+
+    try {
+      sessionStorage.setItem(ELEVATOR_READER_SEED_KEY, JSON.stringify(payload));
+      localStorage.setItem(ELEVATOR_READER_SEED_KEY, JSON.stringify(payload));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function updateBranchSeedCards() {
+    updateSpecialLockingSeedCard();
+    updateElevatorReaderSeedCard();
+  }
+
+  function writeActiveBranchSeeds(scope) {
+    writeSpecialLockingBranchSeed(scope);
+    writeElevatorReaderBranchSeed(scope);
+  }
+
   function branchKey(scope) {
     if (!scope) return "core";
     if (scope.scopeType === "elevator-bank" || scope.planningPath === "elevator-bank") return "elevator";
@@ -415,7 +542,7 @@
       sourceMode: "scope-planner"
     };
 
-    return decorateScopeWithSpecialLockingSeed(scope);
+    return decorateScopeWithElevatorReaderSeed(decorateScopeWithSpecialLockingSeed(scope));
   }
 
   function hydrateScopeForm(scope) {
@@ -441,7 +568,8 @@
     if (els.restrictions) els.restrictions.value = scope.restrictions || "";
     if (els.scopeNotes) els.scopeNotes.value = Array.isArray(scope.notes) ? scope.notes.join("\n") : "";
     hydrateSpecialLockingSeed(scope);
-    updateSpecialLockingSeedCard();
+    hydrateElevatorReaderSeed(scope);
+    updateBranchSeedCards();
   }
 
   function clearScopeForm(name = "Main Entry Door") {
@@ -466,7 +594,8 @@
     if (els.restrictions) els.restrictions.value = "";
     if (els.scopeNotes) els.scopeNotes.value = "";
     hydrateSpecialLockingSeed(scopeFromBasicFormOnly());
-    updateSpecialLockingSeedCard();
+    hydrateElevatorReaderSeed(scopeFromBasicFormOnly());
+    updateBranchSeedCards();
   }
 
   function validateScopeForm() {
@@ -492,7 +621,7 @@
 
     editingScopeId = normalized.id;
     const savedActive = getActiveScopeFromLedger(ledger) || normalized;
-    writeSpecialLockingBranchSeed(savedActive);
+    writeActiveBranchSeeds(savedActive);
     status(normalized.name + " saved as the active access scope.");
     render();
     return true;
@@ -745,7 +874,7 @@
 
     const nextLedger = api.readLedger();
     const nextActive = getActiveScopeFromLedger(nextLedger);
-    writeSpecialLockingBranchSeed(nextActive);
+    writeActiveBranchSeeds(nextActive);
     window.location.href = scopePathUrl(nextActive && nextActive.planningPath);
   }
 
@@ -957,13 +1086,13 @@
     els.continueBtn?.addEventListener("click", continueFlow);
     els.printSummary?.addEventListener("click", printSummary);
     els.copySummary?.addEventListener("click", copySummary);
-    els.planningPath?.addEventListener("change", updateSpecialLockingSeedCard);
-    els.scopeType?.addEventListener("change", updateSpecialLockingSeedCard);
-    els.egressRole?.addEventListener("change", updateSpecialLockingSeedCard);
-    els.freeEgress?.addEventListener("change", updateSpecialLockingSeedCard);
-    els.fireRelease?.addEventListener("change", updateSpecialLockingSeedCard);
-    els.lockIntent?.addEventListener("change", updateSpecialLockingSeedCard);
-    els.securityLevel?.addEventListener("change", updateSpecialLockingSeedCard);
+    els.planningPath?.addEventListener("change", updateBranchSeedCards);
+    els.scopeType?.addEventListener("change", updateBranchSeedCards);
+    els.egressRole?.addEventListener("change", updateBranchSeedCards);
+    els.freeEgress?.addEventListener("change", updateBranchSeedCards);
+    els.fireRelease?.addEventListener("change", updateBranchSeedCards);
+    els.lockIntent?.addEventListener("change", updateBranchSeedCards);
+    els.securityLevel?.addEventListener("change", updateBranchSeedCards);
 
     els.scopeList?.addEventListener("click", (event) => {
       const useBtn = event.target.closest("[data-scope-use]");
@@ -995,6 +1124,8 @@
   window.ScopedLabsAccessControlScopePlannerBranchSeeds = Object.freeze({
     key: SPECIAL_LOCKING_SEED_KEY,
     contract: SPECIAL_LOCKING_SEED_CONTRACT,
+    specialLocking: { collect: collectSpecialLockingSeed, write: writeSpecialLockingBranchSeed },
+    elevatorReader: { key: ELEVATOR_READER_SEED_KEY, contract: ELEVATOR_READER_SEED_CONTRACT, collect: collectElevatorReaderSeed, write: writeElevatorReaderBranchSeed },
     collectSpecialLockingSeed,
     writeSpecialLockingBranchSeed
   });

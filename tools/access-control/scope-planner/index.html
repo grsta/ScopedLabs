@@ -7,7 +7,7 @@
   <meta name="description" content="Define access control doors, door groups, access zones, elevator banks, and egress scopes before running downstream access control planning tools." />
   <meta name="robots" content="noindex,follow" />
 
-  <link rel="stylesheet" href="/assets/style.css?v=access-control-scope-planner-special-locking-seed-013" />
+  <link rel="stylesheet" href="/assets/style.css?v=access-control-scope-planner-elevator-seed-014" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
@@ -479,6 +479,34 @@
       text-transform: uppercase;
     }
 
+
+    .access-elevator-reader-seed-card {
+      margin-top: 14px;
+      background: rgba(0,0,0,.13);
+      border-color: rgba(125,210,255,.18);
+    }
+
+    .access-elevator-reader-seed-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .access-elevator-reader-seed-line {
+      color: rgba(160,220,255,.9);
+      font-size: .74rem;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 860px) {
+      .access-elevator-reader-seed-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
     @media (max-width: 860px) {
       .access-special-locking-seed-grid {
         grid-template-columns: 1fr;
@@ -875,6 +903,65 @@
         </div>
 
 
+        <section id="elevatorReaderSeedCard" class="card access-elevator-reader-seed-card" hidden data-elevator-reader-seed-card>
+          <div class="access-elevator-reader-seed-line">Elevator branch starter</div>
+          <h3 class="h3" style="margin-top: 8px;">Elevator Reader Count starter questions</h3>
+          <p class="muted" style="margin-bottom: 0;">These answers seed the Elevator Reader Count branch. The specialty tool still handles reader quantity, DCS adders, schedule, visual, summary, and export details.</p>
+          <div class="access-elevator-reader-seed-grid">
+            <label class="field">
+              <span class="label">Elevator Cars / Cabs</span>
+              <input id="elevatorCars" type="number" min="0" step="1" value="4" />
+            </label>
+            <label class="field">
+              <span class="label">Elevator Banks</span>
+              <input id="elevatorBanks" type="number" min="1" step="1" value="1" />
+            </label>
+            <label class="field">
+              <span class="label">Secured Floors</span>
+              <input id="elevatorSecuredFloors" type="number" min="0" step="1" value="6" />
+            </label>
+            <label class="field">
+              <span class="label">Destination Control</span>
+              <select id="elevatorDestinationControl">
+                <option value="no" selected>No (traditional buttons)</option>
+                <option value="yes">Yes (DCS / kiosks)</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="label">Reader Location</span>
+              <select id="elevatorReaderPlacement">
+                <option value="car" selected>Inside each car</option>
+                <option value="lobby">In lobby / landing per bank</option>
+                <option value="both">Both lobby and car</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="label">Tenant Separation</span>
+              <select id="elevatorTenantSeparation">
+                <option value="none" selected>No tenant separation expected</option>
+                <option value="review">Tenant separation needs review</option>
+                <option value="yes">Tenant separation required</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="label">Fire Service / Override</span>
+              <select id="elevatorEmergencyOverride">
+                <option value="documented">Documented fire service / override plan</option>
+                <option value="review" selected>Fire service / override coordination needs review</option>
+                <option value="missing">Override coordination missing or undefined</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="label">High-Security Connection</span>
+              <select id="elevatorHighSecurityConnection">
+                <option value="no" selected>No high-security connection</option>
+                <option value="review">Connected to restricted areas / review</option>
+                <option value="yes">Serves high-security floors or areas</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
         <section id="specialLockingSeedCard" class="card access-special-locking-seed-card" hidden data-special-locking-seed-card>
           <div class="access-special-locking-seed-line">Specialty branch starter</div>
           <h3 class="h3" style="margin-top: 8px;">Special Locking / High-Security starter questions</h3>
@@ -993,11 +1080,11 @@
   <script src="/assets/pipeline.js?v=access-control-specialty-pipeline-009-summary-core"></script>
   <script src="/assets/access-control-scope-state.js?v=access-control-scope-state-001-area-pattern"></script>
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
-  <script src="./script.js?v=access-control-scope-planner-special-locking-seed-013"></script>
+  <script src="./script.js?v=access-control-scope-planner-elevator-seed-014"></script>
   <script>
     window.ScopedLabsToolShell?.applyBackContinueShell?.({ rowId: "accessScopePlannerFlowActions" });
   </script>
   <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>
-  <!-- access-control-scope-planner-special-locking-seed-013 -->
+  <!-- access-control-scope-planner-elevator-seed-014 -->
 </body>
 </html>
