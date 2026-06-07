@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-030-special-locking-horizontal-openings";
+  const VERSION = "access-control-planning-visuals-031-special-locking-watch-source";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -433,6 +433,20 @@
     const reviewTone = String(metrics.authorityReview || "").includes("required") ? "risk" : String(metrics.authorityReview || "").includes("likely") ? "watch" : "safe";
     const overrideTone = String(metrics.overridePlan || "").includes("missing") ? "risk" : String(metrics.overridePlan || "").includes("partial") ? "watch" : "safe";
     const egressTone = String(metrics.egressImpact || "").includes("yes") ? "watch" : String(metrics.egressImpact || "").includes("unknown") ? "watch" : "safe";
+    const releaseCheckToneList = [egressTone, releaseTone, reviewTone, overrideTone];
+    const releaseChecksClear = releaseCheckToneList.every((item) => item === "safe");
+    const statusSource = tone === "watch" && releaseChecksClear
+      ? "SOURCE: LOCKING SCOPE"
+      : tone === "watch"
+        ? "SOURCE: REVIEW PRESSURE"
+        : tone === "risk"
+          ? "SOURCE: AUTHORITY REVIEW"
+          : "SOURCE: RELEASE CHECKS CLEAR";
+    const statusSourceFill = tone === "risk"
+      ? "rgba(255,170,170,.82)"
+      : tone === "watch"
+        ? "rgba(255,220,130,.84)"
+        : "rgba(125,255,152,.72)";
 
     return [
       '<div class="access-control-planning-visual-shell" data-access-control-modern-visual="special-locking-scope">',
@@ -445,6 +459,7 @@
       '<text x="52" y="62" font-size="11" fill="rgba(180,255,200,.68)" letter-spacing="1.4">SPECIAL LOCKING / HIGH-SECURITY SCOPE</text>',
       '<text x="52" y="84" font-size="18" fill="rgba(246,255,248,.96)" font-weight="650">Authority review and release coordination</text>',
       statusBadge(statusText, tone, 616, 51),
+      '<text x="659" y="96" font-size="8" fill="' + statusSourceFill + '" text-anchor="middle" letter-spacing=".7">' + escapeHtml(statusSource) + '</text>',
 
       '<rect x="52" y="108" width="300" height="252" rx="12" fill="rgba(0,0,0,.13)" stroke="rgba(120,255,120,.10)" />',
       '<text x="70" y="132" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">FLAGGED OPENINGS</text>',
@@ -480,7 +495,7 @@
       miniMetric("risk score", String(metrics.riskScore ?? "?"), 506, 384, 104, pressureTone),
 
       '</svg>',
-      '<p class="sl-vis-note"><strong>Visual note:</strong> Special locking is a specialty planning branch. Use the visual to flag openings that need authority review, release coordination, egress validation, and documented override procedures before final design.</p>',
+      '<p class="sl-vis-note"><strong>Visual note:</strong> Special locking is a specialty planning branch. Use the visual to flag openings that need authority review, release coordination, egress validation, and documented override procedures before final design. Overall status can remain Watch when locking or high-security scope creates planning pressure even when individual release checks are clear.</p>',
       '</div>'
     ].join("");
   }
