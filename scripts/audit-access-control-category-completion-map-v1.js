@@ -91,9 +91,30 @@ for (const slug of dirs) {
     has(html, 'pill--pro">Pro Tier') ||
     has(html, "This tool continues the Access Control design flow");
 
-  const hasPipelineNav =
+  const hasPipelineMount =
     has(html, 'id="pipeline"') ||
     has(html, "id='pipeline'");
+
+  const hasPipelineRenderer =
+    has(html, "/assets/tool-flow.js") &&
+    has(html, "/assets/catalog.js") &&
+    has(html, "/assets/pipelines.js") &&
+    has(html, "/assets/pipeline-state.js") &&
+    has(html, "/assets/pipeline.js");
+
+  const hasPipelineMetadata =
+    has(html, 'data-category="access-control"') &&
+    has(html, "data-step=") &&
+    has(html, "data-lane=");
+
+  const hasCategoryNav =
+    hasPipelineMount &&
+    has(html, "data-access-control-category-nav") &&
+    has(html, "/assets/access-control-category-nav.js");
+
+  const hasFlowNav =
+    (hasPipelineMount && hasPipelineRenderer && hasPipelineMetadata) ||
+    hasCategoryNav;
 
   const hasChartJs =
     has(html, "chart.js") ||
@@ -150,7 +171,7 @@ for (const slug of dirs) {
     lane,
     scriptVersion: getScriptVersion(html),
     breadcrumbs: checkToken(!has(html, 'class="crumbs"')),
-    pipelineNav: checkToken(hasPipelineNav),
+    flowNav: checkToken(hasFlowNav),
     sharedPolish: checkToken(isScopeEntry || (has(html, "access-control-tool-polish.js") && has(html, 'data-access-control-tool-polish="true"'))),
     decorativeCovered: checkToken(isScopeEntry || !hasDecorativeLabels || (has(html, "access-control-tool-polish.js") && has(html, 'data-access-control-tool-polish="true"'))),
     helperClutter: checkToken(!hasOldVisibleHelper || isAcceptedReference),
