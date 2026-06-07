@@ -81,11 +81,19 @@ const polishPath = path.join("assets", "access-control-tool-polish.js");
 const outputShellPath = path.join("assets", "access-control-output-shell.js");
 const adapterPath = path.join("assets", "access-control-tool-assistant-adapters.js");
 const categoryNavPath = path.join("assets", "access-control-category-nav.js");
+const toolShellPath = path.join("assets", "scopedlabs-tool-shell.js");
+const localAssistantPath = path.join("assets", "scopedlabs-local-assistant.js");
+const reportMetadataPath = path.join("assets", "scopedlabs-report-metadata.js");
+const assistantExportPath = path.join("assets", "scopedlabs-assistant-export.js");
 
 const polish = exists(polishPath) ? read(polishPath) : "";
 const outputShell = exists(outputShellPath) ? read(outputShellPath) : "";
 const adapters = exists(adapterPath) ? read(adapterPath) : "";
 const categoryNav = exists(categoryNavPath) ? read(categoryNavPath) : "";
+const toolShell = exists(toolShellPath) ? read(toolShellPath) : "";
+const localAssistant = exists(localAssistantPath) ? read(localAssistantPath) : "";
+const reportMetadata = exists(reportMetadataPath) ? read(reportMetadataPath) : "";
+const assistantExport = exists(assistantExportPath) ? read(assistantExportPath) : "";
 
 const rows = [];
 
@@ -153,6 +161,18 @@ for (const slug of dirs) {
     has(script, "new Chart(") ||
     has(script, "function renderChart(");
 
+  const hasToolShellContract =
+    has(html, "scopedlabs-tool-shell.js");
+
+  const hasAssistantShellContract =
+    has(html, "accessControlLocalAssistantMount") &&
+    has(html, "scopedlabs-local-assistant.js") &&
+    has(html, "access-control-tool-assistant-adapters.js");
+
+  const hasReportMetadataContract =
+    has(html, "reportMetadataMount") &&
+    has(html, "scopedlabs-report-metadata.js");
+
   const hasOutputShell =
     has(html, "access-control-output-shell.js") &&
     has(script, "showVisual");
@@ -180,9 +200,19 @@ for (const slug of dirs) {
     has(html, "Anti-Passback Decision Schedule") ||
     has(html, "data-apb-summary") ||
     has(html, "antiPassbackSchedule") ||
-    has(script, "renderAntiPassbackSchedule");
+    has(script, "renderAntiPassbackSchedule") ||
+    has(html, "Credential Format Decision Schedule") ||
+    has(html, "data-credential-format-summary") ||
+    has(script, "renderCredentialFormatSchedule");
+
+  const hasCredentialFormatSummaryContribution =
+    slug === "credential-format" &&
+    has(script, "publishCredentialFormatSummaryContribution") &&
+    has(script, "contributionType: \"supplemental\"") &&
+    has(script, "Supplemental Planning Tools");
 
   const hasSummaryReadyContribution =
+    hasCredentialFormatSummaryContribution ||
     (slug === "scope-planner" && (has(script, "ScopedLabsAccessControlScopeState") || has(script, "accessScopeLedger") || has(script, "final Access Control summary"))) ||
     has(script, "publishAccessLevelSummaryCarryover") ||
     has(script, "publishFailSafeResultToScopeLedger") ||
@@ -215,11 +245,12 @@ for (const slug of dirs) {
     scriptVersion: getScriptVersion(html),
     breadcrumbs: checkToken(!has(html, 'class="crumbs"')),
     flowNav: checkToken(hasFlowNav),
+    toolShell: checkToken(isScopeEntry || hasToolShellContract),
     sharedPolish: checkToken(isScopeEntry || (has(html, "access-control-tool-polish.js") && has(html, 'data-access-control-tool-polish="true"'))),
     decorativeCovered: checkToken(isScopeEntry || !hasDecorativeLabels || (has(html, "access-control-tool-polish.js") && has(html, 'data-access-control-tool-polish="true"'))),
     helperClutter: checkToken(!hasOldVisibleHelper || isAcceptedReference),
-    assistantShell: checkToken(isScopeEntry || has(html, "accessControlLocalAssistantMount")),
-    metadata: checkToken(isScopeEntry || has(html, "reportMetadataMount")),
+    assistantShell: checkToken(isScopeEntry || hasAssistantShellContract),
+    metadata: checkToken(isScopeEntry || hasReportMetadataContract),
     flowActions: checkToken(isScopeEntry || has(html, "accessControlFlowActions") || has(html, 'id="next-step-row"') || has(html, 'data-sl-shell-back-continue="true"')),
     flowBeforeExport: checkToken(isScopeEntry || !has(html, "reportMetadataMount") || hasFlowBeforeExport),
     outputShell: checkToken(isScopeEntry || isAcceptedReference || hasOutputShell),
@@ -235,7 +266,11 @@ const moduleRows = [
   { module: "access-control-tool-polish.js", exists: exists(polishPath), parses: moduleParses(polish), owns: "page chrome / decorative pills / export card polish" },
   { module: "access-control-output-shell.js", exists: exists(outputShellPath), parses: moduleParses(outputShell), owns: "visible visual lifecycle / hidden ledger / export image handoff" },
   { module: "access-control-tool-assistant-adapters.js", exists: exists(adapterPath), parses: moduleParses(adapters), owns: "assistant decision model adapters" },
-  { module: "access-control-category-nav.js", exists: exists(categoryNavPath), parses: moduleParses(categoryNav), owns: "non-pipeline tool path nav / breadcrumb replacement" }
+  { module: "access-control-category-nav.js", exists: exists(categoryNavPath), parses: moduleParses(categoryNav), owns: "non-pipeline tool path nav / breadcrumb replacement" },
+  { module: "scopedlabs-tool-shell.js", exists: exists(toolShellPath), parses: moduleParses(toolShell), owns: "tool shell diagnostics / standard page helpers" },
+  { module: "scopedlabs-local-assistant.js", exists: exists(localAssistantPath), parses: moduleParses(localAssistant), owns: "local assistant card renderer" },
+  { module: "scopedlabs-report-metadata.js", exists: exists(reportMetadataPath), parses: moduleParses(reportMetadata), owns: "report metadata context mount" },
+  { module: "scopedlabs-assistant-export.js", exists: exists(assistantExportPath), parses: moduleParses(assistantExport), owns: "assistant/export table helpers" }
 ];
 
 console.log("\nAccess Control shared module inventory:");

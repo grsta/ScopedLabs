@@ -1,11 +1,11 @@
 /* ScopedLabs Access Control Tool Assistant Adapters
-   Version: access-control-assistant-adapters-014-access-level-v2
+   Version: access-control-assistant-adapters-015-credential-format
    Purpose: category-specific local assistant model adapters. Dormant unless a tool explicitly calls one.
 */
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-assistant-adapters-014-access-level-v2";
+  const API_VERSION = "access-control-assistant-adapters-015-credential-format";
 
   function safeText(value) {
     return String(value ?? "");
@@ -373,6 +373,59 @@
     };
   }
 
+
+
+  function buildCredentialFormatModel(data) {
+    const status = safeText(data.status || "PENDING");
+    const formatLabel = safeText(data.formatLabel || "Credential format");
+    const utilization = safeText(data.utilizationLabel || "pending");
+    const fit = safeText(data.fit || "Assessment pending");
+    const interpretation = safeText(data.interpretation || "Run the calculator to generate credential-format guidance.");
+    const actions = Array.isArray(data.recommendedActions) ? data.recommendedActions.map(safeText).filter(Boolean) : [
+      "Confirm reader and controller compatibility before final credential programming.",
+      "Document bit length, facility-code range, and card-number range in the project handoff.",
+      "Include this supplemental result in the Access Control summary when used."
+    ];
+
+    return {
+      category: "access-control",
+      tool: "credential-format",
+      kicker: "Local Design Assistant",
+      title: "Credential Format Assistant",
+      status,
+      summary: safeText(data.summary || fit),
+      sections: [
+        {
+          title: "Format Headroom",
+          body: interpretation,
+          items: [
+            "Format type: " + formatLabel,
+            "Estimated badge population: " + safeText(data.population || "—"),
+            "Capacity used: " + utilization,
+            "Assessment: " + fit
+          ]
+        },
+        {
+          title: "Summary Role",
+          body: "Credential Format Helper is a supplemental Access Control tool. It is not part of the real pipeline, but its result should be available to the category summary and future Gold reporting.",
+          items: [
+            "Contribution type: supplemental",
+            "Summary group: Supplemental Planning Tools",
+            "Pipeline state: not used"
+          ]
+        }
+      ],
+      assumptionsTitle: "Planning Assumptions",
+      actionsTitle: "Recommended Actions",
+      assumptions: [
+        "Decimal capacity is estimated from facility-code digit capacity multiplied by card-number digit capacity.",
+        "Binary capacity is estimated using bit length minus a basic parity allowance.",
+        "Final credential programming must be verified against the access-control platform, reader compatibility, card vendor, and site operating policy."
+      ],
+      actions
+    };
+  }
+
   const adapters = Object.freeze({
     "fail-safe-fail-secure": Object.freeze({
       slug: "fail-safe-fail-secure",
@@ -398,6 +451,11 @@
       slug: "access-level-sizing",
       title: "Access Level Assistant",
       buildModel: buildAccessLevelSizingModel
+    }),
+    "credential-format": Object.freeze({
+      slug: "credential-format",
+      title: "Credential Format Assistant",
+      buildModel: buildCredentialFormatModel
     })
   });
 

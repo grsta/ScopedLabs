@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
   const CATEGORY = "access-control";
   const CATEGORY_LABEL = "Access Control";
   const TOOL = "credential-format-helper";
@@ -23,7 +23,12 @@
     customNotes: $("customNotes"),
     exportReport: $("exportReport"),
     saveSnapshot: $("saveSnapshot"),
-    exportStatus: $("exportStatus")
+    exportStatus: $("exportStatus"),
+    decisionCard: $("credentialFormatDecisionCard"),
+    schedule: $("credentialFormatSchedule"),
+    assistantMount: $("accessControlLocalAssistantMount"),
+    flowActions: $("accessControlFlowActions"),
+    reportMetadataMount: $("reportMetadataMount")
   };
 
   let currentReport = null;
@@ -157,6 +162,211 @@
     ];
   }
 
+
+  // access-control-credential-format-output-contract-021
+  function scheduleCell(value) {
+    return escapeHtml(value == null || value === "" ? "—" : value);
+  }
+
+  function credentialFormatStatusChip(status) {
+    const value = String(status || "PENDING").toUpperCase();
+    const label = value === "HEALTHY" ? "SAFE" : value;
+    return '<span class="status-pill status-pill--' + escapeHtml(value.toLowerCase()) + '">' + escapeHtml(label) + '</span>';
+  }
+
+  function credentialFormatScheduleRow(group, metric, value, note) {
+    return '<tr>' +
+      '<td>' + scheduleCell(group) + '</td>' +
+      '<td>' + scheduleCell(metric) + '</td>' +
+      '<td>' + scheduleCell(value) + '</td>' +
+      '<td>' + scheduleCell(note) + '</td>' +
+      '</tr>';
+  }
+
+  function renderCredentialFormatSchedule(metrics = {}) {
+    const status = metrics.status || "PENDING";
+    const html = [
+      '<div class="credential-format-decision-hero">',
+      '<div><strong>' + scheduleCell(metrics.fit || "Credential format review") + '</strong><span>' + scheduleCell(metrics.summary || "Run the calculator to generate the credential format assessment.") + '</span></div>',
+      '<div>' + credentialFormatStatusChip(status) + '<span>Capacity used: ' + scheduleCell(metrics.utilizationLabel) + '</span></div>',
+      '</div>',
+      '<table class="credential-format-summary-table" data-credential-format-summary-table="true" data-export-table-title="Credential Format Decision Schedule"><thead><tr><th>Group</th><th>Metric</th><th>Value</th><th>Engineering Note</th></tr></thead><tbody>',
+      credentialFormatScheduleRow("Format Inputs", "Format Type", metrics.formatLabel, "Selected credential numbering model."),
+      credentialFormatScheduleRow("Format Inputs", "Facility Code Digits", metrics.fcDigits, "Used for decimal facility-code capacity."),
+      credentialFormatScheduleRow("Format Inputs", "Card Number Digits", metrics.cardDigits, "Used for decimal card-number capacity."),
+      credentialFormatScheduleRow("Format Inputs", "Bit Length", metrics.bits + "-bit", "Used for binary capacity approximation."),
+      credentialFormatScheduleRow("Capacity", "Estimated Badge Population", metrics.population, "Expected active or planned badge population."),
+      credentialFormatScheduleRow("Capacity", "Decimal Capacity", metrics.totalDecimalLabel, "Facility-code capacity multiplied by card-number capacity."),
+      credentialFormatScheduleRow("Capacity", "Binary Capacity", metrics.totalBinaryLabel, "Planning approximation after basic parity allowance."),
+      credentialFormatScheduleRow("Decision", "Capacity Used", metrics.utilizationLabel, "Primary planning pressure indicator."),
+      credentialFormatScheduleRow("Decision", "Assessment", metrics.fit, metrics.interpretation),
+      credentialFormatScheduleRow("Decision", "Status", status === "HEALTHY" ? "SAFE" : status, status === "RISK" ? "Select a larger or better partitioned credential format before rollout." : status === "WATCH" ? "Document format boundaries and migration/growth assumptions." : "Credential format has usable planning headroom."),
+      '</tbody></table>'
+    ].join("");
+
+    const shell = window.ScopedLabsAccessControlOutputShell;
+    if (shell && typeof shell.showVisual === "function") {
+      shell.showVisual({ card: els.decisionCard, target: els.schedule, html });
+    } else {
+      if (els.schedule) els.schedule.innerHTML = html;
+      if (els.decisionCard) els.decisionCard.hidden = false;
+    }
+
+    return html;
+  }
+
+  function clearCredentialFormatSchedule() {
+    const shell = window.ScopedLabsAccessControlOutputShell;
+    if (shell && typeof shell.hideVisual === "function") {
+      shell.hideVisual({ card: els.decisionCard, target: els.schedule });
+      return;
+    }
+
+    if (els.schedule) els.schedule.innerHTML = "";
+    if (els.decisionCard) els.decisionCard.hidden = true;
+  }
+
+  function buildCredentialFormatAssistantFallback(metrics = {}) {
+    const status = metrics.status || "PENDING";
+    return {
+      category: CATEGORY,
+      tool: "credential-format",
+      kicker: "Local Design Assistant",
+      title: "Credential Format Assistant",
+      status,
+      summary: metrics.summary || "Run the calculator to generate local credential-format guidance.",
+      sections: [
+        {
+          title: "Credential Decision",
+          body: metrics.interpretation || "Credential format pressure will appear here after calculation.",
+          items: [
+            "Format type: " + (metrics.formatLabel || "—"),
+            "Badge population: " + (metrics.population || "—"),
+            "Capacity used: " + (metrics.utilizationLabel || "—")
+          ]
+        },
+        {
+          title: "Summary Contribution",
+          body: "This supplemental tool should be included in the Access Control summary when used.",
+          items: [
+            "Contribution type: supplemental",
+            "Summary group: Supplemental Planning Tools",
+            "Pipeline membership: none"
+          ]
+        }
+      ],
+      assumptionsTitle: "Planning Assumptions",
+      actionsTitle: "Recommended Actions",
+      assumptions: assumptionsForTool(),
+      actions: metrics.recommendedActions || [
+        "Confirm platform and reader compatibility before final credential programming.",
+        "Document bit length, facility-code range, and card-number range in the project handoff.",
+        "Coordinate migration, dual-format acceptance, or tenant partitioning before rollout."
+      ]
+    };
+  }
+
+  function renderCredentialFormatAssistant(metrics = {}) {
+    if (!els.assistantMount) return false;
+
+    const api = window.ScopedLabsLocalAssistant;
+    if (!api || typeof api.mount !== "function") return false;
+
+    const registry = window.ScopedLabsAccessControlToolAssistantAdapters;
+    const adapter = registry && typeof registry.getAdapter === "function" ? registry.getAdapter("credential-format") : null;
+    const model = adapter && typeof adapter.buildModel === "function"
+      ? adapter.buildModel(metrics)
+      : buildCredentialFormatAssistantFallback(metrics);
+
+    return api.mount(els.assistantMount, model);
+  }
+
+  function clearCredentialFormatAssistant() {
+    const api = window.ScopedLabsLocalAssistant;
+    if (api && typeof api.clear === "function" && els.assistantMount) {
+      api.clear(els.assistantMount);
+      return;
+    }
+
+    if (els.assistantMount) {
+      els.assistantMount.innerHTML = "";
+      els.assistantMount.hidden = true;
+    }
+  }
+
+  function recommendedCredentialFormatActions(status) {
+    if (status === "RISK") {
+      return [
+        "Move to a larger credential format or intentionally partition credential ranges before rollout.",
+        "Review migration and duplicate-number risk with the access-control platform and card vendor.",
+        "Do not finalize this format until growth and tenant/card-range assumptions are documented."
+      ];
+    }
+
+    if (status === "WATCH") {
+      return [
+        "Document facility-code and card-number ranges before adding more badge populations.",
+        "Confirm whether multi-site, multi-tenant, or migration conditions will consume headroom faster than modeled.",
+        "Keep this result in the Access Control summary as a supplemental credential planning note."
+      ];
+    }
+
+    return [
+      "Document the selected credential format in the project handoff.",
+      "Confirm reader/controller compatibility before ordering cards or programming formats.",
+      "Carry this result into the Access Control summary as supplemental credential context."
+    ];
+  }
+
+  function publishCredentialFormatSummaryContribution(metrics = {}) {
+    const contribution = {
+      category: CATEGORY,
+      slug: "credential-format",
+      title: TOOL_LABEL,
+      contributionType: "supplemental",
+      summaryGroup: "Supplemental Planning Tools",
+      status: metrics.status || "PENDING",
+      summary: metrics.summary || "Credential format result pending.",
+      metrics: {
+        formatType: metrics.formatLabel,
+        facilityCodeDigits: metrics.fcDigits,
+        cardNumberDigits: metrics.cardDigits,
+        bitLength: metrics.bits,
+        estimatedBadgePopulation: metrics.population,
+        capacityUsed: metrics.utilizationLabel,
+        assessment: metrics.fit
+      },
+      notes: [
+        metrics.interpretation || "Credential format should be verified against reader, controller, and card-vendor requirements.",
+        "Supplemental tool: included in summary when used, but not part of real pipeline state."
+      ],
+      updatedAt: new Date().toISOString()
+    };
+
+    window.ScopedLabsAccessControlSummaryContributions = window.ScopedLabsAccessControlSummaryContributions || {};
+    window.ScopedLabsAccessControlSummaryContributions[contribution.slug] = contribution;
+
+    try {
+      localStorage.setItem("scopedlabs:access-control:summary:credential-format", JSON.stringify(contribution));
+    } catch {}
+
+    return contribution;
+  }
+
+  function registerCredentialFormatOutputShell() {
+    const shell = window.ScopedLabsAccessControlOutputShell;
+    if (!shell || typeof shell.register !== "function") return false;
+
+    return shell.register("credential-format", {
+      getChartImage() {
+        return "";
+      },
+      attachExportGetter() {
+        return false;
+      }
+    });
+  }
+
   function render(rows) {
     if (!els.results) return;
 
@@ -216,15 +426,18 @@
       category: CATEGORY_LABEL,
       categorySlug: CATEGORY,
       tool: TOOL_LABEL,
-      toolSlug: TOOL,
+      toolSlug: "credential-format",
       status: core.status,
       summary: core.summary,
       interpretation: core.interpretation,
+      contributionType: core.contributionType || "supplemental",
+      summaryGroup: core.summaryGroup || "Supplemental Planning Tools",
+      metrics: core.metrics || {},
       inputs: [
         { label: "Facility Code Digits", value: String(core.inputs.fcDigits) },
         { label: "Card Number Digits", value: String(core.inputs.cardDigits) },
         { label: "Format Type", value: core.inputs.formatLabel },
-        { label: "Bit Length", value: `${core.inputs.bits}-bit` },
+        { label: "Bit Length", value: String(core.inputs.bits) + "-bit" },
         { label: "Estimated Badge Population", value: String(core.inputs.population) }
       ],
       outputs: core.outputs,
@@ -665,19 +878,47 @@
     const result = classifyUtilization(utilization);
     const formatLabel = fmt === "decimal" ? "Decimal" : "Binary";
     const bestPractices = buildBestPractices();
+    const recommendedActions = recommendedCredentialFormatActions(result.status);
+
+    const metrics = {
+      fcDigits,
+      cardDigits,
+      fmt,
+      formatLabel,
+      bits,
+      usableBits,
+      population,
+      fcCap,
+      cardCap,
+      totalDecimal,
+      totalBinary,
+      totalDecimalLabel: formatNumber(totalDecimal),
+      totalBinaryLabel: formatNumber(totalBinary),
+      utilization,
+      utilizationLabel: utilization.toFixed(2) + " %",
+      fit: result.fit,
+      status: result.status,
+      summary: result.summary,
+      interpretation: result.interpretation,
+      bestPractices,
+      recommendedActions
+    };
 
     const rows = [
       { label: "Format Type", value: formatLabel.toUpperCase() },
-      { label: "Badge Population", value: `${population}` },
-      { label: "Decimal Capacity (FC × Card)", value: `${formatNumber(totalDecimal)} (${formatNumber(fcCap)} × ${formatNumber(cardCap)})` },
-      { label: "Binary Capacity (approx)", value: `${formatNumber(totalBinary)} (usable bits ~ ${usableBits})` },
-      { label: "Capacity Used", value: `${utilization.toFixed(2)} %` },
+      { label: "Badge Population", value: String(population) },
+      { label: "Decimal Capacity (FC × Card)", value: formatNumber(totalDecimal) + " (" + formatNumber(fcCap) + " × " + formatNumber(cardCap) + ")" },
+      { label: "Binary Capacity (approx)", value: formatNumber(totalBinary) + " (usable bits ~ " + usableBits + ")" },
+      { label: "Capacity Used", value: utilization.toFixed(2) + " %" },
       { label: "Assessment", value: result.fit },
       { label: "Engineering Interpretation", value: result.interpretation },
       { label: "Best Practices", value: bestPractices }
     ];
 
     render(rows);
+    renderCredentialFormatSchedule(metrics);
+    renderCredentialFormatAssistant(metrics);
+    publishCredentialFormatSummaryContribution(metrics);
 
     currentReport = buildReportPayload({
       status: result.status,
@@ -690,7 +931,10 @@
         bits,
         population
       },
-      outputs: getRenderedRows()
+      outputs: getRenderedRows(),
+      metrics,
+      contributionType: "supplemental",
+      summaryGroup: "Supplemental Planning Tools"
     });
 
     updateExportControls();
@@ -700,8 +944,11 @@
     currentReport = null;
 
     if (els.results) {
-      els.results.innerHTML = `<div class="muted">Inputs changed. Press Calculate to refresh results.</div>`;
+      els.results.innerHTML = '<div class="muted">Inputs changed. Press Calculate to refresh results.</div>';
     }
+
+    clearCredentialFormatSchedule();
+    clearCredentialFormatAssistant();
 
     updateExportControls();
   }
@@ -716,8 +963,11 @@
     currentReport = null;
 
     if (els.results) {
-      els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+      els.results.innerHTML = '<div class="muted">Enter values and press Calculate.</div>';
     }
+
+    clearCredentialFormatSchedule();
+    clearCredentialFormatAssistant();
 
     updateExportControls();
   }
