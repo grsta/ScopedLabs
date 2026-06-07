@@ -14,7 +14,6 @@
   <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-025" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
@@ -116,6 +115,8 @@
 <h1>Door Count Planner</h1>
 
     <div id="pipeline" data-access-control-category-nav="true"></div>
+
+    <div id="flow-note" class="flow-note" hidden></div>
 <section class="card tool-card" style="margin-top: 18px;">
       <h2 class="card-title" style="margin-top: 0;">Calculator</h2>
 
@@ -158,66 +159,45 @@
         <button id="reset" class="btn" type="button">Reset</button>
       </div>
 
-      <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
-        <h3 class="h3" style="margin-top: 0;">Results</h3>
-
-        <div id="results" class="results-grid" aria-live="polite">
-          <div class="muted">Enter values and press Calculate.</div>
+            <section id="doorCountDecisionCard" class="card door-count-decision-card" data-output-visual-owner="access-control-output-shell" hidden style="margin-top: 14px; background: rgba(0,0,0,.14);">
+        <h3 class="h3 access-control-tool-card-title" style="margin-top: 0;">Door Count Planning Schedule</h3>
+        <p class="muted" style="margin-bottom: 0;">Compact controlled-door quantity, reader count, segmentation pressure, and documentation schedule for the selected access-control scope.</p>
+        <div id="doorCountScheduleWrap" data-output-visual-owner="access-control-output-shell" hidden style="margin-top:16px;">
+          <div id="doorCountSchedule" data-door-count-summary="true" role="group" aria-label="Door count planning schedule"></div>
         </div>
-
-        <div id="chartWrap" hidden style="margin-top:16px; min-height:340px;">
-          <canvas id="chart"></canvas>
-        </div>
-
-        <p class="mini-note">
-          Model: total controlled doors are estimated from perimeter demand, interior segmentation, high-security additions, and compliance posture. Reader count is adjusted separately if both sides are controlled.
-        </p>
-      </div>
-
-      <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
-<h3 class="h3" style="margin-top: 10px;">Export Report</h3>
-        <p class="muted" style="margin-bottom: 0;">
-          Add optional project context and generate a clean documentation view that can be printed or saved as a PDF for client or internal use.
-        </p>
-
-        <div class="export-grid">
-          <label class="field">
-            <span class="label">Report Title</span>
-            <input id="reportTitle" type="text" placeholder="Door Count Planner Assessment" />
-          </label>
-
-          <label class="field">
-            <span class="label">Project Name</span>
-            <input id="projectName" type="text" placeholder="Project Name" />
-          </label>
-
-          <label class="field">
-            <span class="label">Client Name</span>
-            <input id="clientName" type="text" placeholder="Client / Site Name" />
-          </label>
-
-          <label class="field">
-            <span class="label">Prepared By</span>
-            <input id="preparedBy" type="text" placeholder="ScopedLabs Pro User" />
-          </label>
-
-          <label class="field full">
-            <span class="label">Custom Notes</span>
-            <textarea id="customNotes" placeholder="Optional notes, assumptions, field conditions, or design caveats to include in the report."></textarea>
-          </label>
-        </div>
-
-        <div class="btn-row" style="margin-top: 14px;">
-          <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Export Report</button>
-          <button id="saveSnapshot" class="btn" type="button" disabled>Save Snapshot</button>
-        </div>
-
-        <div id="exportStatus" class="export-status"></div>
       </section>
 
-      <div class="btn-row" style="margin-top: 14px;">
+      <section id="doorCountLegacyResultsCard" class="card access-control-hidden-results-card" hidden aria-hidden="true" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+        <h3 class="h3" style="margin-top: 0;">Result Ledger</h3>
+        <div id="results" class="results-grid" data-result-ledger hidden aria-hidden="true" aria-live="polite">
+          <div class="muted">Enter values and press Calculate.</div>
+        </div>
+      </section>
+
+      <div id="accessControlLocalAssistantMount" class="access-control-local-assistant-mount" hidden></div>
+
+      <div id="accessControlFlowActions" class="access-control-flow-actions">
         <a class="btn" href="/tools/access-control/">Back to Access Control</a>
       </div>
+
+      <section id="doorCountReportCard" class="card access-door-count-report-card">
+        <div
+          id="reportMetadataMount"
+          data-report-metadata
+          data-report-title="Report details"
+          data-report-copy="Optional metadata can be included in the generated report. Metadata is available for planning context; membership controls save, print, and export actions."
+          data-report-fields="reportTitle,projectName,clientName,preparedBy,customNotes"
+          data-collapsed="true"
+        ></div>
+
+        <div id="doorCountReportActions" class="sl-report-actions" data-report-actions hidden>
+          <div class="btn-row">
+            <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Export Report</button>
+            <button id="saveSnapshot" class="btn" type="button" disabled>Save Snapshot</button>
+          </div>
+          <div id="exportStatus" class="export-status"></div>
+        </div>
+      </section>
     </section>
     <footer class="site-footer">
     <div class="muted">© <span data-year></span> ScopedLabs</div>
@@ -251,7 +231,14 @@
   </script>
 
   <script src="/assets/export.js?v=shared-export-025-tool-notes-column-widths"></script>
-  <script src="./script.js?v=020"></script>
+  <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
+  <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-001"></script>
+  <script src="/assets/access-control-output-shell.js?v=access-control-output-shell-001-lock-power-visual-export"></script>
+  <script src="/assets/access-control-decision-schedule.js?v=access-control-decision-schedule-001-shared-shell"></script>
+  <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
+  <script src="/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes"></script>
+  <script src="/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-017-door-count"></script>
+  <script src="./script.js?v=access-control-door-count-output-contract-021"></script>
   <script src="/assets/access-control-category-nav.js?v=access-control-category-nav-001-tool-path"></script>
   <script src="/assets/access-control-tool-polish.js?v=access-control-tool-polish-010-page-chrome-pill-cleanup"></script>
   <script defer src="/assets/help.js?v=help-025"></script>

@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
   const CATEGORY = "access-control";
   const CATEGORY_LABEL = "Access Control";
   const TOOL = "door-count-planner";
@@ -29,7 +29,14 @@
     customNotes: $("customNotes"),
     exportReport: $("exportReport"),
     saveSnapshot: $("saveSnapshot"),
-    exportStatus: $("exportStatus")
+    exportStatus: $("exportStatus"),
+    decisionCard: $("doorCountDecisionCard"),
+    scheduleWrap: $("doorCountScheduleWrap"),
+    schedule: $("doorCountSchedule"),
+    assistantMount: $("accessControlLocalAssistantMount"),
+    flowActions: $("accessControlFlowActions"),
+    reportMetadataMount: $("reportMetadataMount"),
+    reportActions: $("doorCountReportActions")
   };
 
   function n(id) {
@@ -360,273 +367,17 @@
   }
 
   function getExportChartImage() {
-    if (!lastMetrics || typeof Chart === "undefined") return getChartImage();
-
-    try {
-      const canvas = document.createElement("canvas");
-      canvas.width = 1200;
-      canvas.height = 620;
-
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return getChartImage();
-
-      const labels = [
-        "Doors",
-        "Zones Impact",
-        "Readers",
-        "Complexity"
-      ];
-
-      const values = [
-        lastMetrics.doors,
-        lastMetrics.zonesImpact,
-        lastMetrics.readers,
-        lastMetrics.complexityIndex
-      ];
-
-      const displayValues = {
-        0: `${lastMetrics.doors} doors`,
-        1: `${lastMetrics.zonesImpact} impact`,
-        2: `${lastMetrics.readers} readers`,
-        3: `${lastMetrics.complexityIndex} complexity`
-      };
-
-      const referenceValue = 80;
-      const dominantIndex = values.indexOf(Math.max(...values));
-      const maxValue = Math.max(...values, referenceValue, 160);
-
-      let exportChart = null;
-
-      const bgPlugin = {
-        id: "exportBgPlugin",
-        beforeDraw(chartInstance) {
-          const { ctx, chartArea } = chartInstance;
-          if (!chartArea) return;
-
-          const { left, top, width, height, right, bottom } = chartArea;
-          const x = chartInstance.scales.x;
-
-          ctx.save();
-
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, chartInstance.width, chartInstance.height);
-
-          ctx.fillStyle = "#f8fbf9";
-          ctx.fillRect(left, top, width, height);
-
-          const healthyMax = Math.min(80, x.max);
-          const watchMax = Math.min(140, x.max);
-
-          if (healthyMax > 0) {
-            ctx.fillStyle = "rgba(34, 197, 94, 0.14)";
-            ctx.fillRect(left, top, x.getPixelForValue(healthyMax) - left, height);
-          }
-
-          if (watchMax > 80) {
-            ctx.fillStyle = "rgba(245, 158, 11, 0.14)";
-            ctx.fillRect(
-              x.getPixelForValue(80),
-              top,
-              x.getPixelForValue(watchMax) - x.getPixelForValue(80),
-              height
-            );
-          }
-
-          if (x.max > 140) {
-            ctx.fillStyle = "rgba(239, 68, 68, 0.12)";
-            ctx.fillRect(
-              x.getPixelForValue(140),
-              top,
-              right - x.getPixelForValue(140),
-              height
-            );
-          }
-
-          ctx.restore();
-        },
-        afterDatasetsDraw(chartInstance) {
-          const { ctx, chartArea, scales } = chartInstance;
-          if (!chartArea || !scales.x || !scales.y) return;
-
-          const x = scales.x;
-          const y = scales.y;
-          const { top, bottom } = chartArea;
-
-          ctx.save();
-
-          const rx = x.getPixelForValue(referenceValue);
-          ctx.strokeStyle = "#198754";
-          ctx.lineWidth = 3;
-          ctx.setLineDash([6, 5]);
-          ctx.beginPath();
-          ctx.moveTo(rx, top);
-          ctx.lineTo(rx, bottom);
-          ctx.stroke();
-          ctx.setLineDash([]);
-
-          ctx.fillStyle = "#1f2937";
-          ctx.font = "600 16px Arial";
-          ctx.fillText("Complexity Watch Limit", rx + 10, bottom - 12);
-
-          ctx.fillStyle = "#15803d";
-          ctx.font = "700 15px Arial";
-          ctx.fillText("Healthy", x.getPixelForValue(8), top + 18);
-
-          ctx.fillStyle = "#b45309";
-          ctx.fillText("Watch", x.getPixelForValue(88), top + 18);
-
-          ctx.fillStyle = "#b91c1c";
-          ctx.fillText("Risk", x.getPixelForValue(148), top + 18);
-
-          const dominantValue = values[dominantIndex];
-          const px = x.getPixelForValue(dominantValue);
-          const py = y.getPixelForValue(labels[dominantIndex]);
-
-          ctx.beginPath();
-          ctx.arc(px, py, 6, 0, Math.PI * 2);
-          ctx.fillStyle = "#ffffff";
-          ctx.fill();
-          ctx.strokeStyle = "#111827";
-          ctx.lineWidth = 2;
-          ctx.stroke();
-
-          ctx.fillStyle = "#1f2937";
-          ctx.font = "600 15px Arial";
-          ctx.fillText(displayValues[dominantIndex], Math.min(px + 10, chartArea.right - 120), py - 10);
-
-          ctx.restore();
-        }
-      };
-
-      exportChart = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "Door Planning Metrics",
-              data: values,
-              indexAxis: "y",
-              barThickness: 18,
-              maxBarThickness: 18,
-              barPercentage: 0.8,
-              categoryPercentage: 0.7,
-              borderRadius: 8,
-              borderSkipped: false,
-              borderWidth: 1.5,
-              backgroundColor: (context) => {
-                const i = context.dataIndex;
-                const v = context.raw;
-
-                if (i === dominantIndex) {
-                  if (v > 140) return "#dc2626";
-                  if (v > 80) return "#f59e0b";
-                  return "#22c55e";
-                }
-
-                if (v > 140) return "rgba(220, 38, 38, 0.55)";
-                if (v > 80) return "rgba(245, 158, 11, 0.50)";
-                return "rgba(59, 130, 246, 0.42)";
-              },
-              borderColor: (context) => {
-                const i = context.dataIndex;
-                const v = context.raw;
-
-                if (i === dominantIndex) {
-                  if (v > 140) return "#7f1d1d";
-                  if (v > 80) return "#92400e";
-                  return "#166534";
-                }
-
-                if (v > 140) return "#991b1b";
-                if (v > 80) return "#b45309";
-                return "#1d4ed8";
-              }
-            }
-          ]
-        },
-        options: {
-          responsive: false,
-          maintainAspectRatio: false,
-          animation: false,
-          indexAxis: "y",
-          layout: {
-            padding: {
-              top: 36,
-              right: 22,
-              bottom: 10,
-              left: 18
-            }
-          },
-          plugins: {
-            legend: { display: false },
-            tooltip: { enabled: false }
-          },
-          scales: {
-            x: {
-              beginAtZero: true,
-              suggestedMax: Math.ceil(maxValue * 1.08),
-              ticks: {
-                color: "#334155",
-                font: {
-                  size: 14,
-                  weight: "600"
-                }
-              },
-              grid: {
-                color: "rgba(15, 23, 42, 0.08)"
-              },
-              border: {
-                color: "rgba(15, 23, 42, 0.18)"
-              },
-              title: {
-                display: true,
-                text: "Planning Magnitude",
-                color: "#0f172a",
-                font: {
-                  size: 15,
-                  weight: "700"
-                }
-              }
-            },
-            y: {
-              ticks: {
-                color: "#0f172a",
-                font: {
-                  size: 15,
-                  weight: "700"
-                }
-              },
-              grid: {
-                display: false
-              },
-              border: {
-                color: "rgba(15, 23, 42, 0.18)"
-              }
-            }
-          }
-        },
-        plugins: [bgPlugin]
-      });
-
-      const dataUrl = canvas.toDataURL("image/png", 1);
-
-      if (exportChart) {
-        exportChart.destroy();
-        exportChart = null;
-      }
-
-      return dataUrl;
-    } catch (err) {
-      console.error("Export chart render failed:", err);
-      return getChartImage();
-    }
+    return "";
   }
 
   function buildCurrentReportPayload() {
     const outputs = collectVisibleResults();
 
     if (!outputs.length) return null;
+
+    const status = lastMetrics?.status || getStatusFromResults(outputs);
+    const summary = lastMetrics?.summary || getSummaryFromResults(outputs);
+    const interpretation = lastMetrics?.insight || getInterpretationFromResults(outputs);
 
     return {
       reportId: makeReportId("SL-ACC-DOORCOUNT"),
@@ -635,9 +386,12 @@
       categorySlug: CATEGORY,
       tool: TOOL_LABEL,
       toolSlug: TOOL,
-      status: getStatusFromResults(outputs),
-      summary: getSummaryFromResults(outputs),
-      interpretation: getInterpretationFromResults(outputs),
+      status,
+      summary,
+      interpretation,
+      contributionType: "supplemental",
+      summaryGroup: "Supplemental Planning Tools",
+      metrics: lastMetrics || {},
       inputs: [
         { label: "Perimeter Entrances", value: String(els.perimeter.value) },
         { label: "Interior Zones / Departments", value: String(els.zones.value) },
@@ -647,7 +401,7 @@
       ],
       outputs,
       assumptions: getAssumptions(),
-      chartImage: getExportChartImage(),
+      chartImage: "",
       meta: getReportMeta()
     };
   }
@@ -1012,6 +766,239 @@
     }
   }
 
+
+  // access-control-door-count-output-contract-021
+  function doorCountStatusFromComplexity(complexityIndex) {
+    return getStatus(complexityIndex);
+  }
+
+  function recommendedDoorCountActions(status) {
+    if (status === "RISK") {
+      return [
+        "Split controller or panel planning into smaller groups before final layout.",
+        "Review high-security and compliance-driven openings with operations before installation scope is locked.",
+        "Carry this result into the Access Control summary as a supplemental planning pressure item."
+      ];
+    }
+
+    if (status === "WATCH") {
+      return [
+        "Document door groups, segmentation boundaries, and reader assumptions before procurement.",
+        "Review controller placement and cable routing before final panel capacity decisions.",
+        "Carry this result into the Access Control summary as supplemental scope context."
+      ];
+    }
+
+    return [
+      "Document the controlled-door and reader count assumptions in the project handoff.",
+      "Confirm whether future expansion, high-security areas, or compliance requirements change the count.",
+      "Carry this result into the Access Control summary as supplemental scope context."
+    ];
+  }
+
+  function renderDoorCountPlanningSchedule(metrics = {}) {
+    const status = metrics.status || doorCountStatusFromComplexity(metrics.complexityIndex);
+    const summary = metrics.summary || "Door count planning review generated from perimeter, interior, high-security, compliance, and reader-side inputs.";
+    const interpretation = metrics.insight || "Run the calculator to generate door-count planning guidance.";
+    const schedule = window.ScopedLabsAccessControlDecisionSchedule;
+
+    const rows = [
+      { group: "Inputs", metric: "Perimeter Entrances", value: metrics.perimeter, note: "Base perimeter openings included in the controlled-door estimate." },
+      { group: "Inputs", metric: "Interior Zones / Departments", value: metrics.zones, note: "Interior segmentation pressure used to estimate additional controlled openings." },
+      { group: "Inputs", metric: "High-Security Areas", value: metrics.highsec, note: "High-security scope adds controlled openings and management complexity." },
+      { group: "Inputs", metric: "Compliance Level", value: metrics.complianceLabel, note: "Compliance posture influences segmentation pressure." },
+      { group: "Inputs", metric: "Control Both Sides", value: metrics.bothSidesLabel, note: "Dual-sided control increases reader count and coordination requirements." },
+      { group: "Calculated Load", metric: "Perimeter Doors", value: metrics.perimeterDoors, note: "Direct perimeter-door contribution." },
+      { group: "Calculated Load", metric: "Interior Zone Doors", value: metrics.zoneBaseLabel, note: "Estimated controlled openings from interior segmentation." },
+      { group: "Calculated Load", metric: "High-Security Additions", value: metrics.highsecAddLabel, note: "Estimated additions from high-security scope." },
+      { group: "Calculated Load", metric: "Total Controlled Doors", value: metrics.doors, note: "Planning-level controlled-door quantity." },
+      { group: "Calculated Load", metric: "Estimated Reader Count", value: metrics.readers, note: "Reader estimate after single-sided or dual-sided control assumption." },
+      { group: "Decision", metric: "Complexity Index", value: metrics.complexityIndex, note: "Planning pressure indicator for scope, segmentation, and reader coordination." },
+      { group: "Decision", metric: "Status", valueHtml: schedule && typeof schedule.statusChip === "function" ? schedule.statusChip(status) : status, note: status === "RISK" ? "Reduce scope complexity or split planning before final layout." : status === "WATCH" ? "Proceed with documented segmentation and controller-placement review." : "Door count is usable for the current planning scope." },
+      { group: "Summary", metric: "Contribution", value: "Supplemental Planning Tools", note: "Included in Access Control summary when this non-pipeline tool is used." }
+    ];
+
+    if (schedule && typeof schedule.render === "function") {
+      return schedule.render({
+        card: els.decisionCard,
+        wrap: els.scheduleWrap,
+        target: els.schedule,
+        title: (metrics.statusLabel || status) + " door-count planning pressure",
+        summary,
+        status,
+        statusDetail: "Controlled doors: " + (metrics.doors ?? "—") + " / Readers: " + (metrics.readers ?? "—"),
+        rows,
+        interpretation,
+        exportTableTitle: "Door Count Planning Schedule",
+        tableDataAttr: 'data-door-count-summary-table="true" data-access-control-decision-schedule="true"'
+      });
+    }
+
+    const html = '<table data-door-count-summary-table="true" data-export-table-title="Door Count Planning Schedule"><thead><tr><th>Group</th><th>Metric</th><th>Value</th><th>Engineering Note</th></tr></thead><tbody>' + rows.map((row) => '<tr><td>' + escapeHtml(row.group) + '</td><td>' + escapeHtml(row.metric) + '</td><td>' + (row.valueHtml || escapeHtml(row.value ?? "—")) + '</td><td>' + escapeHtml(row.note) + '</td></tr>').join("") + '</tbody></table>';
+
+    if (els.schedule) els.schedule.innerHTML = html;
+    if (els.scheduleWrap) els.scheduleWrap.hidden = false;
+    if (els.decisionCard) els.decisionCard.hidden = false;
+
+    return html;
+  }
+
+  function clearDoorCountPlanningSchedule() {
+    const shell = window.ScopedLabsAccessControlOutputShell;
+
+    if (shell && typeof shell.hideVisual === "function") {
+      shell.hideVisual({ card: els.decisionCard, wrap: els.scheduleWrap, target: els.schedule });
+      return;
+    }
+
+    if (els.schedule) els.schedule.innerHTML = "";
+    if (els.scheduleWrap) els.scheduleWrap.hidden = true;
+    if (els.decisionCard) els.decisionCard.hidden = true;
+  }
+
+  function buildDoorCountAssistantFallback(metrics = {}) {
+    const status = metrics.status || doorCountStatusFromComplexity(metrics.complexityIndex);
+
+    return {
+      category: CATEGORY,
+      tool: TOOL,
+      kicker: "Local Design Assistant",
+      title: "Door Count Assistant",
+      status,
+      summary: metrics.summary || "Door count planning guidance is ready for this supplemental tool result.",
+      sections: [
+        {
+          title: "Scope Pressure",
+          body: metrics.insight || "Door-count pressure will appear here after calculation.",
+          items: [
+            "Controlled doors: " + (metrics.doors ?? "—"),
+            "Readers: " + (metrics.readers ?? "—"),
+            "Complexity index: " + (metrics.complexityIndex ?? "—"),
+            "Status: " + status
+          ]
+        },
+        {
+          title: "Summary Role",
+          body: "Door Count Planner is a supplemental Access Control tool. It is not part of the real pipeline, but its result should be available to the category summary and future Gold reporting.",
+          items: [
+            "Contribution type: supplemental",
+            "Summary group: Supplemental Planning Tools",
+            "Pipeline state: not used"
+          ]
+        }
+      ],
+      assumptionsTitle: "Planning Assumptions",
+      actionsTitle: "Recommended Actions",
+      assumptions: getAssumptions(),
+      actions: metrics.recommendedActions || recommendedDoorCountActions(status)
+    };
+  }
+
+  function renderDoorCountAssistant(metrics = {}) {
+    if (!els.assistantMount) return false;
+
+    const api = window.ScopedLabsLocalAssistant;
+    if (!api || typeof api.mount !== "function") return false;
+
+    const registry = window.ScopedLabsAccessControlToolAssistantAdapters;
+    const adapter = registry && typeof registry.getAdapter === "function" ? registry.getAdapter(TOOL) : null;
+    const model = adapter && typeof adapter.buildModel === "function" ? adapter.buildModel(metrics) : buildDoorCountAssistantFallback(metrics);
+
+    return api.mount(els.assistantMount, model);
+  }
+
+  function clearDoorCountAssistant() {
+    const api = window.ScopedLabsLocalAssistant;
+
+    if (api && typeof api.clear === "function" && els.assistantMount) {
+      api.clear(els.assistantMount);
+      return;
+    }
+
+    if (els.assistantMount) {
+      els.assistantMount.innerHTML = "";
+      els.assistantMount.hidden = true;
+    }
+  }
+
+  function publishDoorCountSummaryContribution(metrics = {}) {
+    const contribution = {
+      category: CATEGORY,
+      slug: TOOL,
+      title: TOOL_LABEL,
+      contributionType: "supplemental",
+      summaryGroup: "Supplemental Planning Tools",
+      status: metrics.status || doorCountStatusFromComplexity(metrics.complexityIndex),
+      summary: metrics.summary || "Door count planning result ready.",
+      metrics: {
+        perimeterEntrances: metrics.perimeter,
+        interiorZones: metrics.zones,
+        highSecurityAreas: metrics.highsec,
+        complianceLevel: metrics.complianceLabel,
+        controlBothSides: metrics.bothSidesLabel,
+        totalControlledDoors: metrics.doors,
+        estimatedReaderCount: metrics.readers,
+        complexityIndex: metrics.complexityIndex
+      },
+      notes: [
+        metrics.insight || "Door count should be verified against final scope, field conditions, door schedule, and operating requirements.",
+        "Supplemental tool: included in summary when used, but not part of real pipeline state."
+      ],
+      updatedAt: new Date().toISOString()
+    };
+
+    window.ScopedLabsAccessControlSummaryContributions = window.ScopedLabsAccessControlSummaryContributions || {};
+    window.ScopedLabsAccessControlSummaryContributions[contribution.slug] = contribution;
+
+    try {
+      localStorage.setItem("scopedlabs:access-control:summary:door-count-planner", JSON.stringify(contribution));
+    } catch {}
+
+    return contribution;
+  }
+
+  function registerDoorCountOutputShell() {
+    const shell = window.ScopedLabsAccessControlOutputShell;
+
+    if (!shell || typeof shell.register !== "function") return false;
+
+    return shell.register(TOOL, {
+      getChartImage() {
+        return "";
+      },
+      attachExportGetter() {
+        return false;
+      }
+    });
+  }
+
+  function placeDoorCountReportActions() {
+    if (!els.reportMetadataMount || !els.reportActions) return false;
+
+    const details = els.reportMetadataMount.querySelector("details.sl-report-meta") || els.reportMetadataMount.querySelector("details");
+    if (!details) return false;
+
+    if (els.reportActions.parentElement !== details) {
+      details.appendChild(els.reportActions);
+    }
+
+    els.reportActions.hidden = false;
+    els.reportActions.removeAttribute("hidden");
+    els.reportActions.style.display = "";
+
+    return true;
+  }
+
+  function setupDoorCountReportActions() {
+    const run = () => placeDoorCountReportActions();
+
+    run();
+    window.setTimeout(run, 50);
+    window.setTimeout(run, 250);
+
+    document.addEventListener("scopedlabs:report-metadata-ready", run);
+  }
+
   function getStatus(complexityIndex) {
     if (complexityIndex > 140) return "RISK";
     if (complexityIndex > 80) return "WATCH";
@@ -1042,260 +1029,9 @@
     return "System is clean and scalable with minimal administrative overhead.";
   }
 
-  function renderChart(data) {
+  function renderDoorCountLegacyChartDisabled() {
     destroyChart();
-
-    if (!els.chart) return;
-
-    showChartWrap();
-
-    const labels = [
-      "Doors",
-      "Zones Impact",
-      "Readers",
-      "Complexity"
-    ];
-
-    const values = [
-      data.doors,
-      data.zonesImpact,
-      data.readers,
-      data.complexityIndex
-    ];
-
-    const displayValues = {
-      0: `${data.doors} doors`,
-      1: `${data.zonesImpact} impact`,
-      2: `${data.readers} readers`,
-      3: `${data.complexityIndex} complexity`
-    };
-
-    const dominantIndex = values.indexOf(Math.max(...values));
-    const referenceValue = 80;
-    const chartMax = Math.max(160, Math.ceil(Math.max(...values, referenceValue, 140) * 1.12));
-
-    const chartBgPlugin = {
-      id: "chartBgPlugin",
-      beforeDraw(c) {
-        const { ctx, chartArea } = c;
-        if (!chartArea) return;
-
-        const { left, top, width, height } = chartArea;
-
-        ctx.save();
-        ctx.fillStyle = "rgba(255,255,255,0.05)";
-        ctx.fillRect(left, top, width, height);
-        ctx.restore();
-      }
-    };
-
-    const thresholdBandPlugin = {
-      id: "thresholdBandPlugin",
-      beforeDatasetsDraw(c) {
-        const { ctx, chartArea, scales } = c;
-        if (!chartArea || !scales.x) return;
-
-        const x = scales.x;
-        const { top, bottom, left, right } = chartArea;
-
-        const healthyMax = Math.min(80, x.max);
-        const watchMax = Math.min(140, x.max);
-
-        ctx.save();
-
-        if (healthyMax > 0) {
-          ctx.fillStyle = "rgba(46, 204, 113, 0.16)";
-          ctx.fillRect(left, top, x.getPixelForValue(healthyMax) - left, bottom - top);
-        }
-
-        if (watchMax > 80) {
-          ctx.fillStyle = "rgba(255, 200, 80, 0.13)";
-          ctx.fillRect(
-            x.getPixelForValue(80),
-            top,
-            x.getPixelForValue(watchMax) - x.getPixelForValue(80),
-            bottom - top
-          );
-        }
-
-        if (x.max > 140) {
-          ctx.fillStyle = "rgba(255, 90, 90, 0.13)";
-          ctx.fillRect(
-            x.getPixelForValue(140),
-            top,
-            right - x.getPixelForValue(140),
-            bottom - top
-          );
-        }
-
-        ctx.restore();
-      },
-      afterDatasetsDraw(c) {
-        const { ctx, chartArea, scales } = c;
-        if (!chartArea || !scales.x || !scales.y) return;
-
-        const x = scales.x;
-        const y = scales.y;
-        const { top, bottom } = chartArea;
-
-        ctx.save();
-
-        const rx = x.getPixelForValue(referenceValue);
-        ctx.strokeStyle = "rgba(120, 255, 170, 0.98)";
-        ctx.lineWidth = 3;
-        ctx.setLineDash([4, 4]);
-        ctx.beginPath();
-        ctx.moveTo(rx, top);
-        ctx.lineTo(rx, bottom);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        ctx.fillStyle = "rgba(220, 255, 235, 0.96)";
-        ctx.font = "600 11px sans-serif";
-        ctx.fillText("Complexity Watch Limit", rx + 8, bottom - 10);
-
-        ctx.fillStyle = "rgba(180, 255, 200, 0.82)";
-        ctx.font = "600 11px sans-serif";
-        ctx.fillText("Healthy", x.getPixelForValue(8), top + 14);
-
-        ctx.fillStyle = "rgba(255, 220, 140, 0.82)";
-        ctx.fillText("Watch", x.getPixelForValue(88), top + 14);
-
-        ctx.fillStyle = "rgba(255, 160, 160, 0.82)";
-        ctx.fillText("Risk", x.getPixelForValue(148), top + 14);
-
-        const dominantValue = values[dominantIndex];
-        const px = x.getPixelForValue(dominantValue);
-        const py = y.getPixelForValue(labels[dominantIndex]);
-
-        ctx.beginPath();
-        ctx.arc(px, py, 4.5, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(225, 255, 240, 1)";
-        ctx.fill();
-        ctx.strokeStyle = "rgba(120, 255, 170, 0.95)";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        ctx.fillStyle = "rgba(235, 248, 240, 0.92)";
-        ctx.font = "600 11px sans-serif";
-        ctx.fillText(displayValues[dominantIndex], Math.min(px + 8, chartArea.right - 110), py - 8);
-
-        ctx.restore();
-      }
-    };
-
-    chart = new Chart(els.chart, {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [
-          {
-            label: "Door Planning Metrics",
-            data: values,
-            barThickness: 16,
-            maxBarThickness: 16,
-            barPercentage: 0.8,
-            categoryPercentage: 0.7,
-            borderWidth: 2,
-            borderRadius: 8,
-            borderSkipped: false,
-            backgroundColor: (context) => {
-              const i = context.dataIndex;
-              const v = context.raw;
-
-              if (i === dominantIndex) {
-                if (v > 140) return "rgba(255, 92, 92, 1)";
-                if (v > 80) return "rgba(255, 188, 82, 1)";
-                return "rgba(120, 255, 170, 1)";
-              }
-
-              if (v > 140) return "rgba(255, 77, 77, 0.30)";
-              if (v > 80) return "rgba(255, 170, 51, 0.24)";
-              return "rgba(90, 170, 255, 0.15)";
-            },
-            borderColor: (context) => {
-              const i = context.dataIndex;
-              const v = context.raw;
-
-              if (i === dominantIndex) {
-                if (v > 140) return "rgba(255, 220, 220, 1)";
-                if (v > 80) return "rgba(255, 240, 210, 1)";
-                return "rgba(215, 255, 230, 1)";
-              }
-
-              return "rgba(120,170,200,0.18)";
-            }
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        indexAxis: "y",
-        animation: {
-          duration: 700,
-          easing: "easeOutQuart"
-        },
-        layout: {
-          padding: {
-            top: 28,
-            right: 12,
-            left: 10,
-            bottom: 0
-          }
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: "rgba(8, 18, 18, 0.96)",
-            titleColor: "#e8fff1",
-            bodyColor: "#d9f7e7",
-            borderColor: "rgba(100, 255, 180, 0.25)",
-            borderWidth: 1,
-            padding: 12,
-            callbacks: {
-              label(context) {
-                const i = context.dataIndex;
-                return ` ${displayValues[i]}`;
-              }
-            }
-          }
-        },
-        scales: {
-          x: {
-            beginAtZero: true,
-            suggestedMax: chartMax,
-            ticks: {
-              color: "rgba(220, 238, 230, 0.78)"
-            },
-            grid: {
-              color: "rgba(110, 160, 140, 0.10)"
-            },
-            title: {
-              display: true,
-              text: "Planning Magnitude",
-              color: "rgba(230, 255, 240, 0.92)"
-            }
-          },
-          y: {
-            ticks: {
-              color: "rgba(228, 245, 235, 0.92)"
-            },
-            grid: {
-              display: false
-            }
-          }
-        }
-      },
-      plugins: [chartBgPlugin, thresholdBandPlugin]
-    });
-
-    els.chart.style.width = "100%";
-    els.chart.style.height = "340px";
-
-    if (els.chart.parentElement) {
-      els.chart.parentElement.style.minHeight = "340px";
-    }
+    return false;
   }
 
   function calc() {
@@ -1326,6 +1062,40 @@
     const status = getStatus(complexityIndex);
     const guidance = getGuidance(status);
     const insight = getInsight(status);
+    const complianceLabel = els.compliance.options[els.compliance.selectedIndex]?.text || compliance;
+    const bothSidesLabel = els.bothSides.options[els.bothSides.selectedIndex]?.text || bothSides;
+    const statusLabel = status === "HEALTHY" ? "SAFE" : status;
+    const summary = status === "RISK"
+      ? "Door count and segmentation pressure are high enough to require scope simplification or phased planning."
+      : status === "WATCH"
+        ? "Door count planning is workable, but controller distribution and segmentation should be documented."
+        : "Door count planning is clean and usable for the current supplemental scope.";
+
+    const metrics = {
+      perimeter,
+      zones,
+      highsec,
+      compliance,
+      complianceLabel,
+      bothSides,
+      bothSidesLabel,
+      perimeterDoors,
+      zoneBase,
+      zoneBaseLabel: Math.round(zoneBase),
+      highsecAdd,
+      highsecAddLabel: Math.round(highsecAdd),
+      doors,
+      readerMultiplier,
+      readers,
+      zonesImpact,
+      complexityIndex,
+      status,
+      statusLabel,
+      guidance,
+      insight,
+      summary,
+      recommendedActions: recommendedDoorCountActions(status)
+    };
 
     els.results.innerHTML = [
       row("Perimeter Doors", perimeterDoors),
@@ -1339,14 +1109,11 @@
       row("Engineering Insight", insight)
     ].join("");
 
-    lastMetrics = {
-      doors,
-      zonesImpact,
-      readers,
-      complexityIndex
-    };
+    lastMetrics = metrics;
 
-    renderChart(lastMetrics);
+    renderDoorCountPlanningSchedule(metrics);
+    renderDoorCountAssistant(metrics);
+    publishDoorCountSummaryContribution(metrics);
 
     currentReport = buildCurrentReportPayload();
     updateExportControls();
@@ -1354,10 +1121,12 @@
 
   function resetResults(message = "Enter values and press Calculate.") {
     if (els.results) {
-      els.results.innerHTML = `<div class="muted">${escapeHtml(message)}</div>`;
+      els.results.innerHTML = '<div class="muted">' + escapeHtml(message) + '</div>';
     }
 
     destroyChart();
+    clearDoorCountPlanningSchedule();
+    clearDoorCountAssistant();
     lastMetrics = null;
     currentReport = null;
     updateExportControls();
@@ -1419,6 +1188,7 @@
       els.chart.parentElement.style.minHeight = "340px";
     }
   }
-
+  setupDoorCountReportActions();
+  registerDoorCountOutputShell();
   reset();
 })();

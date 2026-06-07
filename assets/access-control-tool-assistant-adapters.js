@@ -1,11 +1,11 @@
 /* ScopedLabs Access Control Tool Assistant Adapters
-   Version: access-control-assistant-adapters-016-door-cable
+   Version: access-control-assistant-adapters-017-door-count
    Purpose: category-specific local assistant model adapters. Dormant unless a tool explicitly calls one.
 */
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-assistant-adapters-016-door-cable";
+  const API_VERSION = "access-control-assistant-adapters-017-door-count";
 
   function safeText(value) {
     return String(value ?? "");
@@ -480,6 +480,59 @@
     };
   }
 
+
+
+  function buildDoorCountPlannerModel(data) {
+    const status = safeText(data.status || "PENDING");
+    const doors = safeText(data.doors ?? "pending");
+    const readers = safeText(data.readers ?? "pending");
+    const complexity = safeText(data.complexityIndex ?? "pending");
+    const insight = safeText(data.insight || "Run the calculator to generate door-count planning guidance.");
+    const actions = Array.isArray(data.recommendedActions) ? data.recommendedActions.map(safeText).filter(Boolean) : [
+      "Confirm actual door schedule before procurement or installation.",
+      "Document controlled-door count, reader assumptions, and segmentation boundaries in the project handoff.",
+      "Include this supplemental result in the Access Control summary when used."
+    ];
+
+    return {
+      category: "access-control",
+      tool: "door-count-planner",
+      kicker: "Local Design Assistant",
+      title: "Door Count Assistant",
+      status,
+      summary: safeText(data.summary || "Door count planning review is ready."),
+      sections: [
+        {
+          title: "Door Scope",
+          body: insight,
+          items: [
+            "Controlled doors: " + doors,
+            "Estimated readers: " + readers,
+            "Complexity index: " + complexity,
+            "Status: " + status
+          ]
+        },
+        {
+          title: "Summary Role",
+          body: "Door Count Planner is a supplemental Access Control tool. It is not part of the real pipeline, but its result should be available to the category summary and future Gold reporting.",
+          items: [
+            "Contribution type: supplemental",
+            "Summary group: Supplemental Planning Tools",
+            "Pipeline state: not used"
+          ]
+        }
+      ],
+      assumptionsTitle: "Planning Assumptions",
+      actionsTitle: "Recommended Actions",
+      assumptions: [
+        "Door count estimates are based on perimeter, interior segmentation, high-security areas, compliance level, and reader-side assumptions.",
+        "Final counts should be verified against the actual door schedule, access-control policy, and hardware design.",
+        "Reader count can change if both sides of openings require controlled access."
+      ],
+      actions
+    };
+  }
+
   const adapters = Object.freeze({
     "fail-safe-fail-secure": Object.freeze({
       slug: "fail-safe-fail-secure",
@@ -515,6 +568,11 @@
       slug: "door-cable-length",
       title: "Door Cable Assistant",
       buildModel: buildDoorCableLengthModel
+    }),
+    "door-count-planner": Object.freeze({
+      slug: "door-count-planner",
+      title: "Door Count Assistant",
+      buildModel: buildDoorCountPlannerModel
     })
   });
 
