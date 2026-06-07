@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-010-special-locking";
+  const VERSION = "access-control-planning-visuals-011-special-locking-polish";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -361,13 +361,13 @@
     const overridePlan = metrics.overridePlanLabel || metrics.overridePlan || "?";
 
     function openingNode(index) {
-      const x = 72 + (index % 5) * 52;
-      const y = 130 + Math.floor(index / 5) * 46;
+      const x = 76 + (index % 4) * 54;
+      const y = 148 + Math.floor(index / 4) * 48;
       return [
         '<g>',
-        '<rect x="' + x + '" y="' + y + '" width="34" height="32" rx="4" fill="rgba(120,255,120,.065)" stroke="rgba(125,255,152,.34)" />',
-        '<path d="M' + (x + 10) + ' ' + (y + 6) + ' V' + (y + 26) + ' H' + (x + 25) + ' V' + (y + 6) + '" fill="none" stroke="rgba(203,213,225,.36)" stroke-width="1" />',
-        '<circle cx="' + (x + 24) + '" cy="' + (y + 17) + '" r="1.8" fill="rgba(125,255,152,.76)" />',
+        '<rect x="' + x + '" y="' + y + '" width="32" height="34" rx="4" fill="rgba(120,255,120,.055)" stroke="rgba(125,255,152,.30)" />',
+        '<path d="M' + (x + 9) + ' ' + (y + 7) + ' V' + (y + 27) + ' H' + (x + 24) + ' V' + (y + 7) + '" fill="none" stroke="rgba(203,213,225,.34)" stroke-width="1" />',
+        '<circle cx="' + (x + 23) + '" cy="' + (y + 18) + '" r="1.7" fill="rgba(125,255,152,.76)" />',
         '</g>'
       ].join('');
     }
@@ -375,58 +375,74 @@
     function authorityBlock(label, value, x, y, w, toneName) {
       return [
         '<g>',
-        '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="48" rx="9" fill="' + toneFill(toneName || "safe") + '" stroke="' + toneStroke(toneName || "safe") + '" />',
-        '<text x="' + (x + 12) + '" y="' + (y + 16) + '" font-size="9" fill="rgba(203,213,225,.68)" letter-spacing=".7">' + escapeHtml(label).toUpperCase() + '</text>',
-        '<text x="' + (x + 12) + '" y="' + (y + 34) + '" font-size="11" fill="rgba(238,255,244,.92)" font-weight="800">' + escapeHtml(value) + '</text>',
+        '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="42" rx="9" fill="' + toneFill(toneName || "safe") + '" stroke="' + toneStroke(toneName || "safe") + '" />',
+        '<text x="' + (x + 12) + '" y="' + (y + 15) + '" font-size="8.5" fill="rgba(203,213,225,.66)" letter-spacing=".7">' + escapeHtml(label).toUpperCase() + '</text>',
+        '<text x="' + (x + 12) + '" y="' + (y + 31) + '" font-size="10.5" fill="rgba(238,255,244,.92)" font-weight="750">' + escapeHtml(value) + '</text>',
         '</g>'
       ].join('');
     }
 
-    const shownOpenings = Math.max(1, Math.min(10, Math.round(openings || 1)));
+    function miniMetric(label, value, x, y, w, toneName) {
+      return [
+        '<g>',
+        '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="30" rx="8" fill="' + (toneName ? toneFill(toneName) : "rgba(0,0,0,.16)") + '" stroke="' + (toneName ? toneStroke(toneName) : "rgba(120,255,120,.12)") + '" />',
+        '<text x="' + (x + 10) + '" y="' + (y + 12) + '" font-size="8.5" fill="rgba(203,213,225,.62)" letter-spacing=".65">' + escapeHtml(label).toUpperCase() + '</text>',
+        '<text x="' + (x + 10) + '" y="' + (y + 24) + '" font-size="10.5" fill="rgba(238,255,244,.92)" font-weight="800">' + escapeHtml(value) + '</text>',
+        '</g>'
+      ].join('');
+    }
+
+    const shownOpenings = Math.max(1, Math.min(8, Math.round(openings || 1)));
     const releaseTone = String(metrics.releaseLogic || "").includes("needed") ? "watch" : "safe";
     const reviewTone = String(metrics.authorityReview || "").includes("required") ? "risk" : String(metrics.authorityReview || "").includes("likely") ? "watch" : "safe";
     const overrideTone = String(metrics.overridePlan || "").includes("missing") ? "risk" : String(metrics.overridePlan || "").includes("partial") ? "watch" : "safe";
+    const egressTone = String(metrics.egressImpact || "").includes("yes") ? "watch" : String(metrics.egressImpact || "").includes("unknown") ? "watch" : "safe";
 
     return [
       '<div class="access-control-planning-visual-shell" data-access-control-modern-visual="special-locking-scope">',
-      '<svg viewBox="0 0 760 388" role="img" aria-label="Special locking authority review pressure visual" xmlns="http://www.w3.org/2000/svg">',
-      '<defs><pattern id="accGridSpecialLockingV10" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="rgba(120,255,120,.045)" stroke-width="1"/></pattern></defs>',
-      '<rect x="24" y="24" width="712" height="340" rx="16" fill="rgba(0,0,0,.10)" stroke="rgba(120,255,120,.12)" />',
-      '<rect x="36" y="36" width="688" height="316" rx="12" fill="url(#accGridSpecialLockingV10)" stroke="rgba(120,255,120,.07)" />',
+      '<svg viewBox="0 0 760 420" role="img" aria-label="Special locking authority review pressure visual" xmlns="http://www.w3.org/2000/svg">',
+      '<defs><pattern id="accGridSpecialLockingV11" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="rgba(120,255,120,.040)" stroke-width="1"/></pattern></defs>',
+
+      '<rect x="24" y="24" width="712" height="372" rx="16" fill="rgba(0,0,0,.10)" stroke="rgba(120,255,120,.12)" />',
+      '<rect x="36" y="36" width="688" height="348" rx="12" fill="url(#accGridSpecialLockingV11)" stroke="rgba(120,255,120,.07)" />',
+
       '<text x="52" y="62" font-size="11" fill="rgba(180,255,200,.68)" letter-spacing="1.4">SPECIAL LOCKING / HIGH-SECURITY SCOPE</text>',
-      '<text x="52" y="84" font-size="19" fill="rgba(246,255,248,.96)" font-weight="650">Authority review, egress impact, and release pressure</text>',
+      '<text x="52" y="84" font-size="18" fill="rgba(246,255,248,.96)" font-weight="650">Authority review and release coordination</text>',
       statusBadge(statusText, tone, 616, 51),
-      '<text x="72" y="114" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">FLAGGED OPENINGS</text>',
+
+      '<rect x="52" y="108" width="300" height="212" rx="12" fill="rgba(0,0,0,.13)" stroke="rgba(120,255,120,.10)" />',
+      '<text x="70" y="132" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">FLAGGED OPENINGS</text>',
       Array.from({ length: shownOpenings }, (_, index) => openingNode(index)).join(''),
-      openings > shownOpenings ? '<text x="342" y="168" font-size="11" fill="rgba(203,213,225,.66)">+' + escapeHtml(Math.round(openings - shownOpenings)) + '</text>' : '',
-      '<path d="M344 164 H382" stroke="rgba(203,213,225,.24)" stroke-width="1.2" stroke-dasharray="5 6" />',
-      '<text x="396" y="114" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">AUTHORITY / RELEASE CHECKS</text>',
-      authorityBlock("egress", egressImpact, 396, 130, 274, String(metrics.egressImpact || "").includes("yes") ? "watch" : "safe"),
-      authorityBlock("release", releaseLogic, 396, 188, 274, releaseTone),
-      authorityBlock("review", authorityReview, 396, 246, 274, reviewTone),
-      '<path d="M112 226 H338" stroke="rgba(203,213,225,.24)" stroke-width="1.2" stroke-dasharray="6 7" />',
-      '<path d="M112 226 C174 206, 254 246, 338 226" fill="none" stroke="rgba(125,255,152,.38)" stroke-width="1.4" />',
-      '<circle cx="112" cy="226" r="5" fill="rgba(125,255,152,.20)" stroke="rgba(125,255,152,.72)" />',
-      '<circle cx="224" cy="226" r="5" fill="rgba(125,255,152,.20)" stroke="rgba(125,255,152,.72)" />',
-      '<circle cx="338" cy="226" r="5" fill="rgba(125,255,152,.20)" stroke="rgba(125,255,152,.72)" />',
-      '<text x="112" y="244" font-size="10" fill="rgba(203,213,225,.58)" text-anchor="middle">openings</text>',
-      '<text x="224" y="244" font-size="10" fill="rgba(203,213,225,.58)" text-anchor="middle">egress</text>',
-      '<text x="338" y="244" font-size="10" fill="rgba(203,213,225,.58)" text-anchor="middle">release</text>',
-      pressureRail("authority pressure", pressure, 52, 282, 220, pressureTone),
-      metricChip("openings", String(metrics.openingCount ?? "?"), 296, 272, 94),
-      metricChip("risk score", String(metrics.riskScore ?? "?"), 404, 272, 100),
-      '<rect x="52" y="320" width="286" height="28" rx="8" fill="rgba(0,0,0,.16)" stroke="rgba(120,255,120,.10)" />',
-      '<text x="62" y="337" font-size="9" fill="rgba(203,213,225,.62)" letter-spacing=".7">LOCKING</text>',
-      '<text x="128" y="337" font-size="10" fill="rgba(238,255,244,.90)" font-weight="800">' + escapeHtml(lockingType) + '</text>',
-      '<rect x="356" y="320" width="314" height="28" rx="8" fill="' + toneFill(overrideTone) + '" stroke="' + toneStroke(overrideTone) + '" />',
-      '<text x="366" y="337" font-size="9" fill="rgba(203,213,225,.62)" letter-spacing=".7">OVERRIDE</text>',
-      '<text x="436" y="337" font-size="10" fill="rgba(238,255,244,.90)" font-weight="800">' + escapeHtml(overridePlan) + '</text>',
+      openings > shownOpenings ? '<text x="292" y="178" font-size="11" fill="rgba(203,213,225,.66)">+' + escapeHtml(Math.round(openings - shownOpenings)) + '</text>' : '',
+
+      '<path d="M92 256 H308" stroke="rgba(203,213,225,.22)" stroke-width="1.2" stroke-dasharray="6 7" />',
+      '<path d="M92 256 C154 236, 246 276, 308 256" fill="none" stroke="rgba(125,255,152,.34)" stroke-width="1.3" />',
+      '<circle cx="92" cy="256" r="4.8" fill="rgba(125,255,152,.18)" stroke="rgba(125,255,152,.70)" />',
+      '<circle cx="200" cy="256" r="4.8" fill="rgba(255,204,102,.14)" stroke="rgba(255,204,102,.58)" />',
+      '<circle cx="308" cy="256" r="4.8" fill="rgba(255,105,105,.12)" stroke="rgba(255,105,105,.50)" />',
+      '<text x="92" y="274" font-size="9.5" fill="rgba(203,213,225,.56)" text-anchor="middle">opening</text>',
+      '<text x="200" y="274" font-size="9.5" fill="rgba(203,213,225,.56)" text-anchor="middle">egress</text>',
+      '<text x="308" y="274" font-size="9.5" fill="rgba(203,213,225,.56)" text-anchor="middle">release</text>',
+      pressureRail("authority pressure", pressure, 76, 296, 232, pressureTone),
+
+      '<rect x="380" y="108" width="322" height="212" rx="12" fill="rgba(0,0,0,.13)" stroke="rgba(120,255,120,.10)" />',
+      '<text x="398" y="132" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">AUTHORITY / RELEASE CHECKS</text>',
+      authorityBlock("egress", egressImpact, 398, 146, 286, egressTone),
+      authorityBlock("release", releaseLogic, 398, 194, 286, releaseTone),
+      authorityBlock("review", authorityReview, 398, 242, 286, reviewTone),
+      authorityBlock("override", overridePlan, 398, 290, 286, overrideTone),
+
+      '<rect x="52" y="340" width="650" height="32" rx="10" fill="rgba(0,0,0,.16)" stroke="rgba(120,255,120,.10)" />',
+      '<text x="68" y="360" font-size="8.5" fill="rgba(203,213,225,.62)" letter-spacing=".7">LOCKING</text>',
+      '<text x="132" y="360" font-size="10.5" fill="rgba(238,255,244,.90)" font-weight="800">' + escapeHtml(lockingType) + '</text>',
+      miniMetric("openings", String(metrics.openingCount ?? "?"), 402, 341, 92),
+      miniMetric("risk score", String(metrics.riskScore ?? "?"), 506, 341, 104, pressureTone),
+
       '</svg>',
       '<p class="sl-vis-note"><strong>Visual note:</strong> Special locking is a specialty planning branch. Use the visual to flag openings that need authority review, release coordination, egress validation, and documented override procedures before final design.</p>',
       '</div>'
     ].join("");
   }
-
   function renderSpecialLocking(options = {}) {
     return show(options, buildSpecialLockingSvg(options.metrics || {}));
   }
