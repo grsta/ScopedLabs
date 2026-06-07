@@ -173,6 +173,15 @@ for (const slug of dirs) {
     has(html, "reportMetadataMount") &&
     has(html, "scopedlabs-report-metadata.js");
 
+  const hasReportActionsInsideMetadata =
+    contract.navMode === "pipeline" ||
+    has(html, "data-report-actions") ||
+    has(script, "placeCredentialFormatReportActions");
+
+  const hasKbTopAnchor =
+    has(html, 'id="flow-note"') ||
+    has(html, "id='flow-note'");
+
   const hasOutputShell =
     has(html, "access-control-output-shell.js") &&
     has(script, "showVisual");
@@ -203,6 +212,7 @@ for (const slug of dirs) {
     has(script, "renderAntiPassbackSchedule") ||
     has(html, "Credential Format Decision Schedule") ||
     has(html, "data-credential-format-summary") ||
+    has(html, "credential-format-summary-wrap") ||
     has(script, "renderCredentialFormatSchedule");
 
   const hasCredentialFormatSummaryContribution =
@@ -250,7 +260,8 @@ for (const slug of dirs) {
     decorativeCovered: checkToken(isScopeEntry || !hasDecorativeLabels || (has(html, "access-control-tool-polish.js") && has(html, 'data-access-control-tool-polish="true"'))),
     helperClutter: checkToken(!hasOldVisibleHelper || isAcceptedReference),
     assistantShell: checkToken(isScopeEntry || hasAssistantShellContract),
-    metadata: checkToken(isScopeEntry || hasReportMetadataContract),
+    metadata: checkToken(isScopeEntry || (hasReportMetadataContract && hasReportActionsInsideMetadata)),
+    kbTopAnchor: checkToken(isScopeEntry || hasKbTopAnchor),
     flowActions: checkToken(isScopeEntry || has(html, "accessControlFlowActions") || has(html, 'id="next-step-row"') || has(html, 'data-sl-shell-back-continue="true"')),
     flowBeforeExport: checkToken(isScopeEntry || !has(html, "reportMetadataMount") || hasFlowBeforeExport),
     outputShell: checkToken(isScopeEntry || isAcceptedReference || hasOutputShell),

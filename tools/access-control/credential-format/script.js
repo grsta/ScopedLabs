@@ -28,7 +28,9 @@
     schedule: $("credentialFormatSchedule"),
     assistantMount: $("accessControlLocalAssistantMount"),
     flowActions: $("accessControlFlowActions"),
-    reportMetadataMount: $("reportMetadataMount")
+    reportMetadataMount: $("reportMetadataMount"),
+    chartWrap: $("credentialFormatChartWrap"),
+    reportActions: $("credentialFormatReportActions")
   };
 
   let currentReport = null;
@@ -163,52 +165,89 @@
   }
 
 
-  // access-control-credential-format-output-contract-021
+  // access-control-credential-format-output-contract-022-shell-alignment
+
+  // access-control-credential-format-shell-alignment-022
+  function placeCredentialFormatReportActions() {
+    if (!els.reportMetadataMount || !els.reportActions) return false;
+
+    const details = els.reportMetadataMount.querySelector("details.sl-report-meta") || els.reportMetadataMount.querySelector("details");
+    if (!details) return false;
+
+    if (els.reportActions.parentElement !== details) {
+      details.appendChild(els.reportActions);
+    }
+
+    els.reportActions.hidden = false;
+    els.reportActions.removeAttribute("hidden");
+    els.reportActions.style.display = "";
+    return true;
+  }
+
+  function setupCredentialFormatReportActions() {
+    const run = () => placeCredentialFormatReportActions();
+
+    run();
+    window.setTimeout(run, 50);
+    window.setTimeout(run, 250);
+
+    document.addEventListener("scopedlabs:report-metadata-ready", run);
+  }
+
   function scheduleCell(value) {
     return escapeHtml(value == null || value === "" ? "—" : value);
   }
 
   function credentialFormatStatusChip(status) {
-    const value = String(status || "PENDING").toUpperCase();
-    const label = value === "HEALTHY" ? "SAFE" : value;
-    return '<span class="status-pill status-pill--' + escapeHtml(value.toLowerCase()) + '">' + escapeHtml(label) + '</span>';
+    const clean = String(status || "PENDING").toUpperCase();
+    const display = clean === "HEALTHY" ? "SAFE" : clean;
+    const tone = clean.includes("RISK") ? "is-risk" : clean.includes("WATCH") ? "is-watch" : "is-healthy";
+    return '<span class="credential-format-status-chip ' + tone + '">' + escapeHtml(display) + '</span>';
   }
 
   function credentialFormatScheduleRow(group, metric, value, note) {
-    return '<tr>' +
-      '<td>' + scheduleCell(group) + '</td>' +
-      '<td>' + scheduleCell(metric) + '</td>' +
-      '<td>' + scheduleCell(value) + '</td>' +
-      '<td>' + scheduleCell(note) + '</td>' +
-      '</tr>';
+    return '<tr><td>' + escapeHtml(group) + '</td><td>' + escapeHtml(metric) + '</td><td>' + value + '</td><td>' + escapeHtml(note) + '</td></tr>';
   }
 
   function renderCredentialFormatSchedule(metrics = {}) {
     const status = metrics.status || "PENDING";
+    const statusLabel = String(status).toUpperCase() === "HEALTHY" ? "SAFE" : String(status || "PENDING").toUpperCase();
+    const capacityUsed = metrics.utilizationLabel || "Pending";
+    const assessment = metrics.fit || "Credential format review";
+    const interpretation = metrics.interpretation || "Run the calculator to generate credential-format guidance.";
+    const summary = metrics.summary || "Run the calculator to generate the credential format assessment.";
+
+    const tableRows = [
+      credentialFormatScheduleRow("Format", "Format Type", scheduleCell(metrics.formatLabel), "Selected credential numbering model."),
+      credentialFormatScheduleRow("Format", "Facility Code Digits", scheduleCell(metrics.fcDigits), "Used for decimal facility-code capacity."),
+      credentialFormatScheduleRow("Format", "Card Number Digits", scheduleCell(metrics.cardDigits), "Used for decimal card-number capacity."),
+      credentialFormatScheduleRow("Format", "Bit Length", scheduleCell(metrics.bits + "-bit"), "Used for binary capacity approximation."),
+      credentialFormatScheduleRow("Capacity", "Estimated Badge Population", scheduleCell(metrics.population), "Expected active or planned badge population."),
+      credentialFormatScheduleRow("Capacity", "Decimal Capacity", scheduleCell(metrics.totalDecimalLabel), "Facility-code capacity multiplied by card-number capacity."),
+      credentialFormatScheduleRow("Capacity", "Binary Capacity", scheduleCell(metrics.totalBinaryLabel), "Planning approximation after basic parity allowance."),
+      credentialFormatScheduleRow("Decision", "Capacity Used", scheduleCell(capacityUsed), "Primary planning pressure indicator."),
+      credentialFormatScheduleRow("Decision", "Assessment", scheduleCell(assessment), "Credential format fit for the modeled badge population."),
+      credentialFormatScheduleRow("Decision", "Status", credentialFormatStatusChip(status), statusLabel === "RISK" ? "Select a larger or better partitioned credential format before rollout." : statusLabel === "WATCH" ? "Document format boundaries and migration/growth assumptions." : "Credential format has usable planning headroom."),
+      credentialFormatScheduleRow("Summary", "Contribution", scheduleCell("Supplemental Planning Tools"), "Included in Access Control summary when this non-pipeline tool is used.")
+    ];
+
     const html = [
       '<div class="credential-format-decision-hero">',
-      '<div><strong>' + scheduleCell(metrics.fit || "Credential format review") + '</strong><span>' + scheduleCell(metrics.summary || "Run the calculator to generate the credential format assessment.") + '</span></div>',
-      '<div>' + credentialFormatStatusChip(status) + '<span>Capacity used: ' + scheduleCell(metrics.utilizationLabel) + '</span></div>',
+      '<div><strong>' + scheduleCell(assessment) + '</strong><span>' + scheduleCell(summary) + '</span></div>',
+      '<div>' + credentialFormatStatusChip(status) + '<span>Capacity used: ' + scheduleCell(capacityUsed) + '</span></div>',
       '</div>',
       '<table class="credential-format-summary-table" data-credential-format-summary-table="true" data-export-table-title="Credential Format Decision Schedule"><thead><tr><th>Group</th><th>Metric</th><th>Value</th><th>Engineering Note</th></tr></thead><tbody>',
-      credentialFormatScheduleRow("Format Inputs", "Format Type", metrics.formatLabel, "Selected credential numbering model."),
-      credentialFormatScheduleRow("Format Inputs", "Facility Code Digits", metrics.fcDigits, "Used for decimal facility-code capacity."),
-      credentialFormatScheduleRow("Format Inputs", "Card Number Digits", metrics.cardDigits, "Used for decimal card-number capacity."),
-      credentialFormatScheduleRow("Format Inputs", "Bit Length", metrics.bits + "-bit", "Used for binary capacity approximation."),
-      credentialFormatScheduleRow("Capacity", "Estimated Badge Population", metrics.population, "Expected active or planned badge population."),
-      credentialFormatScheduleRow("Capacity", "Decimal Capacity", metrics.totalDecimalLabel, "Facility-code capacity multiplied by card-number capacity."),
-      credentialFormatScheduleRow("Capacity", "Binary Capacity", metrics.totalBinaryLabel, "Planning approximation after basic parity allowance."),
-      credentialFormatScheduleRow("Decision", "Capacity Used", metrics.utilizationLabel, "Primary planning pressure indicator."),
-      credentialFormatScheduleRow("Decision", "Assessment", metrics.fit, metrics.interpretation),
-      credentialFormatScheduleRow("Decision", "Status", status === "HEALTHY" ? "SAFE" : status, status === "RISK" ? "Select a larger or better partitioned credential format before rollout." : status === "WATCH" ? "Document format boundaries and migration/growth assumptions." : "Credential format has usable planning headroom."),
-      '</tbody></table>'
+      tableRows.join(""),
+      '</tbody></table>',
+      '<p class="mini-note"><strong>Engineering Interpretation:</strong> ' + scheduleCell(interpretation) + '</p>'
     ].join("");
 
     const shell = window.ScopedLabsAccessControlOutputShell;
     if (shell && typeof shell.showVisual === "function") {
-      shell.showVisual({ card: els.decisionCard, target: els.schedule, html });
+      shell.showVisual({ card: els.decisionCard, wrap: els.chartWrap, target: els.schedule, html });
     } else {
       if (els.schedule) els.schedule.innerHTML = html;
+      if (els.chartWrap) els.chartWrap.hidden = false;
       if (els.decisionCard) els.decisionCard.hidden = false;
     }
 
@@ -218,11 +257,12 @@
   function clearCredentialFormatSchedule() {
     const shell = window.ScopedLabsAccessControlOutputShell;
     if (shell && typeof shell.hideVisual === "function") {
-      shell.hideVisual({ card: els.decisionCard, target: els.schedule });
+      shell.hideVisual({ card: els.decisionCard, wrap: els.chartWrap, target: els.schedule });
       return;
     }
 
     if (els.schedule) els.schedule.innerHTML = "";
+    if (els.chartWrap) els.chartWrap.hidden = true;
     if (els.decisionCard) els.decisionCard.hidden = true;
   }
 
@@ -1007,6 +1047,8 @@
   });
 
   window.addEventListener("DOMContentLoaded", () => {
+    setupCredentialFormatReportActions();
+    registerCredentialFormatOutputShell();
     reset();
 
     setTimeout(() => {
