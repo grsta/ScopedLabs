@@ -34,7 +34,7 @@ function parses(rel) {
   }
 }
 
-const version = 'access-control-planning-visuals-014-controlled-door-icon-library';
+const version = 'access-control-planning-visuals-015-cad-icon-contract';
 
 const moduleRel = 'assets/access-control-planning-visuals.js';
 const doorCountHtmlRel = 'tools/access-control/door-count-planner/index.html';
@@ -53,9 +53,9 @@ check('Shared Access Control planning visual module parses', parses(moduleRel));
 check('Door Count script parses', parses(doorCountScriptRel));
 check('Door Cable script parses', parses(doorCableScriptRel));
 
-check('Shared module is on module version 014', moduleText.includes(version));
-check('Door Count page loads shared module version 014', doorCountHtml.includes('/assets/access-control-planning-visuals.js?v=' + version));
-check('Door Cable page loads shared module version 014', doorCableHtml.includes('/assets/access-control-planning-visuals.js?v=' + version));
+check('Shared module is on module version 015', moduleText.includes(version));
+check('Door Count page loads shared module version 015', doorCountHtml.includes('/assets/access-control-planning-visuals.js?v=' + version));
+check('Door Cable page loads shared module version 015', doorCableHtml.includes('/assets/access-control-planning-visuals.js?v=' + version));
 
 check('Door Count uses shared renderer only', doorCountScript.includes('ScopedLabsAccessControlPlanningVisuals') && doorCountScript.includes('renderDoorCount'));
 check('Door Cable uses shared renderer only', doorCableScript.includes('ScopedLabsAccessControlPlanningVisuals') && doorCableScript.includes('renderDoorCable'));
@@ -84,6 +84,8 @@ check('Door Cable keeps hidden result ledger', doorCableHtml.includes('access-co
 
 check('Visual fit seatbelt audit exists', exists('scripts/audit-access-control-visual-fit-seatbelts-v1.js'));
 check('Visual fit seatbelt audit parses', parses('scripts/audit-access-control-visual-fit-seatbelts-v1.js'));
+check('CAD icon contract audit exists', exists('scripts/audit-access-control-cad-icon-contract-v1.js'));
+check('CAD icon contract audit parses', parses('scripts/audit-access-control-cad-icon-contract-v1.js'));
 console.log('\nAccess Control module seatbelt audit:');
 console.table(rows);
 

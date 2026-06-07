@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-014-controlled-door-icon-library";
+  const VERSION = "access-control-planning-visuals-015-cad-icon-contract";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -66,7 +66,7 @@
   }
 
 
-  function controlledDoorOpeningIcon(options = {}) {
+  function cadControlledDoorOpeningIcon(options = {}) {
     const x = Number(options.x || 0);
     const y = Number(options.y || 0);
     const scale = Number(options.scale || 1);
@@ -416,7 +416,7 @@
       const y = 140 + Math.floor(index / 4) * 56;
       const label = "OP " + (index + 1);
 
-      return controlledDoorOpeningIcon({
+      return cadControlledDoorOpeningIcon({
         x,
         y,
         scale: 0.72,
@@ -664,7 +664,7 @@
   }
 
   window.ScopedLabsAccessControlPlanningVisuals = Object.freeze({
-    controlledDoorOpeningIcon,
+    cadControlledDoorOpeningIcon,
     VERSION,
     renderDoorCable,
     renderDoorCount,

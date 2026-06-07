@@ -10,6 +10,7 @@ const requiredAudits = [
   "scripts/audit-access-control-pipeline-specialty-branches-v1.js",
   "scripts/audit-access-control-modern-visual-contract-v1.js",
   "scripts/audit-access-control-visual-fit-seatbelts-v1.js",
+  "scripts/audit-access-control-cad-icon-contract-v1.js",
   "scripts/audit-access-control-module-seatbelts-v1.js",
   "scripts/audit-access-control-special-locking-module-v1.js",
   "scripts/audit-access-control-elevator-reader-module-v1.js",

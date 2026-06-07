@@ -168,8 +168,8 @@ pages.forEach((rel) => {
   });
 });
 
-check("Controlled door opening icon primitive exists", moduleText.includes("function controlledDoorOpeningIcon"));
-check("Special Locking renderer uses shared controlled door icon", moduleText.includes("function buildSpecialLockingSvg") && moduleText.includes("controlledDoorOpeningIcon({"));
+check("CAD controlled door opening icon primitive exists", moduleText.includes("function cadControlledDoorOpeningIcon"));
+check("Special Locking renderer uses shared CAD controlled door icon", moduleText.includes("function buildSpecialLockingSvg") && moduleText.includes("cadControlledDoorOpeningIcon({"));
 check("Special Locking taller-card renderer is protected", (() => {
   const renderer = renderersBySlug.get("special-locking-scope");
   if (!renderer) return false;
@@ -180,6 +180,8 @@ check("Special Locking taller-card renderer is protected", (() => {
   return renderer.height >= 450 && maxChipY >= 380 && renderer.height >= maxChipY + 80;
 })(), "prevents the cramped lower-chip layout from returning");
 
+check("CAD icon contract audit exists", fs.existsSync(path.join(root, "scripts/audit-access-control-cad-icon-contract-v1.js")));
+check("Visual module exports CAD controlled door icon primitive", moduleText.includes("cadControlledDoorOpeningIcon,"));
 console.log("\nAccess Control visual fit seatbelt audit:");
 console.table(rows);
 
