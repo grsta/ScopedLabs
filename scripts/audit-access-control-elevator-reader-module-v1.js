@@ -60,6 +60,13 @@ check("Elevator Reader CAD primitives exist", visuals.includes("function cadElev
 check("Elevator Reader uses shared CAD elevator and reader icons", visuals.includes("cadElevatorBankIcon({") && visuals.includes("cadAccessReaderIcon({"));
 check("Elevator Reader CAD primitives are exported", visuals.includes("cadElevatorBankIcon,") && visuals.includes("cadAccessReaderIcon,"));
 check("Elevator Reader CAD primitives are SVG-only", !visuals.includes("<image ") && !visuals.includes("href=\"data:image"));
+const elevatorVisualStart = visuals.indexOf("function buildElevatorReaderSvg");
+const elevatorVisualEnd = visuals.indexOf("function renderElevatorReader", elevatorVisualStart);
+const elevatorVisualBlock = elevatorVisualStart >= 0 && elevatorVisualEnd > elevatorVisualStart ? visuals.slice(elevatorVisualStart, elevatorVisualEnd) : "";
+
+check("Elevator Reader visual uses status-colored line graph", elevatorVisualBlock.includes("const statusLineStroke = toneStroke(tone)") && elevatorVisualBlock.includes("const statusLineFill = toneFill(tone)") && elevatorVisualBlock.includes("statusLineStroke") && !elevatorVisualBlock.includes('stroke="rgba(125,255,152,.38)"'));
+check("Elevator Reader keeps bank overflow label below icon row", elevatorVisualBlock.includes("bank group") && elevatorVisualBlock.includes("y=\"214\""));
+
 
 check("Elevator Reader script renders through shared visual module", script.includes("ScopedLabsAccessControlPlanningVisuals") && script.includes("renderElevatorReader"));
 check("Elevator Reader exports modern SVG visual image", script.includes("getElevatorReaderVisualImage") && script.includes("getExportChartImage"));

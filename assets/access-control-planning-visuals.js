@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-034-elevator-cad-icons";
+  const VERSION = "access-control-planning-visuals-035-elevator-status-line-polish";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -612,11 +612,13 @@
     const tone = statusTone(metrics.status || metrics.systemStatus);
     const statusText = statusLabel(metrics.status || metrics.systemStatus);
     const cars = Math.max(0, Number(metrics.carReaders || 0));
-    const dcs = Math.max(0, Number(metrics.dcsAdd || 0));
+    const dcs = Math.max(0, Number(metrics.dcsCredentialPoints ?? metrics.dcsAdd ?? 0));
     const complexity = Math.max(0, Number(metrics.complexityIndex || 0));
     const pressure = clamp(complexity / 100, 0.04, 1);
     const pressureTone = complexity > 90 ? "risk" : complexity > 55 ? "watch" : "safe";
     const dcsTone = dcs > 0 ? "watch" : "safe";
+    const statusLineStroke = toneStroke(tone);
+    const statusLineFill = toneFill(tone);
     const placement = metrics.placementLabel || metrics.placement || "?";
     const dest = metrics.destLabel || metrics.destinationControl || "?";
     const bankCount = Math.max(1, Math.min(6, Math.round(Number(metrics.banks || 1))));
@@ -641,7 +643,7 @@
       '<rect x="24" y="24" width="712" height="340" rx="16" fill="rgba(0,0,0,.10)" stroke="rgba(120,255,120,.12)" />',
       '<rect x="36" y="36" width="688" height="316" rx="12" fill="url(#accGridElevatorV8)" stroke="rgba(120,255,120,.07)" />',
       '<text x="52" y="62" font-size="11" fill="rgba(180,255,200,.68)" letter-spacing="1.4">ELEVATOR READER COUNT</text>',
-      '<text x="52" y="84" font-size="19" fill="rgba(246,255,248,.96)" font-weight="650">Reader load, DCS adders, and integration pressure</text>',
+      '<text x="52" y="84" font-size="19" fill="rgba(246,255,248,.96)" font-weight="650">Reader load, DCS readers, and integration pressure</text>',
       statusBadge(statusText, tone, 616, 51),
       '<text x="72" y="114" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">CAR / CAB READERS</text>',
       Array.from({ length: carCount }, (_, index) => carNode(index)).join(''),
@@ -649,15 +651,15 @@
       '<path d="M300 166 H350" stroke="rgba(203,213,225,.24)" stroke-width="1.2" stroke-dasharray="5 6" />',
       '<text x="378" y="114" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">ELEVATOR BANK GROUPS</text>',
       Array.from({ length: bankVisibleCount }, (_, index) => bankNode(index)).join(''),
-      bankCount > bankVisibleCount ? '<text x="646" y="162" font-size="11" fill="rgba(203,213,225,.66)">+' + escapeHtml(Math.round(bankCount - bankVisibleCount)) + ' bank</text>' : '',
-      '<rect x="598" y="138" width="74" height="46" rx="8" fill="' + toneFill(dcsTone) + '" stroke="' + toneStroke(dcsTone) + '" />',
-      '<text x="635" y="157" text-anchor="middle" font-size="9" fill="rgba(203,213,225,.66)" letter-spacing=".8">DCS ADD</text>',
-      '<text x="635" y="176" text-anchor="middle" font-size="14" fill="rgba(238,255,244,.94)" font-weight="900">' + escapeHtml(dcs) + '</text>',
+      bankCount > bankVisibleCount ? '<text x="520" y="214" text-anchor="middle" font-size="11" fill="rgba(203,213,225,.66)">+' + escapeHtml(Math.round(bankCount - bankVisibleCount)) + ' bank group' + (Math.round(bankCount - bankVisibleCount) === 1 ? '' : 's') + '</text>' : '',
+      '<rect x="632" y="118" width="74" height="46" rx="8" fill="' + toneFill(dcsTone) + '" stroke="' + toneStroke(dcsTone) + '" />',
+      '<text x="669" y="137" text-anchor="middle" font-size="9" fill="rgba(203,213,225,.66)" letter-spacing=".8">DCS READERS</text>',
+      '<text x="669" y="156" text-anchor="middle" font-size="14" fill="rgba(238,255,244,.94)" font-weight="900">' + escapeHtml(dcs) + '</text>',
       '<path d="M112 226 H648" stroke="rgba(203,213,225,.24)" stroke-width="1.2" stroke-dasharray="6 7" />',
-      '<path d="M112 226 C214 202, 300 246, 382 226 S548 204, 648 226" fill="none" stroke="rgba(125,255,152,.38)" stroke-width="1.4" />',
-      '<circle cx="112" cy="226" r="5" fill="rgba(125,255,152,.20)" stroke="rgba(125,255,152,.72)" />',
-      '<circle cx="382" cy="226" r="5" fill="rgba(125,255,152,.20)" stroke="rgba(125,255,152,.72)" />',
-      '<circle cx="648" cy="226" r="5" fill="rgba(125,255,152,.20)" stroke="rgba(125,255,152,.72)" />',
+      '<path d="M112 226 C214 202, 300 246, 382 226 S548 204, 648 226" fill="none" stroke="' + statusLineStroke + '" stroke-width="1.4" opacity=".76" />',
+      '<circle cx="112" cy="226" r="5" fill="' + statusLineFill + '" stroke="' + statusLineStroke + '" />',
+      '<circle cx="382" cy="226" r="5" fill="' + statusLineFill + '" stroke="' + statusLineStroke + '" />',
+      '<circle cx="648" cy="226" r="5" fill="' + statusLineFill + '" stroke="' + statusLineStroke + '" />',
       '<text x="112" y="244" font-size="10" fill="rgba(203,213,225,.58)" text-anchor="middle">cars</text>',
       '<text x="382" y="244" font-size="10" fill="rgba(203,213,225,.58)" text-anchor="middle">bank groups</text>',
       '<text x="648" y="244" font-size="10" fill="rgba(203,213,225,.58)" text-anchor="middle">integration</text>',
@@ -672,7 +674,7 @@
       '<text x="366" y="337" font-size="9" fill="rgba(203,213,225,.62)" letter-spacing=".7">DESTINATION CONTROL</text>',
       '<text x="498" y="337" font-size="10" fill="rgba(238,255,244,.90)" font-weight="800">' + escapeHtml(dest) + '</text>',
       '</svg>',
-      '<p class="sl-vis-note"><strong>Visual note:</strong> Elevator bank groups are scope markers, not lobby reader counts. Use the visual to compare car readers, actual lobby readers, DCS adders, and integration pressure before final elevator coordination.</p>',
+      '<p class="sl-vis-note"><strong>Visual note:</strong> Elevator bank groups are scope markers, not lobby reader counts. Use the visual to compare car readers, actual lobby readers, DCS reader points, and integration pressure before final elevator coordination.</p>',
       '</div>'
     ].join("");
   }

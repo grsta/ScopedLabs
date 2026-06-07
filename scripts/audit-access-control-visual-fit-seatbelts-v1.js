@@ -187,6 +187,9 @@ check("Special Locking line graph uses dynamic tones", moduleText.includes("tone
 check("Special Locking visual supports item-level exception tones", moduleText.includes("function openingTone(index)") && moduleText.includes("openingTones") && moduleText.includes("miniMetric(\"exceptions\"") && moduleText.includes("hiddenOpeningTone"));
 check("Elevator Reader visual uses CAD elevator and reader primitives", moduleText.includes("function cadElevatorBankIcon") && moduleText.includes("function cadAccessReaderIcon") && moduleText.includes("cadElevatorBankIcon({") && moduleText.includes("cadAccessReaderIcon({"));
 check("Elevator Reader CAD primitives are exported", moduleText.includes("cadElevatorBankIcon,") && moduleText.includes("cadAccessReaderIcon,"));
+check("Elevator Reader status line uses semantic status tone", moduleText.includes("const statusLineStroke = toneStroke(tone)") && moduleText.includes("const statusLineFill = toneFill(tone)") && moduleText.includes("statusLineStroke"));
+check("Elevator Reader bank overflow label stays below bank icons", moduleText.includes("+\' + escapeHtml(Math.round(bankCount - bankVisibleCount)) + \' bank group") && moduleText.includes("y=\"214\""));
+
 console.log("\nAccess Control visual fit seatbelt audit:");
 console.table(rows);
 
