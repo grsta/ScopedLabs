@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-012-special-locking-taller-card";
+  const VERSION = "access-control-planning-visuals-013-special-locking-door-icons";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -361,13 +361,20 @@
     const overridePlan = metrics.overridePlanLabel || metrics.overridePlan || "?";
 
     function openingNode(index) {
-      const x = 76 + (index % 4) * 54;
-      const y = 148 + Math.floor(index / 4) * 48;
+      const x = 74 + (index % 4) * 58;
+      const y = 146 + Math.floor(index / 4) * 50;
+      const label = "OP " + (index + 1);
+
       return [
-        '<g>',
-        '<rect x="' + x + '" y="' + y + '" width="32" height="34" rx="4" fill="rgba(120,255,120,.055)" stroke="rgba(125,255,152,.30)" />',
-        '<path d="M' + (x + 9) + ' ' + (y + 7) + ' V' + (y + 27) + ' H' + (x + 24) + ' V' + (y + 7) + '" fill="none" stroke="rgba(203,213,225,.34)" stroke-width="1" />',
-        '<circle cx="' + (x + 23) + '" cy="' + (y + 18) + '" r="1.7" fill="rgba(125,255,152,.76)" />',
+        '<g aria-label="controlled opening ' + (index + 1) + '">',
+        '<rect x="' + x + '" y="' + y + '" width="40" height="38" rx="5" fill="rgba(120,255,120,.050)" stroke="rgba(125,255,152,.30)" />',
+        '<path d="M' + (x + 10) + ' ' + (y + 30) + ' H' + (x + 30) + '" stroke="rgba(203,213,225,.38)" stroke-width="1" />',
+        '<path d="M' + (x + 12) + ' ' + (y + 30) + ' V' + (y + 9) + ' H' + (x + 27) + '" fill="none" stroke="rgba(203,213,225,.44)" stroke-width="1.2" />',
+        '<path d="M' + (x + 12) + ' ' + (y + 30) + ' L' + (x + 28) + ' ' + (y + 22) + ' V' + (y + 7) + '" fill="none" stroke="rgba(125,255,152,.58)" stroke-width="1.2" />',
+        '<path d="M' + (x + 12) + ' ' + (y + 30) + ' A20 20 0 0 1 ' + (x + 31) + ' ' + (y + 20) + '" fill="none" stroke="rgba(125,255,152,.24)" stroke-width="1" stroke-dasharray="3 4" />',
+        '<rect x="' + (x + 31) + '" y="' + (y + 16) + '" width="4" height="8" rx="1.5" fill="rgba(255,204,102,.24)" stroke="rgba(255,204,102,.62)" />',
+        '<circle cx="' + (x + 27) + '" cy="' + (y + 22) + '" r="1.6" fill="rgba(125,255,152,.78)" />',
+        '<text x="' + (x + 20) + '" y="' + (y + 47) + '" font-size="7.5" fill="rgba(203,213,225,.58)" text-anchor="middle">' + label + '</text>',
         '</g>'
       ].join('');
     }
