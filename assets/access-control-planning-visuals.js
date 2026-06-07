@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-031-special-locking-watch-source";
+  const VERSION = "access-control-planning-visuals-032-special-locking-dynamic-path-colors";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -447,6 +447,14 @@
       : tone === "watch"
         ? "rgba(255,220,130,.84)"
         : "rgba(125,255,152,.72)";
+    const pathTone = releaseCheckToneList.includes("risk")
+      ? "risk"
+      : releaseCheckToneList.includes("watch")
+        ? "watch"
+        : pressureTone;
+    const openingNodeTone = pressureTone;
+    const egressNodeTone = egressTone;
+    const releaseNodeTone = releaseTone;
 
     return [
       '<div class="access-control-planning-visual-shell" data-access-control-modern-visual="special-locking-scope">',
@@ -472,10 +480,10 @@
       '<text x="198" y="148" font-size="10.5" fill="rgba(238,255,244,.90)" font-weight="800">' + escapeHtml(String(openings)) + ' flagged</text>',
 
       '<path d="M92 276 H308" stroke="rgba(203,213,225,.22)" stroke-width="1.2" stroke-dasharray="6 7" />',
-      '<path d="M92 276 C154 256, 246 296, 308 276" fill="none" stroke="rgba(125,255,152,.34)" stroke-width="1.3" />',
-      '<circle cx="92" cy="276" r="4.8" fill="rgba(125,255,152,.18)" stroke="rgba(125,255,152,.70)" />',
-      '<circle cx="200" cy="276" r="4.8" fill="rgba(255,204,102,.14)" stroke="rgba(255,204,102,.58)" />',
-      '<circle cx="308" cy="276" r="4.8" fill="rgba(255,105,105,.12)" stroke="rgba(255,105,105,.50)" />',
+      '<path d="M92 276 C154 256, 246 296, 308 276" fill="none" stroke="' + toneStroke(pathTone) + '" stroke-width="1.3" opacity=".72" />',
+      '<circle cx="92" cy="276" r="4.8" fill="' + toneFill(openingNodeTone) + '" stroke="' + toneStroke(openingNodeTone) + '" />',
+      '<circle cx="200" cy="276" r="4.8" fill="' + toneFill(egressNodeTone) + '" stroke="' + toneStroke(egressNodeTone) + '" />',
+      '<circle cx="308" cy="276" r="4.8" fill="' + toneFill(releaseNodeTone) + '" stroke="' + toneStroke(releaseNodeTone) + '" />',
       '<text x="92" y="294" font-size="9.5" fill="rgba(203,213,225,.56)" text-anchor="middle">opening</text>',
       '<text x="200" y="294" font-size="9.5" fill="rgba(203,213,225,.56)" text-anchor="middle">egress</text>',
       '<text x="308" y="294" font-size="9.5" fill="rgba(203,213,225,.56)" text-anchor="middle">release</text>',
