@@ -65,7 +65,10 @@ const elevatorVisualEnd = visuals.indexOf("function renderElevatorReader", eleva
 const elevatorVisualBlock = elevatorVisualStart >= 0 && elevatorVisualEnd > elevatorVisualStart ? visuals.slice(elevatorVisualStart, elevatorVisualEnd) : "";
 
 check("Elevator Reader visual uses status-colored line graph", elevatorVisualBlock.includes("const statusLineStroke = toneStroke(tone)") && elevatorVisualBlock.includes("const statusLineFill = toneFill(tone)") && elevatorVisualBlock.includes("statusLineStroke") && !elevatorVisualBlock.includes('stroke="rgba(125,255,152,.38)"'));
-check("Elevator Reader keeps bank overflow label below icon row", elevatorVisualBlock.includes("bank group") && elevatorVisualBlock.includes("y=\"214\""));
+check("Elevator Reader visual uses dynamic bank/location labels", elevatorVisualBlock.includes("const elevatorGroupLabel") && elevatorVisualBlock.includes("ELEVATOR / LOCATION") && elevatorVisualBlock.includes("ELEVATOR LOCATIONS") && elevatorVisualBlock.includes("ELEVATOR BANK GROUPS"));
+check("Elevator Reader visual has compact DCS bottom chip label", elevatorVisualBlock.includes("const compactDcsModeLabel") && elevatorVisualBlock.includes("DCS MODE") && elevatorVisualBlock.includes("No DCS / call buttons"));
+check("Elevator Reader keeps bank overflow label below icon row", elevatorVisualBlock.includes("elevatorOverflowLabel") && elevatorVisualBlock.includes('x="520" y="174"') && elevatorVisualBlock.includes('text-anchor="middle"'));
+check("Elevator Reader keeps bank overflow label below icon row", elevatorVisualBlock.includes("bank group") && elevatorVisualBlock.includes("y=\"174\""));
 
 
 check("Elevator Reader script renders through shared visual module", script.includes("ScopedLabsAccessControlPlanningVisuals") && script.includes("renderElevatorReader"));
