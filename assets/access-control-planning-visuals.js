@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-027-special-locking-cluster-helper";
+  const VERSION = "access-control-planning-visuals-023-special-locking-opening-count-icons";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -399,7 +399,6 @@
     const tone = statusTone(metrics.status || metrics.authorityLevel);
     const statusText = statusLabel(metrics.status || metrics.authorityLevel);
     const openings = Math.max(0, Number(metrics.openingCount || 0));
-    const openingCount = Math.round(openings);
     const riskScore = Math.max(0, Number(metrics.riskScore || 0));
     const pressure = clamp(riskScore / 100, 0.04, 1);
     const pressureTone = riskScore >= 75 ? "risk" : riskScore >= 45 ? "watch" : "safe";
@@ -422,28 +421,6 @@
       ? '<text x="198" y="164" font-size="9" fill="rgba(255,220,130,.82)" font-weight="800">+' + escapeHtml(String(hiddenOpenings)) + ' more</text>'
       : "";
 
-
-    function specialLockingOpeningCluster() {
-      const shown = Math.max(0, Math.min(4, openingCount));
-      const hidden = Math.max(0, openingCount - shown);
-      const icons = Array.from({ length: shown }, (_, index) => {
-        const col = index % 2;
-        const row = Math.floor(index / 2);
-
-        return cadControlledDoorOpeningIcon({
-          x: 76 + col * 52,
-          y: 154 + row * 48,
-          scale: 0.40,
-          tone: pressureTone
-        });
-      }).join("");
-
-      const overflow = hidden > 0
-        ? '<text x="198" y="166" font-size="9" fill="rgba(255,220,130,.82)" font-weight="800">+' + escapeHtml(String(hidden)) + ' more</text>'
-        : "";
-
-      return icons + overflow;
-    }
     return [
         '<g>',
         '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="42" rx="9" fill="' + toneFill(toneName || "safe") + '" stroke="' + toneStroke(toneName || "safe") + '" />',
@@ -482,7 +459,8 @@
 
       '<rect x="52" y="108" width="300" height="252" rx="12" fill="rgba(0,0,0,.13)" stroke="rgba(120,255,120,.10)" />',
       '<text x="70" y="132" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">FLAGGED OPENINGS</text>',
-      specialLockingOpeningCluster(),
+      openingIcons,
+      openingOverflow,
       '<text x="198" y="132" font-size="8" fill="rgba(203,213,225,.58)" letter-spacing=".65">CONTROLLED OPENINGS</text>',
       '<text x="198" y="148" font-size="10.5" fill="rgba(238,255,244,.90)" font-weight="800">' + escapeHtml(String(openings)) + ' flagged</text>',
 
