@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-018-special-locking-icon-smaller";
+  const VERSION = "access-control-planning-visuals-019-special-locking-compact-door-icon";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -463,9 +463,9 @@
 
       '<rect x="52" y="108" width="300" height="252" rx="12" fill="rgba(0,0,0,.13)" stroke="rgba(120,255,120,.10)" />',
       '<text x="70" y="132" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">FLAGGED OPENINGS</text>',
-      cadControlledDoorOpeningIcon({ x: 112, y: 170, scale: 0.76, tone: pressureTone }),
-      '<text x="182" y="160" font-size="7.8" fill="rgba(203,213,225,.58)" letter-spacing=".65">CONTROLLED OPENING</text>',
-      '<text x="182" y="175" font-size="10.2" fill="rgba(238,255,244,.90)" font-weight="800">' + escapeHtml(String(openings)) + ' flagged</text>',
+      cadControlledDoorOpeningIcon({ x: 124, y: 176, scale: 0.58, tone: pressureTone }),
+      '<text x="218" y="164" font-size="8" fill="rgba(203,213,225,.58)" letter-spacing=".65">CONTROLLED OPENING</text>',
+      '<text x="218" y="180" font-size="10.5" fill="rgba(238,255,244,.90)" font-weight="800">' + escapeHtml(String(openings)) + ' flagged</text>',
       openings > shownOpenings ? '<text x="292" y="178" font-size="11" fill="rgba(203,213,225,.66)">+' + escapeHtml(Math.round(openings - shownOpenings)) + '</text>' : '',
 
       '<path d="M92 276 H308" stroke="rgba(203,213,225,.22)" stroke-width="1.2" stroke-dasharray="6 7" />',
