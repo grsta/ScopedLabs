@@ -49,6 +49,7 @@ check("Elevator Reader keeps category nav", html.includes('data-access-control-c
 check("Elevator Reader imports Scope Planner seed", html.includes("/assets/access-control-scope-state.js") && html.includes('id="scopeSeedContextCard"') && script.includes("applyElevatorReaderScopeSeed") && script.includes("ELEVATOR_READER_SEED_KEY"));
 check("Elevator Reader has topology-driven reader count inputs", html.includes('id="topology"') && html.includes("Bank / Location Count") && html.includes("Cars / Cabs per Bank or Location"));
 check("Elevator Reader calculates total cars from topology model", script.includes("carsPerGroup") && script.includes("scopeCountInput") && script.includes("const cars = carsPerGroup * banks"));
+check("Elevator Reader treats DCS as count driver", html.includes('id="dcsMode"') && html.includes('id="dcsCredentialPoints"') && script.includes("defaultElevatorDcsCredentialPoints") && script.includes("const dcsAdd = dcsCredentialPoints"));
 
 check("Elevator Reader has flow actions before metadata", html.indexOf('id="accessControlFlowActions"') > -1 && html.indexOf('id="reportMetadataMount"') > html.indexOf('id="accessControlFlowActions"'));
 check("Elevator Reader report actions are metadata/dropdown owned", html.includes('data-report-actions') && script.includes("placeElevatorReaderReportActions"));
@@ -71,7 +72,7 @@ check("Elevator Reader removed Chart.js CDN", !html.includes("chart.js"));
 check("Elevator Reader removed canvas chart", !html.includes("<canvas") && html.includes('class="access-control-output-visual"'));
 check("Elevator Reader removed legacy Chart.js renderer", !script.includes("new Chart(") && !script.includes("function renderChart("));
 check("Elevator Reader keeps canonical export engine", html.includes("/assets/export.js?v=shared-export-030-semantic-report-tones"));
-check("Elevator Reader local script cache is modernized", html.includes("./script.js?v=access-control-elevator-reader-output-contract-024-topology"));
+check("Elevator Reader local script cache is modernized", html.includes("./script.js?v=access-control-elevator-reader-output-contract-025-dcs-driver"));
 
 console.log("\nAccess Control Elevator Reader module audit:");
 console.table(rows);

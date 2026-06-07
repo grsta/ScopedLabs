@@ -16,6 +16,8 @@
     cars: $("cars"),
     banks: $("banks"),
     floors: $("floors"),
+    dcsMode: $("dcsMode"),
+    dcsCredentialPoints: $("dcsCredentialPoints"),
     dest: $("dest"),
     placement: $("placement"),
     scopeSeedContextCard: $("scopeSeedContextCard"),
@@ -75,6 +77,8 @@
       topology: elevatorTopologyLabel(seed.topology),
       contract: seed.contract || ELEVATOR_READER_SEED_CONTRACT,
       topology: normalizeElevatorTopology(seed.topology),
+      dcsMode: normalizeElevatorDcsMode(seed.dcsMode || seed.dest),
+      dcsCredentialPoints: Math.max(0, Math.round(Number(seed.dcsCredentialPoints || 0) || 0)),
       cars: Math.max(0, Math.round(Number(seed.cars || 0) || 0)),
       banks: Math.max(1, Math.round(Number(seed.banks || 1) || 1)),
       floors: Math.max(0, Math.round(Number(seed.floors || 0) || 0)),
@@ -166,7 +170,8 @@
       ["Bank / Location Count", String(seed.banks ?? "")],
       ["Cars / Cabs per Bank or Location", String(seed.cars ?? "")],
       ["Secured Floors Served", String(seed.floors ?? "")],
-      ["Destination Control", labels.dest],
+      ["DCS Mode", elevatorDcsModeLabel(seed.dcsMode || seed.dest)],
+      ["DCS Credential Points", String(seed.dcsCredentialPoints ?? 0)],
       ["Reader Placement", labels.placement],
       ["Tenant Separation", labels.tenantSeparation],
       ["Override", labels.emergencyOverride],
@@ -196,6 +201,8 @@
     if (els.cars) els.cars.value = String(seed.cars || 0);
     if (els.banks) els.banks.value = String(seed.banks || 1);
     if (els.floors) els.floors.value = String(seed.floors || 0);
+    setSelectValue(els.dcsMode, seed.dcsMode || seed.dest);
+    if (els.dcsCredentialPoints) els.dcsCredentialPoints.value = String(seed.dcsCredentialPoints || defaultElevatorDcsCredentialPoints({ dcsMode: seed.dcsMode || seed.dest, topology: seed.topology, banks: seed.banks }));
     setSelectValue(els.dest, seed.dest);
     setSelectValue(els.placement, seed.placement);
 
@@ -620,7 +627,8 @@
       { group: "Scope", metric: "Topology / Count / Floors", value: metrics.topologyLabel + " / " + metrics.banks + " / " + metrics.floors, note: "Topology, bank/location count, and secured floors used for reader-count planning magnitude." },
       { group: "Pressure", metric: "Complexity Index", value: metrics.complexityIndex, note: "Used to flag elevator coordination and integration pressure." },
       { group: "Decision", metric: "Placement", value: metrics.placementLabel, note: metrics.guidance },
-      { group: "Decision", metric: "Destination Control", value: metrics.destLabel, note: metrics.insight }
+      { group: "Decision", metric: "DCS Mode", value: metrics.dcsModeLabel, note: metrics.insight },
+      { group: "Decision", metric: "DCS Credential Points", value: String(metrics.dcsCredentialPoints || 0), note: "DCS capture points are counted as reader/authentication points rather than a flat yes/no adder." }
     ];
 
     schedule.render({
@@ -696,6 +704,8 @@
           complexityIndex: metrics.complexityIndex,
           placement: metrics.placementLabel,
           topology: metrics.topologyLabel,
+          dcsMode: metrics.dcsModeLabel,
+          dcsCredentialPoints: metrics.dcsCredentialPoints,
           destinationControl: metrics.destLabel,
           scopeSeed: activeElevatorSeedContext ? { scopeId: activeElevatorSeedContext.scopeId, scopeName: activeElevatorSeedContext.scopeName, source: activeElevatorSeedContext.source } : null
         }
@@ -742,7 +752,8 @@
         { label: "Cars / Cabs per Bank or Location", value: String(els.cars.value) },
         { label: "Bank / Location Count", value: String(els.banks.value) },
         { label: "Secured Floors Served", value: String(els.floors.value) },
-        { label: "Destination Control System?", value: els.dest.options[els.dest.selectedIndex]?.text || els.dest.value },
+        { label: "DCS Mode", value: els.dcsMode?.options[els.dcsMode.selectedIndex]?.text || els.dcsMode?.value || "No DCS" },
+        { label: "DCS Credential Capture Points", value: String(els.dcsCredentialPoints?.value || 0) },
         { label: "Reader Placement", value: els.placement.options[els.placement.selectedIndex]?.text || els.placement.value }
       ],
       outputs,
@@ -1127,6 +1138,38 @@
     return "Single elevator bank";
   }
 
+
+  function normalizeElevatorDcsMode(value) {
+    const raw = String(value || "").trim();
+    if (raw === "yes") return "per-bank";
+    if (raw === "no") return "no-dcs";
+    return ["no-dcs", "shared-bank", "per-bank", "separate-location", "mixed-custom"].includes(raw) ? raw : "no-dcs";
+  }
+
+  function isElevatorDcsEnabled(value) {
+    return normalizeElevatorDcsMode(value) !== "no-dcs";
+  }
+
+  function elevatorDcsModeLabel(value) {
+    const mode = normalizeElevatorDcsMode(value);
+    if (mode === "shared-bank") return "Shared lobby dispatch for this bank";
+    if (mode === "per-bank") return "Per-bank dispatch terminals";
+    if (mode === "separate-location") return "Separate-location dispatch terminals";
+    if (mode === "mixed-custom") return "Mixed / custom DCS credential points";
+    return "No DCS / traditional elevator call buttons";
+  }
+
+  function defaultElevatorDcsCredentialPoints(options = {}) {
+    const mode = normalizeElevatorDcsMode(options.dcsMode);
+    const banks = Math.max(1, Math.round(Number(options.banks || 1) || 1));
+
+    if (mode === "no-dcs") return 0;
+    if (mode === "shared-bank") return 1;
+    if (mode === "per-bank") return banks;
+    if (mode === "separate-location") return banks;
+    return 0;
+  }
+
   function getPerBankReaders(floors) {
     return floors > 12 ? 2 : 1;
   }
@@ -1176,7 +1219,10 @@
     const banks = topology === "single-bank" ? 1 : scopeCountInput;
     const cars = carsPerGroup * banks;
     const floors = Math.max(0, Math.floor(n("floors")));
-    const dest = els.dest.value;
+    const dcsMode = normalizeElevatorDcsMode(els.dcsMode?.value || els.dest?.value);
+    const dcsCredentialPointsInput = Math.max(0, Math.floor(n("dcsCredentialPoints")));
+    const dcsCredentialPoints = isElevatorDcsEnabled(dcsMode) ? (dcsCredentialPointsInput > 0 ? dcsCredentialPointsInput : defaultElevatorDcsCredentialPoints({ dcsMode, topology, banks })) : 0;
+    const dest = isElevatorDcsEnabled(dcsMode) ? "yes" : "no";
     const placement = els.placement.value;
 
     if (cars <= 0) {
@@ -1190,11 +1236,14 @@
       updateExportControls();
       return;
     }
-
     let carReaders = 0;
     let lobbyReaders = 0;
 
-    if (placement === "car") {
+    if (dest === "yes") {
+      if (placement === "car" || placement === "both") {
+        carReaders = cars;
+      }
+    } else if (placement === "car") {
       carReaders = cars;
     } else if (placement === "lobby") {
       lobbyReaders = banks * getPerBankReaders(floors);
@@ -1203,23 +1252,14 @@
       lobbyReaders = banks * getPerBankReaders(floors);
     }
 
-    let dcsAdd = 0;
-
-    if (dest === "yes") {
-      if (placement === "lobby" || placement === "both") {
-        dcsAdd = banks;
-      } else {
-        dcsAdd = Math.max(1, Math.round(banks * 0.5));
-      }
-    }
-
+    const dcsAdd = dcsCredentialPoints;
     const totalReaders = carReaders + lobbyReaders + dcsAdd;
 
     const complexityIndex = Math.round(
       totalReaders +
       floors * 1.5 +
       banks * 4 +
-      (dest === "yes" ? 12 : 0) +
+      (dest === "yes" ? 8 + dcsCredentialPoints * 2 : 0) +
       (placement === "both" ? 10 : placement === "lobby" ? 4 : 0)
     );
 
@@ -1233,11 +1273,12 @@
       row("Cars / Cabs per Bank or Location", carsPerGroup),
       row("Total Cars / Cabs", cars),
       row("Secured Floors Served", floors),
-      row("Destination Control", dest === "yes" ? "YES" : "NO"),
+      row("DCS Mode", elevatorDcsModeLabel(dcsMode)),
+      row("DCS Credential Points", dcsCredentialPoints),
       row("Placement", placement.toUpperCase()),
       row("Car Readers (est.)", carReaders),
       row("Lobby Readers (est.)", lobbyReaders),
-      row("DCS Adders (est.)", dcsAdd),
+      row("DCS Readers (est.)", dcsAdd),
       row("Estimated Total Readers", totalReaders),
       row("Planning Complexity", complexityIndex),
       row("System Status", status),
@@ -1252,8 +1293,11 @@
       cars,
       banks,
       floors,
+      dcsMode,
+      dcsModeLabel: elevatorDcsModeLabel(dcsMode),
+      dcsCredentialPoints,
       dest,
-      destLabel: els.dest.options[els.dest.selectedIndex]?.text || dest,
+      destLabel: elevatorDcsModeLabel(dcsMode),
       placement,
       placementLabel: els.placement.options[els.placement.selectedIndex]?.text || placement,
       totalReaders,
@@ -1297,6 +1341,8 @@
     if (els.cars) els.cars.value = 3;
     if (els.banks) els.banks.value = 2;
     if (els.floors) els.floors.value = 8;
+    if (els.dcsMode) els.dcsMode.value = "no-dcs";
+    if (els.dcsCredentialPoints) els.dcsCredentialPoints.value = "0";
     if (els.dest) els.dest.value = "no";
     if (els.placement) els.placement.value = "car";
 

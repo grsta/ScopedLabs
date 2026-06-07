@@ -11,7 +11,7 @@
   />
   <meta name="robots" content="noindex,follow" />
 
-  <link rel="stylesheet" href="/assets/style.css?v=access-control-elevator-reader-output-contract-024-topology" />
+  <link rel="stylesheet" href="/assets/style.css?v=access-control-elevator-reader-output-contract-025-dcs-driver" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -231,11 +231,18 @@
         </label>
 
         <label class="field">
-          <span class="label">Destination Control System?</span>
-          <select id="dest">
-            <option value="no" selected>No (traditional buttons)</option>
-            <option value="yes">Yes (DCS / kiosks)</option>
+          <span class="label">Destination Dispatch / DCS Mode</span>
+          <select id="dcsMode">
+            <option value="no-dcs" selected>No DCS / traditional elevator call buttons</option>
+            <option value="shared-bank">Shared lobby dispatch for this bank</option>
+            <option value="per-bank">Per-bank dispatch terminals</option>
+            <option value="separate-location">Separate-location dispatch terminals</option>
+            <option value="mixed-custom">Mixed / custom DCS credential points</option>
           </select>
+        </label>
+        <label class="field">
+          <span class="label">DCS Credential Capture Points</span>
+          <input id="dcsCredentialPoints" type="number" min="0" step="1" value="0" />
         </label>
 
         <label class="field">
@@ -343,7 +350,7 @@
       window.ScopedLabsReportMetadata.init(document);
     }
   </script>
-  <script src="./script.js?v=access-control-elevator-reader-output-contract-024-topology"></script>
+  <script src="./script.js?v=access-control-elevator-reader-output-contract-025-dcs-driver"></script>
   <script src="/assets/access-control-category-nav.js?v=access-control-category-nav-001-tool-path"></script>
   <script src="/assets/access-control-tool-polish.js?v=access-control-tool-polish-010-page-chrome-pill-cleanup"></script>
   <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>

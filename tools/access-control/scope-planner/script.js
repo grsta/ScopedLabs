@@ -15,6 +15,8 @@
     elevatorCars: $("elevatorCars"),
     elevatorBanks: $("elevatorBanks"),
     elevatorSecuredFloors: $("elevatorSecuredFloors"),
+    elevatorDcsMode: $("elevatorDcsMode"),
+    elevatorDcsCredentialPoints: $("elevatorDcsCredentialPoints"),
     elevatorDestinationControl: $("elevatorDestinationControl"),
     elevatorReaderPlacement: $("elevatorReaderPlacement"),
     elevatorTenantSeparation: $("elevatorTenantSeparation"),
@@ -308,6 +310,29 @@
     return "Single elevator bank";
   }
 
+
+  function normalizeElevatorDcsMode(value) {
+    const raw = String(value || "").trim();
+    if (raw === "yes") return "per-bank";
+    if (raw === "no") return "no-dcs";
+    return ["no-dcs", "shared-bank", "per-bank", "separate-location", "mixed-custom"].includes(raw) ? raw : "no-dcs";
+  }
+
+  function elevatorDcsModeToDest(value) {
+    return normalizeElevatorDcsMode(value) === "no-dcs" ? "no" : "yes";
+  }
+
+  function defaultElevatorDcsCredentialPoints(mode, topology, banks) {
+    const dcsMode = normalizeElevatorDcsMode(mode);
+    const count = Math.max(1, Math.round(Number(banks || 1) || 1));
+
+    if (dcsMode === "no-dcs") return 0;
+    if (dcsMode === "shared-bank") return 1;
+    if (dcsMode === "per-bank") return count;
+    if (dcsMode === "separate-location") return count;
+    return 0;
+  }
+
   function defaultElevatorReaderSeedFromScope(scope = {}) {
     const highSecurity = scope.securityLevel === "high" || scope.securityLevel === "critical";
     const traffic = scope.trafficLevel || "normal";
@@ -318,7 +343,9 @@
       cars: Math.max(1, Number(scope.elevatorCars || scope.cars || 4) || 4),
       banks: Math.max(1, Number(scope.elevatorBanks || scope.banks || 1) || 1),
       floors: Math.max(0, Number(scope.elevatorSecuredFloors || scope.floors || (highSecurity ? 2 : 6)) || 0),
-      dest: scope.elevatorDestinationControl || (traffic === "high" || traffic === "very-high" ? "yes" : "no"),
+      dcsMode: normalizeElevatorDcsMode(scope.elevatorDcsMode || scope.elevatorDestinationControl || (traffic === "high" || traffic === "very-high" ? "per-bank" : "no-dcs")),
+      dcsCredentialPoints: Math.max(0, Number(scope.elevatorDcsCredentialPoints || scope.dcsCredentialPoints || 0) || 0),
+      dest: elevatorDcsModeToDest(scope.elevatorDcsMode || scope.elevatorDestinationControl || (traffic === "high" || traffic === "very-high" ? "per-bank" : "no-dcs")),
       placement: scope.elevatorReaderPlacement || (highSecurity ? "both" : "car"),
       tenantSeparation: scope.elevatorTenantSeparation || (scope.scopeType === "elevator-bank" ? "review" : "none"),
       emergencyOverride: scope.elevatorEmergencyOverride || "review",
@@ -334,7 +361,9 @@
       cars: Math.max(0, Math.round(Number(els.elevatorCars?.value || seed.cars || 0) || 0)),
       banks: Math.max(1, Math.round(Number(els.elevatorBanks?.value || seed.banks || 1) || 1)),
       floors: Math.max(0, Math.round(Number(els.elevatorSecuredFloors?.value || seed.floors || 0) || 0)),
-      dest: els.elevatorDestinationControl?.value || seed.dest,
+      dcsMode: normalizeElevatorDcsMode(els.elevatorDcsMode?.value || seed.dcsMode || seed.dest),
+      dcsCredentialPoints: Math.max(0, Math.round(Number(els.elevatorDcsCredentialPoints?.value || seed.dcsCredentialPoints || defaultElevatorDcsCredentialPoints(els.elevatorDcsMode?.value || seed.dcsMode, seed.topology, seed.banks)) || 0)),
+      dest: elevatorDcsModeToDest(els.elevatorDcsMode?.value || seed.dcsMode || seed.dest),
       placement: els.elevatorReaderPlacement?.value || seed.placement,
       tenantSeparation: els.elevatorTenantSeparation?.value || seed.tenantSeparation,
       emergencyOverride: els.elevatorEmergencyOverride?.value || seed.emergencyOverride,
@@ -350,7 +379,9 @@
     if (els.elevatorCars) els.elevatorCars.value = String(seed.cars || 4);
     if (els.elevatorBanks) els.elevatorBanks.value = String(seed.banks || 1);
     if (els.elevatorSecuredFloors) els.elevatorSecuredFloors.value = String(seed.floors || 0);
-    if (els.elevatorDestinationControl) els.elevatorDestinationControl.value = seed.dest || "no";
+    if (els.elevatorDcsMode) els.elevatorDcsMode.value = normalizeElevatorDcsMode(seed.dcsMode || seed.dest);
+    if (els.elevatorDcsCredentialPoints) els.elevatorDcsCredentialPoints.value = String(seed.dcsCredentialPoints || defaultElevatorDcsCredentialPoints(seed.dcsMode || seed.dest, seed.topology, seed.banks));
+    if (els.elevatorDestinationControl) els.elevatorDestinationControl.value = elevatorDcsModeToDest(seed.dcsMode || seed.dest);
     if (els.elevatorReaderPlacement) els.elevatorReaderPlacement.value = seed.placement || "car";
     if (els.elevatorTenantSeparation) els.elevatorTenantSeparation.value = seed.tenantSeparation || "none";
     if (els.elevatorEmergencyOverride) els.elevatorEmergencyOverride.value = seed.emergencyOverride || "review";
@@ -380,7 +411,9 @@
       elevatorTopology: seed.topology,
       elevatorCars: seed.cars,
       elevatorBanks: seed.banks,
-      elevatorSecuredFloors: seed.floors
+      elevatorSecuredFloors: seed.floors,
+      elevatorDcsMode: seed.dcsMode,
+      elevatorDcsCredentialPoints: seed.dcsCredentialPoints
     };
   }
 
@@ -1145,6 +1178,16 @@
       if (els.elevatorTopology.value === "separate-elevators" && els.elevatorCars && Number(els.elevatorCars.value || 0) > 1) {
         els.elevatorCars.value = "1";
       }
+    });
+  }
+
+  if (els.elevatorDcsMode) {
+    els.elevatorDcsMode.addEventListener("change", () => {
+      if (!els.elevatorDcsCredentialPoints) return;
+      const current = Number(els.elevatorDcsCredentialPoints.value || 0) || 0;
+      if (current > 0) return;
+      const banks = Number(els.elevatorBanks?.value || 1) || 1;
+      els.elevatorDcsCredentialPoints.value = String(defaultElevatorDcsCredentialPoints(els.elevatorDcsMode.value, els.elevatorTopology?.value, banks));
     });
   }
 
