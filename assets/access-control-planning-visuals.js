@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-019-special-locking-compact-door-icon";
+  const VERSION = "access-control-planning-visuals-021-special-locking-renderer-repair";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -409,20 +409,6 @@
     const authorityReview = metrics.authorityReviewLabel || metrics.authorityReview || "?";
     const overridePlan = metrics.overridePlanLabel || metrics.overridePlan || "?";
 
-    function openingNode(index) {
-      const x = 72 + (index % 4) * 62;
-      const y = 140 + Math.floor(index / 4) * 56;
-      const label = "OP " + (index + 1);
-
-      return cadControlledDoorOpeningIcon({
-        x,
-        y,
-        scale: 0.72,
-        label,
-        tone: pressureTone
-      });
-    }
-
     function authorityBlock(label, value, x, y, w, toneName) {
       return [
         '<g>',
@@ -430,7 +416,7 @@
         '<text x="' + (x + 12) + '" y="' + (y + 15) + '" font-size="8.5" fill="rgba(203,213,225,.66)" letter-spacing=".7">' + escapeHtml(label).toUpperCase() + '</text>',
         '<text x="' + (x + 12) + '" y="' + (y + 31) + '" font-size="10.5" fill="rgba(238,255,244,.92)" font-weight="750">' + escapeHtml(value) + '</text>',
         '</g>'
-      ].join('');
+      ].join("");
     }
 
     function miniMetric(label, value, x, y, w, toneName) {
@@ -440,10 +426,9 @@
         '<text x="' + (x + 10) + '" y="' + (y + 12) + '" font-size="8.5" fill="rgba(203,213,225,.62)" letter-spacing=".65">' + escapeHtml(label).toUpperCase() + '</text>',
         '<text x="' + (x + 10) + '" y="' + (y + 24) + '" font-size="10.5" fill="rgba(238,255,244,.92)" font-weight="800">' + escapeHtml(value) + '</text>',
         '</g>'
-      ].join('');
+      ].join("");
     }
 
-    const shownOpenings = Math.max(1, Math.min(8, Math.round(openings || 1)));
     const releaseTone = String(metrics.releaseLogic || "").includes("needed") ? "watch" : "safe";
     const reviewTone = String(metrics.authorityReview || "").includes("required") ? "risk" : String(metrics.authorityReview || "").includes("likely") ? "watch" : "safe";
     const overrideTone = String(metrics.overridePlan || "").includes("missing") ? "risk" : String(metrics.overridePlan || "").includes("partial") ? "watch" : "safe";
@@ -452,10 +437,10 @@
     return [
       '<div class="access-control-planning-visual-shell" data-access-control-modern-visual="special-locking-scope">',
       '<svg viewBox="0 0 760 470" role="img" aria-label="Special locking authority review pressure visual" xmlns="http://www.w3.org/2000/svg">',
-      '<defs><pattern id="accGridSpecialLockingV11" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="rgba(120,255,120,.040)" stroke-width="1"/></pattern></defs>',
+      '<defs><pattern id="accGridSpecialLockingV21" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="rgba(120,255,120,.040)" stroke-width="1"/></pattern></defs>',
 
       '<rect x="24" y="24" width="712" height="424" rx="16" fill="rgba(0,0,0,.10)" stroke="rgba(120,255,120,.12)" />',
-      '<rect x="36" y="36" width="688" height="400" rx="12" fill="url(#accGridSpecialLockingV11)" stroke="rgba(120,255,120,.07)" />',
+      '<rect x="36" y="36" width="688" height="400" rx="12" fill="url(#accGridSpecialLockingV21)" stroke="rgba(120,255,120,.07)" />',
 
       '<text x="52" y="62" font-size="11" fill="rgba(180,255,200,.68)" letter-spacing="1.4">SPECIAL LOCKING / HIGH-SECURITY SCOPE</text>',
       '<text x="52" y="84" font-size="18" fill="rgba(246,255,248,.96)" font-weight="650">Authority review and release coordination</text>',
@@ -463,10 +448,10 @@
 
       '<rect x="52" y="108" width="300" height="252" rx="12" fill="rgba(0,0,0,.13)" stroke="rgba(120,255,120,.10)" />',
       '<text x="70" y="132" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">FLAGGED OPENINGS</text>',
-      cadControlledDoorOpeningIcon({ x: 124, y: 176, scale: 0.58, tone: pressureTone }),
-      '<text x="218" y="164" font-size="8" fill="rgba(203,213,225,.58)" letter-spacing=".65">CONTROLLED OPENING</text>',
-      '<text x="218" y="180" font-size="10.5" fill="rgba(238,255,244,.90)" font-weight="800">' + escapeHtml(String(openings)) + ' flagged</text>',
-      openings > shownOpenings ? '<text x="292" y="178" font-size="11" fill="rgba(203,213,225,.66)">+' + escapeHtml(Math.round(openings - shownOpenings)) + '</text>' : '',
+      openings > 0 ? cadControlledDoorOpeningIcon({ x: 72, y: 112, scale: 0.46, tone: pressureTone }) : '',
+      openings > 1 ? cadControlledDoorOpeningIcon({ x: 126, y: 112, scale: 0.46, tone: pressureTone }) : '',
+      '<text x="198" y="132" font-size="8" fill="rgba(203,213,225,.58)" letter-spacing=".65">CONTROLLED OPENINGS</text>',
+      '<text x="198" y="148" font-size="10.5" fill="rgba(238,255,244,.90)" font-weight="800">' + escapeHtml(String(openings)) + ' flagged</text>',
 
       '<path d="M92 276 H308" stroke="rgba(203,213,225,.22)" stroke-width="1.2" stroke-dasharray="6 7" />',
       '<path d="M92 276 C154 256, 246 296, 308 276" fill="none" stroke="rgba(125,255,152,.34)" stroke-width="1.3" />',
@@ -496,6 +481,7 @@
       '</div>'
     ].join("");
   }
+
   function renderSpecialLocking(options = {}) {
     return show(options, buildSpecialLockingSvg(options.metrics || {}));
   }
