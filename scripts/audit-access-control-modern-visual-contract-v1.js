@@ -28,7 +28,7 @@ function moduleParses(text) {
   }
 }
 
-const version = 'access-control-planning-visuals-026-special-locking-cache-refresh';
+const version = 'access-control-planning-visuals-027-special-locking-cluster-helper';
 const visualModule = read('assets/access-control-planning-visuals.js');
 
 check('Planning visual module exists', exists('assets/access-control-planning-visuals.js'));
