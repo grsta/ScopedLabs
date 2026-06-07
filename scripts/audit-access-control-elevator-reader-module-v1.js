@@ -48,9 +48,10 @@ check("Elevator Reader keeps KB top anchor", html.includes('id="flow-note"'));
 check("Elevator Reader keeps category nav", html.includes('data-access-control-category-nav="true"') && html.includes("/assets/access-control-category-nav.js"));
 check("Elevator Reader imports Scope Planner seed", html.includes("/assets/access-control-scope-state.js") && html.includes('id="scopeSeedContextCard"') && script.includes("applyElevatorReaderScopeSeed") && script.includes("ELEVATOR_READER_SEED_KEY"));
 check("Elevator Reader has topology-driven reader count inputs", html.includes('id="topology"') && html.includes("Bank / Location Count") && html.includes("Cars / Cabs per Bank or Location"));
-check("Elevator Reader calculates total cars from topology model", script.includes("carsPerGroup") && script.includes("scopeCountInput") && script.includes("const cars = carsPerGroup * banks"));
+check("Elevator Reader calculates total cars from topology model", script.includes("carsPerGroup") && script.includes("scopeCountInput") && script.includes("bankedCars") && script.includes("separateCars") && script.includes("const cars = isMixedTopology ? bankedCars + separateCars : carsPerGroup * banks"));
 check("Elevator Reader auto-sets single-bank count to one", html.includes("Single elevator bank (count auto-set to 1)") && script.includes("function syncElevatorTopologyControls") && script.includes("els.banks.readOnly = isSingleBank"));
 check("Elevator Reader treats DCS as count driver", html.includes('id="dcsMode"') && html.includes('id="dcsCredentialPoints"') && script.includes("defaultElevatorDcsCredentialPoints") && script.includes("const dcsAdd = dcsCredentialPoints"));
+check("Elevator Reader supports mixed bank and separate-location drivers", html.includes('id="mixedBankGroups"') && html.includes('id="mixedSeparateLocations"') && script.includes("isMixedTopology") && script.includes("bankedCars") && script.includes("separateCars"));
 
 check("Elevator Reader has flow actions before metadata", html.indexOf('id="accessControlFlowActions"') > -1 && html.indexOf('id="reportMetadataMount"') > html.indexOf('id="accessControlFlowActions"'));
 check("Elevator Reader report actions are metadata/dropdown owned", html.includes('data-report-actions') && script.includes("placeElevatorReaderReportActions"));
@@ -68,8 +69,10 @@ const elevatorVisualBlock = elevatorVisualStart >= 0 && elevatorVisualEnd > elev
 check("Elevator Reader visual uses status-colored line graph", elevatorVisualBlock.includes("const statusLineStroke = toneStroke(tone)") && elevatorVisualBlock.includes("const statusLineFill = toneFill(tone)") && elevatorVisualBlock.includes("statusLineStroke") && !elevatorVisualBlock.includes('stroke="rgba(125,255,152,.38)"'));
 check("Elevator Reader visual uses dynamic bank/location labels", elevatorVisualBlock.includes("const elevatorGroupLabel") && elevatorVisualBlock.includes("ELEVATOR / LOCATION") && elevatorVisualBlock.includes("ELEVATOR LOCATIONS") && elevatorVisualBlock.includes("ELEVATOR BANK GROUPS"));
 check("Elevator Reader visual has compact DCS bottom chip label", elevatorVisualBlock.includes("const compactDcsModeLabel") && elevatorVisualBlock.includes("DCS MODE") && elevatorVisualBlock.includes("No DCS / call buttons"));
-check("Elevator Reader keeps bank overflow label below icon row", elevatorVisualBlock.includes("elevatorOverflowLabel") && elevatorVisualBlock.includes('x="520" y="174"') && elevatorVisualBlock.includes('text-anchor="middle"'));
-check("Elevator Reader keeps bank overflow label below icon row", elevatorVisualBlock.includes("bank group") && elevatorVisualBlock.includes("y=\"174\""));
+check("Elevator Reader reader overflow uses status tone", elevatorVisualBlock.includes("carOverflowLabel") && elevatorVisualBlock.includes('x="278" y="204"') && elevatorVisualBlock.includes("statusLineStroke"));
+check("Elevator Reader mixed visual label is explicit", elevatorVisualBlock.includes("BANKS + LOCATIONS") && elevatorVisualBlock.includes("lineGroupLabel"));
+check("Elevator Reader keeps bank overflow label below icon row", elevatorVisualBlock.includes("elevatorOverflowLabel") && elevatorVisualBlock.includes('x="512" y="198"') && elevatorVisualBlock.includes('text-anchor="middle"'));
+check("Elevator Reader keeps bank overflow label below icon row", elevatorVisualBlock.includes("elevatorOverflowLabel") && elevatorVisualBlock.includes('x="512" y="198"') && elevatorVisualBlock.includes('text-anchor="middle"'));
 
 
 check("Elevator Reader script renders through shared visual module", script.includes("ScopedLabsAccessControlPlanningVisuals") && script.includes("renderElevatorReader"));
@@ -83,7 +86,7 @@ check("Elevator Reader removed Chart.js CDN", !html.includes("chart.js"));
 check("Elevator Reader removed canvas chart", !html.includes("<canvas") && html.includes('class="access-control-output-visual"'));
 check("Elevator Reader removed legacy Chart.js renderer", !script.includes("new Chart(") && !script.includes("function renderChart("));
 check("Elevator Reader keeps canonical export engine", html.includes("/assets/export.js?v=shared-export-030-semantic-report-tones"));
-check("Elevator Reader local script cache is modernized", html.includes("./script.js?v=access-control-elevator-reader-output-contract-027-single-bank-safe"));
+check("Elevator Reader local script cache is modernized", html.includes("./script.js?v=access-control-elevator-reader-output-contract-028-mixed-scope-drivers"));
 
 console.log("\nAccess Control Elevator Reader module audit:");
 console.table(rows);

@@ -11,7 +11,7 @@
   />
   <meta name="robots" content="noindex,follow" />
 
-  <link rel="stylesheet" href="/assets/style.css?v=access-control-elevator-reader-output-contract-027-single-bank-safe" />
+  <link rel="stylesheet" href="/assets/style.css?v=access-control-elevator-reader-output-contract-028-mixed-scope-drivers" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -225,6 +225,24 @@
           <input id="banks" type="number" min="1" step="1" value="2" />
         </label>
 
+
+        <label class="field" data-mixed-elevator-field hidden>
+          <span class="label">Mixed Bank Groups</span>
+          <input id="mixedBankGroups" type="number" min="0" step="1" value="1" />
+        </label>
+        <label class="field" data-mixed-elevator-field hidden>
+          <span class="label">Cars / Cabs per Mixed Bank</span>
+          <input id="mixedCarsPerBank" type="number" min="0" step="1" value="2" />
+        </label>
+        <label class="field" data-mixed-elevator-field hidden>
+          <span class="label">Separate Elevator Locations</span>
+          <input id="mixedSeparateLocations" type="number" min="0" step="1" value="1" />
+        </label>
+        <label class="field" data-mixed-elevator-field hidden>
+          <span class="label">Cars / Cabs per Separate Location</span>
+          <input id="mixedCarsPerSeparateLocation" type="number" min="0" step="1" value="1" />
+        </label>
+
         <label class="field">
           <span class="label">Secured Floors Served</span>
           <input id="floors" type="number" min="0" step="1" value="8" />
@@ -261,7 +279,7 @@
       </div>
       <section id="elevatorReaderVisualCard" class="card" data-output-visual-owner="access-control-output-shell" hidden style="margin-top: 14px; background: rgba(0,0,0,.14);">
         <h3 class="h3 access-control-tool-card-title" style="margin-top: 0;">Elevator Reader Planning Visual</h3>
-        <p class="muted" style="margin-bottom: 0;">Reader count, car/lobby split, DCS adders, and coordination pressure are shown as the assistant-owned engineering proof layer.</p>
+        <p class="muted" style="margin-bottom: 0;">Reader count, car/lobby split, DCS reader points, and coordination pressure are shown as the assistant-owned engineering proof layer.</p>
         <div id="chartWrap" data-output-visual-owner="access-control-output-shell" hidden style="margin-top:16px; min-height:388px;">
           <div id="chart" class="access-control-output-visual" data-access-control-modern-visual="elevator-reader-count" role="img" aria-label="CAD-style elevator reader count pressure visual"></div>
         </div>
@@ -341,7 +359,7 @@
   <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-001"></script>
   <script src="/assets/access-control-output-shell.js?v=access-control-output-shell-001-lock-power-visual-export"></script>
   <script src="/assets/access-control-decision-schedule.js?v=access-control-decision-schedule-001-shared-shell"></script>
-  <script src="/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-037-elevator-label-chip-fit"></script>
+  <script src="/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-038-elevator-mixed-drivers"></script>
   <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
   <script src="/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-021-special-locking-exceptions"></script>
   <script src="/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes"></script>
@@ -350,7 +368,7 @@
       window.ScopedLabsReportMetadata.init(document);
     }
   </script>
-  <script src="./script.js?v=access-control-elevator-reader-output-contract-027-single-bank-safe"></script>
+  <script src="./script.js?v=access-control-elevator-reader-output-contract-028-mixed-scope-drivers"></script>
   <script src="/assets/access-control-category-nav.js?v=access-control-category-nav-001-tool-path"></script>
   <script src="/assets/access-control-tool-polish.js?v=access-control-tool-polish-010-page-chrome-pill-cleanup"></script>
   <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>

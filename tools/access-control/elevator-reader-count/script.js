@@ -15,6 +15,10 @@
     topology: $("topology"),
     cars: $("cars"),
     banks: $("banks"),
+    mixedBankGroups: $("mixedBankGroups"),
+    mixedCarsPerBank: $("mixedCarsPerBank"),
+    mixedSeparateLocations: $("mixedSeparateLocations"),
+    mixedCarsPerSeparateLocation: $("mixedCarsPerSeparateLocation"),
     floors: $("floors"),
     dcsMode: $("dcsMode"),
     dcsCredentialPoints: $("dcsCredentialPoints"),
@@ -81,6 +85,10 @@
       dcsCredentialPoints: Math.max(0, Math.round(Number(seed.dcsCredentialPoints || 0) || 0)),
       cars: Math.max(0, Math.round(Number(seed.cars || 0) || 0)),
       banks: Math.max(1, Math.round(Number(seed.banks || 1) || 1)),
+      mixedBankGroups: Math.max(0, Math.round(Number(seed.mixedBankGroups || 0) || 0)),
+      mixedCarsPerBank: Math.max(0, Math.round(Number(seed.mixedCarsPerBank || 0) || 0)),
+      mixedSeparateLocations: Math.max(0, Math.round(Number(seed.mixedSeparateLocations || 0) || 0)),
+      mixedCarsPerSeparateLocation: Math.max(0, Math.round(Number(seed.mixedCarsPerSeparateLocation || 0) || 0)),
       floors: Math.max(0, Math.round(Number(seed.floors || 0) || 0)),
       dest: seed.dest || "no",
       placement: seed.placement || "car",
@@ -169,6 +177,10 @@
       ["Elevator Topology", labels.topology],
       ["Bank / Location Count", String(seed.banks ?? "")],
       ["Cars / Cabs per Bank or Location", String(seed.cars ?? "")],
+      ["Mixed Bank Groups", String(seed.mixedBankGroups ?? 0)],
+      ["Mixed Cars / Bank", String(seed.mixedCarsPerBank ?? 0)],
+      ["Separate Elevator Locations", String(seed.mixedSeparateLocations ?? 0)],
+      ["Cars / Separate Location", String(seed.mixedCarsPerSeparateLocation ?? 0)],
       ["Secured Floors Served", String(seed.floors ?? "")],
       ["DCS Mode", elevatorDcsModeLabel(seed.dcsMode || seed.dest)],
       ["DCS Credential Points", String(seed.dcsCredentialPoints ?? 0)],
@@ -201,6 +213,10 @@
     if (els.cars) els.cars.value = String(seed.cars || 0);
     if (els.banks) els.banks.value = String(seed.banks || 1);
     if (els.floors) els.floors.value = String(seed.floors || 0);
+    if (els.mixedBankGroups) els.mixedBankGroups.value = String(seed.mixedBankGroups || 0);
+    if (els.mixedCarsPerBank) els.mixedCarsPerBank.value = String(seed.mixedCarsPerBank || 0);
+    if (els.mixedSeparateLocations) els.mixedSeparateLocations.value = String(seed.mixedSeparateLocations || 0);
+    if (els.mixedCarsPerSeparateLocation) els.mixedCarsPerSeparateLocation.value = String(seed.mixedCarsPerSeparateLocation || 0);
     setSelectValue(els.dcsMode, seed.dcsMode || seed.dest);
     if (els.dcsCredentialPoints) els.dcsCredentialPoints.value = String(seed.dcsCredentialPoints || defaultElevatorDcsCredentialPoints({ dcsMode: seed.dcsMode || seed.dest, topology: seed.topology, banks: seed.banks }));
     setSelectValue(els.dest, seed.dest);
@@ -704,6 +720,9 @@
           complexityIndex: metrics.complexityIndex,
           placement: metrics.placementLabel,
           topology: metrics.topologyLabel,
+          mixedScope: metrics.isMixedTopology,
+          bankGroups: metrics.bankGroups,
+          separateLocations: metrics.separateLocations,
           dcsMode: metrics.dcsModeLabel,
           dcsCredentialPoints: metrics.dcsCredentialPoints,
           destinationControl: metrics.destLabel,
@@ -750,6 +769,10 @@
         { label: "Scope Planner Source", value: activeElevatorSeedContext ? activeElevatorSeedContext.scopeName + " / " + activeElevatorSeedContext.source : "Standalone elevator branch" },
         { label: "Elevator Scope Type", value: els.topology?.options[els.topology.selectedIndex]?.text || els.topology?.value || "Single elevator bank" },
         { label: "Cars / Cabs per Bank or Location", value: String(els.cars.value) },
+        { label: "Mixed Bank Groups", value: String(els.mixedBankGroups?.value || 0) },
+        { label: "Cars / Cabs per Mixed Bank", value: String(els.mixedCarsPerBank?.value || 0) },
+        { label: "Separate Elevator Locations", value: String(els.mixedSeparateLocations?.value || 0) },
+        { label: "Cars / Cabs per Separate Location", value: String(els.mixedCarsPerSeparateLocation?.value || 0) },
         { label: "Bank / Location Count", value: String(els.banks.value) },
         { label: "Secured Floors Served", value: String(els.floors.value) },
         { label: "DCS Mode", value: els.dcsMode?.options[els.dcsMode.selectedIndex]?.text || els.dcsMode?.value || "No DCS" },
@@ -1171,17 +1194,43 @@
   }
 
 
+  function numberFromElement(el, fallback = 0) {
+    const value = Number(el?.value);
+    return Number.isFinite(value) ? value : fallback;
+  }
+
   function syncElevatorTopologyControls() {
     const rawTopology = String(els.topology?.value || "");
     const isSingleBank = rawTopology === "single-bank";
+    const isMixed = rawTopology === "mixed-custom";
 
     if (els.banks) {
       if (isSingleBank) els.banks.value = "1";
       els.banks.disabled = false;
-      els.banks.readOnly = isSingleBank;
+      els.banks.readOnly = isSingleBank || isMixed;
       els.banks.title = isSingleBank
         ? "Single elevator bank uses one bank group. Put the elevator count in Cars / Cabs per Bank or Location."
-        : "For multiple banks or separate elevator locations, this count drives reader quantity.";
+        : isMixed
+          ? "Mixed/custom uses the Mixed Bank Groups and Separate Elevator Locations fields below."
+          : "For multiple banks or separate elevator locations, this count drives reader quantity.";
+    }
+
+    const mixedFields = [
+      els.mixedBankGroups,
+      els.mixedCarsPerBank,
+      els.mixedSeparateLocations,
+      els.mixedCarsPerSeparateLocation
+    ];
+
+    mixedFields.forEach((el) => {
+      const field = el?.closest ? el.closest(".field") : null;
+      if (field) field.hidden = !isMixed;
+    });
+
+    if (isMixed && els.banks) {
+      const groups = Math.max(0, Math.round(numberFromElement(els.mixedBankGroups, 0)));
+      const locations = Math.max(0, Math.round(numberFromElement(els.mixedSeparateLocations, 0)));
+      els.banks.value = String(Math.max(1, groups + locations));
     }
   }
 
@@ -1229,10 +1278,19 @@
 
   function calc() {
     const topology = normalizeElevatorTopology(els.topology?.value);
+    const isMixedTopology = topology === "mixed-custom";
     const carsPerGroup = Math.max(0, Math.floor(n("cars")));
     const scopeCountInput = Math.max(1, Math.floor(n("banks")));
-    const banks = topology === "single-bank" ? 1 : scopeCountInput;
-    const cars = carsPerGroup * banks;
+    const mixedBankGroups = isMixedTopology ? Math.max(0, Math.floor(n("mixedBankGroups"))) : 0;
+    const mixedCarsPerBank = isMixedTopology ? Math.max(0, Math.floor(n("mixedCarsPerBank"))) : 0;
+    const mixedSeparateLocations = isMixedTopology ? Math.max(0, Math.floor(n("mixedSeparateLocations"))) : 0;
+    const mixedCarsPerSeparateLocation = isMixedTopology ? Math.max(0, Math.floor(n("mixedCarsPerSeparateLocation"))) : 0;
+    const bankGroups = isMixedTopology ? mixedBankGroups : (topology === "single-bank" ? 1 : scopeCountInput);
+    const separateLocations = isMixedTopology ? mixedSeparateLocations : (topology === "separate-elevators" ? scopeCountInput : 0);
+    const banks = isMixedTopology ? Math.max(1, bankGroups + separateLocations) : (topology === "single-bank" ? 1 : scopeCountInput);
+    const bankedCars = isMixedTopology ? bankGroups * mixedCarsPerBank : carsPerGroup * banks;
+    const separateCars = isMixedTopology ? separateLocations * mixedCarsPerSeparateLocation : 0;
+    const cars = isMixedTopology ? bankedCars + separateCars : carsPerGroup * banks;
     const floors = Math.max(0, Math.floor(n("floors")));
     const dcsMode = normalizeElevatorDcsMode(els.dcsMode?.value || els.dest?.value);
     const dcsCredentialPointsInput = Math.max(0, Math.floor(n("dcsCredentialPoints")));
@@ -1286,6 +1344,11 @@
       row("Elevator Scope Type", elevatorTopologyLabel(topology)),
       row("Bank / Location Count", banks),
       row("Cars / Cabs per Bank or Location", carsPerGroup),
+      isMixedTopology ? row("Mixed Bank Groups", bankGroups) : "",
+      isMixedTopology ? row("Cars / Cabs per Mixed Bank", mixedCarsPerBank) : "",
+      isMixedTopology ? row("Separate Elevator Locations", separateLocations) : "",
+      isMixedTopology ? row("Cars / Cabs per Separate Location", mixedCarsPerSeparateLocation) : "",
+      isMixedTopology ? row("Banked Cars / Separate Cars", bankedCars + " / " + separateCars) : "",
       row("Total Cars / Cabs", cars),
       row("Secured Floors Served", floors),
       row("DCS Mode", elevatorDcsModeLabel(dcsMode)),
@@ -1304,9 +1367,18 @@
     lastMetrics = {
       topology,
       topologyLabel: elevatorTopologyLabel(topology),
+      isMixedTopology,
       carsPerGroup,
       cars,
       banks,
+      bankGroups,
+      separateLocations,
+      mixedBankGroups,
+      mixedCarsPerBank,
+      mixedSeparateLocations,
+      mixedCarsPerSeparateLocation,
+      bankedCars,
+      separateCars,
       floors,
       dcsMode,
       dcsModeLabel: elevatorDcsModeLabel(dcsMode),
@@ -1387,6 +1459,12 @@
     els.cars,
     els.banks,
     els.floors,
+    els.mixedBankGroups,
+    els.mixedCarsPerBank,
+    els.mixedSeparateLocations,
+    els.mixedCarsPerSeparateLocation,
+    els.dcsMode,
+    els.dcsCredentialPoints,
     els.dest,
     els.placement
   ].forEach((el) => {

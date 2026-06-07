@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-037-elevator-label-chip-fit";
+  const VERSION = "access-control-planning-visuals-038-elevator-mixed-drivers";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -630,21 +630,25 @@
       .replace(/Mixed \/ custom DCS credential points/i, "Mixed/custom DCS");
     const placement = metrics.placementLabel || metrics.placement || "?";
     const dest = metrics.destLabel || metrics.destinationControl || "?";
-    const bankCount = Math.max(1, Math.min(6, Math.round(Number(metrics.banks || 1))));
-    const bankVisibleCount = Math.max(1, Math.min(3, bankCount));
-
     const topologyKey = String(metrics.topology || metrics.topologyLabel || metrics.elevatorTopology || metrics.elevatorTopologyLabel || metrics.scopeTopology || metrics.scopeType || "").toLowerCase();
-    const isSeparateElevatorTopology = topologyKey.includes("separate") || topologyKey.includes("individual");
+    const isMixedElevatorTopology = Boolean(metrics.isMixedTopology) || topologyKey.includes("mixed") || topologyKey.includes("custom");
+    const isSeparateElevatorTopology = topologyKey.includes("separate") || topologyKey.includes("individual") || topologyKey.includes("location");
     const isSingleElevatorTopology = topologyKey.includes("single");
+    const rawBankGroups = Math.max(0, Math.round(Number(metrics.bankGroups ?? metrics.mixedBankGroups ?? (isSeparateElevatorTopology ? 0 : metrics.banks ?? 1))));
+    const rawSeparateLocations = Math.max(0, Math.round(Number(metrics.separateLocations ?? metrics.mixedSeparateLocations ?? (isSeparateElevatorTopology ? metrics.banks ?? 1 : 0))));
+    const bankCount = Math.max(1, Math.min(6, Math.round(Number(metrics.banks || rawBankGroups + rawSeparateLocations || 1))));
+    const bankVisibleCount = Math.max(1, Math.min(3, bankCount));
     const hiddenElevatorGroups = Math.max(0, bankCount - bankVisibleCount);
-    const elevatorGroupLabel = isSeparateElevatorTopology
-      ? (bankCount === 1 ? "ELEVATOR / LOCATION" : "ELEVATOR LOCATIONS")
-      : (isSingleElevatorTopology ? "ELEVATOR / LOCATION" : (bankCount === 1 ? "ELEVATOR BANK GROUP" : "ELEVATOR BANK GROUPS"));
-    const elevatorOverflowUnit = isSeparateElevatorTopology
-      ? (hiddenElevatorGroups === 1 ? "elevator location" : "elevator locations")
-      : (isSingleElevatorTopology ? (hiddenElevatorGroups === 1 ? "elevator" : "elevators") : (hiddenElevatorGroups === 1 ? "bank group" : "bank groups"));
+    const elevatorGroupLabel = isMixedElevatorTopology
+      ? "BANKS + LOCATIONS"
+      : (isSeparateElevatorTopology ? (bankCount === 1 ? "ELEVATOR / LOCATION" : "ELEVATOR LOCATIONS") : (isSingleElevatorTopology ? "ELEVATOR / LOCATION" : (bankCount === 1 ? "ELEVATOR BANK GROUP" : "ELEVATOR BANK GROUPS")));
+    const lineGroupLabel = isMixedElevatorTopology ? "banks + locations" : (isSeparateElevatorTopology ? "locations" : (isSingleElevatorTopology ? "location" : "bank groups"));
+    const elevatorOverflowUnit = isMixedElevatorTopology
+      ? (hiddenElevatorGroups === 1 ? "scope group" : "scope groups")
+      : (isSeparateElevatorTopology ? (hiddenElevatorGroups === 1 ? "elevator location" : "elevator locations") : (isSingleElevatorTopology ? (hiddenElevatorGroups === 1 ? "elevator" : "elevators") : (hiddenElevatorGroups === 1 ? "bank group" : "bank groups")));
     const elevatorOverflowLabel = hiddenElevatorGroups > 0 ? "+" + hiddenElevatorGroups + " " + elevatorOverflowUnit : "";
     const carCount = Math.max(1, Math.min(8, Math.round(Number(metrics.cars || cars || 1))));
+    const carOverflowLabel = cars > carCount ? "+" + Math.round(cars - carCount) : "";
 
     function carNode(index) {
       const x = 72 + (index % 4) * 48;
@@ -668,11 +672,11 @@
       statusBadge(statusText, tone, 616, 51),
       '<text x="72" y="114" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">CAR / CAB READERS</text>',
       Array.from({ length: carCount }, (_, index) => carNode(index)).join(''),
-      cars > carCount ? '<text x="260" y="162" font-size="11" fill="rgba(203,213,225,.66)">+' + escapeHtml(Math.round(cars - carCount)) + '</text>' : '',
+      carOverflowLabel ? '<text x="278" y="204" text-anchor="middle" font-size="11" fill="' + statusLineStroke + '">' + escapeHtml(carOverflowLabel) + '</text>' : '',
       '<path d="M300 166 H350" stroke="rgba(203,213,225,.24)" stroke-width="1.2" stroke-dasharray="5 6" />',
       '<text x="378" y="114" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">' + escapeHtml(elevatorGroupLabel) + '</text>',
       Array.from({ length: bankVisibleCount }, (_, index) => bankNode(index)).join(''),
-      elevatorOverflowLabel ? '<text x="520" y="174" text-anchor="middle" font-size="11" fill="' + statusLineStroke + '">' + escapeHtml(elevatorOverflowLabel) + '</text>' : '',
+      elevatorOverflowLabel ? '<text x="512" y="198" text-anchor="middle" font-size="11" fill="' + statusLineStroke + '">' + escapeHtml(elevatorOverflowLabel) + '</text>' : '',
       '<rect x="632" y="118" width="74" height="46" rx="8" fill="' + toneFill(dcsTone) + '" stroke="' + toneStroke(dcsTone) + '" />',
       '<text x="669" y="137" text-anchor="middle" font-size="9" fill="rgba(203,213,225,.66)" letter-spacing=".8">DCS READERS</text>',
       '<text x="669" y="156" text-anchor="middle" font-size="14" fill="rgba(238,255,244,.94)" font-weight="900">' + escapeHtml(dcs) + '</text>',
@@ -682,7 +686,7 @@
       '<circle cx="382" cy="226" r="5" fill="' + statusLineFill + '" stroke="' + statusLineStroke + '" />',
       '<circle cx="648" cy="226" r="5" fill="' + statusLineFill + '" stroke="' + statusLineStroke + '" />',
       '<text x="112" y="244" font-size="10" fill="rgba(203,213,225,.58)" text-anchor="middle">cars</text>',
-      '<text x="382" y="244" font-size="10" fill="rgba(203,213,225,.58)" text-anchor="middle">bank groups</text>',
+      '<text x="382" y="244" font-size="10" fill="rgba(203,213,225,.58)" text-anchor="middle">' + escapeHtml(lineGroupLabel) + '</text>',
       '<text x="648" y="244" font-size="10" fill="rgba(203,213,225,.58)" text-anchor="middle">integration</text>',
       pressureRail("integration pressure", pressure, 52, 282, 220, pressureTone),
       metricChip("total readers", String(metrics.totalReaders ?? "?"), 296, 272, 126),
@@ -693,7 +697,7 @@
       '<text x="132" y="337" font-size="10" fill="rgba(238,255,244,.90)" font-weight="800">' + escapeHtml(placement) + '</text>',
       '<rect x="356" y="320" width="272" height="28" rx="8" fill="rgba(0,0,0,.16)" stroke="rgba(120,255,120,.10)" />',
       '<text x="366" y="337" font-size="9" fill="rgba(203,213,225,.62)" letter-spacing=".7">DCS MODE</text>',
-      '<text x="498" y="337" font-size="10" fill="rgba(238,255,244,.90)" font-weight="800">' + escapeHtml(dest) + '</text>',
+      '<text x="498" y="337" font-size="10" fill="rgba(238,255,244,.90)" font-weight="800">' + escapeHtml(compactDcsModeLabel) + '</text>',
       '</svg>',
       '<p class="sl-vis-note"><strong>Visual note:</strong> Elevator bank groups are scope markers, not lobby reader counts. Use the visual to compare car readers, actual lobby readers, DCS reader points, and integration pressure before final elevator coordination.</p>',
       '</div>'
