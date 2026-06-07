@@ -771,14 +771,25 @@
     const exceptionSummary = metrics.exceptionSummary || openingExceptionSummary(details);
     const exceptionCount = Number(metrics.exceptionCount || flagged.length || 0);
 
+    const exportSvg = (() => {
+      const visuals = planningVisuals();
+      if (!metrics || !visuals || typeof visuals.buildSpecialLockingSvg !== "function") return "";
+      return visuals.buildSpecialLockingSvg(metrics, { exportMode: true });
+    })();
+
+    const statusScoreCell = (itemStatus, score) => ({
+      text: String(itemStatus || "HEALTHY").toUpperCase() + (score === undefined || score === null || score === "" ? "" : " / " + score),
+      tone: reportToneFromStatus(itemStatus)
+    });
+
     const groupDefaultRows = [
       ["Flagged Openings", String(metrics.openingCount ?? els.openingCount?.value ?? ""), "Openings included in this specialty branch."],
-      ["Default Locking Condition", metrics.lockingTypeLabel || selectedText(els.lockingType), "Applied to openings that are not flagged as exceptions."],
-      ["Default Egress Impact", metrics.egressImpactLabel || selectedText(els.egressImpact), "Default life-safety assumption for unflagged openings."],
-      ["Default Release Logic", metrics.releaseLogicLabel || selectedText(els.releaseLogic), "Default release/emergency operation assumption."],
-      ["Default Authority Review", metrics.authorityReviewLabel || selectedText(els.authorityReview), "Default AHJ/code review expectation."],
-      ["Default Override Plan", metrics.overridePlanLabel || selectedText(els.overridePlan), "Default operator override / monitoring expectation."],
-      ["Status Source", source, "Explains why the report status is Safe, Watch, or Risk."],
+      ["Default Locking", metrics.lockingTypeLabel || selectedText(els.lockingType), "Applied to openings that are not checked as exceptions."],
+      ["Default Egress", metrics.egressImpactLabel || selectedText(els.egressImpact), "Default life-safety assumption for unflagged openings."],
+      ["Default Release", metrics.releaseLogicLabel || selectedText(els.releaseLogic), "Default release/emergency operation assumption."],
+      ["Default Review", metrics.authorityReviewLabel || selectedText(els.authorityReview), "Default AHJ/code review expectation."],
+      ["Default Override", metrics.overridePlanLabel || selectedText(els.overridePlan), "Default operator override / monitoring expectation."],
+      ["Status Source", source, "Why the report status is Safe, Watch, or Risk."],
       ["Risk Score", String(metrics.riskScore ?? "pending"), "Highest group/default or per-opening exception pressure."]
     ];
 
@@ -795,13 +806,34 @@
           "#" + item.openingNumber,
           item.label || "Opening #" + item.openingNumber,
           exportOpeningMode(item),
-          reportToneCell(item.status),
-          String(item.riskScore ?? ""),
+          statusScoreCell(item.status, item.riskScore),
           compactOpeningNote(item)
         ])
-      : [["Group", "All openings", "Group default", reportToneCell(status), String(metrics.riskScore ?? ""), exceptionSummary]];
+      : [["Group", "All openings", "Group default", statusScoreCell(status, metrics.riskScore), exceptionSummary]];
+
+    const flaggedRows = flagged.map((item) => [
+      "#" + item.openingNumber,
+      item.label || "Opening #" + item.openingNumber,
+      statusScoreCell(item.status, item.riskScore),
+      item.driverSummary || "Flagged opening exception",
+      [
+        item.lockingTypeLabel ? "locking: " + item.lockingTypeLabel : "",
+        item.egressImpactLabel ? "egress: " + item.egressImpactLabel : "",
+        item.releaseLogicLabel ? "release: " + item.releaseLogicLabel : "",
+        item.authorityReviewLabel ? "review: " + item.authorityReviewLabel : "",
+        item.overridePlanLabel ? "override: " + item.overridePlanLabel : ""
+      ].filter(Boolean).join("; ")
+    ]);
 
     const sections = [
+      {
+        title: "Special Locking Visual Snapshot",
+        description: "Inline report-safe CAD visual from the live Special Locking branch. Door tones match the per-opening conditions.",
+        countLabel: status + " / score " + String(metrics.riskScore ?? "pending"),
+        countTone: statusTone,
+        compactSvg: true,
+        svgs: exportSvg ? [exportSvg] : []
+      },
       {
         title: "Special Locking Scope Summary",
         description: "Group defaults, status source, and exception rollup from the live Special Locking branch.",
@@ -816,7 +848,7 @@
           },
           {
             title: "Opening Exception Rollup",
-            className: "extra-export-table--decision",
+            className: "extra-export-table--kv",
             headers: ["Metric", "Value", "Note"],
             rows: rollupRows
           }
@@ -831,7 +863,7 @@
           {
             title: "Per-Opening Status",
             className: "extra-export-table--decision",
-            headers: ["Opening", "Label", "Mode", "Status", "Score", "Driver"],
+            headers: ["Opening", "Label", "Mode", "Status / Score", "Driver"],
             rows: openingMapRows
           }
         ]
@@ -848,19 +880,8 @@
           {
             title: "Checked Opening Exceptions",
             className: "extra-export-table--decision",
-            headers: ["Opening", "Label", "Status", "Score", "Drivers", "Locking", "Egress", "Release", "Review", "Override"],
-            rows: flagged.map((item) => [
-              "#" + item.openingNumber,
-              item.label || "Opening #" + item.openingNumber,
-              reportToneCell(item.status),
-              String(item.riskScore ?? ""),
-              item.driverSummary || "Flagged opening exception",
-              item.lockingTypeLabel || "",
-              item.egressImpactLabel || "",
-              item.releaseLogicLabel || "",
-              item.authorityReviewLabel || "",
-              item.overridePlanLabel || ""
-            ])
+            headers: ["Opening", "Label", "Status / Score", "Drivers", "Condition Details"],
+            rows: flaggedRows
           }
         ]
       });
@@ -874,8 +895,8 @@
           {
             title: "Checked Opening Exceptions",
             className: "extra-export-table--decision",
-            headers: ["Opening", "Label", "Status", "Note"],
-            rows: [["-", "No checked rows", reportToneCell("HEALTHY"), "All reviewed rows currently use the group defaults."]]
+            headers: ["Opening", "Label", "Status / Score", "Drivers", "Condition Details"],
+            rows: [["-", "No checked rows", statusScoreCell("HEALTHY", ""), "All reviewed rows use group defaults.", "No exception details."]]
           }
         ]
       });
@@ -927,7 +948,7 @@
       assumptions: getAssumptions(),
       extraSections: buildSpecialLockingExportSections(lastMetrics || {}, outputs),
       stackReportSections: true,
-      chartImage: getExportChartImage(),
+      chartImage: "",
       openingDetails: lastMetrics?.openingDetails || [],
       meta: getReportMeta()
     };

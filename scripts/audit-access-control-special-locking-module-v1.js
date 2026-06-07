@@ -63,13 +63,15 @@ check("Special Locking visual supports per-opening tones", visuals.includes("ope
 check("Special Locking assistant includes exception summary", adapters.includes("exceptionSummary") && adapters.includes("Opening rollup"));
 check("Special Locking export has exception parity sections", script.includes("buildSpecialLockingExportSections") && script.includes("Flagged Opening Exception Schedule") && script.includes("Opening Status Map"));
 check("Special Locking export uses custom payload builder", script.includes("customPayloadBuilder = getSpecialLockingExportPayload") && script.includes("stackReportSections: true"));
+check("Special Locking export suppresses broken standard chart slot", script.includes('chartImage: ""') && script.includes("Special Locking Visual Snapshot"));
+check("Special Locking export uses compact exception tables", script.includes('headers: ["Opening", "Label", "Mode", "Status / Score", "Driver"]') && script.includes('headers: ["Opening", "Label", "Status / Score", "Drivers", "Condition Details"]'));
 check("Special Locking has hidden result ledger", html.includes("data-result-ledger") && html.includes("#results[data-result-ledger][hidden]"));
 check("Special Locking publishes specialty summary contribution", script.includes("publishSpecialLockingSummaryContribution") && script.includes('contributionType: "specialty-branch"') && script.includes("Specialty / What-if Branches"));
 check("Special Locking assistant adapter exists", adapters.includes("buildSpecialLockingScopeModel") && adapters.includes('"special-locking-scope"'));
 
 check("Special Locking has no Chart.js CDN", !html.includes("chart.js"));
 check("Special Locking has no canvas chart", !html.includes("<canvas") && html.includes('class="access-control-output-visual"'));
-check("Special Locking uses modern local script cache", html.includes("./script.js?v=access-control-special-locking-exceptions-004-export-parity"));
+check("Special Locking uses modern local script cache", html.includes("./script.js?v=access-control-special-locking-exceptions-005-export-visual-table-fit"));
 
 console.log("\nAccess Control Special Locking module audit:");
 console.table(rows);
