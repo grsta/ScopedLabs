@@ -82,6 +82,8 @@ check('Door Cable has no user-facing legacy canvas chart', !doorCableHtml.includ
 check('Door Count keeps hidden result ledger', doorCountHtml.includes('access-control-hidden-results-card') && doorCountHtml.includes('data-result-ledger'));
 check('Door Cable keeps hidden result ledger', doorCableHtml.includes('access-control-hidden-results-card') && doorCableHtml.includes('data-result-ledger'));
 
+check('Visual fit seatbelt audit exists', exists('scripts/audit-access-control-visual-fit-seatbelts-v1.js'));
+check('Visual fit seatbelt audit parses', parses('scripts/audit-access-control-visual-fit-seatbelts-v1.js'));
 console.log('\nAccess Control module seatbelt audit:');
 console.table(rows);
 
