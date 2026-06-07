@@ -25,7 +25,7 @@ const coreLabelsPresent = [
   "Access Level"
 ].every((token) => pipelines.includes(token));
 
-check("Planner cache bumped to Elevator seed lane", index.includes("access-control-scope-planner-elevator-seed-018-single-bank-lock"));
+check("Planner cache bumped to Elevator seed lane", index.includes("access-control-scope-planner-elevator-seed-019-single-bank-safe"));
 check("Planner loads refreshed shared pipeline assets", index.includes("pipelines.js?v=access-control-specialty-pipeline-009-summary-core") && index.includes("pipeline.js?v=access-control-specialty-pipeline-009-summary-core"));
 check("Pipeline renderer has category-aware grouped copy", pipelineJs.includes("const groupedFlowCopy") && pipelineJs.includes('category === "access-control"'));
 check("Access foundation copy is present", pipelineJs.includes("Create or select the access scope being planned."));
@@ -41,7 +41,7 @@ check("Scope Planner can route directly to Special Locking", index.includes('val
 check("Scope Planner can seed Elevator Reader Count", index.includes('id="elevatorReaderSeedCard"') && index.includes("Elevator Reader Count starter questions") && index.includes('value="elevator-bank"'));
 check("Scope Planner captures elevator topology separately", index.includes('id="elevatorTopology"') && index.includes("Elevator Scope Type") && index.includes("Bank / Location Count"));
 check("Scope Planner captures DCS as reader-count driver", index.includes('id="elevatorDcsMode"') && index.includes('id="elevatorDcsCredentialPoints"') && index.includes("DCS Credential Capture Points"));
-check("Scope Planner locks single-bank count to one", index.includes("Single elevator bank (count locked to 1)"));
+check("Scope Planner auto-sets single-bank count to one", index.includes("Single elevator bank (count auto-set to 1)"));
 check("Specialty branches are optional", pipelines.includes("optional: true") && pipelines.includes('flowGroup: "optional-specialty-zone"'));
 
 console.log("\nAccess Control pipeline specialty branches audit:");

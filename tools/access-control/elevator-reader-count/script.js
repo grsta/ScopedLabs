@@ -1172,13 +1172,13 @@
 
 
   function syncElevatorTopologyControls() {
-    syncElevatorTopologyControls();
-    const topology = normalizeElevatorTopology(els.topology?.value);
-    const isSingleBank = topology === "single-bank";
+    const rawTopology = String(els.topology?.value || "");
+    const isSingleBank = rawTopology === "single-bank";
 
     if (els.banks) {
       if (isSingleBank) els.banks.value = "1";
-      els.banks.disabled = isSingleBank;
+      els.banks.disabled = false;
+      els.banks.readOnly = isSingleBank;
       els.banks.title = isSingleBank
         ? "Single elevator bank uses one bank group. Put the elevator count in Cars / Cabs per Bank or Location."
         : "For multiple banks or separate elevator locations, this count drives reader quantity.";
