@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-001-shared";
+  const VERSION = "access-control-planning-visuals-002-cad-polish";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -25,7 +25,7 @@
     style.id = "access-control-planning-visuals-styles";
     style.textContent = [
       ".access-control-planning-visual-shell { margin-top: 14px; }",
-      ".access-control-planning-visual-shell svg { display:block; width:100%; height:auto; border:1px solid rgba(120,255,120,.14); border-radius:16px; background: radial-gradient(circle at 18% 12%, rgba(120,255,120,.08), transparent 34%), rgba(5,12,10,.24); }",
+      ".access-control-planning-visual-shell svg { display:block; width:100%; height:auto; border:1px solid rgba(120,255,120,.14); border-radius:16px; background: rgba(5,12,10,.24); }",
       ".access-control-planning-visual-shell .sl-vis-note { margin:10px 0 0; color: rgba(203,213,225,.72); font-size:.86rem; line-height:1.45; }"
     ].join("\n");
 
@@ -39,13 +39,46 @@
     return "safe";
   }
 
+  function statusLabel(status) {
+    const clean = String(status || "PENDING").toUpperCase();
+    if (clean === "HEALTHY" || clean === "LOW") return "SAFE";
+    if (clean === "MODERATE") return "WATCH";
+    if (clean === "HIGH") return "RISK";
+    return clean;
+  }
+
+  function toneFill(tone) {
+    if (tone === "risk") return "rgba(255,105,105,.14)";
+    if (tone === "watch") return "rgba(255,204,102,.14)";
+    return "rgba(120,255,120,.10)";
+  }
+
+  function toneStroke(tone) {
+    if (tone === "risk") return "rgba(255,105,105,.42)";
+    if (tone === "watch") return "rgba(255,204,102,.42)";
+    return "rgba(120,255,120,.32)";
+  }
+
   function metricChip(label, value, x, y, w) {
     return [
       '<g>',
-      '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="44" rx="10" fill="rgba(0,0,0,.22)" stroke="rgba(120,255,120,.16)" />',
-      '<text x="' + (x + 12) + '" y="' + (y + 17) + '" font-size="10" fill="rgba(203,213,225,.68)" letter-spacing=".7">' + escapeHtml(label).toUpperCase() + '</text>',
-      '<text x="' + (x + 12) + '" y="' + (y + 33) + '" font-size="14" fill="rgba(238,255,244,.94)" font-weight="800">' + escapeHtml(value) + '</text>',
+      '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="40" rx="8" fill="rgba(0,0,0,.18)" stroke="rgba(120,255,120,.14)" />',
+      '<text x="' + (x + 10) + '" y="' + (y + 15) + '" font-size="9" fill="rgba(203,213,225,.64)" letter-spacing=".8">' + escapeHtml(label).toUpperCase() + '</text>',
+      '<text x="' + (x + 10) + '" y="' + (y + 30) + '" font-size="13" fill="rgba(238,255,244,.94)" font-weight="800">' + escapeHtml(value) + '</text>',
       '</g>'
+    ].join("");
+  }
+
+  function dimLine(x1, y1, x2, y2, label) {
+    const midX = (x1 + x2) / 2;
+    const midY = (y1 + y2) / 2;
+    return [
+      '<g stroke="rgba(203,213,225,.32)" stroke-width="1.2" fill="none" stroke-linecap="round">',
+      '<path d="M' + x1 + ' ' + y1 + ' L' + x2 + ' ' + y2 + '" stroke-dasharray="5 6" />',
+      '<path d="M' + x1 + ' ' + (y1 - 6) + ' L' + x1 + ' ' + (y1 + 6) + '" />',
+      '<path d="M' + x2 + ' ' + (y2 - 6) + ' L' + x2 + ' ' + (y2 + 6) + '" />',
+      '</g>',
+      '<text x="' + midX + '" y="' + (midY - 8) + '" font-size="11" fill="rgba(203,213,225,.66)" text-anchor="middle">' + escapeHtml(label) + '</text>'
     ].join("");
   }
 
@@ -88,7 +121,6 @@
     if (!svg) return "";
     const text = typeof svg === "string" ? svg : svg.outerHTML;
     if (!text) return "";
-
     return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(text);
   }
 
@@ -101,90 +133,91 @@
 
   function buildDoorCableSvg(metrics = {}) {
     const status = statusTone(metrics.status || metrics.difficulty);
-    const total = Number(metrics.totalAllDoors || 0);
-    const routed = Number(metrics.routed || 0);
-    const slack = Number(metrics.slack || 0);
-    const density = Number(metrics.cableDensity || 0);
-    const pressure = clamp(density / 3.2, 0.08, 1);
-    const routeEnd = 132 + Math.round(436 * pressure);
-    const y = 142;
-    const statusText = status === "risk" ? "RISK" : status === "watch" ? "WATCH" : "SAFE";
+    const pressure = clamp(Number(metrics.cableDensity || 0) / 3.2, 0.08, 1);
+    const routeY = 140 - Math.round(30 * pressure);
+    const routeSag = 160 + Math.round(18 * pressure);
+    const statusText = statusLabel(metrics.status || metrics.difficulty);
 
     return [
       '<div class="access-control-planning-visual-shell" data-access-control-modern-visual="door-cable-length">',
-      '<svg viewBox="0 0 760 300" role="img" aria-label="Door cable routing pressure visual" xmlns="http://www.w3.org/2000/svg">',
+      '<svg viewBox="0 0 760 292" role="img" aria-label="Door cable routing planning visual" xmlns="http://www.w3.org/2000/svg">',
       '<defs>',
-      '<linearGradient id="accCableLine" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="rgba(125,255,152,.35)"/><stop offset="100%" stop-color="rgba(125,255,152,.9)"/></linearGradient>',
+      '<pattern id="accGridCable" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="rgba(120,255,120,.045)" stroke-width="1"/></pattern>',
       '</defs>',
-      '<rect x="24" y="24" width="712" height="252" rx="18" fill="rgba(0,0,0,.12)" stroke="rgba(120,255,120,.12)" />',
-      '<text x="44" y="54" font-size="13" fill="rgba(180,255,200,.72)" letter-spacing="1.4">MODERN ROUTING VISUAL</text>',
-      '<text x="44" y="78" font-size="22" fill="rgba(246,255,248,.96)" font-weight="800">Door cable routing pressure</text>',
-      '<text x="44" y="101" font-size="13" fill="rgba(203,213,225,.72)">Module-owned replacement for legacy Chart.js cable visual.</text>',
-      '<rect x="54" y="126" width="76" height="52" rx="10" fill="rgba(120,255,120,.08)" stroke="rgba(120,255,120,.24)" />',
-      '<text x="72" y="146" font-size="11" fill="rgba(203,213,225,.7)">PANEL</text>',
-      '<text x="70" y="164" font-size="15" fill="rgba(238,255,244,.94)" font-weight="800">Source</text>',
-      '<rect x="616" y="126" width="88" height="52" rx="10" fill="rgba(120,255,120,.08)" stroke="rgba(120,255,120,.24)" />',
-      '<text x="644" y="146" font-size="11" fill="rgba(203,213,225,.7)">DOOR</text>',
-      '<text x="638" y="164" font-size="15" fill="rgba(238,255,244,.94)" font-weight="800">Opening</text>',
-      '<path d="M132 ' + y + ' C 226 ' + (y - 62) + ', 324 ' + (y + 62) + ', ' + routeEnd + ' ' + y + ' S 572 ' + (y + 20) + ', 616 ' + y + '" fill="none" stroke="url(#accCableLine)" stroke-width="8" stroke-linecap="round" />',
-      '<path d="M132 ' + (y + 26) + ' L616 ' + (y + 26) + '" stroke="rgba(203,213,225,.22)" stroke-width="2" stroke-dasharray="7 8" />',
-      '<text x="330" y="' + (y + 52) + '" font-size="12" fill="rgba(203,213,225,.68)" text-anchor="middle">straight-line baseline</text>',
-      '<circle cx="' + routeEnd + '" cy="' + y + '" r="11" fill="rgba(125,255,152,.26)" stroke="rgba(125,255,152,.82)" />',
-      '<text x="' + routeEnd + '" y="' + (y - 20) + '" font-size="12" fill="rgba(238,255,244,.9)" text-anchor="middle" font-weight="800">route factor</text>',
-      '<rect x="604" y="42" width="96" height="34" rx="17" fill="' + (status === "risk" ? "rgba(255,105,105,.14)" : status === "watch" ? "rgba(255,204,102,.14)" : "rgba(120,255,120,.12)") + '" stroke="' + (status === "risk" ? "rgba(255,105,105,.42)" : status === "watch" ? "rgba(255,204,102,.42)" : "rgba(120,255,120,.32)") + '" />',
-      '<text x="652" y="64" text-anchor="middle" font-size="12" fill="rgba(246,255,248,.92)" font-weight="900">' + statusText + '</text>',
-      metricChip("Total cable", metrics.totalAllDoorsLabel || (total ? total.toFixed(1) + " ft" : "—"), 44, 212, 152),
-      metricChip("Per door", metrics.perDoorTotalLabel || "—", 212, 212, 152),
-      metricChip("Routed", metrics.routedLabel || (routed ? routed.toFixed(1) + " ft" : "—"), 380, 212, 152),
-      metricChip("Slack", metrics.slackLabel || (slack ? slack.toFixed(1) + " ft" : "—"), 548, 212, 152),
+      '<rect x="24" y="24" width="712" height="244" rx="16" fill="rgba(0,0,0,.10)" stroke="rgba(120,255,120,.12)" />',
+      '<rect x="36" y="36" width="688" height="220" rx="12" fill="url(#accGridCable)" stroke="rgba(120,255,120,.07)" />',
+      '<text x="52" y="62" font-size="11" fill="rgba(180,255,200,.68)" letter-spacing="1.4">CAD ROUTING PLAN</text>',
+      '<text x="52" y="84" font-size="19" fill="rgba(246,255,248,.96)" font-weight="800">Door cable path + takeoff pressure</text>',
+      '<rect x="618" y="50" width="74" height="28" rx="14" fill="' + toneFill(status) + '" stroke="' + toneStroke(status) + '" />',
+      '<text x="655" y="68" text-anchor="middle" font-size="11" fill="rgba(246,255,248,.92)" font-weight="900">' + escapeHtml(statusText) + '</text>',
+      '<rect x="72" y="124" width="78" height="44" rx="6" fill="rgba(120,255,120,.065)" stroke="rgba(120,255,120,.28)" />',
+      '<text x="111" y="142" text-anchor="middle" font-size="10" fill="rgba(203,213,225,.68)" letter-spacing=".7">PANEL</text>',
+      '<text x="111" y="158" text-anchor="middle" font-size="13" fill="rgba(238,255,244,.94)" font-weight="800">Source</text>',
+      '<rect x="610" y="124" width="78" height="44" rx="6" fill="rgba(120,255,120,.065)" stroke="rgba(120,255,120,.28)" />',
+      '<text x="649" y="142" text-anchor="middle" font-size="10" fill="rgba(203,213,225,.68)" letter-spacing=".7">DOOR</text>',
+      '<text x="649" y="158" text-anchor="middle" font-size="13" fill="rgba(238,255,244,.94)" font-weight="800">Opening</text>',
+      '<path d="M150 146 L610 146" stroke="rgba(203,213,225,.24)" stroke-width="1.4" stroke-dasharray="6 7" />',
+      '<path d="M150 146 C230 ' + routeY + ', 306 ' + routeSag + ', 382 146 S536 ' + routeY + ', 610 146" fill="none" stroke="rgba(125,255,152,.82)" stroke-width="4" stroke-linecap="round" />',
+      '<path d="M150 146 C230 ' + routeY + ', 306 ' + routeSag + ', 382 146 S536 ' + routeY + ', 610 146" fill="none" stroke="rgba(125,255,152,.18)" stroke-width="10" stroke-linecap="round" />',
+      dimLine(150, 190, 610, 190, "straight-line distance: " + (metrics.distanceLabel || "—")),
+      '<circle cx="382" cy="146" r="7" fill="rgba(125,255,152,.20)" stroke="rgba(125,255,152,.8)" />',
+      '<path d="M382 146 L430 104" stroke="rgba(203,213,225,.34)" stroke-width="1.1" />',
+      '<text x="436" y="101" font-size="11" fill="rgba(238,255,244,.82)" font-weight="800">routing factor</text>',
+      '<text x="436" y="116" font-size="10" fill="rgba(203,213,225,.62)">' + escapeHtml(metrics.routingLabel || "—") + '</text>',
+      metricChip("total cable", metrics.totalAllDoorsLabel || "—", 52, 218, 150),
+      metricChip("per door", metrics.perDoorTotalLabel || "—", 216, 218, 150),
+      metricChip("routed", metrics.routedLabel || "—", 380, 218, 150),
+      metricChip("slack", metrics.slackLabel || "—", 544, 218, 150),
       '</svg>',
-      '<p class="sl-vis-note"><strong>Visual note:</strong> Routing pressure scales with cable density and shows the difference between straight-line distance and planned routed cable quantity.</p>',
+      '<p class="sl-vis-note"><strong>Visual note:</strong> The green route is a planning path overlay, not a field routing drawing. Use it to compare straight-line distance, routing factor, slack, and total takeoff pressure.</p>',
       '</div>'
     ].join("");
   }
 
   function buildDoorCountSvg(metrics = {}) {
     const status = statusTone(metrics.status);
+    const statusText = statusLabel(metrics.status);
     const perimeter = Math.max(0, Number(metrics.perimeterDoors || 0));
     const zones = Math.max(0, Number(metrics.zoneBaseLabel || metrics.zoneBase || 0));
     const high = Math.max(0, Number(metrics.highsecAddLabel || metrics.highsecAdd || 0));
     const doors = Math.max(1, Number(metrics.doors || perimeter + zones + high || 1));
     const readers = Math.max(0, Number(metrics.readers || 0));
     const complexity = Math.max(0, Number(metrics.complexityIndex || 0));
-    const barMax = Math.max(doors, readers, complexity, 1);
-    const widthFor = (value) => Math.max(18, Math.round((Number(value || 0) / barMax) * 456));
-    const statusText = status === "risk" ? "RISK" : status === "watch" ? "WATCH" : "SAFE";
+    const maxBar = Math.max(perimeter, zones, high, doors, readers, complexity, 1);
+    const widthFor = (value) => Math.max(12, Math.round((Number(value || 0) / maxBar) * 356));
 
     function bar(label, value, y, fill) {
       return [
-        '<text x="54" y="' + (y + 18) + '" font-size="13" fill="rgba(203,213,225,.78)" font-weight="700">' + escapeHtml(label) + '</text>',
-        '<rect x="208" y="' + y + '" width="456" height="24" rx="12" fill="rgba(0,0,0,.22)" stroke="rgba(120,255,120,.12)" />',
-        '<rect x="208" y="' + y + '" width="' + widthFor(value) + '" height="24" rx="12" fill="' + fill + '" />',
-        '<text x="682" y="' + (y + 18) + '" font-size="14" fill="rgba(238,255,244,.94)" font-weight="900" text-anchor="end">' + escapeHtml(value) + '</text>'
+        '<text x="58" y="' + (y + 15) + '" font-size="12" fill="rgba(203,213,225,.74)" font-weight="700">' + escapeHtml(label) + '</text>',
+        '<rect x="214" y="' + y + '" width="356" height="20" rx="4" fill="rgba(0,0,0,.20)" stroke="rgba(120,255,120,.10)" />',
+        '<rect x="214" y="' + y + '" width="' + widthFor(value) + '" height="20" rx="4" fill="' + fill + '" />',
+        '<text x="602" y="' + (y + 15) + '" font-size="13" fill="rgba(238,255,244,.94)" font-weight="900" text-anchor="end">' + escapeHtml(value) + '</text>'
       ].join("");
     }
 
     return [
       '<div class="access-control-planning-visual-shell" data-access-control-modern-visual="door-count-planner">',
       '<svg viewBox="0 0 760 318" role="img" aria-label="Door count planning pressure visual" xmlns="http://www.w3.org/2000/svg">',
-      '<rect x="24" y="24" width="712" height="270" rx="18" fill="rgba(0,0,0,.12)" stroke="rgba(120,255,120,.12)" />',
-      '<text x="44" y="54" font-size="13" fill="rgba(180,255,200,.72)" letter-spacing="1.4">MODERN PLANNING VISUAL</text>',
-      '<text x="44" y="78" font-size="22" fill="rgba(246,255,248,.96)" font-weight="800">Door count and reader pressure</text>',
-      '<text x="44" y="101" font-size="13" fill="rgba(203,213,225,.72)">Module-owned replacement for legacy Chart.js scope visual.</text>',
-      '<rect x="604" y="42" width="96" height="34" rx="17" fill="' + (status === "risk" ? "rgba(255,105,105,.14)" : status === "watch" ? "rgba(255,204,102,.14)" : "rgba(120,255,120,.12)") + '" stroke="' + (status === "risk" ? "rgba(255,105,105,.42)" : status === "watch" ? "rgba(255,204,102,.42)" : "rgba(120,255,120,.32)") + '" />',
-      '<text x="652" y="64" text-anchor="middle" font-size="12" fill="rgba(246,255,248,.92)" font-weight="900">' + statusText + '</text>',
-      bar("Perimeter doors", perimeter, 128, "rgba(125,255,152,.72)"),
-      bar("Interior zone doors", zones, 164, "rgba(125,255,200,.54)"),
-      bar("High-security adds", high, 200, "rgba(255,204,102,.62)"),
-      bar("Estimated readers", readers, 236, "rgba(120,180,255,.58)"),
-      '<path d="M208 116 L664 116" stroke="rgba(203,213,225,.18)" stroke-width="2" stroke-dasharray="7 8" />',
-      '<text x="208" y="110" font-size="11" fill="rgba(203,213,225,.58)">relative load scale</text>',
-      metricChip("Total doors", String(metrics.doors ?? "—"), 44, 264, 136),
-      metricChip("Readers", String(metrics.readers ?? "—"), 196, 264, 136),
-      metricChip("Complexity", String(metrics.complexityIndex ?? "—"), 348, 264, 136),
-      metricChip("Control mode", metrics.bothSidesLabel || "—", 500, 264, 188),
+      '<defs><pattern id="accGridDoorCount" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="rgba(120,255,120,.045)" stroke-width="1"/></pattern></defs>',
+      '<rect x="24" y="24" width="712" height="270" rx="16" fill="rgba(0,0,0,.10)" stroke="rgba(120,255,120,.12)" />',
+      '<rect x="36" y="36" width="688" height="246" rx="12" fill="url(#accGridDoorCount)" stroke="rgba(120,255,120,.07)" />',
+      '<text x="52" y="62" font-size="11" fill="rgba(180,255,200,.68)" letter-spacing="1.4">CAD LOAD SUMMARY</text>',
+      '<text x="52" y="84" font-size="19" fill="rgba(246,255,248,.96)" font-weight="800">Controlled doors, readers, and complexity</text>',
+      '<rect x="618" y="50" width="74" height="28" rx="14" fill="' + toneFill(status) + '" stroke="' + toneStroke(status) + '" />',
+      '<text x="655" y="68" text-anchor="middle" font-size="11" fill="rgba(246,255,248,.92)" font-weight="900">' + escapeHtml(statusText) + '</text>',
+      '<path d="M214 108 L570 108" stroke="rgba(203,213,225,.22)" stroke-width="1.2" stroke-dasharray="6 7" />',
+      '<text x="214" y="101" font-size="10" fill="rgba(203,213,225,.58)">relative planning load scale</text>',
+      bar("Perimeter doors", perimeter, 124, "rgba(125,255,152,.64)"),
+      bar("Interior zone adds", zones, 154, "rgba(125,255,200,.46)"),
+      bar("High-security adds", high, 184, "rgba(255,204,102,.56)"),
+      bar("Estimated readers", readers, 214, "rgba(120,180,255,.52)"),
+      '<path d="M214 244 L570 244" stroke="rgba(120,255,120,.16)" stroke-width="1" />',
+      metricChip("total doors", String(metrics.doors ?? "—"), 52, 254, 136),
+      metricChip("readers", String(metrics.readers ?? "—"), 202, 254, 136),
+      metricChip("complexity", String(metrics.complexityIndex ?? "—"), 352, 254, 136),
+      metricChip("control mode", metrics.bothSidesLabel || "—", 502, 254, 190),
       '</svg>',
-      '<p class="sl-vis-note"><strong>Visual note:</strong> Bar lengths compare the main drivers behind controlled-door count, reader count, and planning complexity.</p>',
+      '<p class="sl-vis-note"><strong>Visual note:</strong> The bars show relative planning pressure from door groups, reader count, and complexity. They are intended for scope review, not a final hardware schedule.</p>',
       '</div>'
     ].join("");
   }
