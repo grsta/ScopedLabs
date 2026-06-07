@@ -48,7 +48,7 @@ check(
     read("assets/scopedlabs-local-assistant.js").includes("const pillRow = model.hideHeaderPills") &&
     read("assets/scopedlabs-local-assistant.js").includes("model.hideHeaderPills")
 );
-check("Reader Type loads Access Control assistant adapters", html.includes("/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-019-elevator-reader"));
+check("Reader Type loads Access Control assistant adapters", html.includes("/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-020-special-locking"));
 check("Reader Type loads Access Control scope state", html.includes("/assets/access-control-scope-state.js"));
 check("Reader Type loads Access Control tool polish", html.includes("/assets/access-control-tool-polish.js"));
 

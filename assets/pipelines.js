@@ -90,7 +90,7 @@
       {
         id: "special-locking-scope",
         label: "Special Locking / High-Security Scope",
-        href: "/tools/access-control/scope-planner/",
+        href: "/tools/access-control/special-locking-scope/",
         flowGroup: "optional-specialty-zone",
         optional: true
       }

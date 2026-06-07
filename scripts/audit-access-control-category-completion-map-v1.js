@@ -51,7 +51,8 @@ const TOOL_CONTRACTS = {
   "door-count-planner": { navMode: "category", contributionType: "supplemental", summaryGroup: "Supplemental Planning Tools" },
 
   "anti-passback-zones": { navMode: "category", contributionType: "specialty-branch", summaryGroup: "Specialty / What-if Branches" },
-  "elevator-reader-count": { navMode: "category", contributionType: "specialty-branch", summaryGroup: "Specialty / What-if Branches" }
+  "elevator-reader-count": { navMode: "category", contributionType: "specialty-branch", summaryGroup: "Specialty / What-if Branches" },
+  "special-locking-scope": { navMode: "category", contributionType: "specialty-branch", summaryGroup: "Specialty / What-if Branches" }
 };
 
 function contractFor(slug) {
@@ -234,6 +235,10 @@ for (const slug of dirs) {
     has(html, "data-door-cable-summary") ||
     has(html, "door-cable-summary-wrap") ||
     has(script, "renderDoorCableLengthSchedule") ||
+    has(html, "Special Locking Decision Schedule") ||
+    has(html, "data-special-locking-summary") ||
+    has(html, "specialLockingSchedule") ||
+    has(script, "renderSpecialLockingSchedule") ||
     has(html, "Credential Format Decision Schedule") ||
     has(html, "data-credential-format-summary") ||
     has(html, "credential-format-summary-wrap") ||

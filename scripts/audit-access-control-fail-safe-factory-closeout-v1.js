@@ -34,7 +34,7 @@ check("Tool shell diagnostic module loaded", index.includes("/assets/scopedlabs-
 check("Generic assistant engine loaded once", count(index, "scopedlabs-local-assistant.js") === 1);
 check("Access Control adapter loaded once", count(index, "access-control-tool-assistant-adapters.js") === 1);
 check("Assistant engine uses Physical Security-style card rhythm", engine.includes("pill-row") && engine.includes("assistant-grid") && engine.includes("Local Design Assistant"));
-check("Assistant card is Access Control scoped", engine.includes("access-control-local-assistant-card") && adapters.includes("access-control-assistant-adapters-019-elevator-reader"));
+check("Assistant card is Access Control scoped", engine.includes("access-control-local-assistant-card") && adapters.includes("access-control-assistant-adapters-020-special-locking"));
 check("Only Fail-Safe adapter registered", adapters.includes('"fail-safe-fail-secure"') && !adapters.includes('"reader-type-selector"'));
 check("Old visible breadcrumbs removed", !index.includes('class="crumbs"'));
 check("Top free-tier pill removed", !index.includes("Free Tier"));

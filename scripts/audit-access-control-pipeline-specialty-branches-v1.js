@@ -36,7 +36,7 @@ check("Access core pipeline steps are present and default to core group", coreLa
 check("Access core pipeline includes Summary", pipelines.includes('id: "access-control-summary"') && pipelines.includes('label: "Summary"') && pipelines.includes('/tools/access-control/summary/'));
 check("Access pipeline includes elevator specialty branch", pipelines.includes('id: "elevator-bank-scope"') && pipelines.includes("Elevator Bank Scope"));
 check("Access pipeline includes anti-passback specialty branch", pipelines.includes('id: "anti-passback-zone"') && pipelines.includes("Anti-Passback Zone"));
-check("Access pipeline includes special locking specialty branch", pipelines.includes('id: "special-locking-scope"') && pipelines.includes("Special Locking / High-Security Scope"));
+check("Access pipeline includes special locking specialty branch", pipelines.includes('id: "special-locking-scope"') && pipelines.includes("Special Locking / High-Security Scope") && pipelines.includes("/tools/access-control/special-locking-scope/"));
 check("Specialty branches are optional", pipelines.includes("optional: true") && pipelines.includes('flowGroup: "optional-specialty-zone"'));
 
 console.log("\nAccess Control pipeline specialty branches audit:");

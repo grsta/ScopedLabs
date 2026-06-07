@@ -1,11 +1,11 @@
 /* ScopedLabs Access Control Tool Assistant Adapters
-   Version: access-control-assistant-adapters-019-elevator-reader
+   Version: access-control-assistant-adapters-020-special-locking
    Purpose: category-specific local assistant model adapters. Dormant unless a tool explicitly calls one.
 */
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-assistant-adapters-019-elevator-reader";
+  const API_VERSION = "access-control-assistant-adapters-020-special-locking";
 
   function safeText(value) {
     return String(value ?? "");
@@ -669,6 +669,76 @@
       ]
     };
   }
+
+
+  function buildSpecialLockingScopeModel(data) {
+    const status = safeText(data.status || data.authorityLevel || "PENDING");
+    const openings = safeText(data.openingCount ?? "pending");
+    const lockingType = safeText(data.lockingTypeLabel || data.lockingType || "pending");
+    const egress = safeText(data.egressImpactLabel || data.egressImpact || "pending");
+    const release = safeText(data.releaseLogicLabel || data.releaseLogic || "pending");
+    const review = safeText(data.authorityReviewLabel || data.authorityReview || "pending");
+    const overridePlan = safeText(data.overridePlanLabel || data.overridePlan || "pending");
+    const riskScore = safeText(data.riskScore ?? "pending");
+    const guidance = safeText(data.guidance || "Confirm release behavior, authority review, signage, and operator override procedures before procurement.");
+    const interpretation = safeText(data.interpretation || "Run the calculator to generate special locking guidance.");
+
+    return {
+      category: "access-control",
+      tool: "special-locking-scope",
+      kicker: "Local Design Assistant",
+      title: "Special Locking Assistant",
+      status,
+      summary: "Use this specialty-branch result to identify openings that need code review, release coordination, and documented high-security operating procedures.",
+      hideStandardLists: true,
+      hideHeaderPills: true,
+      sections: [
+        {
+          title: "Authority Review Basis",
+          body: guidance,
+          items: [
+            "Flagged openings: " + openings,
+            "Locking condition: " + lockingType,
+            "Egress impact: " + egress,
+            "Release logic: " + release,
+            "Authority review: " + review,
+            "Override plan: " + overridePlan,
+            "Risk score: " + riskScore
+          ]
+        },
+        {
+          title: "Coordination Review",
+          body: interpretation,
+          items: [
+            "Confirm whether the opening is on an egress path and what code section applies.",
+            "Coordinate fire alarm release, emergency power loss behavior, signage, and manual release devices.",
+            "Document owner operation, guard override, emergency override, and maintenance procedures."
+          ]
+        },
+        {
+          title: "Summary Role",
+          body: "Special Locking / High-Security Scope is a specialty Access Control branch. It is not part of the core pipeline, but its result should be available to the category summary when used.",
+          items: [
+            "Contribution type: specialty-branch",
+            "Summary group: Specialty / What-if Branches",
+            "Pipeline state: optional specialty branch"
+          ]
+        }
+      ],
+      assumptionsTitle: "Planning Assumptions",
+      actionsTitle: "Recommended Actions",
+      assumptions: [
+        "Special locking review is based on opening count, locking condition, egress impact, release logic, authority review status, and override planning.",
+        "Final legality and release behavior must be validated with the AHJ, applicable code, and selected access-control/electrical hardware.",
+        "Life-safety interfaces, signage, emergency release devices, and operating policy can change whether the design is acceptable."
+      ],
+      actions: [
+        guidance,
+        "Coordinate special locking details before procurement or construction documentation.",
+        "Include the specialty-branch result in the Access Control summary when special locking or high-security scope is part of the design narrative."
+      ]
+    };
+  }
   const adapters = Object.freeze({
     "fail-safe-fail-secure": Object.freeze({
       slug: "fail-safe-fail-secure",
@@ -719,6 +789,11 @@
       slug: "elevator-reader-count",
       title: "Elevator Reader Assistant",
       buildModel: buildElevatorReaderCountModel
+    }),
+    "special-locking-scope": Object.freeze({
+      slug: "special-locking-scope",
+      title: "Special Locking Assistant",
+      buildModel: buildSpecialLockingScopeModel
     })
   });
 
