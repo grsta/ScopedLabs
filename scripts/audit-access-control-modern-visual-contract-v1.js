@@ -28,7 +28,7 @@ function moduleParses(text) {
   }
 }
 
-const version = 'access-control-planning-visuals-006-specialty-apb';
+const version = 'access-control-planning-visuals-007-graph-title-weight';
 const visualModule = read('assets/access-control-planning-visuals.js');
 
 check('Planning visual module exists', exists('assets/access-control-planning-visuals.js'));

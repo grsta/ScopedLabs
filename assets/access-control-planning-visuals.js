@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-006-specialty-apb";
+  const VERSION = "access-control-planning-visuals-007-graph-title-weight";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -186,7 +186,7 @@
       '<rect x="24" y="24" width="712" height="278" rx="16" fill="rgba(0,0,0,.10)" stroke="rgba(120,255,120,.12)" />',
       '<rect x="36" y="36" width="688" height="254" rx="12" fill="url(#accGridCableV3)" stroke="rgba(120,255,120,.07)" />',
       '<text x="52" y="62" font-size="11" fill="rgba(180,255,200,.68)" letter-spacing="1.4">ROUTING TAKEOFF</text>',
-      '<text x="52" y="84" font-size="19" fill="rgba(246,255,248,.96)" font-weight="800">Door cable path, slack, and takeoff pressure</text>',
+      '<text x="52" y="84" font-size="19" fill="rgba(246,255,248,.96)" font-weight="650">Door cable path, slack, and takeoff pressure</text>',
       statusBadge(statusText, tone, 616, 51),
       '<g opacity=".96">',
       '<rect x="66" y="137" width="84" height="52" rx="7" fill="rgba(120,255,120,.065)" stroke="rgba(120,255,120,.30)" />',
@@ -316,7 +316,7 @@
       '<rect x="24" y="24" width="712" height="340" rx="16" fill="rgba(0,0,0,.10)" stroke="rgba(120,255,120,.12)" />',
       '<rect x="36" y="36" width="688" height="316" rx="12" fill="url(#accGridDoorCountV4)" stroke="rgba(120,255,120,.07)" />',
       '<text x="52" y="62" font-size="11" fill="rgba(180,255,200,.68)" letter-spacing="1.4">DOOR SCHEDULE LOAD</text>',
-      '<text x="52" y="84" font-size="19" fill="rgba(246,255,248,.96)" font-weight="800">Controlled doors, readers, and segmentation pressure</text>',
+      '<text x="52" y="84" font-size="19" fill="rgba(246,255,248,.96)" font-weight="650">Controlled doors, readers, and segmentation pressure</text>',
       statusBadge(statusText, tone, 616, 51),
       groupRow("Perimeter", contributionLabel(perimeter), perimeter, 52, 112, "safe"),
       groupRow("Interior zones", contributionLabel(zones), zones, 279, 112, "safe"),
@@ -385,7 +385,7 @@
       '<rect x="24" y="24" width="712" height="340" rx="16" fill="rgba(0,0,0,.10)" stroke="rgba(120,255,120,.12)" />',
       '<rect x="36" y="36" width="688" height="316" rx="12" fill="url(#accGridApbV6)" stroke="rgba(120,255,120,.07)" />',
       '<text x="52" y="62" font-size="11" fill="rgba(180,255,200,.68)" letter-spacing="1.4">ANTI-PASSBACK ZONES</text>',
-      '<text x="52" y="84" font-size="19" fill="rgba(246,255,248,.96)" font-weight="800">Zone structure, paired transitions, and enforcement pressure</text>',
+      '<text x="52" y="84" font-size="19" fill="rgba(246,255,248,.96)" font-weight="650">Zone structure, paired transitions, and enforcement pressure</text>',
       statusBadge(statusText, tone, 616, 51),
       '<text x="72" y="114" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">ZONE MODEL</text>',
       Array.from({ length: zoneCount }, (_, index) => zoneNode(index)).join(''),

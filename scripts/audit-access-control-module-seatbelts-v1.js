@@ -34,7 +34,7 @@ function parses(rel) {
   }
 }
 
-const version = 'access-control-planning-visuals-006-specialty-apb';
+const version = 'access-control-planning-visuals-007-graph-title-weight';
 
 const moduleRel = 'assets/access-control-planning-visuals.js';
 const doorCountHtmlRel = 'tools/access-control/door-count-planner/index.html';
