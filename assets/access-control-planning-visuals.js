@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-023-special-locking-opening-count-icons";
+  const VERSION = "access-control-planning-visuals-028-stable-special-locking-revert";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -410,18 +410,7 @@
     const overridePlan = metrics.overridePlanLabel || metrics.overridePlan || "?";
 
     function authorityBlock(label, value, x, y, w, toneName) {
-      const shownOpenings = Math.max(0, Math.min(4, Math.round(openings)));
-    const hiddenOpenings = Math.max(0, Math.round(openings) - shownOpenings);
-    const openingIcons = Array.from({ length: shownOpenings }, (_, index) => {
-      const col = index % 2;
-      const row = Math.floor(index / 2);
-      return cadControlledDoorOpeningIcon({ x: 72 + col * 54, y: 154 + row * 50, scale: 0.42, tone: pressureTone });
-    }).join("");
-    const openingOverflow = hiddenOpenings > 0
-      ? '<text x="198" y="164" font-size="9" fill="rgba(255,220,130,.82)" font-weight="800">+' + escapeHtml(String(hiddenOpenings)) + ' more</text>'
-      : "";
-
-    return [
+      return [
         '<g>',
         '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="42" rx="9" fill="' + toneFill(toneName || "safe") + '" stroke="' + toneStroke(toneName || "safe") + '" />',
         '<text x="' + (x + 12) + '" y="' + (y + 15) + '" font-size="8.5" fill="rgba(203,213,225,.66)" letter-spacing=".7">' + escapeHtml(label).toUpperCase() + '</text>',
@@ -459,8 +448,8 @@
 
       '<rect x="52" y="108" width="300" height="252" rx="12" fill="rgba(0,0,0,.13)" stroke="rgba(120,255,120,.10)" />',
       '<text x="70" y="132" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">FLAGGED OPENINGS</text>',
-      openingIcons,
-      openingOverflow,
+      openings > 0 ? cadControlledDoorOpeningIcon({ x: 76, y: 154, scale: 0.42, tone: pressureTone }) : '',
+      openings > 1 ? cadControlledDoorOpeningIcon({ x: 126, y: 154, scale: 0.42, tone: pressureTone }) : '',
       '<text x="198" y="132" font-size="8" fill="rgba(203,213,225,.58)" letter-spacing=".65">CONTROLLED OPENINGS</text>',
       '<text x="198" y="148" font-size="10.5" fill="rgba(238,255,244,.90)" font-weight="800">' + escapeHtml(String(openings)) + ' flagged</text>',
 
