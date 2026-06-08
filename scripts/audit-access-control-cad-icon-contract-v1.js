@@ -45,6 +45,11 @@ const panelCapacityIcon = sectionBetween(
   "function cadAccessPanelCapacityIcon",
   "function metricChip"
 );
+const credentialFormatIcon = sectionBetween(
+  visuals,
+  "function cadCredentialFormatAnatomyIcon",
+  "function buildDoorCableSvg"
+);
 
 check("Access Control CAD icon primitive exists", cadDoor.includes("function cadControlledDoorOpeningIcon"), "cadControlledDoorOpeningIcon");
 check("CAD controlled door icon is exported", visuals.includes("cadControlledDoorOpeningIcon,"));
@@ -66,6 +71,11 @@ check("CAD panel capacity icon supports dynamic max slots", panelCapacityIcon.in
 check("CAD panel capacity icon declares CAD icon data attribute", panelCapacityIcon.includes('data-cad-icon="access-panel-capacity"'));
 check("CAD panel capacity icon uses thin-line no-filter style", panelCapacityIcon.includes('data-cad-detail="dynamic-expansion-slots"') && !panelCapacityIcon.includes("<filter") && !panelCapacityIcon.includes('filter="url('));
 check("CAD panel capacity icon has no raster image dependency", !/[.]png|[.]jpg|[.]jpeg|[.]webp|<image|base64/i.test(panelCapacityIcon));
+check("CAD credential format anatomy primitive exists", credentialFormatIcon.includes("function cadCredentialFormatAnatomyIcon"), "cadCredentialFormatAnatomyIcon");
+check("CAD credential format anatomy renderer exists", visuals.includes("function buildCredentialFormatSvg") && visuals.includes("renderCredentialFormat"));
+check("CAD credential format anatomy is exported", visuals.includes("cadCredentialFormatAnatomyIcon,") && visuals.includes("buildCredentialFormatSvg,"));
+check("CAD credential format anatomy supports facility and card fields", credentialFormatIcon.includes("FACILITY") && credentialFormatIcon.includes("CARD ID") && credentialFormatIcon.includes("usableBits"));
+check("CAD credential format anatomy uses thin-line no-filter style", credentialFormatIcon.includes('data-cad-detail="bit-layout-capacity"') && !credentialFormatIcon.includes("<filter") && !credentialFormatIcon.includes('filter="url('));
 check("Legacy non-CAD controlledDoorOpeningIcon name is not used", !visuals.includes("controlledDoorOpeningIcon"));
 
 console.log("\\nAccess Control CAD icon contract audit:");

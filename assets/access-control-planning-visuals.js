@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-042-panel-capacity-dynamic-icon";
+  const VERSION = "access-control-planning-visuals-043-credential-format-visual";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -434,6 +434,113 @@
     if (!el) return "";
     const svg = el.querySelector("svg");
     return svg ? svgToDataUri(svg) : "";
+  }
+
+
+  function cadCredentialFormatAnatomyIcon(options = {}) {
+    const x = Number(options.x || 0);
+    const y = Number(options.y || 0);
+    const width = Math.max(320, Number(options.width || 600));
+    const height = Math.max(120, Number(options.height || 154));
+    const tone = options.tone || "safe";
+    const exportMode = !!options.exportMode;
+    const formatLabel = options.formatLabel == null ? "Credential Format" : String(options.formatLabel);
+    const bits = Math.max(8, Math.round(Number(options.bits || 26)));
+    const usableBits = Math.max(1, Math.round(Number(options.usableBits || Math.max(1, bits - 2))));
+    const fcDigits = Math.max(0, Math.round(Number(options.fcDigits || 0)));
+    const cardDigits = Math.max(1, Math.round(Number(options.cardDigits || 1)));
+    const utilization = clamp(Number(options.utilization || 0) / 100, 0, 1);
+    const population = options.population == null ? "-" : String(options.population);
+    const capacityLabel = options.capacityLabel == null ? "-" : String(options.capacityLabel);
+
+    const line = exportMode ? "#668273" : "rgba(203,213,225,.66)";
+    const softLine = exportMode ? "#cbd8d0" : "rgba(203,213,225,.24)";
+    const muted = exportMode ? "#52615c" : "rgba(203,213,225,.72)";
+    const strong = exportMode ? "#101715" : "rgba(238,255,244,.94)";
+    const shellFill = exportMode ? "#ffffff" : "rgba(0,0,0,.10)";
+    const blockFill = exportMode ? "#f8fbf8" : "rgba(0,0,0,.14)";
+    const safeLine = exportMode ? "#1f9d57" : "rgba(125,255,152,.82)";
+    const safeFill = exportMode ? "#e7f8ee" : "rgba(120,255,120,.10)";
+    const watchLine = exportMode ? "#b7791f" : "rgba(255,204,102,.92)";
+    const watchFill = exportMode ? "#fff4d8" : "rgba(255,204,102,.13)";
+    const riskLine = exportMode ? "#b42318" : "rgba(255,105,105,.88)";
+    const riskFill = exportMode ? "#ffe2df" : "rgba(255,105,105,.13)";
+    const toneLine = tone === "risk" ? riskLine : tone === "watch" ? watchLine : safeLine;
+    const toneFillValue = tone === "risk" ? riskFill : tone === "watch" ? watchFill : safeFill;
+
+    const pad = 18;
+    const railX = x + pad;
+    const railY = y + 70;
+    const railW = width - pad * 2;
+    const railH = 38;
+    const parityW = Math.max(26, railW * .075);
+    const middleW = railW - parityW * 2;
+    const fcRatio = Math.max(.22, Math.min(.46, fcDigits / Math.max(1, fcDigits + cardDigits)));
+    const fcW = middleW * fcRatio;
+    const cardW = middleW - fcW;
+    const usedW = Math.max(3, Math.round((railW - 2) * utilization));
+
+    function fmt(value) {
+      return Math.round(Number(value) * 10) / 10;
+    }
+
+    function esc(value) {
+      return escapeHtml(value == null ? "" : String(value));
+    }
+
+    function field(xx, ww, label, detail, fill, stroke) {
+      return [
+        '<rect x="' + fmt(xx) + '" y="' + fmt(railY) + '" width="' + fmt(ww) + '" height="' + fmt(railH) + '" rx="7" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.05"/>',
+        '<text x="' + fmt(xx + ww / 2) + '" y="' + fmt(railY + 17) + '" fill="' + strong + '" font-size="9.2" font-weight="900" font-family="Inter,Arial,sans-serif" text-anchor="middle">' + esc(label) + '</text>',
+        '<text x="' + fmt(xx + ww / 2) + '" y="' + fmt(railY + 30) + '" fill="' + muted + '" font-size="7.4" font-weight="800" font-family="Inter,Arial,sans-serif" text-anchor="middle">' + esc(detail) + '</text>'
+      ].join("");
+    }
+
+    return [
+      '<g class="sl-cad-credential-format-icon" data-cad-icon="credential-format-anatomy" data-cad-detail="bit-layout-capacity" aria-label="Credential format bit layout and capacity anatomy">',
+      '<rect x="' + fmt(x) + '" y="' + fmt(y) + '" width="' + fmt(width) + '" height="' + fmt(height) + '" rx="14" fill="' + shellFill + '" stroke="' + line + '" stroke-width="1.15"/>',
+      '<path d="M' + fmt(x + pad) + ' ' + fmt(y + pad + 24) + ' H' + fmt(x + width - pad) + '" stroke="' + softLine + '" stroke-width=".9" stroke-linecap="round"/>',
+      '<text x="' + fmt(x + pad) + '" y="' + fmt(y + pad) + '" fill="' + muted + '" font-size="9.5" font-weight="900" font-family="Inter,Arial,sans-serif" letter-spacing="1.1">CREDENTIAL FORMAT</text>',
+      '<text x="' + fmt(x + pad) + '" y="' + fmt(y + pad + 21) + '" fill="' + strong + '" font-size="15" font-weight="900" font-family="Inter,Arial,sans-serif">' + esc(formatLabel.toUpperCase()) + ' ? ' + bits + '-BIT</text>',
+      '<rect x="' + fmt(x + width - pad - 92) + '" y="' + fmt(y + pad - 2) + '" width="92" height="26" rx="8" fill="' + toneFillValue + '" stroke="' + toneLine + '" stroke-width="1.1"/>',
+      '<text x="' + fmt(x + width - pad - 46) + '" y="' + fmt(y + pad + 16) + '" fill="' + toneLine + '" font-size="10.5" font-weight="900" font-family="Inter,Arial,sans-serif" text-anchor="middle">' + esc(String(tone).toUpperCase()) + '</text>',
+      field(railX, parityW, "P", "parity", blockFill, softLine),
+      field(railX + parityW, fcW, "FACILITY", fcDigits + " digits", toneFillValue, toneLine),
+      field(railX + parityW + fcW, cardW, "CARD ID", cardDigits + " digits", toneFillValue, toneLine),
+      field(railX + parityW + fcW + cardW, parityW, "P", "parity", blockFill, softLine),
+      '<text x="' + fmt(railX) + '" y="' + fmt(railY + railH + 22) + '" fill="' + muted + '" font-size="8.4" font-weight="800" font-family="Inter,Arial,sans-serif">USABLE BITS ~ ' + usableBits + '</text>',
+      '<text x="' + fmt(x + width - pad) + '" y="' + fmt(railY + railH + 22) + '" fill="' + muted + '" font-size="8.4" font-weight="800" font-family="Inter,Arial,sans-serif" text-anchor="end">POP ' + esc(population) + ' / CAP ' + esc(capacityLabel) + '</text>',
+      '<rect x="' + fmt(railX) + '" y="' + fmt(y + height - 24) + '" width="' + fmt(railW) + '" height="8" rx="4" fill="' + (exportMode ? "#eef4f0" : "rgba(0,0,0,.20)") + '" stroke="' + softLine + '" stroke-width=".8"/>',
+      '<rect x="' + fmt(railX) + '" y="' + fmt(y + height - 24) + '" width="' + fmt(usedW) + '" height="8" rx="4" fill="' + toneLine + '" opacity=".72"/>',
+      '<text x="' + fmt(railX) + '" y="' + fmt(y + height - 31) + '" fill="' + muted + '" font-size="8" font-weight="800" font-family="Inter,Arial,sans-serif">CAPACITY USED</text>',
+      '<text x="' + fmt(x + width - pad) + '" y="' + fmt(y + height - 31) + '" fill="' + toneLine + '" font-size="8" font-weight="900" font-family="Inter,Arial,sans-serif" text-anchor="end">' + Math.round(utilization * 10000) / 100 + '%</text>',
+      '<path d="M' + fmt(x) + ' ' + fmt(y + 14) + ' V' + fmt(y) + ' H' + fmt(x + 14) + ' M' + fmt(x + width - 14) + ' ' + fmt(y) + ' H' + fmt(x + width) + ' V' + fmt(y + 14) + ' M' + fmt(x + width) + ' ' + fmt(y + height - 14) + ' V' + fmt(y + height) + ' H' + fmt(x + width - 14) + ' M' + fmt(x + 14) + ' ' + fmt(y + height) + ' H' + fmt(x) + ' V' + fmt(y + height - 14) + '" stroke="' + toneLine + '" stroke-width="1" stroke-linecap="round"/>',
+      '</g>'
+    ].join("");
+  }
+
+  function buildCredentialFormatSvg(metrics = {}) {
+    const tone = statusTone(metrics.status || "PENDING");
+    const statusText = statusLabel(metrics.status || "PENDING");
+    const fmt = String(metrics.fmt || "decimal").toLowerCase();
+    const capacityLabel = fmt === "binary" ? (metrics.totalBinaryLabel || "-") : (metrics.totalDecimalLabel || "-");
+    const formatLabel = metrics.formatLabel || (fmt === "binary" ? "Binary" : "Decimal");
+
+    return [
+      '<div class="access-control-planning-visual-shell" data-access-control-modern-visual="credential-format-helper">',
+      '<svg viewBox="0 0 760 330" role="img" aria-label="Credential format anatomy visual" xmlns="http://www.w3.org/2000/svg">',
+      '<defs><pattern id="accGridCredentialV1" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="rgba(120,255,120,.045)" stroke-width="1"/></pattern></defs>',
+      '<rect x="24" y="24" width="712" height="282" rx="16" fill="rgba(0,0,0,.10)" stroke="rgba(120,255,120,.12)" />',
+      '<rect x="36" y="36" width="688" height="258" rx="12" fill="url(#accGridCredentialV1)" stroke="rgba(120,255,120,.07)" />',
+      '<text x="52" y="62" font-size="11" fill="rgba(180,255,200,.68)" letter-spacing="1.4">CREDENTIAL FORMAT ANATOMY</text>',
+      '<text x="52" y="84" font-size="19" fill="rgba(246,255,248,.96)" font-weight="650">Bit layout, numbering ranges, and population pressure</text>',
+      statusBadge(statusText, tone, 616, 51),
+      cadCredentialFormatAnatomyIcon({ x: 58, y: 108, width: 644, height: 158, tone, formatLabel, bits: metrics.bits, usableBits: metrics.usableBits, fcDigits: metrics.fcDigits, cardDigits: metrics.cardDigits, utilization: metrics.utilization, population: metrics.population, capacityLabel }),
+      '<text x="58" y="286" font-size="10" fill="rgba(203,213,225,.62)">Facility code and card number fields represent planning capacity, not vendor-specific proprietary encoding.</text>',
+      '</svg>',
+      '<p class="sl-vis-note"><strong>Visual note:</strong> Credential format pressure is driven by badge population versus usable numbering space. Use this visual to document bit length, facility-code range, card-number range, and migration pressure.</p>',
+      '</div>'
+    ].join("");
   }
 
   function buildDoorCableSvg(metrics = {}) {
@@ -937,6 +1044,10 @@
   function renderAntiPassback(options = {}) {
     return show(options, buildAntiPassbackSvg(options.metrics || {}));
   }
+  function renderCredentialFormat(options = {}) {
+    return show(options, buildCredentialFormatSvg(options.metrics || {}));
+  }
+
   function renderDoorCable(options = {}) {
     return show(options, buildDoorCableSvg(options.metrics || {}));
   }
@@ -953,6 +1064,9 @@
     cadElevatorBankIcon,
     cadAccessPanelCapacityIcon,
     VERSION,
+    renderCredentialFormat,
+    buildCredentialFormatSvg,
+    cadCredentialFormatAnatomyIcon,
     renderDoorCable,
     renderDoorCount,
     renderAntiPassback,

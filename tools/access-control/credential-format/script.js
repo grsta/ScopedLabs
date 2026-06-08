@@ -30,6 +30,7 @@
     flowActions: $("accessControlFlowActions"),
     reportMetadataMount: $("reportMetadataMount"),
     chartWrap: $("credentialFormatChartWrap"),
+    visual: $("credentialFormatVisual"),
     reportActions: $("credentialFormatReportActions")
   };
 
@@ -207,6 +208,23 @@
 
   function credentialFormatScheduleRow(group, metric, value, note) {
     return '<tr><td>' + escapeHtml(group) + '</td><td>' + escapeHtml(metric) + '</td><td>' + value + '</td><td>' + escapeHtml(note) + '</td></tr>';
+  }
+
+
+  function renderCredentialFormatVisual(metrics = {}) {
+    const visuals = window.ScopedLabsAccessControlPlanningVisuals;
+    if (!els.visual || !visuals || typeof visuals.renderCredentialFormat !== "function") return false;
+    return visuals.renderCredentialFormat({ card: els.decisionCard, wrap: els.chartWrap, target: els.visual, metrics });
+  }
+
+  function clearCredentialFormatVisual() {
+    if (els.visual) els.visual.innerHTML = "";
+  }
+
+  function getCredentialFormatVisualImage() {
+    const visuals = window.ScopedLabsAccessControlPlanningVisuals;
+    if (!visuals || typeof visuals.getDataUri !== "function") return "";
+    return visuals.getDataUri(els.visual);
   }
 
   function renderCredentialFormatSchedule(metrics = {}) {
@@ -405,7 +423,7 @@
 
     return shell.register("credential-format", {
       getChartImage() {
-        return "";
+        return getCredentialFormatVisualImage();
       },
       attachExportGetter() {
         return false;
@@ -962,6 +980,7 @@
     ];
 
     render(rows);
+    renderCredentialFormatVisual(metrics);
     renderCredentialFormatSchedule(metrics);
     renderCredentialFormatAssistant(metrics);
     publishCredentialFormatSummaryContribution(metrics);
@@ -993,6 +1012,7 @@
       els.results.innerHTML = '<div class="muted">Inputs changed. Press Calculate to refresh results.</div>';
     }
 
+    clearCredentialFormatVisual();
     clearCredentialFormatSchedule();
     clearCredentialFormatAssistant();
 
@@ -1012,6 +1032,7 @@
       els.results.innerHTML = '<div class="muted">Enter values and press Calculate.</div>';
     }
 
+    clearCredentialFormatVisual();
     clearCredentialFormatSchedule();
     clearCredentialFormatAssistant();
 
