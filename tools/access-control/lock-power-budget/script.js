@@ -638,15 +638,17 @@
 
   function currentMarker(x, y, label, value, palette, tone) {
     const color = tone === "required" ? palette.statusColor : palette.green;
-    const labelY = tone === "required" ? y - 70 : y - 58;
+    const labelY = tone === "required" ? y - 84 : y - 58;
     const chipW = tone === "required" ? 156 : 120;
-    const chipX = tone === "required" ? x + 12 : x - 60;
+    const chipXBase = tone === "required" ? x + 12 : x - 60;
+    const chipX = tone === "required" ? Math.min(chipXBase, 706) : chipXBase;
+    const leaderX = tone === "required" ? chipX + 18 : x - 22;
 
     return [
       '<g aria-label="' + lockPowerEsc(label) + ' marker">',
       '<line x1="' + x.toFixed(1) + '" y1="' + (y - 42) + '" x2="' + x.toFixed(1) + '" y2="' + (y + 52) + '" stroke="' + color + '" stroke-width="' + (tone === "required" ? "2.5" : "1.8") + '" stroke-dasharray="' + (tone === "required" ? "0" : "5 5") + '"/>',
       '<circle cx="' + x.toFixed(1) + '" cy="' + y + '" r="' + (tone === "required" ? "7" : "5") + '" fill="' + color + '" stroke="' + palette.card + '" stroke-width="2"/>',
-      '<line x1="' + x.toFixed(1) + '" y1="' + (y - 42) + '" x2="' + (tone === "required" ? x + 26 : x - 22).toFixed(1) + '" y2="' + labelY + '" stroke="' + color + '" stroke-width="1"/>',
+      '<line x1="' + x.toFixed(1) + '" y1="' + (y - 42) + '" x2="' + leaderX.toFixed(1) + '" y2="' + labelY + '" stroke="' + color + '" stroke-width="1"/>',
       '<rect x="' + chipX.toFixed(1) + '" y="' + (labelY - 25) + '" width="' + chipW + '" height="40" rx="9" fill="' + palette.card + '" stroke="' + color + '" stroke-width="1"/>',
       '<text x="' + (chipX + 12).toFixed(1) + '" y="' + (labelY - 8) + '" fill="' + palette.muted + '" font-size="9" font-weight="800" font-family="Inter,Arial,sans-serif">' + lockPowerEsc(label).toUpperCase() + '</text>',
       '<text x="' + (chipX + 12).toFixed(1) + '" y="' + (labelY + 8) + '" fill="' + color + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif">' + lockPowerEsc(value) + '</text>',
@@ -747,6 +749,7 @@
     const lockType = String(els.lockType?.options?.[els.lockType.selectedIndex]?.text || els.lockType?.value || "Lock hardware");
 
     const repeatedLocks = Math.max(1, Math.min(3, Number(lockCount) || 1));
+    const timesSymbol = "\\u00D7";
 
     const svg = [
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Low voltage access control lock power rail diagram">',
@@ -757,10 +760,8 @@
       '<path d="M 94 48 V 346 M 226 48 V 346 M 952 48 V 346" stroke="' + palette.grid + '" stroke-width="1"/>',
 
       '<text x="54" y="58" fill="' + palette.text + '" font-size="18" font-weight="900" font-family="Inter,Arial,sans-serif">Lock Power Rail</text>',
-      '<text x="54" y="82" fill="' + palette.muted + '" font-size="12" font-weight="700" font-family="Inter,Arial,sans-serif">PSU / controller output → DC rail → active lock load → required reserve.</text>',
-
-      '<rect x="884" y="48" width="166" height="38" rx="10" fill="' + palette.statusSoft + '" stroke="' + palette.statusColor + '"/>',
-      '<text x="902" y="72" fill="' + palette.statusColor + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif">' + lockPowerEsc(status) + ' · ' + utilizationPct.toFixed(0) + '%</text>',
+      '<text x="54" y="82" fill="' + palette.muted + '" font-size="12" font-weight="700" font-family="Inter,Arial,sans-serif">PSU / controller output → DC rail → active lock load → required reserve.</text>',      '<rect x="910" y="38" width="140" height="34" rx="10" fill="' + palette.statusSoft + '" stroke="' + palette.statusColor + '"/>',
+      '<text x="980" y="60" fill="' + palette.statusColor + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif" text-anchor="middle">' + lockPowerEsc(status) + ' - ' + utilizationPct.toFixed(0) + '%</text>',
 
       accessPowerSupplySymbol(66, 122, supplyLabel, palette),
       dcPowerRail(220, 884, railY, palette),
@@ -774,13 +775,13 @@
       headroomBracket(peakX, requiredX, railY + 58, lockPowerFormatAmp(reserve) + " reserve", palette),
 
       '<g aria-label="Lock load bank">',
-      '<rect x="922" y="122" width="144" height="136" rx="12" fill="' + palette.block + '" stroke="' + palette.lineStrong + '" stroke-width="1.4"/>',
-      '<text x="994" y="146" fill="' + palette.text + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif" text-anchor="middle">' + lockPowerEsc(lockCount) + ' Lock Loads</text>',
-      '<text x="994" y="162" fill="' + palette.muted + '" font-size="9" font-weight="800" font-family="Inter,Arial,sans-serif" text-anchor="middle">LOAD BANK</text>',
-      electricStrikeLoadSymbol(946, 178, 0, palette),
-      repeatedLocks > 1 ? electricStrikeLoadSymbol(946, 178, 1, palette) : "",
-      repeatedLocks > 2 ? electricStrikeLoadSymbol(946, 178, 2, palette) : "",
-      '<text x="994" y="246" fill="' + palette.green + '" font-size="10" font-weight="900" font-family="Inter,Arial,sans-serif" text-anchor="middle">' + lockPowerEsc(simultaneous) + ' active ? ' + lockPowerEsc(ampsEach) + ' A</text>',
+      '<rect x="922" y="118" width="144" height="142" rx="12" fill="' + palette.block + '" stroke="' + palette.lineStrong + '" stroke-width="1.4"/>',
+      '<text x="994" y="142" fill="' + palette.text + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif" text-anchor="middle">' + lockPowerEsc(lockCount) + ' Lock Loads</text>',
+      '<text x="994" y="158" fill="' + palette.muted + '" font-size="9" font-weight="800" font-family="Inter,Arial,sans-serif" text-anchor="middle">LOAD BANK</text>',
+      electricStrikeLoadSymbol(946, 176, 0, palette),
+      repeatedLocks > 1 ? electricStrikeLoadSymbol(946, 176, 1, palette) : "",
+      repeatedLocks > 2 ? electricStrikeLoadSymbol(946, 176, 2, palette) : "",
+      '<text x="994" y="248" fill="' + palette.green + '" font-size="10" font-weight="900" font-family="Inter,Arial,sans-serif" text-anchor="middle">' + lockPowerEsc(simultaneous) + ' active ' + timesSymbol + ' ' + lockPowerEsc(ampsEach) + ' A</text>',
       '</g>',
 
       metricChip(66, 292, "Peak Load", lockPowerFormatAmp(peak), palette, "green"),
