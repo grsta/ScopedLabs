@@ -204,9 +204,10 @@ check("Anti-Passback uses explicit logical zone labels", moduleText.includes("LO
 check("Panel Capacity dynamic CAD primitive exists", moduleText.includes("function cadAccessPanelCapacityIcon") && moduleText.includes("data-cad-icon=\"access-panel-capacity\"") && moduleText.includes("maxSlots"));
 check("Panel Capacity dynamic CAD primitive is exported", moduleText.includes("cadAccessPanelCapacityIcon,"));
 check("Panel Capacity dynamic CAD primitive uses no SVG filters", moduleText.includes('data-cad-detail="dynamic-expansion-slots"') && !moduleText.includes("filter=\"url("));
-check("Credential Format anatomy CAD renderer exists", moduleText.includes("function buildCredentialFormatSvg") && moduleText.includes('data-cad-icon="credential-format-anatomy"'));
-check("Credential Format anatomy renderer is exported", moduleText.includes("renderCredentialFormat,") && moduleText.includes("buildCredentialFormatSvg,"));
-check("Credential Format anatomy renderer uses no SVG filters", moduleText.includes('data-cad-detail="bit-layout-capacity"') && !moduleText.includes("filter=\"url("));
+check("Credential Format bit-card CAD renderer exists", moduleText.includes("function buildCredentialFormatSvg") && moduleText.includes('data-cad-icon="credential-format-bit-card"'));
+check("Credential Format bit-card renderer is exported", moduleText.includes("renderCredentialFormat,") && moduleText.includes("buildCredentialFormatSvg,"));
+check("Credential Format bit-card renderer is dynamic", moduleText.includes("function cadCredentialFormatBitCardIcon") && moduleText.includes("facilityBits") && moduleText.includes("cardBits") && moduleText.includes("bits === 26"));
+check("Credential Format bit-card renderer uses no SVG filters", moduleText.includes('data-cad-detail="dynamic-bit-layout"') && !moduleText.includes("filter=\"url("));
 
 console.log("\nAccess Control visual fit seatbelt audit:");
 console.table(rows);

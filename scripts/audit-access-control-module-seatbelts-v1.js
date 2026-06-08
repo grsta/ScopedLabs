@@ -34,7 +34,7 @@ function parses(rel) {
   }
 }
 
-const version = 'access-control-planning-visuals-043-credential-format-visual';
+const version = 'access-control-planning-visuals-044-credential-format-bit-card-replace';
 
 const moduleRel = 'assets/access-control-planning-visuals.js';
 const doorCountHtmlRel = 'tools/access-control/door-count-planner/index.html';
@@ -53,9 +53,9 @@ check('Shared Access Control planning visual module parses', parses(moduleRel));
 check('Door Count script parses', parses(doorCountScriptRel));
 check('Door Cable script parses', parses(doorCableScriptRel));
 
-check('Shared module is on module version 043', moduleText.includes(version));
-check('Door Count page loads shared module version 043', doorCountHtml.includes('/assets/access-control-planning-visuals.js?v=' + version));
-check('Door Cable page loads shared module version 043', doorCableHtml.includes('/assets/access-control-planning-visuals.js?v=' + version));
+check('Shared module is on module version 044', moduleText.includes(version));
+check('Door Count page loads shared module version 044', doorCountHtml.includes('/assets/access-control-planning-visuals.js?v=' + version));
+check('Door Cable page loads shared module version 044', doorCableHtml.includes('/assets/access-control-planning-visuals.js?v=' + version));
 
 check('Door Count uses shared renderer only', doorCountScript.includes('ScopedLabsAccessControlPlanningVisuals') && doorCountScript.includes('renderDoorCount'));
 check('Door Cable uses shared renderer only', doorCableScript.includes('ScopedLabsAccessControlPlanningVisuals') && doorCableScript.includes('renderDoorCable'));

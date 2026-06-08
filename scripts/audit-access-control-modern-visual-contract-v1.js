@@ -28,7 +28,7 @@ function moduleParses(text) {
   }
 }
 
-const version = 'access-control-planning-visuals-043-credential-format-visual';
+const version = 'access-control-planning-visuals-044-credential-format-bit-card-replace';
 const visualModule = read('assets/access-control-planning-visuals.js');
 
 check('Planning visual module exists', exists('assets/access-control-planning-visuals.js'));
@@ -38,7 +38,7 @@ check('Planning visual module exposes door cable renderer', visualModule.include
 check('Planning visual module exposes door count renderer', visualModule.includes('renderDoorCount') && visualModule.includes('data-access-control-modern-visual="door-count-planner"'));
 check('Planning visual module exposes anti-passback renderer', visualModule.includes('renderAntiPassback') && visualModule.includes('data-access-control-modern-visual="anti-passback-zones"'));
 check('Planning visual module exposes panel capacity primitive', visualModule.includes('function cadAccessPanelCapacityIcon') && visualModule.includes('data-cad-icon="access-panel-capacity"'));
-check('Planning visual module exposes credential format renderer', visualModule.includes('renderCredentialFormat') && visualModule.includes('data-access-control-modern-visual="credential-format-helper"'));
+check('Planning visual module exposes credential format bit-card renderer', visualModule.includes('renderCredentialFormat') && visualModule.includes('data-cad-icon="credential-format-bit-card"'));
 check('Planning visual module keeps export-safe data URI helper', visualModule.includes('getDataUri') && visualModule.includes('data:image/svg+xml;charset=utf-8'));
 check('Planning visual module uses engineering pressure rails', visualModule.includes('function pressureRail') && visualModule.includes('takeoff pressure') && visualModule.includes('complexity pressure'));
 

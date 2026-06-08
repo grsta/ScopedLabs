@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-043-credential-format-visual";
+  const VERSION = "access-control-planning-visuals-044-credential-format-bit-card-replace";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -437,48 +437,36 @@
   }
 
 
-  function cadCredentialFormatAnatomyIcon(options = {}) {
+
+  function cadCredentialFormatBitCardIcon(options = {}) {
     const x = Number(options.x || 0);
     const y = Number(options.y || 0);
-    const width = Math.max(320, Number(options.width || 600));
-    const height = Math.max(120, Number(options.height || 154));
+    const width = Math.max(520, Number(options.width || 650));
+    const height = Math.max(230, Number(options.height || 250));
     const tone = options.tone || "safe";
-    const exportMode = !!options.exportMode;
     const formatLabel = options.formatLabel == null ? "Credential Format" : String(options.formatLabel);
-    const bits = Math.max(8, Math.round(Number(options.bits || 26)));
-    const usableBits = Math.max(1, Math.round(Number(options.usableBits || Math.max(1, bits - 2))));
+    const bits = Math.max(8, Math.min(64, Math.round(Number(options.bits || 26))));
+    const usableBits = Math.max(1, Math.min(bits - 2, Math.round(Number(options.usableBits || bits - 2))));
     const fcDigits = Math.max(0, Math.round(Number(options.fcDigits || 0)));
     const cardDigits = Math.max(1, Math.round(Number(options.cardDigits || 1)));
-    const utilization = clamp(Number(options.utilization || 0) / 100, 0, 1);
     const population = options.population == null ? "-" : String(options.population);
+    const utilization = clamp(Number(options.utilization || 0) / 100, 0, 1);
     const capacityLabel = options.capacityLabel == null ? "-" : String(options.capacityLabel);
 
-    const line = exportMode ? "#668273" : "rgba(203,213,225,.66)";
-    const softLine = exportMode ? "#cbd8d0" : "rgba(203,213,225,.24)";
-    const muted = exportMode ? "#52615c" : "rgba(203,213,225,.72)";
-    const strong = exportMode ? "#101715" : "rgba(238,255,244,.94)";
-    const shellFill = exportMode ? "#ffffff" : "rgba(0,0,0,.10)";
-    const blockFill = exportMode ? "#f8fbf8" : "rgba(0,0,0,.14)";
-    const safeLine = exportMode ? "#1f9d57" : "rgba(125,255,152,.82)";
-    const safeFill = exportMode ? "#e7f8ee" : "rgba(120,255,120,.10)";
-    const watchLine = exportMode ? "#b7791f" : "rgba(255,204,102,.92)";
-    const watchFill = exportMode ? "#fff4d8" : "rgba(255,204,102,.13)";
-    const riskLine = exportMode ? "#b42318" : "rgba(255,105,105,.88)";
-    const riskFill = exportMode ? "#ffe2df" : "rgba(255,105,105,.13)";
+    const line = "rgba(203,213,225,.54)";
+    const softLine = "rgba(203,213,225,.24)";
+    const text = "rgba(238,255,244,.94)";
+    const muted = "rgba(203,213,225,.72)";
+    const shellFill = "rgba(0,0,0,.12)";
+    const frameLine = "rgba(120,255,120,.18)";
+    const safeLine = "rgba(125,255,152,.82)";
+    const safeFill = "rgba(120,255,120,.10)";
+    const watchLine = "rgba(255,204,102,.92)";
+    const watchFill = "rgba(255,204,102,.13)";
+    const riskLine = "rgba(255,105,105,.88)";
+    const riskFill = "rgba(255,105,105,.13)";
     const toneLine = tone === "risk" ? riskLine : tone === "watch" ? watchLine : safeLine;
     const toneFillValue = tone === "risk" ? riskFill : tone === "watch" ? watchFill : safeFill;
-
-    const pad = 18;
-    const railX = x + pad;
-    const railY = y + 70;
-    const railW = width - pad * 2;
-    const railH = 38;
-    const parityW = Math.max(26, railW * .075);
-    const middleW = railW - parityW * 2;
-    const fcRatio = Math.max(.22, Math.min(.46, fcDigits / Math.max(1, fcDigits + cardDigits)));
-    const fcW = middleW * fcRatio;
-    const cardW = middleW - fcW;
-    const usedW = Math.max(3, Math.round((railW - 2) * utilization));
 
     function fmt(value) {
       return Math.round(Number(value) * 10) / 10;
@@ -488,33 +476,114 @@
       return escapeHtml(value == null ? "" : String(value));
     }
 
-    function field(xx, ww, label, detail, fill, stroke) {
+    function estimateFacilityBits() {
+      if (bits === 26) return 8;
+      if (fcDigits <= 0) return Math.max(1, Math.round(usableBits * .25));
+      const byDigits = Math.ceil(Math.log2(Math.pow(10, fcDigits)));
+      return Math.max(1, Math.min(usableBits - 1, byDigits));
+    }
+
+    const parityBits = bits >= 10 ? 2 : 0;
+    const dataStart = parityBits ? 1 : 0;
+    const dataEnd = parityBits ? bits - 2 : bits - 1;
+    const availableDataBits = Math.max(1, dataEnd - dataStart + 1);
+    const facilityBits = Math.max(1, Math.min(availableDataBits - 1, estimateFacilityBits()));
+    const cardBits = Math.max(1, availableDataBits - facilityBits);
+    const facilityStart = dataStart;
+    const facilityEnd = facilityStart + facilityBits - 1;
+    const cardStart = facilityEnd + 1;
+    const cardEnd = dataEnd;
+
+    const pad = 16;
+    const titleY = y + 26;
+    const bitLabelY = y + 72;
+    const rowX = x + pad;
+    const rowY = y + 92;
+    const rowW = width - pad * 2;
+    const gap = bits <= 26 ? 3 : bits <= 37 ? 2 : 1.2;
+    const cellW = Math.max(5.2, (rowW - gap * (bits - 1)) / bits);
+    const cellH = 31;
+    const numberSize = bits <= 32 ? 7.2 : bits <= 44 ? 6.1 : 0;
+    const cells = [];
+    const numbers = [];
+
+    function bitKind(index) {
+      if (parityBits && (index === 0 || index === bits - 1)) return "parity";
+      if (index >= facilityStart && index <= facilityEnd) return "facility";
+      return "card";
+    }
+
+    for (let i = 0; i < bits; i += 1) {
+      const bx = rowX + i * (cellW + gap);
+      const kind = bitKind(i);
+      const fill = kind === "parity" ? watchFill : kind === "facility" ? toneFillValue : "rgba(238,246,255,.025)";
+      const stroke = kind === "parity" ? watchLine : kind === "facility" ? toneLine : "rgba(238,246,255,.30)";
+
+      cells.push('<rect x="' + fmt(bx) + '" y="' + fmt(rowY) + '" width="' + fmt(cellW) + '" height="' + cellH + '" rx="4" fill="' + fill + '" stroke="' + stroke + '" stroke-width=".95"/>');
+
+      if (numberSize) {
+        numbers.push('<text x="' + fmt(bx + cellW / 2) + '" y="' + fmt(rowY - 7) + '" fill="' + muted + '" font-size="' + numberSize + '" font-weight="800" font-family="Inter,Arial,sans-serif" text-anchor="middle">' + (i + 1) + '</text>');
+      }
+    }
+
+    function centerFor(start, end) {
+      const sx = rowX + start * (cellW + gap);
+      const ex = rowX + end * (cellW + gap) + cellW;
+      return (sx + ex) / 2;
+    }
+
+    function bracket(start, end, label, stroke, textFill) {
+      const sx = rowX + start * (cellW + gap);
+      const ex = rowX + end * (cellW + gap) + cellW;
+      const by = rowY + cellH + 18;
+
       return [
-        '<rect x="' + fmt(xx) + '" y="' + fmt(railY) + '" width="' + fmt(ww) + '" height="' + fmt(railH) + '" rx="7" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.05"/>',
-        '<text x="' + fmt(xx + ww / 2) + '" y="' + fmt(railY + 17) + '" fill="' + strong + '" font-size="9.2" font-weight="900" font-family="Inter,Arial,sans-serif" text-anchor="middle">' + esc(label) + '</text>',
-        '<text x="' + fmt(xx + ww / 2) + '" y="' + fmt(railY + 30) + '" fill="' + muted + '" font-size="7.4" font-weight="800" font-family="Inter,Arial,sans-serif" text-anchor="middle">' + esc(detail) + '</text>'
+        '<path d="M' + fmt(sx) + ' ' + fmt(by - 9) + ' V' + fmt(by) + ' H' + fmt(ex) + ' V' + fmt(by - 9) + '" fill="none" stroke="' + stroke + '" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>',
+        '<text x="' + fmt((sx + ex) / 2) + '" y="' + fmt(by + 16) + '" fill="' + textFill + '" font-size="8.2" font-weight="900" font-family="Inter,Arial,sans-serif" text-anchor="middle">' + esc(label) + '</text>'
       ].join("");
     }
 
+    function metric(xx, yy, ww, label, value, stroke, fill) {
+      return [
+        '<rect x="' + fmt(xx) + '" y="' + fmt(yy) + '" width="' + fmt(ww) + '" height="38" rx="8" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1"/>',
+        '<text x="' + fmt(xx + 10) + '" y="' + fmt(yy + 16) + '" fill="' + muted + '" font-size="7.8" font-weight="800" font-family="Inter,Arial,sans-serif">' + esc(label) + '</text>',
+        '<text x="' + fmt(xx + 10) + '" y="' + fmt(yy + 30) + '" fill="' + stroke + '" font-size="10.4" font-weight="900" font-family="Inter,Arial,sans-serif">' + esc(value) + '</text>'
+      ].join("");
+    }
+
+    const fcLabel = "FACILITY CODE ? BITS " + (facilityStart + 1) + "-" + (facilityEnd + 1) + " ? " + facilityBits + " BITS";
+    const cardLabel = "CARD NUMBER ? BITS " + (cardStart + 1) + "-" + (cardEnd + 1) + " ? " + cardBits + " BITS";
+    const leftParity = bits === 26 ? "Even: bits 2-13" : "Verify map";
+    const rightParity = bits === 26 ? "Odd: bits 14-25" : "Verify map";
+    const metricY = y + height - 62;
+    const capacityW = Math.max(3, Math.round((width - pad * 2) * utilization));
+
     return [
-      '<g class="sl-cad-credential-format-icon" data-cad-icon="credential-format-anatomy" data-cad-detail="bit-layout-capacity" aria-label="Credential format bit layout and capacity anatomy">',
-      '<rect x="' + fmt(x) + '" y="' + fmt(y) + '" width="' + fmt(width) + '" height="' + fmt(height) + '" rx="14" fill="' + shellFill + '" stroke="' + line + '" stroke-width="1.15"/>',
-      '<path d="M' + fmt(x + pad) + ' ' + fmt(y + pad + 24) + ' H' + fmt(x + width - pad) + '" stroke="' + softLine + '" stroke-width=".9" stroke-linecap="round"/>',
-      '<text x="' + fmt(x + pad) + '" y="' + fmt(y + pad) + '" fill="' + muted + '" font-size="9.5" font-weight="900" font-family="Inter,Arial,sans-serif" letter-spacing="1.1">CREDENTIAL FORMAT</text>',
-      '<text x="' + fmt(x + pad) + '" y="' + fmt(y + pad + 21) + '" fill="' + strong + '" font-size="15" font-weight="900" font-family="Inter,Arial,sans-serif">' + esc(formatLabel.toUpperCase()) + ' ? ' + bits + '-BIT</text>',
-      '<rect x="' + fmt(x + width - pad - 92) + '" y="' + fmt(y + pad - 2) + '" width="92" height="26" rx="8" fill="' + toneFillValue + '" stroke="' + toneLine + '" stroke-width="1.1"/>',
-      '<text x="' + fmt(x + width - pad - 46) + '" y="' + fmt(y + pad + 16) + '" fill="' + toneLine + '" font-size="10.5" font-weight="900" font-family="Inter,Arial,sans-serif" text-anchor="middle">' + esc(String(tone).toUpperCase()) + '</text>',
-      field(railX, parityW, "P", "parity", blockFill, softLine),
-      field(railX + parityW, fcW, "FACILITY", fcDigits + " digits", toneFillValue, toneLine),
-      field(railX + parityW + fcW, cardW, "CARD ID", cardDigits + " digits", toneFillValue, toneLine),
-      field(railX + parityW + fcW + cardW, parityW, "P", "parity", blockFill, softLine),
-      '<text x="' + fmt(railX) + '" y="' + fmt(railY + railH + 22) + '" fill="' + muted + '" font-size="8.4" font-weight="800" font-family="Inter,Arial,sans-serif">USABLE BITS ~ ' + usableBits + '</text>',
-      '<text x="' + fmt(x + width - pad) + '" y="' + fmt(railY + railH + 22) + '" fill="' + muted + '" font-size="8.4" font-weight="800" font-family="Inter,Arial,sans-serif" text-anchor="end">POP ' + esc(population) + ' / CAP ' + esc(capacityLabel) + '</text>',
-      '<rect x="' + fmt(railX) + '" y="' + fmt(y + height - 24) + '" width="' + fmt(railW) + '" height="8" rx="4" fill="' + (exportMode ? "#eef4f0" : "rgba(0,0,0,.20)") + '" stroke="' + softLine + '" stroke-width=".8"/>',
-      '<rect x="' + fmt(railX) + '" y="' + fmt(y + height - 24) + '" width="' + fmt(usedW) + '" height="8" rx="4" fill="' + toneLine + '" opacity=".72"/>',
-      '<text x="' + fmt(railX) + '" y="' + fmt(y + height - 31) + '" fill="' + muted + '" font-size="8" font-weight="800" font-family="Inter,Arial,sans-serif">CAPACITY USED</text>',
-      '<text x="' + fmt(x + width - pad) + '" y="' + fmt(y + height - 31) + '" fill="' + toneLine + '" font-size="8" font-weight="900" font-family="Inter,Arial,sans-serif" text-anchor="end">' + Math.round(utilization * 10000) / 100 + '%</text>',
-      '<path d="M' + fmt(x) + ' ' + fmt(y + 14) + ' V' + fmt(y) + ' H' + fmt(x + 14) + ' M' + fmt(x + width - 14) + ' ' + fmt(y) + ' H' + fmt(x + width) + ' V' + fmt(y + 14) + ' M' + fmt(x + width) + ' ' + fmt(y + height - 14) + ' V' + fmt(y + height) + ' H' + fmt(x + width - 14) + ' M' + fmt(x + 14) + ' ' + fmt(y + height) + ' H' + fmt(x) + ' V' + fmt(y + height - 14) + '" stroke="' + toneLine + '" stroke-width="1" stroke-linecap="round"/>',
+      '<g class="sl-cad-credential-format-bit-card" data-cad-icon="credential-format-bit-card" data-cad-detail="dynamic-bit-layout" aria-label="Dynamic credential format bit card">',
+      '<rect x="' + fmt(x) + '" y="' + fmt(y) + '" width="' + fmt(width) + '" height="' + fmt(height) + '" rx="14" fill="' + shellFill + '" stroke="' + frameLine + '" stroke-width="1.15"/>',
+      '<rect x="' + fmt(x + 10) + '" y="' + fmt(y + 10) + '" width="' + fmt(width - 20) + '" height="' + fmt(height - 20) + '" rx="10" fill="none" stroke="' + frameLine + '" stroke-width=".8"/>',
+      '<text x="' + fmt(x + pad) + '" y="' + fmt(titleY) + '" fill="' + text + '" font-size="14" font-weight="900" font-family="Inter,Arial,sans-serif">' + esc(formatLabel.toUpperCase()) + ' ? ' + bits + '-BIT FORMAT</text>',
+      '<text x="' + fmt(x + pad) + '" y="' + fmt(titleY + 18) + '" fill="' + muted + '" font-size="8.8" font-weight="800" font-family="Inter,Arial,sans-serif">Dynamic bit layout / facility code / card number / parity structure</text>',
+      '<rect x="' + fmt(x + width - pad - 78) + '" y="' + fmt(y + 16) + '" width="78" height="24" rx="8" fill="' + toneFillValue + '" stroke="' + toneLine + '" stroke-width="1"/>',
+      '<text x="' + fmt(x + width - pad - 39) + '" y="' + fmt(y + 32) + '" fill="' + toneLine + '" font-size="9.5" font-weight="900" font-family="Inter,Arial,sans-serif" text-anchor="middle">' + esc(String(tone).toUpperCase()) + '</text>',
+      '<path d="M' + fmt(x + pad) + ' ' + fmt(y + 57) + ' H' + fmt(x + width - pad) + '" stroke="' + softLine + '" stroke-width=".9" stroke-linecap="round"/>',
+      '<text x="' + fmt(x + pad) + '" y="' + fmt(bitLabelY) + '" fill="' + toneLine + '" font-size="9.5" font-weight="900" font-family="Inter,Arial,sans-serif" letter-spacing=".8">BIT LAYOUT</text>',
+      numbers.join(""),
+      cells.join(""),
+      parityBits ? '<text x="' + fmt(centerFor(0, 0)) + '" y="' + fmt(rowY + 20) + '" fill="' + watchLine + '" font-size="8" font-weight="900" font-family="Inter,Arial,sans-serif" text-anchor="middle">P</text>' : '',
+      '<text x="' + fmt(centerFor(facilityStart, facilityEnd)) + '" y="' + fmt(rowY + 20) + '" fill="' + toneLine + '" font-size="8.5" font-weight="900" font-family="Inter,Arial,sans-serif" text-anchor="middle">FC</text>',
+      '<text x="' + fmt(centerFor(cardStart, cardEnd)) + '" y="' + fmt(rowY + 20) + '" fill="' + text + '" font-size="8.5" font-weight="900" font-family="Inter,Arial,sans-serif" text-anchor="middle">CARD #</text>',
+      parityBits ? '<text x="' + fmt(centerFor(bits - 1, bits - 1)) + '" y="' + fmt(rowY + 20) + '" fill="' + watchLine + '" font-size="8" font-weight="900" font-family="Inter,Arial,sans-serif" text-anchor="middle">P</text>' : '',
+      bracket(facilityStart, facilityEnd, fcLabel, toneLine, toneLine),
+      bracket(cardStart, cardEnd, cardLabel, line, toneLine),
+      parityBits ? metric(x + pad, metricY, 136, "BIT 1", leftParity, watchLine, watchFill) : '',
+      parityBits ? metric(x + pad + 148, metricY, 136, "BIT " + bits, rightParity, watchLine, watchFill) : '',
+      metric(x + width - pad - 256, metricY, 74, "TOTAL", bits, toneLine, toneFillValue),
+      metric(x + width - pad - 170, metricY, 74, "FACILITY", facilityBits, toneLine, toneFillValue),
+      metric(x + width - pad - 84, metricY, 84, "CARD #", cardBits, toneLine, toneFillValue),
+      '<rect x="' + fmt(x + pad) + '" y="' + fmt(y + height - 12) + '" width="' + fmt(width - pad * 2) + '" height="5" rx="3" fill="rgba(0,0,0,.20)" stroke="' + softLine + '" stroke-width=".6"/>',
+      '<rect x="' + fmt(x + pad) + '" y="' + fmt(y + height - 12) + '" width="' + fmt(capacityW) + '" height="5" rx="3" fill="' + toneLine + '" opacity=".72"/>',
+      '<text x="' + fmt(x + pad) + '" y="' + fmt(y + height - 18) + '" fill="' + muted + '" font-size="7.5" font-weight="800" font-family="Inter,Arial,sans-serif">POP ' + esc(population) + ' / CAP ' + esc(capacityLabel) + '</text>',
       '</g>'
     ].join("");
   }
@@ -528,17 +597,17 @@
 
     return [
       '<div class="access-control-planning-visual-shell" data-access-control-modern-visual="credential-format-helper">',
-      '<svg viewBox="0 0 760 330" role="img" aria-label="Credential format anatomy visual" xmlns="http://www.w3.org/2000/svg">',
-      '<defs><pattern id="accGridCredentialV1" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="rgba(120,255,120,.045)" stroke-width="1"/></pattern></defs>',
-      '<rect x="24" y="24" width="712" height="282" rx="16" fill="rgba(0,0,0,.10)" stroke="rgba(120,255,120,.12)" />',
-      '<rect x="36" y="36" width="688" height="258" rx="12" fill="url(#accGridCredentialV1)" stroke="rgba(120,255,120,.07)" />',
-      '<text x="52" y="62" font-size="11" fill="rgba(180,255,200,.68)" letter-spacing="1.4">CREDENTIAL FORMAT ANATOMY</text>',
-      '<text x="52" y="84" font-size="19" fill="rgba(246,255,248,.96)" font-weight="650">Bit layout, numbering ranges, and population pressure</text>',
+      '<svg viewBox="0 0 760 370" role="img" aria-label="Credential format bit-card visual" xmlns="http://www.w3.org/2000/svg">',
+      '<defs><pattern id="accGridCredentialBitCardV1" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="rgba(120,255,120,.045)" stroke-width="1"/></pattern></defs>',
+      '<rect x="24" y="24" width="712" height="322" rx="16" fill="rgba(0,0,0,.10)" stroke="rgba(120,255,120,.12)" />',
+      '<rect x="36" y="36" width="688" height="298" rx="12" fill="url(#accGridCredentialBitCardV1)" stroke="rgba(120,255,120,.07)" />',
+      '<text x="52" y="62" font-size="11" fill="rgba(180,255,200,.68)" letter-spacing="1.4">CREDENTIAL FORMAT HELPER</text>',
+      '<text x="52" y="84" font-size="19" fill="rgba(246,255,248,.96)" font-weight="650">Dynamic bit layout, parity fields, and numbering capacity</text>',
       statusBadge(statusText, tone, 616, 51),
-      cadCredentialFormatAnatomyIcon({ x: 58, y: 108, width: 644, height: 158, tone, formatLabel, bits: metrics.bits, usableBits: metrics.usableBits, fcDigits: metrics.fcDigits, cardDigits: metrics.cardDigits, utilization: metrics.utilization, population: metrics.population, capacityLabel }),
-      '<text x="58" y="286" font-size="10" fill="rgba(203,213,225,.62)">Facility code and card number fields represent planning capacity, not vendor-specific proprietary encoding.</text>',
+      cadCredentialFormatBitCardIcon({ x: 58, y: 102, width: 644, height: 218, tone, formatLabel, bits: metrics.bits, usableBits: metrics.usableBits, fcDigits: metrics.fcDigits, cardDigits: metrics.cardDigits, utilization: metrics.utilization, population: metrics.population, capacityLabel }),
+      '<text x="58" y="336" font-size="10" fill="rgba(203,213,225,.62)">Visual ranges are planning anatomy. Verify manufacturer-specific bit maps before programming a live credential format.</text>',
       '</svg>',
-      '<p class="sl-vis-note"><strong>Visual note:</strong> Credential format pressure is driven by badge population versus usable numbering space. Use this visual to document bit length, facility-code range, card-number range, and migration pressure.</p>',
+      '<p class="sl-vis-note"><strong>Visual note:</strong> The bit-card visual adapts to the selected bit length and estimated facility/card-number allocation while preserving the existing calculator capacity math.</p>',
       '</div>'
     ].join("");
   }
@@ -1066,7 +1135,7 @@
     VERSION,
     renderCredentialFormat,
     buildCredentialFormatSvg,
-    cadCredentialFormatAnatomyIcon,
+    cadCredentialFormatBitCardIcon,
     renderDoorCable,
     renderDoorCount,
     renderAntiPassback,
