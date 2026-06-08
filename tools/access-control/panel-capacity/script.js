@@ -498,7 +498,7 @@
       const slotUsed = Math.max(0, Math.min(slotMax, Math.round(activeExp || 0)));
       const shared = window.ScopedLabsAccessControlPlanningVisuals;
       const slotTone = status === "RISK" ? "risk" : status === "WATCH" ? "watch" : "safe";
-      const watchSlot = slotTone === "safe" ? 0 : slotUsed;
+      const watchSlot = 0;
       const slotLabels = Array.from({ length: slotMax }, (_, slotIndex) => slotIndex < slotUsed ? "EXP" : "-");
 
       if (shared && typeof shared.cadAccessPanelCapacityIcon === "function") {

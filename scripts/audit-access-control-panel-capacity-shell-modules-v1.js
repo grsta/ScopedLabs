@@ -48,11 +48,11 @@ check("Panel Capacity loads Panel adapter cache", html.includes("/assets/access-
 check("Panel Capacity loads shared planning visual module", html.includes("/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-042-panel-capacity-dynamic-icon"));
 check("Panel Capacity loads report metadata module", html.includes("/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes"));
 check("Panel Capacity loads Access Control polish module", html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-010-page-chrome-pill-cleanup"));
-check("Panel Capacity local script cache is dynamic icon lane", html.includes("./script.js?v=access-control-panel-capacity-dynamic-icon-025"));
+check("Panel Capacity local script cache is dynamic icon lane", html.includes("./script.js?v=access-control-panel-capacity-dynamic-icon-026-used-slots-green"));
 
 check("Panel Capacity script order keeps export before shell modules", order(html, "/assets/export.js?v=shared-export-030-semantic-report-tones", "/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"));
-check("Panel Capacity script order keeps assistant modules before local script", order(html, "/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-021-special-locking-exceptions", "./script.js?v=access-control-panel-capacity-dynamic-icon-025"));
-check("Panel Capacity script order keeps polish after local script", order(html, "./script.js?v=access-control-panel-capacity-dynamic-icon-025", "/assets/access-control-tool-polish.js?v=access-control-tool-polish-010-page-chrome-pill-cleanup"));
+check("Panel Capacity script order keeps assistant modules before local script", order(html, "/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-021-special-locking-exceptions", "./script.js?v=access-control-panel-capacity-dynamic-icon-026-used-slots-green"));
+check("Panel Capacity script order keeps polish after local script", order(html, "./script.js?v=access-control-panel-capacity-dynamic-icon-026-used-slots-green", "/assets/access-control-tool-polish.js?v=access-control-tool-polish-010-page-chrome-pill-cleanup"));
 
 check("Panel Capacity has local assistant mount", html.includes('id="accessControlLocalAssistantMount"'));
 check("Panel Capacity has shared report metadata mount", html.includes('id="reportMetadataMount"') && html.includes("data-report-metadata"));
