@@ -749,7 +749,7 @@
     const lockType = String(els.lockType?.options?.[els.lockType.selectedIndex]?.text || els.lockType?.value || "Lock hardware");
 
     const repeatedLocks = Math.max(1, Math.min(3, Number(lockCount) || 1));
-    const timesSymbol = "\\u00D7";
+    const timesSymbol = "x";
 
     const svg = [
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Low voltage access control lock power rail diagram">',
@@ -779,7 +779,7 @@ accessPowerSupplySymbol(66, 122, supplyLabel, palette),
       electricStrikeLoadSymbol(946, 176, 0, palette),
       repeatedLocks > 1 ? electricStrikeLoadSymbol(946, 176, 1, palette) : "",
       repeatedLocks > 2 ? electricStrikeLoadSymbol(946, 176, 2, palette) : "",
-      '<text x="994" y="248" fill="' + palette.green + '" font-size="10" font-weight="900" font-family="Inter,Arial,sans-serif" text-anchor="middle">' + lockPowerEsc(simultaneous) + ' active ' + timesSymbol + ' ' + lockPowerEsc(ampsEach) + ' A</text>',
+      '<text x="994" y="248" fill="' + palette.green + '" font-size="10" font-weight="900" font-family="Inter,Arial,sans-serif" text-anchor="middle">' + lockPowerEsc(simultaneous) + ' active x ' + lockPowerEsc(ampsEach) + ' A</text>',
       '</g>',
 
       metricChip(66, 292, "Peak Load", lockPowerFormatAmp(peak), palette, "green"),
