@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-039-elevator-banks-singles";
+  const VERSION = "access-control-planning-visuals-040-apb-zone-reader-icons";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -144,6 +144,40 @@
       '<circle cx="' + sx(37) + '" cy="' + sy(74) + '" r="' + sw(3.3) + '" fill="' + glow + '" />',
       '<path d="M' + sx(25) + ' ' + sy(64) + ' q' + sw(-10) + ' ' + sw(10) + ' 0 ' + sw(20) + ' M' + sx(49) + ' ' + sy(64) + ' q' + sw(10) + ' ' + sw(10) + ' 0 ' + sw(20) + ' M' + sx(19) + ' ' + sy(58) + ' q' + sw(-16) + ' ' + sw(16) + ' 0 ' + sw(32) + ' M' + sx(55) + ' ' + sy(58) + ' q' + sw(16) + ' ' + sw(16) + ' 0 ' + sw(32) + '" fill="none" stroke="' + glow + '" stroke-width="' + sw(1.05) + '" stroke-linecap="round" />',
       label ? '<text x="' + sx(37) + '" y="' + sy(112) + '" font-size="' + sw(11) + '" fill="rgba(238,255,244,.88)" font-weight="900" text-anchor="middle">' + escapeHtml(label) + '</text>' : '',
+      '</g>'
+    ].join("");
+  }
+
+  function cadApbZoneMarker(options = {}) {
+    const x = Number(options.x || 0);
+    const y = Number(options.y || 0);
+    const scale = Number(options.scale || 1);
+    const tone = options.tone || "safe";
+    const label = options.label == null ? "Z1" : String(options.label);
+
+    const line = toneStroke(tone);
+    const fill = toneFill(tone);
+    const inner = "rgba(226,232,240,.64)";
+    const text = "rgba(238,255,244,.92)";
+
+    function sx(value) {
+      return Math.round((x + value * scale) * 10) / 10;
+    }
+
+    function sy(value) {
+      return Math.round((y + value * scale) * 10) / 10;
+    }
+
+    function sw(value) {
+      return Math.round(value * scale * 10) / 10;
+    }
+
+    return [
+      '<g class="sl-cad-apb-zone-icon" data-cad-icon="apb-zone" aria-label="' + escapeHtml(label) + ' anti-passback zone marker">',
+      '<path d="M' + sx(48) + ' ' + sy(8) + ' V' + sy(18) + ' M' + sx(48) + ' ' + sy(78) + ' V' + sy(88) + ' M' + sx(8) + ' ' + sy(48) + ' H' + sx(18) + ' M' + sx(78) + ' ' + sy(48) + ' H' + sx(88) + '" stroke="' + line + '" stroke-width="' + sw(2) + '" stroke-linecap="round" />',
+      '<path d="M' + sx(48) + ' ' + sy(14) + ' L' + sx(78) + ' ' + sy(31) + ' L' + sx(78) + ' ' + sy(65) + ' L' + sx(48) + ' ' + sy(82) + ' L' + sx(18) + ' ' + sy(65) + ' L' + sx(18) + ' ' + sy(31) + ' Z" fill="' + fill + '" stroke="' + line + '" stroke-width="' + sw(2.4) + '" stroke-linejoin="round" />',
+      '<path d="M' + sx(48) + ' ' + sy(25) + ' L' + sx(68) + ' ' + sy(36.5) + ' L' + sx(68) + ' ' + sy(59.5) + ' L' + sx(48) + ' ' + sy(71) + ' L' + sx(28) + ' ' + sy(59.5) + ' L' + sx(28) + ' ' + sy(36.5) + ' Z" fill="none" stroke="' + inner + '" stroke-width="' + sw(1.4) + '" stroke-linejoin="round" />',
+      '<text x="' + sx(48) + '" y="' + sy(55) + '" text-anchor="middle" fill="' + text + '" font-size="' + sw(23) + '" font-weight="800" font-family="Inter,Arial,sans-serif" letter-spacing="' + sw(1) + '">' + escapeHtml(label) + '</text>',
       '</g>'
     ].join("");
   }
@@ -724,26 +758,33 @@
 
     function zoneNode(index) {
       const cols = 5;
-      const x = 72 + (index % cols) * 54;
-      const y = 126 + Math.floor(index / cols) * 42;
-      return [
-        '<rect x="' + x + '" y="' + y + '" width="36" height="24" rx="5" fill="rgba(120,255,120,.075)" stroke="rgba(125,255,152,.36)" />',
-        '<text x="' + (x + 18) + '" y="' + (y + 16) + '" text-anchor="middle" font-size="10" fill="rgba(238,255,244,.88)" font-weight="800">Z' + (index + 1) + '</text>'
-      ].join('');
+      const x = 58 + (index % cols) * 54;
+      const y = 118 + Math.floor(index / cols) * 56;
+      return cadApbZoneMarker({
+        x,
+        y,
+        scale: 0.34,
+        tone,
+        label: "Z" + (index + 1)
+      });
     }
 
     function pairedGate(index) {
-      const x = 394 + index * 42;
+      const x = 394 + index * 52;
+      const y = 132;
       return [
-        '<g>',
-        '<rect x="' + x + '" y="136" width="18" height="54" rx="4" fill="rgba(255,204,102,.09)" stroke="rgba(255,204,102,.40)" />',
-        '<path d="M' + (x + 5) + ' 150 H' + (x + 13) + ' M' + (x + 5) + ' 165 H' + (x + 13) + ' M' + (x + 5) + ' 180 H' + (x + 13) + '" stroke="rgba(255,235,170,.48)" stroke-width="1" />',
+        '<g aria-label="Paired entry and exit readers">',
+        cadAccessReaderIcon({ x, y, scale: 0.18, tone, label: "" }),
+        cadAccessReaderIcon({ x: x + 22, y, scale: 0.18, tone, label: "" }),
+        '<path d="M' + (x + 15) + ' 156 H' + (x + 28) + '" stroke="rgba(203,213,225,.30)" stroke-width="1.1" stroke-dasharray="3 4" />',
+        '<text x="' + (x + 7) + '" y="168" font-size="8.5" fill="rgba(203,213,225,.70)" text-anchor="middle" letter-spacing=".6">IN</text>',
+        '<text x="' + (x + 30) + '" y="168" font-size="8.5" fill="rgba(203,213,225,.70)" text-anchor="middle" letter-spacing=".6">OUT</text>',
         '</g>'
       ].join('');
     }
 
     const zoneCount = Math.max(2, Math.min(10, Math.round(zones || 2)));
-    const pairCount = Math.max(1, Math.min(6, Math.round(paired || 1)));
+    const pairCount = Math.max(1, Math.min(5, Math.round(paired || 1)));
 
     return [
       '<div class="access-control-planning-visual-shell" data-access-control-modern-visual="anti-passback-zones">',
@@ -754,13 +795,13 @@
       '<text x="52" y="62" font-size="11" fill="rgba(180,255,200,.68)" letter-spacing="1.4">ANTI-PASSBACK ZONES</text>',
       '<text x="52" y="84" font-size="19" fill="rgba(246,255,248,.96)" font-weight="650">Zone structure, paired transitions, and enforcement pressure</text>',
       statusBadge(statusText, tone, 616, 51),
-      '<text x="72" y="114" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">ZONE MODEL</text>',
+      '<text x="72" y="114" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">LOGICAL ZONES</text>',
       Array.from({ length: zoneCount }, (_, index) => zoneNode(index)).join(''),
       zones > zoneCount ? '<text x="342" y="176" font-size="11" fill="rgba(203,213,225,.66)">+' + escapeHtml(Math.round(zones - zoneCount)) + '</text>' : '',
       '<path d="M338 164 H382" stroke="rgba(203,213,225,.24)" stroke-width="1.2" stroke-dasharray="5 6" />',
-      '<text x="392" y="114" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">PAIRED IN / OUT READS</text>',
+      '<text x="392" y="114" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".8">ENTRY / EXIT READERS</text>',
       Array.from({ length: pairCount }, (_, index) => pairedGate(index)).join(''),
-      paired > pairCount ? '<text x="660" y="166" font-size="11" fill="rgba(203,213,225,.66)">+' + escapeHtml(Math.round(paired - pairCount)) + '</text>' : '',
+      paired > pairCount ? '<text x="656" y="166" font-size="11" fill="rgba(203,213,225,.66)">+' + escapeHtml(Math.round(paired - pairCount)) + '</text>' : '',
       '<path d="M112 226 H648" stroke="rgba(203,213,225,.24)" stroke-width="1.2" stroke-dasharray="6 7" />',
       '<path d="M112 226 C210 202, 308 246, 382 226 S540 204, 648 226" fill="none" stroke="rgba(125,255,152,.38)" stroke-width="1.4" />',
       '<circle cx="112" cy="226" r="5" fill="rgba(125,255,152,.20)" stroke="rgba(125,255,152,.72)" />',
@@ -797,6 +838,7 @@
   window.ScopedLabsAccessControlPlanningVisuals = Object.freeze({
     cadControlledDoorOpeningIcon,
     cadAccessReaderIcon,
+    cadApbZoneMarker,
     cadElevatorBankIcon,
     VERSION,
     renderDoorCable,

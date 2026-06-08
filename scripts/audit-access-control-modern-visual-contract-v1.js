@@ -28,7 +28,7 @@ function moduleParses(text) {
   }
 }
 
-const version = 'access-control-planning-visuals-039-elevator-banks-singles';
+const version = 'access-control-planning-visuals-040-apb-zone-reader-icons';
 const visualModule = read('assets/access-control-planning-visuals.js');
 
 check('Planning visual module exists', exists('assets/access-control-planning-visuals.js'));
@@ -36,6 +36,7 @@ check('Planning visual module parses', moduleParses(visualModule));
 check('Planning visual module is on engineering visual version', visualModule.includes(version));
 check('Planning visual module exposes door cable renderer', visualModule.includes('renderDoorCable') && visualModule.includes('data-access-control-modern-visual="door-cable-length"'));
 check('Planning visual module exposes door count renderer', visualModule.includes('renderDoorCount') && visualModule.includes('data-access-control-modern-visual="door-count-planner"'));
+check('Planning visual module exposes anti-passback renderer', visualModule.includes('renderAntiPassback') && visualModule.includes('data-access-control-modern-visual="anti-passback-zones"'));
 check('Planning visual module keeps export-safe data URI helper', visualModule.includes('getDataUri') && visualModule.includes('data:image/svg+xml;charset=utf-8'));
 check('Planning visual module uses engineering pressure rails', visualModule.includes('function pressureRail') && visualModule.includes('takeoff pressure') && visualModule.includes('complexity pressure'));
 

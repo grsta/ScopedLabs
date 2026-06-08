@@ -195,6 +195,9 @@ check("Elevator Reader banks plus singles visual label is explicit", moduleText.
 
 check("Elevator Reader status line uses semantic status tone", moduleText.includes("const statusLineStroke = toneStroke(tone)") && moduleText.includes("const statusLineFill = toneFill(tone)") && moduleText.includes("statusLineStroke"));
 check("Elevator Reader bank overflow label stays below bank icons", moduleText.includes("elevatorOverflowLabel") && moduleText.includes('x="458" y="184" width="108"') && moduleText.includes('text-anchor="middle"'));
+check("Anti-Passback visual uses CAD zone and reader primitives", moduleText.includes("function cadApbZoneMarker") && moduleText.includes("cadApbZoneMarker({") && moduleText.includes("cadAccessReaderIcon({") && moduleText.includes('ENTRY / EXIT READERS'));
+check("Anti-Passback CAD zone primitive is exported", moduleText.includes("cadApbZoneMarker,"));
+check("Anti-Passback uses explicit logical zone labels", moduleText.includes("LOGICAL ZONES") && moduleText.includes('label: "Z" + (index + 1)'));
 
 console.log("\nAccess Control visual fit seatbelt audit:");
 console.table(rows);
