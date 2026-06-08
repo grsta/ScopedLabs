@@ -707,7 +707,7 @@
     const exportMode = options.exportMode === true;
 
     const width = 1120;
-    const height = 360;
+    const height = 392;
 
     const palette = {
       bg: exportMode ? "#ffffff" : "rgba(0,0,0,0)",
@@ -751,10 +751,10 @@
     const svg = [
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Low voltage access control lock power rail diagram">',
       '<rect x="0" y="0" width="' + width + '" height="' + height + '" rx="18" fill="' + palette.bg + '"/>',
-      '<rect x="24" y="22" width="1072" height="316" rx="18" fill="' + palette.panel + '" stroke="' + palette.lineSoft + '"/>',
+      '<rect x="24" y="22" width="1072" height="348" rx="18" fill="' + palette.panel + '" stroke="' + palette.lineSoft + '"/>',
 
-      '<path d="M 54 72 H 1066 M 54 116 H 1066 M 54 250 H 1066 M 54 294 H 1066" stroke="' + palette.grid + '" stroke-width="1"/>',
-      '<path d="M 94 48 V 318 M 226 48 V 318 M 952 48 V 318" stroke="' + palette.grid + '" stroke-width="1"/>',
+      '<path d="M 54 72 H 1066 M 54 116 H 1066 M 54 266 H 1066 M 54 312 H 1066" stroke="' + palette.grid + '" stroke-width="1"/>',
+      '<path d="M 94 48 V 346 M 226 48 V 346 M 952 48 V 346" stroke="' + palette.grid + '" stroke-width="1"/>',
 
       '<text x="54" y="58" fill="' + palette.text + '" font-size="18" font-weight="900" font-family="Inter,Arial,sans-serif">Lock Power Rail</text>',
       '<text x="54" y="82" fill="' + palette.muted + '" font-size="12" font-weight="700" font-family="Inter,Arial,sans-serif">PSU / controller output → DC rail → active lock load → required reserve.</text>',
@@ -771,24 +771,23 @@
 
       currentMarker(peakX, railY, "Peak load", lockPowerFormatAmp(peak), palette, "peak"),
       currentMarker(requiredX, railY, "Required supply", lockPowerFormatAmp(required) + " / " + lockPowerFormatWatt(watts), palette, "required"),
-      headroomBracket(peakX, requiredX, railY + 72, lockPowerFormatAmp(reserve) + " reserve", palette),
+      headroomBracket(peakX, requiredX, railY + 58, lockPowerFormatAmp(reserve) + " reserve", palette),
 
       '<g aria-label="Lock load bank">',
-      '<rect x="922" y="122" width="144" height="112" rx="12" fill="' + palette.block + '" stroke="' + palette.lineStrong + '" stroke-width="1.4"/>',
-      '<text x="938" y="148" fill="' + palette.text + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif">' + lockPowerEsc(lockCount) + ' Lock Loads</text>',
-      '<text x="938" y="168" fill="' + palette.muted + '" font-size="9" font-weight="800" font-family="Inter,Arial,sans-serif">LOAD BANK</text>',
-      electricStrikeLoadSymbol(940, 184, 0, palette),
-      repeatedLocks > 1 ? electricStrikeLoadSymbol(940, 184, 1, palette) : "",
-      repeatedLocks > 2 ? electricStrikeLoadSymbol(940, 184, 2, palette) : "",
-      
-      '<text x="938" y="228" fill="' + palette.green + '" font-size="10" font-weight="900" font-family="Inter,Arial,sans-serif">' + lockPowerEsc(simultaneous) + ' active × ' + lockPowerEsc(ampsEach) + ' A</text>',
+      '<rect x="922" y="122" width="144" height="136" rx="12" fill="' + palette.block + '" stroke="' + palette.lineStrong + '" stroke-width="1.4"/>',
+      '<text x="994" y="146" fill="' + palette.text + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif" text-anchor="middle">' + lockPowerEsc(lockCount) + ' Lock Loads</text>',
+      '<text x="994" y="162" fill="' + palette.muted + '" font-size="9" font-weight="800" font-family="Inter,Arial,sans-serif" text-anchor="middle">LOAD BANK</text>',
+      electricStrikeLoadSymbol(946, 178, 0, palette),
+      repeatedLocks > 1 ? electricStrikeLoadSymbol(946, 178, 1, palette) : "",
+      repeatedLocks > 2 ? electricStrikeLoadSymbol(946, 178, 2, palette) : "",
+      '<text x="994" y="246" fill="' + palette.green + '" font-size="10" font-weight="900" font-family="Inter,Arial,sans-serif" text-anchor="middle">' + lockPowerEsc(simultaneous) + ' active ? ' + lockPowerEsc(ampsEach) + ' A</text>',
       '</g>',
 
-      metricChip(66, 272, "Peak Load", lockPowerFormatAmp(peak), palette, "green"),
-      metricChip(256, 272, "Required Supply", lockPowerFormatAmp(required), palette, "status"),
-      metricChip(446, 272, "Power", lockPowerFormatWatt(watts), palette, "green"),
-      metricChip(636, 272, "Headroom Reserve", lockPowerFormatAmp(reserve), palette, "amber"),
-      metricChip(826, 272, "Status", status + " · " + utilizationPct.toFixed(0) + "%", palette, "status"),
+      metricChip(66, 292, "Peak Load", lockPowerFormatAmp(peak), palette, "green"),
+      metricChip(256, 292, "Required Supply", lockPowerFormatAmp(required), palette, "status"),
+      metricChip(446, 292, "Power", lockPowerFormatWatt(watts), palette, "green"),
+      metricChip(636, 292, "Headroom Reserve", lockPowerFormatAmp(reserve), palette, "amber"),
+      metricChip(826, 292, "Status", status + " · " + utilizationPct.toFixed(0) + "%", palette, "status"),
 
       '</svg>'
     ].join("");
