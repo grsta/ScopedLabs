@@ -11,7 +11,7 @@
   />
   <meta name="robots" content="noindex,follow" />
 
-  <link rel="stylesheet" href="/assets/style.css?v=access-control-elevator-reader-output-contract-031-banks-singles-hotfix" />
+  <link rel="stylesheet" href="/assets/style.css?v=access-control-elevator-reader-output-contract-032-export-print-parity" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -344,6 +344,10 @@
       "toolLabel": "Elevator Reader Count",
       "toolSlug": "elevator-reader-count",
       "reportPrefix": "SL-AC",
+      "customPayloadBuilder": "ScopedLabsAccessControlElevatorReaderExport.buildPayload",
+      "stackReportSections": true,
+      "inputSectionTitle": "Elevator Reader Inputs",
+      "outputSectionTitle": "Elevator Reader Outputs",
       "assumptions": [
         "This report reflects the visible Elevator Reader Count inputs and outputs at the time the export was generated.",
         "The calculation output is intended for planning, comparison, and documentation support.",
@@ -368,7 +372,7 @@
       window.ScopedLabsReportMetadata.init(document);
     }
   </script>
-  <script src="./script.js?v=access-control-elevator-reader-output-contract-031-banks-singles-hotfix"></script>
+  <script src="./script.js?v=access-control-elevator-reader-output-contract-032-export-print-parity"></script>
   <script src="/assets/access-control-category-nav.js?v=access-control-category-nav-001-tool-path"></script>
   <script src="/assets/access-control-tool-polish.js?v=access-control-tool-polish-010-page-chrome-pill-cleanup"></script>
   <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>

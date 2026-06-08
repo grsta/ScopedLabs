@@ -78,6 +78,9 @@ check("Elevator Reader keeps bank overflow label below icon row", elevatorVisual
 
 check("Elevator Reader script renders through shared visual module", script.includes("ScopedLabsAccessControlPlanningVisuals") && script.includes("renderElevatorReader"));
 check("Elevator Reader exports modern SVG visual image", script.includes("getElevatorReaderVisualImage") && script.includes("getExportChartImage"));
+check("Elevator Reader export has print parity sections", html.includes("customPayloadBuilder") && script.includes("buildElevatorReaderExportSections") && script.includes("Elevator Reader Visual Snapshot") && script.includes("Elevator Scope Topology") && script.includes("Reader Count Breakdown") && script.includes("DCS / Dispatch Assumptions"));
+check("Elevator Reader export suppresses legacy chart slot", script.includes('chartImage: ""') && script.includes("extraSections: buildElevatorReaderExportSections(lastMetrics)"));
+check("Elevator Reader export filters topology-specific inputs", script.includes("buildElevatorReaderInputRows") && script.includes("isBanksPlusSingles") && script.includes("Elevator Bank Groups") && script.includes("Single Elevator Locations"));
 check("Elevator Reader has compact decision schedule", html.includes("Elevator Reader Decision Schedule") && html.includes("data-elevator-reader-summary") && script.includes("renderElevatorReaderSchedule"));
 check("Elevator Reader has hidden result ledger", html.includes("data-result-ledger") && html.includes("#results[data-result-ledger][hidden]"));
 check("Elevator Reader publishes specialty summary contribution", script.includes("publishElevatorReaderSummaryContribution") && script.includes('contributionType: "specialty-branch"') && script.includes("Specialty / What-if Branches"));
@@ -87,7 +90,7 @@ check("Elevator Reader removed Chart.js CDN", !html.includes("chart.js"));
 check("Elevator Reader removed canvas chart", !html.includes("<canvas") && html.includes('class="access-control-output-visual"'));
 check("Elevator Reader removed legacy Chart.js renderer", !script.includes("new Chart(") && !script.includes("function renderChart("));
 check("Elevator Reader keeps canonical export engine", html.includes("/assets/export.js?v=shared-export-030-semantic-report-tones"));
-check("Elevator Reader local script cache is modernized", html.includes("./script.js?v=access-control-elevator-reader-output-contract-031-banks-singles-hotfix"));
+check("Elevator Reader local script cache is modernized", html.includes("./script.js?v=access-control-elevator-reader-output-contract-032-export-print-parity"));
 
 console.log("\nAccess Control Elevator Reader module audit:");
 console.table(rows);

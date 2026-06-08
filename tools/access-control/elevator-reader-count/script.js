@@ -533,6 +533,149 @@
   }
 
 
+  function reportToneFromStatus(status) {
+    const key = String(status || "").toLowerCase();
+    if (key.includes("risk")) return "risk";
+    if (key.includes("watch")) return "watch";
+    return "safe";
+  }
+
+  function reportCell(text, tone = "") {
+    return tone ? { text: String(text ?? ""), tone } : String(text ?? "");
+  }
+
+  function getElevatorReaderVisualSvg(metrics, options = {}) {
+    const visuals = planningVisuals();
+    if (!metrics || !visuals || typeof visuals.buildElevatorReaderSvg !== "function") return "";
+
+    return visuals.buildElevatorReaderSvg(metrics, Object.assign({ exportMode: true }, options));
+  }
+
+  function buildElevatorReaderInputRows() {
+    const topology = normalizeElevatorTopology(els.topology?.value);
+    const isBanksPlusSingles = topology === "mixed-custom";
+
+    const rows = [
+      { label: "Scope Planner Source", value: activeElevatorSeedContext ? activeElevatorSeedContext.scopeName + " / " + activeElevatorSeedContext.source : "Standalone elevator branch" },
+      { label: "Elevator Scope Type", value: els.topology?.options[els.topology.selectedIndex]?.text || elevatorTopologyLabel(topology) }
+    ];
+
+    if (isBanksPlusSingles) {
+      rows.push(
+        { label: "Elevator Bank Groups", value: String(els.mixedBankGroups?.value || 0) },
+        { label: "Cars / Cabs per Bank Group", value: String(els.mixedCarsPerBank?.value || 0) },
+        { label: "Single Elevator Locations", value: String(els.mixedSeparateLocations?.value || 0) }
+      );
+    } else {
+      rows.push(
+        { label: "Cars / Cabs per Bank or Location", value: String(els.cars?.value || 0) },
+        { label: "Bank / Location Count", value: String(els.banks?.value || 0) }
+      );
+    }
+
+    rows.push(
+      { label: "Secured Floors Served", value: String(els.floors?.value || 0) },
+      { label: "DCS Mode", value: els.dcsMode?.options[els.dcsMode.selectedIndex]?.text || els.dcsMode?.value || "No DCS" },
+      { label: "DCS Credential Capture Points", value: String(els.dcsCredentialPoints?.value || 0) },
+      { label: "Reader Placement", value: els.placement?.options[els.placement.selectedIndex]?.text || els.placement?.value || "" }
+    );
+
+    return rows.filter((item) => item.label && item.value !== undefined && item.value !== null);
+  }
+
+  function buildElevatorReaderExportSections(metrics) {
+    if (!metrics) return [];
+
+    const tone = reportToneFromStatus(metrics.status);
+    const visualSvg = getElevatorReaderVisualSvg(metrics, { exportMode: true });
+    const isBanksPlusSingles = metrics.isMixedTopology === true || metrics.topology === "mixed-custom";
+
+    const scopeRows = [
+      ["Elevator Scope Type", metrics.topologyLabel || "Not documented"],
+      ["Bank / Location Count", String(metrics.banks ?? "0")],
+      ["Secured Floors Served", String(metrics.floors ?? "0")]
+    ];
+
+    if (isBanksPlusSingles) {
+      scopeRows.push(
+        ["Elevator Bank Groups", String(metrics.bankGroups ?? metrics.mixedBankGroups ?? 0)],
+        ["Cars / Cabs per Bank Group", String(metrics.mixedCarsPerBank ?? 0)],
+        ["Single Elevator Locations", String(metrics.separateLocations ?? metrics.mixedSeparateLocations ?? 0)],
+        ["Banked Cars", String(metrics.bankedCars ?? 0)],
+        ["Single Cars", String(metrics.separateCars ?? 0)]
+      );
+    } else {
+      scopeRows.push(
+        ["Cars / Cabs per Bank or Location", String(metrics.carsPerGroup ?? metrics.cars ?? 0)],
+        ["Total Cars / Cabs", String(metrics.cars ?? 0)]
+      );
+    }
+
+    const readerRows = [
+      ["Car Readers", String(metrics.carReaders ?? 0)],
+      ["Lobby Readers", String(metrics.lobbyReaders ?? 0)],
+      ["DCS Readers", String(metrics.dcsAdd ?? 0)],
+      ["Estimated Total Readers", reportCell(metrics.totalReaders ?? 0, tone)],
+      ["Planning Complexity", reportCell(metrics.complexityIndex ?? 0, tone)],
+      ["System Status", reportCell(metrics.status || "HEALTHY", tone)]
+    ];
+
+    const dcsRows = [
+      ["DCS Mode", metrics.dcsModeLabel || metrics.destLabel || "No DCS"],
+      ["DCS Credential Capture Points", String(metrics.dcsCredentialPoints ?? 0)],
+      ["DCS Count Driver", "Credential capture points are counted as reader/authentication points, not as a flat yes/no adder."],
+      ["Reader Placement", metrics.placementLabel || metrics.placement || "Not documented"]
+    ];
+
+    const sections = [];
+
+    if (visualSvg) {
+      sections.push({
+        title: "Elevator Reader Visual Snapshot",
+        text: "Report-safe CAD view of the selected elevator topology, reader model, DCS reader points, and status pressure line.",
+        svgs: [visualSvg],
+        compactSvg: true
+      });
+    }
+
+    sections.push(
+      {
+        title: "Elevator Scope Topology",
+        text: isBanksPlusSingles
+          ? "Banks + single elevators are separated so banked cars and single elevator locations remain traceable in the reader count."
+          : "Topology inputs define whether reader count follows cars, bank/location groups, or separate elevator locations.",
+        tables: [{
+          title: "Topology Breakdown",
+          headers: ["Field", "Value"],
+          rows: scopeRows,
+          className: "extra-export-table--compact"
+        }]
+      },
+      {
+        title: "Reader Count Breakdown",
+        text: "Reader totals separate in-car readers, lobby/landing readers, and DCS credential capture points.",
+        tables: [{
+          title: "Reader Count Model",
+          headers: ["Reader Driver", "Count"],
+          rows: readerRows,
+          className: "extra-export-table--compact"
+        }]
+      },
+      {
+        title: "DCS / Dispatch Assumptions",
+        text: "Destination dispatch is modeled as credential capture reader points so the printout reflects the actual authentication count driver.",
+        tables: [{
+          title: "DCS Driver Summary",
+          headers: ["DCS Field", "Value"],
+          rows: dcsRows,
+          className: "extra-export-table--compact"
+        }]
+      }
+    );
+
+    return sections;
+  }
+
 
   function planningVisuals() {
     return window.ScopedLabsAccessControlPlanningVisuals || null;
@@ -764,22 +907,11 @@
       status: getStatusFromResults(outputs),
       summary: getSummaryFromResults(outputs),
       interpretation: getInterpretationFromResults(outputs),
-      inputs: [
-        { label: "Scope Planner Source", value: activeElevatorSeedContext ? activeElevatorSeedContext.scopeName + " / " + activeElevatorSeedContext.source : "Standalone elevator branch" },
-        { label: "Elevator Scope Type", value: els.topology?.options[els.topology.selectedIndex]?.text || els.topology?.value || "Single elevator bank" },
-        { label: "Cars / Cabs per Bank or Location", value: String(els.cars.value) },
-        { label: "Elevator Bank Groups", value: String(els.mixedBankGroups?.value || 0) },
-        { label: "Cars / Cabs per Bank Group", value: String(els.mixedCarsPerBank?.value || 0) },
-        { label: "Single Elevator Locations", value: String(els.mixedSeparateLocations?.value || 0) },
-        { label: "Bank / Location Count", value: String(els.banks.value) },
-        { label: "Secured Floors Served", value: String(els.floors.value) },
-        { label: "DCS Mode", value: els.dcsMode?.options[els.dcsMode.selectedIndex]?.text || els.dcsMode?.value || "No DCS" },
-        { label: "DCS Credential Capture Points", value: String(els.dcsCredentialPoints?.value || 0) },
-        { label: "Reader Placement", value: els.placement.options[els.placement.selectedIndex]?.text || els.placement.value }
-      ],
+      inputs: buildElevatorReaderInputRows(),
       outputs,
       assumptions: getAssumptions(),
-      chartImage: getExportChartImage(),
+      extraSections: buildElevatorReaderExportSections(lastMetrics),
+      chartImage: "",
       scopeSeedContext: activeElevatorSeedContext,
       meta: getReportMeta()
     };
@@ -1457,6 +1589,16 @@
     applyElevatorReaderScopeSeed();
     syncElevatorTopologyControls();
     resetResults("Enter values and press Calculate.");
+  }
+
+  window.ScopedLabsAccessControlElevatorReaderExport = Object.freeze({
+    buildPayload: buildCurrentReportPayload,
+    buildSections: buildElevatorReaderExportSections
+  });
+
+  if (window.ScopedLabsExportConfig) {
+    window.ScopedLabsExportConfig.customPayloadBuilder = "ScopedLabsAccessControlElevatorReaderExport.buildPayload";
+    window.ScopedLabsExportConfig.stackReportSections = true;
   }
 
   if (els.topology) els.topology.addEventListener("change", syncElevatorTopologyControls);
