@@ -43,6 +43,8 @@ const specialLocking = sectionBetween(
 
 check("Access Control CAD icon primitive exists", cadDoor.includes("function cadControlledDoorOpeningIcon"), "cadControlledDoorOpeningIcon");
 check("CAD controlled door icon is exported", visuals.includes("cadControlledDoorOpeningIcon,"));
+check("CAD door reader opening alias exists", visuals.includes("function cadDoorReaderOpeningIcon"), "cadDoorReaderOpeningIcon");
+check("CAD door reader opening alias is exported", visuals.includes("cadDoorReaderOpeningIcon,"));
 check("Special Locking uses shared CAD controlled door icon", specialLocking.includes("cadControlledDoorOpeningIcon({"));
 check("CAD controlled door icon declares CAD icon data attribute", cadDoor.includes('data-cad-icon="controlled-door-opening"'));
 check("CAD controlled door icon uses SVG path linework", cadDoor.includes("<path") && cadDoor.includes("stroke-width"));
@@ -50,6 +52,7 @@ check("CAD controlled door icon includes door frame", cadDoor.includes("V") && c
 check("CAD controlled door icon includes door swing arc", cadDoor.includes(" A") && cadDoor.includes("stroke-dasharray"));
 check("CAD controlled door icon includes reader block", cadDoor.includes("readerLine") && cadDoor.includes("readerFillValue"));
 check("CAD controlled door icon includes lock/strike marker", cadDoor.includes("toneLine") && cadDoor.includes("toneFillValue"));
+check("CAD controlled door icon uses thin-line no-filter style", cadDoor.includes('data-cad-detail="door-reader-opening"') && !cadDoor.includes("<filter") && !cadDoor.includes('filter="url('));
 check("CAD controlled door icon has reusable tone hooks", cadDoor.includes('tone === "risk"') && cadDoor.includes('tone === "watch"'));
 check("CAD controlled door icon has no raster image dependency", !/[.]png|[.]jpg|[.]jpeg|[.]webp|<image|base64/i.test(cadDoor));
 check("Legacy non-CAD controlledDoorOpeningIcon name is not used", !visuals.includes("controlledDoorOpeningIcon"));

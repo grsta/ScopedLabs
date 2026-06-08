@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-040-apb-zone-reader-icons";
+  const VERSION = "access-control-planning-visuals-041-special-locking-door-reader-icon";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -74,8 +74,11 @@
 
     const toneLine = toneStroke(tone);
     const toneFillValue = toneFill(tone);
-    const readerLine = tone === "risk" ? "rgba(255,170,170,.72)" : tone === "watch" ? "rgba(255,220,130,.72)" : "rgba(125,255,152,.72)";
-    const readerFillValue = tone === "risk" ? "rgba(255,105,105,.12)" : tone === "watch" ? "rgba(255,204,102,.14)" : "rgba(120,255,120,.12)";
+    const readerLine = tone === "risk" ? "rgba(255,170,170,.76)" : tone === "watch" ? "rgba(255,220,130,.78)" : "rgba(92,255,245,.76)";
+    const readerFillValue = tone === "risk" ? "rgba(255,105,105,.10)" : tone === "watch" ? "rgba(255,204,102,.11)" : "rgba(92,255,245,.08)";
+    const doorLine = "rgba(203,213,225,.66)";
+    const doorLineStrong = "rgba(238,255,244,.78)";
+    const mutedLine = "rgba(148,213,210,.44)";
 
     function sx(value) {
       return Math.round((x + value * scale) * 10) / 10;
@@ -90,28 +93,35 @@
     }
 
     return [
-      '<g class="sl-cad-controlled-door-icon" data-cad-icon="controlled-door-opening" aria-label="CAD controlled door opening">',
+      '<g class="sl-cad-controlled-door-icon" data-cad-icon="controlled-door-opening" data-cad-detail="door-reader-opening" aria-label="CAD controlled door and reader opening">',
 
-      '<rect x="' + sx(30) + '" y="' + sy(4) + '" width="' + sw(102) + '" height="' + sw(142) + '" fill="rgba(0,0,0,.06)" stroke="rgba(203,213,225,.48)" stroke-width="' + sw(1.2) + '" />',
-      '<path d="M' + sx(38) + ' ' + sy(146) + ' V' + sy(16) + ' H' + sx(124) + ' V' + sy(146) + '" fill="none" stroke="rgba(203,213,225,.66)" stroke-width="' + sw(1.2) + '" />',
-      '<path d="M' + sx(30) + ' ' + sy(4) + ' L' + sx(38) + ' ' + sy(16) + ' M' + sx(132) + ' ' + sy(4) + ' L' + sx(124) + ' ' + sy(16) + ' M' + sx(30) + ' ' + sy(146) + ' L' + sx(38) + ' ' + sy(146) + ' M' + sx(132) + ' ' + sy(146) + ' L' + sx(124) + ' ' + sy(146) + '" fill="none" stroke="rgba(148,213,210,.44)" stroke-width="' + sw(1) + '" />',
+      '<rect x="' + sx(42) + '" y="' + sy(6) + '" width="' + sw(88) + '" height="' + sw(138) + '" fill="rgba(0,0,0,.06)" stroke="' + doorLine + '" stroke-width="' + sw(1.35) + '" />',
+      '<rect x="' + sx(48) + '" y="' + sy(12) + '" width="' + sw(76) + '" height="' + sw(126) + '" fill="rgba(0,0,0,.04)" stroke="' + doorLine + '" stroke-width="' + sw(1.1) + '" />',
 
-      '<path d="M' + sx(38) + ' ' + sy(146) + ' V' + sy(74) + '" fill="none" stroke="' + toneLine + '" stroke-width="' + sw(1.4) + '" />',
-      '<path d="M' + sx(38) + ' ' + sy(146) + ' A' + sw(82) + ' ' + sw(82) + ' 0 0 0 ' + sx(118) + ' ' + sy(138) + '" fill="none" stroke="rgba(203,213,225,.48)" stroke-width="' + sw(1.1) + '" stroke-dasharray="' + sw(6) + ' ' + sw(5) + '" />',
-      '<path d="M' + sx(38) + ' ' + sy(146) + ' L' + sx(118) + ' ' + sy(146) + '" stroke="rgba(203,213,225,.46)" stroke-width="' + sw(1) + '" />',
+      '<path d="M' + sx(50) + ' ' + sy(16) + ' H' + sx(116) + ' V' + sy(138) + ' H' + sx(50) + '" fill="none" stroke="' + doorLineStrong + '" stroke-width="' + sw(1.25) + '" stroke-linecap="round" stroke-linejoin="round" />',
+      '<path d="M' + sx(50) + ' ' + sy(62) + ' V' + sy(92) + '" fill="none" stroke="' + toneLine + '" stroke-width="' + sw(1.25) + '" stroke-linecap="round" />',
 
-      '<circle cx="' + sx(48) + '" cy="' + sy(86) + '" r="' + sw(5.2) + '" fill="rgba(0,0,0,.14)" stroke="rgba(203,213,225,.70)" stroke-width="' + sw(1.1) + '" />',
-      '<path d="M' + sx(52) + ' ' + sy(86) + ' H' + sx(75) + '" fill="none" stroke="rgba(203,213,225,.78)" stroke-width="' + sw(1.6) + '" stroke-linecap="round" />',
+      '<rect x="' + sx(117) + '" y="' + sy(30) + '" width="' + sw(5) + '" height="' + sw(17) + '" fill="rgba(0,0,0,.08)" stroke="' + doorLine + '" stroke-width="' + sw(.9) + '" />',
+      '<rect x="' + sx(117) + '" y="' + sy(108) + '" width="' + sw(5) + '" height="' + sw(17) + '" fill="' + toneFillValue + '" stroke="' + toneLine + '" stroke-width="' + sw(.9) + '" />',
 
-      '<rect x="' + sx(14) + '" y="' + sy(58) + '" width="' + sw(12) + '" height="' + sw(30) + '" rx="' + sw(2.4) + '" fill="' + readerFillValue + '" stroke="' + readerLine + '" stroke-width="' + sw(1.1) + '" />',
-      '<path d="M' + sx(18) + ' ' + sy(64) + ' H' + sx(22) + '" stroke="' + readerLine + '" stroke-width="' + sw(1.1) + '" stroke-linecap="round" />',
-      '<path d="M' + sx(18) + ' ' + sy(75) + ' q' + sw(4) + ' ' + sw(5) + ' 0 ' + sw(10) + ' M' + sx(14) + ' ' + sy(73) + ' q' + sw(8) + ' ' + sw(8) + ' 0 ' + sw(16) + ' M' + sx(10) + ' ' + sy(71) + ' q' + sw(12) + ' ' + sw(11) + ' 0 ' + sw(22) + '" fill="none" stroke="' + readerLine + '" stroke-width="' + sw(1) + '" stroke-linecap="round" />',
+      '<circle cx="' + sx(66) + '" cy="' + sy(78) + '" r="' + sw(3.8) + '" fill="rgba(0,0,0,.14)" stroke="' + doorLineStrong + '" stroke-width="' + sw(1) + '" />',
+      '<path d="M' + sx(66) + ' ' + sy(78) + ' H' + sx(84) + '" fill="none" stroke="' + doorLineStrong + '" stroke-width="' + sw(1.45) + '" stroke-linecap="round" />',
 
-      '<rect x="' + sx(122) + '" y="' + sy(42) + '" width="' + sw(7) + '" height="' + sw(18) + '" fill="rgba(203,213,225,.06)" stroke="rgba(203,213,225,.50)" stroke-width="' + sw(1) + '" />',
-      '<rect x="' + sx(122) + '" y="' + sy(104) + '" width="' + sw(7) + '" height="' + sw(18) + '" fill="' + toneFillValue + '" stroke="' + toneLine + '" stroke-width="' + sw(1) + '" />',
+      '<path d="M' + sx(50) + ' ' + sy(138) + ' A' + sw(66) + ' ' + sw(66) + ' 0 0 1 ' + sx(116) + ' ' + sy(76) + '" fill="none" stroke="' + doorLine + '" stroke-width="' + sw(1.05) + '" stroke-dasharray="' + sw(5.8) + ' ' + sw(5.8) + '" stroke-linecap="round" />',
+
+      '<rect x="' + sx(16) + '" y="' + sy(58) + '" width="' + sw(14) + '" height="' + sw(32) + '" rx="' + sw(2.6) + '" fill="' + readerFillValue + '" stroke="' + readerLine + '" stroke-width="' + sw(1.15) + '" />',
+      '<path d="M' + sx(20) + ' ' + sy(65) + ' H' + sx(26) + '" stroke="' + readerLine + '" stroke-width="' + sw(1.05) + '" stroke-linecap="round" />',
+      '<path d="M' + sx(22) + ' ' + sy(74) + ' q' + sw(3) + ' ' + sw(4) + ' 0 ' + sw(8) + ' M' + sx(18) + ' ' + sy(72) + ' q' + sw(7) + ' ' + sw(7) + ' 0 ' + sw(14) + ' M' + sx(14) + ' ' + sy(70) + ' q' + sw(11) + ' ' + sw(10) + ' 0 ' + sw(20) + '" fill="none" stroke="' + readerLine + '" stroke-width="' + sw(.95) + '" stroke-linecap="round" />',
+
+      '<path d="M' + sx(34) + ' ' + sy(54) + ' V' + sy(94) + '" fill="none" stroke="' + mutedLine + '" stroke-width="' + sw(1) + '" stroke-linecap="round" />',
+      '<path d="M' + sx(48) + ' ' + sy(144) + ' H' + sx(126) + '" fill="none" stroke="' + mutedLine + '" stroke-width="' + sw(1) + '" stroke-linecap="round" />',
 
       '</g>'
     ].join("");
+  }
+
+  function cadDoorReaderOpeningIcon(options = {}) {
+    return cadControlledDoorOpeningIcon(options);
   }
 
   function cadAccessReaderIcon(options = {}) {
@@ -837,6 +847,7 @@
 
   window.ScopedLabsAccessControlPlanningVisuals = Object.freeze({
     cadControlledDoorOpeningIcon,
+    cadDoorReaderOpeningIcon,
     cadAccessReaderIcon,
     cadApbZoneMarker,
     cadElevatorBankIcon,

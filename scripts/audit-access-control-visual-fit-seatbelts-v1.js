@@ -182,6 +182,9 @@ check("Special Locking taller-card renderer is protected", (() => {
 
 check("CAD icon contract audit exists", fs.existsSync(path.join(root, "scripts/audit-access-control-cad-icon-contract-v1.js")));
 check("Visual module exports CAD controlled door icon primitive", moduleText.includes("cadControlledDoorOpeningIcon,"));
+check("CAD door reader opening primitive alias exists", moduleText.includes("function cadDoorReaderOpeningIcon"));
+check("CAD door reader opening primitive alias is exported", moduleText.includes("cadDoorReaderOpeningIcon,"));
+check("CAD controlled opening icon uses no SVG filters", moduleText.includes('data-cad-detail="door-reader-opening"') && !moduleText.includes("filter=\\\"url("));
 check("Special Locking visual explains Watch source", moduleText.includes("SOURCE: LOCKING SCOPE") && moduleText.includes("Overall status can remain Watch"));
 check("Special Locking line graph uses dynamic tones", moduleText.includes("toneStroke(pathTone)") && moduleText.includes("egressNodeTone") && moduleText.includes("releaseNodeTone"));
 check("Special Locking visual supports item-level exception tones", moduleText.includes("function openingTone(index)") && moduleText.includes("openingTones") && moduleText.includes("miniMetric(\"exceptions\"") && moduleText.includes("hiddenOpeningTone"));
