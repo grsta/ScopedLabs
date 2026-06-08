@@ -760,10 +760,8 @@
       '<path d="M 94 48 V 346 M 226 48 V 346 M 952 48 V 346" stroke="' + palette.grid + '" stroke-width="1"/>',
 
       '<text x="54" y="58" fill="' + palette.text + '" font-size="18" font-weight="900" font-family="Inter,Arial,sans-serif">Lock Power Rail</text>',
-      '<text x="54" y="82" fill="' + palette.muted + '" font-size="12" font-weight="700" font-family="Inter,Arial,sans-serif">PSU / controller output → DC rail → active lock load → required reserve.</text>',      '<rect x="910" y="38" width="140" height="34" rx="10" fill="' + palette.statusSoft + '" stroke="' + palette.statusColor + '"/>',
-      '<text x="980" y="60" fill="' + palette.statusColor + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif" text-anchor="middle">' + lockPowerEsc(status) + ' - ' + utilizationPct.toFixed(0) + '%</text>',
-
-      accessPowerSupplySymbol(66, 122, supplyLabel, palette),
+      '<text x="54" y="82" fill="' + palette.muted + '" font-size="12" font-weight="700" font-family="Inter,Arial,sans-serif">PSU / controller output → DC rail → active lock load → required reserve.</text>',
+accessPowerSupplySymbol(66, 122, supplyLabel, palette),
       dcPowerRail(220, 884, railY, palette),
 
       '<line x1="216" y1="' + (railY + 17) + '" x2="220" y2="' + (railY + 17) + '" stroke="' + palette.lineStrong + '" stroke-width="1.2"/>',

@@ -52,3 +52,6 @@ console.log(`- SAFE: ${safe}`);
 console.log(`- FAIL: ${fail}`);
 
 if (failed) process.exit(1);
+
+
+check("Lock Power CAD rail removes duplicate top status chip", script.includes('metricChip(826, 292, "Status"') && !script.includes('x="910" y="38" width="140"') && !script.includes('x="884" y="48" width="166"') && !script.includes('x="900" y="40" width="150"'));
