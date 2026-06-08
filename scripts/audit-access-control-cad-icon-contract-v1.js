@@ -40,6 +40,11 @@ const specialLocking = sectionBetween(
   "function buildSpecialLockingSvg",
   "function renderSpecialLocking"
 );
+const panelCapacityIcon = sectionBetween(
+  visuals,
+  "function cadAccessPanelCapacityIcon",
+  "function metricChip"
+);
 
 check("Access Control CAD icon primitive exists", cadDoor.includes("function cadControlledDoorOpeningIcon"), "cadControlledDoorOpeningIcon");
 check("CAD controlled door icon is exported", visuals.includes("cadControlledDoorOpeningIcon,"));
@@ -55,6 +60,12 @@ check("CAD controlled door icon includes lock/strike marker", cadDoor.includes("
 check("CAD controlled door icon uses thin-line no-filter style", cadDoor.includes('data-cad-detail="door-reader-opening"') && !cadDoor.includes("<filter") && !cadDoor.includes('filter="url('));
 check("CAD controlled door icon has reusable tone hooks", cadDoor.includes('tone === "risk"') && cadDoor.includes('tone === "watch"'));
 check("CAD controlled door icon has no raster image dependency", !/[.]png|[.]jpg|[.]jpeg|[.]webp|<image|base64/i.test(cadDoor));
+check("CAD panel capacity icon primitive exists", panelCapacityIcon.includes("function cadAccessPanelCapacityIcon"), "cadAccessPanelCapacityIcon");
+check("CAD panel capacity icon is exported", visuals.includes("cadAccessPanelCapacityIcon,"));
+check("CAD panel capacity icon supports dynamic max slots", panelCapacityIcon.includes("maxSlots") && panelCapacityIcon.includes("usedSlots") && panelCapacityIcon.includes("watchSlot"));
+check("CAD panel capacity icon declares CAD icon data attribute", panelCapacityIcon.includes('data-cad-icon="access-panel-capacity"'));
+check("CAD panel capacity icon uses thin-line no-filter style", panelCapacityIcon.includes('data-cad-detail="dynamic-expansion-slots"') && !panelCapacityIcon.includes("<filter") && !panelCapacityIcon.includes('filter="url('));
+check("CAD panel capacity icon has no raster image dependency", !/[.]png|[.]jpg|[.]jpeg|[.]webp|<image|base64/i.test(panelCapacityIcon));
 check("Legacy non-CAD controlledDoorOpeningIcon name is not used", !visuals.includes("controlledDoorOpeningIcon"));
 
 console.log("\\nAccess Control CAD icon contract audit:");

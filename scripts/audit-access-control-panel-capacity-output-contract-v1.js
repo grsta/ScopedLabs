@@ -303,6 +303,13 @@ check({
 });
 
 check({
+  label: "Panel Capacity uses shared dynamic CAD panel primitive",
+  ok: has(script, "cadAccessPanelCapacityIcon") && has(script, "ScopedLabsAccessControlPlanningVisuals"),
+  issueType: "visual",
+  evidence: "shared cadAccessPanelCapacityIcon renderer handoff"
+});
+
+check({
   label: "Panel Capacity visual is CAD architecture map, not Chart.js bar graph",
   ok: !has(html, "chart.js") && !has(script, "new Chart(") && !has(script, "function renderChart(") && has(script, "PANEL_CAPACITY_CAD_ARCHITECTURE_MAP_024"),
   issueType: "engineeringVisual",

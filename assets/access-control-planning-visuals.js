@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-041-special-locking-door-reader-icon";
+  const VERSION = "access-control-planning-visuals-042-panel-capacity-dynamic-icon";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -239,6 +239,106 @@
     ].join("");
   }
 
+
+
+  function cadAccessPanelCapacityIcon(options = {}) {
+    const x = Number(options.x || 0);
+    const y = Number(options.y || 0);
+    const width = Math.max(128, Number(options.width || 220));
+    const height = Math.max(112, Number(options.height || 148));
+    const tone = options.tone || "safe";
+    const exportMode = !!options.exportMode;
+    const panelLabel = options.panelLabel == null ? "PANEL 1" : String(options.panelLabel);
+    const maxSlots = Math.max(1, Math.min(12, Math.round(Number(options.maxSlots || 8))));
+    const usedSlots = Math.max(0, Math.min(maxSlots, Math.round(Number(options.usedSlots || 0))));
+    const watchSlot = Math.max(0, Math.min(maxSlots, Math.round(Number(options.watchSlot || 0))));
+    const slotLabels = Array.isArray(options.slotLabels) ? options.slotLabels : [];
+
+    const line = exportMode ? "#668273" : "rgba(203,213,225,.66)";
+    const strong = exportMode ? "#101715" : "rgba(238,255,244,.84)";
+    const muted = exportMode ? "#54615d" : "rgba(203,213,225,.70)";
+    const softLine = exportMode ? "#b8cabe" : "rgba(203,213,225,.26)";
+    const shellFill = exportMode ? "#f8fbf8" : "rgba(0,0,0,.10)";
+    const bayFill = exportMode ? "#ffffff" : "rgba(0,0,0,.12)";
+    const safeLine = exportMode ? "#1f9d57" : "rgba(125,255,152,.82)";
+    const safeFill = exportMode ? "#e7f8ee" : "rgba(120,255,120,.10)";
+    const watchLine = exportMode ? "#b7791f" : "rgba(255,204,102,.92)";
+    const watchFill = exportMode ? "#fff4d8" : "rgba(255,204,102,.13)";
+    const riskLine = exportMode ? "#b42318" : "rgba(255,105,105,.88)";
+    const riskFill = exportMode ? "#ffe2df" : "rgba(255,105,105,.13)";
+    const toneLine = tone === "risk" ? riskLine : tone === "watch" ? watchLine : safeLine;
+    const toneFillValue = tone === "risk" ? riskFill : tone === "watch" ? watchFill : safeFill;
+
+    const pad = Math.max(10, width * 0.055);
+    const headerY = y + pad + 16;
+    const bodyY = y + pad + 38;
+    const bodyH = Math.max(48, height - pad * 2 - 54);
+    const bayW = Math.max(58, Math.min(90, width * 0.33));
+    const bayX = x + pad;
+    const slotsX = bayX + bayW + Math.max(12, width * 0.055);
+    const slotsW = Math.max(40, x + width - pad - slotsX);
+    const gap = maxSlots <= 4 ? 8 : maxSlots <= 8 ? 5 : 3;
+    const slotW = Math.max(4.8, (slotsW - gap * (maxSlots - 1)) / maxSlots);
+    const slotH = Math.max(28, bodyH * 0.56);
+    const slotY = bodyY + 20;
+    const textSize = maxSlots <= 4 ? 8.2 : maxSlots <= 8 ? 6.4 : 5.5;
+    const parts = [];
+
+    function esc(value) {
+      return escapeHtml(value == null ? "" : String(value));
+    }
+
+    function fmt(value) {
+      return Math.round(Number(value) * 10) / 10;
+    }
+
+    function slotLabel(index, used, watch) {
+      const explicit = slotLabels[index];
+      if (explicit != null && String(explicit).trim()) return String(explicit).trim();
+      if (used) return maxSlots <= 4 ? "EXP" : "EX";
+      if (watch) return "ADD";
+      return "-";
+    }
+
+    for (let i = 0; i < maxSlots; i += 1) {
+      const sx = slotsX + i * (slotW + gap);
+      const used = i < usedSlots;
+      const watch = watchSlot > 0 && i === watchSlot - 1;
+      const stroke = watch ? watchLine : used ? safeLine : softLine;
+      const fill = watch ? watchFill : used ? safeFill : (exportMode ? "#ffffff" : "rgba(0,0,0,.08)");
+      const label = slotLabel(i, used, watch);
+
+      parts.push('<rect x="' + fmt(sx) + '" y="' + fmt(slotY) + '" width="' + fmt(slotW) + '" height="' + fmt(slotH) + '" rx="4" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.05"/>');
+      parts.push('<text x="' + fmt(sx + slotW / 2) + '" y="' + fmt(slotY + slotH / 2 + 3) + '" fill="' + (watch ? watchLine : used ? safeLine : muted) + '" font-size="' + textSize + '" font-weight="900" font-family="Inter,Arial,sans-serif" text-anchor="middle">' + esc(label).slice(0, 4) + '</text>');
+      parts.push('<text x="' + fmt(sx + slotW / 2) + '" y="' + fmt(slotY + slotH + 13) + '" fill="' + muted + '" font-size="7.5" font-weight="800" font-family="Inter,Arial,sans-serif" text-anchor="middle">' + (i + 1) + '</text>');
+    }
+
+    const terminals = [];
+    const terminalCount = 8;
+
+    for (let i = 0; i < terminalCount; i += 1) {
+      const cx = bayX + 12 + i * Math.max(6, (bayW - 24) / (terminalCount - 1));
+      terminals.push('<circle cx="' + fmt(cx) + '" cy="' + fmt(bodyY + bodyH - 13) + '" r="2.1" fill="' + (i < Math.min(usedSlots + 2, terminalCount) ? safeLine : muted) + '"/>');
+    }
+
+    return [
+      '<g class="sl-cad-panel-capacity-icon" data-cad-icon="access-panel-capacity" data-cad-detail="dynamic-expansion-slots" aria-label="CAD access panel capacity with ' + maxSlots + ' expansion slots">',
+      '<rect x="' + fmt(x) + '" y="' + fmt(y) + '" width="' + fmt(width) + '" height="' + fmt(height) + '" rx="12" fill="' + shellFill + '" stroke="' + line + '" stroke-width="1.25"/>',
+      '<path d="M' + fmt(x + pad) + ' ' + fmt(y + pad) + ' H' + fmt(x + width - pad) + ' M' + fmt(x + pad) + ' ' + fmt(y + height - pad) + ' H' + fmt(x + width - pad) + '" stroke="' + softLine + '" stroke-width=".8" stroke-linecap="round"/>',
+      '<text x="' + fmt(x + pad) + '" y="' + fmt(headerY) + '" fill="' + strong + '" font-size="12" font-weight="900" font-family="Inter,Arial,sans-serif">' + esc(panelLabel) + '</text>',
+      '<text x="' + fmt(x + pad) + '" y="' + fmt(headerY + 16) + '" fill="' + muted + '" font-size="8.8" font-weight="800" font-family="Inter,Arial,sans-serif">CTRL BAY + MAX ' + maxSlots + ' SLOTS</text>',
+      '<rect x="' + fmt(bayX) + '" y="' + fmt(bodyY + 20) + '" width="' + fmt(bayW) + '" height="' + fmt(slotH) + '" rx="7" fill="' + bayFill + '" stroke="' + line + '" stroke-width="1"/>',
+      '<rect x="' + fmt(bayX + 9) + '" y="' + fmt(bodyY + 31) + '" width="' + fmt(Math.max(20, bayW * .34)) + '" height="' + fmt(Math.max(13, slotH * .32)) + '" rx="3" fill="' + toneFillValue + '" stroke="' + toneLine + '" stroke-width="1"/>',
+      '<path d="M' + fmt(bayX + bayW * .50) + ' ' + fmt(bodyY + 34) + ' H' + fmt(bayX + bayW - 12) + ' M' + fmt(bayX + bayW * .50) + ' ' + fmt(bodyY + 48) + ' H' + fmt(bayX + bayW - 18) + '" stroke="' + softLine + '" stroke-width=".9" stroke-linecap="round"/>',
+      terminals.join(""),
+      '<path d="M' + fmt(bayX + bayW) + ' ' + fmt(slotY + slotH / 2) + ' H' + fmt(slotsX - 6) + '" stroke="' + toneLine + '" stroke-width="1.15" stroke-linecap="round"/>',
+      parts.join(""),
+      '<text x="' + fmt(slotsX) + '" y="' + fmt(y + height - pad - 2) + '" fill="' + muted + '" font-size="8.2" font-weight="800" font-family="Inter,Arial,sans-serif">' + usedSlots + ' / ' + maxSlots + ' USED</text>',
+      '<text x="' + fmt(x + width - pad) + '" y="' + fmt(y + height - pad - 2) + '" fill="' + toneLine + '" font-size="8.2" font-weight="900" font-family="Inter,Arial,sans-serif" text-anchor="end">' + esc(String(tone).toUpperCase()) + '</text>',
+      '<path d="M' + fmt(x) + ' ' + fmt(y + 14) + ' V' + fmt(y) + ' H' + fmt(x + 14) + ' M' + fmt(x + width - 14) + ' ' + fmt(y) + ' H' + fmt(x + width) + ' V' + fmt(y + 14) + ' M' + fmt(x + width) + ' ' + fmt(y + height - 14) + ' V' + fmt(y + height) + ' H' + fmt(x + width - 14) + ' M' + fmt(x + 14) + ' ' + fmt(y + height) + ' H' + fmt(x) + ' V' + fmt(y + height - 14) + '" stroke="' + toneLine + '" stroke-width="1" stroke-linecap="round"/>',
+      '</g>'
+    ].join("");
+  }
 
   function metricChip(label, value, x, y, w) {
     return [
@@ -851,6 +951,7 @@
     cadAccessReaderIcon,
     cadApbZoneMarker,
     cadElevatorBankIcon,
+    cadAccessPanelCapacityIcon,
     VERSION,
     renderDoorCable,
     renderDoorCount,

@@ -426,7 +426,7 @@
   }
 
   function buildPanelCapacityVisualSvg(metrics = {}, options = {}) {
-    // PANEL_CAPACITY_CAD_ARCHITECTURE_MAP_024
+    // PANEL_CAPACITY_CAD_ARCHITECTURE_MAP_025_SHARED_DYNAMIC_ICON
     const exportMode = !!options.exportMode;
     const width = 1120;
     const height = 500;
@@ -494,6 +494,29 @@
     }
 
     function panelModule(x, y, index, activeExp, maxSlots) {
+      const slotMax = Math.max(1, Math.min(12, Math.round(maxSlots || 1)));
+      const slotUsed = Math.max(0, Math.min(slotMax, Math.round(activeExp || 0)));
+      const shared = window.ScopedLabsAccessControlPlanningVisuals;
+      const slotTone = status === "RISK" ? "risk" : status === "WATCH" ? "watch" : "safe";
+      const watchSlot = slotTone === "safe" ? 0 : slotUsed;
+      const slotLabels = Array.from({ length: slotMax }, (_, slotIndex) => slotIndex < slotUsed ? "EXP" : "-");
+
+      if (shared && typeof shared.cadAccessPanelCapacityIcon === "function") {
+        return shared.cadAccessPanelCapacityIcon({
+          x,
+          y,
+          width: 174,
+          height: 138,
+          panelLabel: "PANEL " + (index + 1),
+          maxSlots: slotMax,
+          usedSlots: slotUsed,
+          watchSlot,
+          slotLabels,
+          tone: slotTone,
+          exportMode
+        });
+      }
+
       return [
         '<g aria-label="Panel ' + (index + 1) + ' controller bay">',
         '<rect x="' + x + '" y="' + y + '" width="164" height="138" rx="12" fill="' + palette.block + '" stroke="' + palette.lineStrong + '" stroke-width="1.4"/>',
@@ -503,8 +526,8 @@
         '<circle cx="' + (x + 142) + '" cy="' + (y + 43) + '" r="5" fill="' + palette.card + '" stroke="' + palette.green + '" stroke-width="1.4"/>',
         '<circle cx="' + (x + 142) + '" cy="' + (y + 75) + '" r="5" fill="' + palette.card + '" stroke="' + palette.lineStrong + '" stroke-width="1.4"/>',
         '<text x="' + (x + 18) + '" y="' + (y + 82) + '" fill="' + palette.muted + '" font-size="10" font-weight="800" font-family="Inter,Arial,sans-serif">EXPANSION SLOTS</text>',
-        expansionStrip(x + 18, y + 96, activeExp, maxSlots),
-        '<text x="' + (x + 18) + '" y="' + (y + 127) + '" fill="' + palette.muted + '" font-size="10" font-weight="800" font-family="Inter,Arial,sans-serif">' + activeExp + '/' + maxSlots + ' EXP USED</text>',
+        expansionStrip(x + 18, y + 96, slotUsed, slotMax),
+        '<text x="' + (x + 18) + '" y="' + (y + 127) + '" fill="' + palette.muted + '" font-size="10" font-weight="800" font-family="Inter,Arial,sans-serif">' + slotUsed + '/' + slotMax + ' EXP USED</text>',
         '</g>'
       ].join("");
     }

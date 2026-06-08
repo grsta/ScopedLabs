@@ -201,6 +201,9 @@ check("Elevator Reader bank overflow label stays below bank icons", moduleText.i
 check("Anti-Passback visual uses CAD zone and reader primitives", moduleText.includes("function cadApbZoneMarker") && moduleText.includes("cadApbZoneMarker({") && moduleText.includes("cadAccessReaderIcon({") && moduleText.includes('ENTRY / EXIT READERS'));
 check("Anti-Passback CAD zone primitive is exported", moduleText.includes("cadApbZoneMarker,"));
 check("Anti-Passback uses explicit logical zone labels", moduleText.includes("LOGICAL ZONES") && moduleText.includes('label: "Z" + (index + 1)'));
+check("Panel Capacity dynamic CAD primitive exists", moduleText.includes("function cadAccessPanelCapacityIcon") && moduleText.includes("data-cad-icon=\"access-panel-capacity\"") && moduleText.includes("maxSlots"));
+check("Panel Capacity dynamic CAD primitive is exported", moduleText.includes("cadAccessPanelCapacityIcon,"));
+check("Panel Capacity dynamic CAD primitive uses no SVG filters", moduleText.includes('data-cad-detail="dynamic-expansion-slots"') && !moduleText.includes("filter=\"url("));
 
 console.log("\nAccess Control visual fit seatbelt audit:");
 console.table(rows);
