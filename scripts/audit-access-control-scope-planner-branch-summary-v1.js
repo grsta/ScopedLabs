@@ -24,7 +24,7 @@ const badDisplaySeparatorsGone =
   !script.includes("' ? threat: '") &&
   !script.includes("' ? traffic: '");
 
-check("Planner version bumped to print report tab lane", index.includes("access-control-scope-planner-branch-map-024"));
+check("Planner version bumped to print-palette lane", index.includes("./script.js?v=access-control-scope-planner-branch-map-print-palette-025") && index.includes("<!-- access-control-scope-planner-branch-map-print-palette-025 -->"));
 check("Active scope card uses breadcrumb mini flow", script.includes("access-scope-mini-flow") && script.includes("branchLabel(key)") && script.includes("&rarr;"));
 check("Active scope card keeps branch classification", script.includes("function branchLabel(key)") && script.includes("Core Door Scope"));
 check("Summary has grouped branch helper", script.includes("function branchTable(key, items)"));
@@ -37,7 +37,7 @@ check("Selected Active Scope uses green text class", index.includes("access-stat
 check("Status values use plain colored text classes", index.includes("access-status-authority") && index.includes("access-status-risk") && index.includes("access-status-watch") && script.includes("accessStatusClass"));
 check("Summary includes status legend", index.includes("access-status-legend") && script.includes("renderStatusLegend") && script.includes("AUTHORITY REVIEW") && script.includes("AHJ/code/fire/life-safety review may be required"));
 check("Scope Planner summary includes branch-map visual", index.includes("/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-047-scope-branch-map-print-palette") && script.includes("buildScopePlannerBranchMapHtml") && script.includes("ScopedLabsAccessControlPlanningVisuals"));
-check("Scope Planner print report requests export branch-map palette", script.includes("renderScopeSummary(ledger, { exportMode: true })") && script.includes("exportMode: !!options.exportMode"));
+check("Scope Planner print report requests export branch-map palette", index.includes("./script.js?v=access-control-scope-planner-branch-map-print-palette-025") && script.includes("renderScopeSummary(ledger, { exportMode: true })") && script.includes("exportMode: !!options.exportMode") && script.includes("exportMode: !!rollup.exportMode"));
 check("Bad display separator strings are gone", badDisplaySeparatorsGone);
 check("Authority review caution remains in summary", script.includes("Authority review caution:") && script.includes("Final approval must come from applicable code review"));
 
