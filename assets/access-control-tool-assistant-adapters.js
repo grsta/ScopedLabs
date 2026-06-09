@@ -1,11 +1,11 @@
 /* ScopedLabs Access Control Tool Assistant Adapters
-   Version: access-control-assistant-adapters-023-fail-safe-marker-polish
+   Version: access-control-assistant-adapters-024-assistant-proof-pattern-extract
    Purpose: category-specific local assistant model adapters. Dormant unless a tool explicitly calls one.
 */
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-assistant-adapters-023-fail-safe-marker-polish";
+  const API_VERSION = "access-control-assistant-adapters-024-assistant-proof-pattern-extract";
 
   function safeText(value) {
     return String(value ?? "");
@@ -15,20 +15,24 @@
     return safeText(data.recommendation).toUpperCase() === "CONDITIONAL";
   }
 
-  function buildFailSafeFailSecureModel(data) {
-    const status = safeText(data.status || (isConditional(data) ? "WATCH" : "HEALTHY"));
-    const recommendation = safeText(data.recommendation || "Recommendation pending");
-    const confidence = safeText(data.confidence || "unknown").toLowerCase();
-    const risk = safeText(data.risk || "Review egress, security, and power-loss behavior before hardware selection.");
-    const guidance = safeText(data.guidance || data.actionableGuidance || "Confirm code, egress, and operational requirements before moving to the next access-control step.");
-    const recommendationReferences = Array.isArray(data.recommendationReferences)
-      ? data.recommendationReferences.map((item) => {
+  function formatAssistantProofReferences(references = []) {
+    return Array.isArray(references)
+      ? references.map((item) => {
           const id = safeText(item?.id || "");
           const label = safeText(item?.label || "Reference");
           const reason = safeText(item?.reason || "Review required.");
           return [id, label + ":", reason].filter(Boolean).join(" ");
         }).filter(Boolean)
       : [];
+  }
+
+  function buildFailSafeFailSecureModel(data) {
+    const status = safeText(data.status || (isConditional(data) ? "WATCH" : "HEALTHY"));
+    const recommendation = safeText(data.recommendation || "Recommendation pending");
+    const confidence = safeText(data.confidence || "unknown").toLowerCase();
+    const risk = safeText(data.risk || "Review egress, security, and power-loss behavior before hardware selection.");
+    const guidance = safeText(data.guidance || data.actionableGuidance || "Confirm code, egress, and operational requirements before moving to the next access-control step.");
+    const recommendationReferences = formatAssistantProofReferences(data.recommendationReferences);
 
     const actions = isConditional(data)
       ? [
@@ -827,6 +831,7 @@
     version: API_VERSION,
     getAdapter,
     listAdapters,
-    hasAdapter
+    hasAdapter,
+    formatAssistantProofReferences
   });
 })();

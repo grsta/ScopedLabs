@@ -93,6 +93,7 @@ check("Fail-Safe CAD egress path primitive exists", visuals.includes("function c
 check("Fail-Safe state diagram has two visual layers", visuals.includes(`data-fail-safe-visual-mode="entered-plus-recommendation"`) && visuals.includes("A / ENTERED CONDITIONS") && visuals.includes("B / ASSISTANT RECOMMENDATION"));
 check("Fail-Safe recommendation markers exist", visuals.includes(`data-fail-safe-marker-style="plain-text"`) && visuals.includes("*1") && visuals.includes("*2") && visuals.includes("*3"));
 check("Fail-Safe visual reference card removed", visuals.includes(`data-fail-safe-reference-card="removed"`) && visuals.includes("See Assistant Recommended Actions below"));
+check("Assistant proof helpers are exported", visuals.includes("assistantProofInputLane,") && visuals.includes("assistantProofRecommendationNode,") && visuals.includes("getAssistantProofPatternContract,"));
 check("Legacy non-CAD controlledDoorOpeningIcon name is not used", !visuals.includes("controlledDoorOpeningIcon"));
 
 console.log("\\nAccess Control CAD icon contract audit:");

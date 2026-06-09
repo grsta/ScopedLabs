@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-051-authority-review-tone";
+  const VERSION = "access-control-planning-visuals-052-assistant-proof-pattern-extract";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -690,8 +690,141 @@
   }
 
 
-  function normalizeFailSafeReferences(refs, context = {}) {
+
+  function assistantProofShort(value, max = 34) {
+    const text = String(value == null ? "" : value).replace(/\s+/g, " ").trim();
+    if (text.length <= max) return text;
+    return text.slice(0, Math.max(0, max - 3)).trimEnd() + "...";
+  }
+
+  function assistantProofWrap(value, max = 20, lines = 2) {
+    const words = String(value == null ? "" : value).replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
+    const out = [];
+    let current = "";
+
+    words.forEach((word) => {
+      const candidate = current ? current + " " + word : word;
+      if (candidate.length > max && current) {
+        out.push(current);
+        current = word;
+      } else {
+        current = candidate;
+      }
+    });
+
+    if (current) out.push(current);
+
+    const trimmed = out.slice(0, lines);
+    if (out.length > lines && trimmed.length) {
+      trimmed[trimmed.length - 1] = assistantProofShort(trimmed[trimmed.length - 1], max);
+    }
+
+    return trimmed.length ? trimmed : [""];
+  }
+
+  function assistantProofTextLines(lines, x, y, options = {}) {
+    const size = options.size || 8.4;
+    const leading = options.leading || 12;
+    const fill = options.fill || "currentColor";
+    const weight = options.weight || 620;
+    const anchor = options.anchor || "start";
+    const family = options.family || "Inter,Arial,sans-serif";
+
+    return (Array.isArray(lines) ? lines : [lines]).map((line, index) => {
+      return '<text x="' + x + '" y="' + (y + index * leading) + '" fill="' + fill + '" font-size="' + size + '" font-weight="' + weight + '" text-anchor="' + anchor + '" font-family="' + family + '">' + escapeHtml(line) + '</text>';
+    }).join("");
+  }
+
+  function assistantProofMarker(id, x, y, toneName = "watch", palette, anchor = "middle") {
+    const c = accessToneColors(toneName, palette || accessVisualPalette(false));
+    return '<text x="' + x + '" y="' + y + '" fill="' + c.line + '" font-size="10.2" font-weight="780" text-anchor="' + anchor + '" font-family="Inter,Arial,sans-serif" data-fail-safe-ref-marker="' + escapeHtml(id) + '">' + escapeHtml(id) + '</text>';
+  }
+
+  function assistantProofBadge(label, toneName, x, y, w, palette) {
+    const c = accessToneColors(toneName, palette || accessVisualPalette(false));
+    return [
+      '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="30" rx="9" fill="' + c.fill + '" stroke="' + c.line + '" stroke-width="1.1" />',
+      '<text x="' + (x + w / 2) + '" y="' + (y + 20) + '" font-size="9.6" fill="' + c.line + '" font-weight="720" text-anchor="middle" font-family="Inter,Arial,sans-serif">' + escapeHtml(assistantProofShort(label, 16)) + '</text>'
+    ].join("");
+  }
+
+  function assistantProofSectionTitle(label, x, y, palette) {
+    return '<text x="' + x + '" y="' + y + '" fill="' + (palette || accessVisualPalette(false)).label + '" font-size="10.2" font-weight="700" font-family="Inter,Arial,sans-serif" letter-spacing="1.1">' + escapeHtml(label) + '</text>';
+  }
+
+  function assistantProofInputLane(options = {}) {
+    const palette = options.palette || accessVisualPalette(false);
+    const title = options.title || "Input";
+    const valueLines = assistantProofWrap(options.value, options.valueMax || 18, options.valueLines || 2);
+    const subLines = options.sub ? assistantProofWrap(options.sub, options.subMax || 15, 1) : [];
+    const x = Number(options.x || 0);
+    const y = Number(options.y || 0);
+    const w = Number(options.w || 154);
+
+    return [
+      '<g data-fail-safe-input-card="' + escapeHtml(title) + '">',
+      '<path d="M' + x + ' ' + (y + 112) + ' H' + (x + w) + '" stroke="' + palette.faintLine + '" stroke-width=".85" opacity=".62" />',
+      options.iconHtml || '',
+      '<text x="' + (x + 8) + '" y="' + (y + 89) + '" fill="' + palette.muted + '" font-size="7.9" font-weight="640" font-family="Inter,Arial,sans-serif" letter-spacing=".7">' + escapeHtml(String(title).toUpperCase()) + '</text>',
+      assistantProofTextLines(valueLines, x + 8, y + 105, { size: 8.5, leading: 11, weight: 650, fill: palette.text }),
+      subLines.length ? assistantProofTextLines(subLines, x + w - 6, y + 105, { size: 7.4, leading: 10, weight: 560, fill: palette.muted, anchor: "end" }) : '',
+      '</g>'
+    ].join("");
+  }
+
+  function assistantProofRecommendationNode(options = {}) {
+    const palette = options.palette || accessVisualPalette(false);
+    const title = options.title || "Recommendation";
+    const toneName = options.toneName || "watch";
+    const c = accessToneColors(toneName, palette);
+    const detailLines = assistantProofWrap(options.detail, options.detailMax || 22, 2);
+    const ref = typeof options.refItem === "string" ? { id: options.refItem, tone: toneName } : (options.refItem || null);
+    const x = Number(options.x || 0);
+    const y = Number(options.y || 0);
+    const w = Number(options.w || 140);
+
+    return [
+      '<g data-fail-safe-recommendation-card="' + escapeHtml(title) + '">',
+      '<path d="M' + x + ' ' + (y + 76) + ' H' + (x + w) + '" stroke="' + c.line + '" stroke-width="1" opacity=".82" />',
+      '<path d="M' + x + ' ' + (y + 22) + ' V' + (y + 76) + '" stroke="' + c.line + '" stroke-width="2" opacity=".9" />',
+      ref ? assistantProofMarker(ref.id || "*", x + 12, y + 17, ref.tone || toneName, palette, "start") : '',
+      '<text x="' + (x + 34) + '" y="' + (y + 17) + '" fill="' + palette.muted + '" font-size="7.9" font-weight="640" font-family="Inter,Arial,sans-serif" letter-spacing=".65">' + escapeHtml(String(title).toUpperCase()) + '</text>',
+      '<text x="' + (x + 12) + '" y="' + (y + 43) + '" fill="' + c.line + '" font-size="11.8" font-weight="720" font-family="Inter,Arial,sans-serif">' + escapeHtml(assistantProofShort(options.value, 18)) + '</text>',
+      assistantProofTextLines(detailLines, x + 12, y + 61, { size: 8.1, leading: 10, weight: 560, fill: palette.text }),
+      '</g>'
+    ].join("");
+  }
+
+  function assistantProofArrow(x1, y1, x2, y2, palette) {
+    const p = palette || accessVisualPalette(false);
+    return '<path d="M' + x1 + ' ' + y1 + ' H' + x2 + ' M' + (x2 - 10) + ' ' + (y2 - 7) + ' L' + x2 + ' ' + y2 + ' L' + (x2 - 10) + ' ' + (y2 + 7) + '" stroke="' + p.whiteLine + '" stroke-width="1.15" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".62" />';
+  }
+
+  function normalizeAssistantProofReferences(refs, defaults = []) {
     const source = Array.isArray(refs) ? refs : [];
+
+    return defaults.map((fallback, index) => {
+      const item = source[index] || {};
+      return {
+        id: item.id || fallback.id,
+        label: item.label || fallback.label,
+        reason: item.reason || fallback.reason,
+        tone: item.tone || fallback.tone
+      };
+    });
+  }
+
+  function getAssistantProofPatternContract() {
+    return Object.freeze({
+      name: "access-control-assistant-proof-visual-pattern",
+      layers: ["entered-conditions", "assistant-recommendation"],
+      markers: ["*1", "*2", "*3"],
+      exportParity: true,
+      visualMarkerStyle: "plain-text"
+    });
+  }
+
+  function normalizeFailSafeReferences(refs, context = {}) {
     const defaults = [
       {
         id: "*1",
@@ -713,15 +846,7 @@
       }
     ];
 
-    return defaults.map((fallback, index) => {
-      const item = source[index] || {};
-      return {
-        id: item.id || fallback.id,
-        label: item.label || fallback.label,
-        reason: item.reason || fallback.reason,
-        tone: item.tone || fallback.tone
-      };
-    });
+    return normalizeAssistantProofReferences(refs, defaults);
   }
 
   function buildFailSafeStateDiagramSvg(metrics = {}) {
@@ -752,83 +877,20 @@
     const tone = accessToneColors(statusToneValue, palette);
 
     function esc(value) { return escapeHtml(value == null ? "" : String(value)); }
-    function short(value, max = 34) {
-      const text = String(value == null ? "" : value).replace(/\s+/g, " ").trim();
-      if (text.length <= max) return text;
-      return text.slice(0, Math.max(0, max - 3)).trimEnd() + "...";
-    }
-    function wrap(value, max = 20, lines = 2) {
-      const words = String(value == null ? "" : value).replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
-      const out = [];
-      let current = "";
-      words.forEach((word) => {
-        const candidate = current ? current + " " + word : word;
-        if (candidate.length > max && current) {
-          out.push(current);
-          current = word;
-        } else {
-          current = candidate;
-        }
-      });
-      if (current) out.push(current);
-      const trimmed = out.slice(0, lines);
-      if (out.length > lines && trimmed.length) trimmed[trimmed.length - 1] = short(trimmed[trimmed.length - 1], max);
-      return trimmed.length ? trimmed : [""];
-    }
-    function textLines(lines, x, y, options = {}) {
-      const size = options.size || 8.4;
-      const leading = options.leading || 12;
-      const fill = options.fill || palette.text;
-      const weight = options.weight || 620;
-      const anchor = options.anchor || "start";
-      return lines.map((line, index) => '<text x="' + x + '" y="' + (y + index * leading) + '" fill="' + fill + '" font-size="' + size + '" font-weight="' + weight + '" text-anchor="' + anchor + '" font-family="Inter,Arial,sans-serif">' + esc(line) + '</text>').join('');
-    }
+    function short(value, max = 34) { return assistantProofShort(value, max); }
+    function wrap(value, max = 20, lines = 2) { return assistantProofWrap(value, max, lines); }
+    function textLines(lines, x, y, options = {}) { return assistantProofTextLines(lines, x, y, options); }
     function colors(toneName) { return accessToneColors(toneName, palette); }
-    function marker(id, x, y, toneName = "watch", anchor = "middle") {
-      const c = colors(toneName);
-      return '<text x="' + x + '" y="' + y + '" fill="' + c.line + '" font-size="10.2" font-weight="780" text-anchor="' + anchor + '" font-family="Inter,Arial,sans-serif" data-fail-safe-ref-marker="' + esc(id) + '">' + esc(id) + '</text>';
-    }
-    function badge(label, toneName, x, y, w) {
-      const c = colors(toneName);
-      return [
-        '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="30" rx="9" fill="' + c.fill + '" stroke="' + c.line + '" stroke-width="1.1" />',
-        '<text x="' + (x + w / 2) + '" y="' + (y + 20) + '" font-size="9.6" fill="' + c.line + '" font-weight="720" text-anchor="middle" font-family="Inter,Arial,sans-serif">' + esc(short(label, 16)) + '</text>'
-      ].join('');
-    }
-    function sectionTitle(label, x, y) {
-      return '<text x="' + x + '" y="' + y + '" fill="' + palette.label + '" font-size="10.2" font-weight="700" font-family="Inter,Arial,sans-serif" letter-spacing="1.1">' + esc(label) + '</text>';
-    }
+    function marker(id, x, y, toneName = "watch", anchor = "middle") { return assistantProofMarker(id, x, y, toneName, palette, anchor); }
+    function badge(label, toneName, x, y, w) { return assistantProofBadge(label, toneName, x, y, w, palette); }
+    function sectionTitle(label, x, y) { return assistantProofSectionTitle(label, x, y, palette); }
     function inputLane(title, value, sub, x, y, w, iconHtml) {
-      const valueLines = wrap(value, 18, 2);
-      const subLines = sub ? wrap(sub, 15, 1) : [];
-      return [
-        '<g data-fail-safe-input-card="' + esc(title) + '">',
-        '<path d="M' + x + ' ' + (y + 112) + ' H' + (x + w) + '" stroke="' + palette.faintLine + '" stroke-width=".85" opacity=".62" />',
-        iconHtml,
-        '<text x="' + (x + 8) + '" y="' + (y + 89) + '" fill="' + palette.muted + '" font-size="7.9" font-weight="640" font-family="Inter,Arial,sans-serif" letter-spacing=".7">' + esc(title.toUpperCase()) + '</text>',
-        textLines(valueLines, x + 8, y + 105, { size: 8.5, leading: 11, weight: 650, fill: palette.text }),
-        subLines.length ? textLines(subLines, x + w - 6, y + 105, { size: 7.4, leading: 10, weight: 560, fill: palette.muted, anchor: 'end' }) : '',
-        '</g>'
-      ].join('');
+      return assistantProofInputLane({ title, value, sub, x, y, w, iconHtml, palette, exportMode });
     }
     function recNode(title, value, detail, refItem, x, y, w, toneName) {
-      const c = colors(toneName);
-      const detailLines = wrap(detail, 22, 2);
-      const ref = typeof refItem === 'string' ? { id: refItem, tone: toneName } : (refItem || null);
-      return [
-        '<g data-fail-safe-recommendation-card="' + esc(title) + '">',
-        '<path d="M' + x + ' ' + (y + 76) + ' H' + (x + w) + '" stroke="' + c.line + '" stroke-width="1" opacity=".82" />',
-        '<path d="M' + x + ' ' + (y + 22) + ' V' + (y + 76) + '" stroke="' + c.line + '" stroke-width="2" opacity=".9" />',
-        ref ? marker(ref.id || '*', x + 12, y + 17, ref.tone || toneName, 'start') : '',
-        '<text x="' + (x + 34) + '" y="' + (y + 17) + '" fill="' + palette.muted + '" font-size="7.9" font-weight="640" font-family="Inter,Arial,sans-serif" letter-spacing=".65">' + esc(title.toUpperCase()) + '</text>',
-        '<text x="' + (x + 12) + '" y="' + (y + 43) + '" fill="' + c.line + '" font-size="11.8" font-weight="720" font-family="Inter,Arial,sans-serif">' + esc(short(value, 18)) + '</text>',
-        textLines(detailLines, x + 12, y + 61, { size: 8.1, leading: 10, weight: 560, fill: palette.text }),
-        '</g>'
-      ].join('');
+      return assistantProofRecommendationNode({ title, value, detail, refItem, x, y, w, toneName, palette, exportMode });
     }
-    function arrow(x1, y1, x2, y2) {
-      return '<path d="M' + x1 + ' ' + y1 + ' H' + x2 + ' M' + (x2 - 10) + ' ' + (y2 - 7) + ' L' + x2 + ' ' + y2 + ' L' + (x2 - 10) + ' ' + (y2 + 7) + '" stroke="' + palette.whiteLine + '" stroke-width="1.15" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".62" />';
-    }
+    function arrow(x1, y1, x2, y2) { return assistantProofArrow(x1, y1, x2, y2, palette); }
 
     const recTone = statusToneValue === 'risk' ? 'risk' : statusToneValue === 'watch' || statusToneValue === 'authority' ? 'watch' : 'safe';
     const releaseTone = releaseState === 'release' ? 'watch' : 'safe';
@@ -1747,6 +1809,17 @@
     cadAccessFireAlarmReleaseIcon,
     cadAccessEgressPathIcon,
     cadAccessStateTransitionFlow,
+    assistantProofShort,
+    assistantProofWrap,
+    assistantProofTextLines,
+    assistantProofMarker,
+    assistantProofBadge,
+    assistantProofSectionTitle,
+    assistantProofInputLane,
+    assistantProofRecommendationNode,
+    assistantProofArrow,
+    normalizeAssistantProofReferences,
+    getAssistantProofPatternContract,
     VERSION,
     renderFailSafeState,
     buildFailSafeStateDiagramSvg,
