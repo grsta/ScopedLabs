@@ -171,7 +171,7 @@ check("Legacy results card remains hidden", tagIsHidden(legacyCardTag), "hiddenL
 check("Legacy result rows are hidden ledger only", has(html, 'id="results"') && has(html, "data-result-ledger") && tagIsHidden(resultsTag), "hiddenLedger", resultsTag || "missing #results");
 check("Hidden result ledger has CSS leak guard", has(html, "#results[data-result-ledger][hidden]") || has(html, "[data-result-ledger][hidden]"), "hiddenLedger");
 check("Compact Fail-State Decision schedule/table is present", has(html, "failSafeDecisionSchedule") || has(html, "data-fail-safe-summary") || has(script, "renderFailSafeDecisionSchedule"), "compactOutput");
-check("Fail-Safe hero status chip is content-width", html.includes("access-control-fail-safe-two-visuals-polish-019") && html.includes(".fail-safe-decision-hero .fail-safe-status-chip") && html.includes("width: fit-content") && html.includes("align-items: flex-start"), "compactOutput");
+check("Fail-Safe hero status chip is content-width", html.includes("access-control-fail-safe-status-scope-split-020") && html.includes(".fail-safe-decision-hero .fail-safe-status-chip") && html.includes("width: fit-content") && html.includes("align-items: flex-start"), "compactOutput");
 check("Fail-Safe has no Chart.js dependency", !has(html, "chart.js") && !has(script, "new Chart("), "outputShell");
 check("Export and snapshot IDs remain preserved", has(html, 'id="exportReport"') && has(html, 'id="saveSnapshot"') && has(html, 'id="exportStatus"'), "export");
 check("Custom Fail-Safe export payload remains preserved", has(script, "ScopedLabsAccessControlFailSafeExport") && has(script, "getSharedExportPayload"), "export");
@@ -183,6 +183,7 @@ check("Fail-Safe state visual mount exists", html.includes('id="failSafeStateVis
 check("Fail-Safe state visual export image uses shared renderer", script.includes("buildFailSafeStateDiagramSvg") && script.includes("exportMode: true"));
 check("Fail-Safe recommendation references are report-ready", script.includes("recommendationReferences") && script.includes("Recommendation References") && script.includes("*1"));
 check("Fail-Safe assistant markers are color-decorated", html.includes("access-fail-safe-ref-marker") && script.includes("decorateFailSafeAssistantMarkers"));
+check("Fail-Safe separates local status from scope review flag", script.includes("function getStatusForRecommendation(recommendation, confidence)") && !script.includes('activeScope && activeScope.requiresAuthorityReview) return "AUTHORITY REVIEW"') && script.includes('Scope Review Flag') && script.includes("scopeReviewStatus"));
 
 console.log("\nFail-Safe output contract audit:");
 console.table(rows);

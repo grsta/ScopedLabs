@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  // access-control-fail-safe-two-visuals-polish-019
+  // access-control-fail-safe-status-scope-split-020
 
   const CATEGORY = "access-control";
   const CATEGORY_LABEL = "Access Control";
@@ -94,7 +94,7 @@
     return String(value ?? "").trim().toLowerCase();
   }
 
-  // access-control-fail-safe-output-contract-016
+  // access-control-fail-safe-status-scope-split-020
   function outputShell() {
     return window.ScopedLabsAccessControlOutputShell || null;
   }
@@ -616,7 +616,8 @@
       powerLossIntent: completedTools[STEP].powerLossIntent,
       failStateStatus: core.status,
       failStateDecisionFlags: core.decisionFlags || [],
-      status: core.activeScope.requiresAuthorityReview ? "AUTHORITY REVIEW" : core.status,
+      status: core.status,
+      scopeReviewStatus: core.activeScope.requiresAuthorityReview ? "AUTHORITY REVIEW" : "NONE",
       updatedAt: new Date().toISOString()
     };
 
@@ -670,7 +671,7 @@
         id: "*1",
         label: "Recommendation basis",
         reason: core.rationale || ("Recommended " + recommendation + " from the selected fail-state conditions."),
-        tone: status.includes("RISK") ? "risk" : "watch"
+        tone: status.includes("RISK") ? "risk" : status.includes("SAFE") || status.includes("COMPLETE") ? "safe" : "watch"
       },
       {
         id: "*2",
@@ -1139,7 +1140,7 @@ function savePipelineResult(payload) {
     return selectEl ? selectEl.value : "";
   }
 
-  // access-control-fail-safe-scope-input-hydration-015
+  // access-control-fail-safe-status-scope-split-020
   function setSelectValue(selectEl, value) {
     if (!selectEl || value === undefined || value === null) return false;
 
@@ -1375,10 +1376,9 @@ function savePipelineResult(payload) {
       actions.push("Confirm free mechanical egress or provide listed release/backup-power strategy before continuing.");
     }
 
-    if (activeScope && activeScope.requiresAuthorityReview && status !== "RISK") {
-      status = "AUTHORITY REVIEW";
+    if (activeScope && activeScope.requiresAuthorityReview) {
       flags.push("Scope marked for authority review");
-      actions.push("Carry this opening into Summary as an authority-review item.");
+      actions.push("Carry this opening into Summary as an authority-review item. This scope review flag is separate from the local fail-state decision status.");
     }
 
     if (!actions.length) {
@@ -1397,8 +1397,7 @@ function savePipelineResult(payload) {
     };
   }
 
-  function getStatusForRecommendation(recommendation, confidence, activeScope) {
-    if (activeScope && activeScope.requiresAuthorityReview) return "AUTHORITY REVIEW";
+  function getStatusForRecommendation(recommendation, confidence) {
     if (recommendation === "CONDITIONAL") return "WATCH";
     if (confidence === "LOW") return "WATCH";
     return "COMPLETE";
@@ -1463,7 +1462,7 @@ function savePipelineResult(payload) {
     }
 
     const baseConfidence = getConfidence(score);
-    const baseStatus = getStatusForRecommendation(recommendation, baseConfidence, activeScope);
+    const baseStatus = getStatusForRecommendation(recommendation, baseConfidence);
     const decision = buildFailSafeDecisionModel({
       recommendation,
       rationale,
@@ -1528,6 +1527,7 @@ function savePipelineResult(payload) {
     render([
       { label: "Recommendation", value: recommendation },
       { label: "Status", value: status },
+      { label: "Scope Review Flag", value: activeScope && activeScope.requiresAuthorityReview ? "AUTHORITY REVIEW" : "No carried scope review" },
       { label: "Confidence", value: confidence },
       { label: "Why", value: rationale },
       { label: "Decision Flags", value: decision.flags.length ? decision.flags.join(" | ") : "No special flags" },

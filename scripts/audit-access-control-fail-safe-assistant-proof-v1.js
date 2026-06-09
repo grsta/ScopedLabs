@@ -39,9 +39,9 @@ check("Explicit local assistant mount present", index.includes('id="accessContro
 check("Assistant mount is hidden before calculation", /id="accessControlLocalAssistantMount"[^>]*hidden/.test(index));
 check("Generic assistant asset loaded once", count(index, "scopedlabs-local-assistant.js") === 1);
 check("Access Control adapter asset loaded once", count(index, "access-control-tool-assistant-adapters.js") === 1);
-check("Local script cache bumped", index.includes("./script.js?v=access-control-fail-safe-two-visuals-polish-019"));
-check("Style cache bumped", index.includes("/assets/style.css?v=access-control-fail-safe-two-visuals-polish-019"));
-check("Assistant scripts load before local script", index.indexOf("scopedlabs-local-assistant.js") < index.indexOf("./script.js?v=access-control-fail-safe-two-visuals-polish-019") && index.indexOf("access-control-tool-assistant-adapters.js") < index.indexOf("./script.js?v=access-control-fail-safe-two-visuals-polish-019"));
+check("Local script cache bumped", index.includes("./script.js?v=access-control-fail-safe-status-scope-split-020"));
+check("Style cache bumped", index.includes("/assets/style.css?v=access-control-fail-safe-status-scope-split-020"));
+check("Assistant scripts load before local script", index.indexOf("scopedlabs-local-assistant.js") < index.indexOf("./script.js?v=access-control-fail-safe-status-scope-split-020") && index.indexOf("access-control-tool-assistant-adapters.js") < index.indexOf("./script.js?v=access-control-fail-safe-status-scope-split-020"));
 check("Result region preserved", index.includes('id="results"'));
 check("Export controls preserved", ["exportReport", "saveSnapshot", "exportStatus"].every((id) => index.includes('id="' + id + '"')));
 check("Knowledge Base runtime preserved", index.includes('/assets/help.js'));
@@ -58,7 +58,7 @@ check("Assistant clear function added", script.includes("function clearLocalAssi
 check("Assistant clears through clearResults", script.includes("clearLocalAssistant();") && script.indexOf("clearLocalAssistant();") < script.indexOf("clearAnalysis();"));
 check("Assistant renders after calculation", script.includes("renderLocalAssistant(assistantPayload);") && script.indexOf("renderLocalAssistant(assistantPayload);") > script.indexOf("currentReport = buildReportPayload"));
 check("Assistant payload includes validated outputs", ["recommendation", "confidence", "score", "risk", "guidance", "scoreMeaning"].every((token) => script.includes(token)));
-check("Scoped assistant CSS added", style.includes("access-control-fail-safe-two-visuals-polish-019") && style.includes(".scopedlabs-local-assistant-card"));
+check("Scoped assistant CSS added", style.includes("access-control-fail-safe-status-scope-split-020") && style.includes(".scopedlabs-local-assistant-card"));
 check("Physical Security assets not copied into Access Control page", !index.includes("physical-security-local-assistant.js") && !index.includes("physical-security-tool-assistant-adapters.js"));
 check("No category-wide Access Control assistant rollout", !readerIndex.includes("access-control-tool-assistant-adapters.js") && !readerIndex.includes("accessControlLocalAssistantMount"));
 
