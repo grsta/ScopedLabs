@@ -1,3 +1,4 @@
+// access-control-door-cable-length-export-print-ux-001: local print report wording and page-pack polish.
 (() => {
   const CATEGORY = "access-control";
   const CATEGORY_LABEL = "Access Control";
@@ -436,9 +437,9 @@
     const chartBlock = payload.chartImage
       ? `
         <section class="section">
-          <h2>Chart Snapshot</h2>
+          <h2>Planning Visual</h2>
           <div class="chart-wrap">
-            <img src="${payload.chartImage}" alt="Door Cable Length chart">
+            <img src="${payload.chartImage}" alt="Door Cable Length planning visual">
           </div>
         </section>
       `
@@ -488,7 +489,7 @@
       border:1px solid #c9d8cf;
       background:#fff;
       color:var(--ink);
-      border-radius:999px;
+      border-radius:10px;
       padding:10px 14px;
       font-weight:700;
       cursor:pointer;
@@ -508,7 +509,7 @@
     }
     .brand-name{
       font-size:1.15rem;
-      font-weight:800;
+      font-weight:720;
       letter-spacing:.02em;
     }
     .tagline{
@@ -541,9 +542,9 @@
       align-items:center;
       justify-content:center;
       padding:8px 12px;
-      border-radius:999px;
+      border-radius:10px;
       font-size:.82rem;
-      font-weight:800;
+      font-weight:720;
       letter-spacing:.06em;
       text-transform:uppercase;
       border:1px solid transparent;
@@ -652,10 +653,17 @@
       .grid{grid-template-columns:1fr}
     }
     @media print{
+      @page{margin:.45in}
       body{background:#fff;padding:0}
       .page{max-width:none;border:none;box-shadow:none}
       .toolbar{display:none !important}
       .report{padding:0}
+      .report-head,.section,.chart-wrap,.grid,.summary,.body-copy,.foot{break-inside:avoid;page-break-inside:avoid}
+      .section{margin-top:12px}
+      .section h2{break-after:avoid;page-break-after:avoid}
+      .chart-wrap img{display:block;max-width:100%;max-height:4.6in;object-fit:contain;margin:0 auto}
+      table{break-inside:auto}
+      tr{break-inside:avoid;page-break-inside:avoid}
     }
   </style>
 </head>
