@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-048-fail-safe-state-icons";
+  const VERSION = "access-control-planning-visuals-049-fail-safe-two-layer-refs";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -445,43 +445,43 @@
     return exportMode
       ? {
           shellFill: "#ffffff",
-          shellStroke: "#b8cabe",
-          gridStroke: "#dce8df",
-          title: "#132018",
-          label: "#1f7a3d",
-          text: "#132018",
-          muted: "#4b5563",
+          shellStroke: "#bcc8c0",
+          gridStroke: "#e2ebe5",
+          title: "#14211a",
+          label: "#375344",
+          text: "#14211a",
+          muted: "#56635d",
           whiteLine: "#2f3b35",
-          faintLine: "#9aa8a0",
-          tealLine: "#1f7a7a",
-          tealFill: "#e7f7f5",
-          safeLine: "#1f7a3d",
-          safeFill: "#eaf7ef",
-          watchLine: "#946200",
+          faintLine: "#a5b2ab",
+          tealLine: "#2f3b35",
+          tealFill: "#f3f7f4",
+          safeLine: "#247246",
+          safeFill: "#eaf6ef",
+          watchLine: "#9a6a12",
           watchFill: "#fff7df",
-          riskLine: "#a3362b",
+          riskLine: "#b13a32",
           riskFill: "#fff0ee",
           nodeFill: "#f8fbf8"
         }
       : {
           shellFill: "rgba(0,0,0,.10)",
-          shellStroke: "rgba(120,255,120,.12)",
-          gridStroke: "rgba(120,255,120,.045)",
+          shellStroke: "rgba(238,246,255,.16)",
+          gridStroke: "rgba(238,246,255,.045)",
           title: "rgba(246,255,248,.96)",
-          label: "rgba(180,255,200,.68)",
-          text: "rgba(238,255,244,.94)",
-          muted: "rgba(203,213,225,.68)",
+          label: "rgba(203,213,225,.74)",
+          text: "rgba(238,246,255,.93)",
+          muted: "rgba(203,213,225,.66)",
           whiteLine: "rgba(238,246,255,.78)",
-          faintLine: "rgba(203,213,225,.34)",
-          tealLine: "rgba(88,241,241,.86)",
-          tealFill: "rgba(88,241,241,.08)",
-          safeLine: "rgba(125,255,152,.82)",
-          safeFill: "rgba(120,255,120,.10)",
-          watchLine: "rgba(250,204,21,.92)",
-          watchFill: "rgba(250,204,21,.12)",
-          riskLine: "rgba(255,105,105,.88)",
-          riskFill: "rgba(255,105,105,.13)",
-          nodeFill: "rgba(0,0,0,.14)"
+          faintLine: "rgba(203,213,225,.32)",
+          tealLine: "rgba(238,246,255,.72)",
+          tealFill: "rgba(238,246,255,.045)",
+          safeLine: "rgba(125,255,152,.74)",
+          safeFill: "rgba(120,255,120,.08)",
+          watchLine: "rgba(250,204,21,.86)",
+          watchFill: "rgba(250,204,21,.10)",
+          riskLine: "rgba(255,118,118,.86)",
+          riskFill: "rgba(255,105,105,.10)",
+          nodeFill: "rgba(0,0,0,.12)"
         };
   }
 
@@ -670,76 +670,176 @@
     ].join('');
   }
 
+
+  function normalizeFailSafeReferences(refs, context = {}) {
+    const source = Array.isArray(refs) ? refs : [];
+    const defaults = [
+      {
+        id: "*1",
+        label: "Recommendation basis",
+        reason: context.recommendation ? "Assistant recommendation is " + context.recommendation + " based on the entered fail-state inputs." : "Assistant recommendation is based on the entered fail-state inputs.",
+        tone: "watch"
+      },
+      {
+        id: "*2",
+        label: "Release path",
+        reason: context.releaseEventLabel || context.fireLabel ? "Release behavior is checked against the fire alarm and required release-event inputs." : "Release behavior must be confirmed before final hardware selection.",
+        tone: "watch"
+      },
+      {
+        id: "*3",
+        label: "Egress / review",
+        reason: context.risk || context.status ? "Egress outcome and review pressure are driven by the stated risk/status." : "Egress and authority-review requirements remain controlling conditions.",
+        tone: String(context.status || "").toLowerCase().includes("risk") ? "risk" : "watch"
+      }
+    ];
+
+    return defaults.map((fallback, index) => {
+      const item = source[index] || {};
+      return {
+        id: item.id || fallback.id,
+        label: item.label || fallback.label,
+        reason: item.reason || fallback.reason,
+        tone: item.tone || fallback.tone
+      };
+    });
+  }
+
   function buildFailSafeStateDiagramSvg(metrics = {}) {
     const exportMode = !!metrics.exportMode;
     const palette = accessVisualPalette(exportMode);
     const status = statusLabel(metrics.status || "WATCH");
     const statusToneValue = statusTone(status);
     const recommendation = String(metrics.recommendation || "CONDITIONAL").toUpperCase();
-    const mode = recommendation.includes("FAIL-SAFE") ? "fail-safe" : recommendation.includes("FAIL-SECURE") ? "fail-secure" : "conditional";
-    const powerLossLabel = String(metrics.powerLossLabel || "Power loss behavior not documented");
-    const fireLabel = String(metrics.fireLabel || "Fire release behavior not documented");
-    const releaseEventLabel = String(metrics.releaseEventLabel || "Release event not documented");
-    const standbyPowerLabel = String(metrics.standbyPowerLabel || "Standby power not documented");
-    const risk = String(metrics.risk || "Decision risk pending");
     const confidence = String(metrics.confidence || "Pending");
     const score = String(metrics.score ?? "Pending");
+    const risk = String(metrics.risk || "Decision risk pending");
+    const powerLossLabel = String(metrics.powerLossLabel || "Power reliability not documented");
+    const fireLabel = String(metrics.fireLabel || "Fire alarm integration not documented");
+    const releaseEventLabel = String(metrics.releaseEventLabel || "Release event not documented");
+    const standbyPowerLabel = String(metrics.standbyPowerLabel || "Standby power not documented");
+    const hardwareTypeLabel = String(metrics.hardwareTypeLabel || "Hardware type not documented");
+    const egressControlledLabel = String(metrics.egressControlledLabel || "Egress control not documented");
+    const doorTypeLabel = String(metrics.doorTypeLabel || "Door type not documented");
+    const mode = recommendation.includes("FAIL-SAFE") ? "fail-safe" : recommendation.includes("FAIL-SECURE") ? "fail-secure" : "conditional";
     const lockState = recommendation.includes("FAIL-SAFE") ? "unlocked" : recommendation.includes("FAIL-SECURE") ? "locked" : "released";
-    const egressState = statusToneValue === "risk" ? "restricted" : lockState === "locked" ? "available" : "released";
-    const powerState = powerLossLabel.toLowerCase().includes("loss") || powerLossLabel.toLowerCase().includes("outage") ? "loss" : "normal";
-    const releaseState = fireLabel.toLowerCase().includes("yes") || releaseEventLabel.toLowerCase().includes("release") || releaseEventLabel.toLowerCase().includes("fire") ? "release" : "idle";
+    const powerText = (powerLossLabel + " " + standbyPowerLabel).toLowerCase();
+    const powerState = powerText.includes("frequent") || powerText.includes("loss") || powerText.includes("outage") || powerText.includes("none") ? "loss" : "normal";
+    const releaseText = (fireLabel + " " + releaseEventLabel).toLowerCase();
+    const releaseState = releaseText.includes("yes") || releaseText.includes("fire") || releaseText.includes("release") || releaseText.includes("sprinkler") || releaseText.includes("multiple") ? "release" : "idle";
+    const egressText = (egressControlledLabel + " " + risk + " " + status).toLowerCase();
+    const egressState = statusToneValue === "risk" || egressText.includes("improper") || egressText.includes("blocked") ? "restricted" : statusToneValue === "watch" || statusToneValue === "authority" || lockState === "released" ? "released" : "available";
+    const refs = normalizeFailSafeReferences(metrics.references || metrics.recommendationReferences, { recommendation, risk, status, fireLabel, releaseEventLabel, egressControlledLabel });
     const tone = accessToneColors(statusToneValue, palette);
 
+    function esc(value) { return escapeHtml(value == null ? "" : String(value)); }
+    function short(value, max = 34) {
+      const text = String(value == null ? "" : value).replace(/\s+/g, " ").trim();
+      if (text.length <= max) return text;
+      return text.slice(0, Math.max(0, max - 1)).trimEnd() + "?";
+    }
+    function colors(toneName) { return accessToneColors(toneName, palette); }
+    function marker(id, x, y, toneName = "watch") {
+      const c = colors(toneName);
+      return [
+        '<circle cx="' + x + '" cy="' + y + '" r="12" fill="' + c.fill + '" stroke="' + c.line + '" stroke-width="1.15" />',
+        '<text x="' + x + '" y="' + (y + 4) + '" fill="' + c.line + '" font-size="9.5" font-weight="820" text-anchor="middle" font-family="Inter,Arial,sans-serif">' + esc(id) + '</text>'
+      ].join('');
+    }
     function badge(label, toneName, x, y, w) {
-      const c = accessToneColors(toneName, palette);
+      const c = colors(toneName);
       return [
         '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="30" rx="9" fill="' + c.fill + '" stroke="' + c.line + '" stroke-width="1.2" />',
-        '<text x="' + (x + w / 2) + '" y="' + (y + 20) + '" font-size="10.5" fill="' + c.line + '" font-weight="950" text-anchor="middle" font-family="Inter,Arial,sans-serif">' + escapeHtml(label) + '</text>'
+        '<text x="' + (x + w / 2) + '" y="' + (y + 20) + '" font-size="10" fill="' + c.line + '" font-weight="780" text-anchor="middle" font-family="Inter,Arial,sans-serif">' + esc(short(label, 16)) + '</text>'
       ].join('');
     }
-
-    function nodeFrame(title, x, y, w, h, toneName) {
-      const c = accessToneColors(toneName, palette);
+    function sectionTitle(label, x, y) {
+      return '<text x="' + x + '" y="' + y + '" fill="' + palette.label + '" font-size="10.5" font-weight="760" font-family="Inter,Arial,sans-serif" letter-spacing="1.1">' + esc(label) + '</text>';
+    }
+    function inputCard(title, value, sub, x, y, w, iconHtml) {
       return [
-        '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="14" fill="' + (exportMode ? '#ffffff' : 'rgba(0,0,0,.13)') + '" stroke="' + c.line + '" stroke-width="' + (exportMode ? '1.35' : '1.05') + '" />',
-        '<text x="' + (x + 14) + '" y="' + (y + 23) + '" font-size="10" fill="' + c.line + '" font-weight="950" font-family="Inter,Arial,sans-serif" letter-spacing=".8">' + escapeHtml(title) + '</text>'
+        '<g data-fail-safe-input-card="' + esc(title) + '">',
+        '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="118" rx="13" fill="' + (exportMode ? '#ffffff' : 'rgba(0,0,0,.10)') + '" stroke="' + palette.faintLine + '" stroke-width=".95" />',
+        iconHtml,
+        '<text x="' + (x + 12) + '" y="' + (y + 91) + '" fill="' + palette.muted + '" font-size="8.2" font-weight="680" font-family="Inter,Arial,sans-serif" letter-spacing=".7">' + esc(title.toUpperCase()) + '</text>',
+        '<text x="' + (x + 12) + '" y="' + (y + 106) + '" fill="' + palette.text + '" font-size="9.2" font-weight="650" font-family="Inter,Arial,sans-serif">' + esc(short(value, 24)) + '</text>',
+        sub ? '<text x="' + (x + w - 12) + '" y="' + (y + 106) + '" fill="' + palette.muted + '" font-size="7.8" font-weight="620" font-family="Inter,Arial,sans-serif" text-anchor="end">' + esc(short(sub, 15)) + '</text>' : '',
+        '</g>'
+      ].join('');
+    }
+    function recCard(title, value, detail, ref, x, y, w, toneName) {
+      const c = colors(toneName);
+      return [
+        '<g data-fail-safe-recommendation-card="' + esc(title) + '">',
+        '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="86" rx="13" fill="' + c.fill + '" stroke="' + c.line + '" stroke-width="1.15" />',
+        ref ? marker(ref, x + w - 18, y + 18, toneName === 'risk' ? 'risk' : 'watch') : '',
+        '<text x="' + (x + 12) + '" y="' + (y + 23) + '" fill="' + palette.muted + '" font-size="8.2" font-weight="680" font-family="Inter,Arial,sans-serif" letter-spacing=".7">' + esc(title.toUpperCase()) + '</text>',
+        '<text x="' + (x + 12) + '" y="' + (y + 48) + '" fill="' + c.line + '" font-size="12.5" font-weight="760" font-family="Inter,Arial,sans-serif">' + esc(short(value, 20)) + '</text>',
+        '<text x="' + (x + 12) + '" y="' + (y + 68) + '" fill="' + palette.text + '" font-size="8.8" font-weight="620" font-family="Inter,Arial,sans-serif">' + esc(short(detail, 26)) + '</text>',
+        '</g>'
+      ].join('');
+    }
+    function arrow(x1, y1, x2, y2) {
+      return '<path d="M' + x1 + ' ' + y1 + ' H' + x2 + ' M' + (x2 - 10) + ' ' + (y2 - 7) + ' L' + x2 + ' ' + y2 + ' L' + (x2 - 10) + ' ' + (y2 + 7) + '" stroke="' + palette.whiteLine + '" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".78" />';
+    }
+    function refLine(ref, x, y) {
+      return [
+        marker(ref.id || '*', x, y - 4, ref.tone || 'watch'),
+        '<text x="' + (x + 20) + '" y="' + (y - 6) + '" fill="' + palette.text + '" font-size="8.8" font-weight="700" font-family="Inter,Arial,sans-serif">' + esc(short(ref.label || 'Reference', 28)) + '</text>',
+        '<text x="' + (x + 20) + '" y="' + (y + 10) + '" fill="' + palette.muted + '" font-size="8.1" font-weight="560" font-family="Inter,Arial,sans-serif">' + esc(short(ref.reason || '', 76)) + '</text>'
       ].join('');
     }
 
-    function arrow(x1, y1, x2, y2, color) {
-      return '<path d="M' + x1 + ' ' + y1 + ' H' + x2 + ' M' + (x2 - 12) + ' ' + (y2 - 10) + ' L' + x2 + ' ' + y2 + ' L' + (x2 - 12) + ' ' + (y2 + 10) + '" stroke="' + color + '" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round" />';
-    }
+    const recTone = statusToneValue === 'risk' ? 'risk' : statusToneValue === 'watch' || statusToneValue === 'authority' ? 'watch' : 'safe';
+    const releaseTone = releaseState === 'release' ? 'watch' : 'safe';
+    const egressTone = egressState === 'restricted' ? 'risk' : egressState === 'released' ? 'watch' : 'safe';
+    const lockDetail = lockState === 'locked' ? 'Maintains secured state' : lockState === 'unlocked' ? 'Unlocks on loss/release' : 'Conditional release path';
+    const egressValue = egressState === 'restricted' ? 'EXIT REVIEW' : egressState === 'released' ? 'EXIT RELEASED' : 'EXIT AVAILABLE';
+    const releaseValue = releaseState === 'release' ? 'RELEASE INPUT' : 'NO RELEASE INPUT';
 
     return [
-      '<div class="access-control-planning-visual-shell access-fail-safe-state-visual-shell" data-access-control-modern-visual="fail-safe-state-diagram"' + (exportMode ? ' data-export-palette="print-safe"' : '') + '>',
-      '<svg viewBox="0 0 760 460" role="img" aria-label="Fail-Safe vs Fail-Secure state diagram" xmlns="http://www.w3.org/2000/svg">',
-      '<defs><pattern id="accGridFailSafeStateV1" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="' + palette.gridStroke + '" stroke-width="1"/></pattern></defs>',
-      '<rect x="24" y="24" width="712" height="392" rx="16" fill="' + palette.shellFill + '" stroke="' + palette.shellStroke + '" stroke-width="1.15" />',
-      '<rect x="36" y="36" width="688" height="368" rx="12" fill="url(#accGridFailSafeStateV1)" stroke="' + palette.gridStroke + '" stroke-width="1" />',
-      '<text x="52" y="62" font-size="11" fill="' + palette.label + '" letter-spacing="1.4" font-family="Inter,Arial,sans-serif">FAIL-SAFE VS FAIL-SECURE</text>',
-      '<text x="52" y="85" font-size="19" fill="' + palette.title + '" font-weight="650" font-family="Inter,Arial,sans-serif">Power loss, release path, lock state, and egress outcome</text>',
+      '<div class="access-control-planning-visual-shell access-fail-safe-state-visual-shell" data-access-control-modern-visual="fail-safe-state-diagram" data-fail-safe-visual-mode="entered-plus-recommendation"' + (exportMode ? ' data-export-palette="print-safe"' : '') + '>',
+      '<svg viewBox="0 0 760 650" role="img" aria-label="Fail-Safe vs Fail-Secure entered conditions and assistant recommendation" xmlns="http://www.w3.org/2000/svg">',
+      '<defs><pattern id="accGridFailSafeTwoLayerV1" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="' + palette.gridStroke + '" stroke-width="1"/></pattern></defs>',
+      '<rect x="24" y="24" width="712" height="590" rx="16" fill="' + palette.shellFill + '" stroke="' + palette.shellStroke + '" stroke-width="1.15" />',
+      '<rect x="36" y="36" width="688" height="566" rx="12" fill="url(#accGridFailSafeTwoLayerV1)" stroke="' + palette.gridStroke + '" stroke-width="1" />',
+      '<text x="52" y="62" font-size="10.5" fill="' + palette.label + '" letter-spacing="1.4" font-family="Inter,Arial,sans-serif">FAIL-SAFE VS FAIL-SECURE</text>',
+      '<text x="52" y="85" font-size="18" fill="' + palette.title + '" font-weight="640" font-family="Inter,Arial,sans-serif">Entered conditions and assistant-recommended operating behavior</text>',
       badge(status, statusToneValue, 604, 52, 98),
-      nodeFrame('POWER SOURCE', 52, 116, 174, 146, powerState === 'loss' ? 'watch' : 'teal'),
-      nodeFrame('LOCK BEHAVIOR', 292, 116, 178, 146, statusToneValue),
-      nodeFrame('EGRESS OUTCOME', 536, 116, 172, 146, egressState === 'restricted' ? 'risk' : 'teal'),
-      cadAccessPowerSourceIcon({ x: 50, y: 128, scale: .56, powerState, battery: !standbyPowerLabel.toLowerCase().includes('none'), exportMode, palette }),
-      cadAccessLockBodyIcon({ x: 282, y: 126, scale: .58, mode, state: lockState, showLegend: false, exportMode, palette }),
-      cadAccessEgressPathIcon({ x: 526, y: 132, scale: .55, egressState, exportMode, palette }),
-      arrow(226, 190, 286, 190, palette.tealLine),
-      arrow(470, 190, 530, 190, palette.tealLine),
-      nodeFrame('FIRE / RELEASE INPUT', 52, 284, 222, 76, releaseState === 'release' ? 'watch' : 'teal'),
-      cadAccessFireAlarmReleaseIcon({ x: 64, y: 288, scale: .42, releaseState, exportMode, palette }),
-      '<text x="' + 162 + '" y="' + 321 + '" fill="' + palette.text + '" font-size="9.2" font-weight="850" font-family="Inter,Arial,sans-serif">' + escapeHtml(releaseEventLabel) + '</text>',
-      cadAccessStateTransitionFlow({ x: 310, y: 272, scale: .66, flowType: releaseState === 'release' ? 'emergency' : 'normal', exportMode, palette }),
-      '<rect x="52" y="374" width="656" height="28" rx="8" fill="' + (exportMode ? '#f8fbf8' : 'rgba(0,0,0,.12)') + '" stroke="' + palette.faintLine + '" stroke-width="1" />',
-      '<text x="66" y="392" fill="' + palette.muted + '" font-size="8.5" font-weight="850" font-family="Inter,Arial,sans-serif">RECOMMENDATION</text>',
-      '<text x="176" y="392" fill="' + tone.line + '" font-size="10" font-weight="950" font-family="Inter,Arial,sans-serif">' + escapeHtml(recommendation) + '</text>',
-      '<text x="328" y="392" fill="' + palette.muted + '" font-size="8.5" font-weight="850" font-family="Inter,Arial,sans-serif">CONFIDENCE</text>',
-      '<text x="420" y="392" fill="' + palette.text + '" font-size="10" font-weight="900" font-family="Inter,Arial,sans-serif">' + escapeHtml(confidence) + ' / SCORE ' + escapeHtml(score) + '</text>',
-      '<text x="566" y="392" fill="' + palette.muted + '" font-size="8.5" font-weight="850" font-family="Inter,Arial,sans-serif">RISK</text>',
-      '<text x="606" y="392" fill="' + palette.text + '" font-size="9.2" font-weight="850" font-family="Inter,Arial,sans-serif">' + escapeHtml(risk).slice(0, 24) + '</text>',
+
+      sectionTitle('A / ENTERED CONDITIONS', 52, 120),
+      '<text x="224" y="120" fill="' + palette.muted + '" font-size="8.4" font-weight="560" font-family="Inter,Arial,sans-serif">Raw user selections. No recommendation logic is applied in this row.</text>',
+      inputCard('Power Input', powerLossLabel, standbyPowerLabel, 52, 136, 156, cadAccessPowerSourceIcon({ x: 60, y: 136, scale: .34, powerState, battery: !standbyPowerLabel.toLowerCase().includes('none'), exportMode, palette })),
+      inputCard('Hardware Input', hardwareTypeLabel, doorTypeLabel, 224, 136, 156, cadAccessLockBodyIcon({ x: 224, y: 140, scale: .35, mode, state: lockState, showLegend: false, exportMode, palette })),
+      inputCard('Release Input', fireLabel, releaseEventLabel, 396, 136, 156, cadAccessFireAlarmReleaseIcon({ x: 404, y: 142, scale: .31, releaseState, exportMode, palette })),
+      inputCard('Egress Input', egressControlledLabel, standbyPowerLabel, 568, 136, 140, cadAccessEgressPathIcon({ x: 558, y: 148, scale: .32, egressState, exportMode, palette })),
+
+      sectionTitle('B / ASSISTANT RECOMMENDATION', 52, 300),
+      '<text x="252" y="300" fill="' + palette.muted + '" font-size="8.4" font-weight="560" font-family="Inter,Arial,sans-serif">Markers below match the explanation notes and export report references.</text>',
+      recCard('Recommendation', recommendation, 'Mode selected from input scoring', '*1', 52, 318, 154, recTone),
+      arrow(212, 361, 236, 361),
+      recCard('Lock Behavior', lockState === 'locked' ? 'LOCKED' : lockState === 'unlocked' ? 'UNLOCKED' : 'RELEASED', lockDetail, '*1', 242, 318, 154, recTone),
+      arrow(402, 361, 426, 361),
+      recCard('Release Path', releaseValue, releaseEventLabel, '*2', 432, 318, 154, releaseTone),
+      arrow(592, 361, 616, 361),
+      recCard('Egress Outcome', egressValue, risk, '*3', 622, 318, 86, egressTone),
+
+      '<path d="M52 430 H708" stroke="' + palette.faintLine + '" stroke-width="1" stroke-dasharray="6 7" />',
+      '<rect x="52" y="448" width="656" height="104" rx="12" fill="' + (exportMode ? '#f8fbf8' : 'rgba(0,0,0,.10)') + '" stroke="' + palette.faintLine + '" stroke-width=".95" />',
+      '<text x="66" y="470" fill="' + palette.label + '" font-size="9.4" font-weight="760" font-family="Inter,Arial,sans-serif" letter-spacing=".8">RECOMMENDATION REFERENCES</text>',
+      refLine(refs[0], 74, 496),
+      refLine(refs[1], 74, 524),
+      refLine(refs[2], 74, 552),
+
+      '<rect x="52" y="570" width="656" height="30" rx="8" fill="' + (exportMode ? '#ffffff' : 'rgba(0,0,0,.12)') + '" stroke="' + palette.faintLine + '" stroke-width="1" />',
+      '<text x="66" y="589" fill="' + palette.muted + '" font-size="8.2" font-weight="700" font-family="Inter,Arial,sans-serif">SUMMARY</text>',
+      '<text x="132" y="589" fill="' + tone.line + '" font-size="9.4" font-weight="760" font-family="Inter,Arial,sans-serif">' + esc(short(recommendation, 16)) + '</text>',
+      '<text x="292" y="589" fill="' + palette.muted + '" font-size="8.2" font-weight="700" font-family="Inter,Arial,sans-serif">CONFIDENCE</text>',
+      '<text x="386" y="589" fill="' + palette.text + '" font-size="9.4" font-weight="700" font-family="Inter,Arial,sans-serif">' + esc(short(confidence, 12)) + ' / SCORE ' + esc(short(score, 8)) + '</text>',
+      '<text x="538" y="589" fill="' + palette.muted + '" font-size="8.2" font-weight="700" font-family="Inter,Arial,sans-serif">RISK</text>',
+      '<text x="582" y="589" fill="' + palette.text + '" font-size="8.6" font-weight="620" font-family="Inter,Arial,sans-serif">' + esc(short(risk, 28)) + '</text>',
       '</svg>',
-      '<p class="sl-vis-note"><strong>Visual note:</strong> This state diagram compares normal power, power loss, fire/release input, lock behavior, and egress outcome. It documents planning behavior only; final release requirements still need project and AHJ/code review.</p>',
+      '<p class="sl-vis-note"><strong>Visual note:</strong> Row A shows entered conditions. Row B shows the assistant recommendation. Markers *1, *2, and *3 tie the visual to the assistant explanation and export report.</p>',
       '</div>'
     ].join('');
   }

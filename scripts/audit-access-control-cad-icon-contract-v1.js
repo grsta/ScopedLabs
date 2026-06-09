@@ -86,6 +86,12 @@ check("Scope Planner branch-map visual is exported", visuals.includes("buildScop
 check("Scope Planner branch-map visual uses Access Control branches", scopeBranchMap.includes("Core Door Pipeline") && scopeBranchMap.includes("Elevator Readers") && scopeBranchMap.includes("Anti-Passback") && scopeBranchMap.includes("Special Locking"));
 check("Scope Planner branch-map visual has no raster image dependency", !/[.]png|[.]jpg|[.]jpeg|[.]webp|<image|base64/i.test(scopeBranchMap));
 check("Scope Planner branch-map visual supports print-safe palette", scopeBranchMap.includes('data-export-palette="print-safe"') && scopeBranchMap.includes("exportMode") && scopeBranchMap.includes("#132018"));
+check("Fail-Safe CAD lock body primitive exists", visuals.includes("function cadAccessLockBodyIcon") && visuals.includes(`data-cad-icon="access-lock-body"`));
+check("Fail-Safe CAD power source primitive exists", visuals.includes("function cadAccessPowerSourceIcon") && visuals.includes(`data-cad-icon="access-power-source"`));
+check("Fail-Safe CAD fire release primitive exists", visuals.includes("function cadAccessFireAlarmReleaseIcon") && visuals.includes(`data-cad-icon="access-fire-alarm-release"`));
+check("Fail-Safe CAD egress path primitive exists", visuals.includes("function cadAccessEgressPathIcon") && visuals.includes(`data-cad-icon="access-egress-path"`));
+check("Fail-Safe state diagram has two visual layers", visuals.includes(`data-fail-safe-visual-mode="entered-plus-recommendation"`) && visuals.includes("A / ENTERED CONDITIONS") && visuals.includes("B / ASSISTANT RECOMMENDATION"));
+check("Fail-Safe recommendation markers exist", visuals.includes("RECOMMENDATION REFERENCES") && visuals.includes("*1") && visuals.includes("*2") && visuals.includes("*3"));
 check("Legacy non-CAD controlledDoorOpeningIcon name is not used", !visuals.includes("controlledDoorOpeningIcon"));
 
 console.log("\\nAccess Control CAD icon contract audit:");
@@ -99,10 +105,3 @@ console.log("- SAFE: " + safe);
 console.log("- FAIL: " + fail);
 
 if (failed) process.exit(1);
-
-check("Fail-Safe CAD lock body primitive exists", visuals.includes("function cadAccessLockBodyIcon") && visuals.includes(`data-cad-icon="access-lock-body"`));
-check("Fail-Safe CAD power source primitive exists", visuals.includes("function cadAccessPowerSourceIcon") && visuals.includes(`data-cad-icon="access-power-source"`));
-check("Fail-Safe CAD fire release primitive exists", visuals.includes("function cadAccessFireAlarmReleaseIcon") && visuals.includes(`data-cad-icon="access-fire-alarm-release"`));
-check("Fail-Safe CAD egress path primitive exists", visuals.includes("function cadAccessEgressPathIcon") && visuals.includes(`data-cad-icon="access-egress-path"`));
-check("Fail-Safe CAD state transition primitive exists", visuals.includes("function cadAccessStateTransitionFlow") && visuals.includes(`data-cad-icon="access-state-transition-flow"`));
-check("Fail-Safe state diagram visual exists", visuals.includes("function buildFailSafeStateDiagramSvg") && visuals.includes(`data-access-control-modern-visual="fail-safe-state-diagram"`));

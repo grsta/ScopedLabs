@@ -34,7 +34,7 @@ function parses(rel) {
   }
 }
 
-const version = 'access-control-planning-visuals-048-fail-safe-state-icons';
+const version = 'access-control-planning-visuals-049-fail-safe-two-layer-refs';
 
 const moduleRel = 'assets/access-control-planning-visuals.js';
 const doorCountHtmlRel = 'tools/access-control/door-count-planner/index.html';
@@ -53,9 +53,9 @@ check('Shared Access Control planning visual module parses', parses(moduleRel));
 check('Door Count script parses', parses(doorCountScriptRel));
 check('Door Cable script parses', parses(doorCableScriptRel));
 
-check('Shared module is on module version 048', moduleText.includes(version));
-check('Door Count page loads shared module version 048', doorCountHtml.includes('/assets/access-control-planning-visuals.js?v=' + version));
-check('Door Cable page loads shared module version 048', doorCableHtml.includes('/assets/access-control-planning-visuals.js?v=' + version));
+check('Shared module is on module version 049', moduleText.includes(version));
+check('Door Count page loads shared module version 049', doorCountHtml.includes('/assets/access-control-planning-visuals.js?v=' + version));
+check('Door Cable page loads shared module version 049', doorCableHtml.includes('/assets/access-control-planning-visuals.js?v=' + version));
 
 check('Door Count uses shared renderer only', doorCountScript.includes('ScopedLabsAccessControlPlanningVisuals') && doorCountScript.includes('renderDoorCount'));
 check('Door Cable uses shared renderer only', doorCableScript.includes('ScopedLabsAccessControlPlanningVisuals') && doorCableScript.includes('renderDoorCable'));

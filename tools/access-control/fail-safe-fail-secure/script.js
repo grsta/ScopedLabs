@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  // access-control-fail-safe-state-visual-017
+  // access-control-fail-safe-two-visuals-018
 
   const CATEGORY = "access-control";
   const CATEGORY_LABEL = "Access Control";
@@ -186,13 +186,16 @@
       confidence: options.confidence || rowValue(rows, "Confidence") || currentOutputValue("Confidence") || "Pending",
       score: options.score != null ? options.score : (rowValue(rows, "Score") || currentOutputValue("Score") || "Pending"),
       risk: options.risk || rowValue(rows, "Primary Risk") || currentOutputValue("Primary Risk") || "Decision risk pending",
+      rationale: options.rationale || rowValue(rows, "Why") || currentOutputValue("Why") || "Recommendation rationale pending",
+      requiredAction: options.requiredAction || rowValue(rows, "Required Action") || currentOutputValue("Required Action") || "Required action pending",
       doorTypeLabel: inputs.doorTypeLabel || currentInputValue("Door Type") || labelFromSelect(els.doorType),
       powerLossLabel: inputs.powerLossLabel || currentInputValue("Power Reliability") || labelFromSelect(els.powerLoss),
       fireLabel: inputs.fireLabel || currentInputValue("Fire Alarm Integration") || labelFromSelect(els.fire),
       hardwareTypeLabel: inputs.hardwareTypeLabel || currentInputValue("Hardware Type") || labelFromSelect(els.hardwareType),
       egressControlledLabel: inputs.egressControlledLabel || currentInputValue("Egress Controlled by Access System") || labelFromSelect(els.egressControlled),
       releaseEventLabel: inputs.releaseEventLabel || currentInputValue("Required Release Event") || labelFromSelect(els.releaseEvent),
-      standbyPowerLabel: inputs.standbyPowerLabel || currentInputValue("Standby Power Expectation") || labelFromSelect(els.standbyPower)
+      standbyPowerLabel: inputs.standbyPowerLabel || currentInputValue("Standby Power Expectation") || labelFromSelect(els.standbyPower),
+      references: options.references || currentReport?.recommendationReferences || []
     };
   }
 
@@ -283,7 +286,7 @@
 
     if (visuals && typeof visuals.buildFailSafeStateDiagramSvg === "function" && typeof visuals.svgToDataUri === "function") {
       const svgHtml = visuals.buildFailSafeStateDiagramSvg({
-        ...buildFailSafeVisualMetrics({}),
+        ...buildFailSafeVisualMetrics({ references: currentReport?.recommendationReferences || [] }),
         exportMode: true
       });
       const match = String(svgHtml || "").match(/<svg[\s\S]*?<\/svg>/i);
@@ -652,6 +655,38 @@
     if (els.statusCard) els.statusCard.hidden = true;
   }
 
+
+  function buildFailSafeRecommendationReferences(core = {}) {
+    const recommendation = String(core.recommendation || "CONDITIONAL").toUpperCase();
+    const status = String(core.status || "WATCH").toUpperCase();
+    const inputs = core.inputs || {};
+    const flags = Array.isArray(core.decisionFlags) ? core.decisionFlags : [];
+    const actions = Array.isArray(core.requiredActions) ? core.requiredActions : [];
+    const releaseContext = [inputs.fireLabel, inputs.releaseEventLabel].filter(Boolean).join(" / ") || "Release behavior not documented";
+    const egressContext = [inputs.egressControlledLabel, inputs.standbyPowerLabel].filter(Boolean).join(" / ") || "Egress/standby power not documented";
+
+    return [
+      {
+        id: "*1",
+        label: "Recommendation basis",
+        reason: core.rationale || ("Recommended " + recommendation + " from the selected fail-state conditions."),
+        tone: status.includes("RISK") ? "risk" : "watch"
+      },
+      {
+        id: "*2",
+        label: "Release path",
+        reason: "Fire/release input: " + releaseContext + ". Verify the release path matches the intended hardware behavior.",
+        tone: releaseContext.toLowerCase().includes("none") ? "watch" : "safe"
+      },
+      {
+        id: "*3",
+        label: "Egress / review",
+        reason: (actions[0] || core.risk || "Confirm egress, standby power, and authority-review requirements before final selection.") + (flags.length ? " Flags: " + flags.join(" | ") + "." : ""),
+        tone: status.includes("RISK") ? "risk" : "watch"
+      }
+    ];
+  }
+
   function renderVisibleDecisionStatus(core) {
     if (!els.statusCard) return;
 
@@ -678,7 +713,7 @@
     if (els.statusAction) els.statusAction.textContent = core.actions && core.actions.length ? core.actions.join(" ") : "Carry this result into the next Access Control design step.";
   }
 
-  function render(rows) {
+  function render(rows, options = {}) {
     if (!els.results) return;
 
     els.results.innerHTML = rows.map((r) => [
@@ -688,7 +723,13 @@
       '</div>'
     ].join("")).join("");
 
-    renderFailSafeStateVisual(buildFailSafeVisualMetrics({ outputs: rows }));
+    renderFailSafeStateVisual(buildFailSafeVisualMetrics({
+      outputs: rows,
+      inputs: options.inputs || {},
+      references: options.references || [],
+      rationale: options.rationale || "",
+      requiredAction: options.requiredAction || ""
+    }));
     renderFailSafeDecisionSchedule(rows);
   }
 
@@ -756,6 +797,7 @@
       ],
       outputs: core.outputs,
       assumptions: assumptionsForTool(),
+      recommendationReferences: core.recommendationReferences || [],
       meta: getReportMeta()
     };
   }
@@ -870,6 +912,17 @@
           {
             headers: ["Input", "Value"],
             rows: (currentReport.inputs || []).map((item) => [item.label, item.value])
+          }
+        ]
+      },
+      {
+        title: "Recommendation References",
+        description: "Reference markers shown in the Assistant Recommendation visual. These explain why a change, review, or validation step is recommended.",
+        tableClass: "extra-export-table--planner extra-export-table--decision",
+        tables: [
+          {
+            headers: ["Marker", "Reference", "Reason"],
+            rows: (currentReport.recommendationReferences || []).map((item) => [item.id || "", item.label || "", item.reason || ""])
           }
         ]
       },
@@ -1411,6 +1464,18 @@ function savePipelineResult(payload) {
       actions: decision.actions
     });
 
+    const recommendationReferences = buildFailSafeRecommendationReferences({
+      status,
+      recommendation,
+      confidence,
+      score,
+      rationale,
+      risk,
+      decisionFlags: decision.flags,
+      requiredActions: decision.actions,
+      inputs: modelInputs
+    });
+
     render([
       { label: "Recommendation", value: recommendation },
       { label: "Status", value: status },
@@ -1423,7 +1488,12 @@ function savePipelineResult(payload) {
       { label: "Score", value: String(score) },
       { label: "Engineering Interpretation", value: interpretation },
       { label: "Actionable Guidance", value: guidance }
-    ]);
+    ], {
+      inputs: modelInputs,
+      references: recommendationReferences,
+      rationale,
+      requiredAction: decision.actions[0] || ""
+    });
 
     savePipelineResult({
       recommendation,
@@ -1442,6 +1512,7 @@ function savePipelineResult(payload) {
       standbyPower,
       decisionFlags: decision.flags,
       requiredActions: decision.actions,
+      recommendationReferences,
       activeScope: activeScope ? {
         id: activeScope.id,
         name: activeScope.name,
@@ -1465,6 +1536,7 @@ function savePipelineResult(payload) {
       guidance,
       decisionFlags: decision.flags,
       requiredActions: decision.actions,
+      recommendationReferences,
       activeScope,
       inputs: modelInputs
     };
@@ -1478,7 +1550,8 @@ function savePipelineResult(payload) {
       summary: recommendation + " is the current planning recommendation with " + confidence.toLowerCase() + " confidence. " + rationale,
       interpretation,
       inputs: modelInputs,
-      outputs: getRenderedRows()
+      outputs: getRenderedRows(),
+      recommendationReferences
     });
 
     publishFailSafeResultToScopeLedger({
@@ -1490,6 +1563,7 @@ function savePipelineResult(payload) {
       inputs: modelInputs,
       decisionFlags: decision.flags,
       requiredActions: decision.actions,
+      recommendationReferences,
       activeScope
     });
 

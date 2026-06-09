@@ -1,11 +1,11 @@
 /* ScopedLabs Access Control Tool Assistant Adapters
-   Version: access-control-assistant-adapters-021-special-locking-exceptions
+   Version: access-control-assistant-adapters-022-fail-safe-reference-markers
    Purpose: category-specific local assistant model adapters. Dormant unless a tool explicitly calls one.
 */
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-assistant-adapters-021-special-locking-exceptions";
+  const API_VERSION = "access-control-assistant-adapters-022-fail-safe-reference-markers";
 
   function safeText(value) {
     return String(value ?? "");
@@ -21,6 +21,14 @@
     const confidence = safeText(data.confidence || "unknown").toLowerCase();
     const risk = safeText(data.risk || "Review egress, security, and power-loss behavior before hardware selection.");
     const guidance = safeText(data.guidance || data.actionableGuidance || "Confirm code, egress, and operational requirements before moving to the next access-control step.");
+    const recommendationReferences = Array.isArray(data.recommendationReferences)
+      ? data.recommendationReferences.map((item) => {
+          const id = safeText(item?.id || "");
+          const label = safeText(item?.label || "Reference");
+          const reason = safeText(item?.reason || "Review required.");
+          return [id, label + ":", reason].filter(Boolean).join(" ");
+        }).filter(Boolean)
+      : [];
 
     const actions = isConditional(data)
       ? [
@@ -49,7 +57,7 @@
         "Fail-secure behavior still requires compliant egress hardware and safe exit under the real door use case.",
         "Power reliability and threat level are planning inputs, not final hardware specifications."
       ],
-      actions
+      actions: recommendationReferences.length ? recommendationReferences.concat(actions) : actions
     };
   }
 

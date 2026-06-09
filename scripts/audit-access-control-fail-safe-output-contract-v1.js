@@ -171,13 +171,17 @@ check("Legacy results card remains hidden", tagIsHidden(legacyCardTag), "hiddenL
 check("Legacy result rows are hidden ledger only", has(html, 'id="results"') && has(html, "data-result-ledger") && tagIsHidden(resultsTag), "hiddenLedger", resultsTag || "missing #results");
 check("Hidden result ledger has CSS leak guard", has(html, "#results[data-result-ledger][hidden]") || has(html, "[data-result-ledger][hidden]"), "hiddenLedger");
 check("Compact Fail-State Decision schedule/table is present", has(html, "failSafeDecisionSchedule") || has(html, "data-fail-safe-summary") || has(script, "renderFailSafeDecisionSchedule"), "compactOutput");
-check("Fail-Safe hero status chip is content-width", html.includes("access-control-fail-safe-state-visual-017") && html.includes(".fail-safe-decision-hero .fail-safe-status-chip") && html.includes("width: fit-content") && html.includes("align-items: flex-start"), "compactOutput");
+check("Fail-Safe hero status chip is content-width", html.includes("access-control-fail-safe-two-visuals-018") && html.includes(".fail-safe-decision-hero .fail-safe-status-chip") && html.includes("width: fit-content") && html.includes("align-items: flex-start"), "compactOutput");
 check("Fail-Safe has no Chart.js dependency", !has(html, "chart.js") && !has(script, "new Chart("), "outputShell");
 check("Export and snapshot IDs remain preserved", has(html, 'id="exportReport"') && has(html, 'id="saveSnapshot"') && has(html, 'id="exportStatus"'), "export");
 check("Custom Fail-Safe export payload remains preserved", has(script, "ScopedLabsAccessControlFailSafeExport") && has(script, "getSharedExportPayload"), "export");
 check("Core Fail-Safe decision logic remains preserved", has(script, "function calculate") && has(script, "buildFailSafeDecisionModel") && has(script, "getStatusForRecommendation") && has(script, "FAIL-SAFE") && has(script, "FAIL-SECURE"), "export");
 check("Access Scope hydration remains preserved", has(script, "getActiveAccessScope") && has(script, "applyActiveScopeToInputs") && has(script, "publishFailSafeResultToScopeLedger"), "scope");
 check("Continue target remains Reader Type Selector", has(script, 'window.location.href = "/tools/access-control/reader-type-selector/"'), "flow");
+
+check("Fail-Safe state visual mount exists", html.includes('id="failSafeStateVisual"') && script.includes("renderFailSafeStateVisual"));
+check("Fail-Safe state visual export image uses shared renderer", script.includes("buildFailSafeStateDiagramSvg") && script.includes("exportMode: true"));
+check("Fail-Safe recommendation references are report-ready", script.includes("recommendationReferences") && script.includes("Recommendation References") && script.includes("*1"));
 
 console.log("\nFail-Safe output contract audit:");
 console.table(rows);
@@ -207,5 +211,3 @@ console.log("- SAFE: " + rows.filter((row) => row.Status === "SAFE").length);
 console.log("- FAIL: " + failures.length);
 
 if (failed) process.exit(1);
-check("Fail-Safe state visual mount exists", require("fs").readFileSync(require("path").join(process.cwd(), "tools/access-control/fail-safe-fail-secure/index.html"), "utf8").includes('id="failSafeStateVisual"') && require("fs").readFileSync(require("path").join(process.cwd(), "tools/access-control/fail-safe-fail-secure/script.js"), "utf8").includes("renderFailSafeStateVisual"));
-check("Fail-Safe state visual export image uses shared renderer", require("fs").readFileSync(require("path").join(process.cwd(), "tools/access-control/fail-safe-fail-secure/script.js"), "utf8").includes("buildFailSafeStateDiagramSvg") && require("fs").readFileSync(require("path").join(process.cwd(), "tools/access-control/fail-safe-fail-secure/script.js"), "utf8").includes("exportMode: true"));

@@ -67,7 +67,7 @@ check("Visible status card remains", html.includes('id="failSafeStatusCard"') &&
 check("Fail-Safe loads Access Control output shell", html.includes("/assets/access-control-output-shell.js"));
 check("Fail-Safe has hidden result ledger guard", html.includes("#results[data-result-ledger][hidden]") && html.includes("data-result-ledger"));
 check("Fail-Safe has compact decision schedule", html.includes('id="failSafeDecisionSchedule"') && script.includes("renderFailSafeDecisionSchedule"));
-check("Fail-Safe hero status chip is content-width", html.includes("access-control-fail-safe-state-visual-017") && html.includes(".fail-safe-decision-hero .fail-safe-status-chip") && html.includes("width: fit-content") && html.includes("align-items: flex-start"));
+check("Fail-Safe hero status chip is content-width", html.includes("access-control-fail-safe-two-visuals-018") && html.includes(".fail-safe-decision-hero .fail-safe-status-chip") && html.includes("width: fit-content") && html.includes("align-items: flex-start"));
 check("Compact status legend remains", html.includes('id="failSafeStatusLegend"') && html.includes("Authority Review"));
 check("Export controls remain wired", html.includes('id="exportReport"') && html.includes('id="saveSnapshot"'));
 check("No Documentation & Export pill text remains", !html.includes("Documentation & Export"));
