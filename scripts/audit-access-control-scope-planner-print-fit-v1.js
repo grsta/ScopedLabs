@@ -1,0 +1,34 @@
+const fs = require("fs");
+const path = require("path");
+
+const root = process.cwd();
+const htmlRel = "tools/access-control/scope-planner/index.html";
+const scriptRel = "tools/access-control/scope-planner/script.js";
+
+function read(rel) {
+  return fs.readFileSync(path.join(root, rel), "utf8");
+}
+
+function check(name, ok) {
+  console.log((ok ? "SAFE " : "FAIL ") + name);
+  if (!ok) failures += 1;
+}
+
+let failures = 0;
+const html = read(htmlRel);
+const script = read(scriptRel);
+
+console.log("\nAccess Control Scope Planner print-fit audit");
+
+check("Scope Planner script cache token bumped", html.includes("script.js?v=access-control-scope-planner-print-page-fit-026"));
+check("Scope Planner stylesheet cache token bumped", html.includes("/assets/style.css?v=access-control-scope-planner-print-page-fit-026"));
+check("Scope Planner print-fit token present", script.includes("access-control-scope-planner-print-page-fit-026"));
+check("Print report forces landscape page fit", script.includes("@page{size:landscape;margin:.38in}"));
+check("Print overview branch map is height constrained", script.includes(".access-scope-branch-map-shell svg") && script.includes("max-height:3.9in"));
+check("Print rollup uses compact six-column layout", script.includes(".access-scope-summary-rollup{grid-template-columns:repeat(6"));
+check("Print branch categories start on their own page", script.includes(".access-scope-summary-branch{break-before:page;page-break-before:always"));
+check("Print branch tables are compacted", script.includes("table.access-scope-summary-table{font-size:.68rem}") && script.includes(".access-scope-summary-table th,.access-scope-summary-table td{padding:5px 6px"));
+check("Print status pill uses cleaner weight/radius", script.includes(".status-pill{display:inline-flex") && script.includes("border-radius:10px") && script.includes("font-weight:720"));
+
+console.log("\nSummary:", (9 - failures) + " SAFE / " + failures + " FAIL");
+if (failures) process.exit(1);
