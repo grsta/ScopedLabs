@@ -28,8 +28,8 @@ check("Fail-Safe index exists", index.length > 0);
 check("Fail-Safe script exists", script.length > 0);
 check("Browser title uses ASCII hyphen", index.includes("<title>Fail-Safe vs Fail-Secure - ScopedLabs</title>"));
 check("No bullet title separator", !index.includes("\u2022"));
-check("Style cache bumped", index.includes("/assets/style.css?v=access-control-fail-safe-factory-closeout-001"));
-check("Local script cache bumped", index.includes("./script.js?v=access-control-fail-safe-factory-closeout-001"));
+check("Style cache bumped", index.includes("/assets/style.css?v=access-control-fail-safe-state-visual-017"));
+check("Local script cache bumped", index.includes("./script.js?v=access-control-fail-safe-state-visual-017"));
 check("Tool shell diagnostic module loaded", index.includes("/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"));
 check("Generic assistant engine loaded once", count(index, "scopedlabs-local-assistant.js") === 1);
 check("Access Control adapter loaded once", count(index, "access-control-tool-assistant-adapters.js") === 1);
@@ -56,7 +56,7 @@ check("Export payload still uses hidden calculated outputs", script.includes("ou
 check("Pipeline/continue preserved", index.includes('id="pipeline"') && script.includes('/tools/access-control/reader-type-selector/') && index.includes('id="continue"'));
 check("Knowledge Base preserved", index.includes('/assets/help.js'));
 check("Footer copyright entity", index.includes("&copy; <span data-year></span> ScopedLabs"));
-check("Closeout CSS present", style.includes("access-control-fail-safe-factory-closeout-001"));
+check("Closeout CSS present", style.includes("access-control-fail-safe-state-visual-017"));
 check("Physical-style assistant grid CSS present", style.includes(".scopedlabs-local-assistant-card .assistant-grid") && style.includes("grid-template-columns: repeat(2, minmax(0, 1fr))"));
 check("No category-wide Access Control rollout", !readerIndex.includes("access-control-tool-assistant-adapters.js") && !readerIndex.includes("accessControlLocalAssistantMount"));
 

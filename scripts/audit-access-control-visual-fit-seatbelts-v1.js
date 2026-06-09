@@ -209,6 +209,10 @@ check("Credential Format bit-card renderer is exported", moduleText.includes("re
 check("Credential Format bit-card renderer is dynamic", moduleText.includes("function cadCredentialFormatBitCardIcon") && moduleText.includes("facilityBits") && moduleText.includes("cardBits") && moduleText.includes("bits === 26"));
 check("Credential Format bit-card renderer uses no SVG filters", moduleText.includes('data-cad-detail="dynamic-bit-layout"') && !moduleText.includes("filter=\"url("));
 
+check("Fail-Safe state diagram renderer exists", moduleText.includes("function buildFailSafeStateDiagramSvg") && moduleText.includes(`data-access-control-modern-visual="fail-safe-state-diagram"`));
+check("Fail-Safe icon primitives exist", moduleText.includes("function cadAccessLockBodyIcon") && moduleText.includes("function cadAccessPowerSourceIcon") && moduleText.includes("function cadAccessFireAlarmReleaseIcon") && moduleText.includes("function cadAccessEgressPathIcon") && moduleText.includes("function cadAccessStateTransitionFlow"));
+check("Fail-Safe state diagram supports print-safe palette", moduleText.includes(`data-export-palette="print-safe"`) && moduleText.includes("buildFailSafeStateDiagramSvg") && moduleText.includes("exportMode"));
+
 console.log("\nAccess Control visual fit seatbelt audit:");
 console.table(rows);
 

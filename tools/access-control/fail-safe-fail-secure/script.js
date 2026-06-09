@@ -1,6 +1,8 @@
 (() => {
   "use strict";
 
+  // access-control-fail-safe-state-visual-017
+
   const CATEGORY = "access-control";
   const CATEGORY_LABEL = "Access Control";
   const STEP = "fail-safe-fail-secure";
@@ -59,6 +61,7 @@
     exportStatus: $("exportStatus"),
     decisionCard: $("failSafeDecisionCard"),
     chartWrap: $("chartWrap"),
+    failSafeStateVisual: $("failSafeStateVisual"),
     failSafeDecisionSchedule: $("failSafeDecisionSchedule"),
     localAssistantMount: $("accessControlLocalAssistantMount")
   };
@@ -152,6 +155,71 @@
     ].join("");
   }
 
+
+  function planningVisuals() {
+    return window.ScopedLabsAccessControlPlanningVisuals || null;
+  }
+
+  function rowValue(rows, label) {
+    const target = String(label || "").trim().toLowerCase();
+    const row = Array.isArray(rows)
+      ? rows.find((item) => String(item?.label || "").trim().toLowerCase() === target)
+      : null;
+    return row ? row.value : "";
+  }
+
+  function currentOutputValue(label) {
+    return currentReport ? rowValue(currentReport.outputs || [], label) : "";
+  }
+
+  function currentInputValue(label) {
+    return currentReport ? rowValue(currentReport.inputs || [], label) : "";
+  }
+
+  function buildFailSafeVisualMetrics(options = {}) {
+    const rows = options.outputs || [];
+    const inputs = options.inputs || {};
+
+    return {
+      status: options.status || rowValue(rows, "Status") || currentOutputValue("Status") || currentReport?.status || "WATCH",
+      recommendation: options.recommendation || rowValue(rows, "Recommendation") || currentOutputValue("Recommendation") || "CONDITIONAL",
+      confidence: options.confidence || rowValue(rows, "Confidence") || currentOutputValue("Confidence") || "Pending",
+      score: options.score != null ? options.score : (rowValue(rows, "Score") || currentOutputValue("Score") || "Pending"),
+      risk: options.risk || rowValue(rows, "Primary Risk") || currentOutputValue("Primary Risk") || "Decision risk pending",
+      doorTypeLabel: inputs.doorTypeLabel || currentInputValue("Door Type") || labelFromSelect(els.doorType),
+      powerLossLabel: inputs.powerLossLabel || currentInputValue("Power Reliability") || labelFromSelect(els.powerLoss),
+      fireLabel: inputs.fireLabel || currentInputValue("Fire Alarm Integration") || labelFromSelect(els.fire),
+      hardwareTypeLabel: inputs.hardwareTypeLabel || currentInputValue("Hardware Type") || labelFromSelect(els.hardwareType),
+      egressControlledLabel: inputs.egressControlledLabel || currentInputValue("Egress Controlled by Access System") || labelFromSelect(els.egressControlled),
+      releaseEventLabel: inputs.releaseEventLabel || currentInputValue("Required Release Event") || labelFromSelect(els.releaseEvent),
+      standbyPowerLabel: inputs.standbyPowerLabel || currentInputValue("Standby Power Expectation") || labelFromSelect(els.standbyPower)
+    };
+  }
+
+  function renderFailSafeStateVisual(metrics = {}) {
+    const visuals = planningVisuals();
+    if (!els.failSafeStateVisual || !visuals || typeof visuals.renderFailSafeState !== "function") return false;
+    return visuals.renderFailSafeState({
+      card: els.decisionCard,
+      wrap: els.chartWrap,
+      target: els.failSafeStateVisual,
+      metrics
+    });
+  }
+
+  function clearFailSafeStateVisual() {
+    const visuals = planningVisuals();
+    if (visuals && typeof visuals.hide === "function") {
+      return visuals.hide({
+        card: els.decisionCard,
+        wrap: els.chartWrap,
+        target: els.failSafeStateVisual
+      });
+    }
+    if (els.failSafeStateVisual) els.failSafeStateVisual.innerHTML = "";
+    return true;
+  }
+
   function renderFailSafeDecisionSchedule(rows) {
     const html = buildFailSafeDecisionScheduleHtml(rows);
     const shell = outputShell();
@@ -211,6 +279,17 @@
   }
 
   function getFailSafeVisualImage() {
+    const visuals = planningVisuals();
+
+    if (visuals && typeof visuals.buildFailSafeStateDiagramSvg === "function" && typeof visuals.svgToDataUri === "function") {
+      const svgHtml = visuals.buildFailSafeStateDiagramSvg({
+        ...buildFailSafeVisualMetrics({}),
+        exportMode: true
+      });
+      const match = String(svgHtml || "").match(/<svg[\s\S]*?<\/svg>/i);
+      if (match) return visuals.svgToDataUri(match[0]);
+    }
+
     const svg = buildFailSafeExportSvg();
     return svg ? svgDataUri(svg) : "";
   }
@@ -609,6 +688,7 @@
       '</div>'
     ].join("")).join("");
 
+    renderFailSafeStateVisual(buildFailSafeVisualMetrics({ outputs: rows }));
     renderFailSafeDecisionSchedule(rows);
   }
 
@@ -893,6 +973,7 @@ function savePipelineResult(payload) {
       els.results.innerHTML = `<div class="muted">${escapeHtml(message)}</div>`;
     }
 
+    clearFailSafeStateVisual();
     clearFailSafeDecisionSchedule();
     clearVisibleDecisionStatus();
     clearLocalAssistant();

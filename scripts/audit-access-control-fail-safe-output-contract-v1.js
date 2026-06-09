@@ -171,7 +171,7 @@ check("Legacy results card remains hidden", tagIsHidden(legacyCardTag), "hiddenL
 check("Legacy result rows are hidden ledger only", has(html, 'id="results"') && has(html, "data-result-ledger") && tagIsHidden(resultsTag), "hiddenLedger", resultsTag || "missing #results");
 check("Hidden result ledger has CSS leak guard", has(html, "#results[data-result-ledger][hidden]") || has(html, "[data-result-ledger][hidden]"), "hiddenLedger");
 check("Compact Fail-State Decision schedule/table is present", has(html, "failSafeDecisionSchedule") || has(html, "data-fail-safe-summary") || has(script, "renderFailSafeDecisionSchedule"), "compactOutput");
-check("Fail-Safe hero status chip is content-width", html.includes("access-control-fail-safe-chip-fit-017") && html.includes(".fail-safe-decision-hero .fail-safe-status-chip") && html.includes("width: fit-content") && html.includes("align-items: flex-start"), "compactOutput");
+check("Fail-Safe hero status chip is content-width", html.includes("access-control-fail-safe-state-visual-017") && html.includes(".fail-safe-decision-hero .fail-safe-status-chip") && html.includes("width: fit-content") && html.includes("align-items: flex-start"), "compactOutput");
 check("Fail-Safe has no Chart.js dependency", !has(html, "chart.js") && !has(script, "new Chart("), "outputShell");
 check("Export and snapshot IDs remain preserved", has(html, 'id="exportReport"') && has(html, 'id="saveSnapshot"') && has(html, 'id="exportStatus"'), "export");
 check("Custom Fail-Safe export payload remains preserved", has(script, "ScopedLabsAccessControlFailSafeExport") && has(script, "getSharedExportPayload"), "export");
@@ -207,3 +207,5 @@ console.log("- SAFE: " + rows.filter((row) => row.Status === "SAFE").length);
 console.log("- FAIL: " + failures.length);
 
 if (failed) process.exit(1);
+check("Fail-Safe state visual mount exists", require("fs").readFileSync(require("path").join(process.cwd(), "tools/access-control/fail-safe-fail-secure/index.html"), "utf8").includes('id="failSafeStateVisual"') && require("fs").readFileSync(require("path").join(process.cwd(), "tools/access-control/fail-safe-fail-secure/script.js"), "utf8").includes("renderFailSafeStateVisual"));
+check("Fail-Safe state visual export image uses shared renderer", require("fs").readFileSync(require("path").join(process.cwd(), "tools/access-control/fail-safe-fail-secure/script.js"), "utf8").includes("buildFailSafeStateDiagramSvg") && require("fs").readFileSync(require("path").join(process.cwd(), "tools/access-control/fail-safe-fail-secure/script.js"), "utf8").includes("exportMode: true"));

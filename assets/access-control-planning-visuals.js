@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-047-scope-branch-map-print-palette";
+  const VERSION = "access-control-planning-visuals-048-fail-safe-state-icons";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -439,6 +439,314 @@
 
 
 
+
+
+  function accessVisualPalette(exportMode) {
+    return exportMode
+      ? {
+          shellFill: "#ffffff",
+          shellStroke: "#b8cabe",
+          gridStroke: "#dce8df",
+          title: "#132018",
+          label: "#1f7a3d",
+          text: "#132018",
+          muted: "#4b5563",
+          whiteLine: "#2f3b35",
+          faintLine: "#9aa8a0",
+          tealLine: "#1f7a7a",
+          tealFill: "#e7f7f5",
+          safeLine: "#1f7a3d",
+          safeFill: "#eaf7ef",
+          watchLine: "#946200",
+          watchFill: "#fff7df",
+          riskLine: "#a3362b",
+          riskFill: "#fff0ee",
+          nodeFill: "#f8fbf8"
+        }
+      : {
+          shellFill: "rgba(0,0,0,.10)",
+          shellStroke: "rgba(120,255,120,.12)",
+          gridStroke: "rgba(120,255,120,.045)",
+          title: "rgba(246,255,248,.96)",
+          label: "rgba(180,255,200,.68)",
+          text: "rgba(238,255,244,.94)",
+          muted: "rgba(203,213,225,.68)",
+          whiteLine: "rgba(238,246,255,.78)",
+          faintLine: "rgba(203,213,225,.34)",
+          tealLine: "rgba(88,241,241,.86)",
+          tealFill: "rgba(88,241,241,.08)",
+          safeLine: "rgba(125,255,152,.82)",
+          safeFill: "rgba(120,255,120,.10)",
+          watchLine: "rgba(250,204,21,.92)",
+          watchFill: "rgba(250,204,21,.12)",
+          riskLine: "rgba(255,105,105,.88)",
+          riskFill: "rgba(255,105,105,.13)",
+          nodeFill: "rgba(0,0,0,.14)"
+        };
+  }
+
+  function accessToneColors(tone, palette) {
+    if (tone === "risk") return { line: palette.riskLine, fill: palette.riskFill };
+    if (tone === "watch") return { line: palette.watchLine, fill: palette.watchFill };
+    if (tone === "teal") return { line: palette.tealLine, fill: palette.tealFill };
+    return { line: palette.safeLine, fill: palette.safeFill };
+  }
+
+  function cadAccessLockBodyIcon(options = {}) {
+    const x = Number(options.x || 0);
+    const y = Number(options.y || 0);
+    const scale = Number(options.scale || 1);
+    const exportMode = !!options.exportMode;
+    const palette = options.palette || accessVisualPalette(exportMode);
+    const mode = String(options.mode || "fail-secure").toLowerCase();
+    const state = String(options.state || "locked").toLowerCase();
+    const showLegend = options.showLegend !== false;
+    const activeTone = state === "released" ? "watch" : state === "unlocked" ? "teal" : "safe";
+    const active = accessToneColors(activeTone, palette);
+
+    function sx(value) { return Math.round((x + value * scale) * 10) / 10; }
+    function sy(value) { return Math.round((y + value * scale) * 10) / 10; }
+    function sw(value) { return Math.round(value * scale * 10) / 10; }
+
+    const line = palette.whiteLine;
+    const faint = palette.faintLine;
+    const teal = palette.tealLine;
+    const amber = palette.watchLine;
+    const body = [
+      '<g class="sl-cad-access-lock-body-icon" data-cad-icon="access-lock-body" data-lock-state="' + escapeHtml(state) + '" data-lock-mode="' + escapeHtml(mode) + '">',
+      '<rect x="' + sx(20) + '" y="' + sy(18) + '" width="' + sw(10) + '" height="' + sw(144) + '" fill="none" stroke="' + line + '" stroke-width="' + sw(1.5) + '"/>',
+      '<path d="M' + sx(30) + ' ' + sy(56) + ' H' + sx(44) + ' M' + sx(30) + ' ' + sy(92) + ' H' + sx(44) + ' M' + sx(30) + ' ' + sy(128) + ' H' + sx(44) + '" stroke="' + line + '" stroke-width="' + sw(1.5) + '" stroke-linecap="round"/>',
+      '<rect x="' + sx(44) + '" y="' + sy(34) + '" width="' + sw(92) + '" height="' + sw(112) + '" rx="' + sw(6) + '" fill="' + palette.nodeFill + '" stroke="' + line + '" stroke-width="' + sw(1.5) + '"/>',
+      '<rect x="' + sx(54) + '" y="' + sy(44) + '" width="' + sw(72) + '" height="' + sw(92) + '" rx="' + sw(4) + '" fill="none" stroke="' + faint + '" stroke-width="' + sw(1.2) + '"/>',
+      '<circle cx="' + sx(90) + '" cy="' + sy(90) + '" r="' + sw(18) + '" fill="' + active.fill + '" stroke="' + line + '" stroke-width="' + sw(1.5) + '"/>',
+      '<circle cx="' + sx(90) + '" cy="' + sy(90) + '" r="' + sw(5) + '" fill="none" stroke="' + line + '" stroke-width="' + sw(1.5) + '"/>',
+      '<path d="M' + sx(90) + ' ' + sy(95) + ' V' + sy(state === "locked" ? 116 : 108) + '" stroke="' + (state === "locked" ? line : active.line) + '" stroke-width="' + sw(1.5) + '" stroke-linecap="round"/>',
+      '<circle cx="' + sx(58) + '" cy="' + sy(48) + '" r="' + sw(3) + '" fill="none" stroke="' + line + '" stroke-width="' + sw(1.1) + '"/>',
+      '<circle cx="' + sx(122) + '" cy="' + sy(48) + '" r="' + sw(3) + '" fill="none" stroke="' + line + '" stroke-width="' + sw(1.1) + '"/>',
+      '<circle cx="' + sx(58) + '" cy="' + sy(132) + '" r="' + sw(3) + '" fill="none" stroke="' + line + '" stroke-width="' + sw(1.1) + '"/>',
+      '<circle cx="' + sx(122) + '" cy="' + sy(132) + '" r="' + sw(3) + '" fill="none" stroke="' + line + '" stroke-width="' + sw(1.1) + '"/>'
+    ];
+
+    if (showLegend) {
+      const rows = [
+        { key: "fail-safe", label: "FAIL-SAFE", tone: mode === "fail-safe" ? teal : faint, y: 42 },
+        { key: "fail-secure", label: "FAIL-SECURE", tone: mode === "fail-secure" ? teal : faint, y: 72 },
+        { key: "unlocked", label: "UNLOCKED", tone: state === "unlocked" ? teal : faint, y: 102 },
+        { key: "locked", label: "LOCKED", tone: state === "locked" ? line : faint, y: 132 },
+        { key: "released", label: "RELEASED", tone: state === "released" ? amber : faint, y: 162 }
+      ];
+      rows.forEach((row) => {
+        const isOpen = row.key === "unlocked" || row.key === "released";
+        const rx = 174;
+        body.push('<rect x="' + sx(rx) + '" y="' + sy(row.y - 8) + '" width="' + sw(20) + '" height="' + sw(16) + '" rx="' + sw(2) + '" fill="none" stroke="' + row.tone + '" stroke-width="' + sw(1.5) + '"/>');
+        body.push(isOpen
+          ? '<path d="M' + sx(rx + 7) + ' ' + sy(row.y - 8) + ' V' + sy(row.y - 14) + ' a' + sw(5) + ' ' + sw(5) + ' 0 0 1 ' + sw(10) + ' ' + sw(-2) + '" fill="none" stroke="' + row.tone + '" stroke-width="' + sw(1.5) + '" stroke-linecap="round"/>'
+          : '<path d="M' + sx(rx + 5) + ' ' + sy(row.y - 8) + ' V' + sy(row.y - 14) + ' a' + sw(5) + ' ' + sw(5) + ' 0 0 1 ' + sw(10) + ' 0 V' + sy(row.y - 8) + '" fill="none" stroke="' + row.tone + '" stroke-width="' + sw(1.5) + '" stroke-linecap="round"/>');
+        body.push('<path d="M' + sx(rx + 10) + ' ' + sy(row.y - 1) + ' V' + sy(row.y + 3) + '" stroke="' + row.tone + '" stroke-width="' + sw(1.5) + '" stroke-linecap="round"/>');
+        body.push('<text x="' + sx(204) + '" y="' + sy(row.y + 4) + '" fill="' + row.tone + '" font-family="Inter,Arial,sans-serif" font-size="' + sw(10) + '" font-weight="800" letter-spacing="' + sw(.6) + '">' + row.label + '</text>');
+      });
+    }
+
+    body.push('</g>');
+    return body.join('');
+  }
+
+  function cadAccessPowerSourceIcon(options = {}) {
+    const x = Number(options.x || 0);
+    const y = Number(options.y || 0);
+    const scale = Number(options.scale || 1);
+    const exportMode = !!options.exportMode;
+    const palette = options.palette || accessVisualPalette(exportMode);
+    const powerState = String(options.powerState || "normal").toLowerCase();
+    const battery = options.battery !== false;
+    const normal = powerState === "normal" ? palette.tealLine : palette.faintLine;
+    const loss = powerState === "loss" ? palette.watchLine : palette.faintLine;
+    const line = palette.whiteLine;
+    function sx(value) { return Math.round((x + value * scale) * 10) / 10; }
+    function sy(value) { return Math.round((y + value * scale) * 10) / 10; }
+    function sw(value) { return Math.round(value * scale * 10) / 10; }
+    return [
+      '<g class="sl-cad-access-power-source-icon" data-cad-icon="access-power-source" data-power-state="' + escapeHtml(powerState) + '">',
+      '<rect x="' + sx(44) + '" y="' + sy(28) + '" width="' + sw(96) + '" height="' + sw(122) + '" rx="' + sw(6) + '" fill="' + palette.nodeFill + '" stroke="' + line + '" stroke-width="' + sw(1.5) + '"/>',
+      '<path d="M' + sx(54) + ' ' + sy(46) + ' H' + sx(130) + ' M' + sx(54) + ' ' + sy(58) + ' H' + sx(130) + '" stroke="' + line + '" stroke-width="' + sw(1.5) + '" stroke-linecap="round"/>',
+      [62,74,86,98,110,122].map((tx) => '<path d="M' + sx(tx) + ' ' + sy(48) + ' V' + sy(72) + '" stroke="' + palette.faintLine + '" stroke-width="' + sw(1.1) + '"/>').join(''),
+      '<path d="M' + sx(94) + ' ' + sy(82) + ' L' + sx(80) + ' ' + sy(108) + ' H' + sx(96) + ' L' + sx(86) + ' ' + sy(134) + '" fill="none" stroke="' + (powerState === "normal" ? palette.tealLine : palette.watchLine) + '" stroke-width="' + sw(1.55) + '" stroke-linejoin="round"/>',
+      '<rect x="' + sx(56) + '" y="' + sy(118) + '" width="' + sw(28) + '" height="' + sw(18) + '" fill="none" stroke="' + line + '" stroke-width="' + sw(1.2) + '"/>',
+      '<rect x="' + sx(100) + '" y="' + sy(118) + '" width="' + sw(28) + '" height="' + sw(18) + '" fill="none" stroke="' + line + '" stroke-width="' + sw(1.2) + '"/>',
+      '<text x="' + sx(54) + '" y="' + sy(110) + '" fill="' + palette.text + '" font-size="' + sw(11) + '" font-weight="800" font-family="Inter,Arial,sans-serif">AC</text>',
+      '<text x="' + sx(100) + '" y="' + sy(110) + '" fill="' + palette.text + '" font-size="' + sw(11) + '" font-weight="800" font-family="Inter,Arial,sans-serif">DC</text>',
+      '<path d="M' + sx(196) + ' ' + sy(50) + ' L' + sx(184) + ' ' + sy(72) + ' H' + sx(198) + ' L' + sx(188) + ' ' + sy(94) + '" fill="none" stroke="' + normal + '" stroke-width="' + sw(1.5) + '"/>',
+      '<text x="' + sx(170) + '" y="' + sy(112) + '" fill="' + normal + '" font-size="' + sw(10) + '" font-weight="800" font-family="Inter,Arial,sans-serif">NORMAL</text>',
+      '<path d="M' + sx(246) + ' ' + sy(50) + ' L' + sx(234) + ' ' + sy(72) + ' H' + sx(248) + ' L' + sx(238) + ' ' + sy(94) + ' M' + sx(232) + ' ' + sy(56) + ' L' + sx(252) + ' ' + sy(88) + '" fill="none" stroke="' + loss + '" stroke-width="' + sw(1.5) + '"/>',
+      '<text x="' + sx(224) + '" y="' + sy(112) + '" fill="' + loss + '" font-size="' + sw(10) + '" font-weight="800" font-family="Inter,Arial,sans-serif">POWER</text>',
+      '<text x="' + sx(228) + '" y="' + sy(126) + '" fill="' + loss + '" font-size="' + sw(10) + '" font-weight="800" font-family="Inter,Arial,sans-serif">LOSS</text>',
+      battery ? '<rect x="' + sx(204) + '" y="' + sy(134) + '" width="' + sw(48) + '" height="' + sw(26) + '" fill="none" stroke="' + (powerState === "loss" ? palette.watchLine : line) + '" stroke-width="' + sw(1.4) + '"/>' : '',
+      '</g>'
+    ].join('');
+  }
+
+  function cadAccessFireAlarmReleaseIcon(options = {}) {
+    const x = Number(options.x || 0);
+    const y = Number(options.y || 0);
+    const scale = Number(options.scale || 1);
+    const exportMode = !!options.exportMode;
+    const palette = options.palette || accessVisualPalette(exportMode);
+    const releaseState = String(options.releaseState || "idle").toLowerCase();
+    const active = releaseState === "release" ? palette.watchLine : palette.tealLine;
+    const line = palette.whiteLine;
+    function sx(value) { return Math.round((x + value * scale) * 10) / 10; }
+    function sy(value) { return Math.round((y + value * scale) * 10) / 10; }
+    function sw(value) { return Math.round(value * scale * 10) / 10; }
+    return [
+      '<g class="sl-cad-access-fire-release-icon" data-cad-icon="access-fire-alarm-release" data-release-state="' + escapeHtml(releaseState) + '">',
+      '<rect x="' + sx(44) + '" y="' + sy(28) + '" width="' + sw(88) + '" height="' + sw(122) + '" rx="' + sw(6) + '" fill="' + palette.nodeFill + '" stroke="' + line + '" stroke-width="' + sw(1.5) + '"/>',
+      '<rect x="' + sx(56) + '" y="' + sy(44) + '" width="' + sw(64) + '" height="' + sw(24) + '" rx="' + sw(3) + '" fill="none" stroke="' + line + '" stroke-width="' + sw(1.4) + '"/>',
+      '<text x="' + sx(72) + '" y="' + sy(61) + '" fill="' + palette.text + '" font-family="Inter,Arial,sans-serif" font-size="' + sw(11) + '" font-weight="800">FIRE</text>',
+      '<rect x="' + sx(56) + '" y="' + sy(76) + '" width="' + sw(64) + '" height="' + sw(48) + '" rx="' + sw(3) + '" fill="none" stroke="' + line + '" stroke-width="' + sw(1.4) + '"/>',
+      '<path d="M' + sx(68) + ' ' + sy(96) + ' V' + sy(116) + ' M' + sx(108) + ' ' + sy(96) + ' V' + sy(116) + ' M' + sx(72) + ' ' + sy(112) + ' L' + sx(82) + ' ' + sy(122) + ' L' + sx(92) + ' ' + sy(112) + ' M' + sx(84) + ' ' + sy(112) + ' L' + sx(94) + ' ' + sy(122) + ' L' + sx(104) + ' ' + sy(112) + '" stroke="' + line + '" stroke-width="' + sw(1.4) + '" fill="none"/>',
+      '<text x="' + sx(72) + '" y="' + sy(95) + '" fill="' + palette.text + '" font-family="Inter,Arial,sans-serif" font-size="' + sw(11) + '" font-weight="800">PULL</text>',
+      '<path d="M' + sx(132) + ' ' + sy(95) + ' H' + sx(182) + '" stroke="' + active + '" stroke-width="' + sw(1.5) + '"/>',
+      '<rect x="' + sx(182) + '" y="' + sy(74) + '" width="' + sw(42) + '" height="' + sw(42) + '" fill="none" stroke="' + active + '" stroke-width="' + sw(1.5) + '" stroke-dasharray="' + sw(5) + ' ' + sw(4) + '"/>',
+      '<path d="M' + sx(196) + ' ' + sy(94) + ' H' + sx(208) + ' M' + sx(214) + ' ' + sy(88) + ' V' + sy(106) + ' M' + sx(208) + ' ' + sy(94) + ' L' + sx(220) + ' ' + sy(86) + ' M' + sx(224) + ' ' + sy(84) + ' V' + sy(104) + '" stroke="' + active + '" stroke-width="' + sw(1.5) + '" fill="none"/>',
+      '<text x="' + sx(182) + '" y="' + sy(66) + '" fill="' + active + '" font-family="Inter,Arial,sans-serif" font-size="' + sw(11) + '" font-weight="800">RELEASE</text>',
+      '</g>'
+    ].join('');
+  }
+
+  function cadAccessEgressPathIcon(options = {}) {
+    const x = Number(options.x || 0);
+    const y = Number(options.y || 0);
+    const scale = Number(options.scale || 1);
+    const exportMode = !!options.exportMode;
+    const palette = options.palette || accessVisualPalette(exportMode);
+    const egressState = String(options.egressState || "available").toLowerCase();
+    const tone = egressState === "restricted" ? palette.riskLine : egressState === "released" ? palette.watchLine : palette.tealLine;
+    const line = palette.whiteLine;
+    function sx(value) { return Math.round((x + value * scale) * 10) / 10; }
+    function sy(value) { return Math.round((y + value * scale) * 10) / 10; }
+    function sw(value) { return Math.round(value * scale * 10) / 10; }
+    return [
+      '<g class="sl-cad-access-egress-path-icon" data-cad-icon="access-egress-path" data-egress-state="' + escapeHtml(egressState) + '">',
+      '<path d="M' + sx(34) + ' ' + sy(146) + ' H' + sx(286) + '" stroke="' + line + '" stroke-width="' + sw(1.5) + '"/>',
+      '<rect x="' + sx(74) + '" y="' + sy(28) + '" width="' + sw(96) + '" height="' + sw(118) + '" fill="none" stroke="' + line + '" stroke-width="' + sw(1.5) + '"/>',
+      '<path d="M' + sx(84) + ' ' + sy(38) + ' H' + sx(160) + ' V' + sy(136) + ' H' + sx(84) + '" stroke="' + line + '" stroke-width="' + sw(1.5) + '" fill="none"/>',
+      '<path d="M' + sx(88) + ' ' + sy(134) + ' L' + sx(134) + ' ' + sy(110) + ' L' + sx(134) + ' ' + sy(54) + ' L' + sx(88) + ' ' + sy(38) + ' Z" fill="' + palette.nodeFill + '" stroke="' + line + '" stroke-width="' + sw(1.5) + '"/>',
+      '<path d="M' + sx(108) + ' ' + sy(86) + ' H' + sx(124) + ' M' + sx(108) + ' ' + sy(86) + ' L' + sx(100) + ' ' + sy(80) + ' V' + sy(92) + ' Z" stroke="' + line + '" stroke-width="' + sw(1.5) + '" fill="none"/>',
+      '<path d="M' + sx(88) + ' ' + sy(134) + ' A' + sw(52) + ' ' + sw(52) + ' 0 0 1 ' + sx(146) + ' ' + sy(124) + ' M' + sx(142) + ' ' + sy(118) + ' L' + sx(146) + ' ' + sy(124) + ' L' + sx(150) + ' ' + sy(118) + '" stroke="' + tone + '" stroke-width="' + sw(1.5) + '" fill="none" stroke-dasharray="' + sw(5) + ' ' + sw(5) + '"/>',
+      '<path d="M' + sx(174) + ' ' + sy(86) + ' H' + sx(268) + ' M' + sx(254) + ' ' + sy(74) + ' L' + sx(272) + ' ' + sy(86) + ' L' + sx(254) + ' ' + sy(98) + '" stroke="' + tone + '" stroke-width="' + sw(1.7) + '" fill="none"/>',
+      '</g>'
+    ].join('');
+  }
+
+  function cadAccessStateTransitionFlow(options = {}) {
+    const x = Number(options.x || 0);
+    const y = Number(options.y || 0);
+    const scale = Number(options.scale || 1);
+    const exportMode = !!options.exportMode;
+    const palette = options.palette || accessVisualPalette(exportMode);
+    const flowType = String(options.flowType || "mixed").toLowerCase();
+    const emergency = flowType === "emergency" || flowType === "mixed";
+    function sx(value) { return Math.round((x + value * scale) * 10) / 10; }
+    function sy(value) { return Math.round((y + value * scale) * 10) / 10; }
+    function sw(value) { return Math.round(value * scale * 10) / 10; }
+    const line = palette.whiteLine;
+    const teal = palette.tealLine;
+    const amber = emergency ? palette.watchLine : palette.faintLine;
+    return [
+      '<g class="sl-cad-access-state-transition-flow" data-cad-icon="access-state-transition-flow" data-flow-type="' + escapeHtml(flowType) + '">',
+      '<rect x="' + sx(26) + '" y="' + sy(28) + '" width="' + sw(54) + '" height="' + sw(54) + '" rx="' + sw(6) + '" fill="' + palette.nodeFill + '" stroke="' + line + '" stroke-width="' + sw(1.4) + '"/>',
+      '<path d="M' + sx(54) + ' ' + sy(38) + ' L' + sx(44) + ' ' + sy(58) + ' H' + sx(56) + ' L' + sx(48) + ' ' + sy(74) + '" stroke="' + teal + '" stroke-width="' + sw(1.5) + '" fill="none"/>',
+      '<path d="M' + sx(92) + ' ' + sy(55) + ' H' + sx(178) + ' M' + sx(166) + ' ' + sy(45) + ' L' + sx(182) + ' ' + sy(55) + ' L' + sx(166) + ' ' + sy(65) + '" stroke="' + teal + '" stroke-width="' + sw(1.5) + '" fill="none"/>',
+      '<rect x="' + sx(194) + '" y="' + sy(28) + '" width="' + sw(54) + '" height="' + sw(54) + '" rx="' + sw(6) + '" fill="' + palette.nodeFill + '" stroke="' + line + '" stroke-width="' + sw(1.4) + '"/>',
+      '<path d="M' + sx(222) + ' ' + sy(38) + ' L' + sx(212) + ' ' + sy(58) + ' H' + sx(224) + ' L' + sx(216) + ' ' + sy(74) + ' M' + sx(210) + ' ' + sy(44) + ' L' + sx(228) + ' ' + sy(68) + '" stroke="' + amber + '" stroke-width="' + sw(1.5) + '" fill="none"/>',
+      '<path d="M' + sx(260) + ' ' + sy(55) + ' H' + sx(346) + ' M' + sx(334) + ' ' + sy(45) + ' L' + sx(350) + ' ' + sy(55) + ' L' + sx(334) + ' ' + sy(65) + '" stroke="' + teal + '" stroke-width="' + sw(1.5) + '" fill="none"/>',
+      '<rect x="' + sx(362) + '" y="' + sy(28) + '" width="' + sw(54) + '" height="' + sw(54) + '" rx="' + sw(6) + '" fill="' + palette.nodeFill + '" stroke="' + line + '" stroke-width="' + sw(1.4) + '"/>',
+      '<rect x="' + sx(378) + '" y="' + sy(42) + '" width="' + sw(22) + '" height="' + sw(26) + '" rx="' + sw(3) + '" fill="none" stroke="' + amber + '" stroke-width="' + sw(1.5) + '"/>',
+      '<path d="M' + sx(384) + ' ' + sy(52) + ' H' + sx(394) + ' M' + sx(389) + ' ' + sy(52) + ' V' + sy(62) + '" stroke="' + amber + '" stroke-width="' + sw(1.5) + '"/>',
+      '<path d="M' + sx(32) + ' ' + sy(118) + ' H' + sx(160) + ' M' + sx(148) + ' ' + sy(108) + ' L' + sx(164) + ' ' + sy(118) + ' L' + sx(148) + ' ' + sy(128) + '" stroke="' + teal + '" stroke-width="' + sw(1.5) + '" fill="none"/>',
+      '<path d="M' + sx(186) + ' ' + sy(118) + ' H' + sx(346) + ' M' + sx(334) + ' ' + sy(108) + ' L' + sx(350) + ' ' + sy(118) + ' L' + sx(334) + ' ' + sy(128) + '" stroke="' + amber + '" stroke-width="' + sw(1.5) + '" fill="none" stroke-dasharray="' + sw(8) + ' ' + sw(6) + '"/>',
+      '<text x="' + sx(234) + '" y="' + sy(144) + '" fill="' + palette.text + '" font-family="Inter,Arial,sans-serif" font-size="' + sw(10) + '" font-weight="800" letter-spacing="' + sw(.6) + '">NORMAL / EMERGENCY FLOW</text>',
+      '</g>'
+    ].join('');
+  }
+
+  function buildFailSafeStateDiagramSvg(metrics = {}) {
+    const exportMode = !!metrics.exportMode;
+    const palette = accessVisualPalette(exportMode);
+    const status = statusLabel(metrics.status || "WATCH");
+    const statusToneValue = statusTone(status);
+    const recommendation = String(metrics.recommendation || "CONDITIONAL").toUpperCase();
+    const mode = recommendation.includes("FAIL-SAFE") ? "fail-safe" : recommendation.includes("FAIL-SECURE") ? "fail-secure" : "conditional";
+    const powerLossLabel = String(metrics.powerLossLabel || "Power loss behavior not documented");
+    const fireLabel = String(metrics.fireLabel || "Fire release behavior not documented");
+    const releaseEventLabel = String(metrics.releaseEventLabel || "Release event not documented");
+    const standbyPowerLabel = String(metrics.standbyPowerLabel || "Standby power not documented");
+    const risk = String(metrics.risk || "Decision risk pending");
+    const confidence = String(metrics.confidence || "Pending");
+    const score = String(metrics.score ?? "Pending");
+    const lockState = recommendation.includes("FAIL-SAFE") ? "unlocked" : recommendation.includes("FAIL-SECURE") ? "locked" : "released";
+    const egressState = statusToneValue === "risk" ? "restricted" : lockState === "locked" ? "available" : "released";
+    const powerState = powerLossLabel.toLowerCase().includes("loss") || powerLossLabel.toLowerCase().includes("outage") ? "loss" : "normal";
+    const releaseState = fireLabel.toLowerCase().includes("yes") || releaseEventLabel.toLowerCase().includes("release") || releaseEventLabel.toLowerCase().includes("fire") ? "release" : "idle";
+    const tone = accessToneColors(statusToneValue, palette);
+
+    function badge(label, toneName, x, y, w) {
+      const c = accessToneColors(toneName, palette);
+      return [
+        '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="30" rx="9" fill="' + c.fill + '" stroke="' + c.line + '" stroke-width="1.2" />',
+        '<text x="' + (x + w / 2) + '" y="' + (y + 20) + '" font-size="10.5" fill="' + c.line + '" font-weight="950" text-anchor="middle" font-family="Inter,Arial,sans-serif">' + escapeHtml(label) + '</text>'
+      ].join('');
+    }
+
+    function nodeFrame(title, x, y, w, h, toneName) {
+      const c = accessToneColors(toneName, palette);
+      return [
+        '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="14" fill="' + (exportMode ? '#ffffff' : 'rgba(0,0,0,.13)') + '" stroke="' + c.line + '" stroke-width="' + (exportMode ? '1.35' : '1.05') + '" />',
+        '<text x="' + (x + 14) + '" y="' + (y + 23) + '" font-size="10" fill="' + c.line + '" font-weight="950" font-family="Inter,Arial,sans-serif" letter-spacing=".8">' + escapeHtml(title) + '</text>'
+      ].join('');
+    }
+
+    function arrow(x1, y1, x2, y2, color) {
+      return '<path d="M' + x1 + ' ' + y1 + ' H' + x2 + ' M' + (x2 - 12) + ' ' + (y2 - 10) + ' L' + x2 + ' ' + y2 + ' L' + (x2 - 12) + ' ' + (y2 + 10) + '" stroke="' + color + '" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round" />';
+    }
+
+    return [
+      '<div class="access-control-planning-visual-shell access-fail-safe-state-visual-shell" data-access-control-modern-visual="fail-safe-state-diagram"' + (exportMode ? ' data-export-palette="print-safe"' : '') + '>',
+      '<svg viewBox="0 0 760 460" role="img" aria-label="Fail-Safe vs Fail-Secure state diagram" xmlns="http://www.w3.org/2000/svg">',
+      '<defs><pattern id="accGridFailSafeStateV1" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="' + palette.gridStroke + '" stroke-width="1"/></pattern></defs>',
+      '<rect x="24" y="24" width="712" height="392" rx="16" fill="' + palette.shellFill + '" stroke="' + palette.shellStroke + '" stroke-width="1.15" />',
+      '<rect x="36" y="36" width="688" height="368" rx="12" fill="url(#accGridFailSafeStateV1)" stroke="' + palette.gridStroke + '" stroke-width="1" />',
+      '<text x="52" y="62" font-size="11" fill="' + palette.label + '" letter-spacing="1.4" font-family="Inter,Arial,sans-serif">FAIL-SAFE VS FAIL-SECURE</text>',
+      '<text x="52" y="85" font-size="19" fill="' + palette.title + '" font-weight="650" font-family="Inter,Arial,sans-serif">Power loss, release path, lock state, and egress outcome</text>',
+      badge(status, statusToneValue, 604, 52, 98),
+      nodeFrame('POWER SOURCE', 52, 116, 174, 146, powerState === 'loss' ? 'watch' : 'teal'),
+      nodeFrame('LOCK BEHAVIOR', 292, 116, 178, 146, statusToneValue),
+      nodeFrame('EGRESS OUTCOME', 536, 116, 172, 146, egressState === 'restricted' ? 'risk' : 'teal'),
+      cadAccessPowerSourceIcon({ x: 50, y: 128, scale: .56, powerState, battery: !standbyPowerLabel.toLowerCase().includes('none'), exportMode, palette }),
+      cadAccessLockBodyIcon({ x: 282, y: 126, scale: .58, mode, state: lockState, showLegend: false, exportMode, palette }),
+      cadAccessEgressPathIcon({ x: 526, y: 132, scale: .55, egressState, exportMode, palette }),
+      arrow(226, 190, 286, 190, palette.tealLine),
+      arrow(470, 190, 530, 190, palette.tealLine),
+      nodeFrame('FIRE / RELEASE INPUT', 52, 284, 222, 76, releaseState === 'release' ? 'watch' : 'teal'),
+      cadAccessFireAlarmReleaseIcon({ x: 64, y: 288, scale: .42, releaseState, exportMode, palette }),
+      '<text x="' + 162 + '" y="' + 321 + '" fill="' + palette.text + '" font-size="9.2" font-weight="850" font-family="Inter,Arial,sans-serif">' + escapeHtml(releaseEventLabel) + '</text>',
+      cadAccessStateTransitionFlow({ x: 310, y: 272, scale: .66, flowType: releaseState === 'release' ? 'emergency' : 'normal', exportMode, palette }),
+      '<rect x="52" y="374" width="656" height="28" rx="8" fill="' + (exportMode ? '#f8fbf8' : 'rgba(0,0,0,.12)') + '" stroke="' + palette.faintLine + '" stroke-width="1" />',
+      '<text x="66" y="392" fill="' + palette.muted + '" font-size="8.5" font-weight="850" font-family="Inter,Arial,sans-serif">RECOMMENDATION</text>',
+      '<text x="176" y="392" fill="' + tone.line + '" font-size="10" font-weight="950" font-family="Inter,Arial,sans-serif">' + escapeHtml(recommendation) + '</text>',
+      '<text x="328" y="392" fill="' + palette.muted + '" font-size="8.5" font-weight="850" font-family="Inter,Arial,sans-serif">CONFIDENCE</text>',
+      '<text x="420" y="392" fill="' + palette.text + '" font-size="10" font-weight="900" font-family="Inter,Arial,sans-serif">' + escapeHtml(confidence) + ' / SCORE ' + escapeHtml(score) + '</text>',
+      '<text x="566" y="392" fill="' + palette.muted + '" font-size="8.5" font-weight="850" font-family="Inter,Arial,sans-serif">RISK</text>',
+      '<text x="606" y="392" fill="' + palette.text + '" font-size="9.2" font-weight="850" font-family="Inter,Arial,sans-serif">' + escapeHtml(risk).slice(0, 24) + '</text>',
+      '</svg>',
+      '<p class="sl-vis-note"><strong>Visual note:</strong> This state diagram compares normal power, power loss, fire/release input, lock behavior, and egress outcome. It documents planning behavior only; final release requirements still need project and AHJ/code review.</p>',
+      '</div>'
+    ].join('');
+  }
+
+  function renderFailSafeState(options = {}) {
+    return show(options, buildFailSafeStateDiagramSvg(options.metrics || {}));
+  }
 
   function buildScopePlannerBranchMapSvg(metrics = {}) {
     const exportMode = !!metrics.exportMode;
@@ -1292,7 +1600,14 @@
     cadApbZoneMarker,
     cadElevatorBankIcon,
     cadAccessPanelCapacityIcon,
+    cadAccessLockBodyIcon,
+    cadAccessPowerSourceIcon,
+    cadAccessFireAlarmReleaseIcon,
+    cadAccessEgressPathIcon,
+    cadAccessStateTransitionFlow,
     VERSION,
+    renderFailSafeState,
+    buildFailSafeStateDiagramSvg,
     renderCredentialFormat,
     buildCredentialFormatSvg,
     cadCredentialFormatBitCardIcon,

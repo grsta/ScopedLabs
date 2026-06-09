@@ -99,3 +99,10 @@ console.log("- SAFE: " + safe);
 console.log("- FAIL: " + fail);
 
 if (failed) process.exit(1);
+
+check("Fail-Safe CAD lock body primitive exists", visuals.includes("function cadAccessLockBodyIcon") && visuals.includes(`data-cad-icon="access-lock-body"`));
+check("Fail-Safe CAD power source primitive exists", visuals.includes("function cadAccessPowerSourceIcon") && visuals.includes(`data-cad-icon="access-power-source"`));
+check("Fail-Safe CAD fire release primitive exists", visuals.includes("function cadAccessFireAlarmReleaseIcon") && visuals.includes(`data-cad-icon="access-fire-alarm-release"`));
+check("Fail-Safe CAD egress path primitive exists", visuals.includes("function cadAccessEgressPathIcon") && visuals.includes(`data-cad-icon="access-egress-path"`));
+check("Fail-Safe CAD state transition primitive exists", visuals.includes("function cadAccessStateTransitionFlow") && visuals.includes(`data-cad-icon="access-state-transition-flow"`));
+check("Fail-Safe state diagram visual exists", visuals.includes("function buildFailSafeStateDiagramSvg") && visuals.includes(`data-access-control-modern-visual="fail-safe-state-diagram"`));
