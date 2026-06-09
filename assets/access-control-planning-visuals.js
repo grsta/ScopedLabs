@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-044-credential-format-bit-card-replace";
+  const VERSION = "access-control-planning-visuals-045-credential-format-bit-card-polish";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -551,10 +551,10 @@
       ].join("");
     }
 
-    const fcLabel = "FACILITY CODE ? BITS " + (facilityStart + 1) + "-" + (facilityEnd + 1) + " ? " + facilityBits + " BITS";
-    const cardLabel = "CARD NUMBER ? BITS " + (cardStart + 1) + "-" + (cardEnd + 1) + " ? " + cardBits + " BITS";
-    const leftParity = bits === 26 ? "Even: bits 2-13" : "Verify map";
-    const rightParity = bits === 26 ? "Odd: bits 14-25" : "Verify map";
+    const fcLabel = "FACILITY CODE / BITS " + (facilityStart + 1) + "-" + (facilityEnd + 1) + " / " + facilityBits + " BITS";
+    const cardLabel = "CARD NUMBER / BITS " + (cardStart + 1) + "-" + (cardEnd + 1) + " / " + cardBits + " BITS";
+    const leftParity = bits === 26 ? "Even / bits 2-13" : "Verify map";
+    const rightParity = bits === 26 ? "Odd / bits 14-25" : "Verify map";
     const metricY = y + height - 62;
     const capacityW = Math.max(3, Math.round((width - pad * 2) * utilization));
 
@@ -562,10 +562,8 @@
       '<g class="sl-cad-credential-format-bit-card" data-cad-icon="credential-format-bit-card" data-cad-detail="dynamic-bit-layout" aria-label="Dynamic credential format bit card">',
       '<rect x="' + fmt(x) + '" y="' + fmt(y) + '" width="' + fmt(width) + '" height="' + fmt(height) + '" rx="14" fill="' + shellFill + '" stroke="' + frameLine + '" stroke-width="1.15"/>',
       '<rect x="' + fmt(x + 10) + '" y="' + fmt(y + 10) + '" width="' + fmt(width - 20) + '" height="' + fmt(height - 20) + '" rx="10" fill="none" stroke="' + frameLine + '" stroke-width=".8"/>',
-      '<text x="' + fmt(x + pad) + '" y="' + fmt(titleY) + '" fill="' + text + '" font-size="14" font-weight="900" font-family="Inter,Arial,sans-serif">' + esc(formatLabel.toUpperCase()) + ' ? ' + bits + '-BIT FORMAT</text>',
+      '<text x="' + fmt(x + pad) + '" y="' + fmt(titleY) + '" fill="' + text + '" font-size="14" font-weight="900" font-family="Inter,Arial,sans-serif">' + esc(formatLabel.toUpperCase()) + ' / ' + bits + '-BIT FORMAT</text>',
       '<text x="' + fmt(x + pad) + '" y="' + fmt(titleY + 18) + '" fill="' + muted + '" font-size="8.8" font-weight="800" font-family="Inter,Arial,sans-serif">Dynamic bit layout / facility code / card number / parity structure</text>',
-      '<rect x="' + fmt(x + width - pad - 78) + '" y="' + fmt(y + 16) + '" width="78" height="24" rx="8" fill="' + toneFillValue + '" stroke="' + toneLine + '" stroke-width="1"/>',
-      '<text x="' + fmt(x + width - pad - 39) + '" y="' + fmt(y + 32) + '" fill="' + toneLine + '" font-size="9.5" font-weight="900" font-family="Inter,Arial,sans-serif" text-anchor="middle">' + esc(String(tone).toUpperCase()) + '</text>',
       '<path d="M' + fmt(x + pad) + ' ' + fmt(y + 57) + ' H' + fmt(x + width - pad) + '" stroke="' + softLine + '" stroke-width=".9" stroke-linecap="round"/>',
       '<text x="' + fmt(x + pad) + '" y="' + fmt(bitLabelY) + '" fill="' + toneLine + '" font-size="9.5" font-weight="900" font-family="Inter,Arial,sans-serif" letter-spacing=".8">BIT LAYOUT</text>',
       numbers.join(""),
