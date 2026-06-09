@@ -216,6 +216,7 @@ check("Fail-Safe state diagram has entered condition layer", moduleText.includes
 check("Fail-Safe state diagram has assistant recommendation layer", moduleText.includes("B / ASSISTANT RECOMMENDATION") && moduleText.includes("See Assistant Recommended Actions below"));
 check("Fail-Safe visual reference card is removed", moduleText.includes(`data-fail-safe-reference-card="removed"`) && !moduleText.includes("RECOMMENDATION REFERENCES</text>"));
 check("Fail-Safe visual uses plain text markers", moduleText.includes(`data-fail-safe-marker-style="plain-text"`) && moduleText.includes("data-fail-safe-ref-marker"));
+check("Authority Review maps to watch tone", moduleText.includes('clean.includes("AUTHORITY")') && moduleText.includes('clean.includes("REVIEW")') && moduleText.includes('return "watch";'));
 check("Fail-Safe state diagram uses marker references", moduleText.includes("*1") && moduleText.includes("*2") && moduleText.includes("*3"));
 
 console.log("\nAccess Control visual fit seatbelt audit:");

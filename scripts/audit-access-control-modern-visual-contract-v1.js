@@ -28,7 +28,7 @@ function moduleParses(text) {
   }
 }
 
-const version = 'access-control-planning-visuals-050-fail-safe-two-visuals-polish';
+const version = 'access-control-planning-visuals-051-authority-review-tone';
 const visualModule = read('assets/access-control-planning-visuals.js');
 
 check('Planning visual module exists', exists('assets/access-control-planning-visuals.js'));

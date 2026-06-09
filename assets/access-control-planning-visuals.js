@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-050-fail-safe-two-visuals-polish";
+  const VERSION = "access-control-planning-visuals-051-authority-review-tone";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -34,8 +34,27 @@
 
   function statusTone(status) {
     const clean = String(status || "").toUpperCase();
-    if (clean.includes("RISK") || clean === "HIGH") return "risk";
-    if (clean.includes("WATCH") || clean === "MODERATE") return "watch";
+
+    if (
+      clean.includes("RISK") ||
+      clean.includes("BLOCKED") ||
+      clean.includes("CONFLICT") ||
+      clean === "HIGH"
+    ) {
+      return "risk";
+    }
+
+    if (
+      clean.includes("WATCH") ||
+      clean.includes("AUTHORITY") ||
+      clean.includes("REVIEW") ||
+      clean.includes("CONDITIONAL") ||
+      clean.includes("PENDING") ||
+      clean === "MODERATE"
+    ) {
+      return "watch";
+    }
+
     return "safe";
   }
 
