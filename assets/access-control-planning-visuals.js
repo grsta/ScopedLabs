@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-049-fail-safe-two-layer-refs";
+  const VERSION = "access-control-planning-visuals-050-fail-safe-two-visuals-polish";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -736,110 +736,133 @@
     function short(value, max = 34) {
       const text = String(value == null ? "" : value).replace(/\s+/g, " ").trim();
       if (text.length <= max) return text;
-      return text.slice(0, Math.max(0, max - 1)).trimEnd() + "?";
+      return text.slice(0, Math.max(0, max - 3)).trimEnd() + "...";
+    }
+    function wrap(value, max = 20, lines = 2) {
+      const words = String(value == null ? "" : value).replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
+      const out = [];
+      let current = "";
+      words.forEach((word) => {
+        const candidate = current ? current + " " + word : word;
+        if (candidate.length > max && current) {
+          out.push(current);
+          current = word;
+        } else {
+          current = candidate;
+        }
+      });
+      if (current) out.push(current);
+      const trimmed = out.slice(0, lines);
+      if (out.length > lines && trimmed.length) trimmed[trimmed.length - 1] = short(trimmed[trimmed.length - 1], max);
+      return trimmed.length ? trimmed : [""];
+    }
+    function textLines(lines, x, y, options = {}) {
+      const size = options.size || 8.4;
+      const leading = options.leading || 12;
+      const fill = options.fill || palette.text;
+      const weight = options.weight || 620;
+      const anchor = options.anchor || "start";
+      return lines.map((line, index) => '<text x="' + x + '" y="' + (y + index * leading) + '" fill="' + fill + '" font-size="' + size + '" font-weight="' + weight + '" text-anchor="' + anchor + '" font-family="Inter,Arial,sans-serif">' + esc(line) + '</text>').join('');
     }
     function colors(toneName) { return accessToneColors(toneName, palette); }
-    function marker(id, x, y, toneName = "watch") {
+    function marker(id, x, y, toneName = "watch", anchor = "middle") {
       const c = colors(toneName);
-      return [
-        '<circle cx="' + x + '" cy="' + y + '" r="12" fill="' + c.fill + '" stroke="' + c.line + '" stroke-width="1.15" />',
-        '<text x="' + x + '" y="' + (y + 4) + '" fill="' + c.line + '" font-size="9.5" font-weight="820" text-anchor="middle" font-family="Inter,Arial,sans-serif">' + esc(id) + '</text>'
-      ].join('');
+      return '<text x="' + x + '" y="' + y + '" fill="' + c.line + '" font-size="10.2" font-weight="780" text-anchor="' + anchor + '" font-family="Inter,Arial,sans-serif" data-fail-safe-ref-marker="' + esc(id) + '">' + esc(id) + '</text>';
     }
     function badge(label, toneName, x, y, w) {
       const c = colors(toneName);
       return [
-        '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="30" rx="9" fill="' + c.fill + '" stroke="' + c.line + '" stroke-width="1.2" />',
-        '<text x="' + (x + w / 2) + '" y="' + (y + 20) + '" font-size="10" fill="' + c.line + '" font-weight="780" text-anchor="middle" font-family="Inter,Arial,sans-serif">' + esc(short(label, 16)) + '</text>'
+        '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="30" rx="9" fill="' + c.fill + '" stroke="' + c.line + '" stroke-width="1.1" />',
+        '<text x="' + (x + w / 2) + '" y="' + (y + 20) + '" font-size="9.6" fill="' + c.line + '" font-weight="720" text-anchor="middle" font-family="Inter,Arial,sans-serif">' + esc(short(label, 16)) + '</text>'
       ].join('');
     }
     function sectionTitle(label, x, y) {
-      return '<text x="' + x + '" y="' + y + '" fill="' + palette.label + '" font-size="10.5" font-weight="760" font-family="Inter,Arial,sans-serif" letter-spacing="1.1">' + esc(label) + '</text>';
+      return '<text x="' + x + '" y="' + y + '" fill="' + palette.label + '" font-size="10.2" font-weight="700" font-family="Inter,Arial,sans-serif" letter-spacing="1.1">' + esc(label) + '</text>';
     }
-    function inputCard(title, value, sub, x, y, w, iconHtml) {
+    function inputLane(title, value, sub, x, y, w, iconHtml) {
+      const valueLines = wrap(value, 18, 2);
+      const subLines = sub ? wrap(sub, 15, 1) : [];
       return [
         '<g data-fail-safe-input-card="' + esc(title) + '">',
-        '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="118" rx="13" fill="' + (exportMode ? '#ffffff' : 'rgba(0,0,0,.10)') + '" stroke="' + palette.faintLine + '" stroke-width=".95" />',
+        '<path d="M' + x + ' ' + (y + 112) + ' H' + (x + w) + '" stroke="' + palette.faintLine + '" stroke-width=".85" opacity=".62" />',
         iconHtml,
-        '<text x="' + (x + 12) + '" y="' + (y + 91) + '" fill="' + palette.muted + '" font-size="8.2" font-weight="680" font-family="Inter,Arial,sans-serif" letter-spacing=".7">' + esc(title.toUpperCase()) + '</text>',
-        '<text x="' + (x + 12) + '" y="' + (y + 106) + '" fill="' + palette.text + '" font-size="9.2" font-weight="650" font-family="Inter,Arial,sans-serif">' + esc(short(value, 24)) + '</text>',
-        sub ? '<text x="' + (x + w - 12) + '" y="' + (y + 106) + '" fill="' + palette.muted + '" font-size="7.8" font-weight="620" font-family="Inter,Arial,sans-serif" text-anchor="end">' + esc(short(sub, 15)) + '</text>' : '',
+        '<text x="' + (x + 8) + '" y="' + (y + 89) + '" fill="' + palette.muted + '" font-size="7.9" font-weight="640" font-family="Inter,Arial,sans-serif" letter-spacing=".7">' + esc(title.toUpperCase()) + '</text>',
+        textLines(valueLines, x + 8, y + 105, { size: 8.5, leading: 11, weight: 650, fill: palette.text }),
+        subLines.length ? textLines(subLines, x + w - 6, y + 105, { size: 7.4, leading: 10, weight: 560, fill: palette.muted, anchor: 'end' }) : '',
         '</g>'
       ].join('');
     }
-    function recCard(title, value, detail, ref, x, y, w, toneName) {
+    function recNode(title, value, detail, refItem, x, y, w, toneName) {
       const c = colors(toneName);
+      const detailLines = wrap(detail, 22, 2);
+      const ref = typeof refItem === 'string' ? { id: refItem, tone: toneName } : (refItem || null);
       return [
         '<g data-fail-safe-recommendation-card="' + esc(title) + '">',
-        '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="86" rx="13" fill="' + c.fill + '" stroke="' + c.line + '" stroke-width="1.15" />',
-        ref ? marker(ref, x + w - 18, y + 18, toneName === 'risk' ? 'risk' : 'watch') : '',
-        '<text x="' + (x + 12) + '" y="' + (y + 23) + '" fill="' + palette.muted + '" font-size="8.2" font-weight="680" font-family="Inter,Arial,sans-serif" letter-spacing=".7">' + esc(title.toUpperCase()) + '</text>',
-        '<text x="' + (x + 12) + '" y="' + (y + 48) + '" fill="' + c.line + '" font-size="12.5" font-weight="760" font-family="Inter,Arial,sans-serif">' + esc(short(value, 20)) + '</text>',
-        '<text x="' + (x + 12) + '" y="' + (y + 68) + '" fill="' + palette.text + '" font-size="8.8" font-weight="620" font-family="Inter,Arial,sans-serif">' + esc(short(detail, 26)) + '</text>',
+        '<path d="M' + x + ' ' + (y + 76) + ' H' + (x + w) + '" stroke="' + c.line + '" stroke-width="1" opacity=".82" />',
+        '<path d="M' + x + ' ' + (y + 22) + ' V' + (y + 76) + '" stroke="' + c.line + '" stroke-width="2" opacity=".9" />',
+        ref ? marker(ref.id || '*', x + 12, y + 17, ref.tone || toneName, 'start') : '',
+        '<text x="' + (x + 34) + '" y="' + (y + 17) + '" fill="' + palette.muted + '" font-size="7.9" font-weight="640" font-family="Inter,Arial,sans-serif" letter-spacing=".65">' + esc(title.toUpperCase()) + '</text>',
+        '<text x="' + (x + 12) + '" y="' + (y + 43) + '" fill="' + c.line + '" font-size="11.8" font-weight="720" font-family="Inter,Arial,sans-serif">' + esc(short(value, 18)) + '</text>',
+        textLines(detailLines, x + 12, y + 61, { size: 8.1, leading: 10, weight: 560, fill: palette.text }),
         '</g>'
       ].join('');
     }
     function arrow(x1, y1, x2, y2) {
-      return '<path d="M' + x1 + ' ' + y1 + ' H' + x2 + ' M' + (x2 - 10) + ' ' + (y2 - 7) + ' L' + x2 + ' ' + y2 + ' L' + (x2 - 10) + ' ' + (y2 + 7) + '" stroke="' + palette.whiteLine + '" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".78" />';
-    }
-    function refLine(ref, x, y) {
-      return [
-        marker(ref.id || '*', x, y - 4, ref.tone || 'watch'),
-        '<text x="' + (x + 20) + '" y="' + (y - 6) + '" fill="' + palette.text + '" font-size="8.8" font-weight="700" font-family="Inter,Arial,sans-serif">' + esc(short(ref.label || 'Reference', 28)) + '</text>',
-        '<text x="' + (x + 20) + '" y="' + (y + 10) + '" fill="' + palette.muted + '" font-size="8.1" font-weight="560" font-family="Inter,Arial,sans-serif">' + esc(short(ref.reason || '', 76)) + '</text>'
-      ].join('');
+      return '<path d="M' + x1 + ' ' + y1 + ' H' + x2 + ' M' + (x2 - 10) + ' ' + (y2 - 7) + ' L' + x2 + ' ' + y2 + ' L' + (x2 - 10) + ' ' + (y2 + 7) + '" stroke="' + palette.whiteLine + '" stroke-width="1.15" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".62" />';
     }
 
     const recTone = statusToneValue === 'risk' ? 'risk' : statusToneValue === 'watch' || statusToneValue === 'authority' ? 'watch' : 'safe';
     const releaseTone = releaseState === 'release' ? 'watch' : 'safe';
     const egressTone = egressState === 'restricted' ? 'risk' : egressState === 'released' ? 'watch' : 'safe';
-    const lockDetail = lockState === 'locked' ? 'Maintains secured state' : lockState === 'unlocked' ? 'Unlocks on loss/release' : 'Conditional release path';
+    const lockDetail = lockState === 'locked' ? 'Maintains secured state' : lockState === 'unlocked' ? 'Unlocks on loss or release' : 'Conditional release path';
     const egressValue = egressState === 'restricted' ? 'EXIT REVIEW' : egressState === 'released' ? 'EXIT RELEASED' : 'EXIT AVAILABLE';
     const releaseValue = releaseState === 'release' ? 'RELEASE INPUT' : 'NO RELEASE INPUT';
 
     return [
-      '<div class="access-control-planning-visual-shell access-fail-safe-state-visual-shell" data-access-control-modern-visual="fail-safe-state-diagram" data-fail-safe-visual-mode="entered-plus-recommendation"' + (exportMode ? ' data-export-palette="print-safe"' : '') + '>',
-      '<svg viewBox="0 0 760 650" role="img" aria-label="Fail-Safe vs Fail-Secure entered conditions and assistant recommendation" xmlns="http://www.w3.org/2000/svg">',
-      '<defs><pattern id="accGridFailSafeTwoLayerV1" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="' + palette.gridStroke + '" stroke-width="1"/></pattern></defs>',
-      '<rect x="24" y="24" width="712" height="590" rx="16" fill="' + palette.shellFill + '" stroke="' + palette.shellStroke + '" stroke-width="1.15" />',
-      '<rect x="36" y="36" width="688" height="566" rx="12" fill="url(#accGridFailSafeTwoLayerV1)" stroke="' + palette.gridStroke + '" stroke-width="1" />',
+      '<div class="access-control-planning-visual-shell access-fail-safe-state-visual-shell" data-access-control-modern-visual="fail-safe-state-diagram" data-fail-safe-visual-mode="entered-plus-recommendation" data-fail-safe-marker-style="plain-text" data-fail-safe-reference-card="removed"' + (exportMode ? ' data-export-palette="print-safe"' : '') + '>',
+      '<svg viewBox="0 0 760 560" role="img" aria-label="Fail-Safe vs Fail-Secure entered conditions and assistant recommendation" xmlns="http://www.w3.org/2000/svg">',
+      '<defs><pattern id="accGridFailSafeTwoLayerV2" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="' + palette.gridStroke + '" stroke-width="1"/></pattern></defs>',
+      '<rect x="24" y="24" width="712" height="506" rx="16" fill="' + palette.shellFill + '" stroke="' + palette.shellStroke + '" stroke-width="1.15" />',
+      '<rect x="36" y="36" width="688" height="482" rx="12" fill="url(#accGridFailSafeTwoLayerV2)" stroke="' + palette.gridStroke + '" stroke-width="1" />',
       '<text x="52" y="62" font-size="10.5" fill="' + palette.label + '" letter-spacing="1.4" font-family="Inter,Arial,sans-serif">FAIL-SAFE VS FAIL-SECURE</text>',
-      '<text x="52" y="85" font-size="18" fill="' + palette.title + '" font-weight="640" font-family="Inter,Arial,sans-serif">Entered conditions and assistant-recommended operating behavior</text>',
-      badge(status, statusToneValue, 604, 52, 98),
+      '<text x="52" y="85" font-size="17.2" fill="' + palette.title + '" font-weight="630" font-family="Inter,Arial,sans-serif">Entered conditions and assistant-recommended behavior</text>',
+      badge(status, statusToneValue, 600, 52, 106),
 
       sectionTitle('A / ENTERED CONDITIONS', 52, 120),
-      '<text x="224" y="120" fill="' + palette.muted + '" font-size="8.4" font-weight="560" font-family="Inter,Arial,sans-serif">Raw user selections. No recommendation logic is applied in this row.</text>',
-      inputCard('Power Input', powerLossLabel, standbyPowerLabel, 52, 136, 156, cadAccessPowerSourceIcon({ x: 60, y: 136, scale: .34, powerState, battery: !standbyPowerLabel.toLowerCase().includes('none'), exportMode, palette })),
-      inputCard('Hardware Input', hardwareTypeLabel, doorTypeLabel, 224, 136, 156, cadAccessLockBodyIcon({ x: 224, y: 140, scale: .35, mode, state: lockState, showLegend: false, exportMode, palette })),
-      inputCard('Release Input', fireLabel, releaseEventLabel, 396, 136, 156, cadAccessFireAlarmReleaseIcon({ x: 404, y: 142, scale: .31, releaseState, exportMode, palette })),
-      inputCard('Egress Input', egressControlledLabel, standbyPowerLabel, 568, 136, 140, cadAccessEgressPathIcon({ x: 558, y: 148, scale: .32, egressState, exportMode, palette })),
+      '<text x="224" y="120" fill="' + palette.muted + '" font-size="8" font-weight="540" font-family="Inter,Arial,sans-serif">Raw user selections only. Recommendation logic is applied below.</text>',
+      inputLane('Power Input', powerLossLabel, standbyPowerLabel, 52, 138, 154, cadAccessPowerSourceIcon({ x: 50, y: 132, scale: .35, powerState, battery: !standbyPowerLabel.toLowerCase().includes('none'), exportMode, palette })),
+      inputLane('Hardware Input', hardwareTypeLabel, doorTypeLabel, 222, 138, 154, cadAccessLockBodyIcon({ x: 218, y: 136, scale: .36, mode, state: lockState, showLegend: false, exportMode, palette })),
+      inputLane('Release Input', fireLabel, releaseEventLabel, 392, 138, 154, cadAccessFireAlarmReleaseIcon({ x: 398, y: 140, scale: .32, releaseState, exportMode, palette })),
+      inputLane('Egress Input', egressControlledLabel, standbyPowerLabel, 562, 138, 146, cadAccessEgressPathIcon({ x: 554, y: 150, scale: .32, egressState, exportMode, palette })),
 
-      sectionTitle('B / ASSISTANT RECOMMENDATION', 52, 300),
-      '<text x="252" y="300" fill="' + palette.muted + '" font-size="8.4" font-weight="560" font-family="Inter,Arial,sans-serif">Markers below match the explanation notes and export report references.</text>',
-      recCard('Recommendation', recommendation, 'Mode selected from input scoring', '*1', 52, 318, 154, recTone),
-      arrow(212, 361, 236, 361),
-      recCard('Lock Behavior', lockState === 'locked' ? 'LOCKED' : lockState === 'unlocked' ? 'UNLOCKED' : 'RELEASED', lockDetail, '*1', 242, 318, 154, recTone),
-      arrow(402, 361, 426, 361),
-      recCard('Release Path', releaseValue, releaseEventLabel, '*2', 432, 318, 154, releaseTone),
-      arrow(592, 361, 616, 361),
-      recCard('Egress Outcome', egressValue, risk, '*3', 622, 318, 86, egressTone),
+      '<path d="M52 282 H708" stroke="' + palette.faintLine + '" stroke-width="1" opacity=".62" />',
+      sectionTitle('B / ASSISTANT RECOMMENDATION', 52, 310),
+      '<text x="270" y="310" fill="' + palette.muted + '" font-size="8" font-weight="540" font-family="Inter,Arial,sans-serif">Plain markers tie this path to the Assistant Recommended Actions.</text>',
+      recNode('Recommendation', recommendation, 'Selected from input scoring', refs[0], 52, 330, 140, recTone),
+      arrow(200, 385, 220, 385),
+      recNode('Lock Behavior', lockState === 'locked' ? 'LOCKED' : lockState === 'unlocked' ? 'UNLOCKED' : 'RELEASED', lockDetail, refs[0], 230, 330, 140, recTone),
+      arrow(378, 385, 398, 385),
+      recNode('Release Path', releaseValue, releaseEventLabel, refs[1], 408, 330, 140, releaseTone),
+      arrow(556, 385, 576, 385),
+      recNode('Egress Outcome', egressValue, risk, refs[2], 586, 330, 122, egressTone),
 
-      '<path d="M52 430 H708" stroke="' + palette.faintLine + '" stroke-width="1" stroke-dasharray="6 7" />',
-      '<rect x="52" y="448" width="656" height="104" rx="12" fill="' + (exportMode ? '#f8fbf8' : 'rgba(0,0,0,.10)') + '" stroke="' + palette.faintLine + '" stroke-width=".95" />',
-      '<text x="66" y="470" fill="' + palette.label + '" font-size="9.4" font-weight="760" font-family="Inter,Arial,sans-serif" letter-spacing=".8">RECOMMENDATION REFERENCES</text>',
-      refLine(refs[0], 74, 496),
-      refLine(refs[1], 74, 524),
-      refLine(refs[2], 74, 552),
+      '<text x="52" y="450" fill="' + palette.muted + '" font-size="8.4" font-weight="560" font-family="Inter,Arial,sans-serif">See Assistant Recommended Actions below for </text>',
+      marker('*1', 247, 450, refs[0]?.tone || recTone, 'start'),
+      '<text x="267" y="450" fill="' + palette.muted + '" font-size="8.4" font-weight="560" font-family="Inter,Arial,sans-serif">, </text>',
+      marker('*2', 278, 450, refs[1]?.tone || releaseTone, 'start'),
+      '<text x="298" y="450" fill="' + palette.muted + '" font-size="8.4" font-weight="560" font-family="Inter,Arial,sans-serif">, and </text>',
+      marker('*3', 330, 450, refs[2]?.tone || egressTone, 'start'),
+      '<text x="350" y="450" fill="' + palette.muted + '" font-size="8.4" font-weight="560" font-family="Inter,Arial,sans-serif"> explanations.</text>',
 
-      '<rect x="52" y="570" width="656" height="30" rx="8" fill="' + (exportMode ? '#ffffff' : 'rgba(0,0,0,.12)') + '" stroke="' + palette.faintLine + '" stroke-width="1" />',
-      '<text x="66" y="589" fill="' + palette.muted + '" font-size="8.2" font-weight="700" font-family="Inter,Arial,sans-serif">SUMMARY</text>',
-      '<text x="132" y="589" fill="' + tone.line + '" font-size="9.4" font-weight="760" font-family="Inter,Arial,sans-serif">' + esc(short(recommendation, 16)) + '</text>',
-      '<text x="292" y="589" fill="' + palette.muted + '" font-size="8.2" font-weight="700" font-family="Inter,Arial,sans-serif">CONFIDENCE</text>',
-      '<text x="386" y="589" fill="' + palette.text + '" font-size="9.4" font-weight="700" font-family="Inter,Arial,sans-serif">' + esc(short(confidence, 12)) + ' / SCORE ' + esc(short(score, 8)) + '</text>',
-      '<text x="538" y="589" fill="' + palette.muted + '" font-size="8.2" font-weight="700" font-family="Inter,Arial,sans-serif">RISK</text>',
-      '<text x="582" y="589" fill="' + palette.text + '" font-size="8.6" font-weight="620" font-family="Inter,Arial,sans-serif">' + esc(short(risk, 28)) + '</text>',
+      '<rect x="52" y="470" width="656" height="30" rx="8" fill="' + (exportMode ? '#ffffff' : 'rgba(0,0,0,.12)') + '" stroke="' + palette.faintLine + '" stroke-width="1" />',
+      '<text x="66" y="489" fill="' + palette.muted + '" font-size="8.2" font-weight="680" font-family="Inter,Arial,sans-serif">SUMMARY</text>',
+      '<text x="132" y="489" fill="' + tone.line + '" font-size="9.2" font-weight="720" font-family="Inter,Arial,sans-serif">' + esc(short(recommendation, 16)) + '</text>',
+      '<text x="292" y="489" fill="' + palette.muted + '" font-size="8.2" font-weight="680" font-family="Inter,Arial,sans-serif">CONFIDENCE</text>',
+      '<text x="386" y="489" fill="' + palette.text + '" font-size="9.2" font-weight="680" font-family="Inter,Arial,sans-serif">' + esc(short(confidence, 12)) + ' / SCORE ' + esc(short(score, 8)) + '</text>',
+      '<text x="538" y="489" fill="' + palette.muted + '" font-size="8.2" font-weight="680" font-family="Inter,Arial,sans-serif">RISK</text>',
+      '<text x="582" y="489" fill="' + palette.text + '" font-size="8.4" font-weight="580" font-family="Inter,Arial,sans-serif">' + esc(short(risk, 30)) + '</text>',
       '</svg>',
-      '<p class="sl-vis-note"><strong>Visual note:</strong> Row A shows entered conditions. Row B shows the assistant recommendation. Markers *1, *2, and *3 tie the visual to the assistant explanation and export report.</p>',
+      '<p class="sl-vis-note"><strong>Visual note:</strong> Row A shows entered conditions. Row B shows the assistant recommendation. Markers *1, *2, and *3 are explained in the Assistant Recommended Actions below and carried into export.</p>',
       '</div>'
     ].join('');
   }

@@ -1,11 +1,11 @@
 /* ScopedLabs Access Control Tool Assistant Adapters
-   Version: access-control-assistant-adapters-022-fail-safe-reference-markers
+   Version: access-control-assistant-adapters-023-fail-safe-marker-polish
    Purpose: category-specific local assistant model adapters. Dormant unless a tool explicitly calls one.
 */
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-assistant-adapters-022-fail-safe-reference-markers";
+  const API_VERSION = "access-control-assistant-adapters-023-fail-safe-marker-polish";
 
   function safeText(value) {
     return String(value ?? "");

@@ -91,7 +91,8 @@ check("Fail-Safe CAD power source primitive exists", visuals.includes("function 
 check("Fail-Safe CAD fire release primitive exists", visuals.includes("function cadAccessFireAlarmReleaseIcon") && visuals.includes(`data-cad-icon="access-fire-alarm-release"`));
 check("Fail-Safe CAD egress path primitive exists", visuals.includes("function cadAccessEgressPathIcon") && visuals.includes(`data-cad-icon="access-egress-path"`));
 check("Fail-Safe state diagram has two visual layers", visuals.includes(`data-fail-safe-visual-mode="entered-plus-recommendation"`) && visuals.includes("A / ENTERED CONDITIONS") && visuals.includes("B / ASSISTANT RECOMMENDATION"));
-check("Fail-Safe recommendation markers exist", visuals.includes("RECOMMENDATION REFERENCES") && visuals.includes("*1") && visuals.includes("*2") && visuals.includes("*3"));
+check("Fail-Safe recommendation markers exist", visuals.includes(`data-fail-safe-marker-style="plain-text"`) && visuals.includes("*1") && visuals.includes("*2") && visuals.includes("*3"));
+check("Fail-Safe visual reference card removed", visuals.includes(`data-fail-safe-reference-card="removed"`) && visuals.includes("See Assistant Recommended Actions below"));
 check("Legacy non-CAD controlledDoorOpeningIcon name is not used", !visuals.includes("controlledDoorOpeningIcon"));
 
 console.log("\\nAccess Control CAD icon contract audit:");

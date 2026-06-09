@@ -213,7 +213,9 @@ check("Fail-Safe state diagram renderer exists", moduleText.includes("function b
 check("Fail-Safe icon primitives exist", moduleText.includes("function cadAccessLockBodyIcon") && moduleText.includes("function cadAccessPowerSourceIcon") && moduleText.includes("function cadAccessFireAlarmReleaseIcon") && moduleText.includes("function cadAccessEgressPathIcon") && moduleText.includes("function cadAccessStateTransitionFlow"));
 check("Fail-Safe state diagram supports print-safe palette", moduleText.includes(`data-export-palette="print-safe"`) && moduleText.includes("buildFailSafeStateDiagramSvg") && moduleText.includes("exportMode"));
 check("Fail-Safe state diagram has entered condition layer", moduleText.includes("A / ENTERED CONDITIONS") && moduleText.includes("Raw user selections"));
-check("Fail-Safe state diagram has assistant recommendation layer", moduleText.includes("B / ASSISTANT RECOMMENDATION") && moduleText.includes("RECOMMENDATION REFERENCES"));
+check("Fail-Safe state diagram has assistant recommendation layer", moduleText.includes("B / ASSISTANT RECOMMENDATION") && moduleText.includes("See Assistant Recommended Actions below"));
+check("Fail-Safe visual reference card is removed", moduleText.includes(`data-fail-safe-reference-card="removed"`) && !moduleText.includes("RECOMMENDATION REFERENCES</text>"));
+check("Fail-Safe visual uses plain text markers", moduleText.includes(`data-fail-safe-marker-style="plain-text"`) && moduleText.includes("data-fail-safe-ref-marker"));
 check("Fail-Safe state diagram uses marker references", moduleText.includes("*1") && moduleText.includes("*2") && moduleText.includes("*3"));
 
 console.log("\nAccess Control visual fit seatbelt audit:");

@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  // access-control-fail-safe-two-visuals-018
+  // access-control-fail-safe-two-visuals-polish-019
 
   const CATEGORY = "access-control";
   const CATEGORY_LABEL = "Access Control";
@@ -1000,6 +1000,53 @@ function savePipelineResult(payload) {
     }
   }
 
+
+  function markerToneClass(tone) {
+    const text = String(tone || "watch").toLowerCase();
+    if (text.includes("risk")) return "risk";
+    if (text.includes("safe") || text.includes("complete")) return "safe";
+    if (text.includes("authority")) return "authority";
+    return "watch";
+  }
+
+  function decorateFailSafeAssistantMarkers(references = []) {
+    if (!els.localAssistantMount) return;
+
+    const toneById = new Map((Array.isArray(references) ? references : []).map((item) => {
+      return [String(item?.id || "").trim(), markerToneClass(item?.tone)];
+    }));
+
+    const markerPattern = /(\*[123])/g;
+    const walker = document.createTreeWalker(els.localAssistantMount, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        if (!markerPattern.test(node.nodeValue || "")) return NodeFilter.FILTER_REJECT;
+        markerPattern.lastIndex = 0;
+        if (node.parentElement && node.parentElement.closest(".access-fail-safe-ref-marker")) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+
+    nodes.forEach((node) => {
+      const text = node.nodeValue || "";
+      const fragment = document.createDocumentFragment();
+      let lastIndex = 0;
+      text.replace(markerPattern, (match, _marker, offset) => {
+        if (offset > lastIndex) fragment.appendChild(document.createTextNode(text.slice(lastIndex, offset)));
+        const span = document.createElement("span");
+        span.className = "access-fail-safe-ref-marker " + (toneById.get(match) || "watch");
+        span.textContent = match;
+        fragment.appendChild(span);
+        lastIndex = offset + match.length;
+        return match;
+      });
+      if (lastIndex < text.length) fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+      node.parentNode.replaceChild(fragment, node);
+    });
+  }
+
   function renderLocalAssistant(core) {
     const assistant = window.ScopedLabsLocalAssistant;
     const adapters = window.ScopedLabsAccessControlToolAssistantAdapters;
@@ -1009,7 +1056,9 @@ function savePipelineResult(payload) {
       return false;
     }
 
-    return assistant.mount(els.localAssistantMount, adapter.buildModel(core));
+    const mounted = assistant.mount(els.localAssistantMount, adapter.buildModel(core));
+    window.requestAnimationFrame(() => decorateFailSafeAssistantMarkers(core.recommendationReferences || []));
+    return mounted;
   }
 
   function clearAnalysis() {

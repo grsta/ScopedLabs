@@ -28,7 +28,7 @@ function moduleParses(text) {
   }
 }
 
-const version = 'access-control-planning-visuals-049-fail-safe-two-layer-refs';
+const version = 'access-control-planning-visuals-050-fail-safe-two-visuals-polish';
 const visualModule = read('assets/access-control-planning-visuals.js');
 
 check('Planning visual module exists', exists('assets/access-control-planning-visuals.js'));
