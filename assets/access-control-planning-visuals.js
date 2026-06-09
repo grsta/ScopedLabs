@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-053-assistant-proof-contract";
+  const VERSION = "access-control-planning-visuals-054-lock-power-rail";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -372,7 +372,7 @@
   function statusBadge(label, tone, x, y) {
     return [
       '<rect x="' + x + '" y="' + y + '" width="78" height="28" rx="8" fill="' + toneFill(tone) + '" stroke="' + toneStroke(tone) + '" />',
-      '<text x="' + (x + 39) + '" y="' + (y + 18) + '" text-anchor="middle" font-size="11" fill="' + toneText(tone) + '" font-weight="900" letter-spacing=".6">' + escapeHtml(label) + '</text>'
+      '<text x="' + (x + 39) + '" y="' + (y + 18) + '" text-anchor="middle" font-size="11" fill="' + toneText(tone) + '" font-weight="720" letter-spacing=".6">' + escapeHtml(label) + '</text>'
     ].join("");
   }
 
@@ -1114,7 +1114,7 @@
 
       return [
         '<rect x="' + x + '" y="' + y + '" width="90" height="30" rx="9" fill="' + fill + '" stroke="' + line + '" stroke-width="1.2" />',
-        '<text x="' + (x + 45) + '" y="' + (y + 20) + '" font-size="10.5" fill="' + line + '" font-weight="950" text-anchor="middle">' + escapeHtml(label) + '</text>'
+        '<text x="' + (x + 45) + '" y="' + (y + 20) + '" font-size="10.5" fill="' + line + '" font-weight="720" text-anchor="middle">' + escapeHtml(label) + '</text>'
       ].join("");
     }
 
@@ -1836,6 +1836,126 @@
   function renderAntiPassback(options = {}) {
     return show(options, buildAntiPassbackSvg(options.metrics || {}));
   }
+
+
+  // access-control-lock-power-budget-supply-rail-054: shared modern planning visual used by live output and export handoff.
+  function buildLockPowerBudgetSupplyRailSvg(metrics = {}) {
+    const exportMode = !!metrics.exportMode;
+    const peak = Math.max(0, Number(metrics.peak || metrics.peakLoadA || 0));
+    const required = Math.max(0, Number(metrics.required || metrics.requiredSupplyA || 0));
+    const watts = Math.max(0, Number(metrics.watts || 0));
+    const utilizationPct = Math.max(0, Number(metrics.utilizationPct || 0));
+    const reserve = Math.max(0, required - peak);
+    const reservePct = peak > 0 ? (reserve / peak) * 100 : 0;
+    const statusText = statusLabel(metrics.status || (utilizationPct > 85 ? "RISK" : utilizationPct > 65 ? "WATCH" : "HEALTHY"));
+    const tone = statusTone(statusText);
+    const active = accessToneColors(tone, accessVisualPalette(exportMode));
+    const palette = exportMode
+      ? {
+          shellFill: "#ffffff",
+          shellStroke: "#b8cabe",
+          gridStroke: "#dce8df",
+          title: "#132018",
+          label: "#1f7a3d",
+          text: "#132018",
+          muted: "#4b5563",
+          line: "#8ba596",
+          railFill: "#f4faf6",
+          safeLine: "#1f7a3d",
+          safeFill: "#eaf7ef",
+          watchLine: "#946200",
+          watchFill: "#fff7df",
+          riskLine: "#a3362b",
+          riskFill: "#fff0ee",
+          nodeFill: "#f8fbf8"
+        }
+      : {
+          shellFill: "rgba(0,0,0,.10)",
+          shellStroke: "rgba(120,255,120,.12)",
+          gridStroke: "rgba(120,255,120,.045)",
+          title: "rgba(238,255,244,.96)",
+          label: "rgba(180,255,200,.72)",
+          text: "rgba(238,255,244,.92)",
+          muted: "rgba(203,213,225,.68)",
+          line: "rgba(203,213,225,.24)",
+          railFill: "rgba(255,255,255,.045)",
+          safeLine: "rgba(125,255,152,.82)",
+          safeFill: "rgba(120,255,120,.10)",
+          watchLine: "rgba(255,204,102,.76)",
+          watchFill: "rgba(255,204,102,.10)",
+          riskLine: "rgba(255,105,105,.88)",
+          riskFill: "rgba(255,105,105,.13)",
+          nodeFill: "rgba(0,0,0,.14)"
+        };
+
+    const railX = 98;
+    const railY = 190;
+    const railW = 564;
+    const maxA = Math.max(required * 1.22, peak * 1.35, 1);
+    const peakX = railX + clamp(peak / maxA, 0, 1) * railW;
+    const requiredX = railX + clamp(required / maxA, 0, 1) * railW;
+    const lockCount = metrics.locks || metrics.lockCount || "—";
+    const simul = metrics.simultaneous || metrics.simultaneousUnlocks || "—";
+    const ampsEach = Number(metrics.amps || metrics.ampsEach || 0);
+    const voltage = metrics.voltage || "—";
+    const lockType = metrics.lockType || "Lock hardware";
+
+    function fmt(value, digits = 1) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n.toFixed(digits) : "0";
+    }
+    function amps(value) { return fmt(value, 2) + " A"; }
+    function watt(value) { return fmt(value, 1) + " W"; }
+    function chip(label, value, x, y, w, line) {
+      return [
+        '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="44" rx="9" fill="' + palette.nodeFill + '" stroke="' + (line || palette.line) + '" stroke-width="1" />',
+        '<text x="' + (x + 10) + '" y="' + (y + 17) + '" font-size="8.2" fill="' + palette.muted + '" font-weight="700" letter-spacing=".65">' + escapeHtml(label).toUpperCase() + '</text>',
+        '<text x="' + (x + 10) + '" y="' + (y + 34) + '" font-size="12.2" fill="' + palette.text + '" font-weight="720">' + escapeHtml(value) + '</text>'
+      ].join("");
+    }
+    function marker(x, label, value, line, anchor) {
+      const textX = anchor === "end" ? x - 12 : x + 12;
+      return [
+        '<path d="M' + fmt(x, 1) + ' 126 V238" stroke="' + line + '" stroke-width="1.6" stroke-dasharray="6 6" />',
+        '<circle cx="' + fmt(x, 1) + '" cy="' + railY + '" r="6" fill="' + line + '" stroke="' + (exportMode ? '#ffffff' : 'rgba(255,255,255,.86)') + '" stroke-width="1.6" />',
+        '<text x="' + fmt(textX, 1) + '" y="134" font-size="9.5" fill="' + line + '" font-weight="720" letter-spacing=".55" text-anchor="' + (anchor || 'start') + '">' + escapeHtml(label).toUpperCase() + '</text>',
+        '<text x="' + fmt(textX, 1) + '" y="151" font-size="11.5" fill="' + palette.text + '" font-weight="720" text-anchor="' + (anchor || 'start') + '">' + escapeHtml(value) + '</text>'
+      ].join("");
+    }
+
+    return [
+      '<div class="access-control-planning-visual-shell access-lock-power-rail-shell" data-access-control-modern-visual="lock-power-budget-supply-rail"' + (exportMode ? ' data-export-palette="print-safe"' : '') + '>',
+      '<svg viewBox="0 0 760 386" role="img" aria-label="Lock Power Budget shared supply rail visual" xmlns="http://www.w3.org/2000/svg">',
+      '<defs><pattern id="accGridLockPowerRailV1" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="' + palette.gridStroke + '" stroke-width="1"/></pattern></defs>',
+      '<rect x="24" y="24" width="712" height="338" rx="16" fill="' + palette.shellFill + '" stroke="' + palette.shellStroke + '" stroke-width="1.1" />',
+      '<rect x="36" y="36" width="688" height="314" rx="12" fill="url(#accGridLockPowerRailV1)" stroke="' + palette.line + '" stroke-width="1" />',
+      '<text x="52" y="62" font-size="11" fill="' + palette.label + '" letter-spacing="1.4" font-family="Inter,Arial,sans-serif">LOCK POWER BUDGET</text>',
+      '<text x="52" y="84" font-size="18.2" fill="' + palette.title + '" font-weight="630" font-family="Inter,Arial,sans-serif">Shared DC supply rail, peak load, and required reserve</text>',
+      '<rect x="612" y="51" width="96" height="30" rx="9" fill="' + active.fill + '" stroke="' + active.line + '" stroke-width="1.15" />',
+      '<text x="660" y="71" text-anchor="middle" font-size="10.5" fill="' + active.line + '" font-weight="720" letter-spacing=".65" font-family="Inter,Arial,sans-serif">' + escapeHtml(statusText) + '</text>',
+      '<path d="M86 112 H674 M86 242 H674" stroke="' + palette.gridStroke + '" stroke-width="1" />',
+      '<rect x="' + railX + '" y="' + (railY - 8) + '" width="' + railW + '" height="16" rx="8" fill="' + palette.railFill + '" stroke="' + palette.line + '" />',
+      '<rect x="' + railX + '" y="' + (railY - 8) + '" width="' + Math.max(3, peakX - railX).toFixed(1) + '" height="16" rx="8" fill="' + palette.safeFill + '" stroke="' + palette.safeLine + '" />',
+      '<rect x="' + peakX.toFixed(1) + '" y="' + (railY - 8) + '" width="' + Math.max(2, requiredX - peakX).toFixed(1) + '" height="16" rx="0" fill="' + palette.watchFill + '" stroke="' + palette.watchLine + '" />',
+      marker(peakX, 'Peak Load', amps(peak), palette.safeLine, peakX > 560 ? 'end' : 'start'),
+      marker(requiredX, 'Required Supply', amps(required) + ' / ' + watt(watts), active.line, requiredX > 560 ? 'end' : 'start'),
+      '<path d="M' + peakX.toFixed(1) + ' 260 H' + requiredX.toFixed(1) + '" stroke="' + palette.watchLine + '" stroke-width="1.5" />',
+      '<path d="M' + peakX.toFixed(1) + ' 254 V266 M' + requiredX.toFixed(1) + ' 254 V266" stroke="' + palette.watchLine + '" stroke-width="1.5" />',
+      '<text x="' + Math.min(620, Math.max(106, peakX + 12)).toFixed(1) + '" y="281" font-size="10.5" fill="' + palette.watchLine + '" font-weight="720">HEADROOM RESERVE: ' + amps(reserve) + ' · ' + reservePct.toFixed(0) + '%</text>',
+      chip('simultaneous event', simul + ' x ' + (ampsEach ? fmt(ampsEach, 2) + ' A' : 'lock load'), 70, 304, 154, palette.safeLine),
+      chip('installed locks', String(lockCount), 240, 304, 116),
+      chip('voltage', String(voltage) + ' VDC', 372, 304, 96),
+      chip('hardware', assistantProofShort(lockType, 24), 484, 304, 174, active.line),
+      '</svg>',
+      '<p class="sl-vis-note"><strong>Visual note:</strong> The rail compares the simultaneous lock event against the required supply after headroom. Use the shared visual for live review and export parity; keep manufacturer and voltage-drop checks as required field validation.</p>',
+      '</div>'
+    ].join("");
+  }
+
+  function renderLockPowerBudget(options = {}) {
+    return show(options, buildLockPowerBudgetSupplyRailSvg(options.metrics || {}));
+  }
+
   function renderCredentialFormat(options = {}) {
     return show(options, buildCredentialFormatSvg(options.metrics || {}));
   }
@@ -1876,6 +1996,8 @@
     VERSION,
     renderFailSafeState,
     buildFailSafeStateDiagramSvg,
+    buildLockPowerBudgetSupplyRailSvg,
+    renderLockPowerBudget,
     renderCredentialFormat,
     buildCredentialFormatSvg,
     cadCredentialFormatBitCardIcon,

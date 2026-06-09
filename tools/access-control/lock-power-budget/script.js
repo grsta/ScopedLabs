@@ -796,6 +796,10 @@ accessPowerSupplySymbol(66, 122, supplyLabel, palette),
 
   function getCadPowerRailImage(metrics, options = {}) {
     if (!metrics) return "";
+
+    const sharedImage = getSharedLockPowerRailImage(metrics, { exportMode: options.exportMode === true });
+    if (sharedImage) return sharedImage;
+
     const svg = buildCadPowerRailSvg(metrics, { exportMode: options.exportMode === true });
     return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
   }
@@ -1300,6 +1304,42 @@ accessPowerSupplySymbol(66, 122, supplyLabel, palette),
     return window.ScopedLabsAccessControlOutputShell || null;
   }
 
+  // access-control-lock-power-shared-planning-visual-054: prefer shared modern planning visual, retain local CAD rail fallback.
+  function planningVisuals() {
+    return window.ScopedLabsAccessControlPlanningVisuals || null;
+  }
+
+  function getSharedLockPowerRailHtml(metrics, options = {}) {
+    const visuals = planningVisuals();
+    if (!visuals || typeof visuals.buildLockPowerBudgetSupplyRailSvg !== "function") return "";
+
+    try {
+      return visuals.buildLockPowerBudgetSupplyRailSvg({
+        ...(metrics || {}),
+        exportMode: options.exportMode === true
+      });
+    } catch (err) {
+      console.warn("ScopedLabs Lock Power shared planning visual failed:", err);
+      return "";
+    }
+  }
+
+  function getSharedLockPowerRailImage(metrics, options = {}) {
+    const html = getSharedLockPowerRailHtml(metrics, options);
+    if (!html) return "";
+
+    const match = String(html).match(/<svg[\s\S]*?<\/svg>/i);
+    if (!match) return "";
+
+    const visuals = planningVisuals();
+    if (visuals && typeof visuals.svgToDataUri === "function") {
+      return visuals.svgToDataUri(match[0]);
+    }
+
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(match[0]);
+  }
+
+
   function attachOutputShellExport() {
     const shell = outputShell();
 
@@ -1433,6 +1473,18 @@ accessPowerSupplySymbol(66, 122, supplyLabel, palette),
   function renderVisualOutput(metrics) {
     if (!metrics || !els.chart || !els.chartWrap) return false;
 
+    const visuals = planningVisuals();
+    if (visuals && typeof visuals.renderLockPowerBudget === "function") {
+      const rendered = visuals.renderLockPowerBudget({
+        card: els.visualCard,
+        wrap: els.chartWrap,
+        target: els.chart,
+        metrics
+      });
+
+      if (rendered) return true;
+    }
+
     const svg = buildCadPowerRailSvg(metrics, { exportMode: false });
     const shell = outputShell();
 
@@ -1513,7 +1565,14 @@ accessPowerSupplySymbol(66, 122, supplyLabel, palette),
       peak,
       required,
       watts,
-      utilizationPct
+      utilizationPct,
+      status,
+      voltage,
+      locks,
+      simultaneous: effectiveSimul,
+      amps,
+      headroom,
+      lockType: els.lockType?.options?.[els.lockType.selectedIndex]?.text || els.lockType?.value || "Lock hardware"
     };
 
     renderChart(lastMetrics);

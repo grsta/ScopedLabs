@@ -1,8 +1,9 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-tool-polish-010-page-chrome-pill-cleanup";
+  const VERSION = "access-control-tool-polish-011-status-value-weight";
   const STYLE_ID = "access-control-tool-polish-styles";
+  // access-control-status-value-weight-011: shared status chip and value-column visual weight.
 
   const FLOW_LABELS = {
     "fail-safe-fail-secure": "Fail-Safe / Fail-Secure \u2192 Reader Type"
@@ -24,6 +25,15 @@
     style.id = STYLE_ID;
     style.textContent = [
       'body[data-category="access-control"][data-access-control-tool-polish="true"] .btn{border-radius:10px!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"] .fail-safe-status-chip,body[data-category="access-control"][data-access-control-tool-polish="true"] .access-control-status-chip,body[data-category="access-control"][data-access-control-tool-polish="true"] [data-access-control-status-chip="true"]{align-items:center!important;border-radius:10px!important;display:inline-flex!important;font-size:.76rem!important;font-weight:720!important;justify-content:center!important;letter-spacing:.06em!important;line-height:1.15!important;max-width:max-content!important;min-height:28px!important;min-width:78px!important;padding:2px 14px!important;text-transform:uppercase!important;white-space:nowrap!important;width:fit-content!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"] .access-fail-safe-status-text{border:1px solid rgba(250,204,21,.38)!important;border-radius:10px!important;background:rgba(250,204,21,.10)!important;color:rgba(250,204,21,.96)!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:28px!important;min-width:78px!important;padding:2px 14px!important;font-size:.76rem!important;font-weight:720!important;letter-spacing:.06em!important;line-height:1.15!important;text-transform:uppercase!important;white-space:nowrap!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"] .access-fail-safe-status-text.complete{border-color:rgba(125,255,152,.38)!important;background:rgba(125,255,152,.10)!important;color:rgba(125,255,152,.96)!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"] .access-fail-safe-status-text.risk{border-color:rgba(248,113,113,.38)!important;background:rgba(248,113,113,.10)!important;color:rgba(248,113,113,.96)!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"] .fail-safe-status-chip{font-weight:720!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"] .fail-safe-status-chip.is-watch,body[data-category="access-control"][data-access-control-tool-polish="true"] .fail-safe-status-chip.is-authority{background:rgba(255,204,102,.10)!important;border-color:rgba(255,204,102,.38)!important;color:rgba(255,220,120,.96)!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"] .fail-safe-status-chip.is-risk{background:rgba(255,105,105,.10)!important;border-color:rgba(255,105,105,.38)!important;color:rgba(255,150,150,.96)!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"] .fail-safe-summary-table td:nth-child(3),body[data-category="access-control"][data-access-control-tool-polish="true"] .access-fail-safe-status-item span,body[data-category="access-control"][data-access-control-tool-polish="true"] .result-value,body[data-category="access-control"][data-access-control-tool-polish="true"] .access-scope-summary-value{font-weight:720!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"] .access-tool-status-complete,body[data-category="access-control"][data-access-control-tool-polish="true"] .access-tool-status-watch,body[data-category="access-control"][data-access-control-tool-polish="true"] .access-tool-status-risk,body[data-category="access-control"][data-access-control-tool-polish="true"] .access-tool-status-authority{font-weight:720!important;}',
       'body[data-category="access-control"][data-access-control-tool-polish="true"] .sl-help-card>.pill-row,',
       'body[data-category="access-control"][data-access-control-tool-polish="true"] .scopedlabs-local-assistant-card>.pill-row{display:none!important;}',
       'body[data-category="access-control"][data-access-control-tool-polish="true"] .sl-help-title,',
