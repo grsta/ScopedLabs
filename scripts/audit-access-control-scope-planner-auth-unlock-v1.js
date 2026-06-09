@@ -27,9 +27,9 @@ check("Unlock bridge can show planner", planner.includes("function showPlanner")
 check("Unlock bridge preserves locked state fallback", planner.includes("function showLocked") && planner.includes('data-access-scope-unlocked", "false"'));
 check(
   "Scope Planner cache was bumped",
-  planner.includes("/assets/style.css?v=access-control-scope-planner-area-pattern-004-auth-unlock") &&
-  planner.includes("./script.js?v=access-control-scope-planner-area-pattern-004-auth-unlock") &&
-  planner.includes("<!-- access-control-scope-planner-area-pattern-004-auth-unlock -->")
+  planner.includes("/assets/style.css?v=access-control-scope-planner-branch-map-024") &&
+  planner.includes("./script.js?v=access-control-scope-planner-branch-map-024") &&
+  planner.includes("<!-- access-control-scope-planner-branch-map-024 -->")
 );
 check("No pill markup added to planner", !planner.includes("pill--") && !/class="[^"]*\\bpill\\b/.test(planner));
 check("Fail-Safe not patched by auth unlock fix", !failSafe.includes("access-control-scope-state.js?v=access-control-scope-state-001-area-pattern"));

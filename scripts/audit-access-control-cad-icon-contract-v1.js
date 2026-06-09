@@ -50,6 +50,11 @@ const credentialFormatBitCard = sectionBetween(
   "function cadCredentialFormatBitCardIcon",
   "function buildDoorCableSvg"
 );
+const scopeBranchMap = sectionBetween(
+  visuals,
+  "function buildScopePlannerBranchMapSvg",
+  "function cadCredentialFormatBitCardIcon"
+);
 
 check("Access Control CAD icon primitive exists", cadDoor.includes("function cadControlledDoorOpeningIcon"), "cadControlledDoorOpeningIcon");
 check("CAD controlled door icon is exported", visuals.includes("cadControlledDoorOpeningIcon,"));
@@ -76,6 +81,10 @@ check("CAD credential format bit-card renderer exists", visuals.includes("functi
 check("CAD credential format bit-card is exported", visuals.includes("cadCredentialFormatBitCardIcon,") && visuals.includes("buildCredentialFormatSvg,"));
 check("CAD credential format bit-card supports dynamic fields", credentialFormatBitCard.includes("facilityBits") && credentialFormatBitCard.includes("cardBits") && credentialFormatBitCard.includes("bits === 26"));
 check("CAD credential format bit-card uses thin-line no-filter style", credentialFormatBitCard.includes('data-cad-detail="dynamic-bit-layout"') && !credentialFormatBitCard.includes("<filter") && !credentialFormatBitCard.includes('filter="url('));
+check("Scope Planner branch-map visual exists", scopeBranchMap.includes("function buildScopePlannerBranchMapSvg"), "buildScopePlannerBranchMapSvg");
+check("Scope Planner branch-map visual is exported", visuals.includes("buildScopePlannerBranchMapSvg,"));
+check("Scope Planner branch-map visual uses Access Control branches", scopeBranchMap.includes("Core Door Pipeline") && scopeBranchMap.includes("Elevator Readers") && scopeBranchMap.includes("Anti-Passback") && scopeBranchMap.includes("Special Locking"));
+check("Scope Planner branch-map visual has no raster image dependency", !/[.]png|[.]jpg|[.]jpeg|[.]webp|<image|base64/i.test(scopeBranchMap));
 check("Legacy non-CAD controlledDoorOpeningIcon name is not used", !visuals.includes("controlledDoorOpeningIcon"));
 
 console.log("\\nAccess Control CAD icon contract audit:");

@@ -28,9 +28,9 @@ check("Scope Planner locked card is available for signed-out/unauthorized users"
 check("Scope Planner tool card is hidden until auth unlocks it", planner.includes('id="toolCard" class="card tool-card" style="display:none; margin-top: 18px;"'));
 check(
   "Scope Planner cache was bumped",
-  planner.includes("/assets/style.css?v=access-control-scope-planner-area-pattern-004-auth-unlock") &&
-  planner.includes("./script.js?v=access-control-scope-planner-area-pattern-004-auth-unlock") &&
-  planner.includes("<!-- access-control-scope-planner-area-pattern-004-auth-unlock -->")
+  planner.includes("/assets/style.css?v=access-control-scope-planner-branch-map-024") &&
+  planner.includes("./script.js?v=access-control-scope-planner-branch-map-024") &&
+  planner.includes("<!-- access-control-scope-planner-branch-map-024 -->")
 );
 check("No Scope Planner pill card was added", !category.includes('pill--free">Start Here') && !category.includes('<div class="tool-row-title">Access Scope Planner</div>'));
 check("Planner page has no pill markup", !planner.includes("pill--") && !/class="[^"]*\\bpill\\b/.test(planner));

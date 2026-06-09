@@ -16,7 +16,7 @@ function check(name, ok, detail = "") {
 const html = read("tools/access-control/scope-planner/index.html");
 const script = read("tools/access-control/scope-planner/script.js");
 
-check("Planner cache bumped to print report tab lane", html.includes("access-control-scope-planner-area-match-012-print-report-tab"));
+check("Planner cache bumped to print report tab lane", html.includes("access-control-scope-planner-branch-map-024"));
 check("Intro card has print-hide ID", html.includes('id="accessScopeIntroCard"'));
 check("Scope ledger card has print-hide ID", html.includes('id="scopeLedgerCard"'));
 check("Print button remains wired", html.includes('id="printScopeSummary"') && script.includes('printSummary: $("printScopeSummary")') && script.includes('els.printSummary?.addEventListener("click", printSummary)'));

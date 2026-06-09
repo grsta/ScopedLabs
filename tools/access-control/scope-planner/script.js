@@ -854,6 +854,26 @@
     ].join("");
   }
 
+
+  function buildScopePlannerBranchMapHtml(scopes, groups, active, rollup = {}) {
+    const visuals = window.ScopedLabsAccessControlPlanningVisuals;
+    if (!visuals || typeof visuals.buildScopePlannerBranchMapSvg !== "function") return "";
+
+    return visuals.buildScopePlannerBranchMapSvg({
+      totalScopes: scopes.length,
+      coreCount: groups.core.length,
+      elevatorCount: groups.elevator.length,
+      antiPassbackCount: groups.antiPassback.length,
+      specialCount: groups.special.length,
+      authorityCount: rollup.authorityCount,
+      plannedReaders: rollup.plannedReaders,
+      plannedLocks: rollup.plannedLocks,
+      completedChecks: rollup.completedChecks,
+      activeBranch: active ? branchKey(active) : "",
+      activeLabel: active ? active.name : "No active scope"
+    });
+  }
+
   function renderScopeSummary(ledger) {
     if (!els.scopeSummary) return;
 
@@ -876,6 +896,7 @@
     const plannedReaders = scopes.filter((scope) => scope.readerIntent && scope.readerIntent !== "unknown").length;
     const plannedLocks = scopes.filter((scope) => scope.lockIntent && scope.lockIntent !== "unknown").length;
     const completedChecks = scopes.reduce((sum, scope) => sum + completedCheckCount(scope), 0);
+    const branchMapHtml = buildScopePlannerBranchMapHtml(scopes, groups, active, { authorityCount, plannedReaders, plannedLocks, completedChecks });
 
     function branchTable(key, items) {
       const countLabel = items.length + (items.length === 1 ? " ITEM" : " ITEMS");
@@ -930,6 +951,7 @@
     }
 
     els.scopeSummary.innerHTML = [
+      branchMapHtml,
       '<div class="access-scope-summary-rollup">',
       '<div class="access-scope-summary-metric"><span class="access-scope-summary-label">Scopes</span><span class="access-scope-summary-value">' + scopes.length + '</span><div class="access-scope-summary-note">Defined access doors and specialty zones.</div></div>',
       '<div class="access-scope-summary-metric"><span class="access-scope-summary-label">Core Door Scopes</span><span class="access-scope-summary-value">' + groups.core.length + '</span><div class="access-scope-summary-note">Direct Access Control pipeline scopes.</div></div>',
