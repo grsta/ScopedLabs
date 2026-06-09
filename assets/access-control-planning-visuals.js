@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-046-scope-planner-branch-map";
+  const VERSION = "access-control-planning-visuals-047-scope-branch-map-print-palette";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -439,7 +439,9 @@
 
 
 
+
   function buildScopePlannerBranchMapSvg(metrics = {}) {
+    const exportMode = !!metrics.exportMode;
     const totalScopes = Math.max(0, Math.round(Number(metrics.totalScopes || 0)));
     const coreCount = Math.max(0, Math.round(Number(metrics.coreCount || 0)));
     const elevatorCount = Math.max(0, Math.round(Number(metrics.elevatorCount || 0)));
@@ -454,6 +456,48 @@
     const statusToneValue = authorityCount > 0 ? "watch" : totalScopes > 0 ? "safe" : "watch";
     const statusText = authorityCount > 0 ? "WATCH" : totalScopes > 0 ? "SAFE" : "PLANNING";
 
+    const palette = exportMode
+      ? {
+          shellFill: "#ffffff",
+          shellStroke: "#b8cabe",
+          gridStroke: "#dce8df",
+          title: "#132018",
+          label: "#1f7a3d",
+          text: "#132018",
+          muted: "#4b5563",
+          line: "#8ba596",
+          timeline: "#9ab0a4",
+          timelineFill: "#f2faf5",
+          safeLine: "#1f7a3d",
+          safeFill: "#eaf7ef",
+          watchLine: "#946200",
+          watchFill: "#fff7df",
+          riskLine: "#a3362b",
+          riskFill: "#fff0ee",
+          nodeMutedLine: "#9aa8a0",
+          nodeMutedFill: "#f6f8f6"
+        }
+      : {
+          shellFill: "rgba(0,0,0,.10)",
+          shellStroke: "rgba(120,255,120,.12)",
+          gridStroke: "rgba(120,255,120,.045)",
+          title: "rgba(246,255,248,.96)",
+          label: "rgba(180,255,200,.68)",
+          text: "rgba(238,255,244,.94)",
+          muted: "rgba(203,213,225,.68)",
+          line: "rgba(203,213,225,.24)",
+          timeline: "rgba(203,213,225,.24)",
+          timelineFill: "rgba(120,255,120,.12)",
+          safeLine: "rgba(125,255,152,.82)",
+          safeFill: "rgba(120,255,120,.10)",
+          watchLine: "rgba(255,204,102,.76)",
+          watchFill: "rgba(255,204,102,.10)",
+          riskLine: "rgba(255,105,105,.88)",
+          riskFill: "rgba(255,105,105,.13)",
+          nodeMutedLine: "rgba(203,213,225,.30)",
+          nodeMutedFill: "rgba(0,0,0,.14)"
+        };
+
     function branchTone(key, count) {
       if (activeBranch === key) return "safe";
       if (count > 0) return "watch";
@@ -462,16 +506,16 @@
 
     function toneLine(key, count) {
       const tone = branchTone(key, count);
-      if (tone === "safe") return "rgba(125,255,152,.82)";
-      if (tone === "watch") return "rgba(255,204,102,.76)";
-      return "rgba(203,213,225,.30)";
+      if (tone === "safe") return palette.safeLine;
+      if (tone === "watch") return palette.watchLine;
+      return palette.nodeMutedLine;
     }
 
     function toneFillFor(key, count) {
       const tone = branchTone(key, count);
-      if (tone === "safe") return "rgba(120,255,120,.10)";
-      if (tone === "watch") return "rgba(255,204,102,.10)";
-      return "rgba(0,0,0,.14)";
+      if (tone === "safe") return palette.safeFill;
+      if (tone === "watch") return palette.watchFill;
+      return palette.nodeMutedFill;
     }
 
     function node(key, label, sublabel, count, x, y, w) {
@@ -481,32 +525,50 @@
 
       return [
         '<g data-scope-branch-node="' + escapeHtml(key) + '">',
-        '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="58" rx="11" fill="' + fill + '" stroke="' + line + '" stroke-width="1.15" />',
-        '<text x="' + (x + 12) + '" y="' + (y + 21) + '" font-size="10.5" fill="rgba(238,255,244,.94)" font-weight="900">' + escapeHtml(label) + '</text>',
-        '<text x="' + (x + 12) + '" y="' + (y + 38) + '" font-size="8.4" fill="rgba(203,213,225,.68)" font-weight="800">' + escapeHtml(sublabel) + '</text>',
+        '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="58" rx="11" fill="' + fill + '" stroke="' + line + '" stroke-width="' + (exportMode ? '1.45' : '1.15') + '" />',
+        '<text x="' + (x + 12) + '" y="' + (y + 21) + '" font-size="10.5" fill="' + palette.text + '" font-weight="900">' + escapeHtml(label) + '</text>',
+        '<text x="' + (x + 12) + '" y="' + (y + 38) + '" font-size="8.4" fill="' + palette.muted + '" font-weight="800">' + escapeHtml(sublabel) + '</text>',
         '<text x="' + (x + w - 12) + '" y="' + (y + 38) + '" font-size="8.4" fill="' + line + '" font-weight="900" text-anchor="end">' + escapeHtml(selected) + '</text>',
         '</g>'
       ].join("");
     }
 
     function link(x1, y1, x2, y2, key, count) {
-      return '<path d="M' + x1 + ' ' + y1 + ' C' + ((x1 + x2) / 2) + ' ' + y1 + ', ' + ((x1 + x2) / 2) + ' ' + y2 + ', ' + x2 + ' ' + y2 + '" fill="none" stroke="' + toneLine(key, count) + '" stroke-width="1.25" stroke-dasharray="6 7" stroke-linecap="round" />';
+      return '<path d="M' + x1 + ' ' + y1 + ' C' + ((x1 + x2) / 2) + ' ' + y1 + ', ' + ((x1 + x2) / 2) + ' ' + y2 + ', ' + x2 + ' ' + y2 + '" fill="none" stroke="' + toneLine(key, count) + '" stroke-width="' + (exportMode ? '1.6' : '1.25') + '" stroke-dasharray="6 7" stroke-linecap="round" />';
+    }
+
+    function scopeMetricChip(label, value, x, y, w) {
+      return [
+        '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="48" rx="8" fill="' + (exportMode ? '#f8fbf8' : 'rgba(0,0,0,.13)') + '" stroke="' + (exportMode ? '#9fb4a7' : 'rgba(125,255,152,.26)') + '" stroke-width="' + (exportMode ? '1.15' : '1') + '" />',
+        '<text x="' + (x + 10) + '" y="' + (y + 18) + '" font-size="8" fill="' + palette.muted + '" font-weight="900" letter-spacing=".6">' + escapeHtml(label).toUpperCase() + '</text>',
+        '<text x="' + (x + 10) + '" y="' + (y + 37) + '" font-size="15" fill="' + palette.safeLine + '" font-weight="950">' + escapeHtml(value) + '</text>'
+      ].join("");
+    }
+
+    function scopeStatusBadge(label, tone, x, y) {
+      const line = tone === "risk" ? palette.riskLine : tone === "watch" ? palette.watchLine : palette.safeLine;
+      const fill = tone === "risk" ? palette.riskFill : tone === "watch" ? palette.watchFill : palette.safeFill;
+
+      return [
+        '<rect x="' + x + '" y="' + y + '" width="90" height="30" rx="9" fill="' + fill + '" stroke="' + line + '" stroke-width="1.2" />',
+        '<text x="' + (x + 45) + '" y="' + (y + 20) + '" font-size="10.5" fill="' + line + '" font-weight="950" text-anchor="middle">' + escapeHtml(label) + '</text>'
+      ].join("");
     }
 
     return [
-      '<div class="access-control-planning-visual-shell access-scope-branch-map-shell" data-access-control-modern-visual="scope-planner-branch-map">',
+      '<div class="access-control-planning-visual-shell access-scope-branch-map-shell" data-access-control-modern-visual="scope-planner-branch-map"' + (exportMode ? ' data-export-palette="print-safe"' : '') + '>',
       '<svg viewBox="0 0 760 388" role="img" aria-label="Access Scope Planner branch map visual" xmlns="http://www.w3.org/2000/svg">',
-      '<defs><pattern id="accGridScopeBranchV1" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="rgba(120,255,120,.045)" stroke-width="1"/></pattern></defs>',
-      '<rect x="24" y="24" width="712" height="340" rx="16" fill="rgba(0,0,0,.10)" stroke="rgba(120,255,120,.12)" />',
-      '<rect x="36" y="36" width="688" height="316" rx="12" fill="url(#accGridScopeBranchV1)" stroke="rgba(120,255,120,.07)" />',
-      '<text x="52" y="62" font-size="11" fill="rgba(180,255,200,.68)" letter-spacing="1.4">ACCESS SCOPE PLANNER</text>',
-      '<text x="52" y="84" font-size="19" fill="rgba(246,255,248,.96)" font-weight="650">Scope ledger, core pipeline, and specialty branch map</text>',
-      statusBadge(statusText, statusToneValue, 616, 51),
+      '<defs><pattern id="accGridScopeBranchV2" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="' + palette.gridStroke + '" stroke-width="1"/></pattern></defs>',
+      '<rect x="24" y="24" width="712" height="340" rx="16" fill="' + palette.shellFill + '" stroke="' + palette.shellStroke + '" stroke-width="' + (exportMode ? '1.25' : '1') + '" />',
+      '<rect x="36" y="36" width="688" height="316" rx="12" fill="url(#accGridScopeBranchV2)" stroke="' + palette.line + '" stroke-width="1" />',
+      '<text x="52" y="62" font-size="11" fill="' + palette.label + '" letter-spacing="1.4">ACCESS SCOPE PLANNER</text>',
+      '<text x="52" y="84" font-size="19" fill="' + palette.title + '" font-weight="650">Scope ledger, core pipeline, and specialty branch map</text>',
+      scopeStatusBadge(statusText, statusToneValue, 616, 51),
 
-      '<rect x="278" y="112" width="204" height="72" rx="14" fill="rgba(120,255,120,.09)" stroke="rgba(125,255,152,.56)" stroke-width="1.25" />',
-      '<text x="380" y="139" font-size="12" fill="rgba(238,255,244,.94)" font-weight="950" text-anchor="middle">SCOPE LEDGER</text>',
-      '<text x="380" y="158" font-size="9.4" fill="rgba(203,213,225,.68)" font-weight="800" text-anchor="middle">' + escapeHtml(activeLabel) + '</text>',
-      '<text x="380" y="176" font-size="9.4" fill="rgba(125,255,152,.92)" font-weight="900" text-anchor="middle">' + totalScopes + ' scopes / ' + completedChecks + ' checks</text>',
+      '<rect x="278" y="112" width="204" height="72" rx="14" fill="' + palette.safeFill + '" stroke="' + palette.safeLine + '" stroke-width="1.35" />',
+      '<text x="380" y="139" font-size="12" fill="' + palette.text + '" font-weight="950" text-anchor="middle">SCOPE LEDGER</text>',
+      '<text x="380" y="158" font-size="9.4" fill="' + palette.muted + '" font-weight="800" text-anchor="middle">' + escapeHtml(activeLabel) + '</text>',
+      '<text x="380" y="176" font-size="9.4" fill="' + palette.safeLine + '" font-weight="900" text-anchor="middle">' + totalScopes + ' scopes / ' + completedChecks + ' checks</text>',
 
       link(278, 148, 168, 148, "core", coreCount),
       link(482, 148, 592, 148, "elevator", elevatorCount),
@@ -518,19 +580,19 @@
       node("antiPassback", "Anti-Passback", "Zones / paired entry-exit reads", antiPassbackCount, 52, 220, 192),
       node("special", "Special Locking", "Egress / release / AHJ review", specialCount, 516, 220, 192),
 
-      '<path d="M172 206 H588" stroke="rgba(203,213,225,.24)" stroke-width="1.1" stroke-dasharray="6 7" />',
-      '<circle cx="266" cy="206" r="5" fill="rgba(120,255,120,.12)" stroke="rgba(125,255,152,.62)" />',
-      '<circle cx="380" cy="206" r="5" fill="rgba(120,255,120,.12)" stroke="rgba(125,255,152,.62)" />',
-      '<circle cx="494" cy="206" r="5" fill="rgba(120,255,120,.12)" stroke="rgba(125,255,152,.62)" />',
-      '<text x="266" y="224" font-size="9" fill="rgba(203,213,225,.62)" text-anchor="middle">define</text>',
-      '<text x="380" y="224" font-size="9" fill="rgba(203,213,225,.62)" text-anchor="middle">branch</text>',
-      '<text x="494" y="224" font-size="9" fill="rgba(203,213,225,.62)" text-anchor="middle">continue</text>',
+      '<path d="M172 206 H588" stroke="' + palette.timeline + '" stroke-width="1.25" stroke-dasharray="6 7" />',
+      '<circle cx="266" cy="206" r="5" fill="' + palette.timelineFill + '" stroke="' + palette.safeLine + '" />',
+      '<circle cx="380" cy="206" r="5" fill="' + palette.timelineFill + '" stroke="' + palette.safeLine + '" />',
+      '<circle cx="494" cy="206" r="5" fill="' + palette.timelineFill + '" stroke="' + palette.safeLine + '" />',
+      '<text x="266" y="224" font-size="9" fill="' + palette.muted + '" text-anchor="middle">define</text>',
+      '<text x="380" y="224" font-size="9" fill="' + palette.muted + '" text-anchor="middle">branch</text>',
+      '<text x="494" y="224" font-size="9" fill="' + palette.muted + '" text-anchor="middle">continue</text>',
 
-      metricChip("scopes", String(totalScopes), 74, 304, 96),
-      metricChip("readers", String(plannedReaders), 190, 304, 96),
-      metricChip("locks", String(plannedLocks), 306, 304, 96),
-      metricChip("specialty", String(elevatorCount + antiPassbackCount + specialCount), 422, 304, 108),
-      metricChip("review", String(authorityCount), 550, 304, 96),
+      scopeMetricChip("scopes", String(totalScopes), 74, 304, 96),
+      scopeMetricChip("readers", String(plannedReaders), 190, 304, 96),
+      scopeMetricChip("locks", String(plannedLocks), 306, 304, 96),
+      scopeMetricChip("specialty", String(elevatorCount + antiPassbackCount + specialCount), 422, 304, 108),
+      scopeMetricChip("review", String(authorityCount), 550, 304, 96),
 
       '</svg>',
       '<p class="sl-vis-note"><strong>Visual note:</strong> Scope Planner is the Access Control entry lane. Use this map to confirm whether each saved scope continues through the core pipeline or branches into elevator, anti-passback, or special-locking validation.</p>',

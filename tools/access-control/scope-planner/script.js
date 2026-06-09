@@ -870,11 +870,12 @@
       plannedLocks: rollup.plannedLocks,
       completedChecks: rollup.completedChecks,
       activeBranch: active ? branchKey(active) : "",
-      activeLabel: active ? active.name : "No active scope"
+      activeLabel: active ? active.name : "No active scope",
+      exportMode: !!rollup.exportMode
     });
   }
 
-  function renderScopeSummary(ledger) {
+  function renderScopeSummary(ledger, options = {}) {
     if (!els.scopeSummary) return;
 
     const scopes = Array.isArray(ledger?.scopes) ? ledger.scopes : [];
@@ -896,7 +897,7 @@
     const plannedReaders = scopes.filter((scope) => scope.readerIntent && scope.readerIntent !== "unknown").length;
     const plannedLocks = scopes.filter((scope) => scope.lockIntent && scope.lockIntent !== "unknown").length;
     const completedChecks = scopes.reduce((sum, scope) => sum + completedCheckCount(scope), 0);
-    const branchMapHtml = buildScopePlannerBranchMapHtml(scopes, groups, active, { authorityCount, plannedReaders, plannedLocks, completedChecks });
+    const branchMapHtml = buildScopePlannerBranchMapHtml(scopes, groups, active, { authorityCount, plannedReaders, plannedLocks, completedChecks, exportMode: !!options.exportMode });
 
     function branchTable(key, items) {
       const countLabel = items.length + (items.length === 1 ? " ITEM" : " ITEMS");
@@ -1039,7 +1040,13 @@
     const scopes = Array.isArray(ledger?.scopes) ? ledger.scopes : [];
     const generated = new Date().toLocaleString();
     const reportId = "SL-AC-SCOPE-" + new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 12);
-    const summaryHtml = els.scopeSummary ? els.scopeSummary.innerHTML : "";
+    let summaryHtml = "";
+    if (els.scopeSummary) {
+      const previousScopeSummaryHtml = els.scopeSummary.innerHTML;
+      renderScopeSummary(ledger, { exportMode: true });
+      summaryHtml = els.scopeSummary.innerHTML;
+      els.scopeSummary.innerHTML = previousScopeSummaryHtml;
+    }
 
     const statusText = scopes.some((scope) => scope.status === "RISK")
       ? "RISK"

@@ -85,6 +85,7 @@ check("Scope Planner branch-map visual exists", scopeBranchMap.includes("functio
 check("Scope Planner branch-map visual is exported", visuals.includes("buildScopePlannerBranchMapSvg,"));
 check("Scope Planner branch-map visual uses Access Control branches", scopeBranchMap.includes("Core Door Pipeline") && scopeBranchMap.includes("Elevator Readers") && scopeBranchMap.includes("Anti-Passback") && scopeBranchMap.includes("Special Locking"));
 check("Scope Planner branch-map visual has no raster image dependency", !/[.]png|[.]jpg|[.]jpeg|[.]webp|<image|base64/i.test(scopeBranchMap));
+check("Scope Planner branch-map visual supports print-safe palette", scopeBranchMap.includes('data-export-palette="print-safe"') && scopeBranchMap.includes("exportMode") && scopeBranchMap.includes("#132018"));
 check("Legacy non-CAD controlledDoorOpeningIcon name is not used", !visuals.includes("controlledDoorOpeningIcon"));
 
 console.log("\\nAccess Control CAD icon contract audit:");
