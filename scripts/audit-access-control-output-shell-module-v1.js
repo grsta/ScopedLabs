@@ -19,7 +19,7 @@ const moduleText = read("assets/access-control-output-shell.js");
 check(
   "Access Control output shell module exists",
   moduleText.includes("ScopedLabsAccessControlOutputShell") &&
-    moduleText.includes("access-control-output-shell-001-lock-power-visual-export")
+    moduleText.includes("access-control-output-shell-002-assistant-proof-contract")
 );
 
 check(
@@ -36,7 +36,7 @@ check(
 
 check(
   "Lock Power loads output shell module",
-  html.includes("/assets/access-control-output-shell.js?v=access-control-output-shell-001-lock-power-visual-export")
+  html.includes("/assets/access-control-output-shell.js?v=access-control-output-shell-002-assistant-proof-contract")
 );
 
 check(

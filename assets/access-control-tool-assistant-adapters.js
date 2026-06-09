@@ -1,11 +1,28 @@
 /* ScopedLabs Access Control Tool Assistant Adapters
-   Version: access-control-assistant-adapters-024-assistant-proof-pattern-extract
+   Version: access-control-assistant-adapters-025-assistant-proof-contract
    Purpose: category-specific local assistant model adapters. Dormant unless a tool explicitly calls one.
 */
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-assistant-adapters-024-assistant-proof-pattern-extract";
+  const API_VERSION = "access-control-assistant-adapters-025-assistant-proof-contract";
+
+  const ASSISTANT_PROOF_ADAPTER_CONTRACT = Object.freeze({
+    name: "access-control-assistant-proof-adapter-contract",
+    pattern: "access-control-assistant-proof-visual-pattern",
+    actionMarkerStyle: "plain-text",
+    requiredMarkers: Object.freeze(["*1", "*2", "*3"]),
+    defaultToolOptIn: Object.freeze({
+      enabled: true,
+      layers: Object.freeze(["entered-conditions", "assistant-recommendation"]),
+      markers: Object.freeze(["*1", "*2", "*3"]),
+      exportParity: true
+    })
+  });
+
+  function getAssistantProofAdapterContract() {
+    return ASSISTANT_PROOF_ADAPTER_CONTRACT;
+  }
 
   function safeText(value) {
     return String(value ?? "");
@@ -761,6 +778,7 @@
     "fail-safe-fail-secure": Object.freeze({
       slug: "fail-safe-fail-secure",
       title: "Fail-Safe / Fail-Secure Assistant",
+      assistantProofPattern: getAssistantProofAdapterContract().defaultToolOptIn,
       buildModel: buildFailSafeFailSecureModel
     }),
     "reader-type-selector": Object.freeze({
@@ -832,6 +850,7 @@
     getAdapter,
     listAdapters,
     hasAdapter,
-    formatAssistantProofReferences
+    formatAssistantProofReferences,
+    getAssistantProofAdapterContract
   });
 })();

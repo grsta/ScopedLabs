@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-052-assistant-proof-pattern-extract";
+  const VERSION = "access-control-planning-visuals-053-assistant-proof-contract";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -814,15 +814,66 @@
     });
   }
 
+  function buildAssistantProofPatternAttributes(toolSlug = "") {
+    return [
+      'data-assistant-proof-pattern="access-control-assistant-proof-visual-pattern"',
+      'data-assistant-proof-tool="' + escapeHtml(String(toolSlug || "access-control")) + '"',
+      'data-assistant-proof-layers="entered-conditions assistant-recommendation"',
+      'data-assistant-proof-markers="*1 *2 *3"'
+    ].join(" ");
+  }
+
+  function validateAssistantProofPatternModel(model = {}) {
+    const missing = [];
+    const entered = Array.isArray(model.enteredConditions) ? model.enteredConditions : [];
+    const recommendations = Array.isArray(model.recommendationNodes) ? model.recommendationNodes : [];
+    const references = Array.isArray(model.references) ? model.references : [];
+
+    if (!entered.length) missing.push("enteredConditions");
+    if (!recommendations.length) missing.push("recommendationNodes");
+    if (!references.length) missing.push("references");
+
+    ["*1", "*2", "*3"].forEach((marker) => {
+      if (!references.some((item) => String(item?.id || "").trim() === marker)) {
+        missing.push("reference " + marker);
+      }
+    });
+
+    return Object.freeze({
+      ok: missing.length === 0,
+      missing: Object.freeze(missing),
+      pattern: "access-control-assistant-proof-visual-pattern"
+    });
+  }
+
   function getAssistantProofPatternContract() {
     return Object.freeze({
       name: "access-control-assistant-proof-visual-pattern",
-      layers: ["entered-conditions", "assistant-recommendation"],
-      markers: ["*1", "*2", "*3"],
-      exportParity: true,
-      visualMarkerStyle: "plain-text"
+      version: "001",
+      category: "access-control",
+      optInAttribute: "data-assistant-proof-pattern",
+      requiredLayers: Object.freeze(["entered-conditions", "assistant-recommendation"]),
+      requiredMarkers: Object.freeze(["*1", "*2", "*3"]),
+      markerStyle: "plain-text",
+      statusModel: Object.freeze({
+        localDecisionStatus: "SAFE/WATCH/RISK from the current tool inputs",
+        carriedReviewFlag: "AUTHORITY REVIEW shown separately when upstream scope requires review",
+        noOverwriteRule: true
+      }),
+      exportParity: Object.freeze({
+        requiredSectionTitle: "Recommendation References",
+        requiredColumns: Object.freeze(["Marker", "Reference", "Reason"]),
+        markersMatchAssistantActions: true
+      }),
+      recommendedUseCases: Object.freeze([
+        "assistant recommends a change",
+        "raw input differs from recommendation",
+        "authority/code review flag must remain visible",
+        "Watch/Risk result needs visual proof markers"
+      ])
     });
   }
+
 
   function normalizeFailSafeReferences(refs, context = {}) {
     const defaults = [
@@ -1819,6 +1870,8 @@
     assistantProofRecommendationNode,
     assistantProofArrow,
     normalizeAssistantProofReferences,
+    buildAssistantProofPatternAttributes,
+    validateAssistantProofPatternModel,
     getAssistantProofPatternContract,
     VERSION,
     renderFailSafeState,

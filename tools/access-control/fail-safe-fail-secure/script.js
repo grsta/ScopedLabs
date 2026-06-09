@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  // access-control-fail-safe-status-scope-split-020
+  // access-control-fail-safe-assistant-proof-contract-021
 
   const CATEGORY = "access-control";
   const CATEGORY_LABEL = "Access Control";
@@ -94,7 +94,7 @@
     return String(value ?? "").trim().toLowerCase();
   }
 
-  // access-control-fail-safe-status-scope-split-020
+  // access-control-fail-safe-assistant-proof-contract-021
   function outputShell() {
     return window.ScopedLabsAccessControlOutputShell || null;
   }
@@ -870,6 +870,29 @@
     const statusTone = toneForStatus(decisionStatus);
     const hasActiveScope = activeScopeName !== "No active scope attached";
 
+    function getAssistantProofReferenceExportSection() {
+      const outputShell = window.ScopedLabsAccessControlOutputShell;
+      if (outputShell && typeof outputShell.buildAssistantProofReferencesSection === "function") {
+        return outputShell.buildAssistantProofReferencesSection(currentReport.recommendationReferences || [], {
+          title: "Recommendation References",
+          description: "Reference markers shown in the Assistant Recommendation visual. These explain why a change, review, or validation step is recommended.",
+          tableClass: "extra-export-table--planner extra-export-table--decision"
+        });
+      }
+
+      return {
+        title: "Recommendation References",
+        description: "Reference markers shown in the Assistant Recommendation visual. These explain why a change, review, or validation step is recommended.",
+        tableClass: "extra-export-table--planner extra-export-table--decision",
+        tables: [
+          {
+            headers: ["Marker", "Reference", "Reason"],
+            rows: (currentReport.recommendationReferences || []).map((item) => [item.id || "", item.label || "", item.reason || ""])
+          }
+        ]
+      };
+    }
+
     const keySavedResult = [
       recommendation || "",
       decisionStatus || "",
@@ -916,17 +939,7 @@
           }
         ]
       },
-      {
-        title: "Recommendation References",
-        description: "Reference markers shown in the Assistant Recommendation visual. These explain why a change, review, or validation step is recommended.",
-        tableClass: "extra-export-table--planner extra-export-table--decision",
-        tables: [
-          {
-            headers: ["Marker", "Reference", "Reason"],
-            rows: (currentReport.recommendationReferences || []).map((item) => [item.id || "", item.label || "", item.reason || ""])
-          }
-        ]
-      },
+      getAssistantProofReferenceExportSection(),
       {
         title: "Decision Summary",
         description: "Short decision facts only. Longer engineering guidance is separated below for readability.",
@@ -1140,7 +1153,7 @@ function savePipelineResult(payload) {
     return selectEl ? selectEl.value : "";
   }
 
-  // access-control-fail-safe-status-scope-split-020
+  // access-control-fail-safe-assistant-proof-contract-021
   function setSelectValue(selectEl, value) {
     if (!selectEl || value === undefined || value === null) return false;
 
@@ -1586,6 +1599,7 @@ function savePipelineResult(payload) {
       decisionFlags: decision.flags,
       requiredActions: decision.actions,
       recommendationReferences,
+      assistantProofPattern: "access-control-assistant-proof-visual-pattern",
       activeScope,
       inputs: modelInputs
     };
@@ -1600,7 +1614,8 @@ function savePipelineResult(payload) {
       interpretation,
       inputs: modelInputs,
       outputs: getRenderedRows(),
-      recommendationReferences
+      recommendationReferences,
+      assistantProofPattern: "access-control-assistant-proof-visual-pattern"
     });
 
     publishFailSafeResultToScopeLedger({

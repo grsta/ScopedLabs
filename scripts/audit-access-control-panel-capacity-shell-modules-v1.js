@@ -42,16 +42,16 @@ check("Panel Capacity opts into Access Control polish", html.includes('data-acce
 check("Panel Capacity loads shared export 030", html.includes("/assets/export.js?v=shared-export-030-semantic-report-tones"));
 check("Panel Capacity loads Tool Shell module", html.includes("/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"));
 check("Panel Capacity loads Assistant Export module", html.includes("/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-001"));
-check("Panel Capacity loads Access Control output shell", html.includes("/assets/access-control-output-shell.js?v=access-control-output-shell-001-lock-power-visual-export"));
+check("Panel Capacity loads Access Control output shell", html.includes("/assets/access-control-output-shell.js?v=access-control-output-shell-002-assistant-proof-contract"));
 check("Panel Capacity loads Local Assistant module", html.includes("/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"));
-check("Panel Capacity loads Panel adapter cache", html.includes("/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-024-assistant-proof-pattern-extract"));
-check("Panel Capacity loads shared planning visual module", html.includes("/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-052-assistant-proof-pattern-extract"));
+check("Panel Capacity loads Panel adapter cache", html.includes("/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-025-assistant-proof-contract"));
+check("Panel Capacity loads shared planning visual module", html.includes("/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-053-assistant-proof-contract"));
 check("Panel Capacity loads report metadata module", html.includes("/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes"));
 check("Panel Capacity loads Access Control polish module", html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-010-page-chrome-pill-cleanup"));
 check("Panel Capacity local script cache is dynamic icon lane", html.includes("./script.js?v=access-control-panel-capacity-dynamic-icon-026-used-slots-green"));
 
 check("Panel Capacity script order keeps export before shell modules", order(html, "/assets/export.js?v=shared-export-030-semantic-report-tones", "/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"));
-check("Panel Capacity script order keeps assistant modules before local script", order(html, "/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-024-assistant-proof-pattern-extract", "./script.js?v=access-control-panel-capacity-dynamic-icon-026-used-slots-green"));
+check("Panel Capacity script order keeps assistant modules before local script", order(html, "/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-025-assistant-proof-contract", "./script.js?v=access-control-panel-capacity-dynamic-icon-026-used-slots-green"));
 check("Panel Capacity script order keeps polish after local script", order(html, "./script.js?v=access-control-panel-capacity-dynamic-icon-026-used-slots-green", "/assets/access-control-tool-polish.js?v=access-control-tool-polish-010-page-chrome-pill-cleanup"));
 
 check("Panel Capacity has local assistant mount", html.includes('id="accessControlLocalAssistantMount"'));
@@ -67,7 +67,7 @@ check("Panel Capacity CAD architecture map marker exists", script.includes("PANE
 check("Panel Capacity Back/Continue shell sits before Export Report", html.includes('id="accessControlFlowActions"') && html.includes('id="reportMetadataMount"') && html.indexOf('id="accessControlFlowActions"') < html.indexOf('id="reportMetadataMount"'));
 check("Panel Capacity CAD visual uses expanded drawing height", html.includes("min-height:460px") && script.includes("const height = 500;"));
 check("Panel Capacity expansion slot strip is fit-guarded", script.includes("const slotW = Math.max(7, Math.min(12") || script.includes("cadAccessPanelCapacityIcon"));
-check("Panel Capacity renders panel modules through shared dynamic CAD primitive", script.includes("ScopedLabsAccessControlPlanningVisuals") && script.includes("cadAccessPanelCapacityIcon") && html.includes("/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-052-assistant-proof-pattern-extract"));
+check("Panel Capacity renders panel modules through shared dynamic CAD primitive", script.includes("ScopedLabsAccessControlPlanningVisuals") && script.includes("cadAccessPanelCapacityIcon") && html.includes("/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-053-assistant-proof-contract"));
 
 
 
