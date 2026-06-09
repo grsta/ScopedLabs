@@ -18,17 +18,17 @@ let failures = 0;
 const html = read(htmlRel);
 const script = read(scriptRel);
 
-console.log("\nAccess Control Scope Planner print-fit audit");
+console.log("\nAccess Control Scope Planner print natural-pack audit");
 
-check("Scope Planner script cache token bumped", html.includes("script.js?v=access-control-scope-planner-print-page-fit-026"));
-check("Scope Planner stylesheet cache token bumped", html.includes("/assets/style.css?v=access-control-scope-planner-print-page-fit-026"));
-check("Scope Planner print-fit token present", script.includes("access-control-scope-planner-print-page-fit-026"));
-check("Print report forces landscape page fit", script.includes("@page{size:landscape;margin:.38in}"));
-check("Print overview branch map is height constrained", script.includes(".access-scope-branch-map-shell svg") && script.includes("max-height:3.9in"));
+check("Scope Planner script cache token bumped", html.includes("script.js?v=access-control-scope-planner-print-natural-pack-027"));
+check("Scope Planner stylesheet cache token bumped", html.includes("/assets/style.css?v=access-control-scope-planner-print-natural-pack-027"));
+check("Scope Planner print natural-pack token present", script.includes("access-control-scope-planner-print-natural-pack-027"));
+check("Print report keeps landscape page fit", script.includes("@page{size:landscape;margin:.38in}"));
+check("Print overview branch map remains height constrained", script.includes(".access-scope-branch-map-shell svg") && script.includes("max-height:3.9in"));
 check("Print rollup uses compact six-column layout", script.includes(".access-scope-summary-rollup{grid-template-columns:repeat(6"));
-check("Print branch categories start on their own page", script.includes(".access-scope-summary-branch{break-before:page;page-break-before:always"));
-check("Print branch tables are compacted", script.includes("table.access-scope-summary-table{font-size:.68rem}") && script.includes(".access-scope-summary-table th,.access-scope-summary-table td{padding:5px 6px"));
-check("Print status pill uses cleaner weight/radius", script.includes(".status-pill{display:inline-flex") && script.includes("border-radius:10px") && script.includes("font-weight:720"));
+check("Print branches pack naturally instead of forced page breaks", script.includes(".access-scope-summary-branch{break-inside:avoid;page-break-inside:avoid;margin-top:12px") && !script.includes(".access-scope-summary-branch{break-before:page;page-break-before:always"));
+check("Print branch tables remain compact", script.includes("table.access-scope-summary-table{font-size:.68rem}") && script.includes(".access-scope-summary-table th,.access-scope-summary-table td{padding:5px 6px"));
+check("Print status pill keeps cleaner weight/radius", script.includes(".status-pill{display:inline-flex") && script.includes("border-radius:10px") && script.includes("font-weight:720"));
 
 console.log("\nSummary:", (9 - failures) + " SAFE / " + failures + " FAIL");
 if (failures) process.exit(1);
