@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-054-lock-power-rail";
+  const VERSION = "access-control-planning-visuals-055-lock-power-rail-label-stack";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -1913,13 +1913,24 @@
         '<text x="' + (x + 10) + '" y="' + (y + 34) + '" font-size="12.2" fill="' + palette.text + '" font-weight="720">' + escapeHtml(value) + '</text>'
       ].join("");
     }
-    function marker(x, label, value, line, anchor) {
+    // access-control-lock-power-rail-label-stack-055: stagger close marker labels so peak and required supply never overlap.
+    const markerGap = Math.abs(requiredX - peakX);
+    const stackMarkers = markerGap < 150;
+    const peakMarkerAnchor = stackMarkers ? "end" : (peakX > 560 ? "end" : "start");
+    const requiredMarkerAnchor = stackMarkers ? "start" : (requiredX > 560 ? "end" : "start");
+
+    function marker(x, label, value, line, anchor, row = "upper") {
+      const isLower = row === "lower";
       const textX = anchor === "end" ? x - 12 : x + 12;
+      const guideTop = isLower ? 150 : 126;
+      const labelY = isLower ? 160 : 134;
+      const valueY = isLower ? 177 : 151;
+
       return [
-        '<path d="M' + fmt(x, 1) + ' 126 V238" stroke="' + line + '" stroke-width="1.6" stroke-dasharray="6 6" />',
+        '<path d="M' + fmt(x, 1) + ' ' + guideTop + ' V238" stroke="' + line + '" stroke-width="1.6" stroke-dasharray="6 6" />',
         '<circle cx="' + fmt(x, 1) + '" cy="' + railY + '" r="6" fill="' + line + '" stroke="' + (exportMode ? '#ffffff' : 'rgba(255,255,255,.86)') + '" stroke-width="1.6" />',
-        '<text x="' + fmt(textX, 1) + '" y="134" font-size="9.5" fill="' + line + '" font-weight="720" letter-spacing=".55" text-anchor="' + (anchor || 'start') + '">' + escapeHtml(label).toUpperCase() + '</text>',
-        '<text x="' + fmt(textX, 1) + '" y="151" font-size="11.5" fill="' + palette.text + '" font-weight="720" text-anchor="' + (anchor || 'start') + '">' + escapeHtml(value) + '</text>'
+        '<text x="' + fmt(textX, 1) + '" y="' + labelY + '" font-size="9.5" fill="' + line + '" font-weight="720" letter-spacing=".55" text-anchor="' + (anchor || 'start') + '">' + escapeHtml(label).toUpperCase() + '</text>',
+        '<text x="' + fmt(textX, 1) + '" y="' + valueY + '" font-size="11.5" fill="' + palette.text + '" font-weight="720" text-anchor="' + (anchor || 'start') + '">' + escapeHtml(value) + '</text>'
       ].join("");
     }
 
@@ -1937,8 +1948,8 @@
       '<rect x="' + railX + '" y="' + (railY - 8) + '" width="' + railW + '" height="16" rx="8" fill="' + palette.railFill + '" stroke="' + palette.line + '" />',
       '<rect x="' + railX + '" y="' + (railY - 8) + '" width="' + Math.max(3, peakX - railX).toFixed(1) + '" height="16" rx="8" fill="' + palette.safeFill + '" stroke="' + palette.safeLine + '" />',
       '<rect x="' + peakX.toFixed(1) + '" y="' + (railY - 8) + '" width="' + Math.max(2, requiredX - peakX).toFixed(1) + '" height="16" rx="0" fill="' + palette.watchFill + '" stroke="' + palette.watchLine + '" />',
-      marker(peakX, 'Peak Load', amps(peak), palette.safeLine, peakX > 560 ? 'end' : 'start'),
-      marker(requiredX, 'Required Supply', amps(required) + ' / ' + watt(watts), active.line, requiredX > 560 ? 'end' : 'start'),
+      marker(peakX, 'Peak Load', amps(peak), palette.safeLine, peakMarkerAnchor, 'upper'),
+      marker(requiredX, 'Required Supply', amps(required) + ' / ' + watt(watts), active.line, requiredMarkerAnchor, stackMarkers ? 'lower' : 'upper'),
       '<path d="M' + peakX.toFixed(1) + ' 260 H' + requiredX.toFixed(1) + '" stroke="' + palette.watchLine + '" stroke-width="1.5" />',
       '<path d="M' + peakX.toFixed(1) + ' 254 V266 M' + requiredX.toFixed(1) + ' 254 V266" stroke="' + palette.watchLine + '" stroke-width="1.5" />',
       '<text x="' + Math.min(620, Math.max(106, peakX + 12)).toFixed(1) + '" y="281" font-size="10.5" fill="' + palette.watchLine + '" font-weight="720">HEADROOM RESERVE: ' + amps(reserve) + ' · ' + reservePct.toFixed(0) + '%</text>',
