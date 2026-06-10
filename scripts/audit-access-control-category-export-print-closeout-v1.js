@@ -86,7 +86,7 @@ tools.forEach((slug) => {
     check(slug, "print report uses natural packing", script.includes("access-control-scope-planner-print-disclaimer-keep-028") && script.includes("break-inside:avoid;page-break-inside:avoid") && !script.includes("break-before:page;page-break-before:always"));
     check(slug, "does not force calculator output shell", !html.includes("/assets/access-control-output-shell.js"));
   } else {
-    check(slug, "loads output shell", html.includes("/assets/access-control-output-shell.js?v=access-control-output-shell-002-assistant-proof-contract"));
+    check(slug, "loads output shell", html.includes("/assets/access-control-output-shell.js?v=access-control-output-shell-003-export-popup-visual-autobind"));
     check(slug, "has export visual callback", script.includes("getChartImage") || script.includes("getExportChartImage") || script.includes("getAccessLevelVisualImage") || script.includes("getReaderTypeVisualImage") || script.includes("getCredentialFormatVisualImage"));
     check(slug, "has report actions/dropdown or export config", script.includes("reportActions") || script.includes("ScopedLabsExportConfig") || script.includes("attachOutputShellExport"));
     check(slug, "loads global Access Control polish", html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-011-status-value-weight"));

@@ -84,7 +84,7 @@ for (const slug of tools) {
     continue;
   }
 
-  check(slug, "loads current output shell", html.includes("/assets/access-control-output-shell.js?v=access-control-output-shell-002-assistant-proof-contract"));
+  check(slug, "loads current output shell", html.includes("/assets/access-control-output-shell.js?v=access-control-output-shell-003-export-popup-visual-autobind"));
   check(slug, "loads current global polish", html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-011-status-value-weight"));
   check(slug, "has report/export action wiring", hasAny(script, ["attachOutputShellExport", "ScopedLabsExportConfig", "reportActions"]));
   check(slug, "has export visual image callback", hasAny(script, ["getChartImage", "getExportChartImage", "getAccessLevelVisualImage", "getReaderTypeVisualImage", "getCredentialFormatVisualImage"]));

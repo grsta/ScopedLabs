@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-output-shell-002-assistant-proof-contract";
+  const VERSION = "access-control-output-shell-003-export-popup-visual-autobind";
   const ASSISTANT_PROOF_OUTPUT_CONTRACT = Object.freeze({
     name: "access-control-assistant-proof-output-contract",
     pattern: "access-control-assistant-proof-visual-pattern",
@@ -19,7 +19,7 @@
     role: "assistant-owned-output-visual-export-handoff",
     category: "access-control",
     currentProofTool: "lock-power-budget",
-    requiredMethods: Object.freeze(["register", "getChartImage", "attachExportGetter", "showVisual", "hideVisual"]),
+    requiredMethods: Object.freeze(["register", "getChartImage", "attachExportGetter", "ensureExportVisualBinding", "showVisual", "hideVisual"]),
     outputPattern: Object.freeze({
       visibleDecisionLayer: "assistant-shell",
       visibleEngineeringLayer: "cad-visual",
@@ -30,6 +30,7 @@
     futureCoreTargets: Object.freeze(["panel-capacity", "access-level-sizing"])
   });
   const registry = new Map();
+  const pendingExportBinds = new Set();
 
   function resolveEl(ref) {
     if (!ref) return null;
@@ -86,6 +87,8 @@
       getVisualHtml: typeof options.getVisualHtml === "function" ? options.getVisualHtml : null
     });
 
+    ensureExportVisualBinding(slug);
+
     return true;
   }
 
@@ -136,17 +139,59 @@
     return ASSISTANT_PROOF_OUTPUT_CONTRACT;
   }
 
+  // access-control-output-shell-export-popup-visual-autobind-003:
+  // Tools may register their visual with the Access Control output shell before
+  // the shared export popup reads window.ScopedLabsExportConfig. Bind the shell
+  // visual getter into the export config at the category-shell level so tools do
+  // not need one-off export plumbing.
   function attachExportGetter(toolSlug, exportConfig) {
     const config = exportConfig || window.ScopedLabsExportConfig;
     const slug = safeSlug(toolSlug);
 
     if (!config || typeof config !== "object" || !slug) return false;
 
+    const previousGetter = typeof config.getChartImage === "function" ? config.getChartImage : null;
+
     config.getChartImage = function getAccessControlOutputShellChartImage() {
-      return getChartImage(slug);
+      const shellImage = getChartImage(slug);
+      if (shellImage) return shellImage;
+
+      if (previousGetter) {
+        try {
+          return previousGetter.call(config) || "";
+        } catch (err) {
+          console.warn("ScopedLabs Access Control previous export chart getter failed:", err);
+        }
+      }
+
+      return "";
     };
 
+    config.__accessControlOutputShellVisualBinding = slug;
+    config.__accessControlOutputShellVersion = VERSION;
+
     return true;
+  }
+
+  function ensureExportVisualBinding(toolSlug, options = {}) {
+    const slug = safeSlug(toolSlug);
+    if (!slug) return false;
+
+    if (attachExportGetter(slug, options.exportConfig)) return true;
+    if (options.schedule === false) return false;
+    if (pendingExportBinds.has(slug)) return false;
+
+    pendingExportBinds.add(slug);
+
+    [0, 50, 250, 1000].forEach((delay) => {
+      window.setTimeout(() => {
+        if (attachExportGetter(slug, options.exportConfig)) {
+          pendingExportBinds.delete(slug);
+        }
+      }, delay);
+    });
+
+    return false;
   }
 
   window.ScopedLabsAccessControlOutputShell = Object.freeze({
@@ -159,6 +204,7 @@
     register,
     getChartImage,
     attachExportGetter,
+    ensureExportVisualBinding,
     showVisual,
     hideVisual
   });
