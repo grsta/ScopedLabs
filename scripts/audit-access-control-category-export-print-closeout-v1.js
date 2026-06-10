@@ -62,7 +62,7 @@ const sharedVisualTools = {
 const planning = read("assets/access-control-planning-visuals.js");
 const polish = read("assets/access-control-tool-polish.js");
 
-check("shared", "Planning visual module is current", planning.includes("access-control-planning-visuals-056-door-count-export-safe-visual"));
+check("shared", "Planning visual module is current", planning.includes("access-control-planning-visuals-057-door-count-shared-cad-factory"));
 check("shared", "All shared visual renderers are registered", Object.values(sharedVisualTools).every((name) => planning.includes(name)));
 check("shared", "Scope Planner branch map is registered", planning.includes("buildScopePlannerBranchMapSvg") && planning.includes('data-access-control-modern-visual="scope-planner-branch-map"'));
 check("shared", "Lock Power shared rail is registered", planning.includes("buildLockPowerBudgetSupplyRailSvg") && planning.includes("renderLockPowerBudget") && planning.includes("access-control-lock-power-rail-label-stack-055"));
@@ -80,7 +80,7 @@ tools.forEach((slug) => {
   check(slug, "script parses", scriptParses(script));
 
   if (slug === "scope-planner") {
-    check(slug, "loads shared planning visual", html.includes("/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-056-door-count-export-safe-visual"));
+    check(slug, "loads shared planning visual", html.includes("/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-057-door-count-shared-cad-factory"));
     check(slug, "uses special report print/copy actions", script.includes("printScopeSummary") && script.includes("copyScopeSummary"));
     check(slug, "branch map has export parity", script.includes("buildScopePlannerBranchMapSvg") && script.includes("exportMode: true"));
     check(slug, "print report uses natural packing", script.includes("access-control-scope-planner-print-disclaimer-keep-028") && script.includes("break-inside:avoid;page-break-inside:avoid") && !script.includes("break-before:page;page-break-before:always"));
@@ -93,7 +93,7 @@ tools.forEach((slug) => {
   }
 
   if (Object.prototype.hasOwnProperty.call(sharedVisualTools, slug)) {
-    check(slug, "loads current shared planning visual", html.includes("/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-056-door-count-export-safe-visual"));
+    check(slug, "loads current shared planning visual", html.includes("/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-057-door-count-shared-cad-factory"));
     check(slug, "uses expected shared visual bridge", script.includes("ScopedLabsAccessControlPlanningVisuals") && script.includes(sharedVisualTools[slug]));
   }
 

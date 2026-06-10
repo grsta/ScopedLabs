@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-056-door-count-export-safe-visual";
+  const VERSION = "access-control-planning-visuals-057-door-count-shared-cad-factory";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -90,14 +90,17 @@
     const y = Number(options.y || 0);
     const scale = Number(options.scale || 1);
     const tone = options.tone || "safe";
+    const exportMode = !!options.exportMode;
+    const palette = options.palette || accessVisualPalette(exportMode);
+    const toneColors = accessToneColors(tone, palette);
 
-    const toneLine = toneStroke(tone);
-    const toneFillValue = toneFill(tone);
-    const readerLine = tone === "risk" ? "rgba(255,170,170,.76)" : tone === "watch" ? "rgba(255,220,130,.78)" : "rgba(92,255,245,.76)";
-    const readerFillValue = tone === "risk" ? "rgba(255,105,105,.10)" : tone === "watch" ? "rgba(255,204,102,.11)" : "rgba(92,255,245,.08)";
-    const doorLine = "rgba(203,213,225,.66)";
-    const doorLineStrong = "rgba(238,255,244,.78)";
-    const mutedLine = "rgba(148,213,210,.44)";
+    const toneLine = exportMode ? toneColors.line : toneStroke(tone);
+    const toneFillValue = exportMode ? toneColors.fill : toneFill(tone);
+    const readerLine = exportMode ? palette.tealLine : tone === "risk" ? "rgba(255,170,170,.76)" : tone === "watch" ? "rgba(255,220,130,.78)" : "rgba(92,255,245,.76)";
+    const readerFillValue = exportMode ? palette.tealFill : tone === "risk" ? "rgba(255,105,105,.10)" : tone === "watch" ? "rgba(255,204,102,.11)" : "rgba(92,255,245,.08)";
+    const doorLine = exportMode ? palette.faintLine : "rgba(203,213,225,.66)";
+    const doorLineStrong = exportMode ? palette.whiteLine : "rgba(238,255,244,.78)";
+    const mutedLine = exportMode ? palette.faintLine : "rgba(148,213,210,.44)";
 
     function sx(value) {
       return Math.round((x + value * scale) * 10) / 10;
@@ -112,7 +115,7 @@
     }
 
     return [
-      '<g class="sl-cad-controlled-door-icon" data-cad-icon="controlled-door-opening" data-cad-detail="door-reader-opening" aria-label="CAD controlled door and reader opening">',
+      '<g class="sl-cad-controlled-door-icon" data-cad-icon="controlled-door-opening" data-cad-detail="door-reader-opening" data-cad-factory-source="access-control-shared-door-icon" aria-label="CAD controlled door and reader opening">',
 
       '<rect x="' + sx(42) + '" y="' + sy(6) + '" width="' + sw(88) + '" height="' + sw(138) + '" fill="rgba(0,0,0,.06)" stroke="' + doorLine + '" stroke-width="' + sw(1.35) + '" />',
       '<rect x="' + sx(48) + '" y="' + sy(12) + '" width="' + sw(76) + '" height="' + sw(126) + '" fill="rgba(0,0,0,.04)" stroke="' + doorLine + '" stroke-width="' + sw(1.1) + '" />',
@@ -1392,6 +1395,8 @@
   }
 
   function buildDoorCountSvg(metrics = {}) {
+    const exportMode = !!metrics.exportMode;
+    const palette = accessVisualPalette(exportMode);
     const tone = statusTone(metrics.status);
     const statusText = statusLabel(metrics.status);
     const perimeter = Math.max(0, Number(metrics.perimeterDoors || 0));
@@ -1450,12 +1455,15 @@
     }
 
     function groupRow(label, displayValue, numericValue, x, y, toneName) {
+      const active = accessToneColors(toneName || "safe", palette);
       return [
-        '<g>',
-        '<rect x="' + x + '" y="' + y + '" width="202" height="64" rx="10" fill="rgba(0,0,0,.14)" stroke="rgba(120,255,120,.10)" />',
-        '<text x="' + (x + 12) + '" y="' + (y + 18) + '" font-size="10" fill="rgba(203,213,225,.62)" letter-spacing=".7">' + escapeHtml(label).toUpperCase() + '</text>',
-        '<text x="' + (x + 184) + '" y="' + (y + 19) + '" font-size="15" fill="rgba(238,255,244,.94)" font-weight="900" text-anchor="end">' + escapeHtml(displayValue) + '</text>',
-        doorTicks(numericValue, x + 14, y + 28, toneName),
+        '<g class="sl-door-count-factory-contribution" data-door-count-shared-door-icon-card="true">',
+        '<rect x="' + x + '" y="' + y + '" width="202" height="96" rx="10" fill="' + (exportMode ? palette.nodeFill : "rgba(0,0,0,.14)") + '" stroke="' + active.line + '" stroke-width="1.05" />',
+        '<text x="' + (x + 12) + '" y="' + (y + 18) + '" font-size="10" fill="' + palette.muted + '" letter-spacing=".7">' + escapeHtml(label).toUpperCase() + '</text>',
+        '<text x="' + (x + 184) + '" y="' + (y + 20) + '" font-size="15" fill="' + palette.text + '" font-weight="800" text-anchor="end">' + escapeHtml(displayValue) + '</text>',
+        cadDoorReaderOpeningIcon({ x: x + 10, y: y + 30, scale: .33, tone: toneName || "safe", exportMode, palette }),
+        '<text x="' + (x + 72) + '" y="' + (y + 52) + '" font-size="10" fill="' + palette.text + '" font-weight="720">Controlled opening</text>',
+        '<text x="' + (x + 72) + '" y="' + (y + 70) + '" font-size="9" fill="' + palette.muted + '">CAD door + reader</text>',
         '</g>'
       ].join("");
     }
@@ -1484,11 +1492,11 @@
     const pressureTone = pressure > .72 ? "risk" : pressure > .45 ? "watch" : "safe";
 
     return [
-      '<div class="access-control-planning-visual-shell" data-access-control-modern-visual="door-count-planner">',
-      '<svg viewBox="0 0 760 388" role="img" aria-label="Door count planning pressure visual" xmlns="http://www.w3.org/2000/svg">',
+      '<div class="access-control-planning-visual-shell" data-access-control-modern-visual="door-count-planner" data-door-count-factory-renderer="shared-cad-icon-v57"' + (exportMode ? ' data-export-palette="print-safe"' : '') + '>',
+      '<svg viewBox="0 0 760 430" role="img" aria-label="Door count planning pressure visual" xmlns="http://www.w3.org/2000/svg">',
       '<defs><pattern id="accGridDoorCountV4" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="rgba(120,255,120,.045)" stroke-width="1"/></pattern></defs>',
-      '<rect x="24" y="24" width="712" height="340" rx="16" fill="rgba(0,0,0,.10)" stroke="rgba(120,255,120,.12)" />',
-      '<rect x="36" y="36" width="688" height="316" rx="12" fill="url(#accGridDoorCountV4)" stroke="rgba(120,255,120,.07)" />',
+      '<rect x="24" y="24" width="712" height="382" rx="16" fill="rgba(0,0,0,.10)" stroke="rgba(120,255,120,.12)" />',
+      '<rect x="36" y="36" width="688" height="354" rx="12" fill="url(#accGridDoorCountV4)" stroke="rgba(120,255,120,.07)" />',
       '<text x="52" y="62" font-size="11" fill="rgba(180,255,200,.68)" letter-spacing="1.4">DOOR SCHEDULE LOAD</text>',
       '<text x="52" y="84" font-size="19" fill="rgba(246,255,248,.96)" font-weight="650">Controlled doors, readers, and segmentation pressure</text>',
       statusBadge(statusText, tone, 616, 51),
@@ -1500,14 +1508,14 @@
       '<circle cx="112" cy="206" r="5" fill="rgba(125,255,152,.20)" stroke="rgba(125,255,152,.72)" />',
       '<circle cx="382" cy="206" r="5" fill="rgba(125,255,152,.20)" stroke="rgba(125,255,152,.72)" />',
       '<circle cx="648" cy="206" r="5" fill="rgba(125,255,152,.20)" stroke="rgba(125,255,152,.72)" />',
-      '<text x="112" y="224" font-size="10" fill="rgba(203,213,225,.58)" text-anchor="middle">scope</text>',
-      '<text x="382" y="224" font-size="10" fill="rgba(203,213,225,.58)" text-anchor="middle">controller grouping</text>',
-      '<text x="648" y="224" font-size="10" fill="rgba(203,213,225,.58)" text-anchor="middle">reader count</text>',
-      pressureRail("complexity pressure", pressure, 52, 258, 220, pressureTone),
-      metricChip("total doors", String(metrics.doors ?? doors ?? "?"), 296, 248, 110),
-      metricChip("readers", String(metrics.readers ?? readers ?? "?"), 420, 248, 100),
-      metricChip("complexity", String(metrics.complexityIndex ?? complexity ?? "?"), 534, 248, 116),
-      controlModeBlock(metrics.bothSidesLabel || "?", 534, 292, 182, 52),
+      '<text x="112" y="256" font-size="10" fill="rgba(203,213,225,.58)" text-anchor="middle">scope</text>',
+      '<text x="382" y="256" font-size="10" fill="rgba(203,213,225,.58)" text-anchor="middle">controller grouping</text>',
+      '<text x="648" y="256" font-size="10" fill="rgba(203,213,225,.58)" text-anchor="middle">reader count</text>',
+      pressureRail("complexity pressure", pressure, 52, 306, 220, pressureTone),
+      metricChip("total doors", String(metrics.doors ?? doors ?? "?"), 296, 296, 110),
+      metricChip("readers", String(metrics.readers ?? readers ?? "?"), 420, 296, 100),
+      metricChip("complexity", String(metrics.complexityIndex ?? complexity ?? "?"), 534, 296, 116),
+      controlModeBlock(metrics.bothSidesLabel || "?", 534, 340, 182, 52),
       '</svg>',
       '<p class="sl-vis-note"><strong>Visual note:</strong> Interior and high-security values are weighted planning contributions. The final controlled-door total is rounded after the weighted values are added, so rounded component labels may not equal the final total.</p>',
       '</div>'

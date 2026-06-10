@@ -31,6 +31,12 @@ function hasAny(text, tokens) {
   return tokens.some((token) => text.includes(token));
 }
 
+
+function hasLocalReportCacheToken(slug, html) {
+  return html.includes("./script.js?v=access-control-" + slug + "-export-print-ux-001") ||
+    (slug === "door-count-planner" && html.includes("./script.js?v=access-control-door-count-shared-cad-factory-003"));
+}
+
 const tools = [
   "scope-planner",
   "door-count-planner",
@@ -76,7 +82,7 @@ for (const slug of tools) {
   check(slug, "does not expose legacy Chart Snapshot wording", !script.includes("Chart Snapshot"));
 
   if (slug === "scope-planner") {
-    check(slug, "loads shared planning visual", html.includes("/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-056-door-count-export-safe-visual"));
+    check(slug, "loads shared planning visual", html.includes("/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-057-door-count-shared-cad-factory"));
     check(slug, "has dedicated print/copy summary actions", script.includes("printScopeSummary") && script.includes("copyScopeSummary"));
     check(slug, "branch map has print/export palette", script.includes("buildScopePlannerBranchMapSvg") && script.includes("exportMode: true"));
     check(slug, "uses natural print packing", script.includes("access-control-scope-planner-print-disclaimer-keep-028") && script.includes("break-inside:avoid;page-break-inside:avoid") && !script.includes("break-before:page;page-break-before:always"));
@@ -91,7 +97,12 @@ for (const slug of tools) {
   check(slug, "has acceptable visual ownership path", hasAny(script, ["ScopedLabsAccessControlPlanningVisuals", "shell.register", "attachOutputShellExport"]));
 
   if (localPrintTools.has(slug)) {
-    check(slug, "local report cache token bumped", html.includes("./script.js?v=access-control-" + slug + "-export-print-ux-001"));
+    check(
+  slug,
+  "local report cache token bumped",
+  hasLocalReportCacheToken(slug, html),
+  ""
+);
     check(slug, "local report uses Planning Visual wording or no visual block needed", script.includes("Planning Visual") || slug === "credential-format");
     check(slug, "local report has explicit print page margin", script.includes("@page{margin:.45in}"));
     check(slug, "local report avoids orphaned visual/section blocks", script.includes(".report-head,.section,.chart-wrap,.grid,.summary,.body-copy,.foot{break-inside:avoid;page-break-inside:avoid}"));
