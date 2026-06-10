@@ -39,10 +39,10 @@ const outputShell = read("assets/access-control-output-shell.js");
 const exportEngine = read("assets/export.js");
 
 const outputShellCanAutoBind =
-  outputShell.includes("access-control-output-shell-export-popup-visual-autobind-003") &&
+  outputShell.includes("access-control-output-shell-export-safe-visual-preference-004") &&
   outputShell.includes("ensureExportVisualBinding") &&
   outputShell.includes("__accessControlOutputShellVisualBinding") &&
-  outputShell.includes("config.getChartImage = function getAccessControlOutputShellChartImage");
+  outputShell.includes("config.getChartImage = function getAccessControlOutputShellChartImage") && outputShell.includes("function getExportChartImage");
 
 check(rows, "shared", exists("assets/access-control-output-shell.js") ? "SAFE" : "FAIL", "Access Control output shell exists");
 check(rows, "shared", outputShellCanAutoBind ? "SAFE" : "FAIL", "output shell auto-binds registered visuals into export config");
@@ -85,7 +85,7 @@ for (const slug of tools) {
     continue;
   }
 
-  const loadsOutputShell = html.includes("/assets/access-control-output-shell.js?v=access-control-output-shell-003-export-popup-visual-autobind");
+  const loadsOutputShell = html.includes("/assets/access-control-output-shell.js?v=access-control-output-shell-004-export-safe-visual-preference");
   const hasVisualCallback = hasAny(script, [
     "getChartImage",
     "getExportChartImage",

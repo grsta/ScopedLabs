@@ -1,3 +1,4 @@
+// access-control-door-count-export-safe-visual-002: export/popup uses shared print-safe SVG render instead of live dark DOM snapshot.
 // access-control-door-count-planner-export-print-ux-001: local print report wording and page-pack polish.
 (() => {
   const CATEGORY = "access-control";
@@ -361,11 +362,11 @@
   }
 
   function getChartImage() {
-    return getDoorCountPlanningVisualImage();
+    return getDoorCountPlanningVisualExportImage();
   }
 
   function getExportChartImage() {
-    return getDoorCountPlanningVisualImage();
+    return getDoorCountPlanningVisualExportImage();
   }
 
   function buildCurrentReportPayload() {
@@ -399,7 +400,7 @@
       ],
       outputs,
       assumptions: getAssumptions(),
-      chartImage: getDoorCountPlanningVisualImage(),
+      chartImage: getDoorCountPlanningVisualExportImage(),
       meta: getReportMeta()
     };
   }
@@ -831,6 +832,33 @@
     const visuals = window.ScopedLabsAccessControlPlanningVisuals;
     if (!visuals || typeof visuals.getDataUri !== "function") return "";
     return visuals.getDataUri(els.visualMount);
+  }
+
+  function getDoorCountPlanningVisualExportImage() {
+    const visuals = window.ScopedLabsAccessControlPlanningVisuals;
+    const metrics = lastMetrics || {};
+
+    if (visuals && typeof visuals.buildDoorCountSvg === "function") {
+      try {
+        const html = visuals.buildDoorCountSvg({
+          ...metrics,
+          exportMode: true
+        });
+        const match = String(html || "").match(/<svg[\s\S]*?<\/svg>/i);
+
+        if (match) {
+          if (typeof visuals.svgToDataUri === "function") {
+            return visuals.svgToDataUri(match[0]);
+          }
+
+          return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(match[0]);
+        }
+      } catch (err) {
+        console.warn("ScopedLabs Door Count export-safe visual failed:", err);
+      }
+    }
+
+    return getDoorCountPlanningVisualImage();
   }
 
   function renderDoorCountPlanningSchedule(metrics = {}) {

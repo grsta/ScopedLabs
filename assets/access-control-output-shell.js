@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-output-shell-003-export-popup-visual-autobind";
+  const VERSION = "access-control-output-shell-004-export-safe-visual-preference";
   const ASSISTANT_PROOF_OUTPUT_CONTRACT = Object.freeze({
     name: "access-control-assistant-proof-output-contract",
     pattern: "access-control-assistant-proof-visual-pattern",
@@ -19,7 +19,7 @@
     role: "assistant-owned-output-visual-export-handoff",
     category: "access-control",
     currentProofTool: "lock-power-budget",
-    requiredMethods: Object.freeze(["register", "getChartImage", "attachExportGetter", "ensureExportVisualBinding", "showVisual", "hideVisual"]),
+    requiredMethods: Object.freeze(["register", "getChartImage", "getExportChartImage", "attachExportGetter", "ensureExportVisualBinding", "showVisual", "hideVisual"]),
     outputPattern: Object.freeze({
       visibleDecisionLayer: "assistant-shell",
       visibleEngineeringLayer: "cad-visual",
@@ -30,6 +30,7 @@
     futureCoreTargets: Object.freeze(["panel-capacity", "access-level-sizing"])
   });
   const registry = new Map();
+  // access-control-output-shell-export-safe-visual-preference-004: prefer print-safe renderers over live DOM snapshots for blob/export popup visuals.
   const pendingExportBinds = new Set();
 
   function resolveEl(ref) {
@@ -84,6 +85,7 @@
 
     registry.set(slug, {
       getChartImage: typeof options.getChartImage === "function" ? options.getChartImage : null,
+      getExportChartImage: typeof options.getExportChartImage === "function" ? options.getExportChartImage : null,
       getVisualHtml: typeof options.getVisualHtml === "function" ? options.getVisualHtml : null
     });
 
@@ -102,6 +104,21 @@
       console.warn("ScopedLabs Access Control output shell chart image failed:", err);
       return "";
     }
+  }
+
+  function getExportChartImage(toolSlug) {
+    const slug = safeSlug(toolSlug);
+    const item = registry.get(slug);
+
+    if (item && typeof item.getExportChartImage === "function") {
+      try {
+        return item.getExportChartImage() || getChartImage(slug);
+      } catch (err) {
+        console.warn("ScopedLabs Access Control output shell export-safe chart image failed:", err);
+      }
+    }
+
+    return getChartImage(slug);
   }
 
   function normalizeAssistantProofExportReferences(references = []) {
@@ -153,7 +170,7 @@
     const previousGetter = typeof config.getChartImage === "function" ? config.getChartImage : null;
 
     config.getChartImage = function getAccessControlOutputShellChartImage() {
-      const shellImage = getChartImage(slug);
+      const shellImage = getExportChartImage(slug);
       if (shellImage) return shellImage;
 
       if (previousGetter) {
@@ -169,6 +186,11 @@
 
     config.__accessControlOutputShellVisualBinding = slug;
     config.__accessControlOutputShellVersion = VERSION;
+    config.chartTitle = config.chartTitle && !/chart snapshot/i.test(String(config.chartTitle)) ? config.chartTitle : "Planning Visual";
+    config.visualTitle = config.visualTitle && !/chart snapshot/i.test(String(config.visualTitle)) ? config.visualTitle : "Planning Visual";
+    config.chartSectionTitle = config.chartSectionTitle && !/chart snapshot/i.test(String(config.chartSectionTitle)) ? config.chartSectionTitle : "Planning Visual";
+    config.visualSectionTitle = config.visualSectionTitle && !/chart snapshot/i.test(String(config.visualSectionTitle)) ? config.visualSectionTitle : "Planning Visual";
+    config.reportVisualTitle = config.reportVisualTitle && !/chart snapshot/i.test(String(config.reportVisualTitle)) ? config.reportVisualTitle : "Planning Visual";
 
     return true;
   }
@@ -203,6 +225,7 @@
     buildAssistantProofReferencesSection,
     register,
     getChartImage,
+    getExportChartImage,
     attachExportGetter,
     ensureExportVisualBinding,
     showVisual,

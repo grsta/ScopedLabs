@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-055-lock-power-rail-label-stack";
+  const VERSION = "access-control-planning-visuals-056-door-count-export-safe-visual";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -2014,6 +2014,7 @@
     cadCredentialFormatBitCardIcon,
     buildScopePlannerBranchMapSvg,
     renderDoorCable,
+    buildDoorCountSvg,
     renderDoorCount,
     renderAntiPassback,
     buildAntiPassbackSvg,

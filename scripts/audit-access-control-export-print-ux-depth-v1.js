@@ -76,7 +76,7 @@ for (const slug of tools) {
   check(slug, "does not expose legacy Chart Snapshot wording", !script.includes("Chart Snapshot"));
 
   if (slug === "scope-planner") {
-    check(slug, "loads shared planning visual", html.includes("/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-055-lock-power-rail-label-stack"));
+    check(slug, "loads shared planning visual", html.includes("/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-056-door-count-export-safe-visual"));
     check(slug, "has dedicated print/copy summary actions", script.includes("printScopeSummary") && script.includes("copyScopeSummary"));
     check(slug, "branch map has print/export palette", script.includes("buildScopePlannerBranchMapSvg") && script.includes("exportMode: true"));
     check(slug, "uses natural print packing", script.includes("access-control-scope-planner-print-disclaimer-keep-028") && script.includes("break-inside:avoid;page-break-inside:avoid") && !script.includes("break-before:page;page-break-before:always"));
@@ -84,7 +84,7 @@ for (const slug of tools) {
     continue;
   }
 
-  check(slug, "loads current output shell", html.includes("/assets/access-control-output-shell.js?v=access-control-output-shell-003-export-popup-visual-autobind"));
+  check(slug, "loads current output shell", html.includes("/assets/access-control-output-shell.js?v=access-control-output-shell-004-export-safe-visual-preference"));
   check(slug, "loads current global polish", html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-011-status-value-weight"));
   check(slug, "has report/export action wiring", hasAny(script, ["attachOutputShellExport", "ScopedLabsExportConfig", "reportActions"]));
   check(slug, "has export visual image callback", hasAny(script, ["getChartImage", "getExportChartImage", "getAccessLevelVisualImage", "getReaderTypeVisualImage", "getCredentialFormatVisualImage"]));

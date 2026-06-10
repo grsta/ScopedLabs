@@ -62,7 +62,7 @@ const sharedVisualTools = {
 const planning = read("assets/access-control-planning-visuals.js");
 const polish = read("assets/access-control-tool-polish.js");
 
-check("shared", "Planning visual module is current", planning.includes("access-control-planning-visuals-055-lock-power-rail-label-stack"));
+check("shared", "Planning visual module is current", planning.includes("access-control-planning-visuals-056-door-count-export-safe-visual"));
 check("shared", "All shared visual renderers are registered", Object.values(sharedVisualTools).every((name) => planning.includes(name)));
 check("shared", "Scope Planner branch map is registered", planning.includes("buildScopePlannerBranchMapSvg") && planning.includes('data-access-control-modern-visual="scope-planner-branch-map"'));
 check("shared", "Lock Power shared rail is registered", planning.includes("buildLockPowerBudgetSupplyRailSvg") && planning.includes("renderLockPowerBudget") && planning.includes("access-control-lock-power-rail-label-stack-055"));
@@ -80,20 +80,20 @@ tools.forEach((slug) => {
   check(slug, "script parses", scriptParses(script));
 
   if (slug === "scope-planner") {
-    check(slug, "loads shared planning visual", html.includes("/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-055-lock-power-rail-label-stack"));
+    check(slug, "loads shared planning visual", html.includes("/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-056-door-count-export-safe-visual"));
     check(slug, "uses special report print/copy actions", script.includes("printScopeSummary") && script.includes("copyScopeSummary"));
     check(slug, "branch map has export parity", script.includes("buildScopePlannerBranchMapSvg") && script.includes("exportMode: true"));
     check(slug, "print report uses natural packing", script.includes("access-control-scope-planner-print-disclaimer-keep-028") && script.includes("break-inside:avoid;page-break-inside:avoid") && !script.includes("break-before:page;page-break-before:always"));
     check(slug, "does not force calculator output shell", !html.includes("/assets/access-control-output-shell.js"));
   } else {
-    check(slug, "loads output shell", html.includes("/assets/access-control-output-shell.js?v=access-control-output-shell-003-export-popup-visual-autobind"));
+    check(slug, "loads output shell", html.includes("/assets/access-control-output-shell.js?v=access-control-output-shell-004-export-safe-visual-preference"));
     check(slug, "has export visual callback", script.includes("getChartImage") || script.includes("getExportChartImage") || script.includes("getAccessLevelVisualImage") || script.includes("getReaderTypeVisualImage") || script.includes("getCredentialFormatVisualImage"));
     check(slug, "has report actions/dropdown or export config", script.includes("reportActions") || script.includes("ScopedLabsExportConfig") || script.includes("attachOutputShellExport"));
     check(slug, "loads global Access Control polish", html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-011-status-value-weight"));
   }
 
   if (Object.prototype.hasOwnProperty.call(sharedVisualTools, slug)) {
-    check(slug, "loads current shared planning visual", html.includes("/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-055-lock-power-rail-label-stack"));
+    check(slug, "loads current shared planning visual", html.includes("/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-056-door-count-export-safe-visual"));
     check(slug, "uses expected shared visual bridge", script.includes("ScopedLabsAccessControlPlanningVisuals") && script.includes(sharedVisualTools[slug]));
   }
 

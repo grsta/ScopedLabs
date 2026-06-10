@@ -1346,7 +1346,7 @@ if (shouldSuppressDefaultInterpretationBlock()) {
     const chartBlock = payload.chartImage
       ? `
         <section class="section">
-          <h2>Chart Snapshot</h2>
+          <h2>Planning Visual</h2>
           <div class="chart-wrap">
             <img src="${payload.chartImage}" alt="${escapeHtml(payload.tool)} chart">
           </div>
