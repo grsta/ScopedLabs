@@ -34,7 +34,7 @@ function hasAny(text, tokens) {
 
 function hasLocalReportCacheToken(slug, html) {
   return html.includes("./script.js?v=access-control-" + slug + "-export-print-ux-001") ||
-    (slug === "door-count-planner" && html.includes("./script.js?v=access-control-door-count-shared-cad-factory-003"));
+    (slug === "door-count-planner" && html.includes("./script.js?v=access-control-door-count-export-contrast-004"));
 }
 
 const tools = [

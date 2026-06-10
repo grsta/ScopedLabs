@@ -49,6 +49,7 @@ push(rows, "door-count-tool", doorCountScript.includes("getDoorCountPlanningVisu
 push(rows, "door-count-tool", /getDoorCountPlanningVisualExportImage[\s\S]*exportMode:\s*true/.test(doorCountScript) ? "SAFE" : "FAIL", "Door Count export helper requests print-safe visual palette");
 push(rows, "door-count-tool", /function getChartImage\(\)[\s\S]*getDoorCountPlanningVisualExportImage\(\)/.test(doorCountScript) ? "SAFE" : "FAIL", "Door Count chart callback uses export-safe visual");
 push(rows, "door-count-tool", /function getExportChartImage\(\)[\s\S]*getDoorCountPlanningVisualExportImage\(\)/.test(doorCountScript) ? "SAFE" : "FAIL", "Door Count exposes dedicated export-safe callback");
+push(rows, "door-count-tool", /shell\.register\(TOOL,\s*\{[\s\S]*getExportChartImage\(\)\s*\{[\s\S]*getDoorCountPlanningVisualExportImage\(\)/.test(doorCountScript) ? "SAFE" : "FAIL", "Door Count output shell registration exposes export-safe visual callback");
 push(rows, "door-count-tool", doorCountScript.includes("chartImage: getDoorCountPlanningVisualExportImage()") ? "SAFE" : "FAIL", "Door Count local report uses export-safe visual");
 push(rows, "door-count-tool", doorCountScript.includes("Planning Visual") ? "SAFE" : "FAIL", "Door Count local report wording is modernized");
 

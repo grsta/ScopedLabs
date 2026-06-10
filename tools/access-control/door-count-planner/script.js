@@ -1031,6 +1031,9 @@
       getChartImage() {
         return getDoorCountPlanningVisualImage();
       },
+      getExportChartImage() {
+        return getDoorCountPlanningVisualExportImage();
+      },
       attachExportGetter() {
         return false;
       }
