@@ -47,11 +47,14 @@ push(rows, "door-count-shared-visual", /buildDoorCountSvg,\s*\n\s*renderDoorCoun
 push(rows, "door-count-tool", exists("tools/access-control/door-count-planner/script.js") ? "SAFE" : "FAIL", "Door Count tool script exists");
 push(rows, "door-count-tool", doorCountScript.includes("getDoorCountPlanningVisualExportImage") ? "SAFE" : "FAIL", "Door Count has export-safe visual image helper");
 push(rows, "door-count-tool", /getDoorCountPlanningVisualExportImage[\s\S]*exportMode:\s*true/.test(doorCountScript) ? "SAFE" : "FAIL", "Door Count export helper requests print-safe visual palette");
-push(rows, "door-count-tool", /function getChartImage\(\)[\s\S]*getDoorCountPlanningVisualExportImage\(\)/.test(doorCountScript) ? "SAFE" : "FAIL", "Door Count chart callback uses export-safe visual");
-push(rows, "door-count-tool", /function getExportChartImage\(\)[\s\S]*getDoorCountPlanningVisualExportImage\(\)/.test(doorCountScript) ? "SAFE" : "FAIL", "Door Count exposes dedicated export-safe callback");
-push(rows, "door-count-tool", /shell\.register\(TOOL,\s*\{[\s\S]*getExportChartImage\(\)\s*\{[\s\S]*getDoorCountPlanningVisualExportImage\(\)/.test(doorCountScript) ? "SAFE" : "FAIL", "Door Count output shell registration exposes export-safe visual callback");
-push(rows, "door-count-tool", doorCountScript.includes("chartImage: getDoorCountPlanningVisualExportImage()") ? "SAFE" : "FAIL", "Door Count local report uses export-safe visual");
+push(rows, "door-count-tool", /function getChartImage\(\)[\s\S]*getDoorCountPlanningVisualImage\(\)/.test(doorCountScript) ? "SAFE" : "FAIL", "Door Count chart callback uses dark preview visual");
+push(rows, "door-count-tool", /function getExportChartImage\(\)[\s\S]*getDoorCountPlanningVisualImage\(\)/.test(doorCountScript) ? "SAFE" : "FAIL", "Door Count popup callback uses dark preview visual");
+push(rows, "door-count-tool", /shell\.register\(TOOL,\s*\{[\s\S]*getExportChartImage\(\)\s*\{[\s\S]*getDoorCountPlanningVisualImage\(\)/.test(doorCountScript) ? "SAFE" : "FAIL", "Door Count output shell registration exposes dark preview visual callback");
+push(rows, "door-count-tool", doorCountScript.includes("chartImage: getDoorCountPlanningVisualImage()") ? "SAFE" : "FAIL", "Door Count local report uses dark preview visual");
 push(rows, "door-count-tool", doorCountScript.includes("Planning Visual") ? "SAFE" : "FAIL", "Door Count local report wording is modernized");
+push(rows, "door-count-tool", exportJs.includes("chart-wrap--print-low-ink") ? "SAFE" : "FAIL", "shared export supports print-low-ink chart mode");
+push(rows, "door-count-tool", read("tools/access-control/door-count-planner/index.html").includes('"printLowInkChart": true') ? "SAFE" : "FAIL", "Door Count enables print-low-ink mode for Print / Save PDF");
+push(rows, "door-count-tool", doorCountScript.includes("filter:invert(1) hue-rotate(180deg) saturate(.75) contrast(1.15)") ? "SAFE" : "FAIL", "Door Count local print page tones dark preview visual");
 
 const counts = rows.reduce((acc, row) => {
   acc[row.status] = (acc[row.status] || 0) + 1;

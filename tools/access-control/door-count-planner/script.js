@@ -362,11 +362,11 @@
   }
 
   function getChartImage() {
-    return getDoorCountPlanningVisualExportImage();
+    return getDoorCountPlanningVisualImage();
   }
 
   function getExportChartImage() {
-    return getDoorCountPlanningVisualExportImage();
+    return getDoorCountPlanningVisualImage();
   }
 
   function buildCurrentReportPayload() {
@@ -400,7 +400,7 @@
       ],
       outputs,
       assumptions: getAssumptions(),
-      chartImage: getDoorCountPlanningVisualExportImage(),
+      chartImage: getDoorCountPlanningVisualImage(),
       meta: getReportMeta()
     };
   }
@@ -666,7 +666,7 @@
       .report-head,.section,.chart-wrap,.grid,.summary,.body-copy,.foot{break-inside:avoid;page-break-inside:avoid}
       .section{margin-top:12px}
       .section h2{break-after:avoid;page-break-after:avoid}
-      .chart-wrap img{display:block;max-width:100%;max-height:4.6in;object-fit:contain;margin:0 auto}
+      .chart-wrap img{display:block;max-width:100%;max-height:4.6in;object-fit:contain;margin:0 auto;filter:invert(1) hue-rotate(180deg) saturate(.75) contrast(1.15)}
       table{break-inside:auto}
       tr{break-inside:avoid;page-break-inside:avoid}
     }
@@ -1032,7 +1032,7 @@
         return getDoorCountPlanningVisualImage();
       },
       getExportChartImage() {
-        return getDoorCountPlanningVisualExportImage();
+        return getDoorCountPlanningVisualImage();
       },
       attachExportGetter() {
         return false;

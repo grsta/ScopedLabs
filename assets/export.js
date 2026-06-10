@@ -1022,6 +1022,7 @@
         outputs: Array.isArray(custom.outputs) ? custom.outputs : getResultRows(),
         assumptions: Array.isArray(custom.assumptions) ? custom.assumptions : state.options.assumptions,
         chartImage: custom.chartImage || "",
+        printLowInkChart: custom.printLowInkChart === true || state.options.printLowInkChart === true,
         stackReportSections: custom.stackReportSections === true,
         meta: {
           ...getMeta(),
@@ -1084,6 +1085,7 @@ if (shouldSuppressDefaultInterpretationBlock()) {
       outputs,
       assumptions: state.options.assumptions,
       chartImage,
+      printLowInkChart: state.options.printLowInkChart === true,
       meta
     };
   }
@@ -1347,7 +1349,7 @@ if (shouldSuppressDefaultInterpretationBlock()) {
       ? `
         <section class="section">
           <h2>Planning Visual</h2>
-          <div class="chart-wrap">
+          <div class="chart-wrap${payload.printLowInkChart ? " chart-wrap--print-low-ink" : ""}" data-tool-slug="${escapeHtml(payload.toolSlug || "")}">
             <img src="${payload.chartImage}" alt="${escapeHtml(payload.tool)} chart">
           </div>
         </section>

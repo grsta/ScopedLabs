@@ -32,9 +32,17 @@ function hasAny(text, tokens) {
 }
 
 
+
+function hasConstrainedLocalVisualHeight(script) {
+  return /\.chart-wrap\s+img\s*\{[^}]*max-height\s*:/m.test(script) ||
+    /\.visual-wrap\s+img\s*\{[^}]*max-height\s*:/m.test(script) ||
+    /max-height\s*:\s*4\.6in/m.test(script) ||
+    /max-height\s*:\s*4\.8in/m.test(script);
+}
+
 function hasLocalReportCacheToken(slug, html) {
   return html.includes("./script.js?v=access-control-" + slug + "-export-print-ux-001") ||
-    (slug === "door-count-planner" && html.includes("./script.js?v=access-control-door-count-export-contrast-004"));
+    (slug === "door-count-planner" && html.includes("./script.js?v=access-control-door-count-preview-print-mode-005"));
 }
 
 const tools = [
@@ -106,7 +114,12 @@ for (const slug of tools) {
     check(slug, "local report uses Planning Visual wording or no visual block needed", script.includes("Planning Visual") || slug === "credential-format");
     check(slug, "local report has explicit print page margin", script.includes("@page{margin:.45in}"));
     check(slug, "local report avoids orphaned visual/section blocks", script.includes(".report-head,.section,.chart-wrap,.grid,.summary,.body-copy,.foot{break-inside:avoid;page-break-inside:avoid}"));
-    check(slug, "local report constrains visual image height", script.includes(".chart-wrap img{display:block;max-width:100%;max-height:4.6in;object-fit:contain;margin:0 auto}"));
+    check(
+  slug,
+  "local report constrains visual image height",
+  hasConstrainedLocalVisualHeight(script),
+  ""
+);
     check(slug, "local print status chip uses cleaner weight/radius", script.includes("border-radius:10px") && script.includes("font-weight:720"));
   }
 
