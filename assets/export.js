@@ -1807,6 +1807,15 @@ if (shouldSuppressDefaultInterpretationBlock()) {
       height:auto;
       display:inline-block;
     }
+    .chart-wrap--print-low-ink{
+      background:#07110b;
+      border-color:rgba(120,255,120,.18);
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.02);
+    }
+    .chart-wrap--print-low-ink img{
+      display:block;
+      margin:0 auto;
+    }
     .extra-svg-wrap{
       border:1px solid var(--line);
       border-radius:14px;
@@ -1839,6 +1848,16 @@ if (shouldSuppressDefaultInterpretationBlock()) {
       .page{max-width:none;border:none;box-shadow:none}
       .toolbar{display:none !important}
       .report{padding:.18in .28in .24in}
+
+      .chart-wrap--print-low-ink{
+        background:#fff !important;
+        border:1px solid var(--line) !important;
+        padding:10px !important;
+        box-shadow:none !important;
+      }
+      .chart-wrap--print-low-ink img{
+        filter:invert(1) hue-rotate(180deg) saturate(.75) contrast(1.15) !important;
+      }
 
       .extra-svg-wrap,
       .extra-svg-wrap.print-low-ink-sentinel{

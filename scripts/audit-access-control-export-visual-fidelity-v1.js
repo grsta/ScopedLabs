@@ -53,8 +53,11 @@ push(rows, "door-count-tool", /shell\.register\(TOOL,\s*\{[\s\S]*getExportChartI
 push(rows, "door-count-tool", doorCountScript.includes("chartImage: getDoorCountPlanningVisualImage()") ? "SAFE" : "FAIL", "Door Count local report uses dark preview visual");
 push(rows, "door-count-tool", doorCountScript.includes("Planning Visual") ? "SAFE" : "FAIL", "Door Count local report wording is modernized");
 push(rows, "door-count-tool", exportJs.includes("chart-wrap--print-low-ink") ? "SAFE" : "FAIL", "shared export supports print-low-ink chart mode");
+push(rows, "door-count-tool", exportJs.includes(".chart-wrap--print-low-ink") && exportJs.includes("background:#07110b") ? "SAFE" : "FAIL", "shared export gives low-ink chart a dark popup wrapper");
+push(rows, "door-count-tool", /@media print[\s\S]*\.chart-wrap--print-low-ink[\s\S]*background:#fff[\s\S]*\.chart-wrap--print-low-ink img[\s\S]*filter:invert\(1\)/.test(exportJs) ? "SAFE" : "FAIL", "shared export tones low-ink chart only during print");
 push(rows, "door-count-tool", read("tools/access-control/door-count-planner/index.html").includes('"printLowInkChart": true') ? "SAFE" : "FAIL", "Door Count enables print-low-ink mode for Print / Save PDF");
 push(rows, "door-count-tool", doorCountScript.includes("filter:invert(1) hue-rotate(180deg) saturate(.75) contrast(1.15)") ? "SAFE" : "FAIL", "Door Count local print page tones dark preview visual");
+push(rows, "door-count-tool", /\.chart-wrap\s*\{[^}]*background\s*:\s*#07110b/i.test(doorCountScript) ? "SAFE" : "FAIL", "Door Count local report preview uses dark visual wrapper");
 
 const counts = rows.reduce((acc, row) => {
   acc[row.status] = (acc[row.status] || 0) + 1;

@@ -632,11 +632,12 @@
       line-height:1.7;
     }
     .chart-wrap{
-      border:1px solid var(--line);
+      border:1px solid rgba(120,255,120,.18);
       border-radius:14px;
-      background:#fff;
+      background:#07110b;
       padding:18px;
       text-align:center;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.02);
     }
     .chart-wrap img{
       max-width:100%;
@@ -663,6 +664,12 @@
       .page{max-width:none;border:none;box-shadow:none}
       .toolbar{display:none !important}
       .report{padding:0}
+      .chart-wrap{
+        background:#fff!important;
+        border:1px solid var(--line)!important;
+        padding:10px!important;
+        box-shadow:none!important;
+      }
       .report-head,.section,.chart-wrap,.grid,.summary,.body-copy,.foot{break-inside:avoid;page-break-inside:avoid}
       .section{margin-top:12px}
       .section h2{break-after:avoid;page-break-after:avoid}
