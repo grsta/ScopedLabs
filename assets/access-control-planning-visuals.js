@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-057-door-count-shared-cad-factory";
+  const VERSION = "access-control-planning-visuals-058-door-cable-shared-icons";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -1365,13 +1365,14 @@
       '<text x="52" y="62" font-size="11" fill="rgba(180,255,200,.68)" letter-spacing="1.4">ROUTING TAKEOFF</text>',
       '<text x="52" y="84" font-size="19" fill="rgba(246,255,248,.96)" font-weight="650">Door cable path, slack, and takeoff pressure</text>',
       statusBadge(statusText, tone, 616, 51),
-      '<g opacity=".96">',
-      '<rect x="66" y="137" width="84" height="52" rx="7" fill="rgba(120,255,120,.065)" stroke="rgba(120,255,120,.30)" />',
-      '<path d="M78 151 H138 M78 162 H126 M78 173 H136" stroke="rgba(203,213,225,.32)" stroke-width="1" />',
+      '<g opacity=".96" data-cad-primitive-source="access-control-shared-icons">',
+      '<g transform="translate(61 128) scale(.58)">',
+      cadAccessPanelCapacityIcon({ x: 0, y: 0, width: 154, height: 122, maxSlots: 4, usedSlots: Math.max(1, Math.min(4, cableCount)), panelLabel: "SRC", tone: cableTone, exportMode: false }),
+      '</g>',
       '<text x="108" y="209" font-size="10" fill="rgba(203,213,225,.64)" text-anchor="middle">PANEL / SOURCE</text>',
-      '<rect x="610" y="137" width="84" height="52" rx="7" fill="rgba(120,255,120,.055)" stroke="rgba(120,255,120,.30)" />',
-      '<path d="M638 145 V181 M638 145 H676 V181 H638" stroke="rgba(203,213,225,.35)" stroke-width="1.2" fill="none" />',
-      '<circle cx="668" cy="163" r="2" fill="rgba(125,255,152,.78)" />',
+      '<g transform="translate(592 123) scale(.47)">',
+      cadDoorReaderOpeningIcon({ x: 0, y: 0, tone: cableTone, exportMode: false }),
+      '</g>',
       '<text x="652" y="209" font-size="10" fill="rgba(203,213,225,.64)" text-anchor="middle">CONTROLLED DOOR</text>',
       '</g>',
       '<path d="M150 163 H610" stroke="rgba(203,213,225,.24)" stroke-width="1.2" stroke-dasharray="5 7" marker-end="url(#accArrowCableV3)" />',

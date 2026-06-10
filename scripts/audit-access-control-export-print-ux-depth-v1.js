@@ -91,7 +91,7 @@ for (const slug of tools) {
   check(slug, "does not expose legacy Chart Snapshot wording", !script.includes("Chart Snapshot"));
 
   if (slug === "scope-planner") {
-    check(slug, "loads shared planning visual", html.includes("/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-057-door-count-shared-cad-factory"));
+    check(slug, "loads shared planning visual", html.includes("/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-058-door-cable-shared-icons"));
     check(slug, "has dedicated print/copy summary actions", script.includes("printScopeSummary") && script.includes("copyScopeSummary"));
     check(slug, "branch map has print/export palette", script.includes("buildScopePlannerBranchMapSvg") && script.includes("exportMode: true"));
     check(slug, "uses natural print packing", script.includes("access-control-scope-planner-print-disclaimer-keep-028") && script.includes("break-inside:avoid;page-break-inside:avoid") && !script.includes("break-before:page;page-break-before:always"));
