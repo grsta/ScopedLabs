@@ -658,10 +658,16 @@
       .page{max-width:none;border:none;box-shadow:none}
       .toolbar{display:none !important}
       .report{padding:0}
+      .chart-wrap{
+        background:#fff!important;
+        border:1px solid var(--line)!important;
+        padding:10px!important;
+        box-shadow:none!important;
+      }
       .report-head,.section,.chart-wrap,.grid,.summary,.body-copy,.foot{break-inside:avoid;page-break-inside:avoid}
       .section{margin-top:12px}
       .section h2{break-after:avoid;page-break-after:avoid}
-      .chart-wrap img{display:block;max-width:100%;max-height:4.6in;object-fit:contain;margin:0 auto}
+      .chart-wrap img{display:block;max-width:100%;max-height:4.6in;object-fit:contain;margin:0 auto;filter:invert(1) hue-rotate(180deg) saturate(.75) contrast(1.15)}
       table{break-inside:auto}
       tr{break-inside:avoid;page-break-inside:avoid}
     }
