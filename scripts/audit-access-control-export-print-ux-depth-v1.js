@@ -43,7 +43,8 @@ function hasConstrainedLocalVisualHeight(script) {
 function hasLocalReportCacheToken(slug, html) {
   return html.includes("./script.js?v=access-control-" + slug + "-export-print-ux-001") ||
     (slug === "door-count-planner" && html.includes("./script.js?v=access-control-door-count-preview-print-mode-007")) ||
-    (slug === "door-cable-length" && html.includes("./script.js?v=access-control-door-cable-length-preview-print-mode-002"));
+    (slug === "door-cable-length" && html.includes("./script.js?v=access-control-door-cable-length-preview-print-mode-002")) ||
+    (slug === "panel-capacity" && html.includes("./script.js?v=access-control-panel-capacity-preview-print-mode-002"));
 }
 
 const tools = [
