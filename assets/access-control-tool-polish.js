@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-tool-polish-012-reader-type-status-chip";
+  const VERSION = "access-control-tool-polish-013-generic-result-export-styles";
   const STYLE_ID = "access-control-tool-polish-styles";
   // access-control-status-value-weight-011: shared status chip and value-column visual weight.
 
@@ -25,6 +25,15 @@
     style.id = STYLE_ID;
     style.textContent = [
       'body[data-category="access-control"][data-access-control-tool-polish="true"] .btn{border-radius:10px!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"] .results-grid{display:grid!important;gap:10px!important;margin-top:14px!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"] .result-row{background:rgba(0,0,0,.18)!important;border:1px solid rgba(120,255,120,.14)!important;border-radius:12px!important;display:flex!important;gap:12px!important;justify-content:space-between!important;padding:10px 12px!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"] .result-label,body[data-category="access-control"][data-access-control-tool-polish="true"] .result-row .k{color:rgba(255,255,255,.70)!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"] .result-value,body[data-category="access-control"][data-access-control-tool-polish="true"] .result-row .v{font-weight:800!important;text-align:right!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"] .mini-note{color:rgba(255,255,255,.56)!important;font-size:.92rem!important;line-height:1.5!important;margin-top:12px!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"] .export-grid{display:grid!important;gap:14px!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;margin-top:14px!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"] .export-grid .field.full{grid-column:1/-1!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"] .export-status{color:rgba(255,255,255,.68)!important;font-size:.94rem!important;line-height:1.45!important;margin-top:12px!important;min-height:1.45em!important;}',
+      '@media(max-width:860px){body[data-category="access-control"][data-access-control-tool-polish="true"] .export-grid{grid-template-columns:1fr!important;}}',
       'body[data-category="access-control"][data-access-control-tool-polish="true"] .fail-safe-status-chip,body[data-category="access-control"][data-access-control-tool-polish="true"] .access-control-status-chip,body[data-category="access-control"][data-access-control-tool-polish="true"] [data-access-control-status-chip="true"]{align-items:center!important;border-radius:10px!important;display:inline-flex!important;font-size:.76rem!important;font-weight:720!important;justify-content:center!important;letter-spacing:.06em!important;line-height:1.15!important;max-width:max-content!important;min-height:28px!important;min-width:78px!important;padding:2px 14px!important;text-transform:uppercase!important;white-space:nowrap!important;width:fit-content!important;}',
       'body[data-category="access-control"][data-access-control-tool-polish="true"] .access-fail-safe-status-text{border:1px solid rgba(250,204,21,.38)!important;border-radius:10px!important;background:rgba(250,204,21,.10)!important;color:rgba(250,204,21,.96)!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:28px!important;min-width:78px!important;padding:2px 14px!important;font-size:.76rem!important;font-weight:720!important;letter-spacing:.06em!important;line-height:1.15!important;text-transform:uppercase!important;white-space:nowrap!important;}',
       'body[data-category="access-control"][data-access-control-tool-polish="true"] .access-fail-safe-status-text.complete{border-color:rgba(125,255,152,.38)!important;background:rgba(125,255,152,.10)!important;color:rgba(125,255,152,.96)!important;}',
