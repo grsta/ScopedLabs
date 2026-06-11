@@ -77,6 +77,11 @@ function classifyTool(slug) {
     /function\s+([A-Za-z0-9_]*(?:chip|Chip|pill|Pill|badge|Badge)[A-Za-z0-9_]*)\s*\(/g
   );
 
+  const sharedScheduleChipCount = countLiteral(script, "schedule.statusChip");
+  const sharedScheduleObject = /ScopedLabsAccessControlDecisionSchedule/.test(script);
+
+  const localChipSource = script.replace(/schedule\.statusChip\s*\([^)]*\)/g, "");
+
   const localChipMarkup = [
     /statusChipHtml/,
     /status-chip/,
@@ -85,17 +90,15 @@ function classifyTool(slug) {
     /class=["'][^"']*(?:status-chip|pill|badge)[^"']*["']/i,
     /className\s*=\s*["'][^"']*(?:status-chip|pill|badge)[^"']*["']/i,
     /<span\s+class=["'][^"']*(?:status-chip|pill|badge)[^"']*["']/i,
-  ].some((pattern) => pattern.test(combined));
+  ].some((pattern) => pattern.test(localChipSource));
 
-  const sharedScheduleChipCount = countLiteral(script, "schedule.statusChip");
-  const sharedScheduleObject = /ScopedLabsAccessControlDecisionSchedule/.test(script);
   const exportStatusControl = /\bsetExportStatus\s*\(/.test(script) || /function\s+setExportStatus\s*\(/.test(script);
   const routeExportStatusControl = /setRouteExportStatus/i.test(script);
   const visibleDecisionStatusControl = /renderVisibleDecisionStatus|clearVisibleDecisionStatus|normalizeStatusClass/i.test(script);
 
   const chipFallbackLikely =
     sharedScheduleChipCount > 0 &&
-    (chipFunctions.length > 0 || localChipMarkup);
+    chipFunctions.length > 0;
 
   const calcOnly =
     statusFunctions.length > 0 &&
