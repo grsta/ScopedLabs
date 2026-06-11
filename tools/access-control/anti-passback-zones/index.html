@@ -104,6 +104,20 @@
         grid-template-columns: 1fr;
       }
     }
+  
+  /* access-control-route-conflict-export-overrides-0610b */
+  @media print {
+    .chart-wrap img,
+    .chart-wrap svg {
+      display: block;
+      max-width: 100%;
+      max-height: 4.6in;
+      height: auto;
+      object-fit: contain;
+      margin: 0 auto;
+    }
+  }
+
   </style>
 </head>
 
@@ -250,6 +264,7 @@
       "categorySlug": "access-control",
       "toolLabel": "Anti-Passback Zones",
       "toolSlug": "anti-passback-zones",
+      "printLowInkChart": true,
       "reportPrefix": "SL-AC",
       "assumptions": [
         "This report reflects the visible Anti-Passback Zones inputs and outputs at the time the export was generated.",
@@ -274,7 +289,7 @@
       window.ScopedLabsReportMetadata.init(document);
     }
   </script>
-  <script src="./script.js?v=access-control-anti-passback-zones-export-print-ux-001"></script>
+  <script src="./script.js?v=access-control-anti-passback-zones-route-conflict-export-override-002"></script>
   <script src="/assets/access-control-category-nav.js?v=access-control-category-nav-001-tool-path"></script>
   <script src="/assets/access-control-tool-polish.js?v=access-control-tool-polish-011-status-value-weight"></script>
   <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>

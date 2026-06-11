@@ -1675,4 +1675,106 @@
   }
 
   reset();
+  // access-control-route-conflict-export-override-elevator-reader-count
+  function elevator_reader_count_setRouteExportStatus(message) {
+    if (typeof setExportStatus === "function") {
+      setExportStatus(message);
+      return;
+    }
+
+    const statusEl = els && els.exportStatus ? els.exportStatus : document.getElementById("exportStatus");
+    if (statusEl) statusEl.textContent = message || "";
+  }
+
+  function elevator_reader_count_getRouteExportChartImage() {
+    try {
+      const image = getElevatorReaderVisualImage(lastMetrics, { exportMode: false });
+      if (image) return image;
+    } catch (err) {
+      console.warn("elevator-reader-count dark chart image capture failed:", err);
+    }
+
+    try {
+      if (typeof getExportChartImage === "function") {
+        const image = getExportChartImage();
+        if (image) return image;
+      }
+    } catch (err) {
+      console.warn("elevator-reader-count fallback export chart image capture failed:", err);
+    }
+
+    return "";
+  }
+
+  function elevator_reader_count_buildRouteExportPayload() {
+    const engine = window.ScopedLabsExport || null;
+    const cfg = window.ScopedLabsExportConfig || {};
+    const localReport = typeof currentReport !== "undefined" ? currentReport : null;
+
+    let base = null;
+
+    if (engine && typeof engine.buildPayload === "function") {
+      try {
+        base = engine.buildPayload();
+      } catch (err) {
+        console.warn("elevator-reader-count shared export payload failed:", err);
+      }
+    }
+
+    if (!base && localReport) {
+      base = Object.assign({
+        category: cfg.categoryLabel || "Access Control",
+        categorySlug: cfg.categorySlug || "access-control",
+        tool: cfg.toolLabel || "",
+        toolSlug: cfg.toolSlug || "elevator-reader-count",
+        assumptions: Array.isArray(cfg.assumptions) ? cfg.assumptions : [],
+        meta: {}
+      }, localReport);
+    }
+
+    if (!base) return null;
+
+    const chartImage = elevator_reader_count_getRouteExportChartImage();
+
+    return Object.assign({}, base, {
+      chartImage: chartImage || base.chartImage || "",
+      printLowInkChart: true
+    });
+  }
+
+  function elevator_reader_count_openRouteExportReport(event) {
+    if (event) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+
+    const engine = window.ScopedLabsExport || null;
+
+    if (!engine || typeof engine.openReportWindow !== "function") {
+      elevator_reader_count_setRouteExportStatus("Export engine is still loading. Try again in a moment.");
+      return false;
+    }
+
+    const payload = elevator_reader_count_buildRouteExportPayload();
+
+    if (!payload) {
+      elevator_reader_count_setRouteExportStatus("Run the calculator before exporting a report.");
+      return false;
+    }
+
+    const opened = engine.openReportWindow(payload);
+    elevator_reader_count_setRouteExportStatus(opened ? "Export report opened in a new tab." : "Popup blocked or export failed.");
+    return opened;
+  }
+
+  function elevator_reader_count_bindRouteExportOverride() {
+    const button = els && els.exportReport ? els.exportReport : document.getElementById("exportReport");
+    if (!button || button.dataset.routeConflictExportBound) return;
+
+    button.dataset.routeConflictExportBound = "elevator-reader-count";
+    button.addEventListener("click", elevator_reader_count_openRouteExportReport, true);
+  }
+
+  elevator_reader_count_bindRouteExportOverride();
+
 })();

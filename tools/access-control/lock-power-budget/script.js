@@ -1695,4 +1695,106 @@ accessPowerSupplySymbol(66, 122, supplyLabel, palette),
 
   bindEvents();
   init();
+  // access-control-route-conflict-export-override-lock-power-budget
+  function lock_power_budget_setRouteExportStatus(message) {
+    if (typeof setExportStatus === "function") {
+      setExportStatus(message);
+      return;
+    }
+
+    const statusEl = els && els.exportStatus ? els.exportStatus : document.getElementById("exportStatus");
+    if (statusEl) statusEl.textContent = message || "";
+  }
+
+  function lock_power_budget_getRouteExportChartImage() {
+    try {
+      const image = getCadPowerRailImage(lastMetrics, { exportMode: false });
+      if (image) return image;
+    } catch (err) {
+      console.warn("lock-power-budget dark chart image capture failed:", err);
+    }
+
+    try {
+      if (typeof getExportChartImage === "function") {
+        const image = getExportChartImage();
+        if (image) return image;
+      }
+    } catch (err) {
+      console.warn("lock-power-budget fallback export chart image capture failed:", err);
+    }
+
+    return "";
+  }
+
+  function lock_power_budget_buildRouteExportPayload() {
+    const engine = window.ScopedLabsExport || null;
+    const cfg = window.ScopedLabsExportConfig || {};
+    const localReport = typeof currentReport !== "undefined" ? currentReport : null;
+
+    let base = null;
+
+    if (engine && typeof engine.buildPayload === "function") {
+      try {
+        base = engine.buildPayload();
+      } catch (err) {
+        console.warn("lock-power-budget shared export payload failed:", err);
+      }
+    }
+
+    if (!base && localReport) {
+      base = Object.assign({
+        category: cfg.categoryLabel || "Access Control",
+        categorySlug: cfg.categorySlug || "access-control",
+        tool: cfg.toolLabel || "",
+        toolSlug: cfg.toolSlug || "lock-power-budget",
+        assumptions: Array.isArray(cfg.assumptions) ? cfg.assumptions : [],
+        meta: {}
+      }, localReport);
+    }
+
+    if (!base) return null;
+
+    const chartImage = lock_power_budget_getRouteExportChartImage();
+
+    return Object.assign({}, base, {
+      chartImage: chartImage || base.chartImage || "",
+      printLowInkChart: true
+    });
+  }
+
+  function lock_power_budget_openRouteExportReport(event) {
+    if (event) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+
+    const engine = window.ScopedLabsExport || null;
+
+    if (!engine || typeof engine.openReportWindow !== "function") {
+      lock_power_budget_setRouteExportStatus("Export engine is still loading. Try again in a moment.");
+      return false;
+    }
+
+    const payload = lock_power_budget_buildRouteExportPayload();
+
+    if (!payload) {
+      lock_power_budget_setRouteExportStatus("Run the calculator before exporting a report.");
+      return false;
+    }
+
+    const opened = engine.openReportWindow(payload);
+    lock_power_budget_setRouteExportStatus(opened ? "Export report opened in a new tab." : "Popup blocked or export failed.");
+    return opened;
+  }
+
+  function lock_power_budget_bindRouteExportOverride() {
+    const button = els && els.exportReport ? els.exportReport : document.getElementById("exportReport");
+    if (!button || button.dataset.routeConflictExportBound) return;
+
+    button.dataset.routeConflictExportBound = "lock-power-budget";
+    button.addEventListener("click", lock_power_budget_openRouteExportReport, true);
+  }
+
+  lock_power_budget_bindRouteExportOverride();
+
 })();

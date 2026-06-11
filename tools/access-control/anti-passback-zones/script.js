@@ -1198,4 +1198,106 @@
   }
 
   resetResults();
+  // access-control-route-conflict-export-override-anti-passback-zones
+  function anti_passback_zones_setRouteExportStatus(message) {
+    if (typeof setExportStatus === "function") {
+      setExportStatus(message);
+      return;
+    }
+
+    const statusEl = els && els.exportStatus ? els.exportStatus : document.getElementById("exportStatus");
+    if (statusEl) statusEl.textContent = message || "";
+  }
+
+  function anti_passback_zones_getRouteExportChartImage() {
+    try {
+      const image = getAntiPassbackVisualImage(lastMetrics, { exportMode: false });
+      if (image) return image;
+    } catch (err) {
+      console.warn("anti-passback-zones dark chart image capture failed:", err);
+    }
+
+    try {
+      if (typeof getExportChartImage === "function") {
+        const image = getExportChartImage();
+        if (image) return image;
+      }
+    } catch (err) {
+      console.warn("anti-passback-zones fallback export chart image capture failed:", err);
+    }
+
+    return "";
+  }
+
+  function anti_passback_zones_buildRouteExportPayload() {
+    const engine = window.ScopedLabsExport || null;
+    const cfg = window.ScopedLabsExportConfig || {};
+    const localReport = typeof currentReport !== "undefined" ? currentReport : null;
+
+    let base = null;
+
+    if (engine && typeof engine.buildPayload === "function") {
+      try {
+        base = engine.buildPayload();
+      } catch (err) {
+        console.warn("anti-passback-zones shared export payload failed:", err);
+      }
+    }
+
+    if (!base && localReport) {
+      base = Object.assign({
+        category: cfg.categoryLabel || "Access Control",
+        categorySlug: cfg.categorySlug || "access-control",
+        tool: cfg.toolLabel || "",
+        toolSlug: cfg.toolSlug || "anti-passback-zones",
+        assumptions: Array.isArray(cfg.assumptions) ? cfg.assumptions : [],
+        meta: {}
+      }, localReport);
+    }
+
+    if (!base) return null;
+
+    const chartImage = anti_passback_zones_getRouteExportChartImage();
+
+    return Object.assign({}, base, {
+      chartImage: chartImage || base.chartImage || "",
+      printLowInkChart: true
+    });
+  }
+
+  function anti_passback_zones_openRouteExportReport(event) {
+    if (event) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+
+    const engine = window.ScopedLabsExport || null;
+
+    if (!engine || typeof engine.openReportWindow !== "function") {
+      anti_passback_zones_setRouteExportStatus("Export engine is still loading. Try again in a moment.");
+      return false;
+    }
+
+    const payload = anti_passback_zones_buildRouteExportPayload();
+
+    if (!payload) {
+      anti_passback_zones_setRouteExportStatus("Run the calculator before exporting a report.");
+      return false;
+    }
+
+    const opened = engine.openReportWindow(payload);
+    anti_passback_zones_setRouteExportStatus(opened ? "Export report opened in a new tab." : "Popup blocked or export failed.");
+    return opened;
+  }
+
+  function anti_passback_zones_bindRouteExportOverride() {
+    const button = els && els.exportReport ? els.exportReport : document.getElementById("exportReport");
+    if (!button || button.dataset.routeConflictExportBound) return;
+
+    button.dataset.routeConflictExportBound = "anti-passback-zones";
+    button.addEventListener("click", anti_passback_zones_openRouteExportReport, true);
+  }
+
+  anti_passback_zones_bindRouteExportOverride();
+
 })();
