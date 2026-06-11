@@ -1124,6 +1124,61 @@ function savePipelineResult(payload) {
     }
   }
 
+  function buildFailSafeExportPayload() {
+    const cfg = window.ScopedLabsExportConfig || {};
+    const chartImage = getFailSafeVisualImage();
+
+    return Object.assign({
+      category: cfg.categoryLabel || "Access Control",
+      categorySlug: cfg.categorySlug || "access-control",
+      tool: cfg.toolLabel || "Fail-Safe vs Fail-Secure",
+      toolSlug: cfg.toolSlug || "fail-safe-fail-secure",
+      assumptions: Array.isArray(cfg.assumptions) ? cfg.assumptions : [],
+      printLowInkChart: true,
+      meta: {}
+    }, currentReport || {}, {
+      chartImage,
+      printLowInkChart: true,
+      meta: Object.assign({}, (currentReport && currentReport.meta) || {})
+    });
+  }
+
+  function openFailSafeLocalExportReport(event) {
+    if (!currentReport) return false;
+
+    if (event) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+
+    if (!window.ScopedLabsExport || typeof window.ScopedLabsExport.openReportWindow !== "function") {
+      if (typeof setExportStatus === "function") {
+        setExportStatus("Export engine is still loading. Try again in a moment.");
+      }
+      return false;
+    }
+
+    const payload = buildFailSafeExportPayload();
+
+    if (!payload.chartImage && typeof setExportStatus === "function") {
+      setExportStatus("Report opened, but the Fail Safe visual was not available for export.");
+    }
+
+    const opened = window.ScopedLabsExport.openReportWindow(payload);
+
+    if (typeof setExportStatus === "function") {
+      setExportStatus(opened ? "Export report opened in a new tab." : "Popup blocked or export failed.");
+    }
+
+    return opened;
+  }
+
+  function bindFailSafeLocalExportOverride() {
+    if (!els.exportReport || els.exportReport.dataset.failSafeLocalExportBound) return;
+    els.exportReport.dataset.failSafeLocalExportBound = "true";
+    els.exportReport.addEventListener("click", openFailSafeLocalExportReport, true);
+  }
+
   function clearResults(message = "Run the evaluation to see results.") {
     if (els.results) {
       els.results.innerHTML = `<div class="muted">${escapeHtml(message)}</div>`;
@@ -1674,6 +1729,7 @@ function savePipelineResult(payload) {
     renderActiveScopeContext();
     renderLocalAssistant(assistantPayload);
     attachOutputShellExport();
+    bindFailSafeLocalExportOverride();
     updateExportControls();
   }
 
@@ -1762,6 +1818,7 @@ function savePipelineResult(payload) {
 
     resetAll();
     attachOutputShellExport();
+    bindFailSafeLocalExportOverride();
     applyToolShellModules();
     renderActiveScopeContext();
 
