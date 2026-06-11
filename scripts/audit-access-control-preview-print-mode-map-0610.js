@@ -108,6 +108,7 @@ function hasSharedVisualBridge(html, script) {
     script.includes("buildDoorCountSvg") ||
     script.includes("buildDoorCable") ||
     script.includes("buildLockPower") ||
+    script.includes("buildReaderTypeExportSvg") ||
     script.includes("buildFailSafe") ||
     script.includes("buildCredential") ||
     script.includes("buildAntiPassback") ||
