@@ -30,6 +30,10 @@ const gates = [
     label: "Access Control preview/print mode map audit",
     script: path.join("scripts", "audit-access-control-preview-print-mode-map-0610.js"),
   },
+  {
+    label: "Access Control cache-bust map audit",
+    script: path.join("scripts", "audit-access-control-cache-bust-map-0610.js"),
+  },
 ];
 
 const forwardedArgs = process.argv.slice(2);
