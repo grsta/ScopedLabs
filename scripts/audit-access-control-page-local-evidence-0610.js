@@ -200,30 +200,46 @@ function classifyStyle(html, script, sharedPolishLoaded) {
 function classifyStatus(script, sharedPolishLoaded) {
   const statusFunctions = findFunctionNames(
     script,
-    /function\s+([A-Za-z0-9_]*(?:status|Status|chip|Chip|pill|Pill|badge|Badge)[A-Za-z0-9_]*)\s*\(/g
+    /function\s+([A-Za-z0-9_]*(?:status|Status)[A-Za-z0-9_]*)\s*\(/g
   );
+
+  const chipFunctions = findFunctionNames(
+    script,
+    /function\s+([A-Za-z0-9_]*(?:chip|Chip|pill|Pill|badge|Badge)[A-Za-z0-9_]*)\s*\(/g
+  );
+
+  const sharedScheduleChipCount = String(script || "").split("schedule.statusChip").length - 1;
+  const localChipSource = String(script || "").replace(/schedule\.statusChip\s*\([^)]*\)/g, "");
 
   const statusMarkupPatterns = [
     /statusChipHtml/,
     /status-chip/,
     /status_pill/,
     /status-pill/,
-    /className\s*=\s*["'][^"']*(?:pill|badge|status)[^"']*["']/i,
+    /className\s*=\s*["'][^"']*(?:pill|badge|status-chip)[^"']*["']/i,
     /class=["'][^"']*(?:pill|badge|status-chip)[^"']*["']/i,
   ];
 
-  const hasStatusMarkup = statusMarkupPatterns.some((pattern) => pattern.test(script));
+  const hasStatusMarkup = statusMarkupPatterns.some((pattern) => pattern.test(localChipSource));
+  const hasLocalChipSignal = chipFunctions.length > 0 || hasStatusMarkup;
+  const hasFallbackChipSignal = sharedScheduleChipCount > 0 && chipFunctions.length > 0;
+  const hasCalcOrControlOnlySignal = statusFunctions.length > 0 && !hasLocalChipSignal;
+
   const buckets = [];
 
-  if (statusFunctions.length || hasStatusMarkup) buckets.push("STATUS_LOCAL_RENDERING_PRESENT");
-  if (sharedPolishLoaded && (statusFunctions.length || hasStatusMarkup)) buckets.push("STATUS_SHARED_POLISH_COVERAGE_PROBABLE");
+  if (hasLocalChipSignal) buckets.push("STATUS_LOCAL_RENDERING_PRESENT");
+  if (sharedPolishLoaded && hasLocalChipSignal) buckets.push("STATUS_SHARED_POLISH_COVERAGE_PROBABLE");
+  if (hasFallbackChipSignal) buckets.push("STATUS_LOCAL_FALLBACK_KEEP_REVIEW");
+  if (hasCalcOrControlOnlySignal) buckets.push("STATUS_CALC_OR_CONTROL_ONLY");
   if (statusFunctions.some((name) => /setExportStatus/i.test(name))) buckets.push("STATUS_EXPORT_CONTROL_KEEP");
-  if (!statusFunctions.length && !hasStatusMarkup) buckets.push("STATUS_NO_LOCAL_CHIP_SIGNAL");
+  if (!statusFunctions.length && !hasLocalChipSignal) buckets.push("STATUS_NO_LOCAL_CHIP_SIGNAL");
 
   return {
     buckets,
     statusFunctions,
+    chipFunctions,
     hasStatusMarkup,
+    sharedScheduleChipCount,
   };
 }
 
@@ -341,6 +357,12 @@ function classifyTool(slug) {
     if (style.buckets.includes("STYLE_GENERIC_SHARED_CANDIDATE") && style.buckets.includes("STYLE_SHARED_POLISH_COVERAGE_PROBABLE")) {
       return "STYLE_GENERIC_CLEANUP_CANDIDATE";
     }
+    if (status.buckets.includes("STATUS_LOCAL_FALLBACK_KEEP_REVIEW")) {
+      return "KEEP_LOCAL_STATUS_FALLBACK_UNTIL_SHARED_SCHEDULE_PROVEN";
+    }
+    if (status.buckets.includes("STATUS_CALC_OR_CONTROL_ONLY")) {
+      return "NO_CHIP_CLEANUP_STATUS_CALC_ONLY";
+    }
     if (status.buckets.includes("STATUS_LOCAL_RENDERING_PRESENT") && status.buckets.includes("STATUS_SHARED_POLISH_COVERAGE_PROBABLE")) {
       return "STATUS_CHIP_SHARED_POLISH_REVIEW";
     }
@@ -426,6 +448,8 @@ function main() {
     ["STYLE_JS_INJECTION_PRESENT", countBucket(results, "STYLE_JS_INJECTION_PRESENT")],
     ["STATUS_LOCAL_RENDERING_PRESENT", countBucket(results, "STATUS_LOCAL_RENDERING_PRESENT")],
     ["STATUS_SHARED_POLISH_COVERAGE_PROBABLE", countBucket(results, "STATUS_SHARED_POLISH_COVERAGE_PROBABLE")],
+    ["STATUS_LOCAL_FALLBACK_KEEP_REVIEW", countBucket(results, "STATUS_LOCAL_FALLBACK_KEEP_REVIEW")],
+    ["STATUS_CALC_OR_CONTROL_ONLY", countBucket(results, "STATUS_CALC_OR_CONTROL_ONLY")],
     ["EXPORT_ROUTE_ADAPTER_KEEP_REVIEW", countBucket(results, "EXPORT_ROUTE_ADAPTER_KEEP_REVIEW")],
     ["EXPORT_PAYLOAD_PROOF_GAP", countBucket(results, "EXPORT_PAYLOAD_PROOF_GAP")],
     ["PRINT_MODE_VERIFY_EXPORTMODE_TRUE", countBucket(results, "PRINT_MODE_VERIFY_EXPORTMODE_TRUE")],
