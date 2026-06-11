@@ -336,15 +336,18 @@
     const shell = outputShell();
 
     if (shell && typeof shell.showVisual === "function") {
-      return shell.showVisual({
+      const shown = shell.showVisual({
         card: els.decisionCard,
         wrap: els.chartWrap,
         target: els.readerTypeSchedule,
         html
       });
+      normalizeReaderTypeScheduleStatusChips();
+      return shown;
     }
 
     if (els.readerTypeSchedule) els.readerTypeSchedule.innerHTML = html;
+    normalizeReaderTypeScheduleStatusChips();
     if (els.chartWrap) els.chartWrap.hidden = false;
     if (els.decisionCard) els.decisionCard.hidden = false;
     return true;
@@ -419,9 +422,9 @@
 
     const status = statusFromVerification(readerTypeOutputValue("Verification Status") || (currentReport ? currentReport.status : "") || "WATCH");
     const statusColor = status === "RISK" ? "rgba(255,105,105,.92)" : status === "WATCH" ? "rgba(255,204,102,.94)" : "rgba(125,255,158,.9)";
-    const readerType = readerTypeShortLabel(readerTypeOutputValue("Reader Type") || "Reader recommendation", 28);
-    const iface = readerTypeShortLabel(readerTypeOutputValue("Interface") || "Interface pending", 27);
-    const security = readerTypeShortLabel(readerTypeOutputValue("Security") || "Security basis pending", 31);
+    const readerType = readerTypeShortLabel(readerTypeOutputValue("Reader Type") || "Reader recommendation", 26);
+    const iface = readerTypeShortLabel(readerTypeOutputValue("Interface") || "Interface pending", 26);
+    const security = readerTypeShortLabel(readerTypeOutputValue("Security") || "Security basis pending", 24);
     const verification = readerTypeShortLabel(readerTypeOutputValue("Verification Status") || status, 88);
 
     return [
@@ -432,19 +435,43 @@
       '<line x1="70" y1="258" x2="1016" y2="258" stroke="rgba(125,255,158,.13)"/>',
       '<text x="70" y="78" fill="rgba(238,255,244,.95)" font-size="24" font-weight="800" font-family="Inter,Arial,sans-serif">Reader Decision Schedule</text>',
       '<rect x="850" y="54" width="160" height="38" rx="10" fill="rgba(255,255,255,.045)" stroke="' + statusColor + '"/>',
-      '<text x="878" y="79" fill="' + statusColor + '" font-size="14" font-weight="800" font-family="Inter,Arial,sans-serif">' + escapeHtml(status) + '</text>',
+      '<text x="930" y="73" text-anchor="middle" dominant-baseline="middle" fill="' + statusColor + '" font-size="14" font-weight="800" font-family="Inter,Arial,sans-serif">' + escapeHtml(status) + '</text>',
       '<rect x="70" y="130" width="300" height="92" rx="14" fill="rgba(125,255,158,.09)" stroke="rgba(125,255,158,.24)"/>',
       '<text x="92" y="162" fill="rgba(125,255,158,.88)" font-size="14" font-weight="900" font-family="Inter,Arial,sans-serif">READER TYPE</text>',
-      '<text x="92" y="195" fill="rgba(238,255,244,.95)" font-size="20" font-weight="850" font-family="Inter,Arial,sans-serif">' + escapeHtml(readerType) + '</text>',
+      '<text x="92" y="195" fill="rgba(238,255,244,.95)" font-size="16" font-weight="850" font-family="Inter,Arial,sans-serif">' + escapeHtml(readerType) + '</text>',
       '<rect x="398" y="130" width="286" height="92" rx="14" fill="rgba(255,255,255,.045)" stroke="rgba(125,255,158,.24)"/>',
       '<text x="420" y="162" fill="rgba(125,255,158,.88)" font-size="14" font-weight="900" font-family="Inter,Arial,sans-serif">INTERFACE</text>',
-      '<text x="420" y="195" fill="rgba(238,255,244,.95)" font-size="17" font-weight="800" font-family="Inter,Arial,sans-serif">' + escapeHtml(iface) + '</text>',
+      '<text x="420" y="195" fill="rgba(238,255,244,.95)" font-size="16" font-weight="800" font-family="Inter,Arial,sans-serif">' + escapeHtml(iface) + '</text>',
       '<rect x="712" y="130" width="298" height="92" rx="14" fill="rgba(255,255,255,.045)" stroke="rgba(125,255,158,.24)"/>',
       '<text x="734" y="162" fill="rgba(125,255,158,.88)" font-size="14" font-weight="900" font-family="Inter,Arial,sans-serif">SECURITY BASIS</text>',
       '<text x="734" y="195" fill="rgba(238,255,244,.95)" font-size="16" font-weight="800" font-family="Inter,Arial,sans-serif">' + escapeHtml(security) + '</text>',
       '<text x="70" y="292" fill="rgba(203,213,225,.72)" font-size="14" font-family="Inter,Arial,sans-serif">Verification: ' + escapeHtml(verification) + ' · Confirm credential format, facility-code, existing-card support, and protocol before final hardware selection.</text>',
       '</svg>'
     ].join("");
+  }
+
+  function normalizeReaderTypeScheduleStatusChips() {
+    const root = els.readerTypeSchedule;
+    if (!root || typeof root.querySelectorAll !== "function") return;
+
+    root.querySelectorAll("*").forEach((el) => {
+      const text = String(el.textContent || "").trim().toUpperCase();
+      if (!/^(SAFE|WATCH|RISK)$/.test(text)) return;
+
+      el.style.display = "inline-flex";
+      el.style.alignItems = "center";
+      el.style.justifyContent = "center";
+      el.style.minWidth = "74px";
+      el.style.height = "22px";
+      el.style.padding = "0 12px";
+      el.style.borderRadius = "8px";
+      el.style.fontSize = "12px";
+      el.style.fontWeight = "900";
+      el.style.letterSpacing = ".05em";
+      el.style.lineHeight = "1";
+      el.style.textAlign = "center";
+      el.style.whiteSpace = "nowrap";
+    });
   }
 
   function renderReaderTypeStateVisual() {
