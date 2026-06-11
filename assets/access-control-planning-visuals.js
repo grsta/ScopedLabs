@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-064-panel-capacity-shared-renderer";
+  const VERSION = "access-control-planning-visuals-065-shared-visual-factory-quality";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -1022,6 +1022,8 @@
     const statusToneValue = authorityCount > 0 ? "watch" : totalScopes > 0 ? "safe" : "watch";
     const statusText = authorityCount > 0 ? "WATCH" : totalScopes > 0 ? "SAFE" : "PLANNING";
 
+    function short(value, max = 34) { return assistantProofShort(value, max); }
+
     const palette = exportMode
       ? {
           shellFill: "#ffffff",
@@ -1315,6 +1317,8 @@
   }
 
   function buildCredentialFormatSvg(metrics = {}) {
+    const exportMode = !!metrics.exportMode;
+    const visualPalette = accessVisualPalette(exportMode);
     const tone = statusTone(metrics.status || "PENDING");
     const statusText = statusLabel(metrics.status || "PENDING");
     const fmt = String(metrics.fmt || "decimal").toLowerCase();
@@ -1339,6 +1343,8 @@
   }
 
   function buildDoorCableSvg(metrics = {}) {
+    const exportMode = !!metrics.exportMode;
+    function short(value, max = 34) { return assistantProofShort(value, max); }
     const tone = statusTone(metrics.status || metrics.difficulty);
     const pressure = clamp(Number(metrics.cableDensity || 0) / 3.2, 0.06, 1);
     const statusText = statusLabel(metrics.status || metrics.difficulty);
@@ -1367,11 +1373,11 @@
       statusBadge(statusText, tone, 616, 51),
       '<g opacity=".96" data-cad-primitive-source="access-control-shared-icons">',
       '<g transform="translate(61 128) scale(.58)">',
-      cadAccessPanelCapacityIcon({ x: 0, y: 0, width: 154, height: 122, maxSlots: 4, usedSlots: Math.max(1, Math.min(4, cableCount)), panelLabel: "SRC", tone: cableTone, exportMode: false }),
+      cadAccessPanelCapacityIcon({ x: 0, y: 0, width: 154, height: 122, maxSlots: 4, usedSlots: Math.max(1, Math.min(4, cableCount)), panelLabel: "SRC", tone: cableTone, exportMode }),
       '</g>',
       '<text x="108" y="209" font-size="10" fill="rgba(203,213,225,.64)" text-anchor="middle">PANEL / SOURCE</text>',
       '<g transform="translate(592 123) scale(.47)">',
-      cadDoorReaderOpeningIcon({ x: 0, y: 0, tone: cableTone, exportMode: false }),
+      cadDoorReaderOpeningIcon({ x: 0, y: 0, tone: cableTone, exportMode }),
       '</g>',
       '<text x="652" y="209" font-size="10" fill="rgba(203,213,225,.64)" text-anchor="middle">CONTROLLED DOOR</text>',
       '</g>',
@@ -1400,6 +1406,7 @@
     const palette = accessVisualPalette(exportMode);
     const tone = statusTone(metrics.status);
     const statusText = statusLabel(metrics.status);
+    function short(value, max = 34) { return assistantProofShort(value, max); }
     const perimeter = Math.max(0, Number(metrics.perimeterDoors || 0));
 
     function contributionValue(raw, fallback) {
@@ -1530,6 +1537,9 @@
 
 
   function buildSpecialLockingSvg(metrics = {}) {
+    const exportMode = !!metrics.exportMode;
+    const visualPalette = accessVisualPalette(exportMode);
+    function short(value, max = 34) { return assistantProofShort(value, max); }
     const tone = statusTone(metrics.status || metrics.authorityLevel);
     const statusText = statusLabel(metrics.status || metrics.authorityLevel);
     const openings = Math.max(0, Number(metrics.openingCount || 0));
@@ -1661,6 +1671,9 @@
     return show(options, buildSpecialLockingSvg(options.metrics || {}));
   }
   function buildElevatorReaderSvg(metrics = {}) {
+    const exportMode = !!metrics.exportMode;
+    const visualPalette = accessVisualPalette(exportMode);
+    function short(value, max = 34) { return assistantProofShort(value, max); }
     const tone = statusTone(metrics.status || metrics.systemStatus);
     const statusText = statusLabel(metrics.status || metrics.systemStatus);
     const cars = Math.max(0, Number(metrics.carReaders || 0));
@@ -1762,6 +1775,9 @@
     return show(options, buildElevatorReaderSvg(options.metrics || {}));
   }
   function buildAntiPassbackSvg(metrics = {}) {
+    const exportMode = !!metrics.exportMode;
+    const visualPalette = accessVisualPalette(exportMode);
+    function short(value, max = 34) { return assistantProofShort(value, max); }
     const tone = statusTone(metrics.status || metrics.operationalRisk);
     const statusText = statusLabel(metrics.status || metrics.operationalRisk);
     const zones = Math.max(0, Number(metrics.recommendedZones || 0));
@@ -2069,6 +2085,7 @@
     const readerCount = Math.max(4, Math.min(10, Math.ceil(num(combinations, 4) / 8)));
 
     return [
+      '<div class="access-control-planning-visual-shell" data-access-control-modern-visual="access-level-sizing-complexity-map">',
       '<svg width="760" height="386" viewBox="0 0 760 386" role="img" aria-label="Access Level Sizing shared access complexity visual" xmlns="http://www.w3.org/2000/svg" data-access-control-modern-visual="access-level-sizing-complexity-map">',
       '<defs><pattern id="accGridAccessLevelV1" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="' + palette.gridStroke + '" stroke-width="1"/></pattern></defs>',
       '<rect x="24" y="24" width="712" height="338" rx="16" fill="' + palette.shellFill + '" stroke="' + palette.shellStroke + '" stroke-width="1.1" />',
@@ -2089,12 +2106,16 @@
       pressureBar("Admin load", adminPressure, 374, 328, 236, palette.watchLine),
       '<text x="70" y="270" font-size="13.5" fill="' + activeLine + '" font-weight="760" font-family="Inter,Arial,sans-serif">' + escapeHtml(riskLabel) + '</text>',
       '<text x="70" y="289" font-size="10.5" fill="' + palette.muted + '" font-family="Inter,Arial,sans-serif">' + escapeHtml(assistantProofShort(threshold, 108)) + '</text>',
-      '</svg>'
+      '</svg>',
+      '<p class="sl-vis-note"><strong>Visual note:</strong> Access Level Sizing maps role-area combinations, schedule/group pressure, and governance load while preserving the calculator threshold math.</p>',
+      '</div>'
     ].join("");
   }
 
   // access-control-reader-type-shared-renderer-061: shared Reader Type decision visual used by page, export popup, and print low-ink path.
   function buildReaderTypeDecisionSvg(metrics = {}) {
+    const exportMode = !!metrics.exportMode;
+    const visualPalette = accessVisualPalette(exportMode);
     const rawStatus = metrics.status || metrics.verificationStatus || "WATCH";
     const tone = statusTone(rawStatus);
     const badgeText = tone === "risk" ? "RISK" : tone === "watch" ? "WATCH" : "SAFE";
@@ -2227,6 +2248,9 @@
     const spareDoors = Math.max(0, Math.round(panelCapacityNumberMetric(metrics.spareDoors, 0)));
     const maxExp = Math.max(1, Math.round(panelCapacityNumberMetric(metrics.maxExp, 1)));
     const status = String(metrics.status || panelCapacityStatus(loadPct)).toUpperCase();
+    const statusBadgeText = statusLabel(status);
+    const statusToneValue = statusTone(statusBadgeText);
+    function short(value, max = 34) { return assistantProofShort(value, max); }
 
     const palette = {
       bg: exportMode ? "#ffffff" : "rgba(0,0,0,0)",
@@ -2360,6 +2384,7 @@
     }
 
     return [
+      '<div class="access-control-planning-visual-shell" data-access-control-modern-visual="panel-capacity-architecture-map">',
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="CAD-style panel capacity architecture map">',
       '<rect x="0" y="0" width="' + width + '" height="' + height + '" rx="18" fill="' + palette.bg + '"/>',
       '<rect x="24" y="22" width="1072" height="438" rx="18" fill="' + palette.panel + '" stroke="' + palette.lineSoft + '"/>',
@@ -2368,7 +2393,7 @@
       '<text x="54" y="60" fill="' + palette.text + '" font-size="18" font-weight="900" font-family="Inter,Arial,sans-serif">Panel Architecture Map</text>',
       '<text x="54" y="88" fill="' + palette.muted + '" font-size="12" font-weight="700" font-family="Inter,Arial,sans-serif">Controller bay → expansion slots → field reader/I/O demand → spare door capacity.</text>',
       '<rect x="914" y="50" width="138" height="38" rx="10" fill="' + palette.statusSoft + '" stroke="' + palette.statusColor + '"/>',
-      '<text x="934" y="74" fill="' + palette.statusColor + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif">' + esc(status) + ' · ' + loadPct.toFixed(0) + '%</text>',
+      '<text x="934" y="74" fill="' + palette.statusColor + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif">' + esc(statusBadgeText) + ' · ' + loadPct.toFixed(0) + '%</text>',
       '<text x="74" y="134" fill="' + palette.green + '" font-size="10" font-weight="900" font-family="Inter,Arial,sans-serif">CONTROLLER GROUP</text>',
       panelParts.join(""),
       '<line x1="682" y1="212" x2="846" y2="212" stroke="' + palette.lineStrong + '" stroke-width="2"/>',
@@ -2381,8 +2406,10 @@
       metricChip(266, 400, "Spare Doors", spareDoors, "green", 160),
       metricChip(440, 400, "Panels / Expansions", panels + ' / ' + expansions, "amber", 190),
       metricChip(644, 400, "Readers / I-O", readers + ' / ' + totalInputs + '-' + totalOutputs, "green", 178),
-      metricChip(836, 400, "Status", status, "status", 160),
-      '</svg>'
+      metricChip(836, 400, "Status", statusBadgeText, "status", 160),
+      '</svg>',
+      '<p class="sl-vis-note"><strong>Visual note:</strong> Panel Capacity compares controller count, expansion use, reader/I-O demand, and spare door capacity in one shared factory-rendered architecture view.</p>',
+      '</div>'
     ].join("");
   }
 
