@@ -284,23 +284,7 @@
     return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(String(svg || ""));
   }
 
-  function buildFailSafeExportSvg() {
-    if (!currentReport) return "";
-
-    const outputValue = (label) => {
-      const target = String(label || "").trim().toLowerCase();
-      const row = (currentReport.outputs || []).find((item) => String(item?.label || "").trim().toLowerCase() === target);
-      return row ? row.value : "";
-    };
-
-    const recommendation = outputValue("Recommendation") || "Fail-state decision";
-    const status = outputValue("Status") || currentReport.status || "WATCH";
-    const confidence = outputValue("Confidence") || "Pending";
-    const risk = outputValue("Primary Risk") || "Risk basis pending";
-    const color = String(status).toUpperCase().includes("RISK") ? "#b42318" : String(status).toUpperCase().includes("WATCH") || String(status).toUpperCase().includes("AUTHORITY") ? "#b7791f" : "#1f9d57";
-
-    return '<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="360" viewBox="0 0 1100 360"><rect width="1100" height="360" rx="22" fill="#ffffff"/><rect x="36" y="34" width="1028" height="292" rx="18" fill="#f8fbf8" stroke="#b8cabe"/><text x="70" y="78" fill="#101715" font-size="24" font-weight="800" font-family="Inter,Arial,sans-serif">Fail-State Decision Schedule</text><rect x="870" y="54" width="150" height="38" rx="10" fill="#ffffff" stroke="' + color + '"/><text x="892" y="79" fill="' + color + '" font-size="14" font-weight="800" font-family="Inter,Arial,sans-serif">' + escapeHtml(status) + '</text><text x="70" y="138" fill="#1f9d57" font-size="20" font-weight="800" font-family="Inter,Arial,sans-serif">' + escapeHtml(recommendation) + '</text><text x="70" y="180" fill="#54615d" font-size="16" font-family="Inter,Arial,sans-serif">Confidence: ' + escapeHtml(confidence) + '</text><text x="70" y="222" fill="#54615d" font-size="16" font-family="Inter,Arial,sans-serif">Primary Risk: ' + escapeHtml(risk) + '</text><path d="M70 258 H1016" stroke="#dce8e1"/><text x="70" y="292" fill="#54615d" font-size="14" font-family="Inter,Arial,sans-serif">Verify release behavior, AHJ/code requirements, egress control, and standby power before final hardware selection.</text></svg>';
-  }
+  
 
   function getFailSafeVisualSvg() {
     const visuals = planningVisuals();
@@ -314,7 +298,7 @@
       if (match) return match[0];
     }
 
-    return buildFailSafeExportSvg();
+    return "";
   }
 
   function getFailSafeVisibleVisualHtml() {
