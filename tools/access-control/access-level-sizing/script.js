@@ -417,8 +417,16 @@
     return '<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="360" viewBox="0 0 1100 360"><rect width="1100" height="360" rx="22" fill="#ffffff"/><rect x="36" y="34" width="1028" height="292" rx="18" fill="#f8fbf8" stroke="#b8cabe"/><text x="70" y="78" fill="#101715" font-size="24" font-weight="800" font-family="Inter,Arial,sans-serif">Access Level Complexity Schedule</text><rect x="870" y="54" width="150" height="38" rx="10" fill="#ffffff" stroke="' + color + '"/><text x="894" y="79" fill="' + color + '" font-size="14" font-weight="800" font-family="Inter,Arial,sans-serif">' + escapeHtml(status) + '</text><text x="70" y="134" fill="#1f9d57" font-size="20" font-weight="800" font-family="Inter,Arial,sans-serif">' + escapeHtml(metrics.riskLabel) + '</text><text x="70" y="178" fill="#54615d" font-size="16" font-family="Inter,Arial,sans-serif">Access Levels: ' + escapeHtml(metrics.accessLevels) + ' / Recommended Limit: ' + escapeHtml(metrics.limit) + '</text><text x="70" y="218" fill="#54615d" font-size="16" font-family="Inter,Arial,sans-serif">Role-Area Combinations: ' + escapeHtml(metrics.combinations) + ' / Admin Load Index: ' + escapeHtml(metrics.adminLoad) + '</text><path d="M70 254 H1016" stroke="#dce8e1"/><text x="70" y="290" fill="#54615d" font-size="14" font-family="Inter,Arial,sans-serif">' + escapeHtml(metrics.threshold) + '</text></svg>';
   }
 
+  function getVisibleAccessLevelMatrixSvg() {
+    const svg = els.accessLevelSchedule
+      ? els.accessLevelSchedule.querySelector('svg[data-access-control-modern-visual="access-level-sizing-complexity-map"]')
+      : null;
+
+    return svg ? svg.outerHTML : "";
+  }
+
   function getAccessLevelVisualImage(options = {}) {
-    const svg = buildAccessLevelVisualSvg(options);
+    const svg = getVisibleAccessLevelMatrixSvg() || buildAccessLevelVisualSvg(options);
     return svg ? svgDataUri(svg) : "";
   }
 
@@ -798,7 +806,7 @@
       ],
       assumptions: assumptionsForTool(),
       chartImage: getAccessLevelVisualImage(),
-      chartSvg: buildAccessLevelVisualSvg(),
+      chartSvg: getVisibleAccessLevelMatrixSvg() || buildAccessLevelVisualSvg(),
       meta: getReportMeta()
     };
   }
