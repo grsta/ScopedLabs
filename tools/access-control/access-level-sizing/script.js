@@ -19,6 +19,7 @@
   const $ = (id) => document.getElementById(id);
 
   let currentReport = null;
+  let lastAccessLevelVisualMetrics = null;
 
   const els = {
     roles: $("roles"),
@@ -277,6 +278,39 @@
     return "Design remains " + remaining + " levels under the recommended limit.";
   }
 
+
+  function buildAccessLevelInlineVisualHtml(metrics = {}) {
+    const shared = window.ScopedLabsAccessControlPlanningVisuals;
+
+    if (!shared || typeof shared.buildAccessLevelSizingSvg !== "function") {
+      return "";
+    }
+
+    const svg = shared.buildAccessLevelSizingSvg({
+      status: metrics.status || "WATCH",
+      accessLevels: metrics.total || metrics.accessLevels || "0",
+      combinations: metrics.combinations || "0",
+      adminLoad: metrics.adminLoadIndex || metrics.adminLoad || "0",
+      limit: metrics.recommendedLimit || metrics.limit || "0",
+      riskLabel: metrics.riskLabel || "Complexity pending",
+      threshold: metrics.thresholdMessage || metrics.threshold || "Threshold pending",
+      roles: metrics.roles || (els.roles ? els.roles.value : ""),
+      areas: metrics.areas || (els.areas ? els.areas.value : ""),
+      schedules: metrics.schedules || (els.schedules ? els.schedules.value : ""),
+      groups: metrics.groups || (els.groups ? els.groups.value : "")
+    }, { exportMode: false });
+
+    if (!svg) return "";
+
+    return [
+      '<div class="access-control-planning-visual-shell access-level-matrix-visual" data-access-level-visible-matrix="true" style="margin:0 0 14px;">',
+      String(svg).replace('<svg ', '<svg style="display:block;width:100%;height:auto;border:1px solid rgba(120,255,120,.14);border-radius:16px;background:rgba(5,12,10,.24);box-shadow:inset 0 0 0 1px rgba(255,255,255,.02);" '),
+      '<p class="sl-vis-note" style="margin:10px 0 0;color:rgba(203,213,225,.72);font-size:.86rem;line-height:1.45;"><strong>Visual note:</strong> Matrix view summarizes access-level pressure from roles, areas, schedules, groups, governance, and threshold status.</p>',
+      '</div>'
+    ].join("");
+  }
+
+
   function buildAccessLevelScheduleHtml(metrics = {}) {
     const status = String(metrics.status || "WATCH").toUpperCase();
     const riskLabel = metrics.riskLabel || "Complexity pending";
@@ -301,7 +335,10 @@
       accessLevelScheduleRow("Decision", "Status", accessLevelStatusChip(status), status === "RISK" ? "Simplify access model before scale increases." : status === "WATCH" ? "Watch naming, grouping, schedule, and exception growth before expansion." : "Structure is usable for the final Access Control handoff.")
     ];
 
+    const visual = buildAccessLevelInlineVisualHtml(metrics);
+
     return [
+      visual,
       '<div class="access-level-decision-hero">',
       '<div><strong>' + scheduleCell(riskLabel) + '</strong><span>' + scheduleCell(threshold) + '</span></div>',
       '<div>' + accessLevelStatusChip(status) + '<span>Recommended limit: ' + scheduleCell(metrics.recommendedLimit) + '</span></div>',
@@ -313,6 +350,7 @@
   }
 
   function renderAccessLevelSchedule(metrics) {
+    lastAccessLevelVisualMetrics = metrics || null;
     const html = buildAccessLevelScheduleHtml(metrics);
     const shell = outputShell();
 
@@ -332,6 +370,7 @@
   }
 
   function clearAccessLevelSchedule() {
+    lastAccessLevelVisualMetrics = null;
     const shell = outputShell();
 
     if (shell && typeof shell.hideVisual === "function") {
@@ -353,21 +392,20 @@
   }
 
   function buildAccessLevelVisualSvg(options = {}) {
-    if (!currentReport) return "";
-
-    const status = String(currentReport.status || "WATCH").toUpperCase();
+    const source = lastAccessLevelVisualMetrics || {};
+    const status = String(source.status || getMetricValue("Status") || "WATCH").toUpperCase();
     const metrics = {
       status,
-      accessLevels: getMetricValue("Access Levels") || "0",
-      combinations: getMetricValue("Role-Area Combinations") || "0",
-      adminLoad: getMetricValue("Admin Maintenance Load") || "0",
-      limit: getMetricValue("Recommended Limit") || "0",
-      riskLabel: getMetricValue("Complexity") || "Complexity pending",
-      threshold: getMetricValue("Threshold Check") || "Threshold pending",
-      roles: els.roles ? els.roles.value : "",
-      areas: els.areas ? els.areas.value : "",
-      schedules: els.schedules ? els.schedules.value : "",
-      groups: els.groups ? els.groups.value : ""
+      accessLevels: source.total || source.accessLevels || getMetricValue("Access Levels") || "0",
+      combinations: source.combinations || getMetricValue("Role-Area Combinations") || "0",
+      adminLoad: source.adminLoadIndex || source.adminLoad || getMetricValue("Admin Maintenance Load") || "0",
+      limit: source.recommendedLimit || source.limit || getMetricValue("Recommended Limit") || "0",
+      riskLabel: source.riskLabel || getMetricValue("Complexity") || "Complexity pending",
+      threshold: source.thresholdMessage || source.threshold || getMetricValue("Threshold Check") || "Threshold pending",
+      roles: source.roles || (els.roles ? els.roles.value : ""),
+      areas: source.areas || (els.areas ? els.areas.value : ""),
+      schedules: source.schedules || (els.schedules ? els.schedules.value : ""),
+      groups: source.groups || (els.groups ? els.groups.value : "")
     };
 
     const shared = window.ScopedLabsAccessControlPlanningVisuals;
