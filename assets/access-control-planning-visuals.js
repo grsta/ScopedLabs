@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-059-access-level-shared-visual";
+  const VERSION = "access-control-planning-visuals-060-access-level-matrix-layout";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -2069,7 +2069,7 @@
     const readerCount = Math.max(4, Math.min(10, Math.ceil(num(combinations, 4) / 8)));
 
     return [
-      '<svg viewBox="0 0 760 386" role="img" aria-label="Access Level Sizing shared access complexity visual" xmlns="http://www.w3.org/2000/svg" data-access-control-modern-visual="access-level-sizing-complexity-map">',
+      '<svg width="760" height="386" viewBox="0 0 760 386" role="img" aria-label="Access Level Sizing shared access complexity visual" xmlns="http://www.w3.org/2000/svg" data-access-control-modern-visual="access-level-sizing-complexity-map">',
       '<defs><pattern id="accGridAccessLevelV1" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="' + palette.gridStroke + '" stroke-width="1"/></pattern></defs>',
       '<rect x="24" y="24" width="712" height="338" rx="16" fill="' + palette.shellFill + '" stroke="' + palette.shellStroke + '" stroke-width="1.1" />',
       '<rect x="36" y="36" width="688" height="314" rx="12" fill="url(#accGridAccessLevelV1)" stroke="' + palette.line + '" stroke-width="1" />',
@@ -2085,10 +2085,10 @@
       chip("Role-area combos", combinations, 526, 154, 130, palette.safeLine),
       chip("Roles / areas", roles + " / " + areas, 350, 242, 136, palette.safeLine),
       chip("Schedules / groups", schedules + " / " + groups, 502, 242, 154, palette.watchLine),
-      pressureBar("Level pressure", levelPressure, 70, 314, 236, activeLine),
-      pressureBar("Admin load", adminPressure, 374, 314, 236, palette.watchLine),
-      '<text x="70" y="286" font-size="13.5" fill="' + activeLine + '" font-weight="760" font-family="Inter,Arial,sans-serif">' + escapeHtml(riskLabel) + '</text>',
-      '<text x="70" y="304" font-size="10.5" fill="' + palette.muted + '" font-family="Inter,Arial,sans-serif">' + escapeHtml(assistantProofShort(threshold, 108)) + '</text>',
+      pressureBar("Level pressure", levelPressure, 70, 328, 236, activeLine),
+      pressureBar("Admin load", adminPressure, 374, 328, 236, palette.watchLine),
+      '<text x="70" y="270" font-size="13.5" fill="' + activeLine + '" font-weight="760" font-family="Inter,Arial,sans-serif">' + escapeHtml(riskLabel) + '</text>',
+      '<text x="70" y="289" font-size="10.5" fill="' + palette.muted + '" font-family="Inter,Arial,sans-serif">' + escapeHtml(assistantProofShort(threshold, 108)) + '</text>',
       '</svg>'
     ].join("");
   }

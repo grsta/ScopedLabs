@@ -45,7 +45,7 @@ function hasLocalReportCacheToken(slug, html) {
     (slug === "door-count-planner" && html.includes("./script.js?v=access-control-door-count-preview-print-mode-007")) ||
     (slug === "door-cable-length" && html.includes("./script.js?v=access-control-door-cable-length-preview-print-mode-002")) ||
     (slug === "panel-capacity" && html.includes("./script.js?v=access-control-panel-capacity-preview-print-mode-002")) ||
-    (slug === "access-level-sizing" && html.includes("./script.js?v=access-control-access-level-sizing-preview-print-mode-003-visible-matrix"));
+    (slug === "access-level-sizing" && html.includes("./script.js?v=access-control-access-level-sizing-preview-print-mode-004-matrix-layout-print"));
 }
 
 const tools = [
@@ -93,7 +93,7 @@ for (const slug of tools) {
   check(slug, "does not expose legacy Chart Snapshot wording", !script.includes("Chart Snapshot"));
 
   if (slug === "scope-planner") {
-    check(slug, "loads shared planning visual", html.includes("/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-059-access-level-shared-visual"));
+    check(slug, "loads shared planning visual", html.includes("/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-060-access-level-matrix-layout"));
     check(slug, "has dedicated print/copy summary actions", script.includes("printScopeSummary") && script.includes("copyScopeSummary"));
     check(slug, "branch map has print/export palette", script.includes("buildScopePlannerBranchMapSvg") && script.includes("exportMode: true"));
     check(slug, "uses natural print packing", script.includes("access-control-scope-planner-print-disclaimer-keep-028") && script.includes("break-inside:avoid;page-break-inside:avoid") && !script.includes("break-before:page;page-break-before:always"));

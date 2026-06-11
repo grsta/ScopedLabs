@@ -798,6 +798,7 @@
       ],
       assumptions: assumptionsForTool(),
       chartImage: getAccessLevelVisualImage(),
+      chartSvg: buildAccessLevelVisualSvg(),
       meta: getReportMeta()
     };
   }
@@ -836,12 +837,18 @@
       `
       : "";
 
-    const chartBlock = payload.chartImage
+    const chartVisualMarkup = payload.chartSvg
+      ? payload.chartSvg
+      : payload.chartImage
+        ? `<img src="${payload.chartImage}" alt="Access Level Sizing planning visual">`
+        : "";
+
+    const chartBlock = chartVisualMarkup
       ? `
         <section class="section">
           <h2>Planning Visual</h2>
           <div class="chart-wrap">
-            <img src="${payload.chartImage}" alt="Access Level Sizing planning visual">
+            ${chartVisualMarkup}
           </div>
         </section>
       `
@@ -1036,10 +1043,12 @@
       text-align:center;
       box-shadow:inset 0 0 0 1px rgba(255,255,255,.02);
     }
-    .chart-wrap img{
+    .chart-wrap img,
+    .chart-wrap svg{
       max-width:100%;
       height:auto;
-      display:inline-block;
+      display:block;
+      margin:0 auto;
     }
     .foot{
       margin-top:26px;
@@ -1070,7 +1079,7 @@
       .report-head,.section,.chart-wrap,.grid,.summary,.body-copy,.foot{break-inside:avoid;page-break-inside:avoid}
       .section{margin-top:12px}
       .section h2{break-after:avoid;page-break-after:avoid}
-      .chart-wrap img{display:block;max-width:100%;max-height:4.6in;object-fit:contain;margin:0 auto;filter:invert(1) hue-rotate(180deg) saturate(.75) contrast(1.15)}
+      .chart-wrap img,.chart-wrap svg{display:block;max-width:100%;max-height:4.6in;object-fit:contain;margin:0 auto;filter:invert(1) hue-rotate(180deg) saturate(.75) contrast(1.15)}
       table{break-inside:auto}
       tr{break-inside:avoid;page-break-inside:avoid}
     }
