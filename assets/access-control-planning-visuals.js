@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-062-reader-type-fit";
+  const VERSION = "access-control-planning-visuals-063-reader-type-flow";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -2099,55 +2099,69 @@
     const tone = statusTone(rawStatus);
     const badgeText = tone === "risk" ? "RISK" : tone === "watch" ? "WATCH" : "SAFE";
 
-    const readerType = metrics.readerType || metrics.recommendation || "Reader recommendation";
-    const interfaceLabel = metrics.interfaceLabel || metrics.interface || "Interface pending";
-    const securityLabel = metrics.security || metrics.securityLabel || "Security basis pending";
+    const interfaceLabel = metrics.interfaceLabel || metrics.interface || "";
+    const securityLabel = metrics.security || metrics.securityLabel || "";
     const verification = metrics.verificationStatus || metrics.verification || rawStatus;
 
-    function wrappedValue(value, max, lineCount) {
-      return assistantProofWrap(value, max, lineCount);
-    }
+    const protocolTone = /not selected|unknown|pending|not documented/i.test(interfaceLabel) ? "watch" : "safe";
+    const credentialTone = /unknown|pending|not verified|not documented|csn|uid|26-bit/i.test(securityLabel) ? "watch" : "safe";
+    const handoffTone = tone === "risk" ? "risk" : tone === "watch" ? "watch" : "safe";
 
-    function decisionChip(label, value, x, y, w, wrapMax) {
-      const lines = wrappedValue(value, wrapMax, 2);
+    function flowNode(title, detail, x, y, w, nodeTone) {
+      const lines = assistantProofWrap(detail, 21, 2);
 
       return [
-        '<g class="sl-reader-type-chip">',
-        '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="86" rx="12" fill="rgba(255,255,255,.045)" stroke="rgba(125,255,158,.24)"/>',
-        '<text x="' + (x + 18) + '" y="' + (y + 28) + '" fill="rgba(125,255,158,.88)" font-size="12" font-weight="900" font-family="Inter,Arial,sans-serif" letter-spacing=".45">' + escapeHtml(label).toUpperCase() + '</text>',
-        assistantProofTextLines(lines, x + 18, y + 56, {
-          size: 13.2,
-          leading: 15,
-          fill: "rgba(238,255,244,.95)",
-          weight: 820
+        '<g class="sl-reader-type-flow-node">',
+        '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="78" rx="12" fill="' + toneFill(nodeTone) + '" stroke="' + toneStroke(nodeTone) + '" stroke-width="1.15"/>',
+        '<text x="' + (x + 14) + '" y="' + (y + 26) + '" fill="rgba(125,255,158,.88)" font-size="10.6" font-weight="900" font-family="Inter,Arial,sans-serif" letter-spacing=".6">' + escapeHtml(title).toUpperCase() + '</text>',
+        assistantProofTextLines(lines, x + 14, y + 50, {
+          size: 10.7,
+          leading: 12.5,
+          fill: "rgba(238,255,244,.93)",
+          weight: 760
         }),
         '</g>'
       ].join("");
     }
 
-    const verificationLines = assistantProofWrap("Verification: " + verification + " · Confirm credential format, facility-code, existing-card support, and protocol before final hardware selection.", 104, 2);
+    const verificationDetail = badgeText === "SAFE"
+      ? "ready to carry forward"
+      : badgeText === "RISK"
+        ? "resolve before handoff"
+        : "verify before continuing";
+
+    const handoffDetail = badgeText === "SAFE"
+      ? "carry assumptions"
+      : "carry with notes";
 
     return [
       '<div class="access-control-planning-visual-shell" data-access-control-modern-visual="reader-type-decision">',
-      '<svg viewBox="0 0 760 315" role="img" aria-label="Reader Type decision visual" xmlns="http://www.w3.org/2000/svg">',
-      '<defs><pattern id="accGridReaderTypeV62" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="rgba(120,255,120,.045)" stroke-width="1"/></pattern></defs>',
+      '<svg viewBox="0 0 760 315" role="img" aria-label="Reader Type planning flow visual" xmlns="http://www.w3.org/2000/svg">',
+      '<defs>',
+      '<pattern id="accGridReaderTypeV63" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="rgba(120,255,120,.045)" stroke-width="1"/></pattern>',
+      '<marker id="accReaderArrowV63" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="rgba(125,255,158,.55)"/></marker>',
+      '</defs>',
       '<rect x="24" y="24" width="712" height="267" rx="16" fill="rgba(0,0,0,.10)" stroke="rgba(120,255,120,.12)"/>',
-      '<rect x="36" y="36" width="688" height="243" rx="12" fill="url(#accGridReaderTypeV62)" stroke="rgba(120,255,120,.07)"/>',
+      '<rect x="36" y="36" width="688" height="243" rx="12" fill="url(#accGridReaderTypeV63)" stroke="rgba(120,255,120,.07)"/>',
       '<text x="52" y="62" font-size="11" fill="rgba(180,255,200,.68)" letter-spacing="1.4">READER TYPE SELECTOR</text>',
-      '<text x="52" y="84" font-size="18" fill="rgba(246,255,248,.96)" font-weight="650">Reader decision, interface, and credential assurance</text>',
+      '<text x="52" y="84" font-size="18" fill="rgba(246,255,248,.96)" font-weight="650">Credential readiness and lock-power handoff flow</text>',
       statusBadge(badgeText, tone, 626, 52),
-      decisionChip("Reader type", readerType, 58, 122, 205, 23),
-      decisionChip("Interface", interfaceLabel, 278, 122, 205, 23),
-      decisionChip("Security basis", securityLabel, 498, 122, 205, 22),
-      '<path d="M58 232 H703" stroke="rgba(203,213,225,.22)" stroke-width="1.2" stroke-dasharray="6 7"/>',
-      assistantProofTextLines(verificationLines, 58, 252, {
-        size: 10.4,
+
+      '<path d="M132 164 H628" stroke="rgba(125,255,158,.28)" stroke-width="1.4" stroke-dasharray="7 8" marker-end="url(#accReaderArrowV63)"/>',
+      flowNode("Credential proof", "format / existing cards", 58, 126, 145, credentialTone),
+      flowNode("Protocol gate", protocolTone === "watch" ? "interface pending" : "interface selected", 224, 126, 145, protocolTone),
+      flowNode("Verification", verificationDetail, 390, 126, 145, handoffTone),
+      flowNode("Lock power", handoffDetail, 556, 126, 145, handoffTone),
+
+      '<path d="M58 236 H703" stroke="rgba(203,213,225,.22)" stroke-width="1.2" stroke-dasharray="6 7"/>',
+      assistantProofTextLines(assistantProofWrap("Verification status: " + verification + " · Confirm credential format, facility-code, existing-card support, and protocol before final hardware selection.", 108, 2), 58, 256, {
+        size: 10.2,
         leading: 13,
         fill: "rgba(203,213,225,.72)",
         weight: 520
       }),
       '</svg>',
-      '<p class="sl-vis-note"><strong>Visual note:</strong> Reader Type is a planning bridge into Lock Power Budget. Use the visual to confirm reader technology, interface, credential basis, and verification status before carrying assumptions forward.</p>',
+      '<p class="sl-vis-note"><strong>Visual note:</strong> Reader Type is a handoff checkpoint between credential assumptions and Lock Power Budget. Use this flow to verify credential basis and protocol readiness before carrying assumptions forward.</p>',
       '</div>'
     ].join("");
   }

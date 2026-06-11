@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-tool-polish-011-status-value-weight";
+  const VERSION = "access-control-tool-polish-012-reader-type-status-chip";
   const STYLE_ID = "access-control-tool-polish-styles";
   // access-control-status-value-weight-011: shared status chip and value-column visual weight.
 
@@ -45,6 +45,10 @@
       'body[data-category="access-control"][data-access-control-tool-polish="true"] .access-control-tool-intro-card .muted,',
       'body[data-category="access-control"][data-access-control-tool-polish="true"] .sl-help-summary{font-size:.96rem;line-height:1.55;}',
       '/* access-control-reader-type-chip-layout-003 */',
+      '/* access-control-reader-type-status-chip-shared-012 */',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"] .reader-type-status-chip{align-items:center!important;border:1px solid rgba(255,204,102,.38)!important;border-radius:8px!important;background:rgba(255,204,102,.10)!important;color:rgba(255,220,120,.96)!important;display:inline-flex!important;font-size:.72rem!important;font-weight:840!important;justify-content:center!important;letter-spacing:.06em!important;line-height:1!important;min-height:22px!important;min-width:74px!important;padding:2px 12px!important;text-align:center!important;text-transform:uppercase!important;white-space:nowrap!important;width:fit-content!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"] .reader-type-status-chip.is-risk{background:rgba(255,105,105,.10)!important;border-color:rgba(255,105,105,.38)!important;color:rgba(255,150,150,.96)!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"] .reader-type-status-chip.is-healthy,body[data-category="access-control"][data-access-control-tool-polish="true"] .reader-type-status-chip.is-safe{background:rgba(125,255,152,.10)!important;border-color:rgba(125,255,152,.38)!important;color:rgba(125,255,152,.96)!important;}',
       '/* access-control-fail-safe-assistant-growth-004 */',
       '/* access-control-fail-safe-assistant-panel-fit-005 */',
       '/* access-control-fail-safe-rich-assistant-shell-006 */',
