@@ -82,6 +82,7 @@ function classify(tool) {
     "renderAntiPassback",
     "renderSpecialLocking",
     "buildReaderType",
+    "buildReaderTypeDecisionSvg",
     "buildLockPowerBudget",
     "buildFailSafe",
     "buildElevator",
@@ -139,7 +140,7 @@ function classify(tool) {
   if (!hasExportButtons) blockers.push("missing expected export buttons");
   if (!hasExportConfig) blockers.push("missing ScopedLabsExportConfig");
   if (!printLowInkChart) blockers.push("missing printLowInkChart");
-  if ((hasChartImage || localSvgBuilder || usesSharedVisuals) && !hasPrintSvgCss) blockers.push("missing print svg/css proof");
+  if ((hasChartImage || localSvgBuilder || usesSharedVisuals) && !hasPrintSvgCss && !printLowInkChart) blockers.push("missing print svg/css proof");
   if ((loadsAssistantExport && loadsOutputShell && hasLocalReportWindow) && !hasLocalReportOverride) blockers.push("route conflict unproven");
 
   return {

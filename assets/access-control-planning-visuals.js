@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-060-access-level-matrix-layout";
+  const VERSION = "access-control-planning-visuals-061-reader-type-decision";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -2093,6 +2093,48 @@
     ].join("");
   }
 
+  // access-control-reader-type-shared-renderer-061: shared Reader Type decision visual used by page, export popup, and print low-ink path.
+  function buildReaderTypeDecisionSvg(metrics = {}) {
+    const statusText = statusLabel(metrics.status || metrics.verificationStatus || "WATCH");
+    const tone = statusTone(statusText);
+    const readerType = assistantProofShort(metrics.readerType || metrics.recommendation || "Reader recommendation", 28);
+    const interfaceLabel = assistantProofShort(metrics.interfaceLabel || metrics.interface || "Interface pending", 28);
+    const securityLabel = assistantProofShort(metrics.security || metrics.securityLabel || "Security basis pending", 30);
+    const verification = assistantProofShort(metrics.verificationStatus || metrics.verification || statusText, 92);
+
+    function decisionChip(label, value, x, y, w) {
+      return [
+        '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="92" rx="14" fill="rgba(255,255,255,.045)" stroke="rgba(125,255,158,.24)"/>',
+        '<text x="' + (x + 22) + '" y="' + (y + 32) + '" fill="rgba(125,255,158,.88)" font-size="14" font-weight="900" font-family="Inter,Arial,sans-serif">' + escapeHtml(label).toUpperCase() + '</text>',
+        '<text x="' + (x + 22) + '" y="' + (y + 65) + '" fill="rgba(238,255,244,.95)" font-size="15.5" font-weight="820" font-family="Inter,Arial,sans-serif">' + escapeHtml(value) + '</text>'
+      ].join("");
+    }
+
+    return [
+      '<div class="access-control-planning-visual-shell" data-access-control-modern-visual="reader-type-decision">',
+      '<svg viewBox="0 0 760 300" role="img" aria-label="Reader Type decision visual" xmlns="http://www.w3.org/2000/svg">',
+      '<defs><pattern id="accGridReaderTypeV61" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="rgba(120,255,120,.045)" stroke-width="1"/></pattern></defs>',
+      '<rect x="24" y="24" width="712" height="252" rx="16" fill="rgba(0,0,0,.10)" stroke="rgba(120,255,120,.12)"/>',
+      '<rect x="36" y="36" width="688" height="228" rx="12" fill="url(#accGridReaderTypeV61)" stroke="rgba(120,255,120,.07)"/>',
+      '<text x="52" y="62" font-size="11" fill="rgba(180,255,200,.68)" letter-spacing="1.4">READER TYPE SELECTOR</text>',
+      '<text x="52" y="84" font-size="19" fill="rgba(246,255,248,.96)" font-weight="650">Reader decision, interface, and credential assurance</text>',
+      statusBadge(statusText, tone, 616, 51),
+      decisionChip("Reader type", readerType, 70, 120, 200),
+      decisionChip("Interface", interfaceLabel, 292, 120, 190),
+      decisionChip("Security basis", securityLabel, 504, 120, 190),
+      '<path d="M70 234 H692" stroke="rgba(203,213,225,.22)" stroke-width="1.2" stroke-dasharray="6 7"/>',
+      '<text x="70" y="252" fill="rgba(203,213,225,.72)" font-size="10.8" font-family="Inter,Arial,sans-serif">Verification: ' + escapeHtml(verification) + ' · Confirm credential format, facility-code, existing-card support, and protocol before final hardware selection.</text>',
+      '</svg>',
+      '<p class="sl-vis-note"><strong>Visual note:</strong> Reader Type is a planning bridge into Lock Power Budget. Use the visual to confirm reader technology, interface, credential basis, and verification status before carrying assumptions forward.</p>',
+      '</div>'
+    ].join("");
+  }
+
+  function renderReaderTypeDecision(options = {}) {
+    return show(options, buildReaderTypeDecisionSvg(options.metrics || {}));
+  }
+
+
   function renderAccessLevelSizing(options = {}) {
     return show(options, buildAccessLevelSizingSvg(options.metrics || {}, options));
   }
@@ -2142,6 +2184,8 @@
     VERSION,
     renderFailSafeState,
     buildFailSafeStateDiagramSvg,
+    renderReaderTypeDecision,
+    buildReaderTypeDecisionSvg,
     buildLockPowerBudgetSupplyRailSvg,
     buildAccessLevelSizingSvg,
     renderAccessLevelSizing,
