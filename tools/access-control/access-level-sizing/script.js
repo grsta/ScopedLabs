@@ -352,24 +352,40 @@
     return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(String(svg || ""));
   }
 
-  function buildAccessLevelVisualSvg() {
+  function buildAccessLevelVisualSvg(options = {}) {
     if (!currentReport) return "";
 
     const status = String(currentReport.status || "WATCH").toUpperCase();
-    const accessLevels = getMetricValue("Access Levels") || "0";
-    const combinations = getMetricValue("Role-Area Combinations") || "0";
-    const adminLoad = getMetricValue("Admin Maintenance Load") || "0";
-    const limit = getMetricValue("Recommended Limit") || "0";
-    const riskLabel = getMetricValue("Complexity") || "Complexity pending";
-    const threshold = getMetricValue("Threshold Check") || "Threshold pending";
-    const color = status.includes("RISK") ? "#b42318" : status.includes("WATCH") ? "#b7791f" : "#1f9d57";
+    const metrics = {
+      status,
+      accessLevels: getMetricValue("Access Levels") || "0",
+      combinations: getMetricValue("Role-Area Combinations") || "0",
+      adminLoad: getMetricValue("Admin Maintenance Load") || "0",
+      limit: getMetricValue("Recommended Limit") || "0",
+      riskLabel: getMetricValue("Complexity") || "Complexity pending",
+      threshold: getMetricValue("Threshold Check") || "Threshold pending",
+      roles: els.roles ? els.roles.value : "",
+      areas: els.areas ? els.areas.value : "",
+      schedules: els.schedules ? els.schedules.value : "",
+      groups: els.groups ? els.groups.value : ""
+    };
 
-    return '<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="360" viewBox="0 0 1100 360"><rect width="1100" height="360" rx="22" fill="#ffffff"/><rect x="36" y="34" width="1028" height="292" rx="18" fill="#f8fbf8" stroke="#b8cabe"/><text x="70" y="78" fill="#101715" font-size="24" font-weight="800" font-family="Inter,Arial,sans-serif">Access Level Complexity Schedule</text><rect x="870" y="54" width="150" height="38" rx="10" fill="#ffffff" stroke="' + color + '"/><text x="894" y="79" fill="' + color + '" font-size="14" font-weight="800" font-family="Inter,Arial,sans-serif">' + escapeHtml(status) + '</text><text x="70" y="134" fill="#1f9d57" font-size="20" font-weight="800" font-family="Inter,Arial,sans-serif">' + escapeHtml(riskLabel) + '</text><text x="70" y="178" fill="#54615d" font-size="16" font-family="Inter,Arial,sans-serif">Access Levels: ' + escapeHtml(accessLevels) + ' / Recommended Limit: ' + escapeHtml(limit) + '</text><text x="70" y="218" fill="#54615d" font-size="16" font-family="Inter,Arial,sans-serif">Role-Area Combinations: ' + escapeHtml(combinations) + ' / Admin Load Index: ' + escapeHtml(adminLoad) + '</text><path d="M70 254 H1016" stroke="#dce8e1"/><text x="70" y="290" fill="#54615d" font-size="14" font-family="Inter,Arial,sans-serif">' + escapeHtml(threshold) + '</text></svg>';
+    const shared = window.ScopedLabsAccessControlPlanningVisuals;
+    if (shared && typeof shared.buildAccessLevelSizingSvg === "function") {
+      return shared.buildAccessLevelSizingSvg(metrics, Object.assign({ exportMode: false }, options));
+    }
+
+    const color = status.includes("RISK") ? "#b42318" : status.includes("WATCH") ? "#b7791f" : "#1f9d57";
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="360" viewBox="0 0 1100 360"><rect width="1100" height="360" rx="22" fill="#ffffff"/><rect x="36" y="34" width="1028" height="292" rx="18" fill="#f8fbf8" stroke="#b8cabe"/><text x="70" y="78" fill="#101715" font-size="24" font-weight="800" font-family="Inter,Arial,sans-serif">Access Level Complexity Schedule</text><rect x="870" y="54" width="150" height="38" rx="10" fill="#ffffff" stroke="' + color + '"/><text x="894" y="79" fill="' + color + '" font-size="14" font-weight="800" font-family="Inter,Arial,sans-serif">' + escapeHtml(status) + '</text><text x="70" y="134" fill="#1f9d57" font-size="20" font-weight="800" font-family="Inter,Arial,sans-serif">' + escapeHtml(metrics.riskLabel) + '</text><text x="70" y="178" fill="#54615d" font-size="16" font-family="Inter,Arial,sans-serif">Access Levels: ' + escapeHtml(metrics.accessLevels) + ' / Recommended Limit: ' + escapeHtml(metrics.limit) + '</text><text x="70" y="218" fill="#54615d" font-size="16" font-family="Inter,Arial,sans-serif">Role-Area Combinations: ' + escapeHtml(metrics.combinations) + ' / Admin Load Index: ' + escapeHtml(metrics.adminLoad) + '</text><path d="M70 254 H1016" stroke="#dce8e1"/><text x="70" y="290" fill="#54615d" font-size="14" font-family="Inter,Arial,sans-serif">' + escapeHtml(metrics.threshold) + '</text></svg>';
   }
 
-  function getAccessLevelVisualImage() {
-    const svg = buildAccessLevelVisualSvg();
+  function getAccessLevelVisualImage(options = {}) {
+    const svg = buildAccessLevelVisualSvg(options);
     return svg ? svgDataUri(svg) : "";
+  }
+
+  function getExportChartImage() {
+    return getAccessLevelVisualImage();
   }
 
   function attachOutputShellExport() {
@@ -378,6 +394,7 @@
 
     shell.register(STEP, {
       getChartImage: getAccessLevelVisualImage,
+      getExportChartImage,
       getVisualHtml: () => els.accessLevelSchedule ? els.accessLevelSchedule.innerHTML : ""
     });
 
@@ -974,11 +991,12 @@
       line-height:1.7;
     }
     .chart-wrap{
-      border:1px solid var(--line);
+      border:1px solid rgba(120,255,120,.18);
       border-radius:14px;
-      background:#fff;
+      background:#07110b;
       padding:18px;
       text-align:center;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.02);
     }
     .chart-wrap img{
       max-width:100%;
@@ -1005,10 +1023,16 @@
       .page{max-width:none;border:none;box-shadow:none}
       .toolbar{display:none !important}
       .report{padding:0}
+      .chart-wrap{
+        background:#fff!important;
+        border:1px solid var(--line)!important;
+        padding:10px!important;
+        box-shadow:none!important;
+      }
       .report-head,.section,.chart-wrap,.grid,.summary,.body-copy,.foot{break-inside:avoid;page-break-inside:avoid}
       .section{margin-top:12px}
       .section h2{break-after:avoid;page-break-after:avoid}
-      .chart-wrap img{display:block;max-width:100%;max-height:4.6in;object-fit:contain;margin:0 auto}
+      .chart-wrap img{display:block;max-width:100%;max-height:4.6in;object-fit:contain;margin:0 auto;filter:invert(1) hue-rotate(180deg) saturate(.75) contrast(1.15)}
       table{break-inside:auto}
       tr{break-inside:avoid;page-break-inside:avoid}
     }

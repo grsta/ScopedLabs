@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-058-door-cable-shared-icons";
+  const VERSION = "access-control-planning-visuals-059-access-level-shared-visual";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -1972,6 +1972,132 @@
     ].join("");
   }
 
+
+  function buildAccessLevelSizingSvg(metrics = {}, options = {}) {
+    const exportMode = !!options.exportMode;
+    const statusText = statusLabel(metrics.status || metrics.riskLabel || "WATCH");
+    const tone = statusTone(statusText);
+
+    const palette = exportMode
+      ? {
+          shellFill: "#ffffff",
+          shellStroke: "#b8cabe",
+          gridStroke: "#dce8e1",
+          title: "#101715",
+          label: "#1f6f47",
+          text: "#101715",
+          muted: "#54615d",
+          line: "#b8cabe",
+          cardFill: "#f8fbf8",
+          safeLine: "#1f9d57",
+          safeFill: "#e7f8ee",
+          watchLine: "#b7791f",
+          watchFill: "#fff4d8",
+          riskLine: "#b42318",
+          riskFill: "#ffe2df",
+          nodeFill: "#ffffff"
+        }
+      : {
+          shellFill: "rgba(0,0,0,.10)",
+          shellStroke: "rgba(120,255,120,.14)",
+          gridStroke: "rgba(120,255,120,.055)",
+          title: "rgba(238,255,244,.96)",
+          label: "rgba(180,255,200,.74)",
+          text: "rgba(238,255,244,.92)",
+          muted: "rgba(203,213,225,.68)",
+          line: "rgba(203,213,225,.24)",
+          cardFill: "rgba(255,255,255,.045)",
+          safeLine: "rgba(125,255,152,.82)",
+          safeFill: "rgba(120,255,120,.10)",
+          watchLine: "rgba(255,204,102,.78)",
+          watchFill: "rgba(255,204,102,.11)",
+          riskLine: "rgba(255,105,105,.88)",
+          riskFill: "rgba(255,105,105,.13)",
+          nodeFill: "rgba(0,0,0,.14)"
+        };
+
+    const activeLine = tone === "risk" ? palette.riskLine : tone === "watch" ? palette.watchLine : palette.safeLine;
+    const activeFill = tone === "risk" ? palette.riskFill : tone === "watch" ? palette.watchFill : palette.safeFill;
+
+    function clean(value, fallback = "0") {
+      const text = String(value == null || value === "" ? fallback : value);
+      return text;
+    }
+
+    function num(value, fallback = 0) {
+      const n = Number(String(value == null ? "" : value).replace(/[^0-9.-]/g, ""));
+      return Number.isFinite(n) ? n : fallback;
+    }
+
+    const accessLevels = clean(metrics.accessLevels || metrics.total || metrics.levels, "0");
+    const combinations = clean(metrics.combinations || metrics.roleAreaCombinations, "0");
+    const adminLoad = clean(metrics.adminLoad || metrics.adminLoadIndex, "0");
+    const limit = clean(metrics.limit || metrics.recommendedLimit, "0");
+    const roles = clean(metrics.roles, "-");
+    const areas = clean(metrics.areas, "-");
+    const schedules = clean(metrics.schedules, "-");
+    const groups = clean(metrics.groups || metrics.doorGroups, "-");
+    const riskLabel = clean(metrics.riskLabel || "Complexity pending", "Complexity pending");
+    const threshold = clean(metrics.threshold || metrics.thresholdMessage || "Threshold pending", "Threshold pending");
+    const levelPressure = clamp((num(accessLevels) / Math.max(1, num(limit, 1))) * 100, 0, 145);
+    const adminPressure = clamp(num(adminLoad), 0, 140);
+
+    function chip(label, value, x, y, w, line) {
+      return [
+        '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="44" rx="9" fill="' + palette.nodeFill + '" stroke="' + (line || palette.line) + '" stroke-width="1" />',
+        '<text x="' + (x + 10) + '" y="' + (y + 17) + '" font-size="8.2" fill="' + palette.muted + '" font-weight="700" letter-spacing=".65" font-family="Inter,Arial,sans-serif">' + escapeHtml(label).toUpperCase() + '</text>',
+        '<text x="' + (x + 10) + '" y="' + (y + 34) + '" font-size="12.2" fill="' + palette.text + '" font-weight="720" font-family="Inter,Arial,sans-serif">' + escapeHtml(value) + '</text>'
+      ].join("");
+    }
+
+    function pressureBar(label, pct, x, y, w, line) {
+      const fillW = Math.max(4, clamp(pct / 100, 0, 1) * w);
+      return [
+        '<text x="' + x + '" y="' + (y - 10) + '" font-size="10" fill="' + palette.label + '" font-weight="760" letter-spacing=".7" font-family="Inter,Arial,sans-serif">' + escapeHtml(label).toUpperCase() + '</text>',
+        '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="16" rx="8" fill="' + palette.cardFill + '" stroke="' + palette.line + '" />',
+        '<rect x="' + x + '" y="' + y + '" width="' + fillW.toFixed(1) + '" height="16" rx="8" fill="' + activeFill + '" stroke="' + line + '" />',
+        '<text x="' + (x + w + 12) + '" y="' + (y + 13) + '" font-size="10.5" fill="' + palette.text + '" font-weight="720" font-family="Inter,Arial,sans-serif">' + pct.toFixed(0) + '%</text>'
+      ].join("");
+    }
+
+    function matrixReader(index) {
+      const x = 92 + (index % 5) * 44;
+      const y = 154 + Math.floor(index / 5) * 44;
+      return cadAccessReaderIcon({ x, y, scale: 0.22, tone, label: String(index + 1), exportMode });
+    }
+
+    const readerCount = Math.max(4, Math.min(10, Math.ceil(num(combinations, 4) / 8)));
+
+    return [
+      '<svg viewBox="0 0 760 386" role="img" aria-label="Access Level Sizing shared access complexity visual" xmlns="http://www.w3.org/2000/svg" data-access-control-modern-visual="access-level-sizing-complexity-map">',
+      '<defs><pattern id="accGridAccessLevelV1" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="' + palette.gridStroke + '" stroke-width="1"/></pattern></defs>',
+      '<rect x="24" y="24" width="712" height="338" rx="16" fill="' + palette.shellFill + '" stroke="' + palette.shellStroke + '" stroke-width="1.1" />',
+      '<rect x="36" y="36" width="688" height="314" rx="12" fill="url(#accGridAccessLevelV1)" stroke="' + palette.line + '" stroke-width="1" />',
+      '<text x="52" y="62" font-size="11" fill="' + palette.label + '" letter-spacing="1.4" font-family="Inter,Arial,sans-serif">ACCESS LEVEL SIZING</text>',
+      '<text x="52" y="84" font-size="18.2" fill="' + palette.title + '" font-weight="630" font-family="Inter,Arial,sans-serif">Role-area matrix, governance load, and threshold pressure</text>',
+      '<rect x="612" y="51" width="96" height="30" rx="9" fill="' + activeFill + '" stroke="' + activeLine + '" stroke-width="1.15" />',
+      '<text x="660" y="71" text-anchor="middle" font-size="10.5" fill="' + activeLine + '" font-weight="720" letter-spacing=".65" font-family="Inter,Arial,sans-serif">' + escapeHtml(statusText) + '</text>',
+      '<text x="70" y="122" font-size="10" fill="' + palette.label + '" font-weight="760" letter-spacing=".7" font-family="Inter,Arial,sans-serif">PERMISSION MATRIX</text>',
+      Array.from({ length: readerCount }, (_, index) => matrixReader(index)).join(""),
+      '<path d="M342 144 H664" stroke="' + palette.line + '" stroke-width="1" />',
+      '<path d="M342 232 H664" stroke="' + palette.line + '" stroke-width="1" />',
+      chip("Access levels", accessLevels + " / limit " + limit, 350, 154, 160, activeLine),
+      chip("Role-area combos", combinations, 526, 154, 130, palette.safeLine),
+      chip("Roles / areas", roles + " / " + areas, 350, 242, 136, palette.safeLine),
+      chip("Schedules / groups", schedules + " / " + groups, 502, 242, 154, palette.watchLine),
+      pressureBar("Level pressure", levelPressure, 70, 314, 236, activeLine),
+      pressureBar("Admin load", adminPressure, 374, 314, 236, palette.watchLine),
+      '<text x="70" y="286" font-size="13.5" fill="' + activeLine + '" font-weight="760" font-family="Inter,Arial,sans-serif">' + escapeHtml(riskLabel) + '</text>',
+      '<text x="70" y="304" font-size="10.5" fill="' + palette.muted + '" font-family="Inter,Arial,sans-serif">' + escapeHtml(assistantProofShort(threshold, 108)) + '</text>',
+      '</svg>'
+    ].join("");
+  }
+
+  function renderAccessLevelSizing(options = {}) {
+    return show(options, buildAccessLevelSizingSvg(options.metrics || {}, options));
+  }
+
+
   function renderLockPowerBudget(options = {}) {
     return show(options, buildLockPowerBudgetSupplyRailSvg(options.metrics || {}));
   }
@@ -2017,6 +2143,8 @@
     renderFailSafeState,
     buildFailSafeStateDiagramSvg,
     buildLockPowerBudgetSupplyRailSvg,
+    buildAccessLevelSizingSvg,
+    renderAccessLevelSizing,
     renderLockPowerBudget,
     renderCredentialFormat,
     buildCredentialFormatSvg,
