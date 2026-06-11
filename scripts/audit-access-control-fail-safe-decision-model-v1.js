@@ -16,7 +16,7 @@ function check(name, ok, detail = "") {
 const html = read("tools/access-control/fail-safe-fail-secure/index.html");
 const script = read("tools/access-control/fail-safe-fail-secure/script.js");
 
-check("Fail-Safe cache bumped to final shell polish lane", html.includes("access-control-fail-safe-assistant-proof-contract-021") && html.includes("./script.js?v=access-control-fail-safe-assistant-proof-contract-021"));
+check("Fail-Safe cache bumped to final shell polish lane", html.includes("access-control-fail-safe-fail-secure-preview-print-batch-001") && html.includes("./script.js?v=access-control-fail-safe-fail-secure-preview-print-batch-001"));
 check("Hardware type input exists", html.includes('id="hardwareType"') && html.includes("Maglock / Electromagnetic Lock") && html.includes("Delayed Egress Locking"));
 check("Fire-rated opening input exists", html.includes('id="fireRated"') && html.includes("Fire-Rated Door Assembly"));
 check("Egress-control input exists", html.includes('id="egressControlled"') && html.includes("Free Mechanical Egress Remains"));

@@ -261,6 +261,20 @@
         grid-template-columns: 1fr;
       }
     }
+  
+  /* access-control-shared-renderer-preview-print-batch-0610 */
+  @media print {
+    .chart-wrap img,
+    .chart-wrap svg {
+      display: block;
+      max-width: 100%;
+      max-height: 4.6in;
+      height: auto;
+      object-fit: contain;
+      margin: 0 auto;
+    }
+  }
+
   </style>
 </head>
 
@@ -455,6 +469,7 @@
       "categorySlug": "access-control",
       "toolLabel": "Special Locking / High-Security Scope",
       "toolSlug": "special-locking-scope",
+      "printLowInkChart": true,
       "reportPrefix": "SL-AC",
       "assumptions": [
         "This report reflects the visible Special Locking / High-Security Scope inputs and outputs at the time the export was generated.",
@@ -480,7 +495,7 @@
       window.ScopedLabsReportMetadata.init(document);
     }
   </script>
-  <script src="./script.js?v=access-control-special-locking-exceptions-006-scope-seed"></script>
+  <script src="./script.js?v=access-control-special-locking-scope-preview-print-batch-001"></script>
   <script src="/assets/access-control-category-nav.js?v=access-control-category-nav-001-tool-path"></script>
   <script src="/assets/access-control-tool-polish.js?v=access-control-tool-polish-011-status-value-weight"></script>
   <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>

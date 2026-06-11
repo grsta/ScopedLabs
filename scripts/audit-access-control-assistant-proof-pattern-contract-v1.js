@@ -59,7 +59,7 @@ check("Fail-Safe script uses shared assistant proof export bridge", script.inclu
 check("Fail-Safe report carries assistant proof pattern", script.includes('assistantProofPattern: "access-control-assistant-proof-visual-pattern"'));
 check("Fail-Safe separates local status from carried scope review", script.includes("Scope Review Flag") && script.includes("scopeReviewStatus") && !script.includes('activeScope && activeScope.requiresAuthorityReview) return "AUTHORITY REVIEW"'));
 check("Fail-Safe assistant markers remain decorated", script.includes("decorateFailSafeAssistantMarkers") && html.includes("access-fail-safe-ref-marker"));
-check("Fail-Safe current script cache is contract lane", html.includes("./script.js?v=access-control-fail-safe-assistant-proof-contract-021") && script.includes("access-control-fail-safe-assistant-proof-contract-021"));
+check("Fail-Safe current script cache is contract lane", html.includes("./script.js?v=access-control-fail-safe-fail-secure-preview-print-batch-001") && script.includes("access-control-fail-safe-fail-secure-preview-print-batch-001"));
 
 console.log("\nAccess Control assistant proof pattern contract audit:");
 console.table(rows);
