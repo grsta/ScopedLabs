@@ -34,7 +34,7 @@ function parses(rel) {
   }
 }
 
-const version = 'access-control-planning-visuals-053-assistant-proof-contract';
+const version = 'access-control-planning-visuals-060-access-level-matrix-layout';
 
 const moduleRel = 'assets/access-control-planning-visuals.js';
 const doorCountHtmlRel = 'tools/access-control/door-count-planner/index.html';

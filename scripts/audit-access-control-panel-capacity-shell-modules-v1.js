@@ -45,7 +45,7 @@ check("Panel Capacity loads Assistant Export module", html.includes("/assets/sco
 check("Panel Capacity loads Access Control output shell", html.includes("/assets/access-control-output-shell.js?v=access-control-output-shell-002-assistant-proof-contract"));
 check("Panel Capacity loads Local Assistant module", html.includes("/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"));
 check("Panel Capacity loads Panel adapter cache", html.includes("/assets/access-control-tool-assistant-adapters.js?v=access-control-assistant-adapters-025-assistant-proof-contract"));
-check("Panel Capacity loads shared planning visual module", html.includes("/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-053-assistant-proof-contract"));
+check("Panel Capacity loads shared planning visual module", html.includes("/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-060-access-level-matrix-layout"));
 check("Panel Capacity loads report metadata module", html.includes("/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes"));
 check("Panel Capacity loads Access Control polish module", html.includes("/assets/access-control-tool-polish.js?v=access-control-tool-polish-010-page-chrome-pill-cleanup"));
 check("Panel Capacity local script cache is dynamic icon lane", html.includes("./script.js?v=access-control-panel-capacity-dynamic-icon-026-used-slots-green"));
@@ -67,7 +67,7 @@ check("Panel Capacity CAD architecture map marker exists", script.includes("PANE
 check("Panel Capacity Back/Continue shell sits before Export Report", html.includes('id="accessControlFlowActions"') && html.includes('id="reportMetadataMount"') && html.indexOf('id="accessControlFlowActions"') < html.indexOf('id="reportMetadataMount"'));
 check("Panel Capacity CAD visual uses expanded drawing height", html.includes("min-height:460px") && script.includes("const height = 500;"));
 check("Panel Capacity expansion slot strip is fit-guarded", script.includes("const slotW = Math.max(7, Math.min(12") || script.includes("cadAccessPanelCapacityIcon"));
-check("Panel Capacity renders panel modules through shared dynamic CAD primitive", script.includes("ScopedLabsAccessControlPlanningVisuals") && script.includes("cadAccessPanelCapacityIcon") && html.includes("/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-053-assistant-proof-contract"));
+check("Panel Capacity renders panel modules through shared dynamic CAD primitive", script.includes("ScopedLabsAccessControlPlanningVisuals") && script.includes("cadAccessPanelCapacityIcon") && html.includes("/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-060-access-level-matrix-layout"));
 
 
 
