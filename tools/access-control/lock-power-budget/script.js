@@ -1706,12 +1706,27 @@ accessPowerSupplySymbol(66, 122, supplyLabel, palette),
     if (statusEl) statusEl.textContent = message || "";
   }
 
+  function lock_power_budget_routeExportSvgDataUri(svg) {
+    const raw = String(svg || "").trim();
+    if (!raw) return "";
+    if (raw.startsWith("data:image")) return raw;
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(raw);
+  }
+
   function lock_power_budget_getRouteExportChartImage() {
     try {
-      const image = getCadPowerRailImage(lastMetrics, { exportMode: false });
+      const svg = lastMetrics ? buildCadPowerRailSvg(lastMetrics, { exportMode: false }) : "";
+      const image = lock_power_budget_routeExportSvgDataUri(svg);
       if (image) return image;
     } catch (err) {
-      console.warn("lock-power-budget dark chart image capture failed:", err);
+      console.warn("lock-power-budget dark SVG export capture failed:", err);
+    }
+
+    try {
+      const fallback = getCadPowerRailImage(lastMetrics, { exportMode: false });
+      if (fallback) return fallback;
+    } catch (err) {
+      console.warn("lock-power-budget fallback export image capture failed:", err);
     }
 
     try {
@@ -1720,7 +1735,7 @@ accessPowerSupplySymbol(66, 122, supplyLabel, palette),
         if (image) return image;
       }
     } catch (err) {
-      console.warn("lock-power-budget fallback export chart image capture failed:", err);
+      console.warn("lock-power-budget final export chart image capture failed:", err);
     }
 
     return "";

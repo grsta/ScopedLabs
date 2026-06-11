@@ -1209,12 +1209,27 @@
     if (statusEl) statusEl.textContent = message || "";
   }
 
+  function anti_passback_zones_routeExportSvgDataUri(svg) {
+    const raw = String(svg || "").trim();
+    if (!raw) return "";
+    if (raw.startsWith("data:image")) return raw;
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(raw);
+  }
+
   function anti_passback_zones_getRouteExportChartImage() {
     try {
-      const image = getAntiPassbackVisualImage(lastMetrics, { exportMode: false });
+      const svg = (() => { const visuals = planningVisuals(); return lastMetrics && visuals && typeof visuals.buildAntiPassbackSvg === "function" ? visuals.buildAntiPassbackSvg(lastMetrics, { exportMode: false }) : ""; })();
+      const image = anti_passback_zones_routeExportSvgDataUri(svg);
       if (image) return image;
     } catch (err) {
-      console.warn("anti-passback-zones dark chart image capture failed:", err);
+      console.warn("anti-passback-zones dark SVG export capture failed:", err);
+    }
+
+    try {
+      const fallback = getAntiPassbackVisualImage(lastMetrics, { exportMode: false });
+      if (fallback) return fallback;
+    } catch (err) {
+      console.warn("anti-passback-zones fallback export image capture failed:", err);
     }
 
     try {
@@ -1223,7 +1238,7 @@
         if (image) return image;
       }
     } catch (err) {
-      console.warn("anti-passback-zones fallback export chart image capture failed:", err);
+      console.warn("anti-passback-zones final export chart image capture failed:", err);
     }
 
     return "";

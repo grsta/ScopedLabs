@@ -1686,12 +1686,27 @@
     if (statusEl) statusEl.textContent = message || "";
   }
 
+  function elevator_reader_count_routeExportSvgDataUri(svg) {
+    const raw = String(svg || "").trim();
+    if (!raw) return "";
+    if (raw.startsWith("data:image")) return raw;
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(raw);
+  }
+
   function elevator_reader_count_getRouteExportChartImage() {
     try {
-      const image = getElevatorReaderVisualImage(lastMetrics, { exportMode: false });
+      const svg = lastMetrics ? getElevatorReaderVisualSvg(lastMetrics, { exportMode: false }) : "";
+      const image = elevator_reader_count_routeExportSvgDataUri(svg);
       if (image) return image;
     } catch (err) {
-      console.warn("elevator-reader-count dark chart image capture failed:", err);
+      console.warn("elevator-reader-count dark SVG export capture failed:", err);
+    }
+
+    try {
+      const fallback = getElevatorReaderVisualImage(lastMetrics, { exportMode: false });
+      if (fallback) return fallback;
+    } catch (err) {
+      console.warn("elevator-reader-count fallback export image capture failed:", err);
     }
 
     try {
@@ -1700,7 +1715,7 @@
         if (image) return image;
       }
     } catch (err) {
-      console.warn("elevator-reader-count fallback export chart image capture failed:", err);
+      console.warn("elevator-reader-count final export chart image capture failed:", err);
     }
 
     return "";
