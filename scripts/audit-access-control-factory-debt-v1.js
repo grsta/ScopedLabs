@@ -69,12 +69,17 @@ function cssBlocks(html) {
   return results;
 }
 
+function srcAssetName(src) {
+  const clean = String(src || "").split("?")[0].split("#")[0].replace(/\\/g, "/");
+  return clean.slice(clean.lastIndexOf("/") + 1);
+}
+
 function hasLoaded(srcs, fileName) {
-  return srcs.some((src) => src.includes("/assets/" + fileName) || src.includes("assets/" + fileName) || src.includes(fileName));
+  return srcs.some((src) => srcAssetName(src) === fileName);
 }
 
 function assetVersion(srcs, fileName) {
-  const hits = srcs.filter((src) => src.includes(fileName));
+  const hits = srcs.filter((src) => srcAssetName(src) === fileName);
   return hits.map((src) => {
     const match = src.match(/[?&]v=([^"&]+)/);
     return match ? match[1] : "";
@@ -155,8 +160,21 @@ function classifyTool(slug, html, script) {
   let svgMatch;
   while ((svgMatch = svgFunctionRegex.exec(script))) localSvgFunctionNames.push(svgMatch[1]);
 
-  const localSvgReturn = /<svg[\s\S]{0,2000}<\/svg>/.test(script) || /data:image\/svg\+xml/.test(script);
-  const localSvgBuilder = localSvgFunctionNames.length > 0 || localSvgReturn;
+  const svgLiteralMatches = Array.from(script.matchAll(/(["'`])<svg\\b/gi));
+  const inlineSvgLiteral = svgLiteralMatches.length > 0;
+
+  const svgDataUriHelperOnly =
+    /data:image\/svg\+xml/.test(script) &&
+    !inlineSvgLiteral &&
+    !localSvgFunctionNames.length;
+
+  const sharedSvgExtractionOnly =
+    /<svg\[\\s\\S\]\*\?/.test(script) &&
+    /build[A-Za-z0-9_]*SharedVisualMarkup|ScopedLabsAccessControlPlanningVisuals|getDataUri|svgDataUri/i.test(script) &&
+    !inlineSvgLiteral &&
+    !localSvgFunctionNames.length;
+
+  const localSvgBuilder = localSvgFunctionNames.length > 0 || (inlineSvgLiteral && !sharedSvgExtractionOnly);
 
   const localStyleInjection = /document\.createElement\s*\(\s*["']style["']\s*\)/.test(script) ||
     /style\.textContent\s*=/.test(script) ||
@@ -169,6 +187,10 @@ function classifyTool(slug, html, script) {
 
   const broadExportModeTrue = /exportMode\s*:\s*true/.test(script);
   const hasResultTable = /<table|summary-table|data-reader-type-summary-table|extra-export-table/i.test(script + html);
+  const printProof =
+    printLowInk ||
+    localExportOverride ||
+    /@media\s+print|print-safe|data-export-palette|getDataUri\s*\(|printLowInkChart/i.test(script + "\n" + html);
 
   const issues = [];
   const warnings = [];
@@ -188,9 +210,10 @@ function classifyTool(slug, html, script) {
   if (loaded["access-control-output-shell.js"] && !outputShellUse && !allow.visualOptional) warnings.push("loads output shell but no register/use detected");
   if (outputShellUse && !loaded["access-control-output-shell.js"]) issues.push("uses output shell but does not load asset");
 
-  if (chartImage && !printLowInk && !allow.visualOptional) warnings.push("chart image/export visual path without printLowInkChart proof");
+  if (chartImage && !printProof && !allow.visualOptional) warnings.push("chart image/export visual path without print/low-ink proof");
   if (exportConfig && !customPayload) warnings.push("export config present without custom payload proof");
   if (localExportOverride) info.push("local export route adapter detected");
+  if (svgDataUriHelperOnly) info.push("SVG data URI helper detected; not counted as local visual builder");
   if (localSvgBuilder) warnings.push("local SVG builder detected: " + (localSvgFunctionNames.length ? localSvgFunctionNames.join(", ") : "inline SVG/data URI"));
   if (rawDynamicSvgTextRisk) warnings.push("local SVG dynamic text may overflow; no shared text wrap helper detected");
   if (localStyleInjection) warnings.push("page-local style injection or inline style block detected");
@@ -213,11 +236,21 @@ function classifyTool(slug, html, script) {
   if (allow.notes) info.push(...allow.notes);
 
   let status = "SAFE_SHARED_FACTORY";
-  if (allow.visualOptional) status = "SKIP_SPECIAL_PATH";
-  if (localSvgBuilder || localStyleInjection || localChipStyle) status = "WATCH_FACTORY_DEBT";
-  if (localSvgBuilder && usesSharedVisuals && loaded["access-control-planning-visuals.js"]) status = "WATCH_MIXED_SHARED_AND_LOCAL";
-  if (localExportOverride && !localSvgBuilder && usesSharedVisuals) status = "SAFE_ADAPTER_ONLY";
-  if (loaded["access-control-planning-visuals.js"] && !usesSharedVisuals && !allow.visualOptional) status = "WATCH_LOADED_NOT_USED";
+
+  if (allow.visualOptional) {
+    status = "SKIP_SPECIAL_PATH";
+  } else if (loaded["access-control-planning-visuals.js"] && !usesSharedVisuals) {
+    status = "WATCH_LOADED_NOT_USED";
+  } else if (localSvgBuilder) {
+    status = usesSharedVisuals ? "WATCH_MIXED_SHARED_AND_LOCAL" : "WATCH_LOCAL_VISUAL_BUILDER";
+  } else if (chartImage && !printProof) {
+    status = "WATCH_PRINT_PROOF_GAP";
+  } else if (localExportOverride && usesSharedVisuals) {
+    status = "SAFE_ADAPTER_ONLY";
+  } else if (!usesSharedVisuals && (localStyleInjection || localChipStyle)) {
+    status = "WATCH_LOCAL_STYLE_DEBT";
+  }
+
   if (issues.length) status = "FAIL_CONTRACT";
 
   return {
@@ -464,7 +497,7 @@ function printToolResult(result) {
 function main() {
   const tools = listToolDirs();
 
-  console.log("Access Control factory debt audit v1a");
+  console.log("Access Control factory debt audit v1c");
   console.log("Repo:", root);
   console.log("Tools found:", tools.length);
   console.log("");
