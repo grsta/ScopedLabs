@@ -201,13 +201,34 @@
 
   function renderFailSafeStateVisual(metrics = {}) {
     const visuals = planningVisuals();
-    if (!els.failSafeStateVisual || !visuals || typeof visuals.renderFailSafeState !== "function") return false;
-    return visuals.renderFailSafeState({
-      card: els.decisionCard,
-      wrap: els.chartWrap,
-      target: els.failSafeStateVisual,
-      metrics
-    });
+    if (!els.failSafeStateVisual || !visuals) return false;
+
+    if (typeof visuals.renderFailSafeState === "function") {
+      const rendered = visuals.renderFailSafeState({
+        card: els.decisionCard,
+        wrap: els.chartWrap,
+        target: els.failSafeStateVisual,
+        metrics
+      });
+
+      if (rendered) return true;
+    }
+
+    if (typeof visuals.buildFailSafeStateDiagramSvg === "function") {
+      const svg = visuals.buildFailSafeStateDiagramSvg({
+        ...metrics,
+        exportMode: false
+      });
+
+      if (svg) {
+        els.failSafeStateVisual.innerHTML = svg;
+        if (els.chartWrap) els.chartWrap.hidden = false;
+        if (els.decisionCard) els.decisionCard.hidden = false;
+        return true;
+      }
+    }
+
+    return false;
   }
 
   function clearFailSafeStateVisual() {
