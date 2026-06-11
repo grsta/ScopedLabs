@@ -54,6 +54,7 @@
   };
 
   let currentReport = null;
+  let lastReaderTypeRows = [];
 
   function ensureReaderResultCadStyles() {
     if (typeof document === "undefined" || document.getElementById("reader-type-result-cad-styles")) return;
@@ -329,6 +330,7 @@
   }
 
   function renderReaderTypeSchedule(rows, verificationHold = null) {
+    lastReaderTypeRows = Array.isArray(rows) ? rows : [];
     const html = buildReaderTypeScheduleHtml(rows, verificationHold);
     renderReaderTypeStateVisual();
     const shell = outputShell();
@@ -349,6 +351,7 @@
   }
 
   function clearReaderTypeSchedule() {
+    lastReaderTypeRows = [];
     if (els.readerTypeStateVisual) els.readerTypeStateVisual.innerHTML = "";
     const shell = outputShell();
 
@@ -394,16 +397,21 @@
   }
 
   function readerTypeOutputValue(label) {
-    if (!currentReport) return "";
+    const rows = currentReport && Array.isArray(currentReport.outputs)
+      ? currentReport.outputs
+      : lastReaderTypeRows;
+
     const target = String(label || "").trim().toLowerCase();
-    const row = (currentReport.outputs || []).find((item) => String(item?.label || "").trim().toLowerCase() === target);
+    const row = (rows || []).find((item) => String(item?.label || "").trim().toLowerCase() === target);
     return row ? String(row.value || "") : "";
   }
 
   function buildReaderTypeDarkVisualSvg() {
-    if (!currentReport) return "";
+    const hasReport = !!currentReport;
+    const hasRows = Array.isArray(lastReaderTypeRows) && lastReaderTypeRows.length > 0;
+    if (!hasReport && !hasRows) return "";
 
-    const status = statusFromVerification(readerTypeOutputValue("Verification Status") || currentReport.status || "WATCH");
+    const status = statusFromVerification(readerTypeOutputValue("Verification Status") || (currentReport ? currentReport.status : "") || "WATCH");
     const statusColor = status === "RISK" ? "rgba(255,105,105,.92)" : status === "WATCH" ? "rgba(255,204,102,.94)" : "rgba(125,255,158,.9)";
     const readerType = readerTypeOutputValue("Reader Type") || "Reader recommendation";
     const iface = readerTypeOutputValue("Interface") || "Interface pending";
