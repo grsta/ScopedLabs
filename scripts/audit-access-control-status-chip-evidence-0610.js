@@ -60,6 +60,17 @@ function countLiteral(text, literal) {
   return String(text || "").split(literal).length - 1;
 }
 
+function removeExportOnlyStatusPillSignals(source) {
+  let text = String(source || "");
+
+  // Export popup/report-preview templates may include status-pill CSS/HTML.
+  // Those are export route adapter details, not page-visible local chip debt.
+  text = text.replace(/(?:const|let|var)\s+[A-Za-z0-9_$]*(?:popup|Popup|html|Html)[A-Za-z0-9_$]*\s*=\s*`[\s\S]*?(?:status-pill|payload\.reportId|exportMode)[\s\S]*?`;/g, "");
+  text = text.replace(/\.status-pill(?:\.[A-Za-z0-9_-]+)?\s*\{[^}]*\}/g, "");
+  text = text.replace(/class=[\"']status-pill\s+\$\{statusClass\}[\"']/g, "");
+
+  return text;
+}
 function classifyTool(slug) {
   const htmlPath = path.join(categoryRoot, slug, "index.html");
   const scriptPath = path.join(categoryRoot, slug, "script.js");
@@ -80,7 +91,9 @@ function classifyTool(slug) {
   const sharedScheduleChipCount = countLiteral(script, "schedule.statusChip");
   const sharedScheduleObject = /ScopedLabsAccessControlDecisionSchedule/.test(script);
 
-  const localChipSource = script.replace(/schedule\.statusChip\s*\([^)]*\)/g, "");
+  const localChipSource = removeExportOnlyStatusPillSignals(
+    script.replace(/schedule\.statusChip\s*\([^)]*\)/g, "")
+  );
 
   const localChipMarkup = [
     /statusChipHtml/,
