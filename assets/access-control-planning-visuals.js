@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-063-reader-type-flow";
+  const VERSION = "access-control-planning-visuals-064-panel-capacity-shared-renderer";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -2184,6 +2184,213 @@
     return show(options, buildCredentialFormatSvg(options.metrics || {}));
   }
 
+  // access-control-panel-capacity-shared-renderer-064: migrated from page-local SVG into shared Access Control visual factory.
+  function panelCapacityNumberMetric(value, fallback = 0) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : fallback;
+  }
+
+  function panelCapacityClampMetric(value, min, max) {
+    return Math.max(min, Math.min(max, panelCapacityNumberMetric(value, min)));
+  }
+
+  function panelCapacityStatus(loadPct) {
+    const value = Number(loadPct);
+    if (Number.isFinite(value) && value > 85) return "RISK";
+    if (Number.isFinite(value) && value > 65) return "WATCH";
+    return "HEALTHY";
+  }
+
+  function panelCapacityEscapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function buildPanelCapacitySvg(metrics = {}, options = {}) {
+    // PANEL_CAPACITY_CAD_ARCHITECTURE_MAP_025_SHARED_DYNAMIC_ICON
+    const exportMode = !!options.exportMode;
+    const width = 1120;
+    const height = 500;
+    const loadPct = panelCapacityClampMetric(metrics.loadPct, 0, 140);
+    const expansionPct = panelCapacityClampMetric(metrics.expansionPct, 0, 120);
+    const panels = Math.max(0, Math.round(panelCapacityNumberMetric(metrics.panels, 0)));
+    const expansions = Math.max(0, Math.round(panelCapacityNumberMetric(metrics.expansions, 0)));
+    const readers = Math.max(0, Math.round(panelCapacityNumberMetric(metrics.readers, 0)));
+    const totalInputs = Math.max(0, Math.round(panelCapacityNumberMetric(metrics.totalInputs, 0)));
+    const totalOutputs = Math.max(0, Math.round(panelCapacityNumberMetric(metrics.totalOutputs, 0)));
+    const targetDoors = Math.max(0, Math.round(panelCapacityNumberMetric(metrics.targetDoors, 0)));
+    const panelCapacity = Math.max(0, Math.round(panelCapacityNumberMetric(metrics.panelCapacity, 0)));
+    const spareDoors = Math.max(0, Math.round(panelCapacityNumberMetric(metrics.spareDoors, 0)));
+    const maxExp = Math.max(1, Math.round(panelCapacityNumberMetric(metrics.maxExp, 1)));
+    const status = String(metrics.status || panelCapacityStatus(loadPct)).toUpperCase();
+
+    const palette = {
+      bg: exportMode ? "#ffffff" : "rgba(0,0,0,0)",
+      panel: exportMode ? "#f8fbf8" : "rgba(4,14,10,.78)",
+      card: exportMode ? "#ffffff" : "rgba(6,18,12,.72)",
+      block: exportMode ? "#f5faf7" : "rgba(9,31,19,.86)",
+      text: exportMode ? "#101715" : "rgba(238,255,244,.95)",
+      muted: exportMode ? "#54615d" : "rgba(203,213,225,.72)",
+      grid: exportMode ? "#dce8e1" : "rgba(125,255,158,.13)",
+      lineSoft: exportMode ? "#b8cabe" : "rgba(125,255,158,.24)",
+      lineStrong: exportMode ? "#668273" : "rgba(180,255,200,.52)",
+      green: exportMode ? "#1f9d57" : "rgba(125,255,158,.88)",
+      amber: exportMode ? "#b7791f" : "rgba(255,204,102,.92)",
+      amberSoft: exportMode ? "#fff4d8" : "rgba(255,204,102,.13)",
+      red: exportMode ? "#b42318" : "rgba(255,105,105,.9)",
+      redSoft: exportMode ? "#ffe2df" : "rgba(255,105,105,.14)"
+    };
+
+    palette.statusColor = status === "RISK" ? palette.red : status === "WATCH" ? palette.amber : palette.green;
+    palette.statusSoft = status === "RISK" ? palette.redSoft : status === "WATCH" ? palette.amberSoft : exportMode ? "#e7f8ee" : "rgba(125,255,158,.12)";
+
+    function esc(value) {
+      return panelCapacityEscapeHtml(value === undefined || value === null ? "" : String(value));
+    }
+
+    function metricChip(x, y, label, value, tone, w = 190) {
+      const color = tone === "status" ? palette.statusColor : tone === "amber" ? palette.amber : palette.green;
+      const fill = tone === "status" ? palette.statusSoft : tone === "amber" ? palette.amberSoft : palette.card;
+      return [
+        '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="46" rx="10" fill="' + fill + '" stroke="' + color + '" stroke-width="1"/>',
+        '<text x="' + (x + 12) + '" y="' + (y + 18) + '" fill="' + palette.muted + '" font-size="10" font-weight="800" font-family="Inter,Arial,sans-serif">' + esc(label).toUpperCase() + '</text>',
+        '<text x="' + (x + 12) + '" y="' + (y + 36) + '" fill="' + color + '" font-size="14" font-weight="900" font-family="Inter,Arial,sans-serif">' + esc(value) + '</text>'
+      ].join("");
+    }
+
+    function expansionStrip(x, y, active, maxSlots) {
+      const slots = Math.max(1, Math.min(8, maxSlots));
+      const gap = 4;
+      const slotW = Math.max(7, Math.min(12, Math.floor((116 - ((slots - 1) * gap)) / slots)));
+      const used = Math.max(0, Math.min(slots, active));
+      const parts = [];
+
+      for (let i = 0; i < slots; i += 1) {
+        const sx = x + i * (slotW + gap);
+        const isUsed = i < used;
+        parts.push('<rect x="' + sx + '" y="' + y + '" width="' + slotW + '" height="19" rx="3" fill="' + (isUsed ? palette.amberSoft : palette.card) + '" stroke="' + (isUsed ? palette.amber : palette.lineSoft) + '" stroke-width="1"/>');
+      }
+
+      return parts.join("");
+    }
+
+    function panelModule(x, y, index, activeExp, maxSlots) {
+      const slotMax = Math.max(1, Math.min(12, Math.round(maxSlots || 1)));
+      const slotUsed = Math.max(0, Math.min(slotMax, Math.round(activeExp || 0)));
+      const shared = window.ScopedLabsAccessControlPlanningVisuals || {};
+      const slotTone = status === "RISK" ? "risk" : status === "WATCH" ? "watch" : "safe";
+      const watchSlot = 0;
+      const slotLabels = Array.from({ length: slotMax }, (_, slotIndex) => slotIndex < slotUsed ? "EXP" : "-");
+
+      if (shared && typeof shared.cadAccessPanelCapacityIcon === "function") {
+        return shared.cadAccessPanelCapacityIcon({
+          x,
+          y,
+          width: 174,
+          height: 138,
+          panelLabel: "PANEL " + (index + 1),
+          maxSlots: slotMax,
+          usedSlots: slotUsed,
+          watchSlot,
+          slotLabels,
+          tone: slotTone,
+          exportMode
+        });
+      }
+
+      return [
+        '<g aria-label="Panel ' + (index + 1) + ' controller bay">',
+        '<rect x="' + x + '" y="' + y + '" width="164" height="138" rx="12" fill="' + palette.block + '" stroke="' + palette.lineStrong + '" stroke-width="1.4"/>',
+        '<path d="M ' + (x + 16) + ' ' + (y + 30) + ' H ' + (x + 148) + ' M ' + (x + 16) + ' ' + (y + 62) + ' H ' + (x + 148) + ' M ' + (x + 16) + ' ' + (y + 96) + ' H ' + (x + 148) + '" stroke="' + palette.grid + '" stroke-width="1"/>',
+        '<text x="' + (x + 18) + '" y="' + (y + 23) + '" fill="' + palette.text + '" font-size="14" font-weight="900" font-family="Inter,Arial,sans-serif">PANEL ' + (index + 1) + '</text>',
+        '<text x="' + (x + 18) + '" y="' + (y + 49) + '" fill="' + palette.muted + '" font-size="10" font-weight="800" font-family="Inter,Arial,sans-serif">CTRL BAY</text>',
+        '<circle cx="' + (x + 142) + '" cy="' + (y + 43) + '" r="5" fill="' + palette.card + '" stroke="' + palette.green + '" stroke-width="1.4"/>',
+        '<circle cx="' + (x + 142) + '" cy="' + (y + 75) + '" r="5" fill="' + palette.card + '" stroke="' + palette.lineStrong + '" stroke-width="1.4"/>',
+        '<text x="' + (x + 18) + '" y="' + (y + 82) + '" fill="' + palette.muted + '" font-size="10" font-weight="800" font-family="Inter,Arial,sans-serif">EXPANSION SLOTS</text>',
+        expansionStrip(x + 18, y + 96, slotUsed, slotMax),
+        '<text x="' + (x + 18) + '" y="' + (y + 127) + '" fill="' + palette.muted + '" font-size="10" font-weight="800" font-family="Inter,Arial,sans-serif">' + slotUsed + '/' + slotMax + ' EXP USED</text>',
+        '</g>'
+      ].join("");
+    }
+
+    function loadBank(x, y) {
+      return [
+        '<g aria-label="Reader and I/O load bank">',
+        '<rect x="' + x + '" y="' + y + '" width="216" height="180" rx="13" fill="' + palette.block + '" stroke="' + palette.lineStrong + '" stroke-width="1.4"/>',
+        '<text x="' + (x + 18) + '" y="' + (y + 30) + '" fill="' + palette.text + '" font-size="14" font-weight="900" font-family="Inter,Arial,sans-serif">FIELD DEMAND</text>',
+        '<text x="' + (x + 18) + '" y="' + (y + 54) + '" fill="' + palette.muted + '" font-size="10" font-weight="800" font-family="Inter,Arial,sans-serif">READERS / INPUTS / OUTPUTS</text>',
+        '<path d="M ' + (x + 24) + ' ' + (y + 88) + ' H ' + (x + 192) + ' M ' + (x + 24) + ' ' + (y + 122) + ' H ' + (x + 192) + ' M ' + (x + 24) + ' ' + (y + 156) + ' H ' + (x + 192) + '" stroke="' + palette.grid + '" stroke-width="1"/>',
+        '<text x="' + (x + 32) + '" y="' + (y + 92) + '" fill="' + palette.green + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif">' + readers + ' READERS</text>',
+        '<text x="' + (x + 32) + '" y="' + (y + 126) + '" fill="' + palette.text + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif">' + totalInputs + ' INPUTS</text>',
+        '<text x="' + (x + 32) + '" y="' + (y + 160) + '" fill="' + palette.text + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif">' + totalOutputs + ' OUTPUTS</text>',
+        '</g>'
+      ].join("");
+    }
+
+    function pressureScale(x, y, label, pct, tone) {
+      const color = tone === "status" ? palette.statusColor : palette.amber;
+      const markerX = x + Math.min(1, pct / 100) * 292;
+
+      return [
+        '<g aria-label="' + esc(label) + ' pressure scale">',
+        '<text x="' + x + '" y="' + (y - 14) + '" fill="' + palette.muted + '" font-size="10" font-weight="800" font-family="Inter,Arial,sans-serif">' + esc(label).toUpperCase() + '</text>',
+        '<line x1="' + x + '" y1="' + y + '" x2="' + (x + 292) + '" y2="' + y + '" stroke="' + palette.lineSoft + '" stroke-width="2"/>',
+        '<line x1="' + (x + 190) + '" y1="' + (y - 10) + '" x2="' + (x + 190) + '" y2="' + (y + 10) + '" stroke="' + palette.amber + '" stroke-width="1" stroke-dasharray="4 4"/>',
+        '<line x1="' + (x + 248) + '" y1="' + (y - 10) + '" x2="' + (x + 248) + '" y2="' + (y + 10) + '" stroke="' + palette.red + '" stroke-width="1" stroke-dasharray="4 4"/>',
+        '<circle cx="' + markerX.toFixed(1) + '" cy="' + y + '" r="7" fill="' + color + '" stroke="' + palette.card + '" stroke-width="2"/>',
+        '<text x="' + (x + 308) + '" y="' + (y + 5) + '" fill="' + color + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif">' + pct.toFixed(0) + '%</text>',
+        '</g>'
+      ].join("");
+    }
+
+    const displayPanels = Math.max(1, Math.min(3, panels || 1));
+    const panelParts = [];
+
+    for (let i = 0; i < displayPanels; i += 1) {
+      const activeExp = Math.max(0, Math.min(maxExp, expansions - (i * maxExp)));
+      panelParts.push(panelModule(74 + i * 190, 150, i, activeExp, maxExp));
+    }
+
+    if (panels > displayPanels) {
+      panelParts.push('<text x="' + (74 + displayPanels * 190 + 8) + '" y="218" fill="' + palette.muted + '" font-size="12" font-weight="900" font-family="Inter,Arial,sans-serif">+' + (panels - displayPanels) + ' MORE</text>');
+    }
+
+    return [
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="CAD-style panel capacity architecture map">',
+      '<rect x="0" y="0" width="' + width + '" height="' + height + '" rx="18" fill="' + palette.bg + '"/>',
+      '<rect x="24" y="22" width="1072" height="438" rx="18" fill="' + palette.panel + '" stroke="' + palette.lineSoft + '"/>',
+      '<path d="M 54 78 H 1066 M 54 126 H 1066 M 54 334 H 1066 M 54 388 H 1066 M 54 432 H 1066" stroke="' + palette.grid + '" stroke-width="1"/>',
+      '<path d="M 94 48 V 438 M 690 48 V 438 M 938 48 V 438" stroke="' + palette.grid + '" stroke-width="1"/>',
+      '<text x="54" y="60" fill="' + palette.text + '" font-size="18" font-weight="900" font-family="Inter,Arial,sans-serif">Panel Architecture Map</text>',
+      '<text x="54" y="88" fill="' + palette.muted + '" font-size="12" font-weight="700" font-family="Inter,Arial,sans-serif">Controller bay → expansion slots → field reader/I/O demand → spare door capacity.</text>',
+      '<rect x="914" y="50" width="138" height="38" rx="10" fill="' + palette.statusSoft + '" stroke="' + palette.statusColor + '"/>',
+      '<text x="934" y="74" fill="' + palette.statusColor + '" font-size="13" font-weight="900" font-family="Inter,Arial,sans-serif">' + esc(status) + ' · ' + loadPct.toFixed(0) + '%</text>',
+      '<text x="74" y="134" fill="' + palette.green + '" font-size="10" font-weight="900" font-family="Inter,Arial,sans-serif">CONTROLLER GROUP</text>',
+      panelParts.join(""),
+      '<line x1="682" y1="212" x2="846" y2="212" stroke="' + palette.lineStrong + '" stroke-width="2"/>',
+      '<line x1="682" y1="252" x2="846" y2="252" stroke="' + palette.lineSoft + '" stroke-width="1.4" stroke-dasharray="6 6"/>',
+      '<text x="710" y="192" fill="' + palette.green + '" font-size="10" font-weight="900" font-family="Inter,Arial,sans-serif">I/O BUS</text>',
+      loadBank(856, 150),
+      pressureScale(74, 358, "System load", loadPct, "status"),
+      pressureScale(454, 358, "Expansion pressure", expansionPct, "amber"),
+      metricChip(74, 400, "Target / Capacity", targetDoors + ' / ' + panelCapacity, "green", 178),
+      metricChip(266, 400, "Spare Doors", spareDoors, "green", 160),
+      metricChip(440, 400, "Panels / Expansions", panels + ' / ' + expansions, "amber", 190),
+      metricChip(644, 400, "Readers / I-O", readers + ' / ' + totalInputs + '-' + totalOutputs, "green", 178),
+      metricChip(836, 400, "Status", status, "status", 160),
+      '</svg>'
+    ].join("");
+  }
+
+  function renderPanelCapacity(options = {}) {
+    return show(options, buildPanelCapacitySvg(options.metrics || {}, options));
+  }
+
+
   function renderDoorCable(options = {}) {
     return show(options, buildDoorCableSvg(options.metrics || {}));
   }
@@ -2230,6 +2437,8 @@
     buildCredentialFormatSvg,
     cadCredentialFormatBitCardIcon,
     buildScopePlannerBranchMapSvg,
+    renderPanelCapacity,
+    buildPanelCapacitySvg,
     renderDoorCable,
     buildDoorCountSvg,
     renderDoorCount,
