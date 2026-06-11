@@ -1213,6 +1213,31 @@
     }
   }
 
+  function openCurrentAccessLevelReport(event) {
+    if (!currentReport) return false;
+
+    if (event) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+
+    const chartSvg = getVisibleAccessLevelMatrixSvg() || buildAccessLevelVisualSvg();
+    const payload = Object.assign({}, currentReport, {
+      chartImage: getAccessLevelVisualImage(),
+      chartSvg
+    });
+
+    const opened = openReportWindow(payload);
+
+    if (!opened) {
+      setExportStatus("Popup blocked. Allow popups for ScopedLabs to open the report.");
+      return false;
+    }
+
+    setExportStatus("Report opened.");
+    return true;
+  }
+
   function invalidate(message = "Inputs changed. Press Analyze to refresh results.") {
     clearAccessLevelSchedule();
     clearLocalAssistant();
@@ -1608,6 +1633,12 @@
 
     clearAccessLevelSchedule();
     attachOutputShellExport();
+
+    if (els.exportReport && !els.exportReport.dataset.accessLevelLocalReportBound) {
+      els.exportReport.dataset.accessLevelLocalReportBound = "true";
+      els.exportReport.addEventListener("click", openCurrentAccessLevelReport, true);
+    }
+
     applyShellModules();
     unlockCategoryPage();
 
