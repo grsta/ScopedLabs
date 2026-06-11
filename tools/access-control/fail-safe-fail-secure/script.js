@@ -303,7 +303,6 @@
 
     shell.register(STEP, {
       getChartImage: getFailSafeVisualImage,
-      getExportChartImage: getFailSafeVisualImage,
       getVisualHtml: () => els.failSafeDecisionSchedule ? els.failSafeDecisionSchedule.innerHTML : ""
     });
 

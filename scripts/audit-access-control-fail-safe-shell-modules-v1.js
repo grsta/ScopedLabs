@@ -21,7 +21,7 @@ const nextIdx = html.indexOf('id="next-step-row"');
 const continueIdx = html.indexOf('id="continue"');
 const exportIdx = html.indexOf("Export Report");
 
-check("Fail-Safe cache bumped to shell modules lane", html.includes("access-control-fail-safe-fail-secure-preview-print-batch-001") && html.includes("./script.js?v=access-control-fail-safe-fail-secure-preview-print-batch-001"));
+check("Fail-Safe cache bumped to shell modules lane", html.includes("access-control-fail-safe-assistant-proof-contract-021") && html.includes("./script.js?v=access-control-fail-safe-assistant-proof-contract-021"));
 check("Tool shell helper is loaded", html.includes("/assets/scopedlabs-tool-shell.js"));
 check("Flow action row remains before Export Report", flowIdx >= 0 && exportIdx > flowIdx);
 check("Back action remains visible", html.includes('href="/tools/access-control/"') && html.includes("Back to Access Control"));

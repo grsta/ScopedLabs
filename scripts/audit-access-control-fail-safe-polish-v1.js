@@ -21,7 +21,7 @@ const continueWrapIdx = html.indexOf('id="continue-wrap"');
 const continueBtnIdx = html.indexOf('id="continue"');
 const exportIdx = html.indexOf("Export Report");
 
-check("Fail-Safe cache bumped to flow before export lane", html.includes("access-control-fail-safe-fail-secure-preview-print-batch-001") && html.includes("./script.js?v=access-control-fail-safe-fail-secure-preview-print-batch-001"));
+check("Fail-Safe cache bumped to flow before export lane", html.includes("access-control-fail-safe-assistant-proof-contract-021") && html.includes("./script.js?v=access-control-fail-safe-assistant-proof-contract-021"));
 check("Standard flow action row exists", flowIdx >= 0 && html.includes("access-control-flow-actions"));
 check("Back action remains visible", html.includes('href="/tools/access-control/"') && html.includes("Back to Access Control"));
 check("Continue action is nested in flow row", flowIdx >= 0 && continueWrapIdx > flowIdx && continueBtnIdx > continueWrapIdx);
