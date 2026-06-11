@@ -304,7 +304,7 @@
 
     return [
       '<div class="access-control-planning-visual-shell access-level-matrix-visual" data-access-level-visible-matrix="true" style="margin:0 0 14px;">',
-      String(svg).replace('<svg ', '<svg style="display:block;width:100%;height:auto;border:1px solid rgba(120,255,120,.14);border-radius:16px;background:rgba(5,12,10,.24);box-shadow:inset 0 0 0 1px rgba(255,255,255,.02);" '),
+      String(svg).replace('<' + 'svg ', '<' + 'svg style="display:block;width:100%;height:auto;border:1px solid rgba(120,255,120,.14);border-radius:16px;background:rgba(5,12,10,.24);box-shadow:inset 0 0 0 1px rgba(255,255,255,.02);" '),
       '<p class="sl-vis-note" style="margin:10px 0 0;color:rgba(203,213,225,.72);font-size:.86rem;line-height:1.45;"><strong>Visual note:</strong> Matrix view summarizes access-level pressure from roles, areas, schedules, groups, governance, and threshold status.</p>',
       '</div>'
     ].join("");
@@ -391,7 +391,7 @@
     return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(String(svg || ""));
   }
 
-  function buildAccessLevelVisualSvg(options = {}) {
+  function getAccessLevelSharedVisualSvg(options = {}) {
     const source = lastAccessLevelVisualMetrics || {};
     const status = String(source.status || getMetricValue("Status") || "WATCH").toUpperCase();
     const metrics = {
@@ -413,8 +413,7 @@
       return shared.buildAccessLevelSizingSvg(metrics, Object.assign({ exportMode: false }, options));
     }
 
-    const color = status.includes("RISK") ? "#b42318" : status.includes("WATCH") ? "#b7791f" : "#1f9d57";
-    return '<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="360" viewBox="0 0 1100 360"><rect width="1100" height="360" rx="22" fill="#ffffff"/><rect x="36" y="34" width="1028" height="292" rx="18" fill="#f8fbf8" stroke="#b8cabe"/><text x="70" y="78" fill="#101715" font-size="24" font-weight="800" font-family="Inter,Arial,sans-serif">Access Level Complexity Schedule</text><rect x="870" y="54" width="150" height="38" rx="10" fill="#ffffff" stroke="' + color + '"/><text x="894" y="79" fill="' + color + '" font-size="14" font-weight="800" font-family="Inter,Arial,sans-serif">' + escapeHtml(status) + '</text><text x="70" y="134" fill="#1f9d57" font-size="20" font-weight="800" font-family="Inter,Arial,sans-serif">' + escapeHtml(metrics.riskLabel) + '</text><text x="70" y="178" fill="#54615d" font-size="16" font-family="Inter,Arial,sans-serif">Access Levels: ' + escapeHtml(metrics.accessLevels) + ' / Recommended Limit: ' + escapeHtml(metrics.limit) + '</text><text x="70" y="218" fill="#54615d" font-size="16" font-family="Inter,Arial,sans-serif">Role-Area Combinations: ' + escapeHtml(metrics.combinations) + ' / Admin Load Index: ' + escapeHtml(metrics.adminLoad) + '</text><path d="M70 254 H1016" stroke="#dce8e1"/><text x="70" y="290" fill="#54615d" font-size="14" font-family="Inter,Arial,sans-serif">' + escapeHtml(metrics.threshold) + '</text></svg>';
+    return "";
   }
 
   function getVisibleAccessLevelMatrixSvg() {
@@ -426,7 +425,7 @@
   }
 
   function getAccessLevelVisualImage(options = {}) {
-    const svg = getVisibleAccessLevelMatrixSvg() || buildAccessLevelVisualSvg(options);
+    const svg = getVisibleAccessLevelMatrixSvg() || getAccessLevelSharedVisualSvg(options);
     return svg ? svgDataUri(svg) : "";
   }
 
@@ -806,7 +805,7 @@
       ],
       assumptions: assumptionsForTool(),
       chartImage: getAccessLevelVisualImage(),
-      chartSvg: getVisibleAccessLevelMatrixSvg() || buildAccessLevelVisualSvg(),
+      chartSvg: getVisibleAccessLevelMatrixSvg() || getAccessLevelSharedVisualSvg(),
       meta: getReportMeta()
     };
   }
@@ -849,8 +848,8 @@
       ? getVisibleAccessLevelMatrixSvg()
       : "";
 
-    const directChartSvg = liveChartSvg || (typeof buildAccessLevelVisualSvg === "function"
-      ? buildAccessLevelVisualSvg()
+    const directChartSvg = liveChartSvg || (typeof getAccessLevelSharedVisualSvg === "function"
+      ? getAccessLevelSharedVisualSvg()
       : "");
 
     const chartVisualMarkup = directChartSvg
@@ -1221,7 +1220,7 @@
       event.stopImmediatePropagation();
     }
 
-    const chartSvg = getVisibleAccessLevelMatrixSvg() || buildAccessLevelVisualSvg();
+    const chartSvg = getVisibleAccessLevelMatrixSvg() || getAccessLevelSharedVisualSvg();
     const payload = Object.assign({}, currentReport, {
       chartImage: getAccessLevelVisualImage(),
       chartSvg
