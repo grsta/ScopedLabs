@@ -302,20 +302,38 @@
     return '<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="360" viewBox="0 0 1100 360"><rect width="1100" height="360" rx="22" fill="#ffffff"/><rect x="36" y="34" width="1028" height="292" rx="18" fill="#f8fbf8" stroke="#b8cabe"/><text x="70" y="78" fill="#101715" font-size="24" font-weight="800" font-family="Inter,Arial,sans-serif">Fail-State Decision Schedule</text><rect x="870" y="54" width="150" height="38" rx="10" fill="#ffffff" stroke="' + color + '"/><text x="892" y="79" fill="' + color + '" font-size="14" font-weight="800" font-family="Inter,Arial,sans-serif">' + escapeHtml(status) + '</text><text x="70" y="138" fill="#1f9d57" font-size="20" font-weight="800" font-family="Inter,Arial,sans-serif">' + escapeHtml(recommendation) + '</text><text x="70" y="180" fill="#54615d" font-size="16" font-family="Inter,Arial,sans-serif">Confidence: ' + escapeHtml(confidence) + '</text><text x="70" y="222" fill="#54615d" font-size="16" font-family="Inter,Arial,sans-serif">Primary Risk: ' + escapeHtml(risk) + '</text><path d="M70 258 H1016" stroke="#dce8e1"/><text x="70" y="292" fill="#54615d" font-size="14" font-family="Inter,Arial,sans-serif">Verify release behavior, AHJ/code requirements, egress control, and standby power before final hardware selection.</text></svg>';
   }
 
-  function getFailSafeVisualImage() {
+  function getFailSafeVisualSvg() {
     const visuals = planningVisuals();
 
-    if (visuals && typeof visuals.buildFailSafeStateDiagramSvg === "function" && typeof visuals.svgToDataUri === "function") {
+    if (visuals && typeof visuals.buildFailSafeStateDiagramSvg === "function") {
       const svgHtml = visuals.buildFailSafeStateDiagramSvg({
         ...buildFailSafeVisualMetrics({ references: currentReport?.recommendationReferences || [] }),
         exportMode: true
       });
       const match = String(svgHtml || "").match(/<svg[\s\S]*?<\/svg>/i);
-      if (match) return visuals.svgToDataUri(match[0]);
+      if (match) return match[0];
     }
 
-    const svg = buildFailSafeExportSvg();
+    return buildFailSafeExportSvg();
+  }
+
+  function getFailSafeVisibleVisualHtml() {
+    const diagram = els.failSafeStateVisual ? els.failSafeStateVisual.innerHTML : "";
+    const schedule = els.failSafeDecisionSchedule ? els.failSafeDecisionSchedule.innerHTML : "";
+
+    return [
+      diagram ? '<div class="fail-safe-export-state-visual" data-export-visual="fail-safe-state-diagram">' + diagram + '</div>' : "",
+      schedule ? '<div class="fail-safe-export-decision-schedule" data-export-visual="fail-safe-decision-schedule">' + schedule + '</div>' : ""
+    ].filter(Boolean).join("");
+  }
+
+  function getFailSafeVisualImage() {
+    const svg = getFailSafeVisualSvg();
     return svg ? svgDataUri(svg) : "";
+  }
+
+  function getExportChartImage() {
+    return getFailSafeVisualImage();
   }
 
   function attachOutputShellExport() {
@@ -324,7 +342,8 @@
 
     shell.register(STEP, {
       getChartImage: getFailSafeVisualImage,
-      getVisualHtml: () => els.failSafeDecisionSchedule ? els.failSafeDecisionSchedule.innerHTML : ""
+      getExportChartImage,
+      getVisualHtml: getFailSafeVisibleVisualHtml
     });
 
     if (typeof shell.attachExportGetter === "function") {
