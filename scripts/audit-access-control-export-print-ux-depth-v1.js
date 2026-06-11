@@ -45,7 +45,7 @@ function hasLocalReportCacheToken(slug, html) {
     (slug === "door-count-planner" && html.includes("./script.js?v=access-control-door-count-preview-print-mode-007")) ||
     (slug === "door-cable-length" && html.includes("./script.js?v=access-control-door-cable-length-preview-print-mode-002")) ||
     (slug === "panel-capacity" && html.includes("./script.js?v=access-control-panel-capacity-preview-print-mode-002")) ||
-    (slug === "access-level-sizing" && html.includes("./script.js?v=access-control-access-level-sizing-preview-print-mode-006-report-chart-block"));
+    (slug === "access-level-sizing" && html.includes("./script.js?v=access-control-access-level-sizing-preview-print-mode-007-report-live-svg"));
 }
 
 const tools = [

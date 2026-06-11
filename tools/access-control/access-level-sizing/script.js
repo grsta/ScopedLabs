@@ -845,11 +845,21 @@
       `
       : "";
 
-    const chartVisualMarkup = payload.chartSvg
-      ? payload.chartSvg
-      : payload.chartImage
-        ? `<img src="${payload.chartImage}" alt="Access Level Sizing planning visual">`
-        : "";
+    const liveChartSvg = typeof getVisibleAccessLevelMatrixSvg === "function"
+      ? getVisibleAccessLevelMatrixSvg()
+      : "";
+
+    const directChartSvg = liveChartSvg || (typeof buildAccessLevelVisualSvg === "function"
+      ? buildAccessLevelVisualSvg()
+      : "");
+
+    const chartVisualMarkup = directChartSvg
+      ? directChartSvg
+      : payload.chartSvg
+        ? payload.chartSvg
+        : payload.chartImage
+          ? `<img src="${payload.chartImage}" alt="Access Level Sizing planning visual">`
+          : "";
 
     const chartBlock = chartVisualMarkup
       ? `
