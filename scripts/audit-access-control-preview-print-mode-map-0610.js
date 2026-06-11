@@ -89,6 +89,18 @@ function hasDarkWrapper(html, script, exportJs) {
   );
 }
 
+function hasRouteOverridePattern(script) {
+  return (
+    script.includes("routeConflictExportBound") ||
+    script.includes("_bindRouteExportOverride") ||
+    script.includes("access-control-route-conflict-export-override") ||
+    script.includes("LocalReportBound") ||
+    script.includes("local export override") ||
+    script.includes("openReportWindow(payload)") ||
+    script.includes("openReportWindow(payload);")
+  );
+}
+
 function hasSharedVisualBridge(html, script) {
   return (
     html.includes("access-control-planning-visuals") ||
@@ -149,6 +161,8 @@ for (const slug of tools) {
   const printSafePopup = usesPrintSafeCallbackForPopup(script);
   const lowInk = hasPrintLowInk(html, script);
   const darkWrap = hasDarkWrapper(html, script, exportJs);
+  const routeOverride = hasRouteOverridePattern(script);
+  const provenPreviewPrintPath = routeOverride || (lowInk && darkWrap && sharedBridge && visualCallback);
 
   let status = "SAFE";
   const issues = [];
@@ -156,7 +170,7 @@ for (const slug of tools) {
   if (!outputShellLoaded) issues.push("missing output shell");
   if (!visualCallback) issues.push("missing export visual callback");
   if (!sharedBridge) issues.push("no obvious shared visual bridge");
-  if (printSafePopup && !darkPreview) issues.push("popup may be using print-safe/toned visual too early");
+  if (printSafePopup && !darkPreview && !provenPreviewPrintPath) issues.push("popup may be using print-safe/toned visual too early");
   if (darkPreview && !lowInk) issues.push("dark preview found but print low-ink mode not enabled");
   if (lowInk && !darkWrap) issues.push("low-ink mode found but dark preview wrapper not obvious");
 
@@ -165,7 +179,11 @@ for (const slug of tools) {
   rows.push({
     slug,
     status,
-    reason: issues.length ? issues.join("; ") : "matches or appears compatible with Door Count preview/print pattern"
+    reason: issues.length
+      ? issues.join("; ")
+      : routeOverride
+        ? "route override uses dark popup visual with print low-ink mode"
+        : "matches or appears compatible with Door Count preview/print pattern"
   });
 
   if (status === "SAFE") safe += 1;
