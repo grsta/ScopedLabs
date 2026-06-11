@@ -406,6 +406,12 @@
     return row ? String(row.value || "") : "";
   }
 
+  function readerTypeShortLabel(value, max = 34) {
+    const text = String(value || "").trim();
+    if (text.length <= max) return text;
+    return text.slice(0, Math.max(0, max - 1)).trimEnd() + "…";
+  }
+
   function buildReaderTypeDarkVisualSvg() {
     const hasReport = !!currentReport;
     const hasRows = Array.isArray(lastReaderTypeRows) && lastReaderTypeRows.length > 0;
@@ -413,10 +419,10 @@
 
     const status = statusFromVerification(readerTypeOutputValue("Verification Status") || (currentReport ? currentReport.status : "") || "WATCH");
     const statusColor = status === "RISK" ? "rgba(255,105,105,.92)" : status === "WATCH" ? "rgba(255,204,102,.94)" : "rgba(125,255,158,.9)";
-    const readerType = readerTypeOutputValue("Reader Type") || "Reader recommendation";
-    const iface = readerTypeOutputValue("Interface") || "Interface pending";
-    const security = readerTypeOutputValue("Security") || "Security basis pending";
-    const verification = readerTypeOutputValue("Verification Status") || status;
+    const readerType = readerTypeShortLabel(readerTypeOutputValue("Reader Type") || "Reader recommendation", 28);
+    const iface = readerTypeShortLabel(readerTypeOutputValue("Interface") || "Interface pending", 27);
+    const security = readerTypeShortLabel(readerTypeOutputValue("Security") || "Security basis pending", 31);
+    const verification = readerTypeShortLabel(readerTypeOutputValue("Verification Status") || status, 88);
 
     return [
       '<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="360" viewBox="0 0 1100 360" data-access-control-modern-visual="reader-type-decision-diagram">',
