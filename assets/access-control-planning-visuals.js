@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-planning-visuals-061-reader-type-decision";
+  const VERSION = "access-control-planning-visuals-062-reader-type-fit";
 
   function clamp(value, min, max) {
     const num = Number(value);
@@ -2095,35 +2095,57 @@
 
   // access-control-reader-type-shared-renderer-061: shared Reader Type decision visual used by page, export popup, and print low-ink path.
   function buildReaderTypeDecisionSvg(metrics = {}) {
-    const statusText = statusLabel(metrics.status || metrics.verificationStatus || "WATCH");
-    const tone = statusTone(statusText);
-    const readerType = assistantProofShort(metrics.readerType || metrics.recommendation || "Reader recommendation", 28);
-    const interfaceLabel = assistantProofShort(metrics.interfaceLabel || metrics.interface || "Interface pending", 28);
-    const securityLabel = assistantProofShort(metrics.security || metrics.securityLabel || "Security basis pending", 30);
-    const verification = assistantProofShort(metrics.verificationStatus || metrics.verification || statusText, 92);
+    const rawStatus = metrics.status || metrics.verificationStatus || "WATCH";
+    const tone = statusTone(rawStatus);
+    const badgeText = tone === "risk" ? "RISK" : tone === "watch" ? "WATCH" : "SAFE";
 
-    function decisionChip(label, value, x, y, w) {
+    const readerType = metrics.readerType || metrics.recommendation || "Reader recommendation";
+    const interfaceLabel = metrics.interfaceLabel || metrics.interface || "Interface pending";
+    const securityLabel = metrics.security || metrics.securityLabel || "Security basis pending";
+    const verification = metrics.verificationStatus || metrics.verification || rawStatus;
+
+    function wrappedValue(value, max, lineCount) {
+      return assistantProofWrap(value, max, lineCount);
+    }
+
+    function decisionChip(label, value, x, y, w, wrapMax) {
+      const lines = wrappedValue(value, wrapMax, 2);
+
       return [
-        '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="92" rx="14" fill="rgba(255,255,255,.045)" stroke="rgba(125,255,158,.24)"/>',
-        '<text x="' + (x + 22) + '" y="' + (y + 32) + '" fill="rgba(125,255,158,.88)" font-size="14" font-weight="900" font-family="Inter,Arial,sans-serif">' + escapeHtml(label).toUpperCase() + '</text>',
-        '<text x="' + (x + 22) + '" y="' + (y + 65) + '" fill="rgba(238,255,244,.95)" font-size="15.5" font-weight="820" font-family="Inter,Arial,sans-serif">' + escapeHtml(value) + '</text>'
+        '<g class="sl-reader-type-chip">',
+        '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="86" rx="12" fill="rgba(255,255,255,.045)" stroke="rgba(125,255,158,.24)"/>',
+        '<text x="' + (x + 18) + '" y="' + (y + 28) + '" fill="rgba(125,255,158,.88)" font-size="12" font-weight="900" font-family="Inter,Arial,sans-serif" letter-spacing=".45">' + escapeHtml(label).toUpperCase() + '</text>',
+        assistantProofTextLines(lines, x + 18, y + 56, {
+          size: 13.2,
+          leading: 15,
+          fill: "rgba(238,255,244,.95)",
+          weight: 820
+        }),
+        '</g>'
       ].join("");
     }
 
+    const verificationLines = assistantProofWrap("Verification: " + verification + " · Confirm credential format, facility-code, existing-card support, and protocol before final hardware selection.", 104, 2);
+
     return [
       '<div class="access-control-planning-visual-shell" data-access-control-modern-visual="reader-type-decision">',
-      '<svg viewBox="0 0 760 300" role="img" aria-label="Reader Type decision visual" xmlns="http://www.w3.org/2000/svg">',
-      '<defs><pattern id="accGridReaderTypeV61" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="rgba(120,255,120,.045)" stroke-width="1"/></pattern></defs>',
-      '<rect x="24" y="24" width="712" height="252" rx="16" fill="rgba(0,0,0,.10)" stroke="rgba(120,255,120,.12)"/>',
-      '<rect x="36" y="36" width="688" height="228" rx="12" fill="url(#accGridReaderTypeV61)" stroke="rgba(120,255,120,.07)"/>',
+      '<svg viewBox="0 0 760 315" role="img" aria-label="Reader Type decision visual" xmlns="http://www.w3.org/2000/svg">',
+      '<defs><pattern id="accGridReaderTypeV62" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="rgba(120,255,120,.045)" stroke-width="1"/></pattern></defs>',
+      '<rect x="24" y="24" width="712" height="267" rx="16" fill="rgba(0,0,0,.10)" stroke="rgba(120,255,120,.12)"/>',
+      '<rect x="36" y="36" width="688" height="243" rx="12" fill="url(#accGridReaderTypeV62)" stroke="rgba(120,255,120,.07)"/>',
       '<text x="52" y="62" font-size="11" fill="rgba(180,255,200,.68)" letter-spacing="1.4">READER TYPE SELECTOR</text>',
-      '<text x="52" y="84" font-size="19" fill="rgba(246,255,248,.96)" font-weight="650">Reader decision, interface, and credential assurance</text>',
-      statusBadge(statusText, tone, 616, 51),
-      decisionChip("Reader type", readerType, 70, 120, 200),
-      decisionChip("Interface", interfaceLabel, 292, 120, 190),
-      decisionChip("Security basis", securityLabel, 504, 120, 190),
-      '<path d="M70 234 H692" stroke="rgba(203,213,225,.22)" stroke-width="1.2" stroke-dasharray="6 7"/>',
-      '<text x="70" y="252" fill="rgba(203,213,225,.72)" font-size="10.8" font-family="Inter,Arial,sans-serif">Verification: ' + escapeHtml(verification) + ' · Confirm credential format, facility-code, existing-card support, and protocol before final hardware selection.</text>',
+      '<text x="52" y="84" font-size="18" fill="rgba(246,255,248,.96)" font-weight="650">Reader decision, interface, and credential assurance</text>',
+      statusBadge(badgeText, tone, 626, 52),
+      decisionChip("Reader type", readerType, 58, 122, 205, 23),
+      decisionChip("Interface", interfaceLabel, 278, 122, 205, 23),
+      decisionChip("Security basis", securityLabel, 498, 122, 205, 22),
+      '<path d="M58 232 H703" stroke="rgba(203,213,225,.22)" stroke-width="1.2" stroke-dasharray="6 7"/>',
+      assistantProofTextLines(verificationLines, 58, 252, {
+        size: 10.4,
+        leading: 13,
+        fill: "rgba(203,213,225,.72)",
+        weight: 520
+      }),
       '</svg>',
       '<p class="sl-vis-note"><strong>Visual note:</strong> Reader Type is a planning bridge into Lock Power Budget. Use the visual to confirm reader technology, interface, credential basis, and verification status before carrying assumptions forward.</p>',
       '</div>'
