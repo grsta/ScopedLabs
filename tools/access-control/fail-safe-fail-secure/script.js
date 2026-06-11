@@ -308,7 +308,7 @@
     if (visuals && typeof visuals.buildFailSafeStateDiagramSvg === "function") {
       const svgHtml = visuals.buildFailSafeStateDiagramSvg({
         ...buildFailSafeVisualMetrics({ references: currentReport?.recommendationReferences || [] }),
-        exportMode: true
+        exportMode: false
       });
       const match = String(svgHtml || "").match(/<svg[\s\S]*?<\/svg>/i);
       if (match) return match[0];
