@@ -1209,36 +1209,50 @@
     if (statusEl) statusEl.textContent = message || "";
   }
 
-  function anti_passback_zones_routeExportSvgDataUri(svg) {
-    const raw = String(svg || "").trim();
+  function anti_passback_zones_normalizeRouteExportSvg(value) {
+    const raw = String(value || "").trim();
     if (!raw) return "";
-    if (raw.startsWith("data:image")) return raw;
-    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(raw);
+
+    if (raw.startsWith("data:image/svg+xml")) {
+      try {
+        const payload = raw.split(",").slice(1).join(",");
+        return decodeURIComponent(payload || "");
+      } catch (err) {
+        return "";
+      }
+    }
+
+    const match = raw.match(/<svg[\s\S]*?<\/svg>/i);
+    return match ? match[0] : "";
+  }
+
+  function anti_passback_zones_routeExportSvgDataUri(svg) {
+    const normalized = anti_passback_zones_normalizeRouteExportSvg(svg);
+    if (!normalized) return "";
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(normalized);
   }
 
   function anti_passback_zones_getRouteExportChartImage() {
+    const visuals = planningVisuals();
+
     try {
-      const svg = (() => { const visuals = planningVisuals(); return lastMetrics && visuals && typeof visuals.buildAntiPassbackSvg === "function" ? visuals.buildAntiPassbackSvg(lastMetrics, { exportMode: false }) : ""; })();
-      const image = anti_passback_zones_routeExportSvgDataUri(svg);
-      if (image) return image;
+      if (lastMetrics && visuals && typeof visuals.buildAntiPassbackSvg === "function") {
+        const svg = visuals.buildAntiPassbackSvg(lastMetrics, { exportMode: false });
+        const image = anti_passback_zones_routeExportSvgDataUri(svg);
+        if (image) return image;
+      }
     } catch (err) {
       console.warn("anti-passback-zones dark SVG export capture failed:", err);
     }
 
     try {
-      const fallback = getAntiPassbackVisualImage(lastMetrics, { exportMode: false });
-      if (fallback) return fallback;
-    } catch (err) {
-      console.warn("anti-passback-zones fallback export image capture failed:", err);
-    }
-
-    try {
-      if (typeof getExportChartImage === "function") {
-        const image = getExportChartImage();
+      if (lastMetrics && visuals && typeof visuals.buildAntiPassbackSvg === "function") {
+        const svg = visuals.buildAntiPassbackSvg(lastMetrics, { exportMode: true });
+        const image = anti_passback_zones_routeExportSvgDataUri(svg);
         if (image) return image;
       }
     } catch (err) {
-      console.warn("anti-passback-zones final export chart image capture failed:", err);
+      console.warn("anti-passback-zones light SVG export capture failed:", err);
     }
 
     return "";
