@@ -141,3 +141,39 @@ Do not promote export/report checks into main gates until:
 5. No calculations changed.
 6. No auth, checkout, pipeline, hidden ledgers, carry-forward, or KB behavior changed.
 7. Compact verifier remains clean.
+
+
+## Parked-State Checkpoint
+
+Date: 2026-06-11
+
+Access Control export/report is parked cleanly for now.
+
+Current state:
+
+```text
+EXPORT_REPORT_NO_SAFE_FIX_TARGETS_YET
+DRY_RUN_FIXER_NOT_READY_UNTIL_SAFE_FIX_BUCKET_EXISTS
+ROUTE_OVERRIDE_KEEP_REVIEW
+PREVIEW_PRINT_KEEP_REVIEW
+EXPORT_STATUS_KEEP_SEPARATE
+REPORT_VISUAL_OWNER_KEEP_REVIEW
+EXPORT_PAYLOAD_PROOF_GAP_KEEP_REVIEW
+LEDGER_AND_CARRY_FORWARD_KEEP_SEPARATE
+SCOPE_PLANNER_SPECIAL_PATH_SKIPPED
+NO_IMPLEMENTATION_PATCH_YET
+```
+
+This means:
+
+- The export/report system is audited and contracted.
+- The SAFE_FIX readiness audit found no safe auto-fix target yet.
+- A dry-run fixer should not be built until a real `SAFE_FIX` bucket exists.
+- Route override adapters remain review-only.
+- Preview/print behavior remains review-only.
+- Export status controls remain separate.
+- Report visual ownership remains review-only.
+- Payload proof gaps remain review-only.
+- Hidden result ledgers and carry-forward state remain untouched.
+- Scope Planner remains a special path.
+- Auth, checkout, pipeline, export, snapshot, and Knowledge Base behavior remain untouched.
