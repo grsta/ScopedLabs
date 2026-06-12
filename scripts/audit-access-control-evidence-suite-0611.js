@@ -10,6 +10,11 @@ const AUDITS = [
     args: ["--summary-only"],
   },
   {
+    title: "Small status chip alias",
+    file: "scripts/audit-access-control-small-chip-alias-0611.js",
+    args: ["--summary-only"],
+  },
+  {
     title: "Status rendering map",
     file: "scripts/audit-access-control-status-rendering-map-0611.js",
     patterns: [
