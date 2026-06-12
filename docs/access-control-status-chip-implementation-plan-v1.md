@@ -79,6 +79,24 @@ V1 must not touch:
 
 ## Shared Status Chip Standard
 
+### Locked Visual Decision — Squared Engineering Chips
+
+The V1 visual target is a squared / rectangular engineering status chip.
+
+This is an intentional design direction. Older pill-shaped local status chips are legacy styling and should not be preserved as the future shared standard.
+
+Reader Type is the closest current reference for the shared squared direction. Panel Capacity, Access Level, and Credential Format still contain older pill-style local chip CSS and should migrate toward the shared squared contract.
+
+Rules:
+
+- Do not preserve pill radius as the V1 target.
+- Do not remove local chip CSS until shared square aliases are proven.
+- Do not touch export status controls.
+- Do not touch hidden result ledgers or carry-forward state.
+- Do not touch auth, checkout, pipeline, Knowledge Base, snapshot, or export route behavior.
+- Preserve hero placement behavior for Access Level and Credential Format.
+- Leave Gold tier behavior inactive; only keep future-ready audit hooks.
+
 The shared module should provide one consistent small-chip contract.
 
 Recommended base class:
