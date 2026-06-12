@@ -22,39 +22,6 @@
   <script defer src="/assets/app.js?v=0404"></script>
 
   <style>
-    .results-grid {
-      display: grid;
-      gap: 10px;
-      margin-top: 14px;
-    }
-
-    .result-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 10px 12px;
-      border-radius: 12px;
-      border: 1px solid rgba(120, 255, 120, 0.14);
-      background: rgba(0, 0, 0, 0.18);
-    }
-
-    .result-label,
-    .result-row .k {
-      color: rgba(255, 255, 255, 0.70);
-    }
-
-    .result-value,
-    .result-row .v {
-      font-weight: 800;
-      text-align: right;
-    }
-
-    .mini-note {
-      margin-top: 12px;
-      color: rgba(255, 255, 255, 0.56);
-      font-size: 0.92rem;
-      line-height: 1.5;
-    }
 .export-status {
       margin-top: 12px;
       color: rgba(255, 255, 255, 0.68);
@@ -136,14 +103,6 @@
 
     .result-value[data-tone="active"] {
       color: #7dff98;
-    }
-
-
-
-    /* access-control-reader-type-output-contract-023 */
-    #results[data-result-ledger][hidden],
-    [data-result-ledger][hidden] {
-      display: none !important;
     }
 
     .reader-type-decision-card[hidden] {
@@ -256,8 +215,7 @@
         grid-template-columns: 1fr;
       }
     }
-
-  </style>
+</style>
 </head>
 
 <body data-tier="free" data-category="access-control" data-step="reader-type-selector" data-lane="v1" data-access-control-tool-polish="true">

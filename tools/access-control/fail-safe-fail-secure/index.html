@@ -22,41 +22,7 @@
   <script defer src="/assets/app.js?v=0406"></script>
 
   <style>
-    .results-grid {
-      display: grid;
-      gap: 10px;
-      margin-top: 14px;
-    }
-
-    .result-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 10px 12px;
-      border-radius: 12px;
-      border: 1px solid rgba(120, 255, 120, 0.14);
-      background: rgba(0, 0, 0, 0.18);
-    }
-
-    .result-label,
-    .result-row .k {
-      color: rgba(255, 255, 255, 0.70);
-    }
-
-    .result-value,
-    .result-row .v {
-      font-weight: 800;
-      text-align: right;
-    }
-
-    .mini-note {
-      margin-top: 12px;
-      color: rgba(255, 255, 255, 0.56);
-      font-size: 0.92rem;
-      line-height: 1.5;
-    }
-
-    .export-grid {
+.export-grid {
       display: grid;
       gap: 14px;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -74,7 +40,6 @@
       line-height: 1.45;
       min-height: 1.45em;
     }
-
 
     /* access-fail-safe-scope-context-001 */
     .access-scope-context-card {
@@ -140,7 +105,6 @@
       color: rgba(251,191,36,.95);
       font-weight: 950;
     }
-
 
     /* access-fail-safe-visible-status-legend-003 */
     .access-fail-safe-status-card {
@@ -319,14 +283,6 @@
       letter-spacing: normal;
     }
 
-
-
-    /* access-control-fail-safe-output-contract-016 */
-    #results[data-result-ledger][hidden],
-    [data-result-ledger][hidden] {
-      display: none !important;
-    }
-
     .fail-safe-decision-card[hidden] {
       display: none !important;
     }
@@ -423,8 +379,6 @@
       margin-top: 4px;
     }
 
-
-
     /* access-control-fail-safe-chip-fit-017 */
     .fail-safe-decision-hero > div:last-child {
       display: flex;
@@ -475,10 +429,6 @@
       }
     }
 
-
-
-
-
     @media (max-width: 860px) {
       .access-scope-context-grid {
         grid-template-columns: 1fr 1fr;
@@ -506,7 +456,7 @@
     .access-fail-safe-ref-marker.risk {
       color: #ff7676;
     }
-  </style>
+</style>
 </head>
 
 <body data-tier="free" data-category="access-control" data-step="fail-safe-fail-secure" data-lane="v1" data-access-control-tool-polish="true">
