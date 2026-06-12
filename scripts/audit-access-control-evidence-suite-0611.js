@@ -197,6 +197,21 @@ const AUDITS = [
     ],
   },
   {
+    title: "Category readiness checkpoint",
+    file: "scripts/audit-access-control-category-readiness-checkpoint-0611.js",
+    patterns: [
+      "Category-readiness summary",
+      "STATUS_SYSTEM_READY",
+      "EXPORT_REPORT_SYSTEM_PARKED",
+      "MAIN_GATES_PASS_EXPECTED",
+      "EVIDENCE_SUITE_PASS_EXPECTED",
+      "SPECIAL_PATHS_DOCUMENTED",
+      "AUTO_FIX_NOT_READY_UNTIL_SAFE_FIX_BUCKET_EXISTS",
+      "CATEGORY_BLUEPRINT_READY",
+      "OVERALL:",
+    ],
+  },
+  {
     title: "Page-local evidence",
     file: "scripts/audit-access-control-page-local-evidence-0610.js",
     args: ["--summary-only"],
