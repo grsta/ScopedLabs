@@ -7,6 +7,7 @@ const htmlPath = path.join(toolDir, "index.html");
 const scriptPath = path.join(toolDir, "script.js");
 const polishPath = path.join(root, "assets", "access-control-tool-polish.js");
 const evidenceSuitePath = path.join(root, "scripts", "audit-access-control-evidence-suite-0611.js");
+const contractPath = path.join(root, "docs", "access-control-fail-safe-complex-status-contract-v1.md");
 
 function readIfExists(filePath) {
   return fs.existsSync(filePath) ? fs.readFileSync(filePath, "utf8") : "";
@@ -97,6 +98,7 @@ const html = readIfExists(htmlPath);
 const js = readIfExists(scriptPath);
 const polish = readIfExists(polishPath);
 const evidenceSuite = readIfExists(evidenceSuitePath);
+const contract = readIfExists(contractPath);
 
 const localRules = extractStyleBlocks(html).flatMap(extractRules);
 const localSelectors = uniq(localRules.map((rule) => rule.selector));
@@ -143,6 +145,11 @@ const scriptHasCarryOrLedger =
   has(js, "pipeline") ||
   has(html, "data-result-ledger");
 
+const hasContractMarker =
+  contract.includes("FAIL_SAFE_COMPLEX_STATUS_CONTRACT_NEEDED") &&
+  contract.includes("KEEP_FAIL_SAFE_LOCAL_UNTIL_CONTRACTED") &&
+  contract.includes("DIAGRAM_AND_LEGEND_REVIEW_BEFORE_SHARED_HELPER");
+
 const knownDeferred =
   evidenceSuite.includes("FAIL_SAFE_COMPLEX_STATUS_UNTOUCHED") ||
   evidenceSuite.includes("COMPLEX_STATUS_SYSTEM_KEEP") ||
@@ -177,6 +184,7 @@ console.log("Prerequisites");
 html ? safe("fail-safe-fail-secure index.html present") : fail("fail-safe-fail-secure index.html missing");
 js ? safe("fail-safe-fail-secure script.js present") : info("fail-safe-fail-secure script.js not found");
 polish ? safe("shared polish present") : fail("shared polish missing");
+hasContractMarker ? safe("Fail Safe complex status contract marker present") : fail("Fail Safe complex status contract marker missing");
 knownDeferred ? safe("Fail Safe appears deferred/kept in existing evidence language") : watch("Fail Safe deferred marker not found in evidence suite");
 
 console.log("");

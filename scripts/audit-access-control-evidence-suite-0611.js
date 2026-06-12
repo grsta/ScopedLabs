@@ -118,6 +118,22 @@ const AUDITS = [
     ],
   },
   {
+    title: "Fail Safe complex status",
+    file: "scripts/audit-access-control-fail-safe-complex-status-0611.js",
+    patterns: [
+      "Local inventory",
+      "Script ownership",
+      "Decision bucket",
+      "FAIL_SAFE_COMPLEX_STATUS_CONTRACT_NEEDED",
+      "KEEP_FAIL_SAFE_LOCAL_UNTIL_CONTRACTED",
+      "DIAGRAM_AND_LEGEND_REVIEW_BEFORE_SHARED_HELPER",
+      "EXPORT_STATUS_KEEP_SEPARATE",
+      "LEDGER_AND_CARRY_FORWARD_KEEP_SEPARATE",
+      "AUTH_CHECKOUT_PIPELINE_KB_UNTOUCHED",
+      "OVERALL:",
+    ],
+  },
+  {
     title: "Page-local evidence",
     file: "scripts/audit-access-control-page-local-evidence-0610.js",
     args: ["--summary-only"],
