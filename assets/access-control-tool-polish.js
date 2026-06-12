@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-tool-polish-013-generic-result-export-styles";
+  const VERSION = "access-control-tool-polish-014-result-ledger-hidden-guard";
   const STYLE_ID = "access-control-tool-polish-styles";
   // access-control-status-value-weight-011: shared status chip and value-column visual weight.
 
@@ -25,7 +25,7 @@
     style.id = STYLE_ID;
     style.textContent = [
       'body[data-category="access-control"][data-access-control-tool-polish="true"] .btn{border-radius:10px!important;}',
-      'body[data-category="access-control"][data-access-control-tool-polish="true"] .results-grid{display:grid!important;gap:10px!important;margin-top:14px!important;}',
+      'body[data-category="access-control"][data-access-control-tool-polish="true"] .results-grid{display:grid!important;gap:10px!important;margin-top:14px!important;}\nbody[data-category="access-control"][data-access-control-tool-polish="true"] [data-result-ledger][hidden]{display:none!important;}\nbody[data-category="access-control"][data-access-control-tool-polish="true"] #results[data-result-ledger][hidden]{display:none!important;}',
       'body[data-category="access-control"][data-access-control-tool-polish="true"] .result-row{background:rgba(0,0,0,.18)!important;border:1px solid rgba(120,255,120,.14)!important;border-radius:12px!important;display:flex!important;gap:12px!important;justify-content:space-between!important;padding:10px 12px!important;}',
       'body[data-category="access-control"][data-access-control-tool-polish="true"] .result-label,body[data-category="access-control"][data-access-control-tool-polish="true"] .result-row .k{color:rgba(255,255,255,.70)!important;}',
       'body[data-category="access-control"][data-access-control-tool-polish="true"] .result-value,body[data-category="access-control"][data-access-control-tool-polish="true"] .result-row .v{font-weight:800!important;text-align:right!important;}',
