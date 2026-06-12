@@ -185,11 +185,21 @@ function main() {
     process.exit(1);
   }
 
-  if (removableCount !== 12) {
-    console.log("OVERALL: WATCH");
-    console.log("Expected 12 removable local pill-chip selectors before cleanup.");
+  if (removableCount === 12) {
+    console.log("OVERALL: PASS");
+    console.log("state: READY_FOR_CLEANUP");
     process.exit(0);
   }
+
+  if (removableCount === 0) {
+    console.log("OVERALL: PASS");
+    console.log("state: CLEANED");
+    process.exit(0);
+  }
+
+  console.log("OVERALL: WATCH");
+  console.log("Expected either 12 removable selectors before cleanup or 0 after cleanup.");
+  process.exit(0);
 
   console.log("OVERALL: PASS");
 }
