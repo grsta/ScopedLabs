@@ -15,6 +15,19 @@ const AUDITS = [
     args: ["--summary-only"],
   },
   {
+    title: "Small status chip style bodies",
+    file: "scripts/audit-access-control-small-chip-style-bodies-0611.js",
+    patterns: [
+      "Summary",
+      "DIFF",
+      "LOCAL_ONLY",
+      "MISSING_BOTH",
+      "SHARED_ONLY",
+      "Interpretation:",
+      "Summary: audit only / 0 FAIL",
+    ],
+  },
+  {
     title: "Status rendering map",
     file: "scripts/audit-access-control-status-rendering-map-0611.js",
     patterns: [
