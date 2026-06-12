@@ -101,3 +101,32 @@ Do not promote Fail Safe complex status checks into main gates until:
 4. Export/snapshot output is visually verified.
 5. No calculations are changed.
 6. No auth, checkout, pipeline, ledgers, carry-forward, or Knowledge Base behavior changed.
+
+
+## Parked-State Checkpoint
+
+Date: 2026-06-11
+
+Fail Safe / Fail Secure is parked cleanly for now.
+
+Current state:
+
+```text
+FAIL_SAFE_STATUS_PATH_LOCAL_REVIEW
+FAIL_SAFE_DIAGRAM_LEGEND_LOCAL_REVIEW
+FAIL_SAFE_SHARED_HELPER_NOT_READY
+FAIL_SAFE_NO_IMPLEMENTATION_PATCH_YET
+FAIL_SAFE_COMPLEX_LOCAL_OWNERSHIP_REVIEW
+```
+
+This means:
+
+- The status/recommendation path remains local and intentionally under review.
+- Diagram, legend, and state visuals remain local and intentionally under review.
+- A shared helper is not ready yet.
+- No implementation patch is needed yet.
+- Export status controls remain separate.
+- Hidden result ledgers and carry-forward state remain untouched.
+- Auth, checkout, pipeline, export, snapshot, and Knowledge Base behavior remain untouched.
+- The completed small square-chip migration remains separate.
+- The parked Lock Power visual/status lane remains separate.

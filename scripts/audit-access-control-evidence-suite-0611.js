@@ -134,6 +134,19 @@ const AUDITS = [
     ],
   },
   {
+    title: "Fail Safe parked state",
+    file: "scripts/audit-access-control-fail-safe-parked-state-0611.js",
+    patterns: [
+      "Parked-state summary",
+      "FAIL_SAFE_STATUS_PATH_LOCAL_REVIEW",
+      "FAIL_SAFE_DIAGRAM_LEGEND_LOCAL_REVIEW",
+      "FAIL_SAFE_SHARED_HELPER_NOT_READY",
+      "FAIL_SAFE_NO_IMPLEMENTATION_PATCH_YET",
+      "AUTH_CHECKOUT_PIPELINE_KB_UNTOUCHED",
+      "OVERALL:",
+    ],
+  },
+  {
     title: "Page-local evidence",
     file: "scripts/audit-access-control-page-local-evidence-0610.js",
     args: ["--summary-only"],
