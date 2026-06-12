@@ -67,6 +67,18 @@ const AUDITS = [
     args: ["--summary-only"],
   },
   {
+    title: "Lock Power visual chip",
+    file: "scripts/audit-access-control-lock-power-visual-chip-0611.js",
+    patterns: [
+      "Decision bucket",
+      "LOCK_POWER_VISUAL_CHIP_CONTRACT_NEEDED",
+      "FAIL_SAFE_COMPLEX_STATUS_UNTOUCHED",
+      "EXPORT_STATUS_CONTROLS_UNTOUCHED",
+      "LEDGERS_AND_CARRY_FORWARD_UNTOUCHED",
+      "OVERALL:",
+    ],
+  },
+  {
     title: "Page-local evidence",
     file: "scripts/audit-access-control-page-local-evidence-0610.js",
     args: ["--summary-only"],
