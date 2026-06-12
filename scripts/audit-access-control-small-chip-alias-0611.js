@@ -228,9 +228,26 @@ function classifyCandidate(candidate, local, sharedRules) {
   const hasMissingLocalState = findings.some((finding) => finding.includes("LOCAL_STATE_MISSING"));
   const hasBase = findings.includes("BASE_SELECTOR_PRESENT");
 
+  const sharedBaseForMigration = findRule(sharedRules, candidate.base);
+  const sharedExpectedStates = candidate.expectedStates.every((state) => {
+    return Boolean(findRule(sharedRules, candidate.base + state));
+  });
+  const localExpectedStatesRemoved = candidate.expectedStates.every((state) => {
+    return !findRule(local.rules, candidate.base + state);
+  });
+  const migratedToSharedSquare =
+    !hasBase &&
+    localExpectedStatesRemoved &&
+    Boolean(sharedBaseForMigration) &&
+    sharedExpectedStates;
+
   let bucket = "ALIAS_READY";
 
-  if (!hasBase || hasMissingLocalState) {
+  if (migratedToSharedSquare) {
+    bucket = "SHARED_SQUARE_CHIP_MIGRATED";
+    findings.push("LOCAL_PILL_CHIP_CSS_REMOVED");
+    findings.push("SHARED_SQUARE_ALIAS_PRESENT");
+  } else if (!hasBase || hasMissingLocalState) {
     bucket = "LOCAL_KEEP_REVIEW";
   } else if (hasMissingBaseShared || hasMissingSharedState) {
     bucket = "STATE_ALIAS_MISSING";
@@ -299,6 +316,7 @@ function main() {
   console.log("INFO  GOLD_READY_PLACEHOLDER — audit only; no Gold behavior enabled");
   console.log("INFO  PRO_BEHAVIOR_PRESERVED — audit only; no auth or checkout changes");
   console.log("INFO  EXPORT_STATUS_KEEP — export status controls remain excluded");
+  console.log("INFO  SHARED_SQUARE_CHIP_MIGRATED — local pill CSS removed and shared square aliases now own the small chip styling");
 
   if (!SUMMARY_ONLY) {
     console.log("");

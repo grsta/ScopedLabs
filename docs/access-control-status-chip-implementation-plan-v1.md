@@ -255,3 +255,28 @@ For each implementation phase:
 4. Remove temporary scripts.
 5. Commit only durable docs/scripts/assets/page changes.
 6. Push.
+
+
+## Status Chip Migration Completion Checkpoint
+
+Date: 2026-06-11
+
+The V1 small status-chip migration has been completed for:
+
+- reader-type-selector
+- panel-capacity
+- access-level-sizing
+- credential-format
+
+Completion state:
+
+- Shared squared status-chip aliases are live in `assets/access-control-tool-polish.js`.
+- Old local pill-style chip CSS has been removed from the four small-chip candidate tools.
+- Access Level and Credential Format hero placement rules are preserved.
+- Export status controls remain excluded from this migration.
+- Fail Safe remains deferred as a complex status/legend system.
+- Lock Power remains deferred as a visual chip review.
+- Scope Planner remains a special path.
+- Auth, checkout, pipeline, export, snapshot, Knowledge Base, ledgers, and carry-forward behavior remain untouched.
+
+Evidence language should now use `SHARED_SQUARE_CHIP_MIGRATED` / `LOCAL_PILL_CSS_REMOVED` for the four completed small-chip tools instead of pending cleanup language.

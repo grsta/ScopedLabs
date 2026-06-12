@@ -10,6 +10,17 @@ const AUDITS = [
     args: ["--summary-only"],
   },
   {
+    title: "Status chip migration state",
+    file: "scripts/audit-access-control-status-chip-migration-state-0611.js",
+    patterns: [
+      "Migration summary",
+      "SHARED_SQUARE_CHIP_MIGRATED",
+      "LOCAL_PILL_CSS_REMOVED",
+      "HERO_PLACEMENT_PRESERVED",
+      "OVERALL:",
+    ],
+  },
+  {
     title: "Small status chip alias",
     file: "scripts/audit-access-control-small-chip-alias-0611.js",
     args: ["--summary-only"],

@@ -248,7 +248,7 @@ function main() {
   console.log("Interpretation:");
   console.log("- LOCAL_ONLY selectors are candidates for shared alias coverage.");
   console.log("- DIFF selectors need a design decision before shared polish overrides them.");
-  console.log("- SHARED_ONLY selectors are already available in shared polish but not used locally.");
+  console.log("- SHARED_ONLY is expected for cleaned small status-chip selectors after local pill CSS removal.");
   console.log("- This audit does not change UI, auth, checkout, export, snapshot, pipeline, KB, or ledgers.");
   console.log("");
   console.log("Summary: audit only / 0 FAIL");
