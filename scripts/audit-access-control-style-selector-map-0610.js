@@ -86,13 +86,27 @@ function extractSelectors(css) {
   return Array.from(selectors).sort((a, b) => a.localeCompare(b));
 }
 
+function removeExportPopupStyleTemplates(source) {
+  let text = String(source || "");
+
+  // Export popup/report-preview templates often contain their own <style> block.
+  // That CSS belongs to the print/export route adapter, not page-visible JS style injection.
+  text = text.replace(/(?:const|let|var)\s+[A-Za-z0-9_$]*(?:popup|Popup|preview|Preview|report|Report|html|Html|print|Print)[A-Za-z0-9_$]*\s*=\s*`[\s\S]*?<style\b[\s\S]*?<\/style>[\s\S]*?`;/g, "");
+  text = text.replace(/`[\s\S]*?<style\b[\s\S]*?<\/style>[\s\S]*?(?:payload\.reportId|exportMode|print-color-adjust|status-pill|window\.print)[\s\S]*?`/g, "``");
+
+  return text;
+}
+
+
 function hasJsStyleInjection(script) {
+  const cleaned = removeExportPopupStyleTemplates(script);
+
   return [
     /document\.createElement\(["']style["']\)/,
     /\.appendChild\([^)]*style/i,
     /<style\b/i,
     /insertAdjacentHTML\([^)]*style/i,
-  ].some((pattern) => pattern.test(script));
+  ].some((pattern) => pattern.test(cleaned));
 }
 
 function selectorBucket(selector, slug) {
