@@ -147,6 +147,20 @@ const AUDITS = [
     ],
   },
   {
+    title: "Status system rollup",
+    file: "scripts/audit-access-control-status-system-rollup-0611.js",
+    patterns: [
+      "Rollup summary",
+      "SMALL_SQUARE_CHIPS_MIGRATED",
+      "LOCK_POWER_PARKED",
+      "FAIL_SAFE_PARKED",
+      "EXPORT_STATUS_KEEP_SEPARATE",
+      "LEDGER_AND_CARRY_FORWARD_KEEP_SEPARATE",
+      "AUTH_CHECKOUT_PIPELINE_KB_UNTOUCHED",
+      "OVERALL:",
+    ],
+  },
+  {
     title: "Page-local evidence",
     file: "scripts/audit-access-control-page-local-evidence-0610.js",
     args: ["--summary-only"],
