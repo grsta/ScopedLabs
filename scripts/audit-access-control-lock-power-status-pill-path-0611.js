@@ -7,6 +7,7 @@ const htmlPath = path.join(root, "tools", "access-control", "lock-power-budget",
 const scriptPath = path.join(root, "tools", "access-control", "lock-power-budget", "script.js");
 const polishPath = path.join(root, "assets", "access-control-tool-polish.js");
 const contractPath = path.join(root, "docs", "access-control-lock-power-visual-chip-contract-v1.md");
+const statusPillContractPath = path.join(root, "docs", "access-control-lock-power-status-pill-path-contract-v1.md");
 
 function read(filePath) {
   return fs.readFileSync(filePath, "utf8");
@@ -112,6 +113,7 @@ const html = read(htmlPath);
 const script = read(scriptPath);
 const polish = read(polishPath);
 const contract = read(contractPath);
+const statusPillContract = read(statusPillContractPath);
 
 const localRules = extractStyleBlocks(html).flatMap(extractRules);
 const sharedRules = extractRules(polish);
@@ -121,6 +123,7 @@ const hasStatusClass = script.includes("statusClass");
 const hasGetStatus = script.includes("function getStatus");
 const hasGetStatusFromResults = script.includes("function getStatusFromResults");
 const hasContractMarker = contract.includes("LOCK_POWER_VISUAL_CHIP_CONTRACT_NEEDED");
+const hasStatusPillContractMarker = statusPillContract.includes("LOCK_POWER_STATUS_PILL_PATH_LOCAL_REVIEW");
 
 const localStatusPillSelectors = uniq(findSelectors(localRules, "status-pill"));
 const sharedStatusPillSelectors = uniq(findSelectors(sharedRules, "status-pill"));
@@ -161,6 +164,7 @@ console.log("");
 
 console.log("Prerequisites");
 hasContractMarker ? safe("Lock Power visual-chip contract marker present") : fail("Lock Power visual-chip contract marker missing");
+hasStatusPillContractMarker ? safe("Lock Power status-pill path contract marker present") : fail("Lock Power status-pill path contract marker missing");
 hasGetStatus ? safe("getStatus function present") : watch("getStatus function not found");
 hasGetStatusFromResults ? safe("getStatusFromResults function present") : watch("getStatusFromResults function not found");
 
