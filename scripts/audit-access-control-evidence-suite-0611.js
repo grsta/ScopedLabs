@@ -105,6 +105,19 @@ const AUDITS = [
     ],
   },
   {
+    title: "Lock Power parked state",
+    file: "scripts/audit-access-control-lock-power-parked-state-0611.js",
+    patterns: [
+      "Parked-state summary",
+      "LOCK_POWER_VISUAL_CHIP_ALREADY_RECTANGULAR",
+      "LOCK_POWER_STATUS_PILL_PATH_DOCUMENTED_LOCAL_REVIEW",
+      "LOCK_POWER_NO_IMPLEMENTATION_REQUIRED_YET",
+      "LOCK_POWER_FUTURE_HELPER_OPTIONAL",
+      "FAIL_SAFE_COMPLEX_STATUS_UNTOUCHED",
+      "OVERALL:",
+    ],
+  },
+  {
     title: "Page-local evidence",
     file: "scripts/audit-access-control-page-local-evidence-0610.js",
     args: ["--summary-only"],

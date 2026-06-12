@@ -89,3 +89,30 @@ Do not promote Lock Power visual-chip checks into main gates until:
 3. Export/snapshot behavior is visually verified.
 4. The compact verifier remains clean.
 5. No auth, checkout, pipeline, ledgers, or Knowledge Base behavior changed.
+
+
+## Parked-State Checkpoint
+
+Date: 2026-06-11
+
+Lock Power is parked cleanly for now.
+
+Current state:
+
+```text
+LOCK_POWER_VISUAL_CHIP_ALREADY_RECTANGULAR
+LOCK_POWER_STATUS_PILL_PATH_DOCUMENTED_LOCAL_REVIEW
+LOCK_POWER_NO_IMPLEMENTATION_REQUIRED_YET
+LOCK_POWER_FUTURE_HELPER_OPTIONAL
+```
+
+This means:
+
+- The visible Lock Power visual chip is already rectangular / engineering-style.
+- The generated `status-pill ${statusClass}` path is documented and intentionally left local for review.
+- No shared helper is required yet.
+- A future `LockPowerVisualChipModule` remains optional, not mandatory.
+- CAD rail visuals remain local.
+- Export status controls remain separate.
+- Hidden result ledgers and carry-forward state remain untouched.
+- Fail Safe’s complex status system remains deferred and untouched.
