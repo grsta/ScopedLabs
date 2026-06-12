@@ -79,6 +79,32 @@ const AUDITS = [
     ],
   },
   {
+    title: "Lock Power visual chip readiness",
+    file: "scripts/audit-access-control-lock-power-visual-chip-readiness-0611.js",
+    patterns: [
+      "Visual ownership map",
+      "LOCK_POWER_VISUAL_CHIP_ALREADY_RECTANGULAR",
+      "GENERATED_STATUS_PILL_PATH",
+      "EXPORT_STATUS_KEEP_SEPARATE",
+      "LEDGER_KEEP_SEPARATE",
+      "FAIL_SAFE_COMPLEX_STATUS_UNTOUCHED",
+      "OVERALL:",
+    ],
+  },  {
+    title: "Lock Power status pill path",
+    file: "scripts/audit-access-control-lock-power-status-pill-path-0611.js",
+    patterns: [
+      "Generated status path",
+      "Style ownership",
+      "Decision summary",
+      "LOCK_POWER_VISUAL_CHIP_LOCAL_OWNERSHIP_PRESERVED",
+      "EXPORT_STATUS_KEEP_SEPARATE",
+      "LEDGER_KEEP_SEPARATE",
+      "FAIL_SAFE_COMPLEX_STATUS_UNTOUCHED",
+      "OVERALL:",
+    ],
+  },
+  {
     title: "Page-local evidence",
     file: "scripts/audit-access-control-page-local-evidence-0610.js",
     args: ["--summary-only"],
