@@ -1,6 +1,6 @@
 {
   "category": "access-control",
-  "version": "access-control-category-cards-0613-summary-public-row-class",
+  "version": "access-control-category-cards-0613-summary-public-access",
   "templateHref": "/tools/access-control/panel-capacity/",
   "templateTitle": "Panel Capacity",
   "insertAfterHref": "/tools/access-control/panel-capacity/",
