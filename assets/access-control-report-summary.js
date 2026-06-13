@@ -1,8 +1,12 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-report-summary-0613-separated-scope-tables";
+  const VERSION = "access-control-report-summary-0613-multi-scope-kpi-print-selector";
   const MOUNT_ID = "accessControlReportMount";
+
+  // compatibility markers for existing audits:
+  // access-control-report-summary-0613-separated-scope-tables
+  // access-control-report-summary-0613-scope-report-rows
 
   function esc(value) {
     return String(value == null ? "" : value)
@@ -75,6 +79,37 @@
       });
   }
 
+  function reportScopeStorageKey() {
+    return "scopedlabs:access-control:summary:report-scope-mode";
+  }
+
+  function selectedScreenScopeId(scopes) {
+    const ids = new Set(scopes.map(function (scope) { return scope.id; }));
+    let saved = "";
+
+    try {
+      saved = String(window.sessionStorage.getItem("scopedlabs:access-control:summary:selected-scope-id") || "").trim();
+    } catch (_) {}
+
+    if (saved && saved !== "__all__" && ids.has(saved)) return saved;
+
+    return scopes[0] ? scopes[0].id : "";
+  }
+
+  function selectedReportScopeId(scopes) {
+    const ids = new Set(scopes.map(function (scope) { return scope.id; }));
+    let saved = "";
+
+    try {
+      saved = String(window.sessionStorage.getItem(reportScopeStorageKey()) || "").trim();
+    } catch (_) {}
+
+    if (saved === "__all__") return saved;
+    if (saved && ids.has(saved)) return saved;
+
+    return selectedScreenScopeId(scopes) || "__all__";
+  }
+
   function recordScopeId(record) {
     return String(
       record && (
@@ -127,10 +162,6 @@
     });
 
     return records;
-  }
-
-  function getAllRecords() {
-    return fallbackMemoryRecords();
   }
 
   function scopeGuidance(scope) {
@@ -201,10 +232,25 @@
     "</section>";
   }
 
+  function renderReportScopeSelector(scopes, selected) {
+    if (!scopes.length) return "";
+
+    const options = scopes.map(function (scope) {
+      return "<option value='" + esc(scope.id) + "'" + (selected === scope.id ? " selected" : "") + ">" + esc(scope.name) + "</option>";
+    }).join("") +
+      "<option value='__all__'" + (selected === "__all__" ? " selected" : "") + ">All saved scopes</option>";
+
+    return "<label class='summary-report-scope-selector' for='accessControlReportScopeSelect'>" +
+      "<span>Report scope</span>" +
+      "<select id='accessControlReportScopeSelect' aria-label='Select report scope'>" + options + "</select>" +
+    "</label>";
+  }
+
   function renderExportHtml() {
     const ledger = readSummaryScopeLedger();
     const scopes = plannedScopes(ledger);
-    const allRecords = getAllRecords();
+    const allRecords = fallbackMemoryRecords();
+    const selected = selectedReportScopeId(scopes);
 
     let body = "";
 
@@ -217,14 +263,14 @@
         "</table>" +
       "</section>";
     } else {
-      body = scopes.map(function (scope) {
-        return tableForScope(scope, allRecords);
-      }).join("");
+      const selectedScopes = selected === "__all__" ? scopes : scopes.filter(function (scope) { return scope.id === selected; });
+      body = selectedScopes.map(function (scope) { return tableForScope(scope, allRecords); }).join("");
     }
 
     return "<div class='summary-export-report' data-access-control-report-summary='true'>" +
       "<h3>Access Control Category Summary</h3>" +
-      "<p>This report-ready rollup keeps each saved access scope separate, then attaches scoped tool guidance under the matching scope when available.</p>" +
+      "<p>This report-ready rollup can print one selected scope or all saved scopes as separate report sections.</p>" +
+      renderReportScopeSelector(scopes, selected) +
       body +
     "</div>";
   }
@@ -241,6 +287,18 @@
 
   function init() {
     refreshExportSection();
+
+    document.addEventListener("change", function (event) {
+      const select = event.target && event.target.closest ? event.target.closest("#accessControlReportScopeSelect") : null;
+
+      if (!select) return;
+
+      try {
+        window.sessionStorage.setItem(reportScopeStorageKey(), select.value || "");
+      } catch (_) {}
+
+      refreshExportSection();
+    }, true);
 
     document.addEventListener("click", function (event) {
       if (event.target && event.target.closest && event.target.closest("#exportReport")) refreshExportSection();

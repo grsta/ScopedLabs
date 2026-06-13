@@ -568,6 +568,7 @@
       saved = String(window.sessionStorage.getItem(summarySelectedScopeStorageKey()) || "").trim();
     } catch {}
 
+    if (saved === "__all__") return saved;
     if (saved && ids.has(saved)) return saved;
 
     const activeScopeId = String((ledger && ledger.activeScopeId) || "").trim();
@@ -634,7 +635,38 @@
     };
   }
 
+  function recordsForAllSummaryScopes(records, ledger) {
+    const scopes = summaryScopeList(ledger);
+    const scopeIds = new Set(scopes.map((scope) => scope.id));
+    const filtered = (Array.isArray(records) ? records : []).filter((record) => {
+      const slug = summaryRecordToolSlug(record);
+      const scopeId = summaryRecordScopeId(record);
+
+      if (slug === "scope-planner") return scopeId && scopeIds.has(scopeId);
+      if (!scopeId) return false;
+
+      return scopeIds.has(scopeId);
+    });
+
+    scopes.forEach((scope) => {
+      const hasScopePlanner = filtered.some((record) =>
+        summaryRecordToolSlug(record) === "scope-planner" &&
+        summaryRecordScopeId(record) === scope.id
+      );
+
+      const syntheticScopePlanner = summaryScopeRecordFor(scope);
+
+      if (!hasScopePlanner && syntheticScopePlanner) filtered.unshift(syntheticScopePlanner);
+    });
+
+    return filtered;
+  }
+
   function recordsForSelectedSummaryScope(records, ledger, selectedScopeId) {
+    if (selectedScopeId === "__all__") {
+      return recordsForAllSummaryScopes(records, ledger);
+    }
+
     const selectedScope = summaryScopeById(ledger, selectedScopeId);
 
     if (!selectedScope) return [];
@@ -691,7 +723,7 @@
 
     if (!scopes.length) {
       return "<div class='access-summary-scope-selector' data-summary-scope-selector='empty'>" +
-        "<strong>Active scope view</strong><span>No saved scopes yet. Start in Scope Planner.</span>" +
+        "<span>Active scope view</span><strong>No saved scopes yet</strong>" +
       "</div>";
     }
 
@@ -699,10 +731,11 @@
       const selected = scope.id === selectedScopeId ? " selected" : "";
 
       return "<option value='" + escapeHtml(scope.id) + "'" + selected + ">" + escapeHtml(scope.name) + "</option>";
-    }).join("");
+    }).join("") +
+      "<option value='__all__'" + (selectedScopeId === "__all__" ? " selected" : "") + ">All scopes / category rollup</option>";
 
     return "<label class='access-summary-scope-selector' for='accessControlSummaryScopeSelect' data-summary-scope-selector='active'>" +
-      "<span>Active scope view</span>" +
+      "<span>Scope view</span>" +
       "<select id='accessControlSummaryScopeSelect' aria-label='Select Access Control scope'>" + options + "</select>" +
     "</label>";
   }
@@ -735,29 +768,28 @@
     const plannedScopes = plannedScopeSummary(ledger);
     const selectedScopeId = selectedSummaryScopeId(ledger);
     const selectedScope = summaryScopeById(ledger, selectedScopeId);
+    const isAllScopes = selectedScopeId === "__all__";
     const records = recordsForSelectedSummaryScope(readGuidanceRecords(), ledger, selectedScopeId);
     const rows = toolRows(recordBySlug(records));
     const count = counts(rows);
     const status = overallStatus(count);
-    const activeScopeLabel = selectedScope ? selectedScope.name : "No active scope";
 
     const kpiMount = ensureSection("accessControlSummaryKpis", "Access Control Rollup", "Rollup");
 
     kpiMount.innerHTML =
       renderSummaryScopeSelector(ledger, selectedScopeId) +
-      kpi("Active scope", activeScopeLabel, selectedScope ? "Screen summary is filtered to this saved scope." : "Start in Scope Planner to create a scope.") +
       kpi("Scopes planned", plannedScopes.label, plannedScopes.detail) +
-      kpi("Guidance saved", String(count.generated) + " / " + String(TOOL_DEFINITIONS.length), "Saved guidance for the selected Access Control scope.") +
-      kpi("Overall status", statusLabel(status), "Rollup status based on the selected scope guidance records.");
+      kpi("Guidance saved", String(count.generated) + " / " + String(TOOL_DEFINITIONS.length), isAllScopes ? "Saved guidance across all scoped Access Control records." : "Saved guidance for the selected Access Control scope.") +
+      kpi("Overall status", statusLabel(status), isAllScopes ? "Rollup status based on all scoped guidance records." : "Rollup status based on the selected scope guidance records.");
 
     bindSummaryScopeSelector();
 
     const assistantMount = ensureSection("accessControlMasterAssistant", "Access Control Master Assistant", "Master Assistant");
 
     assistantMount.innerHTML =
-      "<p>This master assistant keeps each Access Control scope separate, then rolls the selected scope into a focused category view. Export/print keeps all saved scopes separated in the final report.</p>" +
+      "<p>This master assistant keeps each Access Control scope separate. The screen view stays focused on the selected scope; export/print can output one scope or all saved scopes as separated report sections.</p>" +
       "<p><strong>Next action:</strong> " +
-      escapeHtml(count.generated > 1 ? "Review any Watch/Risk items for the selected scope, add report metadata, then open the report section." : "Continue the guided flow for the selected scope, then return here for the category rollup.") +
+      escapeHtml(count.generated > 1 ? "Review any Watch/Risk items, add report metadata, then open the report section." : "Continue the guided flow for the selected scope, then return here for the category rollup.") +
       "</p>";
 
     const toolMount = ensureSection("accessControlToolRollup", "Access Control Tool Status", "Tool Guidance");
