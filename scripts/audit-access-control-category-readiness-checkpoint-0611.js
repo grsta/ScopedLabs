@@ -23,7 +23,7 @@ const files = {
   toolPolish: "assets/access-control-tool-polish.js",
   planningVisuals: "assets/access-control-planning-visuals.js",
   toolShell: "assets/scopedlabs-tool-shell.js",
-};
+ summaryContract: "docs/access-control-summary-master-assistant-contract-v1.md", summaryReadiness: "scripts/audit-access-control-summary-master-assistant-readiness-0612.js", summaryProof: "scripts/audit-access-control-summary-page-proof-0612.js", summaryIndex: "tools/access-control/summary/index.html", summaryScript: "tools/access-control/summary/script.js", summaryOpeningProof: "scripts/audit-access-control-opening-page-link-coverage-0612.js",};
 
 function relPath(rel) {
   return path.join(root, rel);
@@ -129,7 +129,7 @@ console.log(" 1  CATEGORY_BLUEPRINT_READY");
 
 console.log("");
 
-if (failCount > 0) {
+console.log(""); console.log("Summary/master assistant readiness"); if (!checkFile("summary contract", files.summaryContract)) failCount += 1; if (!checkFile("summary readiness audit", files.summaryReadiness)) failCount += 1; if (!checkFile("summary proof audit", files.summaryProof)) failCount += 1; if (!checkFile("summary index", files.summaryIndex)) failCount += 1; if (!checkFile("summary script", files.summaryScript)) failCount += 1; if (!checkMarker("summary contract", files.summaryContract, "ACCESS_CONTROL_SUMMARY_PAGE")) failCount += 1; if (!checkMarker("summary readiness", files.summaryReadiness, "ACCESS_CONTROL_SUMMARY_MASTER_ASSISTANT_CONTRACT_ACTIVE")) failCount += 1; if (!checkMarker("summary proof", files.summaryProof, "ACCESS_CONTROL_SUMMARY_PAGE_CREATED")) failCount += 1; if (!checkMarker("summary proof", files.summaryProof, "ACCESS_CONTROL_MASTER_ASSISTANT_CREATED")) failCount += 1; if (!checkMarker("summary proof", files.summaryProof, "ACCESS_CONTROL_FINAL_REPORT_HOST_CREATED")) failCount += 1; if (!checkMarker("summary proof", files.summaryProof, "ACCESS_CONTROL_CATEGORY_OPENING_SUMMARY_LINK_PRESENT")) failCount += 1; if (!checkMarker("summary proof", files.summaryProof, "ACCESS_CONTROL_SUMMARY_SITEMAP_URL_PRESENT")) failCount += 1; if (!checkMarker("summary index", files.summaryIndex, "Access Control Summary")) failCount += 1; if (!checkMarker("summary script", files.summaryScript, "ScopedLabsAccessControlSummary")) failCount += 1; if (!checkMarker("summary opening proof", files.summaryOpeningProof, "ACCESS_CONTROL_OPENING_PAGE_LINK_COVERAGE_COMPLETE")) failCount += 1; if (!checkMarker("evidence suite", files.evidenceSuite, "Access Control summary page proof")) failCount += 1; console.log(""); console.log("Summary/master assistant checkpoint"); console.log(" 1 SUMMARY_MASTER_ASSISTANT_READY"); if (failCount > 0) {
   console.log("OVERALL: FAIL");
   process.exit(1);
 }

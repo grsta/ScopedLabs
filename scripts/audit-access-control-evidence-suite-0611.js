@@ -238,7 +238,7 @@ const AUDITS = [
       "Summary:",
     ],
   },
-];
+{ title: "Access Control summary page proof", file: "scripts/audit-access-control-summary-page-proof-0612.js", patterns: [ "Decision summary", "ACCESS_CONTROL_SUMMARY_PAGE_CREATED", "ACCESS_CONTROL_MASTER_ASSISTANT_CREATED", "ACCESS_CONTROL_FINAL_REPORT_HOST_CREATED", "ACCESS_CONTROL_TOOL_LINK_REFERENCES_PRESENT", "ACCESS_CONTROL_CATEGORY_OPENING_SUMMARY_LINK_PRESENT", "ACCESS_CONTROL_SUMMARY_SITEMAP_URL_PRESENT", "NO_CALCULATOR_PAGE_PATCHES", "OVERALL:", ], }, ];
 
 function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
