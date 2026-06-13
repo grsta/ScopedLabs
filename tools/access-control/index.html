@@ -22,94 +22,44 @@
   </script>
   <script defer src="/assets/auth.js?v=auth-magiclink-session-restore-0527"></script>
   <script defer src="/assets/app.js?v=ac-cat-0382"></script>
-<style id="access-control-category-finalize-card-style-0613">
-/* ScopedLabs Access Control category finalize-card polish - 0613 */
-.access-control-category-finalize {
-  margin-top: 2rem;
-}
-
-.access-control-category-finalize > p {
-  max-width: 68rem;
-}
-
-.access-control-category-finalize .tool-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1rem;
+<style id="access-control-category-summary-card-style-0613">
+/* ScopedLabs Access Control category summary card - 0613 */
+.access-control-category-summary-card {
   margin-top: 1.25rem;
 }
 
-.access-control-category-finalize .tool-card {
+.access-control-category-summary-card > p {
+  max-width: 66rem;
+}
+
+.access-control-category-summary-card .tool-card {
   display: grid;
   gap: .65rem;
-  min-height: 190px;
+  margin-top: 1rem;
   padding: 1.15rem;
   border: 1px solid rgba(148, 163, 184, .22);
   border-radius: 16px;
   background: rgba(2, 6, 23, .28);
   text-decoration: none;
-  align-content: start;
   transition: border-color .18s ease, transform .18s ease, background .18s ease;
 }
 
-.access-control-category-finalize .tool-card:hover,
-.access-control-category-finalize .tool-card:focus-visible {
+.access-control-category-summary-card .tool-card:hover,
+.access-control-category-summary-card .tool-card:focus-visible {
   border-color: rgba(34, 197, 94, .48);
   background: rgba(15, 23, 42, .54);
   transform: translateY(-1px);
 }
 
-.access-control-category-finalize .tool-card h3 {
+.access-control-category-summary-card .tool-card h3 {
   margin: 0;
   font-size: 1.05rem;
 }
 
-.access-control-category-finalize .tool-card p {
+.access-control-category-summary-card .tool-card p {
   margin: 0;
   color: rgba(226, 232, 240, .86);
   line-height: 1.55;
-}
-
-.access-control-category-finalize .tool-card span {
-  display: inline-flex;
-  width: fit-content;
-  min-height: 24px;
-  align-items: center;
-  border: 1px solid rgba(34, 197, 94, .35);
-  border-radius: 8px;
-  padding: .18rem .62rem;
-  color: rgba(187, 247, 208, .95);
-  font-size: .72rem;
-  font-weight: 840;
-  letter-spacing: .055em;
-  text-transform: uppercase;
-}
-
-.access-control-category-finalize .tool-card::after {
-  content: "Open";
-  display: inline-flex;
-  width: fit-content;
-  min-height: 34px;
-  align-items: center;
-  justify-content: center;
-  margin-top: .4rem;
-  padding: .28rem .85rem;
-  border: 1px solid rgba(34, 197, 94, .34);
-  border-radius: 10px;
-  color: #f8fafc;
-  background: rgba(22, 101, 52, .22);
-  font-size: .86rem;
-  font-weight: 760;
-}
-
-@media (max-width: 720px) {
-  .access-control-category-finalize .tool-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .access-control-category-finalize .tool-card {
-    min-height: 0;
-  }
 }
 </style>
 </head>
@@ -352,26 +302,25 @@
         </div>
       </div>
     </a>
-  </div>
 
-<!-- scopedlabs-access-control-category-card-repair-0612-start -->
-<section class="card access-control-category-finalize" data-access-control-category-finalize="true">
-  <h2>Finalize the Access Control design</h2>
-  <p>Use these final category steps when the design needs special locking review or a consolidated report-ready summary.</p>
-  <div class="tool-grid">
-    <a class="tool-card" href="/tools/access-control/special-locking-scope/" aria-label="Special Locking Scope">
-      <h3>Special Locking / High-Security Scope</h3>
-      <p>Scope special locking conditions before coordinating code, hardware behavior, and AHJ review.</p>
-      <span>Specialty Review</span>
-    </a>
-    <a class="tool-card" href="/tools/access-control/summary/" aria-label="Access Control Summary">
-      <h3>Access Control Summary</h3>
-      <p>Roll up the Access Control planning path, review saved tool guidance, and open the final report from one category-level page.</p>
-      <span>Category Summary</span>
-    </a>
-  </div>
+  <a class="tool-row pro" href="/tools/access-control/special-locking-scope/" aria-label="Special Locking Scope">
+    <h3>Special Locking / High-Security Scope</h3>
+    <p>Scope special locking conditions before coordinating code, hardware behavior, and AHJ review.</p>
+    <span>Pro Tier</span>
+  </a>
+</div>
+
+
+<!-- scopedlabs-access-control-summary-card-0613-start -->
+<section class="card access-control-category-summary-card" data-access-control-category-summary-card="true">
+  <h2>Category Summary</h2>
+  <p>Use the summary after the tool path is planned. It rolls up saved Access Control guidance and hosts the final report workflow.</p>
+  <a class="tool-card" href="/tools/access-control/summary/" aria-label="Access Control Summary">
+    <h3>Access Control Summary</h3>
+    <p>Review saved tool guidance, check the category rollup, and open the final report from one category-level page.</p>
+  </a>
 </section>
-<!-- scopedlabs-access-control-category-card-repair-0612-end -->
+<!-- scopedlabs-access-control-summary-card-0613-end -->
 
 <footer class="site-footer">
     <div class="muted">© <span data-year></span> ScopedLabs</div>

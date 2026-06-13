@@ -4,9 +4,6 @@ const path = require("path");
 const root = process.cwd();
 const pagePath = path.join(root, "tools", "access-control", "index.html");
 
-const startMarker = "<!-- scopedlabs-access-control-category-card-repair-0612-start -->";
-const endMarker = "<!-- scopedlabs-access-control-category-card-repair-0612-end -->";
-
 const requiredLinks = [
   "/tools/access-control/scope-planner/",
   "/tools/access-control/door-count-planner/",
@@ -20,7 +17,7 @@ const requiredLinks = [
   "/tools/access-control/fail-safe-fail-secure/",
   "/tools/access-control/special-locking-scope/",
   "/tools/access-control/anti-passback-zones/",
-  "/tools/access-control/summary/",
+  "/tools/access-control/summary/"
 ];
 
 function read(filePath) {
@@ -41,9 +38,7 @@ function extractAnchors(html) {
   const regex = /<a\b[^>]*>[\s\S]*?<\/a>/gi;
   let match;
 
-  while ((match = regex.exec(html))) {
-    anchors.push(match[0]);
-  }
+  while ((match = regex.exec(html))) anchors.push(match[0]);
 
   return anchors;
 }
@@ -62,30 +57,39 @@ console.log("");
 const html = read(pagePath);
 const anchors = extractAnchors(html);
 
-const footerIndex = html.indexOf("© ScopedLabs");
-const finalizeIndex = html.indexOf(startMarker);
-
-if (finalizeIndex !== -1 && footerIndex !== -1 && finalizeIndex < footerIndex) {
-  console.log("SAFE  finalize section appears before footer");
-} else if (footerIndex === -1) {
-  console.log("WATCH footer marker not found; placement could not be compared");
+if (html.includes("Finalize the Access Control design") || html.includes("access-control-category-finalize")) {
+  console.log("FAIL  old grouped finalize section remains");
+  failCount += 1;
 } else {
-  console.log("FAIL  finalize section appears after footer");
+  console.log("SAFE  old grouped finalize section removed");
+}
+
+if (html.includes("scopedlabs-access-control-category-card-repair-0612-start")) {
+  console.log("FAIL  old grouped finalize marker remains");
+  failCount += 1;
+} else {
+  console.log("SAFE  old grouped finalize marker absent");
+}
+
+if (html.includes("scopedlabs-access-control-summary-card-0613-start")) {
+  console.log("SAFE  standalone summary card marker present");
+} else {
+  console.log("FAIL  standalone summary card marker missing");
   failCount += 1;
 }
 
-const staleBadMarkers = [
-  "scopedlabs-access-control-opening-links-0612-start",
-  "scopedlabs-access-control-summary-link-0612-fix-start",
-];
+if (html.includes("access-control-category-summary-card-style-0613")) {
+  console.log("SAFE  standalone summary card style present");
+} else {
+  console.log("FAIL  standalone summary card style missing");
+  failCount += 1;
+}
 
-for (const marker of staleBadMarkers) {
-  if (html.includes(marker)) {
-    console.log("FAIL  stale bad insert marker remains: " + marker);
-    failCount += 1;
-  } else {
-    console.log("SAFE  stale marker absent: " + marker);
-  }
+if (html.includes("<span>Category Summary</span>") || html.includes("<span>Specialty Review</span>")) {
+  console.log("FAIL  old final-section label pills remain");
+  failCount += 1;
+} else {
+  console.log("SAFE  old final-section label pills removed");
 }
 
 let disallowedCtaOnlyCards = 0;
@@ -134,17 +138,17 @@ for (const href of requiredLinks) {
 
 console.log("INFO  required links present: " + linkCount + " / " + requiredLinks.length);
 
-if (html.includes("access-control-category-card-repair-0612-start")) {
-  console.log("SAFE  category card repair marker present");
+if (html.includes("/tools/access-control/special-locking-scope/") && html.includes("<span>Pro Tier</span>")) {
+  console.log("SAFE  Special Locking appears as Pro Tier tool card");
 } else {
-  console.log("FAIL  category card repair marker missing");
+  console.log("FAIL  Special Locking Pro Tier card not detected");
   failCount += 1;
 }
 
-if (html.includes("/tools/access-control/special-locking-scope/") && html.includes("/tools/access-control/summary/")) {
-  console.log("SAFE  finalize section links present");
+if (html.includes("/tools/access-control/summary/") && html.includes("data-access-control-category-summary-card")) {
+  console.log("SAFE  Summary appears as standalone category card");
 } else {
-  console.log("FAIL  finalize section links missing");
+  console.log("FAIL  Summary standalone category card not detected");
   failCount += 1;
 }
 
@@ -155,16 +159,10 @@ if (failCount === 0) {
   console.log("SAFE  ACCESS_CONTROL_CATEGORY_CARDS_REPAIRED");
   console.log("SAFE  ACCESS_CONTROL_CATEGORY_NO_CTA_ONLY_TOOL_CARDS");
   console.log("SAFE  ACCESS_CONTROL_CATEGORY_REQUIRED_LINKS_PRESENT");
-  console.log("SAFE  ACCESS_CONTROL_CATEGORY_FINALIZE_SECTION_BEFORE_FOOTER");
+  console.log("SAFE  ACCESS_CONTROL_SPECIAL_LOCKING_IN_PRO_TIER");
+  console.log("SAFE  ACCESS_CONTROL_SUMMARY_STANDALONE_CARD");
 } else {
   console.log("FAIL  ACCESS_CONTROL_CATEGORY_CARD_INTEGRITY_FAILED");
-}
-
-if (html.includes("access-control-category-finalize-card-style-0613") && html.includes(".access-control-category-finalize .tool-card")) {
-  console.log("SAFE  ACCESS_CONTROL_CATEGORY_FINALIZE_CARD_STYLE_PRESENT");
-} else {
-  console.log("FAIL  finalize card style marker missing");
-  failCount += 1;
 }
 
 console.log("SAFE  NO_CALCULATOR_PAGE_CHANGES");
