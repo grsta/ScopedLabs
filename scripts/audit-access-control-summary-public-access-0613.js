@@ -4,7 +4,6 @@ const path = require("path");
 const root = process.cwd();
 const categoryPath = path.join(root, "tools", "access-control", "index.html");
 const summaryPath = path.join(root, "tools", "access-control", "summary", "index.html");
-const configPath = path.join(root, "scripts", "config", "access-control-category-cards-0613.json");
 
 function read(filePath) {
   return fs.readFileSync(filePath, "utf8");
@@ -52,7 +51,6 @@ console.log("");
 
 const categoryHtml = read(categoryPath);
 const summaryHtml = read(summaryPath);
-const config = JSON.parse(read(configPath));
 const anchors = extractAnchors(categoryHtml);
 const summaryAnchor = anchors.find((anchor) => anchor.href === "/tools/access-control/summary/");
 const bodyMatch = summaryHtml.match(/<body\b[^>]*>/i);
@@ -87,6 +85,13 @@ if (bodyTag && /data-tier\s*=\s*["']public["']/i.test(bodyTag)) {
   failCount += 1;
 }
 
+if (bodyTag && !/data-protected\s*=/i.test(bodyTag)) {
+  console.log("SAFE  Summary page has no page-level protected marker");
+} else {
+  console.log("FAIL  Summary page still has page-level protected marker");
+  failCount += 1;
+}
+
 if (bodyTag && !/data-tier\s*=\s*["']pro["']/i.test(bodyTag)) {
   console.log("SAFE  Summary page body is not marked Pro");
 } else {
@@ -98,24 +103,6 @@ if (bodyTag && /data-summary-public\s*=\s*["']true["']/i.test(bodyTag)) {
   console.log("SAFE  Summary page declares public summary role");
 } else {
   console.log("FAIL  Summary page missing public summary role marker");
-  failCount += 1;
-}
-
-const summaryConfig = Array.isArray(config.summaryCards)
-  ? config.summaryCards.find((card) => card.href === "/tools/access-control/summary/")
-  : null;
-
-if (
-  summaryConfig &&
-  summaryConfig.publicDirectLink === true &&
-  summaryConfig.className === "tool-row" &&
-  !summaryConfig.dataTool &&
-  !summaryConfig.tier &&
-  summaryConfig.useLockIcon === false
-) {
-  console.log("SAFE  Summary config declares public direct row");
-} else {
-  console.log("FAIL  Summary config does not declare public direct row");
   failCount += 1;
 }
 
