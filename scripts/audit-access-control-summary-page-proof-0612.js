@@ -8,7 +8,6 @@ const scriptRel = "tools/access-control/summary/script.js";
 const categoryRel = "tools/access-control/index.html";
 const sitemapRel = "sitemap.xml";
 
-const summaryHref = "/tools/access-control/summary/";
 const summaryUrl = "https://scopedlabs.com/tools/access-control/summary/";
 
 const requiredTools = [
@@ -23,7 +22,7 @@ const requiredTools = [
   "elevator-reader-count",
   "fail-safe-fail-secure",
   "special-locking-scope",
-  "anti-passback-zones",
+  "anti-passback-zones"
 ];
 
 function exists(rel) {
@@ -34,23 +33,13 @@ function read(rel) {
   return exists(rel) ? fs.readFileSync(path.join(root, rel), "utf8") : "";
 }
 
-function extractLinks(html) {
-  const links = [];
-  const regex = /href\\s*=\\s*["']([^"']+)["']/gi;
-  let match;
-
-  while ((match = regex.exec(html))) links.push(match[1]);
-
-  return [...new Set(links)];
-}
-
 function hasSummaryLink(html) {
-  const links = extractLinks(html);
-
-  return links.includes(summaryHref) ||
-    links.includes("tools/access-control/summary/") ||
-    links.includes("./summary/") ||
-    links.includes("summary/");
+  return html.includes('href="/tools/access-control/summary/"') ||
+    html.includes("href='/tools/access-control/summary/'") ||
+    html.includes('href="./summary/"') ||
+    html.includes("href='./summary/'") ||
+    html.includes('href="summary/"') ||
+    html.includes("href='summary/'");
 }
 
 let failCount = 0;
@@ -118,10 +107,9 @@ if (script.includes("access-control-summary-master-assistant-001") && script.inc
 let linkedTools = 0;
 
 for (const slug of requiredTools) {
-  const expected = "/tools/access-control/" + slug + "/";
   const slugLiteral = '"' + slug + '"';
 
-  if (index.includes(expected) || script.includes(expected) || script.includes(slugLiteral)) {
+  if (script.includes(slugLiteral)) {
     linkedTools += 1;
   } else {
     console.log("FAIL  missing summary tool definition/link reference: " + slug);
