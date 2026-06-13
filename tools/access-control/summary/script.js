@@ -214,19 +214,68 @@
     ).trim();
   }
 
+  // access-control-summary-strict-scope-root-0613
+  // Scope Planner owns the active category summary context.
+  // Unscoped downstream/orphan records are ignored and do not count as current guidance.
+  function recordToolSlug(record) {
+    return String(
+      record && (
+        record.slug ||
+        record.toolSlug ||
+        record.tool ||
+        record.toolId ||
+        record.id ||
+        ""
+      ) || ""
+    ).trim();
+  }
+
+  function scopePlannerRecordFromLedger(ledger, scopeIds) {
+    const scopes = Array.isArray(ledger && ledger.scopes) ? ledger.scopes : [];
+    const activeScopeId = String((ledger && ledger.activeScopeId) || "").trim();
+    const fallbackScope = scopes.find((scope) => scope && scope.id);
+    const activeScope = scopes.find((scope) => String(scope && scope.id || "").trim() === activeScopeId) || fallbackScope;
+    const scopeId = String((activeScope && activeScope.id) || activeScopeId || "").trim();
+
+    if (!scopeId || !scopeIds.has(scopeId)) return null;
+
+    return {
+      slug: "scope-planner",
+      toolSlug: "scope-planner",
+      scopeId,
+      status: "saved",
+      summary: "Access Control scope started and available for the current category rollup.",
+      notes: "Access Control scope started and available for the current category rollup."
+    };
+  }
+
   function filterGuidanceRecordsToActiveScopes(records) {
     const ledger = readSummaryScopeLedger();
     const scopeIds = scopeIdsFromLedger(ledger);
 
     if (!scopeIds.size) return [];
 
-    return (Array.isArray(records) ? records : []).filter((record) => {
+    const filtered = (Array.isArray(records) ? records : []).filter((record) => {
+      const slug = recordToolSlug(record);
       const scopeId = recordScopeId(record);
 
-      if (!scopeId) return true;
+      if (slug === "scope-planner") {
+        return !scopeId || scopeIds.has(scopeId);
+      }
+
+      if (!scopeId) return false;
 
       return scopeIds.has(scopeId);
     });
+
+    const hasScopePlanner = filtered.some((record) => recordToolSlug(record) === "scope-planner");
+    const syntheticScopePlanner = scopePlannerRecordFromLedger(ledger, scopeIds);
+
+    if (!hasScopePlanner && syntheticScopePlanner) {
+      filtered.unshift(syntheticScopePlanner);
+    }
+
+    return filtered;
   }
 
  function readGuidanceRecords() {
