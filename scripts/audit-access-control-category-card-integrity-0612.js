@@ -6,39 +6,6 @@ const root = process.cwd();
 const pagePath = path.join(root, "tools", "access-control", "index.html");
 const configPath = path.join(root, "scripts", "config", "access-control-category-cards-0613.json");
 
-function read(filePath) {
-  return fs.readFileSync(filePath, "utf8");
-}
-
-function findSummarySection(html) {
-  const attr = 'data-access-control-category-summary-card="true"';
-  const attrIndex = html.indexOf(attr);
-  if (attrIndex === -1) return "";
-
-  const sectionStart = html.lastIndexOf("<section", attrIndex);
-  const sectionEnd = html.indexOf("</section>", attrIndex);
-  if (sectionStart === -1 || sectionEnd === -1) return "";
-
-  return html.slice(sectionStart, sectionEnd + "</section>".length);
-}
-
-function hasNestedRow(anchor) {
-  return anchor.block.includes("tool-row-center") &&
-    anchor.block.includes("tool-row-title") &&
-    anchor.block.includes("tool-row-sub");
-}
-
-let failCount = 0;
-
-console.log("ScopedLabs Access Control category card integrity audit - 0612");
-console.log("Repo:", root);
-console.log("");
-
-const html = read(pagePath);
-const config = JSON.parse(read(configPath));
-const anchors = engine.extractAnchors(html);
-const summarySection = findSummarySection(html);
-
 const requiredLinks = [
   "/tools/access-control/scope-planner/",
   "/tools/access-control/door-count-planner/",
@@ -55,8 +22,44 @@ const requiredLinks = [
   "/tools/access-control/summary/",
 ];
 
-if (config.version === "access-control-category-cards-0613-summary-row-parity") {
-  console.log("SAFE  Access Control category-card config uses row structure version");
+function read(filePath) {
+  return fs.readFileSync(filePath, "utf8");
+}
+
+function findSummarySection(html) {
+  const attr = 'data-access-control-category-summary-card="true"';
+  const attrIndex = html.indexOf(attr);
+
+  if (attrIndex === -1) return "";
+
+  const sectionStart = html.lastIndexOf("<section", attrIndex);
+  const sectionEnd = html.indexOf("</section>", attrIndex);
+
+  if (sectionStart === -1 || sectionEnd === -1) return "";
+
+  return html.slice(sectionStart, sectionEnd + "</section>".length);
+}
+
+function hasNestedRow(anchor) {
+  return anchor &&
+    anchor.block.includes("tool-row-center") &&
+    anchor.block.includes("tool-row-title") &&
+    anchor.block.includes("tool-row-sub");
+}
+
+let failCount = 0;
+
+console.log("ScopedLabs Access Control category card integrity audit - 0612");
+console.log("Repo:", root);
+console.log("");
+
+const html = read(pagePath);
+const config = JSON.parse(read(configPath));
+const anchors = engine.extractAnchors(html);
+const summarySection = findSummarySection(html);
+
+if (config.version === "access-control-category-cards-0613-summary-public-link") {
+  console.log("SAFE  Access Control category-card config uses summary public-link version");
 } else {
   console.log("FAIL  Access Control category-card config has wrong version");
   failCount += 1;
@@ -76,7 +79,15 @@ if (html.includes("access-control-category-finalize-card-style-0613") || html.in
   console.log("SAFE  no one-off finalize/summary styles remain");
 }
 
+if (html.includes("scopedlabs-access-control-summary-card-pattern-0613-start")) {
+  console.log("SAFE  standalone summary card pattern marker present");
+} else {
+  console.log("FAIL  standalone summary card pattern marker missing");
+  failCount += 1;
+}
+
 let linkCount = 0;
+
 for (const href of requiredLinks) {
   if (html.includes('href="' + href + '"') || html.includes("href='" + href + "'")) {
     linkCount += 1;
@@ -85,6 +96,7 @@ for (const href of requiredLinks) {
     failCount += 1;
   }
 }
+
 console.log("INFO  required links present: " + linkCount + " / " + requiredLinks.length);
 
 const panelAnchor = anchors.find((anchor) => anchor.href === "/tools/access-control/panel-capacity/");
@@ -117,14 +129,21 @@ if (
   !summarySection.includes("Panel Capacity")
 ) {
   console.log("SAFE  Summary uses standard nested tool row inside Category Summary");
-  if (summaryAnchor.block.includes('data-tool="/tools/access-control/summary/"')) {
-    console.log("SAFE  Summary row has standard data-tool attribute");
-  } else {
-    console.log("FAIL  Summary row missing standard data-tool attribute");
-    failCount += 1;
-  }
 } else {
   console.log("FAIL  Summary does not match nested tool row or still has wrong content");
+  failCount += 1;
+}
+
+if (
+  summaryAnchor &&
+  summaryAnchor.href === "/tools/access-control/summary/" &&
+  !summaryAnchor.block.includes("data-tool=") &&
+  !summaryAnchor.text.includes("Pro Tier") &&
+  !summaryAnchor.block.includes("lock-icon")
+) {
+  console.log("SAFE  Summary is public direct link and not tool-gated");
+} else {
+  console.log("FAIL  Summary link appears gated or missing direct public href");
   failCount += 1;
 }
 
@@ -135,6 +154,7 @@ if (failCount === 0) {
   console.log("SAFE  ACCESS_CONTROL_CATEGORY_CARDS_REPAIRED");
   console.log("SAFE  ACCESS_CONTROL_SPECIAL_LOCKING_STANDARD_TOOL_CARD");
   console.log("SAFE  ACCESS_CONTROL_SUMMARY_STANDALONE_CATEGORY_CARD");
+  console.log("SAFE  ACCESS_CONTROL_SUMMARY_PUBLIC_DIRECT_LINK");
   console.log("SAFE  SHARED_CATEGORY_LANDING_CARD_ENGINE_USED");
   console.log("SAFE  NO_ONE_OFF_FINALIZE_STYLE");
 } else {
