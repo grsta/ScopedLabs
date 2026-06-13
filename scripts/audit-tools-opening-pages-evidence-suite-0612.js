@@ -20,6 +20,22 @@ const AUDITS = [
       "OVERALL:",
     ],
   },
+
+  {
+    title: "Access Control opening page link coverage",
+    file: "scripts/audit-access-control-opening-page-link-coverage-0612.js",
+    patterns: [
+      "Access Control opening page",
+      "tool child pages discovered",
+      "missing child tool links",
+      "calculator shell markers",
+      "Decision summary",
+      "ACCESS_CONTROL_OPENING_PAGE_LINK_COVERAGE_COMPLETE",
+      "NO_CALCULATOR_SHELL_PATCH_YET",
+      "PAGE_LAYOUT_PATCH_LIMITED_TO_OPENING_PAGE_LINKS",
+      "OVERALL:",
+    ],
+  },
 ];
 
 function runAudit(audit) {
