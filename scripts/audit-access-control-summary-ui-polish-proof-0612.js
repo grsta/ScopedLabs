@@ -28,9 +28,8 @@ const uiAudit = read(uiAuditRel);
 const requiredIndexMarkers = [
   'data-access-control-summary-page="true"',
   'id="access-control-summary-polish-0612"',
-  "Final Category Rollup → Access Control Ready",
-  "Access Control Tool Guidance Rollup",
-  "Review Summary",
+  "Access Control Summary",
+  "Access Control Master Assistant",
 ];
 
 for (const marker of requiredIndexMarkers) {
@@ -42,16 +41,17 @@ for (const marker of requiredIndexMarkers) {
   }
 }
 
-const requiredStyleMarkers = [
+const requiredStyleOrScriptMarkers = [
   "access-summary-kpi",
   "access-summary-tool-row",
   "access-summary-status",
   "accessControlSummaryKpis",
   "accessControlToolRollup",
   "accessControlToolNotes",
+  "ScopedLabsAccessControlSummary",
 ];
 
-for (const marker of requiredStyleMarkers) {
+for (const marker of requiredStyleOrScriptMarkers) {
   if (index.includes(marker) || script.includes(marker)) {
     console.log("SAFE  style/script marker: " + marker);
   } else {
