@@ -64,24 +64,17 @@ if (html.includes("Finalize the Access Control design") || html.includes("access
   console.log("SAFE  old grouped finalize section removed");
 }
 
-if (html.includes("scopedlabs-access-control-category-card-repair-0612-start")) {
-  console.log("FAIL  old grouped finalize marker remains");
+if (html.includes("access-control-category-finalize-card-style-0613") || html.includes("access-control-category-summary-card-style-0613")) {
+  console.log("FAIL  one-off finalize/summary style remains");
   failCount += 1;
 } else {
-  console.log("SAFE  old grouped finalize marker absent");
+  console.log("SAFE  no one-off finalize/summary styles remain");
 }
 
-if (html.includes("scopedlabs-access-control-summary-card-0613-start")) {
-  console.log("SAFE  standalone summary card marker present");
+if (html.includes("scopedlabs-access-control-summary-card-pattern-0613-start")) {
+  console.log("SAFE  standalone summary card pattern marker present");
 } else {
-  console.log("FAIL  standalone summary card marker missing");
-  failCount += 1;
-}
-
-if (html.includes("access-control-category-summary-card-style-0613")) {
-  console.log("SAFE  standalone summary card style present");
-} else {
-  console.log("FAIL  standalone summary card style missing");
+  console.log("FAIL  standalone summary card pattern marker missing");
   failCount += 1;
 }
 
@@ -138,17 +131,20 @@ for (const href of requiredLinks) {
 
 console.log("INFO  required links present: " + linkCount + " / " + requiredLinks.length);
 
-if (html.includes("/tools/access-control/special-locking-scope/") && html.includes("<span>Pro Tier</span>")) {
-  console.log("SAFE  Special Locking appears as Pro Tier tool card");
+const specialLockingAnchor = anchors.find((anchor) => hrefOf(anchor) === "/tools/access-control/special-locking-scope/");
+const summaryAnchor = anchors.find((anchor) => hrefOf(anchor) === "/tools/access-control/summary/");
+
+if (specialLockingAnchor && cleanText(specialLockingAnchor).includes("Pro Tier")) {
+  console.log("SAFE  Special Locking uses standard Pro tool-card pattern");
 } else {
-  console.log("FAIL  Special Locking Pro Tier card not detected");
+  console.log("FAIL  Special Locking Pro Tier standard card not detected");
   failCount += 1;
 }
 
-if (html.includes("/tools/access-control/summary/") && html.includes("data-access-control-category-summary-card")) {
-  console.log("SAFE  Summary appears as standalone category card");
+if (summaryAnchor && html.includes('data-access-control-category-summary-card="true"') && !cleanText(summaryAnchor).includes("Category Summary")) {
+  console.log("SAFE  Summary uses standalone category card without label pill");
 } else {
-  console.log("FAIL  Summary standalone category card not detected");
+  console.log("FAIL  Summary standalone category card not detected or still has label pill");
   failCount += 1;
 }
 
@@ -159,8 +155,9 @@ if (failCount === 0) {
   console.log("SAFE  ACCESS_CONTROL_CATEGORY_CARDS_REPAIRED");
   console.log("SAFE  ACCESS_CONTROL_CATEGORY_NO_CTA_ONLY_TOOL_CARDS");
   console.log("SAFE  ACCESS_CONTROL_CATEGORY_REQUIRED_LINKS_PRESENT");
-  console.log("SAFE  ACCESS_CONTROL_SPECIAL_LOCKING_IN_PRO_TIER");
-  console.log("SAFE  ACCESS_CONTROL_SUMMARY_STANDALONE_CARD");
+  console.log("SAFE  ACCESS_CONTROL_SPECIAL_LOCKING_STANDARD_TOOL_CARD");
+  console.log("SAFE  ACCESS_CONTROL_SUMMARY_STANDALONE_CATEGORY_CARD");
+  console.log("SAFE  NO_ONE_OFF_FINALIZE_STYLE");
 } else {
   console.log("FAIL  ACCESS_CONTROL_CATEGORY_CARD_INTEGRITY_FAILED");
 }
