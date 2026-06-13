@@ -48,6 +48,11 @@ function hrefOf(anchor) {
   return match ? match[1] : "";
 }
 
+function classOf(anchor) {
+  const match = anchor.match(/class\s*=\s*["']([^"']+)["']/i);
+  return match ? match[1] : "";
+}
+
 let failCount = 0;
 
 console.log("ScopedLabs Access Control category card integrity audit - 0612");
@@ -131,17 +136,18 @@ for (const href of requiredLinks) {
 
 console.log("INFO  required links present: " + linkCount + " / " + requiredLinks.length);
 
-const specialLockingAnchor = anchors.find((anchor) => hrefOf(anchor) === "/tools/access-control/special-locking-scope/");
+const panelAnchor = anchors.find((anchor) => hrefOf(anchor) === "/tools/access-control/panel-capacity/");
+const specialAnchor = anchors.find((anchor) => hrefOf(anchor) === "/tools/access-control/special-locking-scope/");
 const summaryAnchor = anchors.find((anchor) => hrefOf(anchor) === "/tools/access-control/summary/");
 
-if (specialLockingAnchor && cleanText(specialLockingAnchor).includes("Pro Tier")) {
+if (specialAnchor && panelAnchor && classOf(specialAnchor) === classOf(panelAnchor) && cleanText(specialAnchor).includes("Pro Tier")) {
   console.log("SAFE  Special Locking uses standard Pro tool-card pattern");
 } else {
-  console.log("FAIL  Special Locking Pro Tier standard card not detected");
+  console.log("FAIL  Special Locking does not match standard Pro tool-card pattern");
   failCount += 1;
 }
 
-if (summaryAnchor && html.includes('data-access-control-category-summary-card="true"') && !cleanText(summaryAnchor).includes("Category Summary")) {
+if (summaryAnchor && panelAnchor && classOf(summaryAnchor) === classOf(panelAnchor) && html.includes('data-access-control-category-summary-card="true"') && !/<span\b/i.test(summaryAnchor)) {
   console.log("SAFE  Summary uses standalone category card without label pill");
 } else {
   console.log("FAIL  Summary standalone category card not detected or still has label pill");
