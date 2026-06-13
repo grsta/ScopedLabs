@@ -53,6 +53,28 @@ function classOf(anchor) {
   return match ? match[1] : "";
 }
 
+function findSummarySection(html) {
+  const startMarker = "<!-- scopedlabs-access-control-summary-card-pattern-0613-start -->";
+  const endMarker = "<!-- scopedlabs-access-control-summary-card-pattern-0613-end -->";
+
+  const start = html.indexOf(startMarker);
+  const end = html.indexOf(endMarker);
+
+  if (start !== -1 && end !== -1 && end > start) {
+    return html.slice(start, end + endMarker.length);
+  }
+
+  const attrIndex = html.indexOf('data-access-control-category-summary-card="true"');
+  if (attrIndex === -1) return "";
+
+  const sectionStart = html.lastIndexOf("<section", attrIndex);
+  const sectionEnd = html.indexOf("</section>", attrIndex);
+
+  if (sectionStart === -1 || sectionEnd === -1) return "";
+
+  return html.slice(sectionStart, sectionEnd + "</section>".length);
+}
+
 let failCount = 0;
 
 console.log("ScopedLabs Access Control category card integrity audit - 0612");
@@ -61,6 +83,7 @@ console.log("");
 
 const html = read(pagePath);
 const anchors = extractAnchors(html);
+const summarySection = findSummarySection(html);
 
 if (html.includes("Finalize the Access Control design") || html.includes("access-control-category-finalize")) {
   console.log("FAIL  old grouped finalize section remains");
@@ -147,10 +170,22 @@ if (specialAnchor && panelAnchor && classOf(specialAnchor) === classOf(panelAnch
   failCount += 1;
 }
 
-if (summaryAnchor && panelAnchor && classOf(summaryAnchor) === classOf(panelAnchor) && html.includes('data-access-control-category-summary-card="true"') && !/<span\b/i.test(summaryAnchor) && cleanText(summaryAnchor).includes("Access Control Summary") && !cleanText(summaryAnchor).includes("Panel Capacity")) {
-  console.log("SAFE  Summary uses standalone category card without label pill");
+if (!summarySection) {
+  console.log("FAIL  standalone summary section missing");
+  failCount += 1;
+} else if (
+  summaryAnchor &&
+  panelAnchor &&
+  classOf(summaryAnchor) === classOf(panelAnchor) &&
+  summarySection.includes('data-access-control-category-summary-card="true"') &&
+  summarySection.includes("Access Control Summary") &&
+  summarySection.includes("Review saved tool guidance") &&
+  !summarySection.includes("Panel Capacity") &&
+  !/<span\b/i.test(summaryAnchor)
+) {
+  console.log("SAFE  Summary uses standalone category card with correct content");
 } else {
-  console.log("FAIL  Summary standalone category card not detected or still cloned from wrong tool");
+  console.log("FAIL  Summary standalone category card is missing, mislabeled, or cloned from wrong tool");
   failCount += 1;
 }
 
