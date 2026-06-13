@@ -886,6 +886,142 @@
     word-break: break-word;
   }
 </style>
+<style id="access-control-summary-polish-0612">
+/* ScopedLabs Access Control summary polish - 0612 */
+body[data-access-control-summary-page="true"] main {
+  display: grid;
+  gap: 1.15rem;
+}
+
+body[data-access-control-summary-page="true"] .hero,
+body[data-access-control-summary-page="true"] .card,
+body[data-access-control-summary-page="true"] [data-access-control-summary-section] {
+  border-radius: 18px;
+}
+
+body[data-access-control-summary-page="true"] .hero {
+  padding-bottom: 1.6rem;
+}
+
+body[data-access-control-summary-page="true"] .hero p {
+  max-width: 74rem;
+}
+
+body[data-access-control-summary-page="true"] .hero .button-row,
+body[data-access-control-summary-page="true"] .hero .actions,
+body[data-access-control-summary-page="true"] .button-row,
+body[data-access-control-summary-page="true"] .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  align-items: center;
+}
+
+body[data-access-control-summary-page="true"] a.btn,
+body[data-access-control-summary-page="true"] button.btn,
+body[data-access-control-summary-page="true"] .button-row a,
+body[data-access-control-summary-page="true"] .actions a {
+  border-radius: 10px;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+}
+
+body[data-access-control-summary-page="true"] [data-access-control-summary-section] {
+  border: 1px solid rgba(148, 163, 184, .22);
+  background: rgba(15, 23, 42, .56);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, .22);
+}
+
+body[data-access-control-summary-page="true"] [data-access-control-summary-section] > h2 {
+  margin-bottom: .85rem;
+}
+
+body[data-access-control-summary-page="true"] #accessControlSummaryKpis,
+body[data-access-control-summary-page="true"] #accessControlToolRollup,
+body[data-access-control-summary-page="true"] #accessControlToolNotes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: .9rem;
+}
+
+body[data-access-control-summary-page="true"] #accessControlMasterAssistant {
+  display: grid;
+  gap: .65rem;
+}
+
+body[data-access-control-summary-page="true"] .access-summary-kpi,
+body[data-access-control-summary-page="true"] .access-summary-tool-row,
+body[data-access-control-summary-page="true"] .access-summary-note {
+  border: 1px solid rgba(148, 163, 184, .20);
+  border-radius: 14px;
+  padding: 1rem;
+  background: rgba(2, 6, 23, .28);
+}
+
+body[data-access-control-summary-page="true"] .access-summary-kpi h3,
+body[data-access-control-summary-page="true"] .access-summary-tool-row h3,
+body[data-access-control-summary-page="true"] .access-summary-note h3 {
+  margin: 0 0 .45rem;
+}
+
+body[data-access-control-summary-page="true"] .access-summary-kpi strong {
+  display: block;
+  font-size: clamp(1.45rem, 2vw, 2.05rem);
+  line-height: 1.05;
+  margin-bottom: .45rem;
+}
+
+body[data-access-control-summary-page="true"] .access-summary-status {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 24px;
+  align-items: center;
+  border-radius: 8px;
+  padding: .16rem .62rem;
+  font-size: .72rem;
+  font-weight: 840;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+  border: 1px solid rgba(148, 163, 184, .28);
+}
+
+body[data-access-control-summary-page="true"] .access-summary-status--healthy {
+  border-color: rgba(34, 197, 94, .36);
+}
+
+body[data-access-control-summary-page="true"] .access-summary-status--watch {
+  border-color: rgba(245, 158, 11, .42);
+}
+
+body[data-access-control-summary-page="true"] .access-summary-status--risk {
+  border-color: rgba(248, 113, 113, .42);
+}
+
+body[data-access-control-summary-page="true"] .access-summary-status--unknown {
+  opacity: .76;
+}
+
+body[data-access-control-summary-page="true"] #reportMetadataMount {
+  margin-top: .75rem;
+}
+
+@media (max-width: 720px) {
+  body[data-access-control-summary-page="true"] .hero .button-row,
+  body[data-access-control-summary-page="true"] .hero .actions,
+  body[data-access-control-summary-page="true"] .button-row,
+  body[data-access-control-summary-page="true"] .actions {
+    align-items: stretch;
+  }
+
+  body[data-access-control-summary-page="true"] .hero .button-row a,
+  body[data-access-control-summary-page="true"] .hero .actions a,
+  body[data-access-control-summary-page="true"] .button-row a,
+  body[data-access-control-summary-page="true"] .actions a {
+    width: 100%;
+  }
+}
+</style>
 </head>
 
 <body
@@ -895,7 +1031,7 @@
   data-tool="access-control-summary"
   data-step="access-control-summary"
   data-active-area-banner="off"
->
+ data-access-control-summary-page="true">
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/" aria-label="ScopedLabs Home">
@@ -940,8 +1076,8 @@
           This page is the Access Control master assistant and final report host. It rolls up the scope, door behavior, reader, lock power, panel capacity, cable, elevator, special locking, anti-passback, and access-level planning path without changing the individual calculator tools.
         </p>
         <div class="summary-hero-actions btn-row">
-          <a class="btn btn-primary" href="#physicalSecuritySummaryMasterMount">Review Master Assistant</a>
-          <a class="btn" href="#summaryExportSection">Open Report Section</a>
+          <a class="btn btn-primary" href="#physicalSecuritySummaryMasterMount">Review Summary</a>
+          <a class="btn" href="#summaryExportSection">Open Report</a>
           <a class="btn" href="/tools/access-control/scope-planner/">Scope Planner</a>
         </div>
       </section>
@@ -962,7 +1098,7 @@
       </section>
 
       <section class="card summary-scope-card" style="margin-top: 18px;">
-                <h2 class="h2" style="margin-top: 12px;">Area, Zone, and Tool Guidance Rollup</h2>
+                <h2 class="h2" style="margin-top: 12px;">Access Control Tool Guidance Rollup</h2>
         <p class="muted">
           The Access Control tools stay available individually, but this page provides the category-level rollup before the final report.
         </p>
@@ -1036,7 +1172,7 @@
         <div class="pill-row">
           </div>
         <h2 class="h2" style="margin-top: 12px;">Continue Planning</h2>
-        <p class="muted summary-section-copy">Return to the Access Control category, continue the guided flow, or review the final category rollup.</p>
+        <p class="muted summary-section-copy">Return to the Access Control category, review the guided tool path, or open the final report when the rollup is ready.</p>
         <div class="btn-row summary-next-actions">
           <a class="btn btn-primary" href="/tools/access-control/scope-planner/">Return to Scope Planner</a>
           <a class="btn" href="/tools/access-control/">Back to Access Control</a>
