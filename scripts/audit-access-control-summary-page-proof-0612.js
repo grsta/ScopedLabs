@@ -6,6 +6,10 @@ const root = process.cwd();
 const indexRel = "tools/access-control/summary/index.html";
 const scriptRel = "tools/access-control/summary/script.js";
 const categoryRel = "tools/access-control/index.html";
+const sitemapRel = "sitemap.xml";
+
+const summaryHref = "/tools/access-control/summary/";
+const summaryUrl = "https://scopedlabs.com/tools/access-control/summary/";
 
 const requiredTools = [
   "scope-planner",
@@ -19,7 +23,7 @@ const requiredTools = [
   "elevator-reader-count",
   "fail-safe-fail-secure",
   "special-locking-scope",
-  "anti-passback-zones"
+  "anti-passback-zones",
 ];
 
 function exists(rel) {
@@ -32,12 +36,21 @@ function read(rel) {
 
 function extractLinks(html) {
   const links = [];
-  const regex = /href\s*=\s*["']([^"']+)["']/gi;
+  const regex = /href\\s*=\\s*["']([^"']+)["']/gi;
   let match;
 
   while ((match = regex.exec(html))) links.push(match[1]);
 
   return [...new Set(links)];
+}
+
+function hasSummaryLink(html) {
+  const links = extractLinks(html);
+
+  return links.includes(summaryHref) ||
+    links.includes("tools/access-control/summary/") ||
+    links.includes("./summary/") ||
+    links.includes("summary/");
 }
 
 let failCount = 0;
@@ -63,7 +76,7 @@ if (!exists(scriptRel)) {
 const index = read(indexRel);
 const script = read(scriptRel);
 const category = read(categoryRel);
-const links = extractLinks(index);
+const sitemap = read(sitemapRel);
 
 const indexMarkers = [
   "Access Control Summary",
@@ -90,17 +103,17 @@ if (index.includes("Physical Security") || index.includes("physical-security")) 
   console.log("SAFE  no Physical Security markers on Access Control summary page");
 }
 
+const dynamicLinkBuilderPresent =
+  script.includes("/tools/access-control/") &&
+  script.includes("row.slug") &&
+  script.includes("TOOL_DEFINITIONS");
+
 if (script.includes("access-control-summary-master-assistant-001") && script.includes("ScopedLabsAccessControlSummary")) {
   console.log("SAFE  Access Control summary script markers present");
 } else {
   console.log("FAIL  Access Control summary script markers missing");
   failCount += 1;
 }
-
-const dynamicLinkBuilderPresent =
-  script.includes("/tools/access-control/") &&
-  script.includes("row.slug") &&
-  script.includes("TOOL_DEFINITIONS");
 
 let linkedTools = 0;
 
@@ -125,10 +138,18 @@ if (dynamicLinkBuilderPresent) {
   failCount += 1;
 }
 
-if (category.includes("/tools/access-control/summary/")) {
-  console.log("WATCH category opening page already links to Access Control summary");
+if (hasSummaryLink(category)) {
+  console.log("SAFE  ACCESS_CONTROL_CATEGORY_OPENING_SUMMARY_LINK_PRESENT");
 } else {
-  console.log("WATCH category opening page summary link not added yet");
+  console.log("FAIL  category opening page summary link missing");
+  failCount += 1;
+}
+
+if (sitemap.includes(summaryUrl)) {
+  console.log("SAFE  ACCESS_CONTROL_SUMMARY_SITEMAP_URL_PRESENT");
+} else {
+  console.log("FAIL  sitemap missing Access Control summary URL");
+  failCount += 1;
 }
 
 console.log("");
@@ -139,11 +160,12 @@ if (failCount === 0) {
   console.log("SAFE  ACCESS_CONTROL_MASTER_ASSISTANT_CREATED");
   console.log("SAFE  ACCESS_CONTROL_FINAL_REPORT_HOST_CREATED");
   console.log("SAFE  ACCESS_CONTROL_TOOL_LINK_REFERENCES_PRESENT");
+  console.log("SAFE  ACCESS_CONTROL_CATEGORY_OPENING_SUMMARY_LINK_PRESENT");
+  console.log("SAFE  ACCESS_CONTROL_SUMMARY_SITEMAP_URL_PRESENT");
 } else {
   console.log("FAIL  ACCESS_CONTROL_SUMMARY_PAGE_PROOF_FAILED");
 }
 
-console.log("WATCH ACCESS_CONTROL_CATEGORY_OPENING_SUMMARY_LINK_REVIEW");
 console.log("SAFE  NO_CALCULATOR_PAGE_PATCHES");
 
 console.log("");

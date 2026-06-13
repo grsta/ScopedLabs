@@ -250,4 +250,10 @@
     <loc>https://scopedlabs.com/guides/</loc>
     <lastmod>2026-06-02</lastmod>
   </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/access-control/summary/</loc>
+    <lastmod>2026-06-12</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.60</priority>
+  </url>
 </urlset>
