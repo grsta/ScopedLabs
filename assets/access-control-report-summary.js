@@ -1,6 +1,6 @@
 (function () {
   "use strict";
-  const VERSION = "access-control-report-summary-0613-summary-cleanup";
+  const VERSION = "access-control-report-summary-0613-table-layout";
   const MOUNT_ID = "accessControlReportMount";
   function esc(value) { return String(value == null ? "" : value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;"); }
   function tools() { return (window.ScopedLabsAccessControlToolRegistry && window.ScopedLabsAccessControlToolRegistry.tools) || []; }
@@ -17,9 +17,21 @@
     const rows = tools().map(function (tool) {
       const record = bySlug.get(tool.slug);
       const detail = noteFrom(record) || "No saved guidance found yet.";
-      return "<tr><td>" + esc(tool.label) + "</td><td>" + esc(detail) + "</td></tr>";
+      const status = detail === "No saved guidance found yet." ? "PENDING" : "SAVED";
+      return "<tr>" +
+        "<td class='summary-report-tool-cell'><strong>" + esc(tool.label) + "</strong></td>" +
+        "<td class='summary-report-status-cell'><span class='summary-report-status summary-report-status--" + status.toLowerCase() + "'>" + esc(status) + "</span></td>" +
+        "<td class='summary-report-guidance-cell'>" + esc(detail) + "</td>" +
+      "</tr>";
     }).join("");
-    return "<div class='summary-export-report' data-access-control-report-summary='true'><h3>Access Control Category Summary</h3><p>This report-ready rollup reflects saved Access Control guidance and current report metadata.</p><table><thead><tr><th>Tool</th><th>Saved guidance</th></tr></thead><tbody>" + rows + "</tbody></table></div>";
+    return "<div class='summary-export-report' data-access-control-report-summary='true'>" +
+      "<h3>Access Control Category Summary</h3>" +
+      "<p>This report-ready rollup reflects saved Access Control guidance and current report metadata.</p>" +
+      "<table class='summary-report-table'>" +
+        "<thead><tr><th>Tool</th><th>Status</th><th>Saved guidance</th></tr></thead>" +
+        "<tbody>" + rows + "</tbody>" +
+      "</table>" +
+    "</div>";
   }
   function refreshExportSection() { const mount = document.getElementById(MOUNT_ID); if (!mount) return false; mount.innerHTML = renderExportHtml(); return true; }
   function init() { refreshExportSection(); document.addEventListener("click", function (event) { if (event.target && event.target.closest && event.target.closest("#exportReport")) refreshExportSection(); }, true); window.addEventListener("scopedlabs:access-control-guidance-updated", refreshExportSection); }

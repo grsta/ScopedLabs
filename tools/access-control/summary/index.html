@@ -1064,6 +1064,106 @@ body[data-access-control-summary-page="true"] #reportMetadataMount {
     border-color: rgba(86, 255, 135, .32);
   }
 
+  /* access-control-summary-report-table-0613
+     Match final report rollup table rhythm to Scope Planner active-scope tables.
+  */
+  body[data-access-control-summary-page="true"] .summary-export-report {
+    margin-top: 1.05rem;
+  }
+
+  body[data-access-control-summary-page="true"] .summary-report-table {
+    border-collapse: collapse;
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  body[data-access-control-summary-page="true"] .summary-report-table th {
+    border-bottom: 1px solid rgba(186, 255, 204, .15);
+    color: rgba(207, 236, 218, .72);
+    font-size: .72rem;
+    font-weight: 850;
+    letter-spacing: .07em;
+    padding: .55rem .7rem;
+    text-transform: uppercase;
+    vertical-align: bottom;
+  }
+
+  body[data-access-control-summary-page="true"] .summary-report-table td {
+    border-bottom: 1px solid rgba(186, 255, 204, .10);
+    color: rgba(240, 255, 245, .92);
+    line-height: 1.42;
+    padding: .62rem .7rem;
+    vertical-align: top;
+  }
+
+  body[data-access-control-summary-page="true"] .summary-report-table tr:last-child td {
+    border-bottom: 0;
+  }
+
+  body[data-access-control-summary-page="true"] .summary-report-table th:nth-child(1),
+  body[data-access-control-summary-page="true"] .summary-report-table td:nth-child(1) {
+    width: 22%;
+  }
+
+  body[data-access-control-summary-page="true"] .summary-report-table th:nth-child(2),
+  body[data-access-control-summary-page="true"] .summary-report-table td:nth-child(2) {
+    width: 14%;
+  }
+
+  body[data-access-control-summary-page="true"] .summary-report-table th:nth-child(3),
+  body[data-access-control-summary-page="true"] .summary-report-table td:nth-child(3) {
+    width: 64%;
+  }
+
+  body[data-access-control-summary-page="true"] .summary-report-tool-cell strong {
+    color: rgba(248, 255, 250, .96);
+    display: inline-block;
+    font-weight: 850;
+    max-width: 100%;
+  }
+
+  body[data-access-control-summary-page="true"] .summary-report-guidance-cell {
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  body[data-access-control-summary-page="true"] .summary-report-status {
+    border: 1px solid rgba(140, 255, 170, .32);
+    border-radius: 8px;
+    color: rgba(220, 255, 230, .9);
+    display: inline-flex;
+    font-size: .68rem;
+    font-weight: 850;
+    letter-spacing: .05em;
+    line-height: 1;
+    padding: .22rem .42rem;
+  }
+
+  body[data-access-control-summary-page="true"] .summary-report-status--pending {
+    border-color: rgba(255, 214, 102, .35);
+    color: rgba(255, 230, 155, .92);
+  }
+
+  body[data-access-control-summary-page="true"] .summary-report-status--saved {
+    border-color: rgba(140, 255, 170, .38);
+    color: rgba(220, 255, 230, .95);
+  }
+
+  @media (max-width: 760px) {
+    body[data-access-control-summary-page="true"] .summary-report-table {
+      table-layout: auto;
+    }
+
+    body[data-access-control-summary-page="true"] .summary-report-table th:nth-child(1),
+    body[data-access-control-summary-page="true"] .summary-report-table td:nth-child(1),
+    body[data-access-control-summary-page="true"] .summary-report-table th:nth-child(2),
+    body[data-access-control-summary-page="true"] .summary-report-table td:nth-child(2),
+    body[data-access-control-summary-page="true"] .summary-report-table th:nth-child(3),
+    body[data-access-control-summary-page="true"] .summary-report-table td:nth-child(3) {
+      width: auto;
+    }
+  }
+
 </style>
 </head>
 
