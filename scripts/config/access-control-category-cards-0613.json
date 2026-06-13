@@ -33,7 +33,8 @@
       "markerStart": "scopedlabs-access-control-summary-card-pattern-0613-start",
       "markerEnd": "scopedlabs-access-control-summary-card-pattern-0613-end",
       "tier": "",
-      "useLockIcon": false
+      "useLockIcon": false,
+      "publicDirectLink": true
     }
   ]
 }

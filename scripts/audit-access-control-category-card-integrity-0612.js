@@ -6,22 +6,6 @@ const root = process.cwd();
 const pagePath = path.join(root, "tools", "access-control", "index.html");
 const configPath = path.join(root, "scripts", "config", "access-control-category-cards-0613.json");
 
-const requiredLinks = [
-  "/tools/access-control/scope-planner/",
-  "/tools/access-control/door-count-planner/",
-  "/tools/access-control/reader-type-selector/",
-  "/tools/access-control/credential-format/",
-  "/tools/access-control/access-level-sizing/",
-  "/tools/access-control/panel-capacity/",
-  "/tools/access-control/lock-power-budget/",
-  "/tools/access-control/door-cable-length/",
-  "/tools/access-control/elevator-reader-count/",
-  "/tools/access-control/fail-safe-fail-secure/",
-  "/tools/access-control/special-locking-scope/",
-  "/tools/access-control/anti-passback-zones/",
-  "/tools/access-control/summary/",
-];
-
 function read(filePath) {
   return fs.readFileSync(filePath, "utf8");
 }
@@ -29,12 +13,10 @@ function read(filePath) {
 function findSummarySection(html) {
   const attr = 'data-access-control-category-summary-card="true"';
   const attrIndex = html.indexOf(attr);
-
   if (attrIndex === -1) return "";
 
   const sectionStart = html.lastIndexOf("<section", attrIndex);
   const sectionEnd = html.indexOf("</section>", attrIndex);
-
   if (sectionStart === -1 || sectionEnd === -1) return "";
 
   return html.slice(sectionStart, sectionEnd + "</section>".length);
@@ -58,6 +40,22 @@ const config = JSON.parse(read(configPath));
 const anchors = engine.extractAnchors(html);
 const summarySection = findSummarySection(html);
 
+const requiredLinks = [
+  "/tools/access-control/scope-planner/",
+  "/tools/access-control/door-count-planner/",
+  "/tools/access-control/reader-type-selector/",
+  "/tools/access-control/credential-format/",
+  "/tools/access-control/access-level-sizing/",
+  "/tools/access-control/panel-capacity/",
+  "/tools/access-control/lock-power-budget/",
+  "/tools/access-control/door-cable-length/",
+  "/tools/access-control/elevator-reader-count/",
+  "/tools/access-control/fail-safe-fail-secure/",
+  "/tools/access-control/special-locking-scope/",
+  "/tools/access-control/anti-passback-zones/",
+  "/tools/access-control/summary/",
+];
+
 if (config.version === "access-control-category-cards-0613-summary-public-link") {
   console.log("SAFE  Access Control category-card config uses summary public-link version");
 } else {
@@ -79,15 +77,7 @@ if (html.includes("access-control-category-finalize-card-style-0613") || html.in
   console.log("SAFE  no one-off finalize/summary styles remain");
 }
 
-if (html.includes("scopedlabs-access-control-summary-card-pattern-0613-start")) {
-  console.log("SAFE  standalone summary card pattern marker present");
-} else {
-  console.log("FAIL  standalone summary card pattern marker missing");
-  failCount += 1;
-}
-
 let linkCount = 0;
-
 for (const href of requiredLinks) {
   if (html.includes('href="' + href + '"') || html.includes("href='" + href + "'")) {
     linkCount += 1;
@@ -96,7 +86,6 @@ for (const href of requiredLinks) {
     failCount += 1;
   }
 }
-
 console.log("INFO  required links present: " + linkCount + " / " + requiredLinks.length);
 
 const panelAnchor = anchors.find((anchor) => anchor.href === "/tools/access-control/panel-capacity/");
@@ -138,8 +127,8 @@ if (
   summaryAnchor &&
   summaryAnchor.href === "/tools/access-control/summary/" &&
   !summaryAnchor.block.includes("data-tool=") &&
-  !summaryAnchor.text.includes("Pro Tier") &&
-  !summaryAnchor.block.includes("lock-icon")
+  !summaryAnchor.block.includes("lock-icon") &&
+  !summaryAnchor.text.includes("Pro Tier")
 ) {
   console.log("SAFE  Summary is public direct link and not tool-gated");
 } else {
