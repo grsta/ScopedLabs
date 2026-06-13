@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-report-summary-0613-export-column-widths";
+  const VERSION = "access-control-report-summary-0613-export-table-contract";
   const MOUNT_ID = "accessControlReportMount";
 
   // access-control-report-summary-0613-export-column-widths
@@ -226,7 +226,7 @@
 
     return "<section class='summary-report-scope-section' data-summary-report-scope-section='true' data-scope-id='" + esc(scope.id) + "'>" +
       "<h4 class='summary-report-scope-title'>Scope: " + esc(scope.name) + "</h4>" +
-      "<table class='summary-report-table summary-report-table--scope-section'><colgroup><col class='summary-report-col-tool' style='width:22%'><col class='summary-report-col-status' style='width:12%'><col class='summary-report-col-guidance' style='width:66%'></colgroup>" +
+      "<table class='summary-report-table summary-report-table--scope-section' data-export-table-class='extra-export-table--access-control-summary-report' data-export-col-widths='22,12,66' data-export-table-title='Scope: " + esc(scope.name) + "'><colgroup><col class='summary-report-col-tool' style='width:22%'><col class='summary-report-col-status' style='width:12%'><col class='summary-report-col-guidance' style='width:66%'></colgroup>" +
         "<thead><tr><th>Tool</th><th>Status</th><th>Saved guidance</th></tr></thead>" +
         "<tbody>" + rows.join("") + "</tbody>" +
       "</table>" +
@@ -258,7 +258,7 @@
     if (!scopes.length) {
       body = "<section class='summary-report-scope-section' data-summary-report-empty='true'>" +
         "<h4 class='summary-report-scope-title'>No saved scopes</h4>" +
-        "<table class='summary-report-table summary-report-table--scope-section'><colgroup><col class='summary-report-col-tool' style='width:22%'><col class='summary-report-col-status' style='width:12%'><col class='summary-report-col-guidance' style='width:66%'></colgroup>" +
+        "<table class='summary-report-table summary-report-table--scope-section' data-export-table-class='extra-export-table--access-control-summary-report' data-export-col-widths='22,12,66' data-export-table-title='No saved scopes'><colgroup><col class='summary-report-col-tool' style='width:22%'><col class='summary-report-col-status' style='width:12%'><col class='summary-report-col-guidance' style='width:66%'></colgroup>" +
           "<thead><tr><th>Tool</th><th>Status</th><th>Saved guidance</th></tr></thead>" +
           "<tbody>" + rowHtml("Scope Planner", "PENDING", "No access scopes have been saved yet.", "data-summary-report-empty-row='true'") + "</tbody>" +
         "</table>" +

@@ -794,10 +794,44 @@
 
     if (!rows.length) return null;
 
+    // shared-export-026-extra-table-metadata
+    const className = cleanExtraTableText(
+      table.dataset?.exportTableClass ||
+      table.getAttribute("data-export-table-class") ||
+      ""
+    );
+
+    const rawColWidths = cleanExtraTableText(
+      table.dataset?.exportColWidths ||
+      table.getAttribute("data-export-col-widths") ||
+      ""
+    );
+
+    let colWidths = rawColWidths
+      ? rawColWidths.split(",").map((item) => item.trim()).filter(Boolean)
+      : [];
+
+    if (!colWidths.length) {
+      colWidths = Array.from(table.querySelectorAll(":scope > colgroup > col"))
+        .map((col) => {
+          const styleWidth = String(col.style?.width || "").trim();
+          if (styleWidth) return styleWidth;
+
+          const styleAttr = String(col.getAttribute("style") || "");
+          const match = styleAttr.match(/width\s*:\s*([^;]+)/i);
+          if (match && match[1]) return match[1].trim();
+
+          return String(col.getAttribute("width") || "").trim();
+        })
+        .filter(Boolean);
+    }
+
     return {
       title: tableTitle,
       headers: headerCells,
-      rows
+      rows,
+      className,
+      colWidths
     };
   }
 
@@ -930,6 +964,19 @@
           ? `<h3 class="extra-table-title">${escapeHtml(table.title)}</h3>`
           : "";
 
+        function safeColWidth(width) {
+          return String(width || "")
+            .replace(/[^0-9.%frpxemremcalc()\s+-]/g, "")
+            .trim();
+        }
+
+        const colgroupHtml = (Array.isArray(table.colWidths) && table.colWidths.length)
+          ? `<colgroup>${table.colWidths.map((width) => {
+              const safeWidth = safeColWidth(width);
+              return safeWidth ? `<col style="width:${safeWidth}">` : "";
+            }).join("")}</colgroup>`
+          : "";
+
         const requestedClass = String(table.className || section.tableClass || "")
           .replace(/[^a-zA-Z0-9_\-\s]/g, "")
           .trim();
@@ -943,6 +990,7 @@
         return `
           ${tableTitleBlock}
           <table class="${tableClass}">
+            ${colgroupHtml}
             <thead><tr>${headerHtml}</tr></thead>
             <tbody>${rowHtml}</tbody>
           </table>
@@ -1752,6 +1800,27 @@ if (shouldSuppressDefaultInterpretationBlock()) {
       max-width:0;
       overflow-wrap:anywhere;
       word-break:break-word;
+    }
+    /* shared-export-026-extra-table-metadata */
+    table.extra-export-table--access-control-summary-report{
+      table-layout:fixed;
+      width:100%;
+    }
+    table.extra-export-table--access-control-summary-report th:nth-child(1),
+    table.extra-export-table--access-control-summary-report td:nth-child(1){
+      width:22%;
+    }
+    table.extra-export-table--access-control-summary-report th:nth-child(2),
+    table.extra-export-table--access-control-summary-report td:nth-child(2){
+      width:12%;
+      white-space:nowrap;
+    }
+    table.extra-export-table--access-control-summary-report th:nth-child(3),
+    table.extra-export-table--access-control-summary-report td:nth-child(3){
+      width:66%;
+      max-width:none;
+      overflow-wrap:anywhere;
+      word-break:normal;
     }
     .grid{
       display:grid;
