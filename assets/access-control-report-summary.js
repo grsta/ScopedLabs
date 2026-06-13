@@ -1,29 +1,164 @@
-(function () {
+ (function () {
   "use strict";
-  const VERSION = "access-control-report-summary-0613-table-layout";
+
+  const VERSION = "access-control-report-summary-0613-scope-root-filter";
   const MOUNT_ID = "accessControlReportMount";
-  function esc(value) { return String(value == null ? "" : value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;"); }
-  function tools() { return (window.ScopedLabsAccessControlToolRegistry && window.ScopedLabsAccessControlToolRegistry.tools) || []; }
-  function getRecords() {
-    if (window.ScopedLabsAccessControlSummary && typeof window.ScopedLabsAccessControlSummary.readGuidanceRecords === "function") return window.ScopedLabsAccessControlSummary.readGuidanceRecords();
-    if (window.ScopedLabsAccessControlGuidanceMemory && typeof window.ScopedLabsAccessControlGuidanceMemory.listRecords === "function") return window.ScopedLabsAccessControlGuidanceMemory.listRecords();
-    return [];
+
+  function esc(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;");
   }
-  function slugFrom(record) { return String((record && (record.slug || record.toolSlug || record.tool || record.id)) || "").trim(); }
-  function noteFrom(record) { return String((record && (record.notes || record.customNotes || record.reportNotes || record.note || record.summary || record.status || "")) || "").trim(); }
+
+  function safeParse(value) {
+    try {
+      return JSON.parse(value);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function tools() {
+    return (window.ScopedLabsAccessControlToolRegistry && window.ScopedLabsAccessControlToolRegistry.tools) || [];
+  }
+
+  function storageKeys(storage) {
+    const out = [];
+
+    if (!storage) return out;
+
+    try {
+      for (let i = 0; i < storage.length; i += 1) out.push(storage.key(i));
+    } catch (_) {}
+
+    return out.filter(Boolean);
+  }
+
+  function readSummaryScopeLedger() {
+    const api = window.ScopedLabsAccessControlScopeState;
+
+    if (api && typeof api.readLedger === "function") {
+      try {
+        return api.readLedger();
+      } catch (_) {}
+    }
+
+    const stores = [window.sessionStorage, window.localStorage];
+
+    for (const storage of stores) {
+      try {
+        const parsed = safeParse(storage.getItem("scopedlabs:pipeline:access-control:scopes"));
+
+        if (parsed && Array.isArray(parsed.scopes)) return parsed;
+      } catch (_) {}
+    }
+
+    return { scopes: [], activeScopeId: null };
+  }
+
+  function scopeIdsFromLedger(ledger) {
+    const scopes = Array.isArray(ledger && ledger.scopes) ? ledger.scopes : [];
+
+    return new Set(scopes
+      .map(function (scope) { return String(scope && scope.id || "").trim(); })
+      .filter(Boolean));
+  }
+
+  function recordScopeId(record) {
+    return String(
+      record && (
+        record.scopeId ||
+        record.accessScopeId ||
+        record.activeScopeId ||
+        record.scopeID ||
+        record.scope ||
+        ""
+      ) || ""
+    ).trim();
+  }
+
+  function filterGuidanceRecordsToActiveScopes(records) {
+    const ledger = readSummaryScopeLedger();
+    const scopeIds = scopeIdsFromLedger(ledger);
+
+    if (!scopeIds.size) return [];
+
+    return (Array.isArray(records) ? records : []).filter(function (record) {
+      const scopeId = recordScopeId(record);
+
+      if (!scopeId) return true;
+
+      return scopeIds.has(scopeId);
+    });
+  }
+
+  function fallbackMemoryRecords() {
+    const records = [];
+
+    if (window.ScopedLabsAccessControlGuidanceMemory && typeof window.ScopedLabsAccessControlGuidanceMemory.listRecords === "function") {
+      try {
+        records.push.apply(records, window.ScopedLabsAccessControlGuidanceMemory.listRecords());
+      } catch (_) {}
+    }
+
+    [window.sessionStorage, window.localStorage].forEach(function (storage) {
+      storageKeys(storage).forEach(function (key) {
+        if (!/access-control|ScopedLabsAccessControl|report-metadata/i.test(key || "")) return;
+
+        const parsed = safeParse(storage.getItem(key));
+
+        if (Array.isArray(parsed)) records.push.apply(records, parsed);
+        else if (parsed && typeof parsed === "object") records.push(parsed);
+      });
+    });
+
+    return records;
+  }
+
+  function getRecords() {
+    let records = [];
+
+    if (window.ScopedLabsAccessControlSummary && typeof window.ScopedLabsAccessControlSummary.readGuidanceRecords === "function") {
+      try {
+        records = window.ScopedLabsAccessControlSummary.readGuidanceRecords();
+      } catch (_) {
+        records = [];
+      }
+    } else {
+      records = fallbackMemoryRecords();
+    }
+
+    return filterGuidanceRecordsToActiveScopes(records);
+  }
+
+  function slugFrom(record) {
+    return String((record && (record.slug || record.toolSlug || record.tool || record.id)) || "").trim();
+  }
+
+  function noteFrom(record) {
+    return String((record && (record.notes || record.customNotes || record.reportNotes || record.note || record.summary || record.status || "")) || "").trim();
+  }
+
   function renderExportHtml() {
     const records = getRecords();
-    const bySlug = new Map(records.map(function (record) { return [slugFrom(record), record]; }));
+    const bySlug = new Map(records.map(function (record) {
+      return [slugFrom(record), record];
+    }));
+
     const rows = tools().map(function (tool) {
       const record = bySlug.get(tool.slug);
       const detail = noteFrom(record) || "No saved guidance found yet.";
       const status = detail === "No saved guidance found yet." ? "PENDING" : "SAVED";
+
       return "<tr>" +
         "<td class='summary-report-tool-cell'><strong>" + esc(tool.label) + "</strong></td>" +
         "<td class='summary-report-status-cell'><span class='summary-report-status summary-report-status--" + status.toLowerCase() + "'>" + esc(status) + "</span></td>" +
         "<td class='summary-report-guidance-cell'>" + esc(detail) + "</td>" +
       "</tr>";
     }).join("");
+
     return "<div class='summary-export-report' data-access-control-report-summary='true'>" +
       "<h3>Access Control Category Summary</h3>" +
       "<p>This report-ready rollup reflects saved Access Control guidance and current report metadata.</p>" +
@@ -33,8 +168,35 @@
       "</table>" +
     "</div>";
   }
-  function refreshExportSection() { const mount = document.getElementById(MOUNT_ID); if (!mount) return false; mount.innerHTML = renderExportHtml(); return true; }
-  function init() { refreshExportSection(); document.addEventListener("click", function (event) { if (event.target && event.target.closest && event.target.closest("#exportReport")) refreshExportSection(); }, true); window.addEventListener("scopedlabs:access-control-guidance-updated", refreshExportSection); }
-  window.ScopedLabsAccessControlReportSummary = Object.freeze({ version: VERSION, renderExportHtml: renderExportHtml, refreshExportSection: refreshExportSection, init: init });
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, { once: true }); else init();
+
+  function refreshExportSection() {
+    const mount = document.getElementById(MOUNT_ID);
+
+    if (!mount) return false;
+
+    mount.innerHTML = renderExportHtml();
+
+    return true;
+  }
+
+  function init() {
+    refreshExportSection();
+
+    document.addEventListener("click", function (event) {
+      if (event.target && event.target.closest && event.target.closest("#exportReport")) refreshExportSection();
+    }, true);
+
+    window.addEventListener("scopedlabs:access-control-guidance-updated", refreshExportSection);
+    window.addEventListener("scopedlabs:access-control-scope-updated", refreshExportSection);
+  }
+
+  window.ScopedLabsAccessControlReportSummary = Object.freeze({
+    version: VERSION,
+    renderExportHtml: renderExportHtml,
+    refreshExportSection: refreshExportSection,
+    init: init
+  });
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, { once: true });
+  else init();
 })();

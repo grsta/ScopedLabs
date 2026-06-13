@@ -162,7 +162,74 @@
     return records;
   }
 
-  function readGuidanceRecords() {
+ 
+  // access-control-summary-scope-root-filter-0613
+  // Scope Planner owns the current category-summary session root.
+  // If no scopes are saved, orphaned historical guidance records are ignored.
+  function readSummaryScopeLedger() {
+    const api = window.ScopedLabsAccessControlScopeState;
+
+    if (api && typeof api.readLedger === "function") {
+      try {
+        return api.readLedger();
+      } catch {}
+    }
+
+    const keys = [
+      "scopedlabs:pipeline:access-control:scopes"
+    ];
+
+    const stores = [window.sessionStorage, window.localStorage];
+
+    for (const storage of stores) {
+      for (const key of keys) {
+        try {
+          const parsed = safeJsonParse(storage.getItem(key));
+          if (parsed && Array.isArray(parsed.scopes)) return parsed;
+        } catch {}
+      }
+    }
+
+    return { scopes: [], activeScopeId: null };
+  }
+
+  function scopeIdsFromLedger(ledger) {
+    const scopes = Array.isArray(ledger && ledger.scopes) ? ledger.scopes : [];
+
+    return new Set(scopes
+      .map((scope) => String(scope && scope.id || "").trim())
+      .filter(Boolean));
+  }
+
+  function recordScopeId(record) {
+    return String(
+      record && (
+        record.scopeId ||
+        record.accessScopeId ||
+        record.activeScopeId ||
+        record.scopeID ||
+        record.scope ||
+        ""
+      ) || ""
+    ).trim();
+  }
+
+  function filterGuidanceRecordsToActiveScopes(records) {
+    const ledger = readSummaryScopeLedger();
+    const scopeIds = scopeIdsFromLedger(ledger);
+
+    if (!scopeIds.size) return [];
+
+    return (Array.isArray(records) ? records : []).filter((record) => {
+      const scopeId = recordScopeId(record);
+
+      if (!scopeId) return true;
+
+      return scopeIds.has(scopeId);
+    });
+  }
+
+ function readGuidanceRecords() {
     const candidates = [
       ["ScopedLabsAccessControlGuidanceMemory", "listToolGuidance"],
       ["ScopedLabsAccessControlGuidanceMemory", "list"],
@@ -185,9 +252,7 @@
       } catch {}
     });
 
-    flattenRecords(readFromStorage(), records);
-
-    return records;
+    flattenRecords(readFromStorage(), records); return filterGuidanceRecordsToActiveScopes(records);
   }
 
   function slugFromRecord(record) {
@@ -412,7 +477,7 @@
     const notesMount = ensureSection("accessControlToolNotes", "Tool Notes", "Tool Notes");
     notesMount.innerHTML = renderNotes(records);
 
-    document.documentElement.setAttribute("data-access-control-summary-version", VERSION);
+    document.documentElement.setAttribute("data-access-control-summary-version", VERSION); try { window.dispatchEvent(new CustomEvent("scopedlabs:access-control-guidance-updated")); } catch {}
   }
 
   window.ScopedLabsAccessControlSummary = {
