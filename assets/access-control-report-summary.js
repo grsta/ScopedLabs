@@ -1,9 +1,10 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-report-summary-0613-multi-scope-kpi-print-selector";
+  const VERSION = "access-control-report-summary-0613-export-column-widths";
   const MOUNT_ID = "accessControlReportMount";
 
+  // access-control-report-summary-0613-export-column-widths
   // compatibility markers for existing audits:
   // access-control-report-summary-0613-separated-scope-tables
   // access-control-report-summary-0613-scope-report-rows
@@ -225,7 +226,7 @@
 
     return "<section class='summary-report-scope-section' data-summary-report-scope-section='true' data-scope-id='" + esc(scope.id) + "'>" +
       "<h4 class='summary-report-scope-title'>Scope: " + esc(scope.name) + "</h4>" +
-      "<table class='summary-report-table summary-report-table--scope-section'>" +
+      "<table class='summary-report-table summary-report-table--scope-section'><colgroup><col class='summary-report-col-tool' style='width:22%'><col class='summary-report-col-status' style='width:12%'><col class='summary-report-col-guidance' style='width:66%'></colgroup>" +
         "<thead><tr><th>Tool</th><th>Status</th><th>Saved guidance</th></tr></thead>" +
         "<tbody>" + rows.join("") + "</tbody>" +
       "</table>" +
@@ -257,7 +258,7 @@
     if (!scopes.length) {
       body = "<section class='summary-report-scope-section' data-summary-report-empty='true'>" +
         "<h4 class='summary-report-scope-title'>No saved scopes</h4>" +
-        "<table class='summary-report-table summary-report-table--scope-section'>" +
+        "<table class='summary-report-table summary-report-table--scope-section'><colgroup><col class='summary-report-col-tool' style='width:22%'><col class='summary-report-col-status' style='width:12%'><col class='summary-report-col-guidance' style='width:66%'></colgroup>" +
           "<thead><tr><th>Tool</th><th>Status</th><th>Saved guidance</th></tr></thead>" +
           "<tbody>" + rowHtml("Scope Planner", "PENDING", "No access scopes have been saved yet.", "data-summary-report-empty-row='true'") + "</tbody>" +
         "</table>" +

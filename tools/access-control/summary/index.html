@@ -1197,6 +1197,52 @@ body[data-access-control-summary-page="true"] #reportMetadataMount {
     color: rgba(248, 255, 250, .98);
   }
 
+  /* access-control-summary-export-column-widths-0613
+     Export/print tables: keep Tool and Status compact so Saved guidance has room.
+  */
+  body[data-access-control-summary-page="true"] .summary-report-table {
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  body[data-access-control-summary-page="true"] .summary-report-table .summary-report-col-tool {
+    width: 22%;
+  }
+
+  body[data-access-control-summary-page="true"] .summary-report-table .summary-report-col-status {
+    width: 12%;
+  }
+
+  body[data-access-control-summary-page="true"] .summary-report-table .summary-report-col-guidance {
+    width: 66%;
+  }
+
+  body[data-access-control-summary-page="true"] .summary-report-table th:nth-child(1),
+  body[data-access-control-summary-page="true"] .summary-report-table td:nth-child(1) {
+    width: 22%;
+  }
+
+  body[data-access-control-summary-page="true"] .summary-report-table th:nth-child(2),
+  body[data-access-control-summary-page="true"] .summary-report-table td:nth-child(2) {
+    width: 12%;
+  }
+
+  body[data-access-control-summary-page="true"] .summary-report-table th:nth-child(3),
+  body[data-access-control-summary-page="true"] .summary-report-table td:nth-child(3) {
+    width: 66%;
+  }
+
+  body[data-access-control-summary-page="true"] .summary-report-guidance-cell {
+    max-width: none;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    word-break: normal;
+  }
+
+  body[data-access-control-summary-page="true"] .summary-report-status-cell {
+    white-space: nowrap;
+  }
+
 </style>
 </head>
 
