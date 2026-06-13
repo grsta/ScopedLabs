@@ -230,12 +230,47 @@
     ).trim();
   }
 
+  // access-control-summary-multi-scope-kpi-0613
+  function plannedScopeSummary(ledger) {
+    const scopes = Array.isArray(ledger && ledger.scopes) ? ledger.scopes : [];
+
+    const names = scopes
+      .map((scope, index) => String((scope && (scope.name || scope.label || scope.title)) || ("Access Scope " + (index + 1))).trim())
+      .filter(Boolean);
+
+    if (!scopes.length) {
+      return {
+        count: 0,
+        label: "0",
+        detail: "No access scopes have been saved for the current category rollup.",
+        reportText: "No access scopes have been saved yet."
+      };
+    }
+
+    if (scopes.length === 1) {
+      return {
+        count: 1,
+        label: "1",
+        detail: "One access scope is planned in the current category rollup.",
+        reportText: "1 scope planned: " + (names[0] || "Access Scope 1")
+      };
+    }
+
+    return {
+      count: scopes.length,
+      label: String(scopes.length),
+      detail: String(scopes.length) + " access scopes are planned in the current category rollup.",
+      reportText: String(scopes.length) + " scopes planned: " + names.join(", ")
+    };
+  }
+
   function scopePlannerRecordFromLedger(ledger, scopeIds) {
     const scopes = Array.isArray(ledger && ledger.scopes) ? ledger.scopes : [];
     const activeScopeId = String((ledger && ledger.activeScopeId) || "").trim();
     const fallbackScope = scopes.find((scope) => scope && scope.id);
     const activeScope = scopes.find((scope) => String(scope && scope.id || "").trim() === activeScopeId) || fallbackScope;
     const scopeId = String((activeScope && activeScope.id) || activeScopeId || "").trim();
+    const planned = plannedScopeSummary(ledger);
 
     if (!scopeId || !scopeIds.has(scopeId)) return null;
 
@@ -244,8 +279,8 @@
       toolSlug: "scope-planner",
       scopeId,
       status: "saved",
-      summary: "Access Control scope started and available for the current category rollup.",
-      notes: "Access Control scope started and available for the current category rollup."
+      summary: planned.reportText,
+      notes: planned.reportText
     };
   }
 
@@ -502,23 +537,28 @@
   }
 
   function render() {
+    const ledger = readSummaryScopeLedger();
+    const plannedScopes = plannedScopeSummary(ledger);
     const records = readGuidanceRecords();
     const rows = toolRows(recordBySlug(records));
     const count = counts(rows);
     const status = overallStatus(count);
 
     const kpiMount = ensureSection("accessControlSummaryKpis", "Access Control Rollup", "Rollup");
+
     kpiMount.innerHTML =
       kpi("Tools discovered", String(TOOL_DEFINITIONS.length), "Access Control planning tools included in this category rollup.") +
-      kpi("Guidance saved", String(count.generated) + " / " + String(TOOL_DEFINITIONS.length), "Saved tool guidance found in current browser/session memory.") +
-      kpi("Overall status", statusLabel(status), "Rollup status based on saved tool guidance records.");
+      kpi("Scopes planned", plannedScopes.label, plannedScopes.detail) +
+      kpi("Guidance saved", String(count.generated) + " / " + String(TOOL_DEFINITIONS.length), "Saved tool guidance found in the current scoped Access Control session.") +
+      kpi("Overall status", statusLabel(status), "Rollup status based on saved scoped tool guidance records.");
 
     const assistantMount = ensureSection("accessControlMasterAssistant", "Access Control Master Assistant", "Master Assistant");
+
     assistantMount.innerHTML =
-      '<p>This master assistant keeps each Access Control tool separate, then rolls the saved guidance into a final category view. Use it after running the individual tools or before opening the final report.</p>' +
-      '<p><strong>Next action:</strong> ' +
+      "<p>This master assistant keeps each Access Control tool separate, then rolls the saved guidance into a final category view. Use it after running the individual tools or before opening the final report.</p>" +
+      "<p><strong>Next action:</strong> " +
       escapeHtml(count.generated > 0 ? "Review any Watch/Risk items, add report metadata, then open the report section." : "Run the Access Control tools in the guided flow, then return here for the category rollup.") +
-      '</p>';
+      "</p>";
 
     const toolMount = ensureSection("accessControlToolRollup", "Access Control Tool Status", "Tool Guidance");
     toolMount.innerHTML = renderToolRows(rows);
@@ -526,7 +566,11 @@
     const notesMount = ensureSection("accessControlToolNotes", "Tool Notes", "Tool Notes");
     notesMount.innerHTML = renderNotes(records);
 
-    document.documentElement.setAttribute("data-access-control-summary-version", VERSION); try { window.dispatchEvent(new CustomEvent("scopedlabs:access-control-guidance-updated")); } catch {}
+    document.documentElement.setAttribute("data-access-control-summary-version", VERSION);
+
+    try {
+      window.dispatchEvent(new CustomEvent("scopedlabs:access-control-guidance-updated"));
+    } catch {}
   }
 
   window.ScopedLabsAccessControlSummary = {
