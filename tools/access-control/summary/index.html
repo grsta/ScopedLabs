@@ -1164,6 +1164,39 @@ body[data-access-control-summary-page="true"] #reportMetadataMount {
     }
   }
 
+  /* access-control-summary-scope-report-table-0613
+     Scope-aware final report table: each saved scope gets its own Scope Planner row.
+  */
+  body[data-access-control-summary-page="true"] .summary-report-table--scope-aware th:nth-child(1),
+  body[data-access-control-summary-page="true"] .summary-report-table--scope-aware td:nth-child(1) {
+    width: 24%;
+  }
+
+  body[data-access-control-summary-page="true"] .summary-report-table--scope-aware th:nth-child(2),
+  body[data-access-control-summary-page="true"] .summary-report-table--scope-aware td:nth-child(2) {
+    width: 20%;
+  }
+
+  body[data-access-control-summary-page="true"] .summary-report-table--scope-aware th:nth-child(3),
+  body[data-access-control-summary-page="true"] .summary-report-table--scope-aware td:nth-child(3) {
+    width: 13%;
+  }
+
+  body[data-access-control-summary-page="true"] .summary-report-table--scope-aware th:nth-child(4),
+  body[data-access-control-summary-page="true"] .summary-report-table--scope-aware td:nth-child(4) {
+    width: 43%;
+  }
+
+  body[data-access-control-summary-page="true"] .summary-report-scope-cell {
+    color: rgba(224, 255, 234, .94);
+    font-weight: 850;
+  }
+
+  body[data-access-control-summary-page="true"] tr[data-summary-report-scope-planner-row="true"] .summary-report-scope-cell,
+  body[data-access-control-summary-page="true"] tr[data-summary-report-scope-planner-row="true"] .summary-report-tool-cell strong {
+    color: rgba(248, 255, 250, .98);
+  }
+
 </style>
 </head>
 

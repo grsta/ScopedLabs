@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-report-summary-0613-multi-scope-kpi";
+  const VERSION = "access-control-report-summary-0613-scope-report-rows";
   const MOUNT_ID = "accessControlReportMount";
 
   function esc(value) {
@@ -58,47 +58,35 @@
     return { scopes: [], activeScopeId: null };
   }
 
-  function scopeIdsFromLedger(ledger) {
-    const scopes = Array.isArray(ledger && ledger.scopes) ? ledger.scopes : [];
+  function plannedScopes(ledger) {
+    return (Array.isArray(ledger && ledger.scopes) ? ledger.scopes : [])
+      .filter(function (scope) { return scope && scope.id; })
+      .map(function (scope, index) {
+        const id = String(scope.id || "").trim();
+        const name = String(scope.name || scope.label || scope.title || ("Access Scope " + (index + 1))).trim();
 
-    return new Set(scopes
-      .map(function (scope) { return String(scope && scope.id || "").trim(); })
-      .filter(Boolean));
+        return {
+          id: id,
+          name: name || ("Access Scope " + (index + 1)),
+          type: String(scope.type || scope.scopeType || scope.branchType || "").trim(),
+          path: String(scope.path || scope.accessPath || scope.doorPath || "").trim(),
+          egress: String(scope.egress || scope.egressMode || scope.egressStatus || "").trim(),
+          lockIntent: String(scope.lockIntent || scope.lockMode || "").trim()
+        };
+      });
   }
 
-  function plannedScopeSummary(ledger) {
-    const scopes = Array.isArray(ledger && ledger.scopes) ? ledger.scopes : [];
+  function scopeMap(scopes) {
+    return new Map(scopes.map(function (scope) {
+      return [scope.id, scope];
+    }));
+  }
 
-    const names = scopes
-      .map(function (scope, index) {
-        return String((scope && (scope.name || scope.label || scope.title)) || ("Access Scope " + (index + 1))).trim();
-      })
-      .filter(Boolean);
+  function scopeNameFromRecord(record, scopesById) {
+    const scopeId = recordScopeId(record);
+    const scope = scopesById.get(scopeId);
 
-    if (!scopes.length) {
-      return {
-        count: 0,
-        label: "0",
-        detail: "No access scopes have been saved for the current category rollup.",
-        reportText: "No access scopes have been saved yet."
-      };
-    }
-
-    if (scopes.length === 1) {
-      return {
-        count: 1,
-        label: "1",
-        detail: "One access scope is planned in the current category rollup.",
-        reportText: "1 scope planned: " + (names[0] || "Access Scope 1")
-      };
-    }
-
-    return {
-      count: scopes.length,
-      label: String(scopes.length),
-      detail: String(scopes.length) + " access scopes are planned in the current category rollup.",
-      reportText: String(scopes.length) + " scopes planned: " + names.join(", ")
-    };
+    return scope ? scope.name : "—";
   }
 
   function recordScopeId(record) {
@@ -118,48 +106,18 @@
     return String((record && (record.slug || record.toolSlug || record.tool || record.toolId || record.id)) || "").trim();
   }
 
-  function scopePlannerRecordFromLedger(ledger, scopeIds) {
-    const scopes = Array.isArray(ledger && ledger.scopes) ? ledger.scopes : [];
-    const activeScopeId = String((ledger && ledger.activeScopeId) || "").trim();
-    const fallbackScope = scopes.find(function (scope) { return scope && scope.id; });
-    const activeScope = scopes.find(function (scope) { return String(scope && scope.id || "").trim() === activeScopeId; }) || fallbackScope;
-    const scopeId = String((activeScope && activeScope.id) || activeScopeId || "").trim();
-    const planned = plannedScopeSummary(ledger);
+  function normalizeStatus(value) {
+    const text = String(value || "").toLowerCase();
 
-    if (!scopeId || !scopeIds.has(scopeId)) return null;
+    if (text.includes("risk") || text.includes("fail") || text.includes("blocked")) return "RISK";
+    if (text.includes("watch") || text.includes("warn") || text.includes("review")) return "WATCH";
+    if (text.includes("healthy") || text.includes("safe") || text.includes("ok") || text.includes("pass") || text.includes("complete") || text.includes("saved")) return "SAVED";
 
-    return {
-      slug: "scope-planner",
-      toolSlug: "scope-planner",
-      scopeId: scopeId,
-      status: "saved",
-      summary: planned.reportText,
-      notes: planned.reportText
-    };
+    return "PENDING";
   }
 
-  function filterGuidanceRecordsToActiveScopes(records) {
-    const ledger = readSummaryScopeLedger();
-    const scopeIds = scopeIdsFromLedger(ledger);
-
-    if (!scopeIds.size) return [];
-
-    const filtered = (Array.isArray(records) ? records : []).filter(function (record) {
-      const slug = slugFrom(record);
-      const scopeId = recordScopeId(record);
-
-      if (slug === "scope-planner") return !scopeId || scopeIds.has(scopeId);
-      if (!scopeId) return false;
-
-      return scopeIds.has(scopeId);
-    });
-
-    const hasScopePlanner = filtered.some(function (record) { return slugFrom(record) === "scope-planner"; });
-    const syntheticScopePlanner = scopePlannerRecordFromLedger(ledger, scopeIds);
-
-    if (!hasScopePlanner && syntheticScopePlanner) filtered.unshift(syntheticScopePlanner);
-
-    return filtered;
+  function noteFrom(record) {
+    return String((record && (record.notes || record.customNotes || record.reportNotes || record.note || record.summary || record.status || "")) || "").trim();
   }
 
   function fallbackMemoryRecords() {
@@ -198,36 +156,107 @@
       records = fallbackMemoryRecords();
     }
 
-    return filterGuidanceRecordsToActiveScopes(records);
+    return Array.isArray(records) ? records : [];
   }
 
-  function noteFrom(record) {
-    return String((record && (record.notes || record.customNotes || record.reportNotes || record.note || record.summary || record.status || "")) || "").trim();
+  function scopePlannerGuidance(scope) {
+    const details = [];
+
+    if (scope.path) details.push("Path: " + scope.path);
+    if (scope.egress) details.push("Egress: " + scope.egress);
+    if (scope.lockIntent) details.push("Lock intent: " + scope.lockIntent);
+
+    if (!details.length) details.push("Scope started and available for the current category rollup.");
+
+    return details.join(" · ");
+  }
+
+  function reportStatusClass(status) {
+    return String(status || "PENDING").toLowerCase();
+  }
+
+  function rowHtml(scopeName, toolLabel, status, guidance, attrs) {
+    const attrText = attrs ? " " + attrs : "";
+
+    return "<tr" + attrText + ">" +
+      "<td class='summary-report-scope-cell'>" + esc(scopeName || "—") + "</td>" +
+      "<td class='summary-report-tool-cell'><strong>" + esc(toolLabel) + "</strong></td>" +
+      "<td class='summary-report-status-cell'><span class='summary-report-status summary-report-status--" + esc(reportStatusClass(status)) + "'>" + esc(status) + "</span></td>" +
+      "<td class='summary-report-guidance-cell'>" + esc(guidance || "No saved guidance found yet.") + "</td>" +
+    "</tr>";
+  }
+
+  function buildReportRows() {
+    const ledger = readSummaryScopeLedger();
+    const scopes = plannedScopes(ledger);
+    const scopesById = scopeMap(scopes);
+    const records = getRecords();
+
+    const rows = [];
+
+    scopes.forEach(function (scope) {
+      rows.push(rowHtml(
+        scope.name,
+        "Scope Planner",
+        "SAVED",
+        scopePlannerGuidance(scope),
+        "data-summary-report-scope-planner-row='true' data-scope-id='" + esc(scope.id) + "'"
+      ));
+    });
+
+    const downstreamTools = tools().filter(function (tool) {
+      return tool && tool.slug && tool.slug !== "scope-planner";
+    });
+
+    downstreamTools.forEach(function (tool) {
+      const scopedRecords = records.filter(function (record) {
+        const slug = slugFrom(record);
+        const scopeId = recordScopeId(record);
+
+        return slug === tool.slug && scopeId && scopesById.has(scopeId);
+      });
+
+      if (!scopedRecords.length) {
+        rows.push(rowHtml(
+          "—",
+          tool.label,
+          "PENDING",
+          "No scoped guidance found yet.",
+          "data-summary-report-pending-tool-row='true' data-tool-slug='" + esc(tool.slug) + "'"
+        ));
+        return;
+      }
+
+      scopedRecords.forEach(function (record) {
+        const status = normalizeStatus(record.status || record.overallStatus || record.state || "saved");
+        const guidance = noteFrom(record) || "Scoped guidance saved.";
+        const scopeName = scopeNameFromRecord(record, scopesById);
+
+        rows.push(rowHtml(
+          scopeName,
+          tool.label,
+          status,
+          guidance,
+          "data-summary-report-scoped-tool-row='true' data-tool-slug='" + esc(tool.slug) + "'"
+        ));
+      });
+    });
+
+    if (!rows.length) {
+      rows.push(rowHtml("—", "Scope Planner", "PENDING", "No access scopes have been saved yet.", "data-summary-report-empty-row='true'"));
+    }
+
+    return rows.join("");
   }
 
   function renderExportHtml() {
-    const records = getRecords();
-    const bySlug = new Map(records.map(function (record) {
-      return [slugFrom(record), record];
-    }));
-
-    const rows = tools().map(function (tool) {
-      const record = bySlug.get(tool.slug);
-      const detail = noteFrom(record) || "No saved guidance found yet.";
-      const status = detail === "No saved guidance found yet." ? "PENDING" : "SAVED";
-
-      return "<tr>" +
-        "<td class='summary-report-tool-cell'><strong>" + esc(tool.label) + "</strong></td>" +
-        "<td class='summary-report-status-cell'><span class='summary-report-status summary-report-status--" + status.toLowerCase() + "'>" + esc(status) + "</span></td>" +
-        "<td class='summary-report-guidance-cell'>" + esc(detail) + "</td>" +
-      "</tr>";
-    }).join("");
+    const rows = buildReportRows();
 
     return "<div class='summary-export-report' data-access-control-report-summary='true'>" +
       "<h3>Access Control Category Summary</h3>" +
-      "<p>This report-ready rollup reflects saved Access Control guidance and current report metadata.</p>" +
-      "<table class='summary-report-table'>" +
-        "<thead><tr><th>Tool</th><th>Status</th><th>Saved guidance</th></tr></thead>" +
+      "<p>This report-ready rollup keeps each saved access scope separate, then attaches scoped tool guidance under the matching scope when available.</p>" +
+      "<table class='summary-report-table summary-report-table--scope-aware'>" +
+        "<thead><tr><th>Scope / Door</th><th>Tool</th><th>Status</th><th>Saved guidance</th></tr></thead>" +
         "<tbody>" + rows + "</tbody>" +
       "</table>" +
     "</div>";
@@ -258,6 +287,7 @@
     version: VERSION,
     renderExportHtml: renderExportHtml,
     refreshExportSection: refreshExportSection,
+    buildReportRows: buildReportRows,
     init: init
   });
 
