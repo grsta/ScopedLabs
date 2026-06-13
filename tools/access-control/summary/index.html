@@ -1076,50 +1076,19 @@ body[data-access-control-summary-page="true"] #reportMetadataMount {
           This page is the Access Control master assistant and final report host. It rolls up the scope, door behavior, reader, lock power, panel capacity, cable, elevator, special locking, anti-passback, and access-level planning path without changing the individual calculator tools.
         </p>
         <div class="summary-hero-actions btn-row">
-          <a class="btn btn-primary" href="#accessControlMasterAssistant">Review Summary</a>
+          <a class="btn btn-primary" href="#accessControlSummaryKpis">Review Summary</a>
           <a class="btn" href="#summaryExportSection">Open Report</a>
           <a class="btn" href="/tools/access-control/scope-planner/">Scope Planner</a>
         </div>
       </section>
 
-      <section class="card summary-master-card" style="margin-top: 18px;">
-                <h2 class="h2" style="margin-top: 12px;">Access Control Master Assistant</h2>
-        <p class="muted summary-master-copy">
-          This master assistant reads saved Access Control planning context, report metadata, and tool notes to prioritize the final Access Control design before export.
-        </p>
-        <div id="accessControlMasterAssistant" class="sl-category-guidance-mount" style="margin-top: 12px;"></div>
-        <div id="accessControlMasterAssistantContext" class="summary-master-context" aria-live="polite"></div>
-      </section>
-
-      <section class="card summary-results-card" style="margin-top: 18px;">
+<section class="card summary-results-card" style="margin-top: 18px;">
                 <h2 class="h2" style="margin-top: 12px;">Access Control Rollup</h2>
         <p class="muted summary-section-copy">Quick status snapshot from Access Control tool guidance, saved planning context, and available report notes.</p>
         <div id="accessControlSummaryKpis" class="summary-grid" aria-live="polite"></div>
       </section>
 
-      <section class="card summary-scope-card" style="margin-top: 18px;">
-                <h2 class="h2" style="margin-top: 12px;">Access Control Tool Guidance Rollup</h2>
-        <p class="muted">
-          The Access Control tools stay available individually, but this page provides the category-level rollup before the final report.
-        </p>
-        <div id="accessControlToolRollup"></div>
-      </section>
-
-      <section
-        id="accessControlToolNotesSection"
-        class="card summary-tool-notes-card"
-        style="margin-top: 18px;"
-        data-export-section
-        data-export-title="Access Control Tool Notes"
-      >
-        <h2 class="h2" style="margin-top: 12px;">Tool Notes</h2>
-        <p class="muted summary-section-copy">
-          Tool-specific notes stay separated by source tool and roll up here for the final Access Control report.
-        </p>
-        <div id="accessControlToolNotes"></div>
-      </section>
-
-      <section
+<section
         id="summaryExportSection"
         class="card summary-export-card"
         style="margin-top: 18px;"

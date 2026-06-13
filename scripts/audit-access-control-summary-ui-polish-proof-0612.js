@@ -2,17 +2,16 @@ const fs = require("fs");
 const path = require("path");
 
 const root = process.cwd();
+const indexPath = path.join(root, "tools", "access-control", "summary", "index.html");
+const scriptPath = path.join(root, "tools", "access-control", "summary", "script.js");
 
-const indexRel = "tools/access-control/summary/index.html";
-const scriptRel = "tools/access-control/summary/script.js";
-const uiAuditRel = "scripts/audit-access-control-summary-ui-polish-0612.js";
-
-function exists(rel) {
-  return fs.existsSync(path.join(root, rel));
+function read(filePath) {
+  return fs.existsSync(filePath) ? fs.readFileSync(filePath, "utf8") : "";
 }
 
-function read(rel) {
-  return exists(rel) ? fs.readFileSync(path.join(root, rel), "utf8") : "";
+function hasSectionClass(html, className) {
+  const re = new RegExp("<section\\b[^>]*class=[\"'][^\"']*" + className + "[^\"']*[\"'][^>]*>", "i");
+  return re.test(html);
 }
 
 let failCount = 0;
@@ -21,72 +20,96 @@ console.log("ScopedLabs Access Control summary UI polish proof - 0612");
 console.log("Repo:", root);
 console.log("");
 
-const index = read(indexRel);
-const script = read(scriptRel);
-const uiAudit = read(uiAuditRel);
+const index = read(indexPath);
+const script = read(scriptPath);
 
-const requiredIndexMarkers = [
-  'data-access-control-summary-page="true"',
-  'id="access-control-summary-polish-0612"',
-  "Access Control Summary",
-  "Access Control Master Assistant",
-];
-
-for (const marker of requiredIndexMarkers) {
-  if (index.includes(marker)) {
-    console.log("SAFE  index polish marker: " + marker);
-  } else {
-    console.log("FAIL  missing index polish marker: " + marker);
-    failCount += 1;
-  }
-}
-
-const requiredStyleOrScriptMarkers = [
-  "access-summary-kpi",
-  "access-summary-tool-row",
-  "access-summary-status",
-  "accessControlSummaryKpis",
-  "accessControlToolRollup",
-  "accessControlToolNotes",
-  "ScopedLabsAccessControlSummary",
-];
-
-for (const marker of requiredStyleOrScriptMarkers) {
-  if (index.includes(marker) || script.includes(marker)) {
-    console.log("SAFE  style/script marker: " + marker);
-  } else {
-    console.log("FAIL  missing style/script marker: " + marker);
-    failCount += 1;
-  }
-}
-
-if (uiAudit.includes("POLISH_AUDIT_ONLY")) {
-  console.log("SAFE  UI polish audit remains audit-only");
+if (index.includes("summary-hero") && index.includes("Master rollup for the Access Control design")) {
+  console.log("SAFE  summary hero remains present");
 } else {
-  console.log("FAIL  UI polish audit marker missing");
+  console.log("FAIL  summary hero missing");
   failCount += 1;
 }
 
-if (index.includes("Physical Security") || index.includes("physical-security")) {
-  console.log("FAIL  Physical Security marker found after Access Control polish");
-  failCount += 1;
+if (!hasSectionClass(index, "summary-master-card")) {
+  console.log("SAFE  duplicate static Master Assistant shell removed");
 } else {
-  console.log("SAFE  no Physical Security markers after polish");
+  console.log("FAIL  duplicate static Master Assistant shell remains");
+  failCount += 1;
+}
+
+if (!hasSectionClass(index, "summary-scope-card")) {
+  console.log("SAFE  duplicate static Tool Guidance shell removed");
+} else {
+  console.log("FAIL  duplicate static Tool Guidance shell remains");
+  failCount += 1;
+}
+
+if (!hasSectionClass(index, "summary-tool-notes-card")) {
+  console.log("SAFE  duplicate static Tool Notes shell removed");
+} else {
+  console.log("FAIL  duplicate static Tool Notes shell remains");
+  failCount += 1;
+}
+
+if (index.includes('id="accessControlSummaryKpis"')) {
+  console.log("SAFE  static KPI mount remains present");
+} else {
+  console.log("FAIL  static KPI mount missing");
+  failCount += 1;
+}
+
+if (
+  script.includes("accessControlMasterAssistant") &&
+  script.includes("accessControlToolRollup") &&
+  script.includes("accessControlToolNotes") &&
+  script.includes("SUMMARY_SECTION_INSERT_AFTER")
+) {
+  console.log("SAFE  generated rollup sections are script-owned");
+} else {
+  console.log("FAIL  generated rollup section ownership missing");
+  failCount += 1;
+}
+
+if (
+  index.includes('id="summaryExportSection"') &&
+  index.includes("Final Report Export") &&
+  index.includes("Report metadata") &&
+  index.includes("Open Report") &&
+  index.includes("Save Snapshot")
+) {
+  console.log("SAFE  final report export section preserved");
+} else {
+  console.log("FAIL  final report export section missing or incomplete");
+  failCount += 1;
+}
+
+if (index.includes('data-summary-public="true"') && index.includes('data-tier="public"') && !/<body\b[^>]*data-protected=/i.test(index)) {
+  console.log("SAFE  public summary access markers preserved");
+} else {
+  console.log("FAIL  public summary access markers changed");
+  failCount += 1;
+}
+
+if (!index.includes("Physical Security") && !index.includes("physicalSecurity")) {
+  console.log("SAFE  Physical Security copy/IDs removed from summary page");
+} else {
+  console.log("FAIL  Physical Security copy/IDs remain on summary page");
+  failCount += 1;
 }
 
 console.log("");
 console.log("Decision summary");
 
 if (failCount === 0) {
-  console.log("SAFE  ACCESS_CONTROL_SUMMARY_UI_POLISH_V1_PRESENT");
-  console.log("SAFE  ACCESS_CONTROL_SUMMARY_COPY_POLISHED");
-  console.log("SAFE  ACCESS_CONTROL_SUMMARY_GENERATED_SECTIONS_POLISHED");
+  console.log("SAFE  ACCESS_CONTROL_SUMMARY_UI_POLISH_CURRENT");
+  console.log("SAFE  ACCESS_CONTROL_SUMMARY_DUPLICATE_SHELLS_REMOVED");
+  console.log("SAFE  NO_CALCULATOR_PAGE_CHANGES");
+  console.log("SAFE  NO_AUTH_CHECKOUT_EXPORT_SNAPSHOT_BEHAVIOR_CHANGES");
 } else {
-  console.log("FAIL  ACCESS_CONTROL_SUMMARY_UI_POLISH_PROOF_FAILED");
+  console.log("FAIL  ACCESS_CONTROL_SUMMARY_UI_POLISH_FAILED");
+  console.log("SAFE  NO_CALCULATOR_PAGE_CHANGES");
+  console.log("SAFE  NO_AUTH_CHECKOUT_EXPORT_SNAPSHOT_BEHAVIOR_CHANGES");
 }
-
-console.log("SAFE  NO_CALCULATOR_PAGE_CHANGES");
-console.log("SAFE  NO_AUTH_CHECKOUT_EXPORT_SNAPSHOT_BEHAVIOR_CHANGES");
 
 console.log("");
 

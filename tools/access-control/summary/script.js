@@ -302,14 +302,44 @@
     }) || null;
   }
 
+  const SUMMARY_SECTION_EXPORT_TITLES = {
+    accessControlSummaryKpis: "Access Control Rollup",
+    accessControlMasterAssistant: "Access Control Master Assistant",
+    accessControlToolRollup: "Access Control Tool Status",
+    accessControlToolNotes: "Access Control Tool Notes",
+  };
+
+  const SUMMARY_SECTION_INSERT_AFTER = {
+    accessControlMasterAssistant: "accessControlSummaryKpis",
+    accessControlToolRollup: "accessControlMasterAssistant",
+    accessControlToolNotes: "accessControlToolRollup",
+  };
+
+  function closestCard(element) {
+    return element && element.closest ? element.closest("section.card") : null;
+  }
+
+  function findSummaryInsertAfterSection(id) {
+    const afterId = SUMMARY_SECTION_INSERT_AFTER[id];
+    if (!afterId) return null;
+
+    const mount = byId(afterId);
+    return closestCard(mount);
+  }
+
   function ensureSection(id, title, headingHint) {
     const existing = byId(id);
 
     if (existing) return existing;
 
     const section = document.createElement("section");
-    section.className = "card";
+    section.className = "card access-control-summary-generated-card";
     section.setAttribute("data-access-control-summary-section", id);
+
+    if (SUMMARY_SECTION_EXPORT_TITLES[id]) {
+      section.setAttribute("data-export-section", "");
+      section.setAttribute("data-export-title", SUMMARY_SECTION_EXPORT_TITLES[id]);
+    }
 
     const heading = document.createElement("h2");
     heading.textContent = title;
@@ -321,10 +351,13 @@
     section.appendChild(heading);
     section.appendChild(mount);
 
+    const afterSection = findSummaryInsertAfterSection(id);
     const targetHeading = findHeading(headingHint || title);
     const main = document.querySelector("main") || document.body;
 
-    if (targetHeading && targetHeading.parentElement) {
+    if (afterSection && afterSection.parentElement) {
+      afterSection.insertAdjacentElement("afterend", section);
+    } else if (targetHeading && targetHeading.parentElement) {
       targetHeading.parentElement.insertAdjacentElement("afterend", section);
     } else {
       main.appendChild(section);
