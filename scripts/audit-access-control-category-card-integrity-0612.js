@@ -54,17 +54,9 @@ function classOf(anchor) {
 }
 
 function findSummarySection(html) {
-  const startMarker = "<!-- scopedlabs-access-control-summary-card-pattern-0613-start -->";
-  const endMarker = "<!-- scopedlabs-access-control-summary-card-pattern-0613-end -->";
+  const attr = 'data-access-control-category-summary-card="true"';
+  const attrIndex = html.indexOf(attr);
 
-  const start = html.indexOf(startMarker);
-  const end = html.indexOf(endMarker);
-
-  if (start !== -1 && end !== -1 && end > start) {
-    return html.slice(start, end + endMarker.length);
-  }
-
-  const attrIndex = html.indexOf('data-access-control-category-summary-card="true"');
   if (attrIndex === -1) return "";
 
   const sectionStart = html.lastIndexOf("<section", attrIndex);
@@ -163,17 +155,15 @@ const panelAnchor = anchors.find((anchor) => hrefOf(anchor) === "/tools/access-c
 const specialAnchor = anchors.find((anchor) => hrefOf(anchor) === "/tools/access-control/special-locking-scope/");
 const summaryAnchor = anchors.find((anchor) => hrefOf(anchor) === "/tools/access-control/summary/");
 
-if (specialAnchor && panelAnchor && classOf(specialAnchor) === classOf(panelAnchor) && cleanText(specialAnchor).includes("Pro Tier")) {
-  console.log("SAFE  Special Locking uses standard Pro tool-card pattern");
+if (specialAnchor && panelAnchor && classOf(specialAnchor) === classOf(panelAnchor) && cleanText(specialAnchor).includes("Special Locking") && !cleanText(specialAnchor).includes("Pro Tier") && !/<span\b/i.test(specialAnchor)) {
+  console.log("SAFE  Special Locking uses standard tool-card row without visible gate label");
 } else {
-  console.log("FAIL  Special Locking does not match standard Pro tool-card pattern");
+  console.log("FAIL  Special Locking does not match standard row or still shows gate label");
   failCount += 1;
 }
 
-if (!summarySection) {
-  console.log("FAIL  standalone summary section missing");
-  failCount += 1;
-} else if (
+if (
+  summarySection &&
   summaryAnchor &&
   panelAnchor &&
   classOf(summaryAnchor) === classOf(panelAnchor) &&
