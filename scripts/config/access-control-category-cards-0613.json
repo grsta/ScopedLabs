@@ -9,7 +9,8 @@
     "No local one-off finalize/summary styles",
     "Special Locking uses standard tool-row nested structure",
     "Summary uses standard tool-row nested structure inside standalone category summary section",
-    "No calculator/auth/checkout/export behavior changes"
+    "No calculator/auth/checkout/export behavior changes",
+    "Guided Design Flow shows Summary / Report as public terminal endpoint on the category page only"
   ],
   "toolCards": [
     {
@@ -37,5 +38,18 @@
       "publicDirectLink": true,
       "className": "tool-row"
     }
-  ]
+  ],
+  "guidedFlow": {
+    "version": "access-control-guided-flow-terminal-0613",
+    "scope": "category-page-only",
+    "anchorLabel": "GUIDED DESIGN FLOW",
+    "insertAfterLabel": "Access Levels",
+    "terminal": {
+      "label": "Summary / Report",
+      "href": "/tools/access-control/summary/",
+      "publicDirectLink": true,
+      "excludedFromCalculatorGates": true,
+      "excludedFromToolPagePipelineNav": true
+    }
+  }
 }
