@@ -56,8 +56,8 @@ const requiredLinks = [
   "/tools/access-control/summary/",
 ];
 
-if (config.version === "access-control-category-cards-0613-summary-public-link") {
-  console.log("SAFE  Access Control category-card config uses summary public-link version");
+if (config.version === "access-control-category-cards-0613-summary-public-row-class") {
+  console.log("SAFE  Access Control category-card config uses summary public row-class version");
 } else {
   console.log("FAIL  Access Control category-card config has wrong version");
   failCount += 1;
@@ -108,24 +108,24 @@ if (
 }
 
 if (
-  panelAnchor &&
   summaryAnchor &&
-  summaryAnchor.className === panelAnchor.className &&
   hasNestedRow(summaryAnchor) &&
   summarySection.includes('data-access-control-category-summary-card="true"') &&
   summarySection.includes("Access Control Summary") &&
   summarySection.includes("Review saved tool guidance") &&
   !summarySection.includes("Panel Capacity")
 ) {
-  console.log("SAFE  Summary uses standard nested tool row inside Category Summary");
+  console.log("SAFE  Summary uses standard nested row inside Category Summary");
 } else {
-  console.log("FAIL  Summary does not match nested tool row or still has wrong content");
+  console.log("FAIL  Summary does not match nested row or still has wrong content");
   failCount += 1;
 }
 
 if (
   summaryAnchor &&
   summaryAnchor.href === "/tools/access-control/summary/" &&
+  summaryAnchor.className === "tool-row" &&
+  !summaryAnchor.className.split(/\s+/).includes("pro") &&
   !summaryAnchor.block.includes("data-tool=") &&
   !summaryAnchor.block.includes("lock-icon") &&
   !summaryAnchor.text.includes("Pro Tier")

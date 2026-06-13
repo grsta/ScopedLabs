@@ -1,6 +1,6 @@
 {
   "category": "access-control",
-  "version": "access-control-category-cards-0613-summary-public-link",
+  "version": "access-control-category-cards-0613-summary-public-row-class",
   "templateHref": "/tools/access-control/panel-capacity/",
   "templateTitle": "Panel Capacity",
   "insertAfterHref": "/tools/access-control/panel-capacity/",
@@ -34,7 +34,8 @@
       "markerEnd": "scopedlabs-access-control-summary-card-pattern-0613-end",
       "tier": "",
       "useLockIcon": false,
-      "publicDirectLink": true
+      "publicDirectLink": true,
+      "className": "tool-row"
     }
   ]
 }

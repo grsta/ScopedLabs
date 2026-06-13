@@ -149,7 +149,7 @@ function removeOneOffLandingBlocks(html) {
 }
 
 function buildStandardRowCard(templateAnchorBlock, card) {
-  const classAttr = classAttrOf(templateAnchorBlock);
+  const classAttr = card.className ? ' class="' + escapeHtml(card.className) + '"' : classAttrOf(templateAnchorBlock);
   const aria = escapeHtml(card.title);
   const href = escapeHtml(card.href);
   const lock = card.useLockIcon === true || (card.useLockIcon !== false && hasLockIcon(templateAnchorBlock))
