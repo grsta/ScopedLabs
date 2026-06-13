@@ -1,44 +1,9 @@
 const fs = require("fs");
 const path = require("path");
-const engine = require("./lib/scopedlabs-category-landing-card-engine.js");
 
 const root = process.cwd();
 const pagePath = path.join(root, "tools", "access-control", "index.html");
 const configPath = path.join(root, "scripts", "config", "access-control-category-cards-0613.json");
-
-function read(filePath) {
-  return fs.readFileSync(filePath, "utf8");
-}
-
-function findSummarySection(html) {
-  const attr = 'data-access-control-category-summary-card="true"';
-  const attrIndex = html.indexOf(attr);
-  if (attrIndex === -1) return "";
-
-  const sectionStart = html.lastIndexOf("<section", attrIndex);
-  const sectionEnd = html.indexOf("</section>", attrIndex);
-  if (sectionStart === -1 || sectionEnd === -1) return "";
-
-  return html.slice(sectionStart, sectionEnd + "</section>".length);
-}
-
-function hasNestedRow(anchor) {
-  return anchor &&
-    anchor.block.includes("tool-row-center") &&
-    anchor.block.includes("tool-row-title") &&
-    anchor.block.includes("tool-row-sub");
-}
-
-let failCount = 0;
-
-console.log("ScopedLabs Access Control category card integrity audit - 0612");
-console.log("Repo:", root);
-console.log("");
-
-const html = read(pagePath);
-const config = JSON.parse(read(configPath));
-const anchors = engine.extractAnchors(html);
-const summarySection = findSummarySection(html);
 
 const requiredLinks = [
   "/tools/access-control/scope-planner/",
@@ -55,6 +20,79 @@ const requiredLinks = [
   "/tools/access-control/anti-passback-zones/",
   "/tools/access-control/summary/",
 ];
+
+function read(filePath) {
+  return fs.readFileSync(filePath, "utf8");
+}
+
+function cleanText(value) {
+  return String(value || "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractAnchors(html) {
+  const anchors = [];
+  const regex = /<a\b[^>]*>[\s\S]*?<\/a>/gi;
+  let match;
+
+  while ((match = regex.exec(html))) {
+    const block = match[0];
+    const hrefMatch = block.match(/href\s*=\s*["']([^"']+)["']/i);
+    const classMatch = block.match(/class\s*=\s*["']([^"']+)["']/i);
+
+    anchors.push({
+      start: match.index,
+      end: match.index + block.length,
+      href: hrefMatch ? hrefMatch[1] : "",
+      className: classMatch ? classMatch[1] : "",
+      text: cleanText(block),
+      block,
+    });
+  }
+
+  return anchors;
+}
+
+function findSummarySection(html) {
+  const attr = 'data-access-control-category-summary-card="true"';
+  const attrIndex = html.indexOf(attr);
+
+  if (attrIndex === -1) return "";
+
+  const sectionStart = html.lastIndexOf("<section", attrIndex);
+  const sectionEnd = html.indexOf("</section>", attrIndex);
+
+  if (sectionStart === -1 || sectionEnd === -1) return "";
+
+  return html.slice(sectionStart, sectionEnd + "</section>".length);
+}
+
+function hasNestedRow(anchor) {
+  return anchor &&
+    anchor.block.includes("tool-row-center") &&
+    anchor.block.includes("tool-row-title") &&
+    anchor.block.includes("tool-row-sub");
+}
+
+function hasClass(anchor, className) {
+  return anchor &&
+    anchor.className.split(/\s+/).filter(Boolean).includes(className);
+}
+
+let failCount = 0;
+
+console.log("ScopedLabs Access Control category card integrity audit - 0612");
+console.log("Repo:", root);
+console.log("");
+
+const html = read(pagePath);
+const config = JSON.parse(read(configPath));
+const anchors = extractAnchors(html);
+const summarySection = findSummarySection(html);
 
 if (config.version === "access-control-category-cards-0613-summary-public-row-class") {
   console.log("SAFE  Access Control category-card config uses summary public row-class version");
@@ -78,6 +116,7 @@ if (html.includes("access-control-category-finalize-card-style-0613") || html.in
 }
 
 let linkCount = 0;
+
 for (const href of requiredLinks) {
   if (html.includes('href="' + href + '"') || html.includes("href='" + href + "'")) {
     linkCount += 1;
@@ -86,6 +125,7 @@ for (const href of requiredLinks) {
     failCount += 1;
   }
 }
+
 console.log("INFO  required links present: " + linkCount + " / " + requiredLinks.length);
 
 const panelAnchor = anchors.find((anchor) => anchor.href === "/tools/access-control/panel-capacity/");
@@ -95,9 +135,11 @@ const summaryAnchor = anchors.find((anchor) => anchor.href === "/tools/access-co
 if (
   panelAnchor &&
   specialAnchor &&
-  specialAnchor.className === panelAnchor.className &&
   hasNestedRow(specialAnchor) &&
+  hasClass(specialAnchor, "tool-row") &&
+  hasClass(specialAnchor, "pro") &&
   specialAnchor.block.includes("tool-row-pill") &&
+  specialAnchor.block.includes("lock-icon") &&
   specialAnchor.text.includes("Special Locking") &&
   specialAnchor.text.includes("Pro Tier")
 ) {
@@ -111,6 +153,7 @@ if (
   summaryAnchor &&
   hasNestedRow(summaryAnchor) &&
   summarySection.includes('data-access-control-category-summary-card="true"') &&
+  summarySection.includes("Category Summary") &&
   summarySection.includes("Access Control Summary") &&
   summarySection.includes("Review saved tool guidance") &&
   !summarySection.includes("Panel Capacity")
@@ -125,7 +168,7 @@ if (
   summaryAnchor &&
   summaryAnchor.href === "/tools/access-control/summary/" &&
   summaryAnchor.className === "tool-row" &&
-  !summaryAnchor.className.split(/\s+/).includes("pro") &&
+  !hasClass(summaryAnchor, "pro") &&
   !summaryAnchor.block.includes("data-tool=") &&
   !summaryAnchor.block.includes("lock-icon") &&
   !summaryAnchor.text.includes("Pro Tier")
@@ -133,6 +176,24 @@ if (
   console.log("SAFE  Summary is public direct link and not tool-gated");
 } else {
   console.log("FAIL  Summary link appears gated or missing direct public href");
+  failCount += 1;
+}
+
+const summaryConfig = Array.isArray(config.summaryCards)
+  ? config.summaryCards.find((card) => card.href === "/tools/access-control/summary/")
+  : null;
+
+if (
+  summaryConfig &&
+  summaryConfig.publicDirectLink === true &&
+  summaryConfig.className === "tool-row" &&
+  !summaryConfig.dataTool &&
+  !summaryConfig.tier &&
+  summaryConfig.useLockIcon === false
+) {
+  console.log("SAFE  Summary config declares public direct row");
+} else {
+  console.log("FAIL  Summary config does not declare public direct row");
   failCount += 1;
 }
 
