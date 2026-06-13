@@ -1,6 +1,6 @@
 {
   "category": "access-control",
-  "version": "access-control-category-cards-0613-row-structure",
+  "version": "access-control-category-cards-0613-summary-row-parity",
   "templateHref": "/tools/access-control/panel-capacity/",
   "templateTitle": "Panel Capacity",
   "insertAfterHref": "/tools/access-control/panel-capacity/",
@@ -33,7 +33,8 @@
       "markerStart": "scopedlabs-access-control-summary-card-pattern-0613-start",
       "markerEnd": "scopedlabs-access-control-summary-card-pattern-0613-end",
       "tier": "",
-      "useLockIcon": false
+      "useLockIcon": false,
+      "dataTool": "/tools/access-control/summary/"
     }
   ]
 }

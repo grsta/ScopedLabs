@@ -55,7 +55,7 @@ const requiredLinks = [
   "/tools/access-control/summary/",
 ];
 
-if (config.version === "access-control-category-cards-0613-row-structure") {
+if (config.version === "access-control-category-cards-0613-summary-row-parity") {
   console.log("SAFE  Access Control category-card config uses row structure version");
 } else {
   console.log("FAIL  Access Control category-card config has wrong version");
@@ -117,6 +117,12 @@ if (
   !summarySection.includes("Panel Capacity")
 ) {
   console.log("SAFE  Summary uses standard nested tool row inside Category Summary");
+  if (summaryAnchor.block.includes('data-tool="/tools/access-control/summary/"')) {
+    console.log("SAFE  Summary row has standard data-tool attribute");
+  } else {
+    console.log("FAIL  Summary row missing standard data-tool attribute");
+    failCount += 1;
+  }
 } else {
   console.log("FAIL  Summary does not match nested tool row or still has wrong content");
   failCount += 1;
