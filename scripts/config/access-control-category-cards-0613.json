@@ -1,0 +1,35 @@
+{
+  "category": "access-control",
+  "version": "access-control-category-cards-0613",
+  "templateHref": "/tools/access-control/panel-capacity/",
+  "templateTitle": "Panel Capacity",
+  "insertAfterHref": "/tools/access-control/panel-capacity/",
+  "rules": [
+    "No grouped finalize section",
+    "No local one-off finalize/summary styles",
+    "Special Locking uses standard tool card class",
+    "Summary uses standard tool card class inside standalone category summary section",
+    "No visible Summary label pill",
+    "No calculator/auth/checkout/export behavior changes"
+  ],
+  "toolCards": [
+    {
+      "href": "/tools/access-control/special-locking-scope/",
+      "title": "Special Locking / High-Security Scope",
+      "description": "Review special locking and high-security door conditions before code and AHJ coordination.",
+      "tier": ""
+    }
+  ],
+  "summaryCards": [
+    {
+      "href": "/tools/access-control/summary/",
+      "title": "Access Control Summary",
+      "description": "Review saved tool guidance, check the category rollup, and open the final report from one category-level page.",
+      "sectionTitle": "Category Summary",
+      "sectionDescription": "Use the summary after the tool path is planned. It rolls up saved Access Control guidance and hosts the final report workflow.",
+      "sectionAttribute": "data-access-control-category-summary-card=\"true\"",
+      "markerStart": "scopedlabs-access-control-summary-card-pattern-0613-start",
+      "markerEnd": "scopedlabs-access-control-summary-card-pattern-0613-end"
+    }
+  ]
+}
