@@ -1,5 +1,13 @@
 const fs = require("fs");
 
+function escapeHtml(value) {
+  return String(value == null ? "" : value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 function cleanText(value) {
   return String(value || "")
     .replace(/<[^>]*>/g, " ")
@@ -14,14 +22,23 @@ function hrefOf(anchorBlock) {
   return match ? match[1] : "";
 }
 
-function classAttrOf(anchorBlock) {
-  const match = String(anchorBlock || "").match(/class\s*=\s*["']([^"']+)["']/i);
-  return match ? ' class="' + match[1] + '"' : ' class="tool-card"';
-}
-
 function classOf(anchorBlock) {
   const match = String(anchorBlock || "").match(/class\s*=\s*["']([^"']+)["']/i);
   return match ? match[1] : "";
+}
+
+function classAttrOf(anchorBlock) {
+  const className = classOf(anchorBlock);
+  return className ? ' class="' + className + '"' : ' class="tool-row tool-row--center"';
+}
+
+function pillClassOf(anchorBlock) {
+  const match = String(anchorBlock || "").match(/<span\b[^>]*class\s*=\s*["']([^"']+)["'][^>]*>[^<]*<\/span>/i);
+  return match ? match[1] : "pill pill--pro";
+}
+
+function hasLockIcon(anchorBlock) {
+  return String(anchorBlock || "").includes("lock-icon");
 }
 
 function extractAnchors(html) {
@@ -83,14 +100,11 @@ function findEnclosingBlockByText(html, text, tagName) {
 
     closeRegex.lastIndex = textIndex;
     const closeMatch = closeRegex.exec(source);
-
     if (!closeMatch) continue;
 
     const end = closeMatch.index + closeMatch[0].length;
 
-    if (start <= textIndex && end >= textIndex) {
-      candidates.push({ start, end, length: end - start });
-    }
+    if (start <= textIndex && end >= textIndex) candidates.push({ start, end, length: end - start });
   }
 
   candidates.sort((a, b) => a.length - b.length);
@@ -123,9 +137,7 @@ function removeOneOffLandingBlocks(html) {
     ["scopedlabs-access-control-summary-link-0612-fix-start", "scopedlabs-access-control-summary-link-0612-fix-end"],
   ];
 
-  for (const [start, end] of blocks) {
-    next = removeMarkedBlock(next, start, end);
-  }
+  for (const [start, end] of blocks) next = removeMarkedBlock(next, start, end);
 
   next = next.replace(/<style\b[^>]*id=["']access-control-category-finalize-card-style-0613["'][\s\S]*?<\/style>\s*/gi, "");
   next = next.replace(/<style\b[^>]*id=["']access-control-category-summary-card-style-0613["'][\s\S]*?<\/style>\s*/gi, "");
@@ -136,24 +148,31 @@ function removeOneOffLandingBlocks(html) {
   return next;
 }
 
-function buildCard(templateAnchorBlock, card) {
+function buildStandardRowCard(templateAnchorBlock, card) {
   const classAttr = classAttrOf(templateAnchorBlock);
+  const aria = escapeHtml(card.title);
+  const href = escapeHtml(card.href);
+  const lock = card.useLockIcon === true || (card.useLockIcon !== false && hasLockIcon(templateAnchorBlock))
+    ? '<span class="lock-icon"></span>'
+    : '';
+  const dataTool = card.dataTool ? '\n  data-tool="' + escapeHtml(card.dataTool) + '"' : '';
 
-  const tier = card.tier ? "\n    <span>" + escapeHtml(card.tier) + "</span>" : "";
+  let pill = "";
+  if (card.tier) {
+    const pillClass = escapeHtml(card.pillClass || pillClassOf(templateAnchorBlock));
+    pill =
+      '\n    <div class="tool-row-pill">\n' +
+      '      <span class="' + pillClass + '">' + escapeHtml(card.tier) + '</span>\n' +
+      '    </div>';
+  }
 
-  return '<a' + classAttr + ' href="' + escapeHtml(card.href) + '" aria-label="' + escapeHtml(card.title) + '">\n' +
-    '    <h3>' + escapeHtml(card.title) + '</h3>\n' +
-    '    <p>' + escapeHtml(card.description) + '</p>' +
-    tier + '\n' +
-    '  </a>';
-}
-
-function escapeHtml(value) {
-  return String(value == null ? "" : value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+  return '<a' + classAttr + '\n  href="' + href + '"' + dataTool + '\n  aria-label="' + aria + '">\n' +
+    '  <div class="tool-row-center">\n' +
+    '    <div class="tool-row-title">' + lock + escapeHtml(card.title) + '</div>\n' +
+    '    <div class="tool-row-sub">' + escapeHtml(card.description) + '</div>' +
+    pill + '\n' +
+    '  </div>\n' +
+    '</a>';
 }
 
 function insertAfterAnchor(html, anchor, block) {
@@ -186,21 +205,15 @@ function insertBeforeFooter(html, block) {
 function applyCategoryLandingCards(html, config) {
   let next = removeOneOffLandingBlocks(html);
 
-  const templateHref = config.templateHref;
-  const templateAnchor = findAnchorByHref(next, templateHref) || findAnchorByText(next, config.templateTitle || "");
+  const templateAnchor = findAnchorByHref(next, config.templateHref) || findAnchorByText(next, config.templateTitle || "");
+  if (!templateAnchor) throw new Error("Could not find landing card template: " + config.templateHref);
 
-  if (!templateAnchor) {
-    throw new Error("Could not find landing card template: " + templateHref);
-  }
-
-  for (const card of config.toolCards || []) {
-    next = removeAnchorsByHref(next, card.href);
-  }
+  for (const card of config.toolCards || []) next = removeAnchorsByHref(next, card.href);
 
   let insertAfter = findAnchorByHref(next, config.insertAfterHref) || templateAnchor;
 
   for (const card of config.toolCards || []) {
-    const cardHtml = buildCard(templateAnchor.block, card);
+    const cardHtml = buildStandardRowCard(templateAnchor.block, card);
     next = insertAfterAnchor(next, insertAfter, cardHtml);
     insertAfter = findAnchorByHref(next, card.href);
   }
@@ -208,7 +221,7 @@ function applyCategoryLandingCards(html, config) {
   for (const card of config.summaryCards || []) {
     next = removeAnchorsByHref(next, card.href);
 
-    const cardHtml = buildCard(templateAnchor.block, card);
+    const cardHtml = buildStandardRowCard(templateAnchor.block, card);
     const sectionHtml = '\n<!-- ' + card.markerStart + ' -->\n' +
       '<section class="card" ' + card.sectionAttribute + '>\n' +
       '  <h2>' + escapeHtml(card.sectionTitle) + '</h2>\n' +
@@ -231,6 +244,6 @@ module.exports = {
   findAnchorByHref,
   findAnchorByText,
   removeOneOffLandingBlocks,
-  buildCard,
+  buildStandardRowCard,
   applyCategoryLandingCards,
 };
