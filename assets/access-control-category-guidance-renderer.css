@@ -1,0 +1,3 @@
+/* Access Control category guidance renderer shell - summary cleanup 0613 */
+.sl-category-guidance-mount { display: block; }
+.access-summary-note, .access-summary-row { min-width: 0; }

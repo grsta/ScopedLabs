@@ -8,7 +8,7 @@
   <meta name="robots" content="noindex,follow" />
 
   <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-030-phys-card-shell" />
-  <link rel="stylesheet" href="/assets/access-control-category-guidance-renderer.css?v=access-control-category-guidance-renderer-css-002-summary-master-polish" />
+  <link rel="stylesheet" href="/assets/access-control-category-guidance-renderer.css?v=access-control-summary-cleanup-0613" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
@@ -765,8 +765,8 @@
   }
 
   /* access-control-summary-tool-notes-menu-overlay-047 */
-  #physicalSecurityToolNotesSection,
-  #physicalSecurityToolNotesMount,
+  #accessControlToolNotesSection,
+  #accessControlToolNotes,
   .summary-tool-notes-table,
   .summary-tool-notes-table tbody,
   .summary-tool-notes-table tr,
@@ -854,32 +854,32 @@
   }
 
   /* access-control-summary-tool-notes-wrap-051 */
-  #physicalSecurityToolNotesSection {
+  #accessControlToolNotesSection {
     overflow: hidden;
   }
 
-  #physicalSecurityToolNotesSection .summary-tool-notes-table {
+  #accessControlToolNotesSection .summary-tool-notes-table {
     table-layout: fixed;
     width: 100%;
   }
 
-  #physicalSecurityToolNotesSection .summary-tool-notes-table th,
-  #physicalSecurityToolNotesSection .summary-tool-notes-table td {
+  #accessControlToolNotesSection .summary-tool-notes-table th,
+  #accessControlToolNotesSection .summary-tool-notes-table td {
     vertical-align: top;
   }
 
-  #physicalSecurityToolNotesSection .summary-tool-notes-table th:nth-child(1),
-  #physicalSecurityToolNotesSection .summary-tool-notes-table td:nth-child(1) {
+  #accessControlToolNotesSection .summary-tool-notes-table th:nth-child(1),
+  #accessControlToolNotesSection .summary-tool-notes-table td:nth-child(1) {
     width: 30%;
   }
 
-  #physicalSecurityToolNotesSection .summary-tool-notes-table th:nth-child(2),
-  #physicalSecurityToolNotesSection .summary-tool-notes-table td:nth-child(2) {
+  #accessControlToolNotesSection .summary-tool-notes-table th:nth-child(2),
+  #accessControlToolNotesSection .summary-tool-notes-table td:nth-child(2) {
     width: 18%;
   }
 
-  #physicalSecurityToolNotesSection .summary-tool-notes-table th:nth-child(3),
-  #physicalSecurityToolNotesSection .summary-tool-notes-table td:nth-child(3) {
+  #accessControlToolNotesSection .summary-tool-notes-table th:nth-child(3),
+  #accessControlToolNotesSection .summary-tool-notes-table td:nth-child(3) {
     overflow-wrap: anywhere;
     white-space: normal;
     width: 52%;
@@ -1076,7 +1076,7 @@ body[data-access-control-summary-page="true"] #reportMetadataMount {
           This page is the Access Control master assistant and final report host. It rolls up the scope, door behavior, reader, lock power, panel capacity, cable, elevator, special locking, anti-passback, and access-level planning path without changing the individual calculator tools.
         </p>
         <div class="summary-hero-actions btn-row">
-          <a class="btn btn-primary" href="#physicalSecuritySummaryMasterMount">Review Summary</a>
+          <a class="btn btn-primary" href="#accessControlMasterAssistant">Review Summary</a>
           <a class="btn" href="#summaryExportSection">Open Report</a>
           <a class="btn" href="/tools/access-control/scope-planner/">Scope Planner</a>
         </div>
@@ -1087,14 +1087,14 @@ body[data-access-control-summary-page="true"] #reportMetadataMount {
         <p class="muted summary-master-copy">
           This master assistant reads saved Access Control planning context, report metadata, and tool notes to prioritize the final Access Control design before export.
         </p>
-        <div id="physicalSecuritySummaryMasterMount" class="sl-category-guidance-mount" style="margin-top: 12px;"></div>
-        <div id="physicalSecuritySummaryMasterContext" class="summary-master-context" aria-live="polite"></div>
+        <div id="accessControlMasterAssistant" class="sl-category-guidance-mount" style="margin-top: 12px;"></div>
+        <div id="accessControlMasterAssistantContext" class="summary-master-context" aria-live="polite"></div>
       </section>
 
-      <section class="card summary-results-card" style="margin-top: 18px;" hidden aria-hidden="true" data-sl-hidden-security-rollup-section="true" data-sl-hide-marker="access-control-summary-hide-exact-rollup-section-032">
+      <section class="card summary-results-card" style="margin-top: 18px;">
                 <h2 class="h2" style="margin-top: 12px;">Access Control Rollup</h2>
         <p class="muted summary-section-copy">Quick status snapshot from Access Control tool guidance, saved planning context, and available report notes.</p>
-        <div id="results" class="summary-grid" aria-live="polite"></div>
+        <div id="accessControlSummaryKpis" class="summary-grid" aria-live="polite"></div>
       </section>
 
       <section class="card summary-scope-card" style="margin-top: 18px;">
@@ -1102,11 +1102,11 @@ body[data-access-control-summary-page="true"] #reportMetadataMount {
         <p class="muted">
           The Access Control tools stay available individually, but this page provides the category-level rollup before the final report.
         </p>
-        <div id="physicalSecurityScopeMount"></div>
+        <div id="accessControlToolRollup"></div>
       </section>
 
       <section
-        id="physicalSecurityToolNotesSection"
+        id="accessControlToolNotesSection"
         class="card summary-tool-notes-card"
         style="margin-top: 18px;"
         data-export-section
@@ -1116,7 +1116,7 @@ body[data-access-control-summary-page="true"] #reportMetadataMount {
         <p class="muted summary-section-copy">
           Tool-specific notes stay separated by source tool and roll up here for the final Access Control report.
         </p>
-        <div id="physicalSecurityToolNotesMount"></div>
+        <div id="accessControlToolNotes"></div>
       </section>
 
       <section
@@ -1158,8 +1158,8 @@ body[data-access-control-summary-page="true"] #reportMetadataMount {
           </div>
         </details>
 
-        <div id="physicalSecurityReportMount" style="margin-top: 14px;"></div>
-        <pre id="physicalSecurityCrossCategoryPayload" class="summary-payload" hidden aria-hidden="true">{}</pre>
+        <div id="accessControlReportMount" style="margin-top: 14px;"></div>
+        <pre id="accessControlSummaryPayload" class="summary-payload" hidden aria-hidden="true">{}</pre>
 
         <div class="btn-row" style="margin-top: 14px;">
           <button id="exportReport" class="btn btn-primary" type="button">Open Report</button>
@@ -1206,7 +1206,7 @@ body[data-access-control-summary-page="true"] #reportMetadataMount {
       categorySlug: "access-control",
       toolLabel: "Access Control Summary",
       toolSlug: "access-control-summary",
-      reportPrefix: "SL-PS-SUM",
+      reportPrefix: "SL-AC-SUM",
       alwaysAllowExport: true,
       alwaysExportReady: true,
       suppressStandardReportSections: true,
@@ -1227,14 +1227,14 @@ body[data-access-control-summary-page="true"] #reportMetadataMount {
   </script>
   <script src="/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes"></script>
   <script src="/assets/export.js?v=shared-export-025-tool-notes-column-widths"></script>
-  <script src="/assets/access-control-area-state.js?v=access-control-area-state-016-summary-banner-optout"></script>
-  <script src="/assets/access-control-tool-registry.js?v=access-control-tool-registry-001-shell-v1"></script>
-  <script src="/assets/access-control-guidance-memory.js?v=access-control-guidance-memory-001-session-foundation"></script>
-  <script src="/assets/access-control-source-policy.js?v=access-control-source-policy-002-master-knowledge-guardrails"></script>
-  <script src="/assets/access-control-category-knowledge.js?v=access-control-category-knowledge-003-dori-master-wording"></script>
-  <script src="/assets/access-control-category-guidance.js?v=access-control-category-guidance-007-deduped-source-detail"></script>
-  <script src="/assets/access-control-category-guidance-renderer.js?v=access-control-category-guidance-renderer-003-draft-next-action-copy"></script>
-  <script src="/assets/access-control-report-summary.js?v=access-control-report-summary-029-area-step-table-title"></script>
+  <script src="/assets/access-control-area-state.js?v=access-control-summary-cleanup-0613"></script>
+  <script src="/assets/access-control-tool-registry.js?v=access-control-summary-cleanup-0613"></script>
+  <script src="/assets/access-control-guidance-memory.js?v=access-control-summary-cleanup-0613"></script>
+  <script src="/assets/access-control-source-policy.js?v=access-control-summary-cleanup-0613"></script>
+  <script src="/assets/access-control-category-knowledge.js?v=access-control-summary-cleanup-0613"></script>
+  <script src="/assets/access-control-category-guidance.js?v=access-control-summary-cleanup-0613"></script>
+  <script src="/assets/access-control-category-guidance-renderer.js?v=access-control-summary-cleanup-0613"></script>
+  <script src="/assets/access-control-report-summary.js?v=access-control-summary-cleanup-0613"></script>
   <script src="./script.js?v=access-control-summary-master-assistant-001"></script>
   <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>
 
