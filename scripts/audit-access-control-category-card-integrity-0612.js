@@ -2,9 +2,10 @@ const fs = require("fs");
 const path = require("path");
 
 const root = process.cwd();
+const pagePath = path.join(root, "tools", "access-control", "index.html");
 
-const pageRel = "tools/access-control/index.html";
-const pagePath = path.join(root, pageRel);
+const startMarker = "<!-- scopedlabs-access-control-category-card-repair-0612-start -->";
+const endMarker = "<!-- scopedlabs-access-control-category-card-repair-0612-end -->";
 
 const requiredLinks = [
   "/tools/access-control/scope-planner/",
@@ -19,7 +20,7 @@ const requiredLinks = [
   "/tools/access-control/fail-safe-fail-secure/",
   "/tools/access-control/special-locking-scope/",
   "/tools/access-control/anti-passback-zones/",
-  "/tools/access-control/summary/"
+  "/tools/access-control/summary/",
 ];
 
 function read(filePath) {
@@ -60,6 +61,18 @@ console.log("");
 
 const html = read(pagePath);
 const anchors = extractAnchors(html);
+
+const footerIndex = html.indexOf("© ScopedLabs");
+const finalizeIndex = html.indexOf(startMarker);
+
+if (finalizeIndex !== -1 && footerIndex !== -1 && finalizeIndex < footerIndex) {
+  console.log("SAFE  finalize section appears before footer");
+} else if (footerIndex === -1) {
+  console.log("WATCH footer marker not found; placement could not be compared");
+} else {
+  console.log("FAIL  finalize section appears after footer");
+  failCount += 1;
+}
 
 const staleBadMarkers = [
   "scopedlabs-access-control-opening-links-0612-start",
@@ -142,6 +155,7 @@ if (failCount === 0) {
   console.log("SAFE  ACCESS_CONTROL_CATEGORY_CARDS_REPAIRED");
   console.log("SAFE  ACCESS_CONTROL_CATEGORY_NO_CTA_ONLY_TOOL_CARDS");
   console.log("SAFE  ACCESS_CONTROL_CATEGORY_REQUIRED_LINKS_PRESENT");
+  console.log("SAFE  ACCESS_CONTROL_CATEGORY_FINALIZE_SECTION_BEFORE_FOOTER");
 } else {
   console.log("FAIL  ACCESS_CONTROL_CATEGORY_CARD_INTEGRITY_FAILED");
 }
