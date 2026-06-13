@@ -49,7 +49,7 @@ function listToolDirs() {
   return fs.readdirSync(categoryRoot, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
-    .filter((name) => exists(path.join(categoryRoot, name, "index.html")))
+    .filter((name) => exists(path.join(categoryRoot, name, "index.html"))) .filter((name) => name !== "summary")
     .sort((a, b) => a.localeCompare(b));
 }
 

@@ -61,7 +61,7 @@ function listTools() {
   return fs.readdirSync(categoryRoot, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
-    .filter((slug) => exists(path.join(categoryRoot, slug, "index.html")))
+    .filter((slug) => exists(path.join(categoryRoot, slug, "index.html"))) .filter((slug) => slug !== "summary")
     .sort((a, b) => a.localeCompare(b));
 }
 

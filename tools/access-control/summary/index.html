@@ -1,0 +1,1127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Access Control Summary | ScopedLabs</title>
+  <meta name="description" content="Review Access Control core coverage, optional specialty zones, category guidance, and report-ready summary context." />
+  <meta name="robots" content="noindex,follow" />
+
+  <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-030-phys-card-shell" />
+  <link rel="stylesheet" href="/assets/access-control-category-guidance-renderer.css?v=access-control-category-guidance-renderer-css-002-summary-master-polish" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=auth-magiclink-session-restore-0527"></script>
+  <script defer src="/assets/app.js?v=access-control-summary-proof-001"></script>
+
+  <style>
+    .summary-hero {
+      margin-top: 18px;
+      border-color: rgba(125,255,152,.20);
+      background: radial-gradient(circle at 18% 0%, rgba(125,255,152,.075), transparent 34%), linear-gradient(180deg, rgba(5,14,11,.96), rgba(2,7,5,.98));
+    }
+
+    .summary-grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-top: 14px;
+    }
+
+    .summary-panel,
+    .summary-row {
+      border: 1px solid rgba(226,232,240,.12);
+      background: rgba(0,0,0,.14);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .summary-panel h3,
+    .summary-row h3 {
+      margin-top: 0;
+    }
+
+    .summary-kpi {
+      font-size: 1.65rem;
+      font-weight: 950;
+      color: rgba(248,250,252,.94);
+      line-height: 1.1;
+    }
+
+    .summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      overflow: hidden;
+      border-radius: 14px;
+    }
+
+    .summary-table th,
+    .summary-table td {
+      border: 1px solid rgba(226,232,240,.12);
+      padding: 9px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .summary-table th {
+      color: rgba(125,255,152,.88);
+      background: rgba(125,255,152,.06);
+      font-size: .78rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+
+
+
+
+
+
+
+    /* access-control-summary-area-selector-green-led-011 */
+    .summary-area-selector-wrap {
+      margin: 10px 0 14px;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+    }
+
+    .summary-area-selector-rail {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px 8px;
+      margin: 0 0 8px;
+      padding: 0;
+    }
+
+    .summary-area-selector-step {
+      appearance: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 0;
+      background: transparent;
+      color: rgba(226,232,240,.76);
+      border-radius: 0;
+      padding: 0;
+      font: inherit;
+      font-size: .88rem;
+      font-weight: 520;
+      letter-spacing: 0;
+      cursor: pointer;
+      box-shadow: none;
+      line-height: 1.35;
+    }
+
+    .summary-area-selector-step:hover,
+    .summary-area-selector-step:focus-visible {
+      color: rgba(248,250,252,.96);
+      outline: none;
+      text-decoration: none;
+    }
+
+    .summary-area-selector-step.active {
+      color: rgba(248,250,252,.96);
+      font-weight: 650;
+    }
+
+    .summary-area-selector-led,
+    .summary-area-current-led {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex: 0 0 auto;
+      background: rgba(148,163,184,.56);
+      box-shadow: none;
+    }
+
+    .summary-area-selector-step.active .summary-area-selector-led,
+    .summary-area-current-led,
+    .summary-area-current-led.risk,
+    .summary-area-current-led.watch,
+    .summary-area-current-led.healthy,
+    .summary-area-current-led.pending,
+    .summary-area-current-led.unknown {
+      background: rgba(125,255,152,.96);
+      box-shadow: 0 0 10px rgba(125,255,152,.44);
+      opacity: 1;
+    }
+
+    .summary-area-selector-step:not(.active) .summary-area-selector-led {
+      background: rgba(148,163,184,.56);
+      box-shadow: none;
+      opacity: .64;
+    }
+
+    .summary-area-selector-label {
+      color: inherit;
+      font-weight: inherit;
+    }
+
+    .summary-area-selector-status {
+      display: inline;
+      margin-left: 2px;
+      font-size: .82rem;
+      font-weight: 600;
+      color: rgba(203,213,225,.66);
+    }
+
+    .summary-area-selector-step.risk .summary-area-selector-status { color: rgba(255,154,118,.90); }
+    .summary-area-selector-step.watch .summary-area-selector-status { color: rgba(255,218,106,.92); }
+    .summary-area-selector-step.healthy .summary-area-selector-status { color: rgba(125,255,152,.88); }
+
+    .summary-area-selector-arrow {
+      color: rgba(125,255,152,.32);
+      font-size: .82rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .summary-area-selector-current {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin: 6px 0 0;
+      color: rgba(226,232,240,.74);
+      font-size: .88rem;
+      line-height: 1.45;
+    }
+
+    .summary-area-selector-current strong {
+      color: rgba(248,250,252,.96);
+      font-weight: 650;
+    }
+
+    .summary-area-selector-current-status {
+      color: rgba(203,213,225,.68);
+      font-size: .82rem;
+      font-weight: 600;
+    }
+
+    .summary-area-selector-current-status.risk { color: rgba(255,154,118,.90); }
+    .summary-area-selector-current-status.watch { color: rgba(255,218,106,.92); }
+    .summary-area-selector-current-status.healthy { color: rgba(125,255,152,.88); }
+    /* access-control-summary-area-rollup-first-007 */
+    .summary-area-rollup-card {
+      margin-top: 12px;
+    }
+
+    .summary-area-rollup-card h3 {
+      margin-bottom: 4px;
+    }
+
+    .summary-area-rollup-meta {
+      margin: 4px 0 8px;
+      color: rgba(226,232,240,.74);
+      line-height: 1.5;
+    }
+
+    .summary-area-tool-table {
+      margin-top: 10px;
+    }
+
+    .summary-area-tool-table th:first-child,
+    .summary-area-tool-table td:first-child {
+      width: 28%;
+    }
+
+
+
+
+
+    /* access-control-summary-area-zone-card-polish-017 */
+    .access-control-area-zone-report {
+      margin-top: 24px;
+    }
+
+    .access-control-area-zone-report > h3 {
+      margin: 26px 0 13px;
+      padding: 0 0 8px;
+      border: 0;
+      border-bottom: 1px solid rgba(125,255,152,.20);
+      background: transparent;
+      color: rgba(226,255,235,.94);
+      font-size: 1.02rem;
+      font-weight: 850;
+      letter-spacing: .01em;
+      text-transform: none;
+    }
+
+    .access-control-area-zone-card {
+      margin: 16px 0 22px;
+      padding: 14px 14px 16px;
+      border: 1px solid rgba(125,255,152,.16);
+      border-radius: 16px;
+      background: rgba(255,255,255,.025);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.025);
+    }
+
+    .access-control-area-zone-card + .access-control-area-zone-card {
+      margin-top: 18px;
+    }
+
+    .access-control-area-zone-card h4 {
+      margin: 0 0 6px;
+      color: rgba(248,250,252,.96);
+      font-size: 1rem;
+      font-weight: 850;
+      letter-spacing: 0;
+    }
+
+    .access-control-area-zone-card h4::before {
+      content: none;
+    }
+
+    .access-control-area-zone-meta {
+      margin: 0 0 10px;
+      color: rgba(226,232,240,.72);
+      line-height: 1.5;
+    }
+
+    .access-control-area-zone-card > p {
+      margin: 0 0 10px;
+    }
+
+    .access-control-area-zone-card .summary-table {
+      margin-top: 12px;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .access-control-area-zone-empty {
+      margin: 8px 0 16px;
+      color: rgba(226,232,240,.68);
+    }
+    /* access-control-summary-scoped-tool-links-014 */
+    .access-control-scoped-tool-link {
+      color: rgba(190,255,205,.96);
+      font-weight: 750;
+      text-decoration: none;
+      border-bottom: 1px dotted rgba(125,255,152,.42);
+    }
+
+    .access-control-scoped-tool-link:hover,
+    .access-control-scoped-tool-link:focus-visible {
+      color: rgba(248,250,252,.98);
+      border-bottom-color: rgba(125,255,152,.82);
+      outline: none;
+    }
+    /* access-control-summary-export-area-zone-sections-012 */
+    .access-control-area-zone-report {
+      margin-top: 18px;
+    }
+
+    .access-control-area-zone-report h3 {
+      margin: 18px 0 8px;
+      color: rgba(248,250,252,.94);
+      font-size: 1.02rem;
+    }
+
+    .access-control-area-zone-card {
+      margin-top: 12px;
+      padding-top: 2px;
+      border-top: 1px solid rgba(226,232,240,.10);
+    }
+
+    .access-control-area-zone-card h4 {
+      margin: 0 0 4px;
+      color: rgba(248,250,252,.94);
+      font-size: .96rem;
+    }
+
+    .access-control-area-zone-meta {
+      margin: 0 0 8px;
+      color: rgba(226,232,240,.74);
+      line-height: 1.5;
+    }
+
+    .access-control-area-zone-empty {
+      color: rgba(226,232,240,.68);
+      margin: 8px 0 0;
+    }
+    /* access-control-summary-watch-risk-note-006 */
+    .access-control-watch-risk-note {
+      color: rgba(226,232,240,.78);
+      line-height: 1.5;
+      margin: 12px 0 10px;
+      max-width: 860px;
+    }
+
+    .access-control-watch-risk-note strong {
+      color: rgba(255,218,106,.98);
+      font-weight: 900;
+    }
+    /* access-control-summary-report-status-text-005 */
+    .access-control-report-status {
+      display: inline;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      font-weight: 850;
+      letter-spacing: 0;
+      text-transform: none;
+      white-space: normal;
+    }
+
+    .access-control-report-status.healthy {
+      color: rgba(125,255,152,.96);
+    }
+
+    .access-control-report-status.watch {
+      color: rgba(255,218,106,.98);
+    }
+
+    .access-control-report-status.risk {
+      color: rgba(255,154,118,.98);
+    }
+
+    .access-control-report-status.unknown,
+    .access-control-report-status.pending {
+      color: rgba(203,213,225,.72);
+    }
+    /* access-control-summary-status-text-polish-004 */
+    .summary-status {
+      display: inline;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      font-size: .92rem;
+      font-weight: 850;
+      letter-spacing: 0;
+      text-transform: none;
+      line-height: 1.35;
+      color: rgba(226,232,240,.76);
+      white-space: normal;
+    }
+
+    .summary-status.healthy {
+      color: rgba(125,255,152,.96);
+      background: transparent;
+      border-color: transparent;
+    }
+
+    .summary-status.watch {
+      color: rgba(255,218,106,.98);
+      background: transparent;
+      border-color: transparent;
+    }
+
+    .summary-status.risk {
+      color: rgba(255,154,118,.98);
+      background: transparent;
+      border-color: transparent;
+    }
+
+    .summary-status.unknown,
+    .summary-status.pending {
+      color: rgba(203,213,225,.72);
+      background: transparent;
+      border-color: transparent;
+    }
+
+    .summary-payload {
+      white-space: pre-wrap;
+      font-size: .78rem;
+      line-height: 1.45;
+      max-height: 240px;
+      overflow: auto;
+      border: 1px solid rgba(226,232,240,.12);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(0,0,0,.18);
+      color: rgba(226,232,240,.72);
+    }
+
+
+
+
+    /* access-control-summary-page-flow-polish-004 */
+    .summary-page-heading {
+      margin-bottom: 18px;
+    }
+
+    .summary-hero-flow {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      flex-wrap: wrap;
+      margin-bottom: 13px;
+      color: rgba(226,232,240,.78);
+    }
+
+    .summary-flow-step {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: rgba(226,232,240,.82);
+      font-size: .72rem;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .summary-flow-step::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #7dff98;
+      box-shadow: 0 0 12px rgba(125,255,152,.55);
+    }
+
+    .summary-flow-arrow {
+      color: rgba(125,255,152,.52);
+      font-weight: 950;
+      line-height: 1;
+    }
+    /* access-control-summary-page-polish-003 */
+    .summary-page-heading {
+      margin-top: 12px;
+      max-width: 860px;
+    }
+
+    .summary-page-heading h1 {
+      margin: 0;
+    }
+
+    .summary-page-heading p {
+      margin: 10px 0 0;
+      max-width: 760px;
+      line-height: 1.55;
+    }
+
+    .summary-page-hero {
+      position: relative;
+      overflow: hidden;
+    }
+
+
+    /* access-control-summary-remove-hero-ring-018
+       Decorative Summary hero ring removed; this page should read as a final report/control host. */
+
+    .summary-hero-actions {
+      margin-top: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .summary-section-copy {
+      max-width: 760px;
+      line-height: 1.55;
+      margin-top: -2px;
+    }
+
+    .summary-results-card .summary-grid {
+      margin-top: 12px;
+    }
+
+    .summary-report-details {
+      border: 1px solid rgba(226,232,240,.12);
+      border-radius: 14px;
+      background: rgba(0,0,0,.14);
+      padding: 0;
+      margin-top: 12px;
+    }
+
+    .summary-report-details summary {
+      cursor: pointer;
+      color: rgba(248,250,252,.94);
+      font-weight: 850;
+      padding: 12px 14px;
+    }
+
+    .summary-report-details .export-grid {
+      padding: 0 14px 14px;
+      margin-top: 0;
+    }
+
+    .summary-next-actions .btn-primary {
+      min-width: 180px;
+    }
+    /* access-control-summary-master-polish-002 */
+    .summary-master-card {
+      border-color: rgba(125,255,152,.22);
+      background: radial-gradient(circle at 14% 0%, rgba(125,255,152,.07), transparent 34%), rgba(2,7,5,.96);
+    }
+
+    .summary-master-copy {
+      max-width: 780px;
+      margin-bottom: 0;
+      line-height: 1.55;
+    }
+
+    .summary-master-context {
+      margin-top: 14px;
+    }
+
+    .summary-master-context-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .summary-master-context-card {
+      border: 1px solid rgba(226,232,240,.12);
+      border-radius: 14px;
+      background: rgba(0,0,0,.16);
+      padding: 13px;
+    }
+
+    .summary-master-context-card strong {
+      display: block;
+      color: rgba(248,250,252,.94);
+      font-size: .92rem;
+      margin-bottom: 6px;
+    }
+
+    .summary-master-context-card p {
+      color: rgba(226,232,240,.72);
+      line-height: 1.48;
+      margin: 0;
+      font-size: .86rem;
+    }
+
+    .summary-master-action-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .summary-master-action-item {
+      border: 1px solid rgba(226,232,240,.10);
+      border-radius: 12px;
+      background: rgba(255,255,255,.025);
+      padding: 10px 11px;
+    }
+
+    .summary-master-action-item span {
+      display: block;
+      color: rgba(125,255,152,.82);
+      font-size: .68rem;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .summary-master-action-item p {
+      margin: 0;
+      color: rgba(226,232,240,.74);
+      line-height: 1.45;
+      font-size: .84rem;
+    }
+
+    @media (max-width: 900px) {
+      .summary-master-context-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 900px) {
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  
+
+  
+    /* access-control-summary-live-area-step-heading-hide-027
+       The area-specific tool-table heading belongs in the Print / Save report page.
+       Keep the live Summary page cleaner by hiding only this repeated heading inline. */
+    body[data-tool="access-control-summary"] .access-control-area-zone-tool-heading {
+      display: none !important;
+    }
+
+  
+
+  
+
+    .summary-tool-notes-table .note-scope-cell {
+    align-items: center;
+    display: flex;
+    gap: .75rem;
+    justify-content: space-between;
+  }
+
+  .summary-note-actions {
+    flex: 0 0 auto;
+    position: relative;
+  }
+
+  .summary-note-actions summary {
+    align-items: center;
+    border: 1px solid rgba(140, 255, 170, .24);
+    border-radius: .45rem;
+    color: var(--muted, #c9d6cf);
+    cursor: pointer;
+    display: inline-flex;
+    font-weight: 900;
+    height: 1.65rem;
+    justify-content: center;
+    line-height: 1;
+    list-style: none;
+    width: 1.65rem;
+  }
+
+  .summary-note-actions summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .summary-note-actions[open] summary {
+    background: rgba(80, 220, 120, .12);
+    border-color: rgba(140, 255, 170, .42);
+    color: var(--accent, #8cffaa);
+  }
+
+  .summary-note-menu {
+    background: rgba(5, 18, 12, .98);
+    border: 1px solid rgba(140, 255, 170, .22);
+    border-radius: .65rem;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, .38);
+    display: grid;
+    gap: .25rem;
+    min-width: 9rem;
+    padding: .35rem;
+    position: absolute;
+    right: 0;
+    top: calc(100% + .35rem);
+    z-index: 20;
+  }
+
+  .summary-note-menu a,
+  .summary-note-menu button {
+    background: transparent;
+    border: 0;
+    border-radius: .45rem;
+    color: inherit;
+    cursor: pointer;
+    display: block;
+    font: inherit;
+    padding: .45rem .55rem;
+    text-align: left;
+    text-decoration: none;
+    width: 100%;
+  }
+
+  .summary-note-menu a:hover,
+  .summary-note-menu button:hover {
+    background: rgba(80, 220, 120, .12);
+  }
+
+  .summary-note-menu button[disabled] {
+    cursor: not-allowed;
+    opacity: .55;
+  }
+
+  /* access-control-summary-tool-notes-menu-glyph-045 */
+  .summary-note-actions summary {
+    color: transparent;
+    font-size: 0;
+    overflow: hidden;
+  }
+
+  .summary-note-actions summary::before {
+    color: var(--muted, #c9d6cf);
+    content: "...";
+    font-size: .95rem;
+    letter-spacing: .03em;
+    line-height: 1;
+  }
+
+  .summary-note-actions[open] summary::before {
+    color: var(--accent, #8cffaa);
+  }
+
+  /* access-control-summary-tool-notes-menu-flow-046 */
+  .summary-tool-notes-table .note-scope-cell {
+    align-items: flex-start;
+  }
+
+  .summary-note-actions[open] {
+    align-self: flex-start;
+  }
+
+  .summary-note-actions[open] .summary-note-menu {
+    box-shadow: none;
+    margin-top: .35rem;
+    min-width: 7.5rem;
+    position: static;
+    right: auto;
+    top: auto;
+  }
+
+  .summary-note-actions[open] .summary-note-menu a,
+  .summary-note-actions[open] .summary-note-menu button {
+    white-space: nowrap;
+  }
+
+  /* access-control-summary-tool-notes-menu-overlay-047 */
+  #physicalSecurityToolNotesSection,
+  #physicalSecurityToolNotesMount,
+  .summary-tool-notes-table,
+  .summary-tool-notes-table tbody,
+  .summary-tool-notes-table tr,
+  .summary-tool-notes-table td {
+    overflow: visible;
+  }
+
+  .summary-tool-notes-table .note-scope-cell {
+    align-items: center;
+  }
+
+  .summary-note-actions {
+    position: relative;
+    z-index: 30;
+  }
+
+  .summary-note-actions[open] {
+    align-self: center;
+    z-index: 5000;
+  }
+
+  .summary-note-actions[open] .summary-note-menu {
+    box-shadow: 0 16px 40px rgba(0, 0, 0, .48);
+    margin-top: 0;
+    min-width: 8.5rem;
+    position: absolute;
+    right: 0;
+    top: calc(100% + .35rem);
+    z-index: 5001;
+  }
+
+  .summary-note-actions[open] .summary-note-menu a,
+  .summary-note-actions[open] .summary-note-menu button {
+    white-space: nowrap;
+  }
+
+  /* access-control-summary-footer-placement-048 */
+  body[data-tool="access-control-summary"] footer,
+  body[data-step="access-control-summary"] footer,
+  .summary-page footer,
+  footer {
+    box-sizing: border-box;
+  }
+
+  body[data-tool="access-control-summary"] > footer,
+  body[data-step="access-control-summary"] > footer {
+    margin: 2.5rem auto 1.25rem;
+    max-width: 1100px;
+    padding: 0 1rem;
+    position: static;
+    width: min(1100px, calc(100% - 2rem));
+  }
+
+  body[data-tool="access-control-summary"] > footer nav,
+  body[data-step="access-control-summary"] > footer nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem .6rem;
+  }
+
+  /* access-control-summary-footer-lift-049 */
+  body[data-tool="access-control-summary"] main,
+  body[data-step="access-control-summary"] main {
+    min-height: auto;
+    padding-bottom: 1rem;
+  }
+
+  body[data-tool="access-control-summary"] > footer,
+  body[data-step="access-control-summary"] > footer {
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  /* access-control-summary-footer-gap-050 */
+  body[data-tool="access-control-summary"] main,
+  body[data-step="access-control-summary"] main {
+    min-height: auto;
+    padding-bottom: 0;
+  }
+
+  body[data-tool="access-control-summary"] > footer,
+  body[data-step="access-control-summary"] > footer {
+    margin-top: 1.15rem;
+    margin-bottom: 1.25rem;
+  }
+
+  /* access-control-summary-tool-notes-wrap-051 */
+  #physicalSecurityToolNotesSection {
+    overflow: hidden;
+  }
+
+  #physicalSecurityToolNotesSection .summary-tool-notes-table {
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  #physicalSecurityToolNotesSection .summary-tool-notes-table th,
+  #physicalSecurityToolNotesSection .summary-tool-notes-table td {
+    vertical-align: top;
+  }
+
+  #physicalSecurityToolNotesSection .summary-tool-notes-table th:nth-child(1),
+  #physicalSecurityToolNotesSection .summary-tool-notes-table td:nth-child(1) {
+    width: 30%;
+  }
+
+  #physicalSecurityToolNotesSection .summary-tool-notes-table th:nth-child(2),
+  #physicalSecurityToolNotesSection .summary-tool-notes-table td:nth-child(2) {
+    width: 18%;
+  }
+
+  #physicalSecurityToolNotesSection .summary-tool-notes-table th:nth-child(3),
+  #physicalSecurityToolNotesSection .summary-tool-notes-table td:nth-child(3) {
+    overflow-wrap: anywhere;
+    white-space: normal;
+    width: 52%;
+    word-break: break-word;
+  }
+</style>
+</head>
+
+<body
+  data-protected="true"
+  data-tier="pro"
+  data-category="access-control"
+  data-tool="access-control-summary"
+  data-step="access-control-summary"
+  data-active-area-banner="off"
+>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="ScopedLabs Home">
+      <span class="brand-dot" aria-hidden="true"></span>
+      <span class="brand-icon-wrap" aria-hidden="true">
+        <img
+          class="brand-icon"
+          src="/assets/favicon/favicon-32x32.png?v=1"
+          alt=""
+          width="32"
+          height="32"
+        />
+      </span>
+      <span class="brand-name">ScopedLabs</span>
+    </a>
+
+                                          <nav class="nav site-nav nav-tabs" aria-label="Primary">
+        <a class="nav-tab" href="/">Home</a>
+        <a class="nav-tab is-active" href="/tools/" aria-current="page">Tools</a>
+        <a class="nav-tab" href="/guides/">Guides</a>
+        <a class="nav-tab" href="/about/">About</a>
+        <a class="nav-tab" href="/contact/">Contact</a>
+        <a class="nav-tab" href="/account/">Account</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="container">
+      <div class="summary-page-heading">
+        <h1>Access Control Summary</h1>
+              </div>
+
+      <section class="card summary-hero summary-page-hero">
+                <div class="summary-hero-flow" aria-label="Access Control Summary flow">
+          <span class="summary-flow-step">Final Category Rollup</span>
+          <span class="summary-flow-arrow" aria-hidden="true">→</span>
+          <span class="summary-flow-step">Cross-Category Ready</span>
+        </div>
+        <h2 class="h2" style="margin-top: 12px;">Master rollup for the Access Control design</h2>
+        <p class="muted" style="margin-bottom: 0;">
+          This page is the Access Control master assistant and final report host. It rolls up the scope, door behavior, reader, lock power, panel capacity, cable, elevator, special locking, anti-passback, and access-level planning path without changing the individual calculator tools.
+        </p>
+        <div class="summary-hero-actions btn-row">
+          <a class="btn btn-primary" href="#physicalSecuritySummaryMasterMount">Review Master Assistant</a>
+          <a class="btn" href="#summaryExportSection">Open Report Section</a>
+          <a class="btn" href="/tools/access-control/scope-planner/">Scope Planner</a>
+        </div>
+      </section>
+
+      <section class="card summary-master-card" style="margin-top: 18px;">
+                <h2 class="h2" style="margin-top: 12px;">Access Control Master Assistant</h2>
+        <p class="muted summary-master-copy">
+          This master assistant reads saved Access Control planning context, report metadata, and tool notes to prioritize the final Access Control design before export.
+        </p>
+        <div id="physicalSecuritySummaryMasterMount" class="sl-category-guidance-mount" style="margin-top: 12px;"></div>
+        <div id="physicalSecuritySummaryMasterContext" class="summary-master-context" aria-live="polite"></div>
+      </section>
+
+      <section class="card summary-results-card" style="margin-top: 18px;" hidden aria-hidden="true" data-sl-hidden-security-rollup-section="true" data-sl-hide-marker="access-control-summary-hide-exact-rollup-section-032">
+                <h2 class="h2" style="margin-top: 12px;">Access Control Rollup</h2>
+        <p class="muted summary-section-copy">Quick status snapshot from Access Control tool guidance, saved planning context, and available report notes.</p>
+        <div id="results" class="summary-grid" aria-live="polite"></div>
+      </section>
+
+      <section class="card summary-scope-card" style="margin-top: 18px;">
+                <h2 class="h2" style="margin-top: 12px;">Area, Zone, and Tool Guidance Rollup</h2>
+        <p class="muted">
+          The Access Control tools stay available individually, but this page provides the category-level rollup before the final report.
+        </p>
+        <div id="physicalSecurityScopeMount"></div>
+      </section>
+
+      <section
+        id="physicalSecurityToolNotesSection"
+        class="card summary-tool-notes-card"
+        style="margin-top: 18px;"
+        data-export-section
+        data-export-title="Access Control Tool Notes"
+      >
+        <h2 class="h2" style="margin-top: 12px;">Tool Notes</h2>
+        <p class="muted summary-section-copy">
+          Tool-specific notes stay separated by source tool and roll up here for the final Access Control report.
+        </p>
+        <div id="physicalSecurityToolNotesMount"></div>
+      </section>
+
+      <section
+        id="summaryExportSection"
+        class="card summary-export-card"
+        style="margin-top: 18px;"
+        data-export-section
+        data-export-title="Access Control Category Summary"
+      >
+        
+        <h2 class="h2" style="margin-top: 12px;">Final Report Export</h2>
+        <p class="muted summary-section-copy">
+          Add optional report context and open a report-ready summary for the current Access Control planning session.
+        </p>
+
+        <details id="summaryReportDetails" class="summary-report-details">
+          <summary>Report metadata</summary>
+          <div class="form-grid export-grid">
+          <label class="field">
+            <span class="label">Report Title</span>
+            <input id="reportTitle" type="text" placeholder="Access Control Summary" />
+          </label>
+          <label class="field">
+            <span class="label">Project Name</span>
+            <input id="projectName" type="text" placeholder="Project Name" />
+          </label>
+          <label class="field">
+            <span class="label">Client Name</span>
+            <input id="clientName" type="text" placeholder="Client / Site Name" />
+          </label>
+          <label class="field">
+            <span class="label">Prepared By</span>
+            <input id="preparedBy" type="text" placeholder="ScopedLabs Pro User" />
+          </label>
+          <label class="field full">
+            <span class="label">Custom Notes</span>
+            <textarea id="customNotes" placeholder="Optional notes, assumptions, site conditions, device profile references, or cross-category dependencies."></textarea>
+          </label>
+          </div>
+        </details>
+
+        <div id="physicalSecurityReportMount" style="margin-top: 14px;"></div>
+        <pre id="physicalSecurityCrossCategoryPayload" class="summary-payload" hidden aria-hidden="true">{}</pre>
+
+        <div class="btn-row" style="margin-top: 14px;">
+          <button id="exportReport" class="btn btn-primary" type="button">Open Report</button>
+          <button id="saveSnapshot" class="btn" type="button">Save Snapshot</button>
+        </div>
+        <div id="exportStatus" class="export-status"></div>
+      </section>
+
+      <section class="card summary-next-card" style="margin-top: 18px;">
+        <div class="pill-row">
+          </div>
+        <h2 class="h2" style="margin-top: 12px;">Continue Planning</h2>
+        <p class="muted summary-section-copy">Return to the Access Control category, continue the guided flow, or review the final category rollup.</p>
+        <div class="btn-row summary-next-actions">
+          <a class="btn btn-primary" href="/tools/access-control/scope-planner/">Return to Scope Planner</a>
+          <a class="btn" href="/tools/access-control/">Back to Access Control</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+        <div class="muted">© <span data-year></span> ScopedLabs</div>
+              <div class="footer-links">
+      <a href="/tools/">Tools</a>
+      <a href="/upgrade/">Upgrade</a>
+      <a href="/about/">About</a>
+      <a href="/contact/">Contact</a>
+      <a href="/changelog/">Changelog</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="/disclaimer/">Disclaimer</a>
+    </div>
+</footer>
+
+  <script src="/assets/tool-flow.js?v=access-control-summary-proof-001"></script>
+  <script src="/assets/catalog.js?v=access-control-summary-proof-001"></script>
+  <script src="/assets/pipelines.js?v=access-control-summary-pipeline-nav-001"></script>
+  <script src="/assets/pipeline-state.js?v=access-control-summary-proof-001"></script>
+  <script src="/assets/pipeline.js?v=access-control-summary-pipeline-width-002"></script>
+  <script data-scopedlabs-export-config>
+    window.ScopedLabsExportConfig = {
+      categoryLabel: "Access Control",
+      categorySlug: "access-control",
+      toolLabel: "Access Control Summary",
+      toolSlug: "access-control-summary",
+      reportPrefix: "SL-PS-SUM",
+      alwaysAllowExport: true,
+      alwaysExportReady: true,
+      suppressStandardReportSections: true,
+      suppressHeaderStatusPill: true,
+      invalidateOnInput: false,
+      readyStatusMessage: "Summary report ready. Open Report or Save Snapshot.",
+      emptyExportOutputs: [
+        { label: "Report Type", value: "Access Control category summary" },
+        { label: "Report Readiness", value: "Ready without calculator step" }
+      ],
+      assumptions: [
+        "This report reflects the current Access Control summary, guidance memory, area/zone context, and visible report fields at the time the export was generated.",
+        "Core coverage areas and optional specialty zones may be at different completion states.",
+        "Future cross-category coordination should verify Network, Power, Storage, Access Control, equipment profile, and site-condition dependencies before final design decisions."
+      ],
+      disclaimer: "ScopedLabs outputs are planning aids only and do not replace formal engineering review, code compliance review, site-specific validation, manufacturer documentation, or platform-specific design validation."
+    };
+  </script>
+  <script src="/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes"></script>
+  <script src="/assets/export.js?v=shared-export-025-tool-notes-column-widths"></script>
+  <script src="/assets/access-control-area-state.js?v=access-control-area-state-016-summary-banner-optout"></script>
+  <script src="/assets/access-control-tool-registry.js?v=access-control-tool-registry-001-shell-v1"></script>
+  <script src="/assets/access-control-guidance-memory.js?v=access-control-guidance-memory-001-session-foundation"></script>
+  <script src="/assets/access-control-source-policy.js?v=access-control-source-policy-002-master-knowledge-guardrails"></script>
+  <script src="/assets/access-control-category-knowledge.js?v=access-control-category-knowledge-003-dori-master-wording"></script>
+  <script src="/assets/access-control-category-guidance.js?v=access-control-category-guidance-007-deduped-source-detail"></script>
+  <script src="/assets/access-control-category-guidance-renderer.js?v=access-control-category-guidance-renderer-003-draft-next-action-copy"></script>
+  <script src="/assets/access-control-report-summary.js?v=access-control-report-summary-029-area-step-table-title"></script>
+  <script src="./script.js?v=access-control-summary-master-assistant-001"></script>
+  <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>
+
+  <!-- access-control-summary-continue-actions-cleanup-029 -->
+  <!-- access-control-summary-report-metadata-shared-page-notes-034 -->
+  <!-- access-control-summary-tool-notes-rollup-034 -->
+  <!-- access-control-summary-tool-notes-area-context-035 -->
+  <!-- access-control-summary-print-header-fix-036 -->
+  <!-- access-control-summary-report-table-title-fix-037 -->
+  <!-- access-control-summary-owned-category-master-038 -->
+  <!-- access-control-summary-master-draft-queue-039 -->
+  <!-- access-control-summary-master-copy-polish-040 -->
+  <!-- access-control-summary-report-metadata-carryover-033 -->
+  <!-- access-control-summary-dori-master-wording-041 -->
+  <!-- access-control-summary-dori-dedupe-042 -->
+  <!-- access-control-summary-tool-notes-actions-043 -->
+  <!-- access-control-summary-tool-notes-menu-044 -->
+  <!-- access-control-summary-tool-notes-menu-glyph-045 -->
+  <!-- access-control-summary-tool-notes-menu-flow-046 -->
+  <!-- access-control-summary-tool-notes-menu-overlay-047 -->
+  <!-- access-control-summary-footer-placement-048 -->
+  <!-- access-control-summary-footer-lift-049 -->
+  <!-- access-control-summary-footer-gap-050 -->
+  <!-- access-control-summary-tool-notes-wrap-051 -->
+</body>
+</html>
