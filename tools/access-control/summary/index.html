@@ -1021,6 +1021,49 @@ body[data-access-control-summary-page="true"] #reportMetadataMount {
     width: 100%;
   }
 }
+
+  /* access-control-summary-generated-tone-0613
+     Keep script-owned Access Control Summary sections on the green/dark category tone.
+     Scope intentionally excludes Final Report Export, auth, checkout, and report behavior.
+  */
+  body[data-access-control-summary-page="true"] .summary-results-card,
+  body[data-access-control-summary-page="true"] .access-control-summary-generated-card {
+    background:
+      radial-gradient(circle at top left, rgba(57, 255, 117, .08), transparent 34%),
+      linear-gradient(180deg, rgba(8, 32, 18, .94), rgba(2, 10, 7, .96));
+    border-color: rgba(86, 255, 135, .22);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, .34);
+  }
+
+  body[data-access-control-summary-page="true"] .summary-results-card > h2,
+  body[data-access-control-summary-page="true"] .access-control-summary-generated-card > h2 {
+    color: rgba(248, 255, 250, .96);
+  }
+
+  body[data-access-control-summary-page="true"] .summary-results-card .access-summary-kpi,
+  body[data-access-control-summary-page="true"] .access-control-summary-generated-card .access-summary-kpi,
+  body[data-access-control-summary-page="true"] .access-control-summary-generated-card .access-summary-tool-row,
+  body[data-access-control-summary-page="true"] .access-control-summary-generated-card .access-summary-note,
+  body[data-access-control-summary-page="true"] .access-control-summary-generated-card .summary-panel,
+  body[data-access-control-summary-page="true"] .access-control-summary-generated-card .summary-row {
+    background:
+      linear-gradient(180deg, rgba(5, 22, 14, .94), rgba(2, 11, 8, .96));
+    border-color: rgba(186, 255, 204, .13);
+  }
+
+  body[data-access-control-summary-page="true"] .summary-results-card .access-summary-kpi p,
+  body[data-access-control-summary-page="true"] .access-control-summary-generated-card .access-summary-tool-row p,
+  body[data-access-control-summary-page="true"] .access-control-summary-generated-card .access-summary-note p,
+  body[data-access-control-summary-page="true"] .access-control-summary-generated-card .summary-panel p,
+  body[data-access-control-summary-page="true"] .access-control-summary-generated-card .summary-row p {
+    color: rgba(219, 244, 226, .88);
+  }
+
+  body[data-access-control-summary-page="true"] .access-control-summary-generated-card .status-chip,
+  body[data-access-control-summary-page="true"] .access-control-summary-generated-card .pill {
+    border-color: rgba(86, 255, 135, .32);
+  }
+
 </style>
 </head>
 
