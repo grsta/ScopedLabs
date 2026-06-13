@@ -147,10 +147,10 @@ if (specialAnchor && panelAnchor && classOf(specialAnchor) === classOf(panelAnch
   failCount += 1;
 }
 
-if (summaryAnchor && panelAnchor && classOf(summaryAnchor) === classOf(panelAnchor) && html.includes('data-access-control-category-summary-card="true"') && !/<span\b/i.test(summaryAnchor)) {
+if (summaryAnchor && panelAnchor && classOf(summaryAnchor) === classOf(panelAnchor) && html.includes('data-access-control-category-summary-card="true"') && !/<span\b/i.test(summaryAnchor) && cleanText(summaryAnchor).includes("Access Control Summary") && !cleanText(summaryAnchor).includes("Panel Capacity")) {
   console.log("SAFE  Summary uses standalone category card without label pill");
 } else {
-  console.log("FAIL  Summary standalone category card not detected or still has label pill");
+  console.log("FAIL  Summary standalone category card not detected or still cloned from wrong tool");
   failCount += 1;
 }
 
