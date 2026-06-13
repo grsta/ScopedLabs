@@ -160,6 +160,13 @@ if (failCount === 0) {
   console.log("FAIL  ACCESS_CONTROL_CATEGORY_CARD_INTEGRITY_FAILED");
 }
 
+if (html.includes("access-control-category-finalize-card-style-0613") && html.includes(".access-control-category-finalize .tool-card")) {
+  console.log("SAFE  ACCESS_CONTROL_CATEGORY_FINALIZE_CARD_STYLE_PRESENT");
+} else {
+  console.log("FAIL  finalize card style marker missing");
+  failCount += 1;
+}
+
 console.log("SAFE  NO_CALCULATOR_PAGE_CHANGES");
 
 console.log("");
