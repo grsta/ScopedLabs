@@ -536,28 +536,228 @@
     }).join("");
   }
 
+
+  // access-control-summary-scope-view-mode-0613
+  function summaryScopeList(ledger) {
+    return (Array.isArray(ledger && ledger.scopes) ? ledger.scopes : [])
+      .filter((scope) => scope && scope.id)
+      .map((scope, index) => {
+        const id = String(scope.id || "").trim();
+        const name = String(scope.name || scope.label || scope.title || ("Access Scope " + (index + 1))).trim();
+
+        return {
+          id,
+          name: name || ("Access Scope " + (index + 1)),
+          path: String(scope.path || scope.accessPath || scope.doorPath || "").trim(),
+          egress: String(scope.egress || scope.egressMode || scope.egressStatus || "").trim(),
+          lockIntent: String(scope.lockIntent || scope.lockMode || "").trim()
+        };
+      });
+  }
+
+  function summarySelectedScopeStorageKey() {
+    return "scopedlabs:access-control:summary:selected-scope-id";
+  }
+
+  function selectedSummaryScopeId(ledger) {
+    const scopes = summaryScopeList(ledger);
+    const ids = new Set(scopes.map((scope) => scope.id));
+    let saved = "";
+
+    try {
+      saved = String(window.sessionStorage.getItem(summarySelectedScopeStorageKey()) || "").trim();
+    } catch {}
+
+    if (saved && ids.has(saved)) return saved;
+
+    const activeScopeId = String((ledger && ledger.activeScopeId) || "").trim();
+
+    if (activeScopeId && ids.has(activeScopeId)) return activeScopeId;
+
+    return scopes[0] ? scopes[0].id : "";
+  }
+
+  function summaryScopeById(ledger, scopeId) {
+    return summaryScopeList(ledger).find((scope) => scope.id === scopeId) || null;
+  }
+
+  function summaryRecordToolSlug(record) {
+    return String(
+      record && (
+        record.slug ||
+        record.toolSlug ||
+        record.tool ||
+        record.toolId ||
+        record.id ||
+        ""
+      ) || ""
+    ).trim();
+  }
+
+  function summaryRecordScopeId(record) {
+    return String(
+      record && (
+        record.scopeId ||
+        record.accessScopeId ||
+        record.activeScopeId ||
+        record.scopeID ||
+        record.scope ||
+        ""
+      ) || ""
+    ).trim();
+  }
+
+  function summaryScopeGuidance(scope) {
+    if (!scope) return "No active scope selected.";
+
+    const details = [];
+
+    if (scope.path) details.push("Path: " + scope.path);
+    if (scope.egress) details.push("Egress: " + scope.egress);
+    if (scope.lockIntent) details.push("Lock intent: " + scope.lockIntent);
+
+    if (!details.length) details.push("Scope started and available for the current category rollup.");
+
+    return details.join(" · ");
+  }
+
+  function summaryScopeRecordFor(scope) {
+    if (!scope || !scope.id) return null;
+
+    return {
+      slug: "scope-planner",
+      toolSlug: "scope-planner",
+      scopeId: scope.id,
+      status: "saved",
+      summary: summaryScopeGuidance(scope),
+      notes: summaryScopeGuidance(scope)
+    };
+  }
+
+  function recordsForSelectedSummaryScope(records, ledger, selectedScopeId) {
+    const selectedScope = summaryScopeById(ledger, selectedScopeId);
+
+    if (!selectedScope) return [];
+
+    const filtered = (Array.isArray(records) ? records : []).filter((record) => {
+      const slug = summaryRecordToolSlug(record);
+      const scopeId = summaryRecordScopeId(record);
+
+      if (slug === "scope-planner") {
+        return scopeId === selectedScopeId;
+      }
+
+      if (!scopeId) return false;
+
+      return scopeId === selectedScopeId;
+    });
+
+    const hasScopePlanner = filtered.some((record) => summaryRecordToolSlug(record) === "scope-planner");
+    const syntheticScopePlanner = summaryScopeRecordFor(selectedScope);
+
+    if (!hasScopePlanner && syntheticScopePlanner) filtered.unshift(syntheticScopePlanner);
+
+    return filtered;
+  }
+
+  function plannedScopeSummary(ledger) {
+    const scopes = summaryScopeList(ledger);
+
+    if (!scopes.length) {
+      return {
+        count: 0,
+        label: "0",
+        detail: "No access scopes have been saved for the current category rollup."
+      };
+    }
+
+    if (scopes.length === 1) {
+      return {
+        count: 1,
+        label: "1",
+        detail: "One access scope is planned in the current category rollup."
+      };
+    }
+
+    return {
+      count: scopes.length,
+      label: String(scopes.length),
+      detail: String(scopes.length) + " access scopes are planned in the current category rollup."
+    };
+  }
+
+  function renderSummaryScopeSelector(ledger, selectedScopeId) {
+    const scopes = summaryScopeList(ledger);
+
+    if (!scopes.length) {
+      return "<div class='access-summary-scope-selector' data-summary-scope-selector='empty'>" +
+        "<strong>Active scope view</strong><span>No saved scopes yet. Start in Scope Planner.</span>" +
+      "</div>";
+    }
+
+    const options = scopes.map((scope) => {
+      const selected = scope.id === selectedScopeId ? " selected" : "";
+
+      return "<option value='" + escapeHtml(scope.id) + "'" + selected + ">" + escapeHtml(scope.name) + "</option>";
+    }).join("");
+
+    return "<label class='access-summary-scope-selector' for='accessControlSummaryScopeSelect' data-summary-scope-selector='active'>" +
+      "<span>Active scope view</span>" +
+      "<select id='accessControlSummaryScopeSelect' aria-label='Select Access Control scope'>" + options + "</select>" +
+    "</label>";
+  }
+
+  function bindSummaryScopeSelector() {
+    const select = byId("accessControlSummaryScopeSelect");
+
+    if (!select || select.dataset.bound === "true") return;
+
+    select.dataset.bound = "true";
+
+    select.addEventListener("change", () => {
+      try {
+        window.sessionStorage.setItem(summarySelectedScopeStorageKey(), select.value || "");
+      } catch {}
+
+      render();
+
+      try {
+        window.dispatchEvent(new CustomEvent("scopedlabs:access-control-scope-view-changed", {
+          detail: { scopeId: select.value || "" }
+        }));
+      } catch {}
+    });
+  }
+
+
   function render() {
     const ledger = readSummaryScopeLedger();
     const plannedScopes = plannedScopeSummary(ledger);
-    const records = readGuidanceRecords();
+    const selectedScopeId = selectedSummaryScopeId(ledger);
+    const selectedScope = summaryScopeById(ledger, selectedScopeId);
+    const records = recordsForSelectedSummaryScope(readGuidanceRecords(), ledger, selectedScopeId);
     const rows = toolRows(recordBySlug(records));
     const count = counts(rows);
     const status = overallStatus(count);
+    const activeScopeLabel = selectedScope ? selectedScope.name : "No active scope";
 
     const kpiMount = ensureSection("accessControlSummaryKpis", "Access Control Rollup", "Rollup");
 
     kpiMount.innerHTML =
-      kpi("Tools discovered", String(TOOL_DEFINITIONS.length), "Access Control planning tools included in this category rollup.") +
+      renderSummaryScopeSelector(ledger, selectedScopeId) +
+      kpi("Active scope", activeScopeLabel, selectedScope ? "Screen summary is filtered to this saved scope." : "Start in Scope Planner to create a scope.") +
       kpi("Scopes planned", plannedScopes.label, plannedScopes.detail) +
-      kpi("Guidance saved", String(count.generated) + " / " + String(TOOL_DEFINITIONS.length), "Saved tool guidance found in the current scoped Access Control session.") +
-      kpi("Overall status", statusLabel(status), "Rollup status based on saved scoped tool guidance records.");
+      kpi("Guidance saved", String(count.generated) + " / " + String(TOOL_DEFINITIONS.length), "Saved guidance for the selected Access Control scope.") +
+      kpi("Overall status", statusLabel(status), "Rollup status based on the selected scope guidance records.");
+
+    bindSummaryScopeSelector();
 
     const assistantMount = ensureSection("accessControlMasterAssistant", "Access Control Master Assistant", "Master Assistant");
 
     assistantMount.innerHTML =
-      "<p>This master assistant keeps each Access Control tool separate, then rolls the saved guidance into a final category view. Use it after running the individual tools or before opening the final report.</p>" +
+      "<p>This master assistant keeps each Access Control scope separate, then rolls the selected scope into a focused category view. Export/print keeps all saved scopes separated in the final report.</p>" +
       "<p><strong>Next action:</strong> " +
-      escapeHtml(count.generated > 0 ? "Review any Watch/Risk items, add report metadata, then open the report section." : "Run the Access Control tools in the guided flow, then return here for the category rollup.") +
+      escapeHtml(count.generated > 1 ? "Review any Watch/Risk items for the selected scope, add report metadata, then open the report section." : "Continue the guided flow for the selected scope, then return here for the category rollup.") +
       "</p>";
 
     const toolMount = ensureSection("accessControlToolRollup", "Access Control Tool Status", "Tool Guidance");

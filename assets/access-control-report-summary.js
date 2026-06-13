@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-report-summary-0613-scope-report-rows";
+  const VERSION = "access-control-report-summary-0613-separated-scope-tables";
   const MOUNT_ID = "accessControlReportMount";
 
   function esc(value) {
@@ -68,25 +68,11 @@
         return {
           id: id,
           name: name || ("Access Scope " + (index + 1)),
-          type: String(scope.type || scope.scopeType || scope.branchType || "").trim(),
           path: String(scope.path || scope.accessPath || scope.doorPath || "").trim(),
           egress: String(scope.egress || scope.egressMode || scope.egressStatus || "").trim(),
           lockIntent: String(scope.lockIntent || scope.lockMode || "").trim()
         };
       });
-  }
-
-  function scopeMap(scopes) {
-    return new Map(scopes.map(function (scope) {
-      return [scope.id, scope];
-    }));
-  }
-
-  function scopeNameFromRecord(record, scopesById) {
-    const scopeId = recordScopeId(record);
-    const scope = scopesById.get(scopeId);
-
-    return scope ? scope.name : "—";
   }
 
   function recordScopeId(record) {
@@ -106,6 +92,10 @@
     return String((record && (record.slug || record.toolSlug || record.tool || record.toolId || record.id)) || "").trim();
   }
 
+  function noteFrom(record) {
+    return String((record && (record.notes || record.customNotes || record.reportNotes || record.note || record.summary || record.status || "")) || "").trim();
+  }
+
   function normalizeStatus(value) {
     const text = String(value || "").toLowerCase();
 
@@ -114,10 +104,6 @@
     if (text.includes("healthy") || text.includes("safe") || text.includes("ok") || text.includes("pass") || text.includes("complete") || text.includes("saved")) return "SAVED";
 
     return "PENDING";
-  }
-
-  function noteFrom(record) {
-    return String((record && (record.notes || record.customNotes || record.reportNotes || record.note || record.summary || record.status || "")) || "").trim();
   }
 
   function fallbackMemoryRecords() {
@@ -143,23 +129,11 @@
     return records;
   }
 
-  function getRecords() {
-    let records = [];
-
-    if (window.ScopedLabsAccessControlSummary && typeof window.ScopedLabsAccessControlSummary.readGuidanceRecords === "function") {
-      try {
-        records = window.ScopedLabsAccessControlSummary.readGuidanceRecords();
-      } catch (_) {
-        records = [];
-      }
-    } else {
-      records = fallbackMemoryRecords();
-    }
-
-    return Array.isArray(records) ? records : [];
+  function getAllRecords() {
+    return fallbackMemoryRecords();
   }
 
-  function scopePlannerGuidance(scope) {
+  function scopeGuidance(scope) {
     const details = [];
 
     if (scope.path) details.push("Path: " + scope.path);
@@ -171,94 +145,87 @@
     return details.join(" · ");
   }
 
-  function reportStatusClass(status) {
-    return String(status || "PENDING").toLowerCase();
-  }
-
-  function rowHtml(scopeName, toolLabel, status, guidance, attrs) {
+  function rowHtml(toolLabel, status, guidance, attrs) {
     const attrText = attrs ? " " + attrs : "";
 
     return "<tr" + attrText + ">" +
-      "<td class='summary-report-scope-cell'>" + esc(scopeName || "—") + "</td>" +
       "<td class='summary-report-tool-cell'><strong>" + esc(toolLabel) + "</strong></td>" +
-      "<td class='summary-report-status-cell'><span class='summary-report-status summary-report-status--" + esc(reportStatusClass(status)) + "'>" + esc(status) + "</span></td>" +
+      "<td class='summary-report-status-cell'><span class='summary-report-status summary-report-status--" + esc(String(status || "PENDING").toLowerCase()) + "'>" + esc(status || "PENDING") + "</span></td>" +
       "<td class='summary-report-guidance-cell'>" + esc(guidance || "No saved guidance found yet.") + "</td>" +
     "</tr>";
   }
 
-  function buildReportRows() {
-    const ledger = readSummaryScopeLedger();
-    const scopes = plannedScopes(ledger);
-    const scopesById = scopeMap(scopes);
-    const records = getRecords();
-
+  function tableForScope(scope, allRecords) {
     const rows = [];
 
-    scopes.forEach(function (scope) {
-      rows.push(rowHtml(
-        scope.name,
-        "Scope Planner",
-        "SAVED",
-        scopePlannerGuidance(scope),
-        "data-summary-report-scope-planner-row='true' data-scope-id='" + esc(scope.id) + "'"
-      ));
-    });
+    rows.push(rowHtml(
+      "Scope Planner",
+      "SAVED",
+      scopeGuidance(scope),
+      "data-summary-report-scope-planner-row='true' data-scope-id='" + esc(scope.id) + "'"
+    ));
 
-    const downstreamTools = tools().filter(function (tool) {
-      return tool && tool.slug && tool.slug !== "scope-planner";
-    });
+    tools()
+      .filter(function (tool) { return tool && tool.slug && tool.slug !== "scope-planner"; })
+      .forEach(function (tool) {
+        const scopedRecords = allRecords.filter(function (record) {
+          return slugFrom(record) === tool.slug && recordScopeId(record) === scope.id;
+        });
 
-    downstreamTools.forEach(function (tool) {
-      const scopedRecords = records.filter(function (record) {
-        const slug = slugFrom(record);
-        const scopeId = recordScopeId(record);
+        if (!scopedRecords.length) {
+          rows.push(rowHtml(
+            tool.label,
+            "PENDING",
+            "No scoped guidance found for this scope yet.",
+            "data-summary-report-pending-tool-row='true' data-tool-slug='" + esc(tool.slug) + "'"
+          ));
+          return;
+        }
 
-        return slug === tool.slug && scopeId && scopesById.has(scopeId);
+        scopedRecords.forEach(function (record) {
+          rows.push(rowHtml(
+            tool.label,
+            normalizeStatus(record.status || record.overallStatus || record.state || "saved"),
+            noteFrom(record) || "Scoped guidance saved.",
+            "data-summary-report-scoped-tool-row='true' data-tool-slug='" + esc(tool.slug) + "'"
+          ));
+        });
       });
 
-      if (!scopedRecords.length) {
-        rows.push(rowHtml(
-          "—",
-          tool.label,
-          "PENDING",
-          "No scoped guidance found yet.",
-          "data-summary-report-pending-tool-row='true' data-tool-slug='" + esc(tool.slug) + "'"
-        ));
-        return;
-      }
-
-      scopedRecords.forEach(function (record) {
-        const status = normalizeStatus(record.status || record.overallStatus || record.state || "saved");
-        const guidance = noteFrom(record) || "Scoped guidance saved.";
-        const scopeName = scopeNameFromRecord(record, scopesById);
-
-        rows.push(rowHtml(
-          scopeName,
-          tool.label,
-          status,
-          guidance,
-          "data-summary-report-scoped-tool-row='true' data-tool-slug='" + esc(tool.slug) + "'"
-        ));
-      });
-    });
-
-    if (!rows.length) {
-      rows.push(rowHtml("—", "Scope Planner", "PENDING", "No access scopes have been saved yet.", "data-summary-report-empty-row='true'"));
-    }
-
-    return rows.join("");
+    return "<section class='summary-report-scope-section' data-summary-report-scope-section='true' data-scope-id='" + esc(scope.id) + "'>" +
+      "<h4 class='summary-report-scope-title'>Scope: " + esc(scope.name) + "</h4>" +
+      "<table class='summary-report-table summary-report-table--scope-section'>" +
+        "<thead><tr><th>Tool</th><th>Status</th><th>Saved guidance</th></tr></thead>" +
+        "<tbody>" + rows.join("") + "</tbody>" +
+      "</table>" +
+    "</section>";
   }
 
   function renderExportHtml() {
-    const rows = buildReportRows();
+    const ledger = readSummaryScopeLedger();
+    const scopes = plannedScopes(ledger);
+    const allRecords = getAllRecords();
+
+    let body = "";
+
+    if (!scopes.length) {
+      body = "<section class='summary-report-scope-section' data-summary-report-empty='true'>" +
+        "<h4 class='summary-report-scope-title'>No saved scopes</h4>" +
+        "<table class='summary-report-table summary-report-table--scope-section'>" +
+          "<thead><tr><th>Tool</th><th>Status</th><th>Saved guidance</th></tr></thead>" +
+          "<tbody>" + rowHtml("Scope Planner", "PENDING", "No access scopes have been saved yet.", "data-summary-report-empty-row='true'") + "</tbody>" +
+        "</table>" +
+      "</section>";
+    } else {
+      body = scopes.map(function (scope) {
+        return tableForScope(scope, allRecords);
+      }).join("");
+    }
 
     return "<div class='summary-export-report' data-access-control-report-summary='true'>" +
       "<h3>Access Control Category Summary</h3>" +
       "<p>This report-ready rollup keeps each saved access scope separate, then attaches scoped tool guidance under the matching scope when available.</p>" +
-      "<table class='summary-report-table summary-report-table--scope-aware'>" +
-        "<thead><tr><th>Scope / Door</th><th>Tool</th><th>Status</th><th>Saved guidance</th></tr></thead>" +
-        "<tbody>" + rows + "</tbody>" +
-      "</table>" +
+      body +
     "</div>";
   }
 
@@ -281,13 +248,14 @@
 
     window.addEventListener("scopedlabs:access-control-guidance-updated", refreshExportSection);
     window.addEventListener("scopedlabs:access-control-scope-updated", refreshExportSection);
+    window.addEventListener("scopedlabs:access-control-scope-view-changed", refreshExportSection);
   }
 
   window.ScopedLabsAccessControlReportSummary = Object.freeze({
     version: VERSION,
     renderExportHtml: renderExportHtml,
     refreshExportSection: refreshExportSection,
-    buildReportRows: buildReportRows,
+    tableForScope: tableForScope,
     init: init
   });
 
