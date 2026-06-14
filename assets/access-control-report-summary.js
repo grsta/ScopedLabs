@@ -314,6 +314,7 @@ function tableForScope(scope, allRecords) {
 
     return "<section class='summary-report-scope-section' data-summary-report-scope-section='true' data-scope-id='" + esc(scope.id) + "'>" +
       "<h4 class='summary-report-scope-title'>Scope: " + esc(scope.name) + "</h4>" +
+      scopeReportMetadataBlock(scope) +
       "<table class='summary-report-table summary-report-table--scope-section' data-export-table-class='extra-export-table--access-control-summary-report' data-export-col-widths='22,12,66' data-export-table-title='Scope: " + esc(scope.name) + "'><colgroup><col class='summary-report-col-tool' style='width:22%'><col class='summary-report-col-status' style='width:12%'><col class='summary-report-col-guidance' style='width:66%'></colgroup>" +
         "<thead><tr><th>Tool</th><th>Status</th><th>Saved guidance</th></tr></thead>" +
         "<tbody>" + rows.join("") + "</tbody>" +
@@ -356,7 +357,7 @@ function tableForScope(scope, allRecords) {
       body = selectedScopes.map(function (scope) { return tableForScope(scope, allRecords); }).join("");
     }
 
-    return "<div class='summary-export-report' data-access-control-report-summary='true'>" +
+    return "<div class='summary-export-report' data-access-control-report-summary='true' data-access-control-report-scope='" + esc(selected) + "' data-access-control-all-scopes-report='" + (selected === "__all__" ? "true" : "false") + "'>" +
       "<h3>Access Control Category Summary</h3>" +
       "<p>This report-ready rollup can print one selected scope or all saved scopes as separate report sections.</p>" +
       renderReportScopeSelector(scopes, selected) +

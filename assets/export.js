@@ -1436,6 +1436,13 @@ if (shouldSuppressDefaultInterpretationBlock()) {
         const summary = document.querySelector("[data-access-control-report-summary='true']");
         const onAccessControlSummary = /\/tools\/access-control\/summary\/?$/i.test(pathName) || !!summary;
 
+        const allScopesSummary = document.querySelector("[data-access-control-all-scopes-report='true']");
+        if (allScopesSummary) return true;
+
+        if (summary && String(summary.getAttribute("data-access-control-all-scopes-report") || "").trim() === "true") {
+          return true;
+        }
+
         if (!onAccessControlSummary) return false;
 
         const selector = document.getElementById("accessControlReportScopeSelect") ||
