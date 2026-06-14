@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-report-metadata-006-access-control-render-repair";
+  const VERSION = "scopedlabs-report-metadata-007-active-scope-label";
   const SHARED_STORAGE_KEY = "scopedlabs:report-metadata:shared:v1";
   const PAGE_STORAGE_PREFIX = "scopedlabs:report-metadata:page:";
   const SHARED_FIELDS = ["reportTitle", "projectName", "clientName", "preparedBy"];
@@ -538,7 +538,37 @@
       "</label>";
   }
 
-  function renderMount(mount, options = {}) {
+  // scopedlabs-report-metadata-007-active-scope-label
+  function currentMetadataScopeLabel() {
+    const scope = currentMetadataContext();
+
+    if (!scope) return "";
+
+    if (scope.accessControlScoped) {
+      return String(scope.scopeName || scope.scopeLabel || scope.accessControlScopeId || "").trim();
+    }
+
+    if (scope.areaScoped) {
+      return String(scope.areaName || scope.scopeLabel || scope.areaId || "").trim();
+    }
+
+    return String(scope.scopeLabel || "").trim();
+  }
+
+  function refreshMetadataScopeLabels(root = document) {
+    const label = currentMetadataScopeLabel();
+
+    Array.from(root.querySelectorAll("[data-report-metadata-scope-label]")).forEach((node) => {
+      node.textContent = label || "No active scope selected";
+      node.dataset.metadataScopeStatus = label ? "active" : "missing";
+    });
+
+    Array.from(root.querySelectorAll("[data-report-metadata-scope-card]")).forEach((node) => {
+      node.dataset.metadataScopeStatus = label ? "active" : "missing";
+    });
+  }
+
+function renderMount(mount, options = {}) {
     if (!mount) return null;
 
     injectStyles();
@@ -591,6 +621,7 @@
       renderMount(mount);
     });
 
+    refreshMetadataScopeLabels(root);
     hydrateControls(root);
     bindPersistence(root);
   }
@@ -600,6 +631,7 @@
   }
 
   function rehydrateOnMetadataContextChange() {
+    refreshMetadataScopeLabels(document);
     hydrateControls(document);
   }
 
@@ -617,6 +649,8 @@
     currentAreaContext,
     currentAccessControlScopeContext,
     currentMetadataContext,
+    currentMetadataScopeLabel,
+    refreshMetadataScopeLabels,
     pageStorageKey,
     legacyPageStorageKey,
     init,
