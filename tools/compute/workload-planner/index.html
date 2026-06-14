@@ -260,6 +260,14 @@
       }
     }
 
+  
+    /* COMPUTE WORKLOAD PLANNER LOCK PLACEHOLDER FIX 0614 */
+    body[data-category="compute"][data-step="workload-planner"] #lockedCard,
+    body[data-category="compute"][data-step="workload-planner"] #lockedCard[hidden],
+    body[data-category="compute"][data-step="workload-planner"] #lockedCard[data-compute-planner-lock-placeholder="true"] {
+      display: none !important;
+    }
+
   </style>
 </head>
 
@@ -299,9 +307,9 @@
       <p class="muted">Real compute planning rarely starts with one CPU, one RAM value, and one storage assumption everywhere. Use this step to define one or more workloads so downstream CPU, RAM, storage, density, acceleration, infrastructure, and recovery results can be tied to the correct environment or workload.</p>
     </section>
 
-    <section id="lockedCard" class="card tool-card" hidden>
+    <section id="lockedCard" class="card tool-card" hidden aria-hidden="true" data-compute-planner-lock-placeholder="true" style="display:none !important;">
       <h2 class="card-title" style="margin-top: 0;">🔒 Locked</h2>
-      <p class="muted">This setup step is available when the Compute category is unlocked.</p>
+      <p class="muted">This hidden placeholder preserves the Access-style gate structure. It stays hidden unless a future Compute gate contract enables it.</p>
       <div class="btn-row">
         <a class="btn" href="/tools/compute/">Back to Compute</a>
         <a class="btn btn-primary" href="/account/">Unlock Pro for Compute</a>

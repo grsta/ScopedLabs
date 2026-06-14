@@ -40,6 +40,7 @@
     saveWorkload: $("saveWorkload"),
     newWorkload: $("newWorkload"),
     resetPlan: $("resetPlan"),
+    lockedCard: $("lockedCard"),
     workloadList: $("workloadList"),
     workloadCountLabel: $("workloadCountLabel"),
     workloadSummary: $("workloadSummary"),
@@ -51,6 +52,14 @@
     };
 
   var editingWorkloadId = null;
+
+  function hideLockedPlaceholder() {
+    if (!els.lockedCard) return;
+    els.lockedCard.hidden = true;
+    els.lockedCard.setAttribute("aria-hidden", "true");
+    els.lockedCard.setAttribute("data-compute-planner-lock-placeholder", "true");
+    els.lockedCard.style.display = "none";
+  }
 
   function status(message) {
     if (els.plannerStatus) els.plannerStatus.textContent = message || "";
@@ -360,6 +369,8 @@
   }
 
   function wire() {
+    hideLockedPlaceholder();
+
     if (!State) {
       status("Compute plan state module did not load.");
       return;
