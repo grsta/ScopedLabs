@@ -142,7 +142,45 @@
     return "PENDING";
   }
 
-  function fallbackMemoryRecords() {
+  // access-control-summary-dedupe-scoped-records-0613
+  function recordUpdatedTime(record) {
+    const raw = String(
+      record && (
+        record.updatedAt ||
+        record.generatedAt ||
+        record.savedAt ||
+        record.createdAt ||
+        record.timestamp ||
+        ""
+      ) || ""
+    ).trim();
+
+    const parsed = raw ? Date.parse(raw) : NaN;
+
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  function dedupeScopedSummaryRecords(records) {
+    const byToolScope = new Map();
+
+    (Array.isArray(records) ? records : []).forEach(function (record) {
+      const slug = slugFrom(record);
+      const scopeId = recordScopeId(record);
+
+      if (!slug || !scopeId) return;
+
+      const key = slug + "::" + scopeId;
+      const existing = byToolScope.get(key);
+
+      if (!existing || recordUpdatedTime(record) >= recordUpdatedTime(existing)) {
+        byToolScope.set(key, record);
+      }
+    });
+
+    return Array.from(byToolScope.values());
+  }
+
+function fallbackMemoryRecords() {
     const records = [];
 
     if (window.ScopedLabsAccessControlGuidanceMemory && typeof window.ScopedLabsAccessControlGuidanceMemory.listRecords === "function") {
@@ -339,7 +377,7 @@ function tableForScope(scope, allRecords) {
   function renderExportHtml() {
     const ledger = readSummaryScopeLedger();
     const scopes = plannedScopes(ledger);
-    const allRecords = fallbackMemoryRecords();
+    const allRecords = dedupeScopedSummaryRecords(fallbackMemoryRecords());
     const selected = selectedReportScopeId(scopes);
 
     let body = "";
