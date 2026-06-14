@@ -397,14 +397,39 @@
     data = data || {};
 
     const outputs = cpuPayloadOutputs(data);
-    const inputs = cpuPayloadInputs(data);
-    const status = computeCpuTopCardStatus(data.status || data.analyzerStatus);
-    const logical = cpuNumber(outputs.recommendedLogicalCores, 0);
-    const physical = cpuNumber(outputs.recommendedPhysicalCores, 0);
-    const effective = cpuNumber(outputs.effectiveDemandCores, 0);
-    const required = cpuNumber(outputs.requiredCores, logical);
-    const constraint = titleCase(outputs.primaryConstraint || "CPU capacity");
-    const recommendation = data.summary || (logical + " logical cores / " + physical + " physical cores recommended");
+    const rawStatus = data.status || data.analyzerStatus || outputs.status || "PENDING";
+    const status = computeCpuTopCardStatus(rawStatus);
+
+    const logical = cpuNumber(
+      outputs.recommendedLogicalCores,
+      cpuNumber(outputs.cores, cpuNumber(data.recommendedLogicalCores, cpuNumber(data.cores, 0)))
+    );
+
+    const physical = cpuNumber(
+      outputs.recommendedPhysicalCores,
+      cpuNumber(outputs.physicalCores, cpuNumber(data.recommendedPhysicalCores, cpuNumber(data.physicalCores, 0)))
+    );
+
+    const effective = cpuNumber(
+      outputs.effectiveDemandCores,
+      cpuNumber(outputs.eff, cpuNumber(data.effectiveDemandCores, cpuNumber(data.eff, 0)))
+    );
+
+    const required = cpuNumber(
+      outputs.requiredCores,
+      cpuNumber(data.requiredCores, logical)
+    );
+
+    const constraint = titleCase(
+      outputs.primaryConstraint ||
+      data.primaryConstraint ||
+      data.constraint ||
+      "CPU capacity"
+    );
+
+    const recommendation = logical || physical
+      ? logical + " logical cores / " + physical + " physical cores recommended"
+      : (data.summary || "CPU recommendation pending");
 
     const flags = [
       status.label === "WATCH" ? "CPU watch item" : status.label === "RISK" ? "CPU risk item" : "CPU baseline usable",
