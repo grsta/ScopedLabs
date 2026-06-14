@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-category-planner-shell-005-ledger-square-ctas";
+  var VERSION = "scopedlabs-category-planner-shell-006-access-ledger-line";
 
   function escapeHtml(value) {
     return String(value == null ? "" : value)
@@ -33,11 +33,13 @@
       ".access-scope-flow-line{display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:rgba(246,255,248,.9);line-height:1.45}",
       ".access-scope-flow-line--ledger{justify-content:space-between;gap:14px;margin-bottom:10px}",
       ".access-scope-flow-arrow{color:rgba(246,255,248,.28);font-weight:900}",
+      ".access-scope-flow-line--ledger{justify-content:flex-start;gap:8px}",
+      ".access-scope-flow-line--ledger .access-scope-flow-arrow{color:rgba(120,255,120,.84);font-weight:900}",
       ".access-scope-flow-step{display:inline-flex;align-items:center;gap:7px}",
       ".access-scope-flow-step-link{color:rgba(246,255,248,.9);text-decoration:none;background:transparent!important;border-radius:0!important;padding:0!important;margin:0!important;transition:color .16s ease}",
       ".access-scope-flow-step-link:hover{color:#fff;background:transparent!important;text-decoration:none}",
       ".access-scope-flow-step-link[aria-current=\"page\"]{color:#fff;font-weight:900;background:transparent!important}",
-      ".access-scope-planner-shell .btn{border-radius:10px!important}",
+      ".access-scope-planner-shell .btn{border-radius:7px!important}",
       ".access-scope-flow-dot{width:9px;height:9px;border-radius:999px;border:1px solid rgba(246,255,248,.24);background:rgba(246,255,248,.10);box-shadow:none}",
       ".access-scope-flow-dot.is-active{border-color:rgba(98,255,141,.9);background:#62ff8d;box-shadow:0 0 14px rgba(98,255,141,.55)}",
       ".access-scope-ledger-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}",
@@ -175,8 +177,9 @@
       '</section>' +
       '<section id="scopeLedgerCard" class="card" style="margin-top:14px;background:rgba(0,0,0,.12);">' +
         '<div class="access-scope-flow-line access-scope-flow-line--ledger" aria-label="' + escapeHtml(config.ledgerAria || "planner ledger summary") + '">' +
-          '<span><strong>' + escapeHtml(config.ledgerEyebrow || "Ledger") + '</strong> → ' + escapeHtml(config.ledgerInline || "Saved planning items") + '</span>' +
-          '<span id="' + escapeHtml(config.countId || "scopeCountLabel") + '" class="muted">0 items</span>' +
+          '<span>' + escapeHtml(config.ledgerEyebrow || "Ledger") + '</span>' +
+          '<span class="access-scope-flow-arrow">&rarr;</span>' +
+          '<span id="' + escapeHtml(config.countId || "scopeCountLabel") + '">0 items</span>' +
         '</div>' +
         '<h2 class="card-title" style="margin-top:0;">' + escapeHtml(config.ledgerTitle) + '</h2>' +
         '<p class="muted">' + escapeHtml(config.ledgerCopy) + '</p>' +

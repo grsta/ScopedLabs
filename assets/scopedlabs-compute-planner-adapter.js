@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-compute-planner-adapter-005-ledger-eyebrow-repair";
+  var VERSION = "scopedlabs-compute-planner-adapter-006-access-ledger-line";
   var State = window.ScopedLabsComputePlanState;
   var Shell = window.ScopedLabsCategoryPlannerShell;
 
@@ -52,8 +52,7 @@
     resetId: "resetPlan",
     resetLabel: "Reset Workload Plan",
     statusId: "plannerStatus",
-    ledgerEyebrow: "Workload Ledger → active Compute workload context",
-    ledgerInline: "active Compute workload context",
+    ledgerEyebrow: "Workload Ledger",
     ledgerTitle: "Planning Workloads",
     ledgerCopy: "Downstream Compute results should be treated as workload-specific. The final Compute Summary can later roll these up across CPU, memory, storage, density, acceleration, infrastructure, recovery, and network checks.",
     countId: "scopeCountLabel",
