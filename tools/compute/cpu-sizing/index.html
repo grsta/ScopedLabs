@@ -165,9 +165,11 @@
     <div id="flow-note" class="flow-note" hidden></div>
 
     <section id="computeWorkloadContextCard" class="card compute-workload-context-card" style="margin-top: 18px;" data-compute-workload-context-card>
-      <div class="access-scope-mini-flow" id="computeWorkloadContextEyebrow">ACTIVE WORKLOAD → CPU SIZING</div>
-      <h3 id="computeWorkloadContextTitle" class="h3" style="margin-top:0;">No active workload selected</h3>
-      <p id="computeWorkloadContextCopy" class="muted" style="margin-bottom: 0;">Open Workload Planner to select a Compute workload before attaching CPU results.</p>
+      <div class="access-scope-mini-flow">Compute Planner → Active Workload Context → CPU Sizing</div>
+      <h2 class="card-title" style="margin-top:.25rem;">Active Compute Workload Context</h2>
+      <p id="computeWorkloadContextCopy" class="muted" style="margin-bottom: 0;">
+        No active Compute workload selected. Results can still be calculated, but they will not be attached to a workload until one is selected in Workload Planner.
+      </p>
       <div id="computeWorkloadContextMeta" class="access-scope-meta" style="margin-top: 12px;" hidden></div>
     </section>
 
@@ -338,9 +340,9 @@
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
   <script src="/assets/scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-002-tool-results"></script>
   <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-002"></script>
-  <script src="./script.js?v=compute-cpu-context-005-active-context-helper"></script>
+  <script src="./script.js?v=compute-cpu-context-001"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
-  <script src="/assets/scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-011-active-context-helper"></script>
+  <script src="/assets/scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-001"></script>
   <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
   <script src="/assets/scopedlabs-compute-assistant-contract.js?v=scopedlabs-compute-assistant-contract-001"></script>
   <script src="/assets/scopedlabs-user-tool-notes.js?v=scopedlabs-user-tool-notes-001-compute-proof"></script>

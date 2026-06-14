@@ -33,7 +33,6 @@
     results: $("results"),
     flowNote: $("flow-note"),
     workloadContextCard: $("computeWorkloadContextCard"),
-    workloadContextTitle: $("computeWorkloadContextTitle"),
     workloadContextCopy: $("computeWorkloadContextCopy"),
     workloadContextMeta: $("computeWorkloadContextMeta"),
     analysisCopy: $("analysis-copy"),
@@ -155,37 +154,40 @@
 
   function renderWorkloadContext() {
     const workload = activeComputeWorkload();
-    const Shell = window.ScopedLabsComputeShell;
 
-    if (Shell && typeof Shell.buildActiveWorkloadContext === "function" && typeof Shell.renderActiveWorkloadContext === "function") {
-      const model = Shell.buildActiveWorkloadContext(workload, {
-        eyebrow: "ACTIVE WORKLOAD → CPU SIZING",
-        titleFallback: "Compute Workload",
-        emptyTitle: "No active workload selected",
-        emptyCopy: "Open Workload Planner to select a Compute workload before attaching CPU results."
-      });
-
-      Shell.renderActiveWorkloadContext(model);
-      return;
-    }
-
-    if (!els.workloadContextTitle || !els.workloadContextCopy || !els.workloadContextMeta) return;
+    if (!els.workloadContextCopy || !els.workloadContextMeta) return;
 
     if (!workload) {
-      els.workloadContextTitle.textContent = "No active workload selected";
       els.workloadContextCopy.textContent =
-        "Open Workload Planner to select a Compute workload before attaching CPU results.";
+        "No active Compute workload selected. Results can still be calculated, but they will not be attached to a workload until one is selected in Workload Planner.";
       els.workloadContextMeta.hidden = true;
       els.workloadContextMeta.innerHTML = "";
       return;
     }
 
-    const environment = cpuContextTitleCase(workload.environmentType);
-    const workloadType = cpuContextTitleCase(workload.workloadType);
-    const path = cpuContextTitleCase(workload.planningPath);
+    const branches = [];
 
-    els.workloadContextTitle.textContent = workload.name || "Compute Workload";
-    els.workloadContextCopy.textContent = environment + " | " + workloadType + " | " + path;
+    if (workload.branches) {
+      if (workload.branches.vmDensity) branches.push("VM Density");
+      if (workload.branches.storageHeavy) branches.push("Storage");
+      if (workload.branches.gpu) branches.push("GPU");
+      if (workload.branches.powerThermal) branches.push("Power / Thermal");
+      if (workload.branches.raid) branches.push("RAID");
+      if (workload.branches.backup) branches.push("Backup");
+      if (workload.branches.nicBonding) branches.push("NIC Bonding");
+    }
+
+    els.workloadContextCopy.textContent =
+      (workload.name || "Compute Workload") + " is active. CPU results from this run will save back to the Compute workload plan.";
+
+    els.workloadContextMeta.hidden = false;
+    els.workloadContextMeta.innerHTML = [
+      '<div class="access-scope-meta-item"><small>Workload</small>' + cpuContextEscapeHtml(workload.name || "Compute Workload") + '</div>',
+      '<div class="access-scope-meta-item"><small>Environment</small>' + cpuContextEscapeHtml(cpuContextTitleCase(workload.environmentType)) + '</div>',
+      '<div class="access-scope-meta-item"><small>Path</small>' + cpuContextEscapeHtml(cpuContextTitleCase(workload.planningPath)) + '</div>',
+      '<div class="access-scope-meta-item"><small>Criticality</small>' + cpuContextEscapeHtml(cpuContextTitleCase(workload.criticality)) + '</div>',
+      '<div class="access-scope-meta-item"><small>Branches</small>' + cpuContextEscapeHtml(branches.length ? branches.join(", ") : "None") + '</div>'
+    ].join("");
   }
 
   function saveCpuResultToWorkload(payload) {
