@@ -172,6 +172,8 @@
     var plan = load();
     var active = activeWorkload(plan);
     var workloadId = active ? active.id : "unscoped";
+    var savedResult = result || {};
+    var statusValue = String(savedResult.status || savedResult.summaryStatus || "PENDING").toUpperCase();
 
     plan.results[workloadId] = plan.results[workloadId] || {};
     plan.results[workloadId][toolSlug] = {
@@ -179,9 +181,43 @@
       category: CATEGORY,
       tool: toolSlug,
       workloadId: workloadId,
-      result: result || {},
+      result: savedResult,
       updatedAt: now()
     };
+
+    if (active) {
+      active.completedTools = active.completedTools && typeof active.completedTools === "object" ? active.completedTools : {};
+      active.completedChecks = active.completedChecks && typeof active.completedChecks === "object" ? active.completedChecks : {};
+      active.toolStatuses = active.toolStatuses && typeof active.toolStatuses === "object" ? active.toolStatuses : {};
+      active.keyResults = active.keyResults && typeof active.keyResults === "object" ? active.keyResults : {};
+
+      active.completedTools[toolSlug] = true;
+      active.completedChecks[toolSlug] = true;
+      active.toolStatuses[toolSlug] = statusValue;
+      active.keyResults[toolSlug] = {
+        label: savedResult.label || savedResult.title || toolSlug,
+        summary: savedResult.summary || savedResult.keySavedResult || "",
+        status: statusValue,
+        updatedAt: now()
+      };
+
+      if (statusValue === "RISK") {
+        active.status = "RISK";
+      } else if (statusValue === "WATCH" && active.status !== "RISK") {
+        active.status = "WATCH";
+      } else if (active.status !== "RISK" && active.status !== "WATCH") {
+        active.status = "PENDING";
+      }
+
+      active.updatedAt = now();
+
+      plan.workloads = plan.workloads.map(function (item) {
+        return item.id === active.id ? active : item;
+      });
+
+      writeContext(active, plan);
+      writeBranchSeeds(active);
+    }
 
     return save(plan);
   }
@@ -197,7 +233,7 @@
   }
 
   window.ScopedLabsComputePlanState = Object.freeze({
-    version: "scopedlabs-compute-plan-state-001",
+    version: "scopedlabs-compute-plan-state-002-tool-results",
     contract: CONTRACT,
     keys: Object.freeze({
       plan: PLAN_KEY,

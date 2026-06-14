@@ -4,6 +4,7 @@
   const CATEGORY = "compute";
   const STEP = "cpu-sizing";
   const LANE = "v1";
+  const State = window.ScopedLabsComputePlanState;
 
   const FLOW_KEYS = {
     "cpu-sizing": "scopedlabs:pipeline:compute:cpu-sizing",
@@ -31,6 +32,9 @@
     smt: $("smt"),
     results: $("results"),
     flowNote: $("flow-note"),
+    workloadContextCard: $("computeWorkloadContextCard"),
+    workloadContextCopy: $("computeWorkloadContextCopy"),
+    workloadContextMeta: $("computeWorkloadContextMeta"),
     analysisCopy: $("analysis-copy"),
     continueWrap: $("continue-wrap"),
     continue: $("continue"),
@@ -113,6 +117,89 @@
       window.ScopedLabsExport.invalidate("Inputs changed. Run the calculator again to refresh export.");
     }
   }
+
+
+  function cpuStatusForPlan(status) {
+    if (status === "RISK") return "RISK";
+    if (status === "WATCH") return "WATCH";
+    if (status === "HEALTHY") return "PENDING";
+    return "PENDING";
+  }
+  function cpuContextEscapeHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function cpuContextTitleCase(value) {
+    return String(value || "N/A")
+      .replace(/[-_]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(/\b\w/g, function (char) { return char.toUpperCase(); }) || "N/A";
+  }
+
+  function activeComputeWorkload() {
+    if (!State || typeof State.load !== "function" || typeof State.activeWorkload !== "function") return null;
+
+    try {
+      return State.activeWorkload(State.load());
+    } catch {
+      return null;
+    }
+  }
+
+  function renderWorkloadContext() {
+    const workload = activeComputeWorkload();
+
+    if (!els.workloadContextCopy || !els.workloadContextMeta) return;
+
+    if (!workload) {
+      els.workloadContextCopy.textContent =
+        "No active Compute workload selected. Results can still be calculated, but they will not be attached to a workload until one is selected in Workload Planner.";
+      els.workloadContextMeta.hidden = true;
+      els.workloadContextMeta.innerHTML = "";
+      return;
+    }
+
+    const branches = [];
+
+    if (workload.branches) {
+      if (workload.branches.vmDensity) branches.push("VM Density");
+      if (workload.branches.storageHeavy) branches.push("Storage");
+      if (workload.branches.gpu) branches.push("GPU");
+      if (workload.branches.powerThermal) branches.push("Power / Thermal");
+      if (workload.branches.raid) branches.push("RAID");
+      if (workload.branches.backup) branches.push("Backup");
+      if (workload.branches.nicBonding) branches.push("NIC Bonding");
+    }
+
+    els.workloadContextCopy.textContent =
+      (workload.name || "Compute Workload") + " is active. CPU results from this run will save back to the Compute workload plan.";
+
+    els.workloadContextMeta.hidden = false;
+    els.workloadContextMeta.innerHTML = [
+      '<div class="access-scope-meta-item"><small>Workload</small>' + cpuContextEscapeHtml(workload.name || "Compute Workload") + '</div>',
+      '<div class="access-scope-meta-item"><small>Environment</small>' + cpuContextEscapeHtml(cpuContextTitleCase(workload.environmentType)) + '</div>',
+      '<div class="access-scope-meta-item"><small>Path</small>' + cpuContextEscapeHtml(cpuContextTitleCase(workload.planningPath)) + '</div>',
+      '<div class="access-scope-meta-item"><small>Criticality</small>' + cpuContextEscapeHtml(cpuContextTitleCase(workload.criticality)) + '</div>',
+      '<div class="access-scope-meta-item"><small>Branches</small>' + cpuContextEscapeHtml(branches.length ? branches.join(", ") : "None") + '</div>'
+    ].join("");
+  }
+
+  function saveCpuResultToWorkload(payload) {
+    if (!State || typeof State.recordToolResult !== "function") return null;
+
+    try {
+      return State.recordToolResult(STEP, payload);
+    } catch {
+      return null;
+    }
+  }
+
 
   function calculate() {
     const workload = els.workload.value;
@@ -258,6 +345,38 @@
       }
     });
 
+
+    const cpuWorkloadResult = {
+      label: "CPU Sizing",
+      title: "CPU Sizing",
+      status: cpuStatusForPlan(analyzer.status),
+      analyzerStatus: analyzer.status,
+      summary: rec + " logical cores / " + physicalRec + " physical cores recommended",
+      keySavedResult: "Recommended CPU: " + rec + " logical cores; " + physicalRec + " physical cores; effective demand " + eff.toFixed(2) + " cores",
+      inputs: {
+        workloadType: workload,
+        concurrency: concurrency,
+        cpuPerWorkerPercent: cpuPct,
+        peakFactor: peak,
+        targetUtilizationPercent: target,
+        smt: smt
+      },
+      outputs: {
+        effectiveDemandCores: Number(eff.toFixed(2)),
+        requiredCores: Number(cores.toFixed(2)),
+        recommendedLogicalCores: rec,
+        recommendedPhysicalCores: physicalRec,
+        loadPressure: Number(loadPressure.toFixed(1)),
+        coreDemand: Number(coreDemand.toFixed(1)),
+        utilizationTarget: Number(target.toFixed(1)),
+        primaryConstraint: dominantConstraint
+      },
+      updatedAt: new Date().toISOString()
+    };
+
+    saveCpuResultToWorkload(cpuWorkloadResult);
+    renderWorkloadContext();
+
     showContinue();
 
     if (window.ScopedLabsExport && typeof window.ScopedLabsExport.refresh === "function") {
@@ -285,6 +404,7 @@
   window.addEventListener("DOMContentLoaded", () => {
     const year = document.querySelector("[data-year]");
     if (year) year.textContent = new Date().getFullYear();
+    renderWorkloadContext();
     refreshFlowNote();
     hideContinue();
   });
