@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-category-planner-shell-008-summary-branch-map";
+  var VERSION = "scopedlabs-category-planner-shell-009-flat-summary-visual";
 
   function escapeHtml(value) {
     return String(value == null ? "" : value)
@@ -51,7 +51,7 @@
       ".access-scope-meta-item small{display:block;color:rgba(196,255,214,.58);font-size:.68rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}",
       ".access-scope-metadata-active{margin:10px 0 14px;color:rgba(246,255,248,.78)}",
       ".access-scope-summary-card{background:rgba(0,0,0,.14)}",
-      ".access-control-planning-visual-shell{border:1px solid rgba(120,255,120,.14);background:radial-gradient(circle at 15% 0%,rgba(125,255,152,.055),transparent 28%),rgba(0,0,0,.12);border-radius:18px;padding:12px;margin:18px 0 16px;overflow:hidden}",
+      ".access-control-planning-visual-shell{border:0!important;background:transparent!important;border-radius:0!important;padding:0!important;margin:18px 0 16px!important;overflow:visible!important}",
       ".access-control-planning-visual-shell svg{display:block;width:100%;height:auto}",
       ".access-scope-branch-map-shell{max-width:900px;margin:18px auto 14px}",
       ".sl-vis-note{color:rgba(246,255,248,.76);font-size:.88rem;line-height:1.45;margin:12px 0 0}",
