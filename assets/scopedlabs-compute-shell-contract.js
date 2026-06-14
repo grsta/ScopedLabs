@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var COMPUTE_SHELL_CONTRACT_VERSION = "scopedlabs-compute-shell-contract-008-active-title-guide-match";
+  var COMPUTE_SHELL_CONTRACT_VERSION = "scopedlabs-compute-shell-contract-009-active-title-h3-match";
 
   function isComputeShellPage() {
     var body = document.body;
@@ -140,7 +140,7 @@
       "/* Matches tools/access-control/fail-safe-fail-secure active status card CSS values. */",
       ".compute-workload-context-card{border:1px solid rgba(125,255,152,.2)!important;background:rgba(255,255,255,.035)!important;border-radius:16px!important;padding:16px!important;margin-top:14px!important}",
       ".compute-workload-context-card .access-scope-mini-flow{color:rgba(166,255,190,.86)!important;font-size:.72rem!important;font-weight:800!important;letter-spacing:.055em!important;text-transform:uppercase!important;margin:0 0 .42rem!important;line-height:1.18!important}",
-      ".compute-workload-context-card #computeWorkloadContextTitle{color:rgba(246,255,248,.96)!important;font-size:1rem!important;font-weight:800!important;line-height:1.3!important;margin:0!important}",
+      ".compute-workload-context-card #computeWorkloadContextTitle{color:rgba(233,240,236,.86)!important;font-size:16px!important;font-weight:850!important;line-height:1.25!important;margin:0!important;letter-spacing:0!important}",
       ".compute-workload-context-card #computeWorkloadContextCopy{color:rgba(203,213,225,.72)!important;font-size:.9rem!important;line-height:1.45!important;margin:6px 0 0!important;font-weight:500!important}",
       ".compute-workload-context-card .access-scope-meta{display:grid!important;gap:10px!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;margin-top:14px!important}",
       ".compute-workload-context-card .access-scope-meta-item{border:1px solid rgba(148,163,184,.12)!important;border-radius:12px!important;padding:10px!important;background:rgba(0,0,0,.12)!important;min-height:auto!important;box-sizing:border-box!important;color:rgba(226,232,240,.9)!important;font-size:.88rem!important;font-weight:750!important;line-height:1.4!important}",
