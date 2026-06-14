@@ -155,6 +155,19 @@
 
   function renderWorkloadContext() {
     const workload = activeComputeWorkload();
+    const Shell = window.ScopedLabsComputeShell;
+
+    if (Shell && typeof Shell.buildActiveWorkloadContext === "function" && typeof Shell.renderActiveWorkloadContext === "function") {
+      const model = Shell.buildActiveWorkloadContext(workload, {
+        eyebrow: "ACTIVE WORKLOAD → CPU SIZING",
+        titleFallback: "Compute Workload",
+        emptyTitle: "No active workload selected",
+        emptyCopy: "Open Workload Planner to select a Compute workload before attaching CPU results."
+      });
+
+      Shell.renderActiveWorkloadContext(model);
+      return;
+    }
 
     if (!els.workloadContextTitle || !els.workloadContextCopy || !els.workloadContextMeta) return;
 
@@ -167,42 +180,12 @@
       return;
     }
 
-    const branches = [];
-
-    if (workload.branches) {
-      if (workload.branches.vmDensity) branches.push("VM Density");
-      if (workload.branches.storageHeavy) branches.push("Storage");
-      if (workload.branches.gpu) branches.push("GPU");
-      if (workload.branches.powerThermal) branches.push("Power / Thermal");
-      if (workload.branches.raid) branches.push("RAID");
-      if (workload.branches.backup) branches.push("Backup");
-      if (workload.branches.nicBonding) branches.push("NIC Bonding");
-    }
-
     const environment = cpuContextTitleCase(workload.environmentType);
     const workloadType = cpuContextTitleCase(workload.workloadType);
-    const demand = cpuContextTitleCase(workload.demandPattern || workload.demandProfile || "N/A");
     const path = cpuContextTitleCase(workload.planningPath);
-    const criticality = cpuContextTitleCase(workload.criticality);
-    const status = cpuContextTitleCase(workload.status || workload.summaryStatus || (branches.length ? "watch" : "planning"));
-    const targetUtilization = workload.targetUtilization ? String(workload.targetUtilization) + "%" : "N/A";
-    const growthMargin = workload.growthMargin ? String(workload.growthMargin) + "%" : "N/A";
-    const branchText = branches.length ? branches.join(", ") : "None";
 
     els.workloadContextTitle.textContent = workload.name || "Compute Workload";
     els.workloadContextCopy.textContent = environment + " | " + workloadType + " | " + path;
-
-    els.workloadContextMeta.hidden = false;
-    els.workloadContextMeta.innerHTML = [
-      '<div class="access-scope-meta-item"><strong>Environment</strong><span>' + cpuContextEscapeHtml(environment) + '</span></div>',
-      '<div class="access-scope-meta-item"><strong>Workload Type</strong><span>' + cpuContextEscapeHtml(workloadType) + '</span></div>',
-      '<div class="access-scope-meta-item"><strong>Demand</strong><span>' + cpuContextEscapeHtml(demand) + '</span></div>',
-      '<div class="access-scope-meta-item"><strong>Status</strong><span>' + cpuContextEscapeHtml(status) + '</span></div>',
-      '<div class="access-scope-meta-item"><strong>Path</strong><span>' + cpuContextEscapeHtml(path) + '</span></div>',
-      '<div class="access-scope-meta-item"><strong>Target Utilization</strong><span>' + cpuContextEscapeHtml(targetUtilization) + '</span></div>',
-      '<div class="access-scope-meta-item"><strong>Growth Margin</strong><span>' + cpuContextEscapeHtml(growthMargin) + '</span></div>',
-      '<div class="access-scope-meta-item"><strong>Branches</strong><span>' + cpuContextEscapeHtml(branchText) + '</span></div>'
-    ].join("");
   }
 
   function saveCpuResultToWorkload(payload) {
