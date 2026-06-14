@@ -5,7 +5,7 @@
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-scope-state-004-report-metadata-delete-repair";
+  const API_VERSION = "access-control-scope-state-005-nonblocking-delete";
   const STORAGE_KEY = "scopedlabs:pipeline:access-control:scopes";
   const ACTIVE_KEY = "scopedlabs:pipeline:access-control:active-scope";
   const FLOW_KEY = "scopedlabs:pipeline:access-control:scope-planner";
@@ -252,14 +252,108 @@
     return writeLedger(ledger);
   }
 
-  function removeScope(scopeId) {
-    const cleanScopeId = String(scopeId || "").trim();
+  // access-control-scope-state-005-nonblocking-delete
+  function accessControlStorageStores() {
+    const stores = [];
 
-    if (cleanScopeId) {
-      removeAccessControlReportMetadataForScope(cleanScopeId);
+    try {
+      if (globalThis.sessionStorage) stores.push(globalThis.sessionStorage);
+    } catch {}
+
+    try {
+      if (globalThis.localStorage) stores.push(globalThis.localStorage);
+    } catch {}
+
+    return stores;
+  }
+
+  function removeStoredKeysMatching(predicate) {
+    accessControlStorageStores().forEach((storage) => {
+      try {
+        const keys = [];
+
+        for (let i = 0; i < storage.length; i += 1) {
+          const key = storage.key(i);
+          if (key) keys.push(key);
+        }
+
+        keys.forEach((key) => {
+          try {
+            if (predicate(String(key || ""))) storage.removeItem(key);
+          } catch {
+            // Keep cleanup non-blocking.
+          }
+        });
+      } catch {
+        // Keep scope delete/reset usable even if storage enumeration is blocked.
+      }
+    });
+  }
+
+  function removeAccessControlReportMetadataForScope(scopeId) {
+    const rawScopeId = String(scopeId || "").trim();
+    const encodedScopeId = encodeURIComponent(rawScopeId);
+
+    if (!rawScopeId || !encodedScopeId) return;
+
+    removeStoredKeysMatching((key) =>
+      key.startsWith("scopedlabs:report-metadata:page:") &&
+      key.includes("#access-scope:" + encodedScopeId)
+    );
+
+    const selectorKeys = [
+      "scopedlabs:access-control:summary:selected-scope-id",
+      "scopedlabs:access-control:summary:report-scope-mode",
+      "scopedlabs:pipeline:access-control:active-scope"
+    ];
+
+    accessControlStorageStores().forEach((storage) => {
+      selectorKeys.forEach((key) => {
+        try {
+          if (String(storage.getItem(key) || "") === rawScopeId) storage.removeItem(key);
+        } catch {
+          // Keep cleanup non-blocking.
+        }
+      });
+    });
+  }
+
+  function removeAllAccessControlReportMetadata() {
+    removeStoredKeysMatching((key) =>
+      key.startsWith("scopedlabs:report-metadata:page:") &&
+      key.includes("#access-scope:")
+    );
+
+    const selectorKeys = [
+      "scopedlabs:access-control:summary:selected-scope-id",
+      "scopedlabs:access-control:summary:report-scope-mode",
+      "scopedlabs:pipeline:access-control:active-scope"
+    ];
+
+    accessControlStorageStores().forEach((storage) => {
+      selectorKeys.forEach((key) => {
+        try {
+          storage.removeItem(key);
+        } catch {
+          // Keep cleanup non-blocking.
+        }
+      });
+    });
+  }
+
+function removeScope(scopeId) {
+    const cleanScopeId = String(scopeId || "").trim();
+    const ledger = readLedger();
+
+    if (!cleanScopeId || !ledger.scopes.some((scope) => scope.id === cleanScopeId)) {
+      return ledger;
     }
 
-    const ledger = readLedger();
+    try {
+      removeAccessControlReportMetadataForScope(cleanScopeId);
+    } catch (error) {
+      console.warn("[AccessControlScopeState] Metadata cleanup skipped during scope delete.", error);
+    }
 
     ledger.scopes = ledger.scopes.filter((scope) => scope.id !== cleanScopeId);
 
@@ -456,17 +550,26 @@
   }
 
   function clearAll() {
-    removeAllAccessControlReportMetadata();
+    try {
+      removeAllAccessControlReportMetadata();
+    } catch (error) {
+      console.warn("[AccessControlScopeState] Metadata cleanup skipped during scope reset.", error);
+    }
 
-    sessionStorage.removeItem(STORAGE_KEY);
-    sessionStorage.removeItem(ACTIVE_KEY);
-    sessionStorage.removeItem(FLOW_KEY);
-    sessionStorage.removeItem(METADATA_KEY);
-
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(ACTIVE_KEY);
-    localStorage.removeItem(FLOW_KEY);
-    localStorage.removeItem(METADATA_KEY);
+    accessControlStorageStores().forEach((storage) => {
+      [
+        STORAGE_KEY,
+        ACTIVE_KEY,
+        FLOW_KEY,
+        METADATA_KEY
+      ].forEach((key) => {
+        try {
+          storage.removeItem(key);
+        } catch {
+          // Keep reset non-blocking.
+        }
+      });
+    });
 
     return defaultLedger();
   }
