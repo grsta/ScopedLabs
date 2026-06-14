@@ -112,18 +112,6 @@
   </header>
 
   <main class="container page">
-    <div class="crumbs">
-      <a href="/tools/">Tools</a>
-      <span class="sep">/</span>
-      <a href="/tools/compute/">Compute</a>
-      <span class="sep">/</span>
-      <span>CPU Sizing</span>
-    </div>
-
-    <div class="pill-row" style="margin-top: 6px;">
-      <span class="pill pill--free">Free Tier</span>
-    </div>
-
     <h1>CPU Sizing Estimator</h1>
 
     <div id="pipeline"></div>
@@ -210,50 +198,25 @@
           Model: effective CPU demand is based on concurrency, per-worker utilization, workload factor, burst multiplier, and target utilization ceiling. This is a planning tool for capacity shaping, not a benchmark replacement.
         </p>
       </div>
-
       <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
-        <div class="pill-row">
-          <span class="pill pill--pro">Documentation & Export</span>
-        </div>
-
-        <h3 class="h3" style="margin-top: 10px;">Export Report</h3>
+        <h3 class="h3" style="margin-top: 0;">Export Report</h3>
         <p class="muted" style="margin-bottom: 0;">
           Add optional project context and generate a clean documentation view that can be printed or saved as a PDF for client or internal use.
         </p>
 
-        <div class="export-grid">
-          <label class="field">
-            <span class="label">Report Title</span>
-            <input id="reportTitle" type="text" placeholder="CPU Sizing Assessment" />
-          </label>
-
-          <label class="field">
-            <span class="label">Project Name</span>
-            <input id="projectName" type="text" placeholder="Project Name" />
-          </label>
-
-          <label class="field">
-            <span class="label">Client Name</span>
-            <input id="clientName" type="text" placeholder="Client / Site Name" />
-          </label>
-
-          <label class="field">
-            <span class="label">Prepared By</span>
-            <input id="preparedBy" type="text" placeholder="ScopedLabs Pro User" />
-          </label>
-
-          <label class="field full">
-            <span class="label">Custom Notes</span>
-            <textarea id="customNotes" placeholder="Optional notes, assumptions, workload details, or design caveats to include in the report."></textarea>
-          </label>
-        </div>
+        <div
+          id="reportMetadataMount"
+          data-report-metadata
+          data-report-title="Report Details"
+          data-report-copy="Optional project context and notes can be included in the generated report. Leave blank to use defaults."
+          data-report-fields="reportTitle,projectName,clientName,preparedBy,customNotes"
+        ></div>
 
         <div class="btn-row" style="margin-top: 14px;">
           <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Export Report</button>
           <button id="saveSnapshot" class="btn" type="button" disabled>Save Snapshot</button>
         </div>
-
-        <div id="exportStatus" class="export-status"></div>
+        <p id="exportStatus" class="muted" style="margin-top:10px;"></p>
       </section>
 
       <div class="btn-row" style="margin-top: 14px;">
@@ -315,6 +278,8 @@
     };
   </script>
   <script src="/assets/export.js?v=shared-export-025-tool-notes-column-widths"></script>
+  <script defer src="/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-005-access-control-scope-context"></script>
+  <script defer src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-001"></script>
   <script src="./script.js?v=compute-export-001"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
