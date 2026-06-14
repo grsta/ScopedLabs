@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-category-planner-shell-001";
+  var VERSION = "scopedlabs-category-planner-shell-002-muted-leds";
 
   function escapeHtml(value) {
     return String(value == null ? "" : value)
@@ -32,10 +32,10 @@
       ".access-scope-section-title{color:rgba(120,255,120,.86);font-size:.78rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px}",
       ".access-scope-flow-line{display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:rgba(246,255,248,.9);line-height:1.45}",
       ".access-scope-flow-line--ledger{justify-content:space-between;gap:14px;margin-bottom:10px}",
-      ".access-scope-flow-arrow{color:rgba(120,255,120,.74);font-weight:900}",
+      ".access-scope-flow-arrow{color:rgba(246,255,248,.28);font-weight:900}",
       ".access-scope-flow-step{display:inline-flex;align-items:center;gap:7px}",
-      ".access-scope-flow-dot{width:9px;height:9px;border-radius:999px;border:1px solid rgba(120,255,120,.44);background:rgba(120,255,120,.18);box-shadow:0 0 10px rgba(120,255,120,.12)}",
-      ".access-scope-flow-dot.is-active{background:#62ff8d;box-shadow:0 0 14px rgba(98,255,141,.55)}",
+      ".access-scope-flow-dot{width:9px;height:9px;border-radius:999px;border:1px solid rgba(246,255,248,.24);background:rgba(246,255,248,.10);box-shadow:none}",
+      ".access-scope-flow-dot.is-active{border-color:rgba(98,255,141,.9);background:#62ff8d;box-shadow:0 0 14px rgba(98,255,141,.55)}",
       ".access-scope-ledger-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}",
       ".access-scope-card{border:1px solid rgba(120,255,120,.16);background:rgba(0,0,0,.16);border-radius:14px;padding:14px}",
       ".access-scope-card.is-active{border-color:rgba(120,255,120,.52);box-shadow:0 0 0 1px rgba(120,255,120,.1) inset}",
