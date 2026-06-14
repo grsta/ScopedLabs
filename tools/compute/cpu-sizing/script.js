@@ -33,6 +33,7 @@
     results: $("results"),
     flowNote: $("flow-note"),
     workloadContextCard: $("computeWorkloadContextCard"),
+    workloadContextTitle: $("computeWorkloadContextTitle"),
     workloadContextCopy: $("computeWorkloadContextCopy"),
     workloadContextMeta: $("computeWorkloadContextMeta"),
     analysisCopy: $("analysis-copy"),
@@ -153,41 +154,47 @@
   }
 
   function renderWorkloadContext() {
+    if (State && typeof State.renderWorkloadDisplay === "function") {
+      return State.renderWorkloadDisplay({
+        card: els.workloadContextCard,
+        title: els.workloadContextTitle,
+        description: els.workloadContextCopy,
+        meta: els.workloadContextMeta,
+        toolLabel: "CPU Sizing"
+      });
+    }
+
     const workload = activeComputeWorkload();
 
-    if (!els.workloadContextCopy || !els.workloadContextMeta) return;
+    if (!els.workloadContextCard || !els.workloadContextTitle || !els.workloadContextCopy || !els.workloadContextMeta) return null;
+
+    els.workloadContextCard.hidden = false;
 
     if (!workload) {
+      els.workloadContextTitle.textContent = "No active Compute workload selected";
       els.workloadContextCopy.textContent =
-        "No active Compute workload selected. Results can still be calculated, but they will not be attached to a workload until one is selected in Workload Planner.";
-      els.workloadContextMeta.hidden = true;
-      els.workloadContextMeta.innerHTML = "";
-      return;
+        "Open or create a Compute workload before using this tool so the result can be tied to the right workload plan.";
+      els.workloadContextMeta.innerHTML = [
+        '<div><strong>Workload Source</strong><span>No Workload Planner context detected</span></div>',
+        '<div><strong>Result Save</strong><span>Tool result will not be tied to a workload yet.</span></div>'
+      ].join("");
+      return null;
     }
 
-    const branches = [];
-
-    if (workload.branches) {
-      if (workload.branches.vmDensity) branches.push("VM Density");
-      if (workload.branches.storageHeavy) branches.push("Storage");
-      if (workload.branches.gpu) branches.push("GPU");
-      if (workload.branches.powerThermal) branches.push("Power / Thermal");
-      if (workload.branches.raid) branches.push("RAID");
-      if (workload.branches.backup) branches.push("Backup");
-      if (workload.branches.nicBonding) branches.push("NIC Bonding");
-    }
-
+    els.workloadContextTitle.textContent = workload.name || "Active Compute Workload";
     els.workloadContextCopy.textContent =
-      (workload.name || "Compute Workload") + " is active. CPU results from this run will save back to the Compute workload plan.";
+      cpuContextTitleCase(workload.environmentType) + " | " +
+      cpuContextTitleCase(workload.workloadType) + " | " +
+      cpuContextTitleCase(workload.planningPath);
 
-    els.workloadContextMeta.hidden = false;
     els.workloadContextMeta.innerHTML = [
-      '<div class="access-scope-meta-item"><small>Workload</small>' + cpuContextEscapeHtml(workload.name || "Compute Workload") + '</div>',
-      '<div class="access-scope-meta-item"><small>Environment</small>' + cpuContextEscapeHtml(cpuContextTitleCase(workload.environmentType)) + '</div>',
-      '<div class="access-scope-meta-item"><small>Path</small>' + cpuContextEscapeHtml(cpuContextTitleCase(workload.planningPath)) + '</div>',
-      '<div class="access-scope-meta-item"><small>Criticality</small>' + cpuContextEscapeHtml(cpuContextTitleCase(workload.criticality)) + '</div>',
-      '<div class="access-scope-meta-item"><small>Branches</small>' + cpuContextEscapeHtml(branches.length ? branches.join(", ") : "None") + '</div>'
+      '<div><strong>Environment</strong><span>' + cpuContextEscapeHtml(cpuContextTitleCase(workload.environmentType)) + '</span></div>',
+      '<div><strong>Workload Type</strong><span>' + cpuContextEscapeHtml(cpuContextTitleCase(workload.workloadType)) + '</span></div>',
+      '<div><strong>Path</strong><span>' + cpuContextEscapeHtml(cpuContextTitleCase(workload.planningPath)) + '</span></div>',
+      '<div><strong>Status</strong><span>' + cpuContextEscapeHtml(cpuContextTitleCase(workload.status || workload.summaryStatus || "Planning")) + '</span></div>'
     ].join("");
+
+    return workload;
   }
 
   function saveCpuResultToWorkload(payload) {

@@ -232,8 +232,153 @@
     return defaultPlan();
   }
 
+
+  // compute-workload-display-renderer-0614b
+  function workloadDisplayEscapeHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function workloadDisplayTitleCase(value) {
+    return String(value || "N/A")
+      .replace(/[-_]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(/\b\w/g, function (letter) {
+        return letter.toUpperCase();
+      }) || "N/A";
+  }
+
+  function ensureWorkloadDisplayStyles() {
+    if (typeof document === "undefined" || document.getElementById("compute-workload-display-styles")) return;
+
+    var style = document.createElement("style");
+    style.id = "compute-workload-display-styles";
+    style.textContent = [
+      ".access-scope-context-card.compute-workload-context-card{border-color:rgba(125,255,152,.22)!important;background:rgba(125,255,152,.035)!important}",
+      ".access-scope-context-line{color:rgba(190,255,205,.9);font-size:.72rem;font-weight:950;letter-spacing:.08em;margin-bottom:8px;text-transform:uppercase}",
+      ".access-scope-context-line .arrow{color:rgba(125,255,152,.78);padding:0 5px}",
+      ".access-scope-context-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}",
+      ".access-scope-context-grid div{border:1px solid rgba(148,163,184,.12);border-radius:10px;background:rgba(0,0,0,.12);padding:8px;color:rgba(226,232,240,.82);font-size:.82rem}",
+      ".access-scope-context-grid strong{display:block;color:rgba(203,213,225,.62);font-size:.62rem;letter-spacing:.12em;margin-bottom:4px;text-transform:uppercase}",
+      ".access-scope-context-grid span{display:block;color:rgba(226,232,240,.86)}",
+      "@media (max-width:860px){.access-scope-context-grid{grid-template-columns:1fr}}"
+    ].join("\n");
+
+    document.head.appendChild(style);
+  }
+
+  function buildWorkloadDisplayContext(toolLabel) {
+    toolLabel = toolLabel || "Compute Tool";
+
+    var plan = load();
+    var workload = activeWorkload(plan);
+
+    if (!workload) {
+      return {
+        hasActiveWorkload: false,
+        title: "No active Compute workload selected",
+        lineTarget: toolLabel,
+        description: "Open or create a Compute workload before using this tool so the result can be tied to the right workload plan.",
+        rows: [
+          ["Workload Source", "No Workload Planner context detected"],
+          ["Result Save", "Tool result will not be tied to a workload yet."]
+        ],
+        reportRows: [
+          { label: "Active Workload", value: "No active Compute workload selected" },
+          { label: "Workload Source", value: "No Workload Planner context detected" }
+        ],
+        raw: null
+      };
+    }
+
+    var branches = [];
+    var branchMap = workload.branches || {};
+
+    if (branchMap.vmDensity) branches.push("VM Density");
+    if (branchMap.storageHeavy) branches.push("Storage");
+    if (branchMap.gpu) branches.push("GPU");
+    if (branchMap.powerThermal) branches.push("Power / Thermal");
+    if (branchMap.raid) branches.push("RAID");
+    if (branchMap.backup) branches.push("Backup");
+    if (branchMap.nicBonding) branches.push("NIC Bonding");
+
+    var environment = workloadDisplayTitleCase(workload.environmentType);
+    var workloadType = workloadDisplayTitleCase(workload.workloadType);
+    var demand = workloadDisplayTitleCase(workload.demandPattern || workload.demandProfile);
+    var status = workloadDisplayTitleCase(workload.status || workload.summaryStatus || "Planning");
+    var path = workloadDisplayTitleCase(workload.planningPath);
+    var targetUtilization = workload.targetUtilization ? String(workload.targetUtilization) + "%" : "N/A";
+    var growthMargin = workload.growthMargin ? String(workload.growthMargin) + "%" : "N/A";
+    var branchText = branches.length ? branches.join(", ") : "None";
+
+    return {
+      hasActiveWorkload: true,
+      title: workload.name || "Active Compute Workload",
+      lineTarget: toolLabel,
+      description: environment + " | " + workloadType + " | " + path,
+      rows: [
+        ["Environment", environment],
+        ["Workload Type", workloadType],
+        ["Demand", demand],
+        ["Status", status],
+        ["Path", path],
+        ["Target Utilization", targetUtilization],
+        ["Growth Margin", growthMargin],
+        ["Branches", branchText]
+      ],
+      reportRows: [
+        { label: "Active Workload", value: workload.name || "Active Compute Workload" },
+        { label: "Environment", value: environment },
+        { label: "Workload Type", value: workloadType },
+        { label: "Demand", value: demand },
+        { label: "Status", value: status },
+        { label: "Path", value: path },
+        { label: "Target Utilization", value: targetUtilization },
+        { label: "Growth Margin", value: growthMargin },
+        { label: "Branches", value: branchText }
+      ],
+      raw: workload
+    };
+  }
+
+  function renderWorkloadDisplay(config) {
+    config = config || {};
+    if (typeof document === "undefined") return null;
+
+    ensureWorkloadDisplayStyles();
+
+    var card = typeof config.card === "string" ? document.getElementById(config.card) : config.card;
+    var titleEl = typeof config.title === "string" ? document.getElementById(config.title) : config.title;
+    var descriptionEl = typeof config.description === "string" ? document.getElementById(config.description) : config.description;
+    var metaEl = typeof config.meta === "string" ? document.getElementById(config.meta) : config.meta;
+    var toolLabel = config.toolLabel || "Compute Tool";
+
+    var context = buildWorkloadDisplayContext(toolLabel);
+
+    if (card) {
+      card.hidden = false;
+      card.dataset.workloadStatus = context.hasActiveWorkload ? "active" : "missing";
+    }
+
+    if (titleEl) titleEl.textContent = context.title;
+    if (descriptionEl) descriptionEl.textContent = context.description;
+
+    if (metaEl) {
+      metaEl.innerHTML = context.rows.map(function (row) {
+        return "<div><strong>" + workloadDisplayEscapeHtml(row[0]) + "</strong><span>" + workloadDisplayEscapeHtml(row[1]) + "</span></div>";
+      }).join("");
+    }
+
+    return context;
+  }
+
+
   window.ScopedLabsComputePlanState = Object.freeze({
-    version: "scopedlabs-compute-plan-state-002-tool-results",
+    version: "scopedlabs-compute-plan-state-003-workload-display",
     contract: CONTRACT,
     keys: Object.freeze({
       plan: PLAN_KEY,
@@ -248,6 +393,9 @@
     writeContext: writeContext,
     writeBranchSeeds: writeBranchSeeds,
     recordToolResult: recordToolResult,
+    ensureWorkloadDisplayStyles: ensureWorkloadDisplayStyles,
+    buildWorkloadDisplayContext: buildWorkloadDisplayContext,
+    renderWorkloadDisplay: renderWorkloadDisplay,
     reset: reset
   });
 })();
