@@ -1,18 +1,39 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-report-metadata-005-access-control-scope-context";
+  const VERSION = "scopedlabs-report-metadata-006-access-control-render-repair";
   const SHARED_STORAGE_KEY = "scopedlabs:report-metadata:shared:v1";
   const PAGE_STORAGE_PREFIX = "scopedlabs:report-metadata:page:";
   const SHARED_FIELDS = ["reportTitle", "projectName", "clientName", "preparedBy"];
   const PAGE_FIELDS = ["reportTitle", "projectName", "clientName", "preparedBy", "customNotes"];
   const PAGE_ONLY_FIELDS = ["customNotes"];
+  const DEFAULT_FIELDS = PAGE_FIELDS.slice();
 
   const FIELD_DEFS = {
-    reportTitle: { id: "reportTitle", label: "Report Title", type: "text", placeholder: "Camera Spacing Planner Assessment" },
-    projectName: { id: "projectName", label: "Project Name", type: "text", placeholder: "Project Name" },
-    clientName: { id: "clientName", label: "Client Name", type: "text", placeholder: "Client / Site Name" },
-    preparedBy: { id: "preparedBy", label: "Prepared By", type: "text", placeholder: "Name or Team" },
+    reportTitle: {
+      id: "reportTitle",
+      label: "Report Title",
+      type: "text",
+      placeholder: "Access Control Scope Assessment"
+    },
+    projectName: {
+      id: "projectName",
+      label: "Project Name",
+      type: "text",
+      placeholder: "Project Name"
+    },
+    clientName: {
+      id: "clientName",
+      label: "Client Name",
+      type: "text",
+      placeholder: "Client / Site Name"
+    },
+    preparedBy: {
+      id: "preparedBy",
+      label: "Prepared By",
+      type: "text",
+      placeholder: "Name or Team"
+    },
     customNotes: {
       id: "customNotes",
       label: "Custom Notes",
@@ -22,14 +43,26 @@
     }
   };
 
-  const DEFAULT_FIELDS = ["reportTitle", "projectName", "clientName", "preparedBy", "customNotes"];
-
   function escapeHtml(value) {
-    return String(value ?? "")
+    return String(value == null ? "" : value)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
+  }
+
+  function storageStores() {
+    const stores = [];
+
+    try {
+      if (window.sessionStorage) stores.push(window.sessionStorage);
+    } catch {}
+
+    try {
+      if (window.localStorage) stores.push(window.localStorage);
+    } catch {}
+
+    return stores;
   }
 
   function storageAvailable() {
@@ -43,8 +76,62 @@
     }
   }
 
+  function safeParse(value) {
+    if (!value) return {};
+
+    try {
+      const parsed = JSON.parse(value);
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
   function normalizedPagePath() {
-    return String(window.location?.pathname || "").replace(/\/+$/, "/") || "/";
+    return String(window.location && window.location.pathname || "").replace(/\/+$/, "/") || "/";
+  }
+
+  function readBrowserStore(key) {
+    for (const storage of storageStores()) {
+      try {
+        const parsed = safeParse(storage.getItem(key));
+        if (parsed && Object.keys(parsed).length) return parsed;
+      } catch {}
+    }
+
+    return {};
+  }
+
+  function readBrowserText(key) {
+    for (const storage of storageStores()) {
+      try {
+        const value = storage.getItem(key);
+        if (value) return value;
+      } catch {}
+    }
+
+    return "";
+  }
+
+  function loadStored(key) {
+    if (!storageAvailable()) return {};
+
+    try {
+      return safeParse(window.localStorage.getItem(key));
+    } catch {
+      return {};
+    }
+  }
+
+  function saveStored(key, value) {
+    if (!storageAvailable()) return;
+
+    try {
+      window.localStorage.setItem(key, JSON.stringify({
+        ...value,
+        updatedAt: new Date().toISOString()
+      }));
+    } catch {}
   }
 
   function physicalSecurityToolSlug(pagePath = normalizedPagePath()) {
@@ -55,32 +142,6 @@
   function shouldScopeNotesToActiveArea(pagePath = normalizedPagePath()) {
     const slug = physicalSecurityToolSlug(pagePath);
     return !!slug && slug !== "summary" && slug !== "area-planner";
-  }
-
-  function safeParse(value) {
-    if (!value) return {};
-    try {
-      const parsed = JSON.parse(value);
-      return parsed && typeof parsed === "object" ? parsed : {};
-    } catch {
-      return {};
-    }
-  }
-
-  function readBrowserStore(key) {
-    try {
-      return safeParse(window.sessionStorage.getItem(key)) || safeParse(window.localStorage.getItem(key));
-    } catch {
-      return {};
-    }
-  }
-
-  function readBrowserText(key) {
-    try {
-      return window.sessionStorage.getItem(key) || window.localStorage.getItem(key) || "";
-    } catch {
-      return "";
-    }
   }
 
   function normalizeAreaContext(area) {
@@ -114,22 +175,102 @@
         const active = normalizeAreaContext(api.getActiveArea());
         if (active) return active;
       }
-    } catch {
-      // Fall back to persisted area ledger below.
-    }
+    } catch {}
 
     const ledger = readBrowserStore("scopedlabs:pipeline:physical-security:areas");
     const areas = Array.isArray(ledger.areas) ? ledger.areas : [];
-    const activeId =
-      String(ledger.activeAreaId || "").trim() ||
+    const activeId = String(ledger.activeAreaId || "").trim() ||
       String(readBrowserText("scopedlabs:pipeline:physical-security:active-area") || "").trim();
 
-    const active =
-      areas.find((area) => String(area && area.id) === activeId) ||
-      areas[0] ||
-      null;
+    const active = areas.find((area) => String(area && area.id) === activeId) || areas[0] || null;
 
     return normalizeAreaContext(active);
+  }
+
+  function isAccessControlMetadataPage(pagePath = normalizedPagePath()) {
+    return /\/tools\/access-control\//i.test(String(pagePath || "")) ||
+      String(document.body && document.body.dataset && document.body.dataset.category || "").toLowerCase() === "access-control";
+  }
+
+  function readAccessControlScopeLedger() {
+    try {
+      const api = window.ScopedLabsAccessControlScopeState;
+      if (api && typeof api.readLedger === "function") {
+        const ledger = api.readLedger();
+        if (ledger && Array.isArray(ledger.scopes)) return ledger;
+      }
+    } catch {}
+
+    const parsed = readBrowserStore("scopedlabs:pipeline:access-control:scopes");
+
+    return parsed && Array.isArray(parsed.scopes)
+      ? parsed
+      : { activeScopeId: null, scopes: [] };
+  }
+
+  function accessControlSelectedScopeId(ledger) {
+    const scopes = Array.isArray(ledger && ledger.scopes) ? ledger.scopes : [];
+    const ids = new Set(scopes.map((scope) => String(scope && scope.id || "").trim()).filter(Boolean));
+
+    const keys = [
+      "scopedlabs:access-control:summary:report-scope-mode",
+      "scopedlabs:access-control:summary:selected-scope-id",
+      "scopedlabs:pipeline:access-control:active-scope"
+    ];
+
+    for (const key of keys) {
+      const value = String(readBrowserText(key) || "").trim();
+      if (value && value !== "__all__" && ids.has(value)) return value;
+    }
+
+    const activeScopeId = String((ledger && ledger.activeScopeId) || "").trim();
+
+    if (activeScopeId && ids.has(activeScopeId)) return activeScopeId;
+
+    return scopes[0] ? String(scopes[0].id || "").trim() : "";
+  }
+
+  function normalizeAccessControlScopeContext(scope) {
+    if (!scope || typeof scope !== "object") return null;
+
+    const accessControlScopeId = String(scope.id || scope.scopeId || "").trim();
+    const scopeName = String(scope.name || scope.scopeName || scope.label || scope.title || "").trim();
+    const scopeType = String(scope.scopeType || scope.type || "").trim();
+
+    if (!accessControlScopeId && !scopeName) return null;
+
+    const scopeLabel = scopeName
+      ? scopeName + (scopeType ? " (" + scopeType + ")" : "")
+      : accessControlScopeId;
+
+    return {
+      accessControlScopeId,
+      scopeId: accessControlScopeId,
+      scopeName: scopeName || accessControlScopeId || "Access Scope",
+      scopeType: scopeType || "Access Scope",
+      scopeLabel,
+      accessControlScoped: true
+    };
+  }
+
+  function currentAccessControlScopeContext() {
+    if (!isAccessControlMetadataPage()) return null;
+
+    const ledger = readAccessControlScopeLedger();
+    const scopes = Array.isArray(ledger && ledger.scopes) ? ledger.scopes : [];
+    const selectedId = accessControlSelectedScopeId(ledger);
+
+    const selected = scopes.find((scope) => String(scope && scope.id || "").trim() === selectedId) || null;
+
+    return normalizeAccessControlScopeContext(selected);
+  }
+
+  function currentMetadataContext() {
+    return currentAccessControlScopeContext() || currentAreaContext();
+  }
+
+  function isAccessControlMetadataBlocked() {
+    return isAccessControlMetadataPage() && !currentAccessControlScopeContext();
   }
 
   function legacyPageStorageKey() {
@@ -138,39 +279,110 @@
 
   function pageStorageKey() {
     const legacyKey = legacyPageStorageKey();
-    const accessScope = currentAccessControlScopeContext();
 
     if (isAccessControlMetadataPage()) {
-      if (!accessScope || !accessScope.accessControlScopeId) {
+      const scope = currentAccessControlScopeContext();
+
+      if (!scope || !scope.accessControlScopeId) {
         return legacyKey + "#access-scope:none";
       }
 
-      return legacyKey + "#access-scope:" + encodeURIComponent(accessScope.accessControlScopeId);
+      return legacyKey + "#access-scope:" + encodeURIComponent(scope.accessControlScopeId);
     }
 
-    const scope = currentAreaContext();
+    const area = currentAreaContext();
 
-    if (!scope || !scope.areaId) return legacyKey;
+    if (!area || !area.areaId) return legacyKey;
 
-    return legacyKey + "#area:" + encodeURIComponent(scope.areaId);
+    return legacyKey + "#area:" + encodeURIComponent(area.areaId);
   }
 
-  function loadStored(key) {
-    if (!storageAvailable()) return {};
-    try {
-      return safeParse(window.localStorage.getItem(key));
-    } catch {
-      return {};
-    }
+  function getControl(root, field) {
+    const def = FIELD_DEFS[field];
+    return def && def.id ? root.querySelector("#" + def.id) : null;
   }
 
-  function saveStored(key, value) {
-    if (!storageAvailable()) return;
-    try {
-      window.localStorage.setItem(key, JSON.stringify({ ...value, updatedAt: new Date().toISOString() }));
-    } catch {
-      // Keep export usable even when browser storage is blocked.
+  function currentValues(root = document) {
+    const values = {};
+
+    PAGE_FIELDS.forEach((field) => {
+      values[field] = String(getControl(root, field)?.value || "").trim();
+    });
+
+    return values;
+  }
+
+  function saveCurrent(root = document) {
+    const values = currentValues(root);
+    const scope = currentMetadataContext();
+    const accessControlPage = isAccessControlMetadataPage();
+
+    if (accessControlPage && !scope) {
+      document.dispatchEvent(new CustomEvent("scopedlabs:report-metadata-saved", {
+        detail: {
+          version: VERSION,
+          values: {},
+          scope: null,
+          accessControlBlocked: true,
+          sharedFields: SHARED_FIELDS.slice(),
+          pageOnlyFields: PAGE_ONLY_FIELDS.slice()
+        }
+      }));
+      return;
     }
+
+    const key = pageStorageKey();
+    const pageData = {
+      ...loadStored(key),
+      sourcePath: normalizedPagePath(),
+      areaScoped: !!(scope && scope.areaScoped),
+      accessControlScoped: !!(scope && scope.accessControlScoped)
+    };
+
+    if (scope && scope.areaScoped) {
+      pageData.areaId = scope.areaId || "";
+      pageData.areaName = scope.areaName || "";
+      pageData.areaType = scope.areaType || "";
+      pageData.scopeLabel = scope.scopeLabel || "";
+    }
+
+    if (scope && scope.accessControlScoped) {
+      pageData.accessControlScopeId = scope.accessControlScopeId || "";
+      pageData.scopeId = scope.scopeId || scope.accessControlScopeId || "";
+      pageData.scopeName = scope.scopeName || "";
+      pageData.scopeType = scope.scopeType || "";
+      pageData.scopeLabel = scope.scopeLabel || "";
+    }
+
+    PAGE_FIELDS.forEach((field) => {
+      pageData[field] = values[field] || "";
+    });
+
+    saveStored(key, pageData);
+
+    if (!accessControlPage) {
+      const sharedData = {
+        ...loadStored(SHARED_STORAGE_KEY),
+        sourcePath: normalizedPagePath()
+      };
+
+      SHARED_FIELDS.forEach((field) => {
+        sharedData[field] = values[field] || "";
+      });
+
+      saveStored(SHARED_STORAGE_KEY, sharedData);
+    }
+
+    document.dispatchEvent(new CustomEvent("scopedlabs:report-metadata-saved", {
+      detail: {
+        version: VERSION,
+        values,
+        scope,
+        accessControlScoped: !!(scope && scope.accessControlScoped),
+        sharedFields: SHARED_FIELDS.slice(),
+        pageOnlyFields: PAGE_ONLY_FIELDS.slice()
+      }
+    }));
   }
 
   function loadPageData() {
@@ -210,89 +422,6 @@
       accessControlScoped: false,
       accessControlBlocked: false
     };
-  }
-
-  function getControl(root, field) {
-    const def = FIELD_DEFS[field];
-    return def?.id ? root.querySelector("#" + def.id) : null;
-  }
-
-  function currentValues(root = document) {
-    const values = {};
-    PAGE_FIELDS.forEach((field) => {
-      values[field] = String(getControl(root, field)?.value || "").trim();
-    });
-    return values;
-  }
-
-  function saveCurrent(root = document) {
-    const values = currentValues(root);
-    const scope = currentMetadataContext();
-    const accessControlPage = isAccessControlMetadataPage();
-
-    if (accessControlPage && !scope) {
-      document.dispatchEvent(new CustomEvent("scopedlabs:report-metadata-saved", {
-        detail: {
-          version: VERSION,
-          values: {},
-          scope: null,
-          accessControlBlocked: true,
-          sharedFields: SHARED_FIELDS.slice(),
-          pageOnlyFields: PAGE_ONLY_FIELDS.slice()
-        }
-      }));
-      return;
-    }
-
-    const key = pageStorageKey();
-    const pageData = {
-      ...loadStored(key),
-      sourcePath: normalizedPagePath(),
-      areaScoped: !!(scope && scope.areaScoped),
-      accessControlScoped: !!(scope && scope.accessControlScoped)
-    };
-
-    const sharedData = { ...loadStored(SHARED_STORAGE_KEY), sourcePath: normalizedPagePath() };
-
-    if (scope && scope.areaScoped) {
-      pageData.areaId = scope.areaId || "";
-      pageData.areaName = scope.areaName || "";
-      pageData.areaType = scope.areaType || "";
-      pageData.scopeLabel = scope.scopeLabel || "";
-    }
-
-    if (scope && scope.accessControlScoped) {
-      pageData.accessControlScopeId = scope.accessControlScopeId || "";
-      pageData.scopeId = scope.scopeId || scope.accessControlScopeId || "";
-      pageData.scopeName = scope.scopeName || "";
-      pageData.scopeType = scope.scopeType || "";
-      pageData.scopeLabel = scope.scopeLabel || "";
-    }
-
-    PAGE_FIELDS.forEach((field) => {
-      pageData[field] = values[field] || "";
-    });
-
-    if (!accessControlPage) {
-      SHARED_FIELDS.forEach((field) => {
-        sharedData[field] = values[field] || "";
-      });
-
-      saveStored(SHARED_STORAGE_KEY, sharedData);
-    }
-
-    saveStored(key, pageData);
-
-    document.dispatchEvent(new CustomEvent("scopedlabs:report-metadata-saved", {
-      detail: {
-        version: VERSION,
-        values,
-        scope,
-        accessControlScoped: !!(scope && scope.accessControlScoped),
-        sharedFields: SHARED_FIELDS.slice(),
-        pageOnlyFields: PAGE_ONLY_FIELDS.slice()
-      }
-    }));
   }
 
   function hydrateControls(root = document) {
@@ -346,7 +475,9 @@
     PAGE_FIELDS.forEach((field) => {
       const control = getControl(root, field);
       if (!control || control.dataset.scopedlabsReportMetadataPersistBound === "true") return;
+
       control.dataset.scopedlabsReportMetadataPersistBound = "true";
+
       control.addEventListener("input", () => saveCurrent(root));
       control.addEventListener("change", () => saveCurrent(root));
     });
@@ -382,7 +513,11 @@
   }
 
   function fieldHtml(key, overrides = {}) {
-    const def = { ...(FIELD_DEFS[key] || {}), ...(overrides[key] || {}) };
+    const def = {
+      ...(FIELD_DEFS[key] || {}),
+      ...(overrides[key] || {})
+    };
+
     if (!def.id || !def.label) return "";
 
     const fullClass = def.full || def.type === "textarea" ? " full" : "";
@@ -390,17 +525,17 @@
 
     if (def.type === "textarea") {
       return "" +
-        '<label class="field' + fullClass + '">' +
-          '<span class="label">' + escapeHtml(def.label) + '</span>' +
-          '<textarea id="' + escapeHtml(def.id) + '" placeholder="' + placeholder + '"></textarea>' +
-        '</label>';
+        "<label class=\"field" + fullClass + "\">" +
+          "<span>" + escapeHtml(def.label) + "</span>" +
+          "<textarea id=\"" + escapeHtml(def.id) + "\" placeholder=\"" + placeholder + "\"></textarea>" +
+        "</label>";
     }
 
     return "" +
-      '<label class="field' + fullClass + '">' +
-        '<span class="label">' + escapeHtml(def.label) + '</span>' +
-        '<input id="' + escapeHtml(def.id) + '" type="' + escapeHtml(def.type || "text") + '" placeholder="' + placeholder + '" />' +
-      '</label>';
+      "<label class=\"field" + fullClass + "\">" +
+        "<span>" + escapeHtml(def.label) + "</span>" +
+        "<input id=\"" + escapeHtml(def.id) + "\" type=\"" + escapeHtml(def.type || "text") + "\" placeholder=\"" + placeholder + "\">" +
+      "</label>";
   }
 
   function renderMount(mount, options = {}) {
@@ -417,14 +552,15 @@
     const details = document.createElement("details");
     details.className = "sl-report-meta";
     details.dataset.reportMetadataRendered = "true";
+
     if (!collapsed) details.open = true;
 
     details.innerHTML = "" +
-      '<summary>' + escapeHtml(title) + '</summary>' +
-      '<p class="sl-report-meta-copy">' + escapeHtml(copy) + '</p>' +
-      '<div class="sl-report-meta-grid">' +
+      "<summary>" + escapeHtml(title) + "</summary>" +
+      "<p class=\"sl-report-meta-copy\">" + escapeHtml(copy) + "</p>" +
+      "<div class=\"sl-report-meta-grid\">" +
         fields.map((field) => fieldHtml(field, overrides)).join("") +
-      '</div>';
+      "</div>";
 
     mount.innerHTML = "";
     mount.appendChild(details);
@@ -449,6 +585,7 @@
 
   function init(root = document) {
     const mounts = Array.from(root.querySelectorAll("[data-report-metadata]"));
+
     mounts.forEach((mount) => {
       if (mount.dataset.reportMetadataReady === "true") return;
       renderMount(mount);
@@ -461,7 +598,6 @@
   function read(root = document) {
     return currentValues(root);
   }
-
 
   function rehydrateOnMetadataContextChange() {
     hydrateControls(document);
@@ -497,10 +633,8 @@
   }
 })();
 
-/* data-scopedlabs-report-metadata-title-defaults-v002
+/* data-scopedlabs-report-metadata-title-defaults-v003
    Keeps compact report metadata defaults scoped to the current tool.
-   This is intentionally presentation-only: it does not change export, snapshot,
-   analyzer, pipeline, auth, checkout, or calculation behavior.
 */
 (function () {
   function currentToolAssessmentTitle() {
