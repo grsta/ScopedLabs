@@ -5,7 +5,7 @@
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-scope-state-002-shared-display";
+  const API_VERSION = "access-control-scope-state-003-report-metadata-cleanup";
   const STORAGE_KEY = "scopedlabs:pipeline:access-control:scopes";
   const ACTIVE_KEY = "scopedlabs:pipeline:access-control:active-scope";
   const FLOW_KEY = "scopedlabs:pipeline:access-control:scope-planner";
@@ -253,6 +253,8 @@
   }
 
   function removeScope(scopeId) {
+    removeAccessControlReportMetadataForScope(scopeId);
+
     const ledger = readLedger();
     ledger.scopes = ledger.scopes.filter((scope) => scope.id !== scopeId);
     if (ledger.activeScopeId === scopeId) ledger.activeScopeId = ledger.scopes[0]?.id || null;
@@ -445,6 +447,7 @@
   }
 
   function clearAll() {
+    removeAllAccessControlReportMetadata();
     sessionStorage.removeItem(STORAGE_KEY);
     sessionStorage.removeItem(ACTIVE_KEY);
     sessionStorage.removeItem(FLOW_KEY);

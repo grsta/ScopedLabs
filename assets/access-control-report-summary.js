@@ -299,6 +299,12 @@
       } catch (_) {}
 
       refreshExportSection();
+
+      try {
+        window.dispatchEvent(new CustomEvent("scopedlabs:access-control-report-scope-changed", {
+          detail: { scopeId: select.value || "" }
+        }));
+      } catch (_) {}
     }, true);
 
     document.addEventListener("click", function (event) {

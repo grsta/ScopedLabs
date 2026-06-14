@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-report-metadata-004-area-context-notes";
+  const VERSION = "scopedlabs-report-metadata-005-access-control-scope-context";
   const SHARED_STORAGE_KEY = "scopedlabs:report-metadata:shared:v1";
   const PAGE_STORAGE_PREFIX = "scopedlabs:report-metadata:page:";
   const SHARED_FIELDS = ["reportTitle", "projectName", "clientName", "preparedBy"];
@@ -138,6 +138,16 @@
 
   function pageStorageKey() {
     const legacyKey = legacyPageStorageKey();
+    const accessScope = currentAccessControlScopeContext();
+
+    if (isAccessControlMetadataPage()) {
+      if (!accessScope || !accessScope.accessControlScopeId) {
+        return legacyKey + "#access-scope:none";
+      }
+
+      return legacyKey + "#access-scope:" + encodeURIComponent(accessScope.accessControlScopeId);
+    }
+
     const scope = currentAreaContext();
 
     if (!scope || !scope.areaId) return legacyKey;
@@ -167,11 +177,38 @@
     const scopedKey = pageStorageKey();
     const legacyKey = legacyPageStorageKey();
 
+    if (isAccessControlMetadataPage()) {
+      if (isAccessControlMetadataBlocked()) {
+        return {
+          scopedKey,
+          legacyKey,
+          scoped: {},
+          legacy: {},
+          shared: {},
+          accessControlScoped: true,
+          accessControlBlocked: true
+        };
+      }
+
+      return {
+        scopedKey,
+        legacyKey,
+        scoped: loadStored(scopedKey),
+        legacy: {},
+        shared: {},
+        accessControlScoped: true,
+        accessControlBlocked: false
+      };
+    }
+
     return {
       scopedKey,
       legacyKey,
       scoped: loadStored(scopedKey),
-      legacy: scopedKey === legacyKey ? {} : loadStored(legacyKey)
+      legacy: scopedKey === legacyKey ? {} : loadStored(legacyKey),
+      shared: loadStored(SHARED_STORAGE_KEY),
+      accessControlScoped: false,
+      accessControlBlocked: false
     };
   }
 
@@ -190,19 +227,45 @@
 
   function saveCurrent(root = document) {
     const values = currentValues(root);
-    const scope = currentAreaContext();
+    const scope = currentMetadataContext();
+    const accessControlPage = isAccessControlMetadataPage();
+
+    if (accessControlPage && !scope) {
+      document.dispatchEvent(new CustomEvent("scopedlabs:report-metadata-saved", {
+        detail: {
+          version: VERSION,
+          values: {},
+          scope: null,
+          accessControlBlocked: true,
+          sharedFields: SHARED_FIELDS.slice(),
+          pageOnlyFields: PAGE_ONLY_FIELDS.slice()
+        }
+      }));
+      return;
+    }
+
     const key = pageStorageKey();
     const pageData = {
       ...loadStored(key),
       sourcePath: normalizedPagePath(),
-      areaScoped: !!scope
+      areaScoped: !!(scope && scope.areaScoped),
+      accessControlScoped: !!(scope && scope.accessControlScoped)
     };
+
     const sharedData = { ...loadStored(SHARED_STORAGE_KEY), sourcePath: normalizedPagePath() };
 
-    if (scope) {
+    if (scope && scope.areaScoped) {
       pageData.areaId = scope.areaId || "";
       pageData.areaName = scope.areaName || "";
       pageData.areaType = scope.areaType || "";
+      pageData.scopeLabel = scope.scopeLabel || "";
+    }
+
+    if (scope && scope.accessControlScoped) {
+      pageData.accessControlScopeId = scope.accessControlScopeId || "";
+      pageData.scopeId = scope.scopeId || scope.accessControlScopeId || "";
+      pageData.scopeName = scope.scopeName || "";
+      pageData.scopeType = scope.scopeType || "";
       pageData.scopeLabel = scope.scopeLabel || "";
     }
 
@@ -210,18 +273,22 @@
       pageData[field] = values[field] || "";
     });
 
-    SHARED_FIELDS.forEach((field) => {
-      sharedData[field] = values[field] || "";
-    });
+    if (!accessControlPage) {
+      SHARED_FIELDS.forEach((field) => {
+        sharedData[field] = values[field] || "";
+      });
+
+      saveStored(SHARED_STORAGE_KEY, sharedData);
+    }
 
     saveStored(key, pageData);
-    saveStored(SHARED_STORAGE_KEY, sharedData);
 
     document.dispatchEvent(new CustomEvent("scopedlabs:report-metadata-saved", {
       detail: {
         version: VERSION,
         values,
         scope,
+        accessControlScoped: !!(scope && scope.accessControlScoped),
         sharedFields: SHARED_FIELDS.slice(),
         pageOnlyFields: PAGE_ONLY_FIELDS.slice()
       }
@@ -230,12 +297,25 @@
 
   function hydrateControls(root = document) {
     const pageData = loadPageData();
-    const sharedData = loadStored(SHARED_STORAGE_KEY);
+    const accessControlPage = isAccessControlMetadataPage();
+    const sharedData = accessControlPage ? {} : loadStored(SHARED_STORAGE_KEY);
     let hydrated = false;
 
     PAGE_FIELDS.forEach((field) => {
       const control = getControl(root, field);
       if (!control) return;
+
+      if (accessControlPage) {
+        const value = pageData.accessControlBlocked ? "" : (pageData.scoped[field] || "");
+
+        if (String(control.value || "") !== String(value || "")) {
+          control.value = value || "";
+          hydrated = true;
+        }
+
+        return;
+      }
+
       if (String(control.value || "").trim()) return;
 
       const scopedValue = pageData.scoped[field] || "";
@@ -253,7 +333,8 @@
       document.dispatchEvent(new CustomEvent("scopedlabs:report-metadata-hydrated", {
         detail: {
           version: VERSION,
-          scope: currentAreaContext(),
+          scope: currentMetadataContext(),
+          accessControlBlocked: !!pageData.accessControlBlocked,
           sharedFields: SHARED_FIELDS.slice(),
           pageOnlyFields: PAGE_ONLY_FIELDS.slice()
         }
@@ -357,7 +438,7 @@
         version: VERSION,
         mount,
         fields,
-        scope: currentAreaContext(),
+        scope: currentMetadataContext(),
         sharedFields: SHARED_FIELDS.slice(),
         pageOnlyFields: PAGE_ONLY_FIELDS.slice()
       }
@@ -381,6 +462,15 @@
     return currentValues(root);
   }
 
+
+  function rehydrateOnMetadataContextChange() {
+    hydrateControls(document);
+  }
+
+  window.addEventListener("scopedlabs:access-control-scope-updated", rehydrateOnMetadataContextChange);
+  window.addEventListener("scopedlabs:access-control-scope-view-changed", rehydrateOnMetadataContextChange);
+  window.addEventListener("scopedlabs:access-control-report-scope-changed", rehydrateOnMetadataContextChange);
+
   window.ScopedLabsReportMetadata = {
     version: VERSION,
     fields: FIELD_DEFS,
@@ -389,6 +479,8 @@
     sharedStorageKey: SHARED_STORAGE_KEY,
     pageStoragePrefix: PAGE_STORAGE_PREFIX,
     currentAreaContext,
+    currentAccessControlScopeContext,
+    currentMetadataContext,
     pageStorageKey,
     legacyPageStorageKey,
     init,
