@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-category-planner-shell-012-status-table-parity";
+  var VERSION = "scopedlabs-category-planner-shell-013-summary-cta-count-parity";
 
   function escapeHtml(value) {
     return String(value == null ? "" : value)
@@ -236,3 +236,47 @@
     escapeHtml: escapeHtml
   });
 })();
+
+;(function categoryPlannerSummaryCtaCountParity0614() {
+  var STYLE_ID = "sl-category-planner-summary-cta-count-parity-0614";
+
+  function installStyle() {
+    if (document.getElementById(STYLE_ID)) return;
+
+    var style = document.createElement("style");
+    style.id = STYLE_ID;
+    style.textContent = [
+      ".access-scope-summary-branch-count{color:rgba(196,255,214,.78)!important;font-size:.72rem!important;font-weight:800!important;letter-spacing:.045em!important;text-transform:uppercase!important;white-space:nowrap!important}",
+      ".access-scope-planner-flow-actions--inside-summary{margin-top:18px!important;padding-top:14px!important;border-top:1px solid rgba(120,255,120,.12)!important}"
+    ].join("\n");
+
+    document.head.appendChild(style);
+  }
+
+  function dockPlannerFlowActionsInSummaryCard() {
+    var card = document.getElementById("scopeSummaryCard");
+    var row = document.getElementById("accessScopePlannerFlowActions");
+
+    if (!card || !row) return;
+    if (row.parentElement === card) return;
+
+    row.classList.add("access-scope-planner-flow-actions--inside-summary");
+    card.appendChild(row);
+  }
+
+  function start() {
+    installStyle();
+    dockPlannerFlowActionsInSummaryCard();
+
+    window.setTimeout(dockPlannerFlowActionsInSummaryCard, 0);
+    window.setTimeout(dockPlannerFlowActionsInSummaryCard, 150);
+    window.setTimeout(dockPlannerFlowActionsInSummaryCard, 500);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", start, { once: true });
+  } else {
+    start();
+  }
+})();
+
