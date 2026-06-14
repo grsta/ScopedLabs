@@ -1071,7 +1071,19 @@
           <div id="scopeList" class="access-scope-ledger-grid"></div>
         </section>
 
-        <section id="scopeSummaryCard" class="card access-scope-summary-card" style="margin-top: 14px;" data-export-section="Access Control Scope Summary">
+        
+      <section class="card" id="accessControlScopeReportMetadataSection" data-access-control-scope-report-metadata="true">
+        <h2>Scope Report Metadata</h2>
+        <p class="muted">These report details save to the active Access Control scope. Switching scopes loads that scope's own metadata.</p>
+        <div
+          id="reportMetadataMount"
+          data-report-metadata
+          data-report-title="Report metadata"
+          data-report-copy="Optional report details for the active Access Control scope."
+          data-report-fields="reportTitle,projectName,clientName,preparedBy,customNotes"></div>
+      </section>
+
+<section id="scopeSummaryCard" class="card access-scope-summary-card" style="margin-top: 14px;" data-export-section="Access Control Scope Summary">
           <h2 class="h2 access-scope-section-title" style="margin-top: 10px;">Access Control scope and branch summary</h2>
           <p class="muted" style="margin-bottom: 0;">
             This rollup separates core door scopes from optional specialty branches, then summarizes active status, completed checks, saved assumptions, and next actions for the future Access Control summary.
@@ -1112,7 +1124,7 @@
   <script src="/assets/pipelines.js?v=access-control-specialty-pipeline-009-summary-core"></script>
   <script src="/assets/pipeline-state.js?v=access-scope-planner-001"></script>
   <script src="/assets/pipeline.js?v=access-control-specialty-pipeline-009-summary-core"></script>
-  <script src="/assets/access-control-scope-state.js?v=access-control-scope-state-001-area-pattern"></script>
+  <script src="/assets/access-control-scope-state.js?v=access-control-scope-state-004-report-metadata-delete-repair"></script>
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
   <script src="/assets/access-control-planning-visuals.js?v=access-control-planning-visuals-065-shared-visual-factory-quality"></script>
   <script src="./script.js?v=access-control-scope-planner-print-disclaimer-keep-028"></script>
@@ -1121,5 +1133,6 @@
   </script>
   <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>
   <!-- access-control-scope-planner-print-disclaimer-keep-028 -->
+  <script src="/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-005-access-control-scope-context"></script>
 </body>
 </html>

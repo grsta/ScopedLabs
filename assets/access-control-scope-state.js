@@ -5,7 +5,7 @@
 (function () {
   "use strict";
 
-  const API_VERSION = "access-control-scope-state-003-report-metadata-cleanup";
+  const API_VERSION = "access-control-scope-state-004-report-metadata-delete-repair";
   const STORAGE_KEY = "scopedlabs:pipeline:access-control:scopes";
   const ACTIVE_KEY = "scopedlabs:pipeline:access-control:active-scope";
   const FLOW_KEY = "scopedlabs:pipeline:access-control:scope-planner";
@@ -253,11 +253,20 @@
   }
 
   function removeScope(scopeId) {
-    removeAccessControlReportMetadataForScope(scopeId);
+    const cleanScopeId = String(scopeId || "").trim();
+
+    if (cleanScopeId) {
+      removeAccessControlReportMetadataForScope(cleanScopeId);
+    }
 
     const ledger = readLedger();
-    ledger.scopes = ledger.scopes.filter((scope) => scope.id !== scopeId);
-    if (ledger.activeScopeId === scopeId) ledger.activeScopeId = ledger.scopes[0]?.id || null;
+
+    ledger.scopes = ledger.scopes.filter((scope) => scope.id !== cleanScopeId);
+
+    if (ledger.activeScopeId === cleanScopeId) {
+      ledger.activeScopeId = ledger.scopes[0]?.id || null;
+    }
+
     return writeLedger(ledger);
   }
 
@@ -448,14 +457,17 @@
 
   function clearAll() {
     removeAllAccessControlReportMetadata();
+
     sessionStorage.removeItem(STORAGE_KEY);
     sessionStorage.removeItem(ACTIVE_KEY);
     sessionStorage.removeItem(FLOW_KEY);
     sessionStorage.removeItem(METADATA_KEY);
+
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(ACTIVE_KEY);
     localStorage.removeItem(FLOW_KEY);
     localStorage.removeItem(METADATA_KEY);
+
     return defaultLedger();
   }
 
