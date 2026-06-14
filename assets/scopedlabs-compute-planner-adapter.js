@@ -83,21 +83,21 @@
         {
           label: "FOUNDATION",
           copy: "Create or select the compute workload being planned.",
-          steps: [{ label: "Compute Workload Planner", active: true }]
+          steps: [{ label: "Compute Workload Planner", href: "/tools/compute/workload-planner/", active: true }]
         },
         {
           label: "CORE COMPUTE PIPELINE",
           copy: "Run this path for normal server, virtualization, or infrastructure sizing.",
           steps: [
-            { label: "CPU" }, { label: "RAM" }, { label: "Storage IOPS" }, { label: "Throughput" },
-            { label: "VM Density" }, { label: "Power / Thermal" }, { label: "RAID" }, { label: "Backup" }, { label: "Summary" }
+            { label: "CPU", href: "/tools/compute/cpu-sizing/" }, { label: "RAM", href: "/tools/compute/ram-sizing/" }, { label: "Storage IOPS", href: "/tools/compute/storage-iops/" }, { label: "Throughput", href: "/tools/compute/storage-throughput/" },
+            { label: "VM Density", href: "/tools/compute/vm-density/" }, { label: "Power / Thermal", href: "/tools/compute/power-thermal/" }, { label: "RAID", href: "/tools/compute/raid-rebuild-time/" }, { label: "Backup", href: "/tools/compute/backup-window/" }, { label: "Summary" }
           ]
         },
         {
           label: "OPTIONAL SPECIALTY BRANCHES",
           copy: "Use these when the compute design needs GPU, network path, recovery, or infrastructure validation.",
           steps: [
-            { label: "GPU" }, { label: "NIC Bonding" }, { label: "Recovery" }, { label: "Power / Thermal" }
+            { label: "GPU", href: "/tools/compute/gpu-vram/" }, { label: "NIC Bonding", href: "/tools/compute/nic-bonding/" }, { label: "Recovery", href: "/tools/compute/backup-window/" }, { label: "Power / Thermal", href: "/tools/compute/power-thermal/" }
           ]
         }
       ]

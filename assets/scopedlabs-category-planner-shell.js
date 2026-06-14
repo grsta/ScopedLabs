@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-category-planner-shell-002-muted-leds";
+  var VERSION = "scopedlabs-category-planner-shell-003-pipeline-links";
 
   function escapeHtml(value) {
     return String(value == null ? "" : value)
@@ -34,6 +34,9 @@
       ".access-scope-flow-line--ledger{justify-content:space-between;gap:14px;margin-bottom:10px}",
       ".access-scope-flow-arrow{color:rgba(246,255,248,.28);font-weight:900}",
       ".access-scope-flow-step{display:inline-flex;align-items:center;gap:7px}",
+      ".access-scope-flow-step-link{color:rgba(246,255,248,.9);text-decoration:none;border-radius:999px;padding:2px 3px;margin:-2px -3px;transition:color .16s ease,background .16s ease}",
+      ".access-scope-flow-step-link:hover{color:#fff;background:rgba(120,255,120,.08)}",
+      ".access-scope-flow-step-link[aria-current=\"page\"]{color:#fff;font-weight:900}",
       ".access-scope-flow-dot{width:9px;height:9px;border-radius:999px;border:1px solid rgba(246,255,248,.24);background:rgba(246,255,248,.10);box-shadow:none}",
       ".access-scope-flow-dot.is-active{border-color:rgba(98,255,141,.9);background:#62ff8d;box-shadow:0 0 14px rgba(98,255,141,.55)}",
       ".access-scope-ledger-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}",
@@ -94,6 +97,18 @@
     }) + ' /></label>';
   }
 
+  function flowStepHtml(step, index, steps) {
+    var dot = '<span class="access-scope-flow-dot ' + (step.active ? "is-active" : "") + '"></span>';
+    var label = escapeHtml(step.label);
+    var body = dot + label;
+    var current = step.active ? ' aria-current="page"' : "";
+    var stepHtml = step.href
+      ? '<a class="access-scope-flow-step access-scope-flow-step-link" href="' + escapeHtml(step.href) + '"' + current + '>' + body + '</a>'
+      : '<span class="access-scope-flow-step">' + body + '</span>';
+
+    return stepHtml + (index < steps.length - 1 ? '<span class="access-scope-flow-arrow">→</span>' : '');
+  }
+
   function flowCard(config) {
     var flow = config.flow || {};
     return '<section id="' + escapeHtml(flow.id || "plannerDesignFlowCard") + '" class="card">' +
@@ -103,9 +118,8 @@
           '<p class="access-scope-section-title">' + escapeHtml(section.label) + '</p>' +
           '<p class="muted">' + escapeHtml(section.copy || "") + '</p>' +
           '<div class="access-scope-flow-line">' +
-          (section.steps || []).map(function (step, index) {
-            return '<span class="access-scope-flow-step"><span class="access-scope-flow-dot ' + (step.active ? "is-active" : "") + '"></span>' + escapeHtml(step.label) + '</span>' +
-              (index < section.steps.length - 1 ? '<span class="access-scope-flow-arrow">→</span>' : '');
+          (section.steps || []).map(function (step, index, steps) {
+            return flowStepHtml(step, index, steps);
           }).join("") +
           '</div>' +
         '</div>';
