@@ -346,6 +346,70 @@ function ensureStyles(html) {
   return html.replace("</style>", css + "  </style>");
 }
 
+
+function ensureComputeRuntimeContract(html) {
+  html = html.replace(/<body ([^>]*)>/, function (full, attrs) {
+    if (!/data-category=["']compute["']/.test(attrs)) return full;
+
+    var next = attrs;
+    var pairs = {
+      "data-sl-clean-knowledge-card": "true",
+      "data-sl-square-ctas": "true"
+    };
+
+    Object.keys(pairs).forEach(function (name) {
+      var re = new RegExp(name + '="[^"]*"');
+      if (re.test(next)) next = next.replace(re, name + '="' + pairs[name] + '"');
+      else next += " " + name + '="' + pairs[name] + '"';
+    });
+
+    return "<body " + next + ">";
+  });
+
+  html = html
+    .split(/\r?\n/)
+    .filter(function (line) {
+      return !line.includes("/assets/scopedlabs-compute-shell-contract.js");
+    })
+    .join("\n");
+
+  var helpToken = "/assets/help.js?v=help-026";
+  var helpIndex = html.indexOf(helpToken);
+  if (helpIndex < 0) fail("Could not find help.js line for Compute runtime contract.");
+
+  var helpLineEnd = html.indexOf("\n", helpIndex);
+  if (helpLineEnd < 0) helpLineEnd = html.length;
+
+  var lineStart = html.lastIndexOf("\n", helpIndex) + 1;
+  var helpLine = html.slice(lineStart, helpLineEnd);
+  var indent = (helpLine.match(/^\s*/) || [""])[0];
+
+  html =
+    html.slice(0, helpLineEnd + 1) +
+    indent + '<script src="/assets/scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-001"></script>\n' +
+    html.slice(helpLineEnd + 1);
+
+  return html;
+}
+
+function verifyComputeRuntimeContract(html) {
+  var missing = [];
+  var foundForbidden = [];
+
+  [
+    'data-sl-clean-knowledge-card="true"',
+    'data-sl-square-ctas="true"',
+    '/assets/scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-001'
+  ].forEach(function (token) {
+    if (!html.includes(token)) missing.push(token);
+  });
+
+  var count = (html.match(/\/assets\/scopedlabs-compute-shell-contract\.js/g) || []).length;
+  if (count !== 1) foundForbidden.push("duplicate compute runtime contract script count=" + count);
+
+  return { missing: missing, foundForbidden: foundForbidden };
+}
+
 function verify(html, tool) {
   const required = [
     `data-step="${tool.slug}"`,
@@ -412,7 +476,12 @@ function modernizeTool(tool) {
   html = ensureScriptBeforeLocal(html, "/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-002");
   html = ensureScriptAfterHelp(html, "/assets/scopedlabs-user-tool-notes.js?v=scopedlabs-user-tool-notes-001-compute-proof");
 
+  html = ensureComputeRuntimeContract(html);
+
   const checks = verify(html, tool);
+  const runtimeChecks = verifyComputeRuntimeContract(html);
+  checks.missing.push(...runtimeChecks.missing);
+  checks.foundForbidden.push(...runtimeChecks.foundForbidden);
 
   console.log("");
   console.log("========================================================================");
