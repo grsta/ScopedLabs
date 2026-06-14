@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-compute-assistant-contract-003-explicit-calc-handoff";
+  const VERSION = "scopedlabs-compute-assistant-contract-004-no-stale-automount";
 
   function isComputeShellPage() {
     const body = document.body;
@@ -376,8 +376,6 @@
       el.addEventListener("input", clearAssistant);
       el.addEventListener("change", clearAssistant);
     });
-
-    window.setTimeout(mountCpuSizing, 120);
   }
 
   window.ScopedLabsComputeAssistant = Object.freeze({

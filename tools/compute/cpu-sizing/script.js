@@ -117,6 +117,8 @@
     if (window.ScopedLabsExport && typeof window.ScopedLabsExport.invalidate === "function") {
       window.ScopedLabsExport.invalidate("Inputs changed. Run the calculator again to refresh export.");
     }
+
+    clearComputeAssistant();
   }
 
 
@@ -207,6 +209,21 @@
     }
   }
 
+
+  function clearComputeAssistant() {
+    const assistant = window.ScopedLabsComputeAssistant;
+    if (assistant && typeof assistant.clear === "function") {
+      try {
+        assistant.clear();
+        return;
+      } catch {}
+    }
+
+    const card = document.getElementById("computeAssistantCard");
+    const mount = document.getElementById("computeAssistantMount");
+    if (mount) mount.innerHTML = "";
+    if (card) card.hidden = true;
+  }
 
   function renderComputeAssistant(result) {
     const assistant = window.ScopedLabsComputeAssistant;

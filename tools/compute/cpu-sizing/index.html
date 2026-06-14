@@ -231,14 +231,14 @@
         <button id="reset" class="btn" type="button">Reset</button>
       </div>
 
-      <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+      <div id="computeInternalResultsLedger" class="card compute-internal-results-ledger" style="display:none;" hidden aria-hidden="true" data-internal-results-ledger>
         <h3 class="h3" style="margin-top: 0;">Results</h3>
         <div id="results" class="results-grid" aria-live="polite">
           <div class="muted">Enter values and press Calculate.</div>
         </div>
         <div id="analysis-copy" style="display:none;"></div>
+      </div>
 
-              
       <section id="computeAssistantCard" class="card compute-assistant-card" style="margin-top: 14px;" hidden data-compute-assistant-card>
         <div id="computeAssistantMount" data-compute-assistant-mount data-category-slug="compute"></div>
       </section>
@@ -249,7 +249,6 @@
           Model: effective CPU demand is based on concurrency, per-worker utilization, workload factor, burst multiplier, and target utilization ceiling. This is a planning tool for capacity shaping, not a benchmark replacement.
         </p>
       </section>
-      </div>
       <section class="card compute-export-card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
         <h3 class="h3" style="margin-top: 0;">Export Report</h3>
         <p class="muted" style="margin-bottom: 0;">
@@ -344,11 +343,11 @@
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
   <script src="/assets/scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-005-active-title"></script>
   <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-002"></script>
-  <script src="./script.js?v=compute-cpu-context-007-explicit-assistant-handoff"></script>
+  <script src="./script.js?v=compute-cpu-context-008-assistant-primary-result"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
   <script src="/assets/scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-001"></script>
   <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
-  <script src="/assets/scopedlabs-compute-assistant-contract.js?v=scopedlabs-compute-assistant-contract-003-explicit-calc-handoff"></script>
+  <script src="/assets/scopedlabs-compute-assistant-contract.js?v=scopedlabs-compute-assistant-contract-004-no-stale-automount"></script>
   <script src="/assets/scopedlabs-user-tool-notes.js?v=scopedlabs-user-tool-notes-001-compute-proof"></script>
 </body>
 </html>
