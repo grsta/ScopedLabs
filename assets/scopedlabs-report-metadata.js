@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-report-metadata-007-active-scope-label";
+  const VERSION = "scopedlabs-report-metadata-008-access-control-category-scope-key";
   const SHARED_STORAGE_KEY = "scopedlabs:report-metadata:shared:v1";
   const PAGE_STORAGE_PREFIX = "scopedlabs:report-metadata:page:";
   const SHARED_FIELDS = ["reportTitle", "projectName", "clientName", "preparedBy"];
@@ -273,6 +273,12 @@
     return isAccessControlMetadataPage() && !currentAccessControlScopeContext();
   }
 
+
+  function accessControlCategoryMetadataKey() {
+    return PAGE_STORAGE_PREFIX + "/tools/access-control/";
+  }
+
+
   function legacyPageStorageKey() {
     return PAGE_STORAGE_PREFIX + normalizedPagePath();
   }
@@ -282,12 +288,13 @@
 
     if (isAccessControlMetadataPage()) {
       const scope = currentAccessControlScopeContext();
+      const categoryKey = accessControlCategoryMetadataKey();
 
       if (!scope || !scope.accessControlScopeId) {
-        return legacyKey + "#access-scope:none";
+        return categoryKey + "#access-scope:none";
       }
 
-      return legacyKey + "#access-scope:" + encodeURIComponent(scope.accessControlScopeId);
+      return categoryKey + "#access-scope:" + encodeURIComponent(scope.accessControlScopeId);
     }
 
     const area = currentAreaContext();
