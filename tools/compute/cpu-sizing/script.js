@@ -212,35 +212,190 @@
 
 
   function clearComputeAssistant() {
-    const assistant = window.ScopedLabsComputeAssistant;
-    if (assistant && typeof assistant.clear === "function") {
-      try {
-        assistant.clear();
-        return;
-      } catch {}
+    const card = document.getElementById("computeAssistantCard");
+    const statusCard = document.getElementById("computeCpuStatusCard");
+    const statusText = document.getElementById("computeCpuStatusText");
+
+    const defaults = {
+      computeCpuStatusTitle: "Run the CPU sizing calculation",
+      computeCpuStatusSubtitle: "The result will show the recommended core baseline, decision status, and downstream Compute action.",
+      computeCpuStatusRecommendation: "?",
+      computeCpuStatusConfidence: "?",
+      computeCpuStatusFlags: "?",
+      computeCpuStatusRisk: "?",
+      computeCpuStatusAction: "Run the CPU sizing calculation to see the required action."
+    };
+
+    Object.keys(defaults).forEach(function (id) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = defaults[id];
+    });
+
+    if (statusText) {
+      statusText.textContent = "PENDING";
+      statusText.className = "scopedlabs-result-summary-status watch";
     }
 
-    const card = document.getElementById("computeAssistantCard");
-    const mount = document.getElementById("computeAssistantMount");
-    if (mount) mount.innerHTML = "";
+    if (statusCard) statusCard.hidden = true;
     if (card) card.hidden = true;
   }
 
-  function renderComputeAssistant(result) {
-    const assistant = window.ScopedLabsComputeAssistant;
-    if (!assistant || typeof assistant.renderToolAssistant !== "function" || !result) return false;
+  function cpuDecisionNumber(value, fallback) {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : fallback;
+  }
+
+  function cpuDecisionInputValue(id, fallback) {
+    const el = document.getElementById(id);
+    return el ? String(el.value || fallback || "") : String(fallback || "");
+  }
+
+  function cpuDecisionWorkloadLabel(value) {
+    const map = {
+      general: "General / Mixed",
+      web: "Web / API",
+      db: "Database",
+      video: "Video / Transcode",
+      compute: "Compute-heavy / batch"
+    };
+
+    return map[value] || value || "General / Mixed";
+  }
+
+  function cpuDecisionStatus(status) {
+    const value = String(status || "PENDING").toUpperCase();
+
+    if (value === "RISK") {
+      return {
+        label: "RISK",
+        className: "risk",
+        confidence: "LOW"
+      };
+    }
+
+    if (value === "WATCH") {
+      return {
+        label: "WATCH",
+        className: "watch",
+        confidence: "MEDIUM"
+      };
+    }
+
+    return {
+      label: "GOOD",
+      className: "complete",
+      confidence: "HIGH"
+    };
+  }
+
+  function buildCpuDecisionCore(result) {
+    result = result || {};
+
+    const outputs = result.outputs && typeof result.outputs === "object" ? result.outputs : result;
+    const inputs = result.inputs && typeof result.inputs === "object" ? result.inputs : {};
+    const plannerContext = result.plannerContext || null;
+
+    let activeWorkload = null;
 
     try {
-      return assistant.renderToolAssistant({
-        mount: document.getElementById("computeAssistantMount"),
-        card: document.getElementById("computeAssistantCard"),
-        toolSlug: STEP,
-        toolLabel: "CPU Sizing",
-        result
-      });
-    } catch {
-      return false;
+      activeWorkload = typeof activeComputeWorkload === "function" ? activeComputeWorkload() : null;
+    } catch {}
+
+    const hasPlanner = !!(plannerContext || activeWorkload);
+    const status = cpuDecisionStatus(result.analyzerStatus || result.status || outputs.status);
+
+    const logical = cpuDecisionNumber(outputs.recommendedLogicalCores, cpuDecisionNumber(result.recommendedLogicalCores, cpuDecisionNumber(result.cores, 0)));
+    const physical = cpuDecisionNumber(outputs.recommendedPhysicalCores, cpuDecisionNumber(result.recommendedPhysicalCores, cpuDecisionNumber(result.physicalCores, 0)));
+    const effective = cpuDecisionNumber(outputs.effectiveDemandCores, cpuDecisionNumber(result.effectiveDemandCores, cpuDecisionNumber(result.eff, 0)));
+    const required = cpuDecisionNumber(outputs.requiredCores, cpuDecisionNumber(result.requiredCores, logical));
+
+    const workloadType = inputs.workloadType || result.workload || (plannerContext && plannerContext.workloadType) || (activeWorkload && activeWorkload.workloadType) || cpuDecisionInputValue("workload", "general");
+    const workloadName = (plannerContext && plannerContext.name) || (activeWorkload && activeWorkload.name) || cpuDecisionWorkloadLabel(workloadType);
+
+    const concurrency = inputs.concurrency || result.concurrency || cpuDecisionInputValue("concurrency", "");
+    const cpuPerWorker = inputs.cpuPerWorkerPercent || result.cpuPerWorkerPercent || cpuDecisionInputValue("cpuPerWorker", "");
+    const peak = inputs.peakFactor || result.peakFactor || cpuDecisionInputValue("peak", "");
+    const target = inputs.targetUtilizationPercent || result.targetUtilizationPercent || cpuDecisionInputValue("targetUtil", "");
+
+    const recommendation = logical || physical
+      ? logical + " logical cores / " + physical + " physical cores recommended for " + (hasPlanner ? "the active " + workloadName + " workload" : "the current CPU inputs")
+      : "CPU recommendation pending";
+
+    const inputSummary = [
+      concurrency ? concurrency + " workers" : "",
+      cpuPerWorker ? cpuPerWorker + "% per worker" : "",
+      peak ? peak + "× burst" : "",
+      target ? target + "% target utilization" : ""
+    ].filter(Boolean).join(" | ");
+
+    const flags = [
+      hasPlanner ? "Planner context active" : "Planner context missing",
+      status.label === "WATCH" ? "CPU watch item" : status.label === "RISK" ? "CPU risk item" : "CPU baseline usable",
+      "Current CPU inputs applied",
+      "RAM sizing next",
+      "Downstream validation pending"
+    ].join(" | ");
+
+    const risk = status.label === "RISK"
+      ? "CPU is likely underbuilt under the current planner context and CPU inputs."
+      : status.label === "WATCH"
+        ? "CPU margin is tightening under the current concurrency, peak factor, and target utilization."
+        : "No immediate CPU sizing risk detected from the active planner context and current CPU inputs.";
+
+    const action = status.label === "RISK"
+      ? "Rework the CPU baseline before treating RAM, storage, or specialty branch results as valid."
+      : "Carry this CPU result into RAM sizing. Do not treat the Compute plan as complete until RAM and required downstream branches are validated.";
+
+    return {
+      title: "CPU SIZING",
+      subtitle: recommendation + ". Effective demand is " + effective.toFixed(2) + " cores against " + required.toFixed(2) + " required cores." + (inputSummary ? " Inputs: " + inputSummary + "." : ""),
+      statusLabel: status.label,
+      statusClass: status.className,
+      recommendation,
+      confidence: status.confidence,
+      flags,
+      risk,
+      action
+    };
+  }
+
+  function renderVisibleCpuDecisionStatus(core) {
+    const card = document.getElementById("computeAssistantCard");
+    const statusCard = document.getElementById("computeCpuStatusCard");
+
+    if (!card || !statusCard || !core) return false;
+
+    const fields = {
+      computeCpuStatusTitle: core.title,
+      computeCpuStatusSubtitle: core.subtitle,
+      computeCpuStatusRecommendation: core.recommendation,
+      computeCpuStatusConfidence: core.confidence,
+      computeCpuStatusFlags: core.flags,
+      computeCpuStatusRisk: core.risk,
+      computeCpuStatusAction: core.action
+    };
+
+    Object.keys(fields).forEach(function (id) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = fields[id] || "";
+    });
+
+    const statusText = document.getElementById("computeCpuStatusText");
+    if (statusText) {
+      statusText.textContent = core.statusLabel || "PENDING";
+      statusText.className = "scopedlabs-result-summary-status " + (core.statusClass || "watch");
     }
+
+    statusCard.hidden = false;
+    card.hidden = false;
+    return true;
+  }
+
+  function renderComputeAssistant(result) {
+    if (!result) return false;
+
+    const core = buildCpuDecisionCore(result);
+    return renderVisibleCpuDecisionStatus(core);
   }
 
   

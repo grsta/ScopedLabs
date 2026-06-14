@@ -594,6 +594,13 @@
   function wire() {
     if (!isComputeShellPage()) return;
 
+    /*
+      CPU Sizing uses a page-local Fail-Safe-style decision card.
+      The shared compute assistant contract must not bind Calculate timers
+      or input/change clears on CPU.
+    */
+    if (getStep() === "cpu-sizing") return;
+
     const calc = document.getElementById("calc");
 
     if (calc) {
@@ -602,14 +609,6 @@
         window.setTimeout(mountCpuSizing, 240);
       });
     }
-
-    /*
-      CPU Sizing owns its own input invalidation lifecycle in script.js.
-      Do not bind shared assistant input/change clears on CPU, or a late
-      input/change event can erase the freshly rendered top decision card
-      after Calculate.
-    */
-    if (getStep() === "cpu-sizing") return;
 
     ["workload", "concurrency", "cpuPerWorker", "peak", "targetUtil", "smt"].forEach(function (id) {
       const el = document.getElementById(id);

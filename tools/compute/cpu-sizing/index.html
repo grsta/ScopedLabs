@@ -243,7 +243,36 @@
       </div>
 
       <section id="computeAssistantCard" class="card compute-assistant-card" style="margin-top: 14px;" hidden data-compute-assistant-card>
-        <div id="computeAssistantMount" data-compute-assistant-mount data-category-slug="compute"></div>
+        <div id="computeAssistantMount" data-compute-assistant-mount data-category-slug="compute">
+  <section id="computeCpuStatusCard" class="scopedlabs-result-summary-card" hidden aria-live="polite">
+    <div class="scopedlabs-result-summary-top">
+      <div>
+        <h3 id="computeCpuStatusTitle" class="scopedlabs-result-summary-title">Run the CPU sizing calculation</h3>
+        <p id="computeCpuStatusSubtitle" class="scopedlabs-result-summary-subtitle">The result will show the recommended core baseline, decision status, and downstream Compute action.</p>
+      </div>
+      <div id="computeCpuStatusText" class="scopedlabs-result-summary-status watch">PENDING</div>
+    </div>
+    <div class="scopedlabs-result-summary-grid">
+      <div class="scopedlabs-result-summary-item">
+        <strong>Recommendation</strong>
+        <span id="computeCpuStatusRecommendation">?</span>
+      </div>
+      <div class="scopedlabs-result-summary-item">
+        <strong>Confidence</strong>
+        <span id="computeCpuStatusConfidence">?</span>
+      </div>
+      <div class="scopedlabs-result-summary-item">
+        <strong>Decision Flags</strong>
+        <span id="computeCpuStatusFlags">?</span>
+      </div>
+      <div class="scopedlabs-result-summary-item">
+        <strong>Primary Risk</strong>
+        <span id="computeCpuStatusRisk">?</span>
+      </div>
+    </div>
+    <div id="computeCpuStatusAction" class="scopedlabs-result-summary-action">Run the CPU sizing calculation to see the required action.</div>
+  </section>
+</div>
       </section>
 
             <section id="computeFirstToolLegend" class="access-tool-status-legend" aria-label="CPU sizing status legend" data-compute-first-tool-legend data-status-legend-standard>
@@ -355,11 +384,11 @@
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
   <script src="/assets/scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-005-active-title"></script>
   <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-002"></script>
-  <script src="./script.js?v=compute-cpu-context-010-decision-core-fix"></script>
+  <script src="./script.js?v=compute-cpu-context-012-failsafe-static-card"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
   <script src="/assets/scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-001"></script>
   <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
-  <script src="/assets/scopedlabs-compute-assistant-contract.js?v=scopedlabs-compute-assistant-contract-0614-input-clear-race-fix"></script>
+  <script src="/assets/scopedlabs-compute-assistant-contract.js?v=scopedlabs-compute-assistant-contract-0614-cpu-failsafe-static"></script>
   <script src="/assets/scopedlabs-user-tool-notes.js?v=scopedlabs-user-tool-notes-001-compute-proof"></script>
 </body>
 </html>
