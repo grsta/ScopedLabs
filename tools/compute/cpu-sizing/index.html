@@ -225,7 +225,12 @@
         </div>
         <div id="analysis-copy" style="display:none;"></div>
 
-              <section class="card compute-calculation-source" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+              
+      <section id="computeAssistantCard" class="card compute-assistant-card" style="margin-top: 14px;" hidden data-compute-assistant-card>
+        <div id="computeAssistantMount" data-compute-assistant-mount data-category-slug="compute"></div>
+      </section>
+
+      <section class="card compute-calculation-source" style="margin-top: 14px; background: rgba(0,0,0,.14);">
         <h3 class="h3" style="margin-top: 0;">Calculation Data Source</h3>
         <p class="mini-note">
           Model: effective CPU demand is based on concurrency, per-worker utilization, workload factor, burst multiplier, and target utilization ceiling. This is a planning tool for capacity shaping, not a benchmark replacement.
@@ -328,6 +333,8 @@
   <script src="./script.js?v=compute-export-001"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
   <script src="/assets/scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-001"></script>
+  <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
+  <script src="/assets/scopedlabs-compute-assistant-contract.js?v=scopedlabs-compute-assistant-contract-001"></script>
   <script src="/assets/scopedlabs-user-tool-notes.js?v=scopedlabs-user-tool-notes-001-compute-proof"></script>
 </body>
 </html>

@@ -392,6 +392,85 @@ function ensureComputeRuntimeContract(html) {
   return html;
 }
 
+
+function ensureComputeAssistantContract(html) {
+  if (!html.includes("data-compute-assistant-mount")) {
+    const assistantBlock =
+      '\n      <section id="computeAssistantCard" class="card compute-assistant-card" style="margin-top: 14px;" hidden data-compute-assistant-card>\n' +
+      '        <div id="computeAssistantMount" data-compute-assistant-mount data-category-slug="compute"></div>\n' +
+      '      </section>\n';
+
+    const calculationAnchor = '<section class="card compute-calculation-source"';
+    const exportAnchor = '<section class="card compute-export-card"';
+    const calculationIndex = html.indexOf(calculationAnchor);
+    const exportIndex = html.indexOf(exportAnchor);
+
+    if (calculationIndex >= 0) {
+      html = html.slice(0, calculationIndex) + assistantBlock + "\n      " + html.slice(calculationIndex);
+    } else if (exportIndex >= 0) {
+      html = html.slice(0, exportIndex) + assistantBlock + "\n      " + html.slice(exportIndex);
+    } else {
+      fail("Could not place Compute assistant mount.");
+    }
+  }
+
+  html = html
+    .split(/\r?\n/)
+    .filter(function (line) {
+      return !line.includes("/assets/scopedlabs-local-assistant.js") &&
+        !line.includes("/assets/scopedlabs-compute-assistant-contract.js");
+    })
+    .join("\n");
+
+  const computeShellToken = "/assets/scopedlabs-compute-shell-contract.js";
+  let anchorIndex = html.indexOf(computeShellToken);
+
+  if (anchorIndex < 0) {
+    const helpToken = "/assets/help.js?v=help-026";
+    anchorIndex = html.indexOf(helpToken);
+    if (anchorIndex < 0) fail("Could not find help.js or Compute shell script line for assistant contract.");
+  }
+
+  let lineEnd = html.indexOf("\n", anchorIndex);
+  if (lineEnd < 0) lineEnd = html.length;
+
+  const lineStart = html.lastIndexOf("\n", anchorIndex) + 1;
+  const anchorLine = html.slice(lineStart, lineEnd);
+  const indent = (anchorLine.match(/^\s*/) || [""])[0];
+
+  html =
+    html.slice(0, lineEnd + 1) +
+    indent + '<script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>\n' +
+    indent + '<script src="/assets/scopedlabs-compute-assistant-contract.js?v=scopedlabs-compute-assistant-contract-001"></script>\n' +
+    html.slice(lineEnd + 1);
+
+  return html;
+}
+
+function verifyComputeAssistantContract(html) {
+  const missing = [];
+  const foundForbidden = [];
+
+  [
+    'id="computeAssistantCard"',
+    'id="computeAssistantMount"',
+    "data-compute-assistant-card",
+    "data-compute-assistant-mount",
+    "/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell",
+    "/assets/scopedlabs-compute-assistant-contract.js?v=scopedlabs-compute-assistant-contract-001"
+  ].forEach(function (token) {
+    if (!html.includes(token)) missing.push(token);
+  });
+
+  const localAssistantCount = (html.match(/\/assets\/scopedlabs-local-assistant\.js/g) || []).length;
+  const computeAssistantCount = (html.match(/\/assets\/scopedlabs-compute-assistant-contract\.js/g) || []).length;
+
+  if (localAssistantCount !== 1) foundForbidden.push("duplicate local assistant script count=" + localAssistantCount);
+  if (computeAssistantCount !== 1) foundForbidden.push("duplicate Compute assistant contract script count=" + computeAssistantCount);
+
+  return { missing, foundForbidden };
+}
+
 function verifyComputeRuntimeContract(html) {
   var missing = [];
   var foundForbidden = [];
@@ -477,11 +556,15 @@ function modernizeTool(tool) {
   html = ensureScriptAfterHelp(html, "/assets/scopedlabs-user-tool-notes.js?v=scopedlabs-user-tool-notes-001-compute-proof");
 
   html = ensureComputeRuntimeContract(html);
+  html = ensureComputeAssistantContract(html);
 
   const checks = verify(html, tool);
   const runtimeChecks = verifyComputeRuntimeContract(html);
   checks.missing.push(...runtimeChecks.missing);
   checks.foundForbidden.push(...runtimeChecks.foundForbidden);
+  const assistantChecks = verifyComputeAssistantContract(html);
+  checks.missing.push(...assistantChecks.missing);
+  checks.foundForbidden.push(...assistantChecks.foundForbidden);
 
   console.log("");
   console.log("========================================================================");
