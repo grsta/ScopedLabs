@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var COMPUTE_SHELL_CONTRACT_VERSION = "scopedlabs-compute-shell-contract-003-active-workload-access-parity";
+  var COMPUTE_SHELL_CONTRACT_VERSION = "scopedlabs-compute-shell-contract-004-active-card-access-match";
 
   function isComputeShellPage() {
     var body = document.body;
@@ -127,8 +127,8 @@
   }
 })();
 
-;(function computeActiveWorkloadContextCardShellStyle0614() {
-  var STYLE_ID = "sl-compute-active-workload-context-card-style-0614";
+;(function computeActiveWorkloadContextCardAccessParity0614() {
+  var STYLE_ID = "sl-compute-active-workload-access-parity-0614";
 
   function installStyle() {
     if (document.getElementById(STYLE_ID)) return;
@@ -137,8 +137,9 @@
     style.id = STYLE_ID;
     style.textContent = [
       ".compute-workload-context-card{border-color:rgba(120,255,120,.22)!important;background:linear-gradient(180deg,rgba(19,59,38,.34),rgba(4,17,12,.58))!important}",
-      ".compute-workload-context-card .access-scope-mini-flow{color:rgba(166,255,190,.86)!important;font-size:.74rem!important;font-weight:800!important;letter-spacing:.06em!important;text-transform:uppercase!important;margin-bottom:.35rem!important}",
-      ".compute-workload-context-card .card-title{font-size:1.2rem!important;line-height:1.22!important}",
+      ".compute-workload-context-card .access-scope-mini-flow{color:rgba(166,255,190,.86)!important;font-size:.74rem!important;font-weight:800!important;letter-spacing:.06em!important;text-transform:uppercase!important;margin:0 0 .45rem!important}",
+      ".compute-workload-context-card .card-title{font-size:1.2rem!important;line-height:1.22!important;margin:.15rem 0 .55rem!important}",
+      ".compute-workload-context-card #computeWorkloadContextCopy{color:rgba(216,238,224,.78)!important;font-size:.94rem!important;line-height:1.45!important;margin:0 0 12px!important}",
       ".compute-workload-context-card .access-scope-meta{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:10px!important;margin-top:12px!important}",
       ".compute-workload-context-card .access-scope-meta-item{min-width:0!important;padding:10px 12px!important;border:1px solid rgba(120,255,120,.15)!important;border-radius:10px!important;background:rgba(0,0,0,.18)!important;color:rgba(245,255,248,.96)!important;font-size:.9rem!important;font-weight:800!important;line-height:1.25!important}",
       ".compute-workload-context-card .access-scope-meta-item small{display:block!important;margin:0 0 5px!important;color:rgba(166,255,190,.70)!important;font-size:.68rem!important;font-weight:800!important;letter-spacing:.055em!important;text-transform:uppercase!important}",
@@ -156,8 +157,8 @@
   }
 })();
 
-;(function computeActiveWorkloadContextCardAccessParity0614() {
-  var STYLE_ID = "sl-compute-active-workload-access-parity-0614";
+;(function computeActiveWorkloadContextCardAccessMatch0614() {
+  var STYLE_ID = "sl-compute-active-card-access-match-0614";
 
   function installStyle() {
     if (document.getElementById(STYLE_ID)) return;
@@ -166,12 +167,13 @@
     style.id = STYLE_ID;
     style.textContent = [
       ".compute-workload-context-card{border-color:rgba(120,255,120,.22)!important;background:linear-gradient(180deg,rgba(19,59,38,.34),rgba(4,17,12,.58))!important}",
-      ".compute-workload-context-card .access-scope-mini-flow{color:rgba(166,255,190,.86)!important;font-size:.74rem!important;font-weight:800!important;letter-spacing:.06em!important;text-transform:uppercase!important;margin:0 0 .45rem!important}",
-      ".compute-workload-context-card .card-title{font-size:1.2rem!important;line-height:1.22!important;margin:.15rem 0 .55rem!important}",
-      ".compute-workload-context-card #computeWorkloadContextCopy{color:rgba(216,238,224,.78)!important;font-size:.94rem!important;line-height:1.45!important;margin:0 0 12px!important}",
+      ".compute-workload-context-card .access-scope-mini-flow{color:rgba(166,255,190,.86)!important;font-size:.72rem!important;font-weight:800!important;letter-spacing:.055em!important;text-transform:uppercase!important;margin:0 0 .42rem!important}",
+      ".compute-workload-context-card .card-title{font-size:1.12rem!important;line-height:1.22!important;font-weight:800!important;margin:.1rem 0 .45rem!important;color:rgba(246,255,248,.98)!important}",
+      ".compute-workload-context-card #computeWorkloadContextCopy{color:rgba(206,226,214,.74)!important;font-size:.92rem!important;line-height:1.42!important;margin:0 0 12px!important;font-weight:500!important}",
       ".compute-workload-context-card .access-scope-meta{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:10px!important;margin-top:12px!important}",
-      ".compute-workload-context-card .access-scope-meta-item{min-width:0!important;padding:10px 12px!important;border:1px solid rgba(120,255,120,.15)!important;border-radius:10px!important;background:rgba(0,0,0,.18)!important;color:rgba(245,255,248,.96)!important;font-size:.9rem!important;font-weight:800!important;line-height:1.25!important}",
-      ".compute-workload-context-card .access-scope-meta-item small{display:block!important;margin:0 0 5px!important;color:rgba(166,255,190,.70)!important;font-size:.68rem!important;font-weight:800!important;letter-spacing:.055em!important;text-transform:uppercase!important}",
+      ".compute-workload-context-card .access-scope-meta-item{min-width:0!important;padding:9px 11px!important;border:1px solid rgba(120,255,120,.13)!important;border-radius:10px!important;background:rgba(0,0,0,.16)!important;color:rgba(244,255,248,.96)!important;font-size:.86rem!important;font-weight:800!important;line-height:1.25!important}",
+      ".compute-workload-context-card .access-scope-meta-item small{display:block!important;margin:0 0 5px!important;color:rgba(166,204,190,.64)!important;font-size:.65rem!important;font-weight:800!important;letter-spacing:.055em!important;text-transform:uppercase!important}",
+      ".compute-workload-context-card .compute-context-value{display:block!important;color:rgba(244,255,248,.96)!important;font-size:.86rem!important;font-weight:800!important;line-height:1.25!important}",
       "@media (max-width: 900px){.compute-workload-context-card .access-scope-meta{grid-template-columns:repeat(2,minmax(0,1fr))!important}}",
       "@media (max-width: 620px){.compute-workload-context-card .access-scope-meta{grid-template-columns:1fr!important}}"
     ].join("\n");

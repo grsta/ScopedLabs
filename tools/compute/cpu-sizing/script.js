@@ -181,8 +181,12 @@
 
     const environment = cpuContextTitleCase(workload.environmentType);
     const workloadType = cpuContextTitleCase(workload.workloadType);
+    const demand = cpuContextTitleCase(workload.demandPattern || workload.demandProfile || "N/A");
     const path = cpuContextTitleCase(workload.planningPath);
     const criticality = cpuContextTitleCase(workload.criticality);
+    const status = cpuContextTitleCase(workload.status || workload.summaryStatus || (branches.length ? "watch" : "planning"));
+    const targetUtilization = workload.targetUtilization ? String(workload.targetUtilization) + "%" : "N/A";
+    const growthMargin = workload.growthMargin ? String(workload.growthMargin) + "%" : "N/A";
     const branchText = branches.length ? branches.join(", ") : "None";
 
     els.workloadContextTitle.textContent = workload.name || "Compute Workload";
@@ -190,11 +194,14 @@
 
     els.workloadContextMeta.hidden = false;
     els.workloadContextMeta.innerHTML = [
-      '<div class="access-scope-meta-item"><small>Environment</small>' + cpuContextEscapeHtml(environment) + '</div>',
-      '<div class="access-scope-meta-item"><small>Workload Type</small>' + cpuContextEscapeHtml(workloadType) + '</div>',
-      '<div class="access-scope-meta-item"><small>Path</small>' + cpuContextEscapeHtml(path) + '</div>',
-      '<div class="access-scope-meta-item"><small>Criticality</small>' + cpuContextEscapeHtml(criticality) + '</div>',
-      '<div class="access-scope-meta-item"><small>Branches</small>' + cpuContextEscapeHtml(branchText) + '</div>'
+      '<div class="access-scope-meta-item"><small>Environment</small><span class="compute-context-value">' + cpuContextEscapeHtml(environment) + '</span></div>',
+      '<div class="access-scope-meta-item"><small>Workload Type</small><span class="compute-context-value">' + cpuContextEscapeHtml(workloadType) + '</span></div>',
+      '<div class="access-scope-meta-item"><small>Demand</small><span class="compute-context-value">' + cpuContextEscapeHtml(demand) + '</span></div>',
+      '<div class="access-scope-meta-item"><small>Status</small><span class="compute-context-value">' + cpuContextEscapeHtml(status) + '</span></div>',
+      '<div class="access-scope-meta-item"><small>Path</small><span class="compute-context-value">' + cpuContextEscapeHtml(path) + '</span></div>',
+      '<div class="access-scope-meta-item"><small>Target Utilization</small><span class="compute-context-value">' + cpuContextEscapeHtml(targetUtilization) + '</span></div>',
+      '<div class="access-scope-meta-item"><small>Growth Margin</small><span class="compute-context-value">' + cpuContextEscapeHtml(growthMargin) + '</span></div>',
+      '<div class="access-scope-meta-item"><small>Branches</small><span class="compute-context-value">' + cpuContextEscapeHtml(branchText) + '</span></div>'
     ].join("");
   }
 
