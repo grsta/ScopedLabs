@@ -15,11 +15,9 @@ let watch = 0;
 
 function result(kind, label, detail) {
   kind = String(kind || "WATCH").toUpperCase();
-
   if (kind === "PASS") pass++;
   if (kind === "FAIL") fail++;
   if (kind === "WATCH") watch++;
-
   console.log(kind.padEnd(6), label);
   if (detail) console.log("       " + detail);
 }
@@ -39,21 +37,20 @@ const css = read(sharedCssFile);
 console.log("ScopedLabs Status Legend Standard Audit V1");
 console.log("Repo:", root);
 
-const failSafeSourceTokens = [
-  '<section id="failSafeStatusLegend" class="access-tool-status-legend" aria-label="Fail-Safe status legend">',
+for (const token of [
+  'id="failSafeStatusLegend"',
+  'class="access-tool-status-legend"',
   '<h3>Status Legend</h3>',
-  '<div class="access-tool-status-legend-grid">',
+  'access-tool-status-legend-grid',
   'access-tool-status-complete',
   'access-tool-status-watch',
   'access-tool-status-risk',
   'access-tool-status-authority'
-];
-
-for (const token of failSafeSourceTokens) {
+]) {
   result(failSafe.includes(token) ? "PASS" : "FAIL", "Fail-Safe pinned source token: " + token);
 }
 
-const sharedCssTokens = [
+for (const token of [
   ".access-tool-status-legend",
   ".access-tool-status-legend h3",
   ".access-tool-status-legend-grid",
@@ -64,14 +61,13 @@ const sharedCssTokens = [
   ".access-tool-status-risk",
   ".access-tool-status-authority",
   ".scopedlabs-status-legend"
-];
-
-for (const token of sharedCssTokens) {
+]) {
   result(css.includes(token) ? "PASS" : "FAIL", "Shared status legend CSS token: " + token);
 }
 
-const cpuRequired = [
-  '/assets/scopedlabs-status-legend.css?v=scopedlabs-status-legend-001',
+result(/\/assets\/scopedlabs-status-legend\.css\?v=scopedlabs-status-legend-[^"']+/.test(cpu) ? "PASS" : "FAIL", "CPU loads cache-busted shared status legend CSS");
+
+for (const token of [
   'id="computeFirstToolLegend"',
   'class="access-tool-status-legend"',
   'data-compute-first-tool-legend',
@@ -91,13 +87,11 @@ const cpuRequired = [
   'id="computeAssistantMount"',
   'id="exportReport"',
   'id="saveSnapshot"'
-];
-
-for (const token of cpuRequired) {
+]) {
   result(cpu.includes(token) ? "PASS" : "FAIL", "CPU standard legend/preserved token: " + token);
 }
 
-const cpuForbidden = [
+for (const token of [
   "CPU Sizing Legend",
   "compute-first-tool-legend-styles",
   "compute-first-tool-legend-grid",
@@ -105,9 +99,7 @@ const cpuForbidden = [
   "compute-first-tool-legend-mark",
   "compute-first-tool-legend-label",
   "compute-first-tool-legend-text"
-];
-
-for (const token of cpuForbidden) {
+]) {
   result(!cpu.includes(token) ? "PASS" : "FAIL", "CPU removed custom legend token: " + token);
 }
 

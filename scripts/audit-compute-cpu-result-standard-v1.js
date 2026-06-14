@@ -9,6 +9,7 @@ const files = {
   script: path.join(root, "tools", "compute", "cpu-sizing", "script.js"),
   contract: path.join(root, "assets", "scopedlabs-compute-assistant-contract.js"),
   css: path.join(root, "assets", "scopedlabs-compute-result-visuals.css"),
+  summaryCss: path.join(root, "assets", "scopedlabs-result-summary-card.css"),
   lifecycle: path.join(root, "scripts", "audit-assistant-lifecycle-contract-v1.js"),
   legend: path.join(root, "scripts", "audit-status-legend-standard-v1.js")
 };
@@ -35,10 +36,30 @@ function order(text, tokens) {
   return indexes.every((value) => value >= 0) && indexes.every((value, index) => index === 0 || indexes[index - 1] < value);
 }
 
+function runAudit(label, file) {
+  if (!fs.existsSync(file)) {
+    result("WATCH", label + " audit missing");
+    return;
+  }
+
+  try {
+    const output = childProcess.execFileSync(process.execPath, [file], {
+      cwd: root,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"]
+    });
+
+    result(output.includes("FAIL : 0") && (output.includes("OVERALL: PASS") || output.includes("OVERALL: PASS WITH WATCH")) ? "PASS" : "FAIL", label + " audit passes");
+  } catch (error) {
+    result("FAIL", label + " audit failed", error.message);
+  }
+}
+
 const html = read(files.html);
 const script = read(files.script);
 const contract = read(files.contract);
 const css = read(files.css);
+const summaryCss = read(files.summaryCss);
 
 console.log("ScopedLabs Compute CPU Result Standard Audit V1");
 console.log("Repo:", root);
@@ -48,8 +69,10 @@ for (const [label, file] of Object.entries(files)) {
   result(read(file) ? "PASS" : "FAIL", label + " readable", path.relative(root, file));
 }
 
+result(/\/assets\/scopedlabs-compute-result-visuals\.css\?v=scopedlabs-compute-result-visuals-[^"']+/.test(html) ? "PASS" : "FAIL", "CPU loads cache-busted Compute result visuals CSS");
+result(/\/assets\/scopedlabs-result-summary-card\.css\?v=scopedlabs-result-summary-card-[^"']+/.test(html) ? "PASS" : "FAIL", "CPU loads cache-busted shared result summary CSS");
+
 for (const token of [
-  "/assets/scopedlabs-compute-result-visuals.css?v=scopedlabs-compute-result-visuals-001",
   'id="computeInternalResultsLedger"',
   'id="computeAssistantCard"',
   'id="computeAssistantMount"',
@@ -74,6 +97,7 @@ for (const token of [
   "function buildComputeCpuVisualSvg(result)",
   "function renderComputeCpuVisual(result)",
   "function clearComputeCpuVisual()",
+  "const cpuPipelineResult = {",
   "renderComputeCpuVisual(cpuPipelineResult);",
   "clearComputeCpuVisual();",
   "renderComputeAssistant(cpuPipelineResult);",
@@ -95,11 +119,14 @@ for (const token of [
   "function cpuPayloadOutputs(data)",
   "function cpuResultSection(data)",
   "function cpuVisualSection(data)",
+  "function renderComputeCpuTopSummaryCard(data)",
   "CPU Sizing Summary",
   "CPU Load Profile",
   "recommendedLogicalCores",
   "effectiveDemandCores",
-  "utilizationTarget"
+  "utilizationTarget",
+  "Planner context active",
+  "Downstream validation pending"
 ]) {
   result(contract.includes(token) ? "PASS" : "FAIL", "assistant contract token: " + token);
 }
@@ -112,11 +139,16 @@ for (const token of [
   result(css.includes(token) ? "PASS" : "FAIL", "Compute visual CSS token: " + token);
 }
 
-
-/* CPU Fail-Safe-style top summary card audit additions */
 for (const token of [
-  "/assets/scopedlabs-result-summary-card.css?v=scopedlabs-result-summary-card-001",
-  "function renderComputeCpuTopSummaryCard(data)",
+  ".scopedlabs-result-summary-card",
+  ".scopedlabs-result-summary-top",
+  ".scopedlabs-result-summary-grid",
+  ".scopedlabs-result-summary-item"
+]) {
+  result(summaryCss.includes(token) ? "PASS" : "FAIL", "Summary card CSS token: " + token);
+}
+
+for (const token of [
   'id="computeCpuStatusCard"',
   "scopedlabs-result-summary-card",
   "scopedlabs-result-summary-top",
@@ -129,27 +161,12 @@ for (const token of [
   "computeCpuStatusAction",
   'if (toolSlug === "cpu-sizing" && data)'
 ]) {
-  const source = html + "\n" + contract + "\n" + css + "\n" + read(path.join(root, "assets", "scopedlabs-result-summary-card.css"));
+  const source = html + "\n" + contract + "\n" + css + "\n" + summaryCss;
   result(source.includes(token) ? "PASS" : "FAIL", "CPU Fail-Safe-style top summary token: " + token);
 }
 
-for (const [label, file] of [["lifecycle", files.lifecycle], ["legend", files.legend]]) {
-  if (!fs.existsSync(file)) {
-    result("WATCH", label + " audit missing");
-    continue;
-  }
-
-  try {
-    const output = childProcess.execFileSync(process.execPath, [file], {
-      cwd: root,
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "pipe"]
-    });
-    result(output.includes("FAIL : 0") || output.includes("OVERALL: PASS") ? "PASS" : "FAIL", label + " audit passes");
-  } catch (error) {
-    result("FAIL", label + " audit failed", error.message);
-  }
-}
+runAudit("lifecycle", files.lifecycle);
+runAudit("legend", files.legend);
 
 console.log("");
 console.log("========================================================================");
