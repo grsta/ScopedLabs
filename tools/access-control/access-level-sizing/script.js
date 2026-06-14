@@ -1970,4 +1970,39 @@
     bindAccessLevelSummaryCarryover();
   }
 
+
+  // access-level-complete-pipeline-summary-0613
+  function bindCompletePipelineSummaryDestination() {
+    const summaryUrl = "/tools/access-control/summary/";
+    const button = els.continueBtn || document.getElementById("continue");
+
+    if (!button || button.dataset.accessLevelSummaryDestinationBound === "true") return;
+
+    button.dataset.accessLevelSummaryDestinationBound = "true";
+    button.dataset.summaryDestination = summaryUrl;
+
+    if (button.tagName && button.tagName.toLowerCase() === "a") {
+      button.setAttribute("href", summaryUrl);
+    }
+
+    button.addEventListener("click", function (event) {
+      const text = String(button.innerText || button.textContent || "").trim();
+
+      if (!/complete pipeline/i.test(text)) return;
+
+      if (typeof persistAccessLevelSummaryCarryover === "function") {
+        persistAccessLevelSummaryCarryover("complete-pipeline-summary-navigation");
+      }
+
+      event.preventDefault();
+      window.location.href = summaryUrl;
+    }, true);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bindCompletePipelineSummaryDestination, { once: true });
+  } else {
+    bindCompletePipelineSummaryDestination();
+  }
+
 })();
