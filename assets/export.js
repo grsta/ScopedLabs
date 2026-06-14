@@ -1428,7 +1428,27 @@ if (shouldSuppressDefaultInterpretationBlock()) {
     const suppressHeaderStatusPill = state.options.suppressHeaderStatusPill === true;
     const headerStatusPillBlock = suppressHeaderStatusPill ? "" : '<div class="status-pill ' + statusClass + '">' + escapeHtml(payload.status || "") + '</div>';
 
-    const suppressedProjectDetailsBlock = suppressStandardSections && projectDetails
+    // shared-export-027-access-control-all-scopes-metadata-suppression
+    const suppressGlobalReportMetadata = (function () {
+      try {
+        const pathName = String(window.location && window.location.pathname || "");
+        if (!/\/tools\/access-control\/summary\/?$/i.test(pathName)) return false;
+
+        const summary = document.querySelector("[data-access-control-report-summary='true']");
+        if (!summary) return false;
+
+        const selector = document.getElementById("accessControlReportScopeSelect") ||
+          summary.querySelector("#accessControlReportScopeSelect");
+
+        if (!selector) return false;
+
+        return String(selector.value || "").trim() === "__all__";
+      } catch (_) {
+        return false;
+      }
+    })();
+
+    const suppressedProjectDetailsBlock = suppressStandardSections && projectDetails && !suppressGlobalReportMetadata
       ? `
         <section class="section">
           <h2>Report Metadata</h2>
