@@ -170,24 +170,82 @@
     };
   }
 
+  function cpuPayloadInputs(data) {
+    return data && data.inputs && typeof data.inputs === "object" ? data.inputs : {};
+  }
+
+  function cpuPayloadOutputs(data) {
+    return data && data.outputs && typeof data.outputs === "object" ? data.outputs : {};
+  }
+
+  function cpuNumber(value, fallback) {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : fallback;
+  }
+
+  function cpuStatusLabel(status) {
+    const value = String(status || "PENDING").toUpperCase();
+    if (value === "RISK") return "Risk";
+    if (value === "WATCH") return "Watch";
+    if (value === "GOOD" || value === "HEALTHY" || value === "COMPLETE") return "Good";
+    return "Review";
+  }
+
+  function cpuStatusForActions(status) {
+    const value = String(status || "PENDING").toUpperCase();
+    if (value === "GOOD" || value === "HEALTHY" || value === "COMPLETE") return "PENDING";
+    return value;
+  }
+
+  function cpuPct(value) {
+    const num = cpuNumber(value, 0);
+    return Math.round(num) + "%";
+  }
+
+  
+
   function cpuResultSection(data) {
-    const status = String(data.status || "PENDING").toUpperCase();
-    const logical = Number(data.cores || 0);
-    const physical = Number(data.physicalCores || 0);
-    const effective = Number(data.eff || 0);
+    const status = cpuStatusLabel(data.status || data.analyzerStatus);
+    const outputs = cpuPayloadOutputs(data);
+
+    const logical = cpuNumber(outputs.recommendedLogicalCores, cpuNumber(data.cores, 0));
+    const physical = cpuNumber(outputs.recommendedPhysicalCores, cpuNumber(data.physicalCores, 0));
+    const effective = cpuNumber(outputs.effectiveDemandCores, cpuNumber(data.eff, 0));
+    const required = cpuNumber(outputs.requiredCores, logical);
+    const constraint = titleCase(outputs.primaryConstraint || data.primaryConstraint || data.constraint || "CPU capacity");
 
     return {
-      title: "CPU Result Readout",
-      body: "This is the current CPU sizing result saved for the active Compute planning path.",
+      title: "CPU Sizing Summary",
+      body: data.summary || "CPU sizing result saved for the active Compute planning path.",
       items: [
         "Status: " + status,
         "Recommended logical cores: " + logical,
-        "Estimated physical cores: " + physical,
+        "Recommended physical cores: " + physical,
         "Effective CPU demand: " + effective.toFixed(2) + " cores",
-        "Primary constraint: " + titleCase(data.primaryConstraint || data.constraint || "CPU capacity")
+        "Required CPU capacity: " + required.toFixed(2) + " cores",
+        "Primary constraint: " + constraint
       ]
     };
   }
+
+  function cpuVisualSection(data) {
+    const outputs = cpuPayloadOutputs(data);
+    const loadPressure = cpuNumber(outputs.loadPressure, 0);
+    const coreDemand = cpuNumber(outputs.coreDemand, 0);
+    const utilization = cpuNumber(outputs.utilizationTarget, 0);
+
+    return {
+      title: "CPU Load Profile",
+      body: "The visible CPU load profile below uses the same saved result payload as this assistant readout.",
+      items: [
+        "Load pressure: " + cpuPct(loadPressure),
+        "Core demand: " + cpuPct(coreDemand),
+        "Utilization target: " + cpuPct(utilization)
+      ]
+    };
+  }
+
+  
 
   function nextStepSection(status) {
     const value = String(status || "PENDING").toUpperCase();
@@ -228,22 +286,27 @@
   }
 
   function buildCpuSizingAssistantModel(data) {
-    const status = data.status || "PENDING";
-    const workload = data.workload || inputValue("workload", "general");
-    const smt = inputValue("smt", "on");
-    const target = inputValue("targetUtil", "70");
-    const peak = inputValue("peak", "1.25");
-    const concurrency = inputValue("concurrency", "");
-    const cpuPerWorker = inputValue("cpuPerWorker", "");
+    data = data || {};
+
+    const inputs = cpuPayloadInputs(data);
+    const status = data.status || data.analyzerStatus || "PENDING";
+    const actionStatus = cpuStatusForActions(status);
+
+    const workload = inputs.workloadType || data.workload || inputValue("workload", "general");
+    const smt = inputs.smt || inputValue("smt", "on");
+    const target = inputs.targetUtilizationPercent || inputValue("targetUtil", "70");
+    const peak = inputs.peakFactor || inputValue("peak", "1.25");
+    const concurrency = inputs.concurrency || inputValue("concurrency", "");
+    const cpuPerWorker = inputs.cpuPerWorkerPercent || inputValue("cpuPerWorker", "");
     const saved = savedToolResult("cpu-sizing");
 
     return {
       category: "compute",
       tool: "cpu-sizing",
-      title: "CPU Design Assistant",
+      title: "CPU Sizing Result",
       kicker: "Compute Assistant",
       status,
-      summary: statusSummary(status),
+      summary: data.summary || statusSummary(actionStatus),
       hideHeaderPills: true,
       hideStandardLists: false,
       assumptionsTitle: "Current CPU Planning Inputs",
@@ -257,11 +320,12 @@
         "SMT mode: " + (smt === "on" ? "logical cores counted" : "physical cores only"),
         "Saved to active workload: " + (saved ? "Yes" : "Not confirmed")
       ],
-      actions: actionList(status, data),
+      actions: actionList(actionStatus, data),
       sections: [
         workloadContextSection("CPU Sizing"),
         cpuResultSection(data),
-        nextStepSection(status)
+        cpuVisualSection(data),
+        nextStepSection(actionStatus)
       ]
     };
   }

@@ -1,0 +1,31 @@
+/*
+  ScopedLabs Compute Result Visuals
+  Shared Compute result visual surface. CPU Sizing is the first consumer.
+*/
+
+.compute-result-visual-card {
+  margin-top: 14px;
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.compute-result-visual-card[hidden] {
+  display: none !important;
+}
+
+.compute-result-visual-title {
+  margin-top: 0;
+}
+
+.compute-result-visual-shell {
+  margin-top: 16px;
+}
+
+.compute-result-visual-shell svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.compute-result-visual-shell text {
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}

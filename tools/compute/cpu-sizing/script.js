@@ -119,6 +119,7 @@
     }
 
     clearComputeAssistant();
+    clearComputeCpuVisual();
   }
 
 
@@ -241,6 +242,101 @@
       return false;
     }
   }
+
+  
+  function cpuVisualClamp(value, min, max) {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return min;
+    return Math.min(max, Math.max(min, num));
+  }
+
+  function cpuVisualStatus(status) {
+    const value = String(status || "PENDING").toUpperCase();
+    if (value === "RISK") return { label: "RISK", fill: "rgba(248,113,113,.16)", line: "rgba(248,113,113,.82)", text: "rgba(248,113,113,.96)" };
+    if (value === "WATCH") return { label: "WATCH", fill: "rgba(250,204,21,.13)", line: "rgba(250,204,21,.78)", text: "rgba(250,204,21,.96)" };
+    return { label: "GOOD", fill: "rgba(34,197,94,.13)", line: "rgba(125,255,152,.78)", text: "rgba(125,255,152,.96)" };
+  }
+
+  function buildComputeCpuVisualSvg(result) {
+    const outputs = result && result.outputs ? result.outputs : {};
+    const inputs = result && result.inputs ? result.inputs : {};
+    const status = cpuVisualStatus(result && (result.status || result.analyzerStatus));
+    const logical = Number(outputs.recommendedLogicalCores || 0);
+    const physical = Number(outputs.recommendedPhysicalCores || 0);
+    const effective = Number(outputs.effectiveDemandCores || 0);
+    const required = Number(outputs.requiredCores || logical || 0);
+    const constraint = outputs.primaryConstraint || "CPU capacity";
+
+    const metrics = [
+      { label: "Load Pressure", value: Number(outputs.loadPressure || 0), note: "scheduler pressure" },
+      { label: "Core Demand", value: Number(outputs.coreDemand || 0), note: "core density" },
+      { label: "Utilization", value: Number(outputs.utilizationTarget || inputs.targetUtilizationPercent || 0), note: "target ceiling" }
+    ];
+
+    const max = Math.max(120, ...metrics.map((item) => cpuVisualClamp(item.value, 0, 180)));
+    const barX = 206;
+    const barW = 410;
+    const rows = metrics.map((item, index) => {
+      const y = 156 + (index * 54);
+      const value = cpuVisualClamp(item.value, 0, 180);
+      const w = Math.max(4, Math.round((value / max) * barW));
+      const line = value >= 90 ? "rgba(248,113,113,.82)" : value >= 70 ? "rgba(250,204,21,.82)" : "rgba(125,255,152,.82)";
+
+      return [
+        '<text x="64" y="' + (y + 16) + '" fill="rgba(246,255,248,.92)" font-size="12" font-weight="850">' + cpuContextEscapeHtml(item.label) + '</text>',
+        '<text x="64" y="' + (y + 34) + '" fill="rgba(203,213,225,.62)" font-size="10.5">' + cpuContextEscapeHtml(item.note) + '</text>',
+        '<rect x="' + barX + '" y="' + y + '" width="' + barW + '" height="18" rx="8" fill="rgba(0,0,0,.22)" stroke="rgba(148,163,184,.14)" />',
+        '<rect x="' + barX + '" y="' + y + '" width="' + w + '" height="18" rx="8" fill="' + line + '" opacity=".86" />',
+        '<text x="' + (barX + barW + 18) + '" y="' + (y + 14) + '" fill="' + line + '" font-size="12" font-weight="900">' + Math.round(value) + '%</text>'
+      ].join("");
+    }).join("");
+
+    function chip(label, value, x, y, width) {
+      return [
+        '<rect x="' + x + '" y="' + y + '" width="' + width + '" height="48" rx="9" fill="rgba(0,0,0,.18)" stroke="rgba(120,255,120,.13)" />',
+        '<text x="' + (x + 10) + '" y="' + (y + 17) + '" font-size="8.5" fill="rgba(203,213,225,.66)" font-weight="850" letter-spacing=".9">' + cpuContextEscapeHtml(label.toUpperCase()) + '</text>',
+        '<text x="' + (x + 10) + '" y="' + (y + 36) + '" font-size="17" fill="rgba(246,255,248,.96)" font-weight="850">' + cpuContextEscapeHtml(value) + '</text>'
+      ].join("");
+    }
+
+    return [
+      '<svg viewBox="0 0 760 356" role="img" aria-label="CPU load profile visual" xmlns="http://www.w3.org/2000/svg">',
+      '<defs><pattern id="computeCpuGridV1" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="rgba(120,255,120,.055)" stroke-width="1"/></pattern></defs>',
+      '<rect x="24" y="24" width="712" height="308" rx="16" fill="rgba(2,8,7,.72)" stroke="rgba(120,255,120,.14)" />',
+      '<rect x="36" y="36" width="688" height="284" rx="12" fill="url(#computeCpuGridV1)" stroke="rgba(148,163,184,.10)" />',
+      '<text x="54" y="64" fill="rgba(203,213,225,.62)" font-size="10.5" font-weight="850" letter-spacing="1.2">COMPUTE CPU SIZING</text>',
+      '<text x="54" y="90" fill="rgba(246,255,248,.96)" font-size="20" font-weight="750">CPU load profile and core recommendation</text>',
+      '<rect x="610" y="54" width="88" height="30" rx="9" fill="' + status.fill + '" stroke="' + status.line + '" />',
+      '<text x="654" y="74" text-anchor="middle" fill="' + status.text + '" font-size="10.5" font-weight="900">' + status.label + '</text>',
+      chip("Logical cores", String(logical || "-"), 54, 108, 150),
+      chip("Physical cores", String(physical || "-"), 220, 108, 150),
+      chip("Effective demand", (effective ? effective.toFixed(2) : "-") + "c", 386, 108, 150),
+      chip("Required", (required ? required.toFixed(2) : "-") + "c", 552, 108, 146),
+      rows,
+      '<line x1="206" y1="300" x2="616" y2="300" stroke="rgba(148,163,184,.18)" />',
+      '<text x="64" y="304" fill="rgba(203,213,225,.62)" font-size="10.5">Primary constraint: ' + cpuContextEscapeHtml(constraint) + '</text>',
+      '</svg>'
+    ].join("");
+  }
+
+  function clearComputeCpuVisual() {
+    const card = document.getElementById("computeCpuVisualCard");
+    const target = document.getElementById("computeCpuVisual");
+    if (target) target.innerHTML = "";
+    if (card) card.hidden = true;
+  }
+
+  function renderComputeCpuVisual(result) {
+    const card = document.getElementById("computeCpuVisualCard");
+    const target = document.getElementById("computeCpuVisual");
+    if (!card || !target || !result) return false;
+
+    target.innerHTML = buildComputeCpuVisualSvg(result);
+    card.hidden = false;
+    return true;
+  }
+
+
 
   function calculate() {
     const workload = els.workload.value;
@@ -418,6 +514,7 @@
     saveCpuResultToWorkload(cpuWorkloadResult);
     renderWorkloadContext();
     renderComputeAssistant(cpuWorkloadResult);
+    renderComputeCpuVisual(cpuWorkloadResult);
 
     showContinue();
 
