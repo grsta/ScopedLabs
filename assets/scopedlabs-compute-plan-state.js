@@ -255,18 +255,64 @@
   function ensureWorkloadDisplayStyles() {
     if (typeof document === "undefined" || document.getElementById("compute-workload-display-styles")) return;
 
-    var style = document.createElement("style");
+    const style = document.createElement("style");
     style.id = "compute-workload-display-styles";
-    style.textContent = [
-      ".access-scope-context-card.compute-workload-context-card{border-color:rgba(125,255,152,.22)!important;background:rgba(125,255,152,.035)!important}",
-      ".access-scope-context-line{color:rgba(190,255,205,.9);font-size:.72rem;font-weight:950;letter-spacing:.08em;margin-bottom:8px;text-transform:uppercase}",
-      ".access-scope-context-line .arrow{color:rgba(125,255,152,.78);padding:0 5px}",
-      ".access-scope-context-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}",
-      ".access-scope-context-grid div{border:1px solid rgba(148,163,184,.12);border-radius:10px;background:rgba(0,0,0,.12);padding:8px;color:rgba(226,232,240,.82);font-size:.82rem}",
-      ".access-scope-context-grid strong{display:block;color:rgba(203,213,225,.62);font-size:.62rem;letter-spacing:.12em;margin-bottom:4px;text-transform:uppercase}",
-      ".access-scope-context-grid span{display:block;color:rgba(226,232,240,.86)}",
-      "@media (max-width:860px){.access-scope-context-grid{grid-template-columns:1fr}}"
-    ].join("\n");
+    style.textContent = `
+      .access-scope-context-card {
+        border-color: rgba(125,255,152,.22) !important;
+        background: rgba(125,255,152,.035) !important;
+      }
+
+      .access-scope-context-line {
+        color: rgba(190,255,205,.9);
+        font-size: .72rem;
+        font-weight: 950;
+        letter-spacing: .08em;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+      }
+
+      .access-scope-context-line .arrow {
+        color: rgba(125,255,152,.78);
+        padding: 0 5px;
+      }
+
+      .access-scope-context-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        margin-top: 10px;
+      }
+
+      .access-scope-context-grid div {
+        border: 1px solid rgba(148,163,184,.12);
+        border-radius: 10px;
+        padding: 8px;
+        background: rgba(255,255,255,.025);
+      }
+
+      .access-scope-context-grid strong {
+        color: rgba(203,213,225,.66);
+        display: block;
+        font-size: .66rem;
+        letter-spacing: .08em;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+      }
+
+      .access-scope-context-grid span {
+        color: rgba(226,232,240,.88);
+        font-size: .84rem;
+        font-weight: 750;
+        line-height: 1.3;
+      }
+
+      @media (max-width: 760px) {
+        .access-scope-context-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    `;
 
     document.head.appendChild(style);
   }
@@ -378,7 +424,7 @@
 
 
   window.ScopedLabsComputePlanState = Object.freeze({
-    version: "scopedlabs-compute-plan-state-003-workload-display",
+    version: "scopedlabs-compute-plan-state-004-access-display-css-clone",
     contract: CONTRACT,
     keys: Object.freeze({
       plan: PLAN_KEY,
