@@ -1429,20 +1429,30 @@ if (shouldSuppressDefaultInterpretationBlock()) {
     const headerStatusPillBlock = suppressHeaderStatusPill ? "" : '<div class="status-pill ' + statusClass + '">' + escapeHtml(payload.status || "") + '</div>';
 
     // shared-export-027-access-control-all-scopes-metadata-suppression
+    // shared-export-028-access-control-all-scope-metadata-route
     const suppressGlobalReportMetadata = (function () {
       try {
         const pathName = String(window.location && window.location.pathname || "");
-        if (!/\/tools\/access-control\/summary\/?$/i.test(pathName)) return false;
-
         const summary = document.querySelector("[data-access-control-report-summary='true']");
-        if (!summary) return false;
+        const onAccessControlSummary = /\/tools\/access-control\/summary\/?$/i.test(pathName) || !!summary;
+
+        if (!onAccessControlSummary) return false;
 
         const selector = document.getElementById("accessControlReportScopeSelect") ||
-          summary.querySelector("#accessControlReportScopeSelect");
+          (summary ? summary.querySelector("#accessControlReportScopeSelect") : null);
 
-        if (!selector) return false;
+        if (selector && String(selector.value || "").trim() === "__all__") return true;
 
-        return String(selector.value || "").trim() === "__all__";
+        try {
+          if (String(window.sessionStorage.getItem("scopedlabs:access-control:summary:report-scope-mode") || "").trim() === "__all__") {
+            return true;
+          }
+        } catch (_) {}
+
+        if (summary && summary.querySelectorAll("[data-summary-report-scope-section='true']").length > 1) return true;
+        if (summary && summary.querySelectorAll(".summary-report-scope-title").length > 1) return true;
+
+        return false;
       } catch (_) {
         return false;
       }
