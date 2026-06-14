@@ -112,6 +112,27 @@ for (const token of [
   result(css.includes(token) ? "PASS" : "FAIL", "Compute visual CSS token: " + token);
 }
 
+
+/* CPU Fail-Safe-style top summary card audit additions */
+for (const token of [
+  "/assets/scopedlabs-result-summary-card.css?v=scopedlabs-result-summary-card-001",
+  "function renderComputeCpuTopSummaryCard(data)",
+  'id="computeCpuStatusCard"',
+  "scopedlabs-result-summary-card",
+  "scopedlabs-result-summary-top",
+  "scopedlabs-result-summary-grid",
+  "scopedlabs-result-summary-item",
+  "computeCpuStatusRecommendation",
+  "computeCpuStatusConfidence",
+  "computeCpuStatusFlags",
+  "computeCpuStatusRisk",
+  "computeCpuStatusAction",
+  'if (toolSlug === "cpu-sizing" && data)'
+]) {
+  const source = html + "\n" + contract + "\n" + css + "\n" + read(path.join(root, "assets", "scopedlabs-result-summary-card.css"));
+  result(source.includes(token) ? "PASS" : "FAIL", "CPU Fail-Safe-style top summary token: " + token);
+}
+
 for (const [label, file] of [["lifecycle", files.lifecycle], ["legend", files.legend]]) {
   if (!fs.existsSync(file)) {
     result("WATCH", label + " audit missing");

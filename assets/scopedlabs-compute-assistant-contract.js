@@ -352,12 +352,119 @@
     };
   }
 
+  function computeCpuSummaryCardEscapeHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function computeCpuTopCardStatus(status) {
+    const value = String(status || "PENDING").toUpperCase();
+
+    if (value === "RISK") {
+      return {
+        label: "RISK",
+        className: "is-risk",
+        confidence: "LOW",
+        risk: "CPU plan is likely underbuilt or operating too close to the edge.",
+        action: "Rework the CPU baseline before treating RAM, storage, or branch tools as valid."
+      };
+    }
+
+    if (value === "WATCH") {
+      return {
+        label: "WATCH",
+        className: "is-watch",
+        confidence: "MEDIUM",
+        risk: "CPU margin is tightening and should be carried forward as a watch item.",
+        action: "Continue to RAM sizing, but keep this CPU result under review if concurrency, burst factor, or utilization target changes."
+      };
+    }
+
+    return {
+      label: "GOOD",
+      className: "is-good",
+      confidence: "HIGH",
+      risk: "No immediate CPU sizing risk detected from the current workload assumptions.",
+      action: "Carry this CPU baseline into RAM sizing as the first Compute planning checkpoint."
+    };
+  }
+
+  function computeCpuTopCardModel(data) {
+    data = data || {};
+
+    const outputs = cpuPayloadOutputs(data);
+    const inputs = cpuPayloadInputs(data);
+    const status = computeCpuTopCardStatus(data.status || data.analyzerStatus);
+    const logical = cpuNumber(outputs.recommendedLogicalCores, 0);
+    const physical = cpuNumber(outputs.recommendedPhysicalCores, 0);
+    const effective = cpuNumber(outputs.effectiveDemandCores, 0);
+    const required = cpuNumber(outputs.requiredCores, logical);
+    const constraint = titleCase(outputs.primaryConstraint || "CPU capacity");
+    const recommendation = data.summary || (logical + " logical cores / " + physical + " physical cores recommended");
+
+    const flags = [
+      status.label === "WATCH" ? "CPU watch item" : status.label === "RISK" ? "CPU risk item" : "CPU baseline usable",
+      constraint,
+      "RAM sizing next"
+    ].join(" | ");
+
+    return {
+      title: "CPU SIZING",
+      subtitle: recommendation + ". Effective demand is " + effective.toFixed(2) + " cores against " + required.toFixed(2) + " required cores.",
+      statusLabel: status.label,
+      statusClass: status.className,
+      recommendation,
+      confidence: status.confidence,
+      flags,
+      risk: status.risk,
+      action: status.action
+    };
+  }
+
+  function renderComputeCpuTopSummaryCard(data) {
+    const model = computeCpuTopCardModel(data);
+
+    return [
+      '<section id="computeCpuStatusCard" class="scopedlabs-result-summary-card" aria-live="polite" data-compute-cpu-status-card>',
+      '  <div class="scopedlabs-result-summary-top">',
+      '    <div>',
+      '      <h3 id="computeCpuStatusTitle" class="scopedlabs-result-summary-title">' + computeCpuSummaryCardEscapeHtml(model.title) + '</h3>',
+      '      <p id="computeCpuStatusSubtitle" class="scopedlabs-result-summary-subtitle">' + computeCpuSummaryCardEscapeHtml(model.subtitle) + '</p>',
+      '    </div>',
+      '    <div id="computeCpuStatusText" class="scopedlabs-result-summary-status ' + computeCpuSummaryCardEscapeHtml(model.statusClass) + '">' + computeCpuSummaryCardEscapeHtml(model.statusLabel) + '</div>',
+      '  </div>',
+      '  <div class="scopedlabs-result-summary-grid">',
+      '    <div class="scopedlabs-result-summary-item"><strong>Recommendation</strong><span id="computeCpuStatusRecommendation">' + computeCpuSummaryCardEscapeHtml(model.recommendation) + '</span></div>',
+      '    <div class="scopedlabs-result-summary-item"><strong>Confidence</strong><span id="computeCpuStatusConfidence">' + computeCpuSummaryCardEscapeHtml(model.confidence) + '</span></div>',
+      '    <div class="scopedlabs-result-summary-item"><strong>Decision Flags</strong><span id="computeCpuStatusFlags">' + computeCpuSummaryCardEscapeHtml(model.flags) + '</span></div>',
+      '    <div class="scopedlabs-result-summary-item"><strong>Primary Risk</strong><span id="computeCpuStatusRisk">' + computeCpuSummaryCardEscapeHtml(model.risk) + '</span></div>',
+      '  </div>',
+      '  <div id="computeCpuStatusAction" class="scopedlabs-result-summary-action">' + computeCpuSummaryCardEscapeHtml(model.action) + '</div>',
+      '</section>'
+    ].join("");
+  }
+
+  
+
   function renderToolAssistant(config) {
     config = config || {};
 
     const mount = config.mount || document.querySelector("[data-compute-assistant-mount]");
     const card = config.card || document.querySelector("[data-compute-assistant-card]");
     if (!mount || !card) return false;
+
+    const data = config && config.result ? config.result : null;
+    const toolSlug = config && config.toolSlug ? config.toolSlug : getStep();
+
+    if (toolSlug === "cpu-sizing" && data) {
+      mount.innerHTML = renderComputeCpuTopSummaryCard(data);
+      card.hidden = false;
+      return true;
+    }
 
     const model = buildToolAssistantModel(config);
 

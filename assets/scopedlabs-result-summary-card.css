@@ -1,0 +1,136 @@
+/*
+  ScopedLabs Result Summary Card
+  Source pinned from Access Control Fail-Safe #failSafeStatusCard.
+  Compute CPU Sizing is the first neutral consumer.
+*/
+
+.scopedlabs-result-summary-card,
+.access-fail-safe-status-card {
+  border: 1px solid rgba(125,255,152,.2);
+  background: rgba(255,255,255,.035);
+  border-radius: 16px;
+  padding: 16px;
+  margin-top: 14px;
+}
+
+.scopedlabs-result-summary-card[hidden],
+.access-fail-safe-status-card[hidden] {
+  display: none !important;
+}
+
+.scopedlabs-result-summary-top,
+.access-fail-safe-status-top {
+  align-items: flex-start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.scopedlabs-result-summary-title,
+.access-fail-safe-status-title {
+  color: rgba(226,232,240,.96);
+  font-size: 1.05rem;
+  font-weight: 900;
+  margin: 0;
+}
+
+.scopedlabs-result-summary-subtitle,
+.access-fail-safe-status-subtitle {
+  color: rgba(203,213,225,.72);
+  font-size: .9rem;
+  line-height: 1.45;
+  margin: 6px 0 0;
+}
+
+.scopedlabs-result-summary-status,
+.access-fail-safe-status-text {
+  font-size: .82rem;
+  font-weight: 950;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.scopedlabs-result-summary-status.is-good,
+.scopedlabs-result-summary-status.is-complete,
+.access-fail-safe-status-text.complete {
+  color: rgba(125,255,152,.96);
+  font-weight: 950;
+}
+
+.scopedlabs-result-summary-status.is-watch,
+.scopedlabs-result-summary-status.is-authority,
+.access-fail-safe-status-text.watch,
+.access-fail-safe-status-text.authority {
+  color: rgba(250,204,21,.96);
+  font-weight: 950;
+}
+
+.scopedlabs-result-summary-status.is-risk,
+.access-fail-safe-status-text.risk {
+  color: rgba(248,113,113,.96);
+  font-weight: 950;
+}
+
+.scopedlabs-result-summary-grid,
+.access-fail-safe-status-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 14px;
+}
+
+.scopedlabs-result-summary-item,
+.access-fail-safe-status-item {
+  border: 1px solid rgba(148,163,184,.12);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(0,0,0,.12);
+}
+
+.scopedlabs-result-summary-item strong,
+.access-fail-safe-status-item strong {
+  color: rgba(203,213,225,.66);
+  display: block;
+  font-size: .68rem;
+  letter-spacing: .08em;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}
+
+.scopedlabs-result-summary-item span,
+.access-fail-safe-status-item span {
+  color: rgba(226,232,240,.9);
+  display: block;
+  font-size: .88rem;
+  font-weight: 750;
+  line-height: 1.4;
+}
+
+.scopedlabs-result-summary-action,
+.access-fail-safe-status-action {
+  border-left: 3px solid rgba(125,255,152,.72);
+  color: rgba(226,232,240,.88);
+  font-size: .9rem;
+  line-height: 1.5;
+  margin-top: 14px;
+  padding-left: 12px;
+}
+
+@media (max-width: 720px) {
+  .scopedlabs-result-summary-top,
+  .access-fail-safe-status-top {
+    display: block;
+  }
+
+  .scopedlabs-result-summary-status,
+  .access-fail-safe-status-text {
+    display: inline-block;
+    margin-top: 10px;
+  }
+
+  .scopedlabs-result-summary-grid,
+  .access-fail-safe-status-grid {
+    grid-template-columns: 1fr;
+  }
+}
