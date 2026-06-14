@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-category-planner-shell-009-flat-summary-visual";
+  var VERSION = "scopedlabs-category-planner-shell-010-full-width-summary-visual";
 
   function escapeHtml(value) {
     return String(value == null ? "" : value)
@@ -53,7 +53,7 @@
       ".access-scope-summary-card{background:rgba(0,0,0,.14)}",
       ".access-control-planning-visual-shell{border:0!important;background:transparent!important;border-radius:0!important;padding:0!important;margin:18px 0 16px!important;overflow:visible!important}",
       ".access-control-planning-visual-shell svg{display:block;width:100%;height:auto}",
-      ".access-scope-branch-map-shell{max-width:900px;margin:18px auto 14px}",
+      ".access-scope-branch-map-shell{width:100%;max-width:none;margin:18px 0 14px}",
       ".sl-vis-note{color:rgba(246,255,248,.76);font-size:.88rem;line-height:1.45;margin:12px 0 0}",
       ".access-status-legend{border-top:1px solid rgba(120,255,120,.12);padding-top:14px;margin-top:16px;margin-bottom:18px}",
       ".access-status-legend-title{font-size:.9rem;letter-spacing:.06em;text-transform:uppercase;margin:0 0 8px;color:rgba(246,255,248,.9)}",
