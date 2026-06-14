@@ -194,14 +194,14 @@
 
     els.workloadContextMeta.hidden = false;
     els.workloadContextMeta.innerHTML = [
-      '<div class="access-scope-meta-item"><small>Environment</small>' + cpuContextEscapeHtml(environment) + '</div>',
-      '<div class="access-scope-meta-item"><small>Workload Type</small>' + cpuContextEscapeHtml(workloadType) + '</div>',
-      '<div class="access-scope-meta-item"><small>Demand</small>' + cpuContextEscapeHtml(demand) + '</div>',
-      '<div class="access-scope-meta-item"><small>Status</small>' + cpuContextEscapeHtml(status) + '</div>',
-      '<div class="access-scope-meta-item"><small>Path</small>' + cpuContextEscapeHtml(path) + '</div>',
-      '<div class="access-scope-meta-item"><small>Target Utilization</small>' + cpuContextEscapeHtml(targetUtilization) + '</div>',
-      '<div class="access-scope-meta-item"><small>Growth Margin</small>' + cpuContextEscapeHtml(growthMargin) + '</div>',
-      '<div class="access-scope-meta-item"><small>Branches</small>' + cpuContextEscapeHtml(branchText) + '</div>'
+      '<div class="access-scope-meta-item"><strong>Environment</strong><span>' + cpuContextEscapeHtml(environment) + '</span></div>',
+      '<div class="access-scope-meta-item"><strong>Workload Type</strong><span>' + cpuContextEscapeHtml(workloadType) + '</span></div>',
+      '<div class="access-scope-meta-item"><strong>Demand</strong><span>' + cpuContextEscapeHtml(demand) + '</span></div>',
+      '<div class="access-scope-meta-item"><strong>Status</strong><span>' + cpuContextEscapeHtml(status) + '</span></div>',
+      '<div class="access-scope-meta-item"><strong>Path</strong><span>' + cpuContextEscapeHtml(path) + '</span></div>',
+      '<div class="access-scope-meta-item"><strong>Target Utilization</strong><span>' + cpuContextEscapeHtml(targetUtilization) + '</span></div>',
+      '<div class="access-scope-meta-item"><strong>Growth Margin</strong><span>' + cpuContextEscapeHtml(growthMargin) + '</span></div>',
+      '<div class="access-scope-meta-item"><strong>Branches</strong><span>' + cpuContextEscapeHtml(branchText) + '</span></div>'
     ].join("");
   }
 

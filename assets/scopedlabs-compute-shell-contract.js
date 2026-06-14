@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var COMPUTE_SHELL_CONTRACT_VERSION = "scopedlabs-compute-shell-contract-006-active-card-access-clone";
+  var COMPUTE_SHELL_CONTRACT_VERSION = "scopedlabs-compute-shell-contract-007-active-card-access-css";
 
   function isComputeShellPage() {
     var body = document.body;
@@ -127,8 +127,8 @@
   }
 })();
 
-;(function computeActiveWorkloadContextCardAccessClone0614() {
-  var STYLE_ID = "sl-compute-active-card-access-clone-0614";
+;(function computeActiveWorkloadContextCardAccessCss0614() {
+  var STYLE_ID = "sl-compute-active-card-access-css-0614";
 
   function installStyle() {
     if (document.getElementById(STYLE_ID)) return;
@@ -137,13 +137,15 @@
     style.id = STYLE_ID;
 
     style.textContent = [
-      ".compute-workload-context-card{border-color:rgba(120,255,120,.22)!important;background:linear-gradient(180deg,rgba(19,59,38,.34),rgba(4,17,12,.58))!important;padding:14px 16px!important}",
+      "/* Matches tools/access-control/fail-safe-fail-secure active status card CSS values. */",
+      ".compute-workload-context-card{border:1px solid rgba(125,255,152,.2)!important;background:rgba(255,255,255,.035)!important;border-radius:16px!important;padding:16px!important;margin-top:14px!important}",
       ".compute-workload-context-card .access-scope-mini-flow{color:rgba(166,255,190,.86)!important;font-size:.72rem!important;font-weight:800!important;letter-spacing:.055em!important;text-transform:uppercase!important;margin:0 0 .42rem!important;line-height:1.18!important}",
-      ".compute-workload-context-card .card-title{font-size:1.08rem!important;line-height:1.22!important;font-weight:800!important;margin:.05rem 0 .5rem!important;color:rgba(246,255,248,.98)!important}",
-      ".compute-workload-context-card #computeWorkloadContextCopy{color:rgba(198,222,208,.76)!important;font-size:.90rem!important;line-height:1.36!important;margin:0 0 10px!important;font-weight:500!important}",
-      ".compute-workload-context-card .access-scope-meta{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:8px!important;margin-top:10px!important}",
-      ".compute-workload-context-card .access-scope-meta-item{min-width:0!important;min-height:48px!important;padding:8px 9px!important;border:1px solid rgba(120,255,120,.13)!important;border-radius:9px!important;background:rgba(0,0,0,.14)!important;color:rgba(244,255,248,.96)!important;font-size:.82rem!important;font-weight:800!important;line-height:1.18!important;box-sizing:border-box!important}",
-      ".compute-workload-context-card .access-scope-meta-item small{display:block!important;margin:0 0 4px!important;color:rgba(166,204,190,.62)!important;font-size:.62rem!important;font-weight:800!important;letter-spacing:.055em!important;text-transform:uppercase!important;line-height:1.1!important}",
+      ".compute-workload-context-card .card-title{color:rgba(226,232,240,.96)!important;font-size:1.05rem!important;font-weight:900!important;line-height:1.22!important;margin:0!important}",
+      ".compute-workload-context-card #computeWorkloadContextCopy{color:rgba(203,213,225,.72)!important;font-size:.9rem!important;line-height:1.45!important;margin:6px 0 0!important;font-weight:500!important}",
+      ".compute-workload-context-card .access-scope-meta{display:grid!important;gap:10px!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;margin-top:14px!important}",
+      ".compute-workload-context-card .access-scope-meta-item{border:1px solid rgba(148,163,184,.12)!important;border-radius:12px!important;padding:10px!important;background:rgba(0,0,0,.12)!important;min-height:auto!important;box-sizing:border-box!important;color:rgba(226,232,240,.9)!important;font-size:.88rem!important;font-weight:750!important;line-height:1.4!important}",
+      ".compute-workload-context-card .access-scope-meta-item strong{color:rgba(203,213,225,.66)!important;display:block!important;font-size:.68rem!important;font-weight:800!important;letter-spacing:.08em!important;margin-bottom:5px!important;text-transform:uppercase!important;line-height:1.1!important}",
+      ".compute-workload-context-card .access-scope-meta-item span{color:rgba(226,232,240,.9)!important;display:block!important;font-size:.88rem!important;font-weight:750!important;line-height:1.4!important}",
       "@media (max-width: 900px){.compute-workload-context-card .access-scope-meta{grid-template-columns:repeat(2,minmax(0,1fr))!important}}",
       "@media (max-width: 620px){.compute-workload-context-card .access-scope-meta{grid-template-columns:1fr!important}}"
     ].join("\n");
