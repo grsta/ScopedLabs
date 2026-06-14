@@ -1,6 +1,8 @@
 (function () {
   "use strict";
 
+  var COMPUTE_SHELL_CONTRACT_VERSION = "scopedlabs-compute-shell-contract-002-active-workload-context-card";
+
   function isComputeShellPage() {
     var body = document.body;
     return !!(
@@ -124,3 +126,33 @@
     observe();
   }
 })();
+
+;(function computeActiveWorkloadContextCardShellStyle0614() {
+  var STYLE_ID = "sl-compute-active-workload-context-card-style-0614";
+
+  function installStyle() {
+    if (document.getElementById(STYLE_ID)) return;
+
+    var style = document.createElement("style");
+    style.id = STYLE_ID;
+    style.textContent = [
+      ".compute-workload-context-card{border-color:rgba(120,255,120,.22)!important;background:linear-gradient(180deg,rgba(19,59,38,.34),rgba(4,17,12,.58))!important}",
+      ".compute-workload-context-card .access-scope-mini-flow{color:rgba(166,255,190,.86)!important;font-size:.74rem!important;font-weight:800!important;letter-spacing:.06em!important;text-transform:uppercase!important;margin-bottom:.35rem!important}",
+      ".compute-workload-context-card .card-title{font-size:1.2rem!important;line-height:1.22!important}",
+      ".compute-workload-context-card .access-scope-meta{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:10px!important;margin-top:12px!important}",
+      ".compute-workload-context-card .access-scope-meta-item{min-width:0!important;padding:10px 12px!important;border:1px solid rgba(120,255,120,.15)!important;border-radius:10px!important;background:rgba(0,0,0,.18)!important;color:rgba(245,255,248,.96)!important;font-size:.9rem!important;font-weight:800!important;line-height:1.25!important}",
+      ".compute-workload-context-card .access-scope-meta-item small{display:block!important;margin:0 0 5px!important;color:rgba(166,255,190,.70)!important;font-size:.68rem!important;font-weight:800!important;letter-spacing:.055em!important;text-transform:uppercase!important}",
+      "@media (max-width: 900px){.compute-workload-context-card .access-scope-meta{grid-template-columns:repeat(2,minmax(0,1fr))!important}}",
+      "@media (max-width: 620px){.compute-workload-context-card .access-scope-meta{grid-template-columns:1fr!important}}"
+    ].join("\n");
+
+    document.head.appendChild(style);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", installStyle, { once: true });
+  } else {
+    installStyle();
+  }
+})();
+
