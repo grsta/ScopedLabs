@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-category-planner-shell-010-full-width-summary-visual";
+  var VERSION = "scopedlabs-category-planner-shell-011-muted-summary-chips";
 
   function escapeHtml(value) {
     return String(value == null ? "" : value)
@@ -66,8 +66,8 @@
       ".access-status-complete{color:#62ff8d;font-weight:900}",
       ".access-scope-summary-rollup{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0 18px}",
       ".access-scope-summary-metric{border:1px solid rgba(120,255,120,.14);background:rgba(0,0,0,.18);border-radius:14px;padding:12px;max-width:100%}",
-      ".access-scope-summary-label{display:block;color:rgba(196,255,214,.62);font-size:.72rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}",
-      ".access-scope-summary-value{display:block;color:#62ff8d;font-size:1.25rem;font-weight:950}",
+      ".access-scope-summary-label{display:block;color:rgba(203,213,225,.66);font-size:.72rem;font-weight:850;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}",
+      ".access-scope-summary-value{display:block;color:rgba(246,255,248,.96);font-size:1.22rem;font-weight:850}",
       ".access-scope-summary-note{color:rgba(246,255,248,.68);font-size:.86rem;line-height:1.45;margin-top:4px}",
       ".access-scope-warn{border:1px solid rgba(255,210,80,.32);background:rgba(255,210,80,.08);border-radius:12px;padding:12px 14px;margin:12px 0;line-height:1.5;color:rgba(255,244,190,.95)}",
       ".access-scope-summary-branch{margin-top:24px}",

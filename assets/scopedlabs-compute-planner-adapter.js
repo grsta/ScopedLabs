@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-compute-planner-adapter-007-summary-branch-map";
+  var VERSION = "scopedlabs-compute-planner-adapter-008-muted-summary-chips";
   var State = window.ScopedLabsComputePlanState;
   var Shell = window.ScopedLabsCategoryPlannerShell;
 
@@ -508,8 +508,8 @@
     function chip(label, value, x, y, width) {
       return [
         '<rect x="' + x + '" y="' + y + '" width="' + width + '" height="48" rx="8" fill="rgba(0,0,0,.16)" stroke="rgba(120,255,120,.13)" />',
-        '<text x="' + (x + 10) + '" y="' + (y + 17) + '" font-size="8.5" fill="rgba(196,255,214,.62)" font-weight="900" letter-spacing=".9">' + escapeHtml(label.toUpperCase()) + '</text>',
-        '<text x="' + (x + 10) + '" y="' + (y + 36) + '" font-size="18" fill="' + palette.safeLine + '" font-weight="950">' + escapeHtml(value) + '</text>'
+        '<text x="' + (x + 10) + '" y="' + (y + 17) + '" font-size="8.5" fill="rgba(203,213,225,.66)" font-weight="850" letter-spacing=".9">' + escapeHtml(label.toUpperCase()) + '</text>',
+        '<text x="' + (x + 10) + '" y="' + (y + 36) + '" font-size="18" fill="rgba(246,255,248,.96)" font-weight="850">' + escapeHtml(value) + '</text>'
       ].join("");
     }
 
