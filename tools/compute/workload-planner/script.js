@@ -43,12 +43,12 @@
     workloadList: $("workloadList"),
     workloadCountLabel: $("workloadCountLabel"),
     workloadSummary: $("workloadSummary"),
+    activeWorkloadLabel: $("activeWorkloadLabel"),
     plannerStatus: $("plannerStatus"),
     printWorkloadSummary: $("printWorkloadSummary"),
     copyWorkloadSummary: $("copyWorkloadSummary"),
     continueTop: $("continue"),
-    continueBottom: $("continueBottom")
-  };
+    };
 
   var editingWorkloadId = null;
 
@@ -224,10 +224,16 @@
     ].join("\n");
   }
 
+  function renderActiveWorkloadLabel(workload) {
+    if (!els.activeWorkloadLabel) return;
+    els.activeWorkloadLabel.textContent = "Active workload: " + (workload && workload.name ? workload.name : "No active workload selected");
+  }
+
   function renderSummary() {
     var plan = State.load();
     var active = State.activeWorkload(plan);
     if (els.workloadSummary) els.workloadSummary.textContent = summaryText(active);
+    renderActiveWorkloadLabel(active);
   }
 
   function renderLedger() {
@@ -386,7 +392,7 @@
       if (el) el.addEventListener("change", updateBranchCards);
     });
 
-    [els.continueTop, els.continueBottom].forEach(function (link) {
+    [els.continueTop, ].forEach(function (link) {
       if (!link) return;
       link.href = NEXT_URL;
       link.addEventListener("click", function () {
