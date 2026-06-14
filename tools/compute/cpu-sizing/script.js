@@ -208,6 +208,23 @@
   }
 
 
+  function renderComputeAssistant(result) {
+    const assistant = window.ScopedLabsComputeAssistant;
+    if (!assistant || typeof assistant.renderToolAssistant !== "function" || !result) return false;
+
+    try {
+      return assistant.renderToolAssistant({
+        mount: document.getElementById("computeAssistantMount"),
+        card: document.getElementById("computeAssistantCard"),
+        toolSlug: STEP,
+        toolLabel: "CPU Sizing",
+        result
+      });
+    } catch {
+      return false;
+    }
+  }
+
   function calculate() {
     const workload = els.workload.value;
     const concurrency = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.concurrency.value, 0));
@@ -383,6 +400,7 @@
 
     saveCpuResultToWorkload(cpuWorkloadResult);
     renderWorkloadContext();
+    renderComputeAssistant(cpuWorkloadResult);
 
     showContinue();
 

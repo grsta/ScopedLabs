@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-compute-assistant-contract-002-active-workload-context";
+  const VERSION = "scopedlabs-compute-assistant-contract-003-explicit-calc-handoff";
 
   function isComputeShellPage() {
     const body = document.body;
@@ -319,7 +319,12 @@
     if (!mount || !card) return false;
 
     const flow = readFlow("cpu-sizing");
-    const data = flow && flow.data ? flow.data : null;
+    let data = flow && flow.data ? flow.data : null;
+
+    if (!data) {
+      const saved = savedToolResult("cpu-sizing");
+      data = saved && saved.result ? saved.result : null;
+    }
 
     if (!data) {
       if (window.ScopedLabsLocalAssistant && typeof window.ScopedLabsLocalAssistant.clear === "function") {
