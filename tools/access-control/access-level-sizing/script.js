@@ -1654,4 +1654,262 @@
     loadFlow();
     updateExportControls();
   });
+
+  // access-level-sizing-summary-carryover-0613
+  function safeSummaryJsonParse(value) {
+    if (!value) return null;
+
+    try {
+      const parsed = JSON.parse(value);
+      return parsed && typeof parsed === "object" ? parsed : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function readAccessLevelStorageJson(key) {
+    const stores = [];
+
+    try {
+      if (window.localStorage) stores.push(window.localStorage);
+    } catch (_) {}
+
+    try {
+      if (window.sessionStorage) stores.push(window.sessionStorage);
+    } catch (_) {}
+
+    for (const store of stores) {
+      try {
+        const parsed = safeSummaryJsonParse(store.getItem(key));
+        if (parsed) return parsed;
+      } catch (_) {}
+    }
+
+    return null;
+  }
+
+  function writeAccessLevelStorageJson(key, value) {
+    const text = JSON.stringify(value);
+
+    try {
+      if (window.localStorage) window.localStorage.setItem(key, text);
+    } catch (_) {}
+
+    try {
+      if (window.sessionStorage) window.sessionStorage.setItem(key, text);
+    } catch (_) {}
+  }
+
+  function readAccessLevelActiveScope() {
+    try {
+      const api = window.ScopedLabsAccessControlScopeState;
+      if (api && typeof api.readLedger === "function") {
+        const ledger = api.readLedger();
+        const scopes = Array.isArray(ledger && ledger.scopes) ? ledger.scopes : [];
+        const activeScopeId = String((ledger && ledger.activeScopeId) || "").trim();
+        const active = scopes.find(function (scope) { return String(scope && scope.id || "").trim() === activeScopeId; }) || scopes[0] || null;
+
+        if (active && active.id) {
+          return {
+            scopeId: String(active.id || "").trim(),
+            scopeName: String(active.name || active.title || active.label || active.id || "").trim()
+          };
+        }
+      }
+    } catch (_) {}
+
+    const ledger = readAccessLevelStorageJson("scopedlabs:pipeline:access-control:scopes") || {};
+    const scopes = Array.isArray(ledger.scopes) ? ledger.scopes : [];
+    let activeScopeId = String(ledger.activeScopeId || "").trim();
+
+    if (!activeScopeId) {
+      try {
+        activeScopeId = String(window.sessionStorage.getItem("scopedlabs:pipeline:access-control:active-scope") || "").trim();
+      } catch (_) {}
+    }
+
+    const active = scopes.find(function (scope) { return String(scope && scope.id || "").trim() === activeScopeId; }) || scopes[0] || null;
+
+    if (!active || !active.id) return null;
+
+    return {
+      scopeId: String(active.id || "").trim(),
+      scopeName: String(active.name || active.title || active.label || active.id || "").trim()
+    };
+  }
+
+  function cleanAccessLevelSummaryText(value) {
+    return String(value || "")
+      .replace(/\s+/g, " ")
+      .replace(/Open Export Report|Save Snapshot|Export Report|Report details/gi, "")
+      .trim();
+  }
+
+  function visibleAccessLevelTextFrom(node) {
+    if (!node) return "";
+
+    try {
+      const style = window.getComputedStyle(node);
+      const rect = node.getBoundingClientRect();
+
+      if (style.display === "none" || style.visibility === "hidden" || rect.width === 0 || rect.height === 0) {
+        return "";
+      }
+    } catch (_) {}
+
+    return cleanAccessLevelSummaryText(node.innerText || node.textContent || "");
+  }
+
+  function readAccessLevelResultSummaryText() {
+    const selectors = [
+      "#results",
+      "#result",
+      "#output",
+      "#outputShell",
+      "[data-output-shell]",
+      "[data-access-control-output-shell]",
+      ".results-card",
+      ".result-card",
+      ".assistant-output",
+      ".tool-results"
+    ];
+
+    const chunks = [];
+
+    selectors.forEach(function (selector) {
+      try {
+        const node = document.querySelector(selector);
+        const text = visibleAccessLevelTextFrom(node);
+
+        if (text && !chunks.includes(text)) chunks.push(text);
+      } catch (_) {}
+    });
+
+    const combined = cleanAccessLevelSummaryText(chunks.join(" "));
+
+    if (/complexity|access-level|recommended limit|overshoot|healthy|watch|risk|reduce complexity/i.test(combined)) {
+      return combined;
+    }
+
+    return "";
+  }
+
+  function accessLevelStatusFromText(text) {
+    const lower = String(text || "").toLowerCase();
+
+    if (/(risk|fail|blocked|over recommended|exceeds)/i.test(lower)) return "RISK";
+    if (/(watch|warn|review|close to|near)/i.test(lower)) return "WATCH";
+    if (/(healthy|safe|complete|saved|under the recommended|within)/i.test(lower)) return "SAVED";
+
+    return "SAVED";
+  }
+
+  function upsertAccessLevelMemoryRecord(record) {
+    const keys = [
+      "scopedlabs:access-control:guidance-memory:records",
+      "ScopedLabsAccessControl:guidance:records"
+    ];
+
+    keys.forEach(function (key) {
+      const existing = readAccessLevelStorageJson(key);
+      const records = Array.isArray(existing) ? existing : Array.isArray(existing && existing.records) ? existing.records : [];
+      const filtered = records.filter(function (item) {
+        const itemSlug = String((item && (item.slug || item.toolSlug || item.tool || item.toolId || item.id)) || "").trim();
+        const itemScope = String((item && (item.scopeId || item.accessScopeId || item.activeScopeId || item.scope)) || "").trim();
+
+        return !(itemSlug === STEP && itemScope === record.scopeId);
+      });
+
+      filtered.push(record);
+      writeAccessLevelStorageJson(key, filtered);
+    });
+  }
+
+  function persistAccessLevelSummaryCarryover(reason) {
+    const activeScope = readAccessLevelActiveScope();
+    if (!activeScope || !activeScope.scopeId) return false;
+
+    const summaryText = readAccessLevelResultSummaryText();
+    if (!summaryText) return false;
+
+    const record = {
+      category: CATEGORY,
+      slug: STEP,
+      toolSlug: STEP,
+      tool: STEP,
+      toolId: STEP,
+      toolLabel: "Access Level Sizing",
+      scopeId: activeScope.scopeId,
+      accessScopeId: activeScope.scopeId,
+      activeScopeId: activeScope.scopeId,
+      scopeName: activeScope.scopeName || activeScope.scopeId,
+      status: accessLevelStatusFromText(summaryText),
+      notes: summaryText,
+      customNotes: summaryText,
+      reportNotes: summaryText,
+      summary: summaryText,
+      source: "access-level-sizing-summary-carryover-0613",
+      reason: reason || "calculation",
+      updatedAt: new Date().toISOString()
+    };
+
+    try {
+      const api = window.ScopedLabsAccessControlGuidanceMemory;
+      if (api) {
+        if (typeof api.saveRecord === "function") api.saveRecord(record);
+        else if (typeof api.upsertRecord === "function") api.upsertRecord(record);
+        else if (typeof api.setRecord === "function") api.setRecord(record);
+        else if (typeof api.addRecord === "function") api.addRecord(record);
+        else if (typeof api.save === "function") api.save(record);
+      }
+    } catch (_) {}
+
+    writeAccessLevelStorageJson(SUMMARY_CARRYOVER_KEY, record);
+    writeAccessLevelStorageJson(SUMMARY_CARRYOVER_KEY + ":" + activeScope.scopeId, record);
+    writeAccessLevelStorageJson("scopedlabs:pipeline:access-control:summary:access-level-sizing:" + activeScope.scopeId, record);
+    writeAccessLevelStorageJson("scopedlabs:access-control:guidance:access-level-sizing:" + activeScope.scopeId, record);
+    writeAccessLevelStorageJson("ScopedLabsAccessControl:guidance:access-level-sizing:" + activeScope.scopeId, record);
+    upsertAccessLevelMemoryRecord(record);
+
+    document.dispatchEvent(new CustomEvent("scopedlabs:access-control-guidance-saved", {
+      detail: record
+    }));
+
+    return true;
+  }
+
+  function bindAccessLevelSummaryCarryover() {
+    if (document.body && document.body.dataset.accessLevelSummaryCarryoverBound === "true") return;
+    if (document.body) document.body.dataset.accessLevelSummaryCarryoverBound = "true";
+
+    const calcButton = els.calc || document.getElementById("calc");
+
+    if (calcButton) {
+      calcButton.addEventListener("click", function () {
+        window.setTimeout(function () { persistAccessLevelSummaryCarryover("calculate-click-250"); }, 250);
+        window.setTimeout(function () { persistAccessLevelSummaryCarryover("calculate-click-850"); }, 850);
+        window.setTimeout(function () { persistAccessLevelSummaryCarryover("calculate-click-1500"); }, 1500);
+      });
+    }
+
+    document.addEventListener("click", function (event) {
+      const target = event.target && event.target.closest ? event.target.closest("a, button") : null;
+      const text = String(target && (target.innerText || target.textContent) || "").trim();
+
+      if (/complete pipeline|open report|save snapshot/i.test(text)) {
+        persistAccessLevelSummaryCarryover("action-click");
+      }
+    }, true);
+
+    window.addEventListener("beforeunload", function () {
+      persistAccessLevelSummaryCarryover("beforeunload");
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bindAccessLevelSummaryCarryover, { once: true });
+  } else {
+    bindAccessLevelSummaryCarryover();
+  }
+
 })();
