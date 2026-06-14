@@ -57,7 +57,7 @@ requireMarker(summaryScript, "summary script", "access-control-summary-user-tool
 requireMarker(summaryScript, "summary script", "function renderUserToolNotes");
 requireMarker(summaryScript, "summary script", "function userToolNoteRecords");
 requireMarker(summaryScript, "summary script", "User Tool Notes");
-requireMarker(summaryScript, "summary script", "extra-export-table--access-control-user-tool-notes");
+requireMarker(summaryScript, "summary script", "access-control-user-tool-note-card");
 
 requireMarker(summaryHtml, "summary html", "/assets/access-control-user-tool-notes.js?v=" + VERSION);
 requireMarker(summaryHtml, "summary html", "./script.js?v=" + SUMMARY_SCRIPT_VERSION);

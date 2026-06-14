@@ -942,10 +942,29 @@ function readGuidanceRecordsRaw() {
     return card;
   }
 
+
+  // access-control-user-tool-notes-card-layout-0614
+  function ensureUserToolNotesCardStyles() {
+    if (document.getElementById("access-control-user-tool-notes-card-layout-0614")) return;
+
+    const style = document.createElement("style");
+    style.id = "access-control-user-tool-notes-card-layout-0614";
+    style.textContent = [
+      ".access-control-user-tool-notes-list{display:grid;gap:.85rem;margin-top:1rem;}",
+      ".access-control-user-tool-note-card{border:1px solid rgba(140,255,170,.18);border-radius:.85rem;padding:1rem;background:rgba(0,0,0,.16);}",
+      ".access-control-user-tool-note-meta{display:flex;flex-wrap:wrap;gap:.55rem 1rem;color:var(--muted,#c9d6cf);font-size:.9rem;margin-bottom:.7rem;}",
+      ".access-control-user-tool-note-body{white-space:pre-wrap;line-height:1.55;color:var(--text,#f4fff7);}",
+      "@media print{.access-control-user-tool-note-card{break-inside:avoid;border-color:#d0d8d2;background:#fff;}.access-control-user-tool-note-meta,.access-control-user-tool-note-body{color:#111;}}"
+    ].join("\n");
+    document.head.appendChild(style);
+  }
+
   function renderUserToolNotes() {
     const records = userToolNoteRecords().filter((record) => String(record.userNotes || record.notes || "").trim());
     const card = ensureUserToolNotesSection();
-    const selectedScopeId = selectedUserToolNotesScopeId();
+    
+    ensureUserToolNotesCardStyles();
+const selectedScopeId = selectedUserToolNotesScopeId();
     const scopePhrase = selectedScopeId && selectedScopeId !== "__all__" ? " for the selected scope" : " by scope";
 
     if (!records.length) {
@@ -956,21 +975,26 @@ function readGuidanceRecordsRaw() {
       return;
     }
 
-    const rows = records.map((record) => {
+    const notes = records.map((record) => {
       const scope = escapeHtml(record.scopeName || record.scopeId || "Access Scope");
       const tool = escapeHtml(record.toolLabel || record.toolSlug || "Tool");
       const note = escapeHtml(record.userNotes || record.notes || "");
-      return "<tr><td>" + scope + "</td><td>" + tool + "</td><td>" + note + "</td></tr>";
+
+      return "<article class='access-control-user-tool-note-card' data-access-control-user-tool-note-card='true'>" +
+        "<div class='access-control-user-tool-note-meta'>" +
+          "<span><strong>Scope:</strong> " + scope + "</span>" +
+          "<span><strong>Tool:</strong> " + tool + "</span>" +
+        "</div>" +
+        "<div class='access-control-user-tool-note-body'>" + note + "</div>" +
+      "</article>";
     }).join("");
 
     card.innerHTML =
       "<h2>User Tool Notes</h2>" +
       "<p class='muted'>User-entered report notes saved from individual Access Control tools, separated from assistant-generated guidance.</p>" +
-      "<table class='summary-tool-notes-table' data-export-table-class='extra-export-table--access-control-user-tool-notes' data-export-col-widths='24,24,52' data-export-table-title='User Tool Notes'>" +
-        "<colgroup><col style='width:24%'><col style='width:24%'><col style='width:52%'></colgroup>" +
-        "<thead><tr><th>Scope</th><th>Tool</th><th>User note</th></tr></thead>" +
-        "<tbody>" + rows + "</tbody>" +
-      "</table>";
+      "<div class='access-control-user-tool-notes-list' data-export-block='access-control-user-tool-notes'>" +
+        notes +
+      "</div>";
   }
 
   function scheduleRenderUserToolNotes() {
