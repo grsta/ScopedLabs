@@ -127,6 +127,74 @@
       }
     }
   </style>
+
+  <style id="compute-first-tool-legend-styles">
+    .compute-first-tool-legend {
+      margin-top: 14px;
+    }
+
+    .compute-first-tool-legend .compute-first-tool-legend-copy {
+      margin: 6px 0 14px;
+      color: rgba(226, 232, 240, 0.72);
+      line-height: 1.55;
+    }
+
+    .compute-first-tool-legend-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .compute-first-tool-legend-row {
+      display: grid;
+      grid-template-columns: 12px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      padding: 10px 0;
+      border-top: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    .compute-first-tool-legend-row:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    .compute-first-tool-legend-mark {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      margin-top: 7px;
+      background: rgba(148, 163, 184, 0.78);
+      box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.10);
+    }
+
+    .compute-first-tool-legend-mark.is-good {
+      background: rgba(34, 197, 94, 0.78);
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.10);
+    }
+
+    .compute-first-tool-legend-mark.is-watch {
+      background: rgba(245, 158, 11, 0.82);
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.10);
+    }
+
+    .compute-first-tool-legend-mark.is-risk {
+      background: rgba(248, 113, 113, 0.78);
+      box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.10);
+    }
+
+    .compute-first-tool-legend-label {
+      display: block;
+      font-weight: 700;
+      color: rgba(248, 250, 252, 0.94);
+      margin-bottom: 2px;
+    }
+
+    .compute-first-tool-legend-text {
+      display: block;
+      color: rgba(226, 232, 240, 0.70);
+      line-height: 1.45;
+    }
+  </style>
 </head>
 
 <body data-tier="free" data-category="compute" data-step="cpu-sizing" data-lane="v1" data-compute-tool-shell="0614" data-sl-clean-knowledge-card="true" data-sl-square-ctas="true">
@@ -243,11 +311,46 @@
         <div id="computeAssistantMount" data-compute-assistant-mount data-category-slug="compute"></div>
       </section>
 
-      <section class="card compute-calculation-source" style="margin-top: 14px; background: rgba(0,0,0,.14);">
-        <h3 class="h3" style="margin-top: 0;">Calculation Data Source</h3>
-        <p class="mini-note">
-          Model: effective CPU demand is based on concurrency, per-worker utilization, workload factor, burst multiplier, and target utilization ceiling. This is a planning tool for capacity shaping, not a benchmark replacement.
+      <section id="computeFirstToolLegend" class="card compute-first-tool-legend" data-compute-first-tool-legend>
+        <h3 class="card-title">CPU Sizing Legend</h3>
+        <p class="compute-first-tool-legend-copy">
+          This first pipeline tool defines how Compute assistant result states read across the workflow.
+          The planner and first pipeline tool show the legend; downstream tools reuse the same language without repeating it.
         </p>
+
+        <div class="compute-first-tool-legend-grid" aria-label="CPU sizing result status legend">
+          <div class="compute-first-tool-legend-row">
+            <span class="compute-first-tool-legend-mark is-good" aria-hidden="true"></span>
+            <span>
+              <span class="compute-first-tool-legend-label">Good</span>
+              <span class="compute-first-tool-legend-text">The CPU sizing result fits the active workload assumptions with reasonable headroom.</span>
+            </span>
+          </div>
+
+          <div class="compute-first-tool-legend-row">
+            <span class="compute-first-tool-legend-mark is-watch" aria-hidden="true"></span>
+            <span>
+              <span class="compute-first-tool-legend-label">Watch</span>
+              <span class="compute-first-tool-legend-text">The result may work, but concurrency, growth, reserve capacity, or workload mix should be reviewed.</span>
+            </span>
+          </div>
+
+          <div class="compute-first-tool-legend-row">
+            <span class="compute-first-tool-legend-mark is-risk" aria-hidden="true"></span>
+            <span>
+              <span class="compute-first-tool-legend-label">Risk</span>
+              <span class="compute-first-tool-legend-text">The entered assumptions are likely underbuilt, overloaded, or require a stronger CPU plan.</span>
+            </span>
+          </div>
+
+          <div class="compute-first-tool-legend-row">
+            <span class="compute-first-tool-legend-mark" aria-hidden="true"></span>
+            <span>
+              <span class="compute-first-tool-legend-label">Review</span>
+              <span class="compute-first-tool-legend-text">The assistant needs complete inputs or engineering judgment before treating the result as final.</span>
+            </span>
+          </div>
+        </div>
       </section>
       <section class="card compute-export-card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
         <h3 class="h3" style="margin-top: 0;">Export Report</h3>
