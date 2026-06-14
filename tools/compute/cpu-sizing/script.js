@@ -33,6 +33,7 @@
     results: $("results"),
     flowNote: $("flow-note"),
     workloadContextCard: $("computeWorkloadContextCard"),
+    workloadContextTitle: $("computeWorkloadContextTitle"),
     workloadContextCopy: $("computeWorkloadContextCopy"),
     workloadContextMeta: $("computeWorkloadContextMeta"),
     analysisCopy: $("analysis-copy"),
@@ -155,11 +156,12 @@
   function renderWorkloadContext() {
     const workload = activeComputeWorkload();
 
-    if (!els.workloadContextCopy || !els.workloadContextMeta) return;
+    if (!els.workloadContextTitle || !els.workloadContextCopy || !els.workloadContextMeta) return;
 
     if (!workload) {
+      els.workloadContextTitle.textContent = "No active workload selected";
       els.workloadContextCopy.textContent =
-        "No active Compute workload selected. Results can still be calculated, but they will not be attached to a workload until one is selected in Workload Planner.";
+        "Open Workload Planner to select a Compute workload before attaching CPU results.";
       els.workloadContextMeta.hidden = true;
       els.workloadContextMeta.innerHTML = "";
       return;
@@ -177,16 +179,22 @@
       if (workload.branches.nicBonding) branches.push("NIC Bonding");
     }
 
-    els.workloadContextCopy.textContent =
-      (workload.name || "Compute Workload") + " is active. CPU results from this run will save back to the Compute workload plan.";
+    const environment = cpuContextTitleCase(workload.environmentType);
+    const workloadType = cpuContextTitleCase(workload.workloadType);
+    const path = cpuContextTitleCase(workload.planningPath);
+    const criticality = cpuContextTitleCase(workload.criticality);
+    const branchText = branches.length ? branches.join(", ") : "None";
+
+    els.workloadContextTitle.textContent = workload.name || "Compute Workload";
+    els.workloadContextCopy.textContent = environment + " | " + workloadType + " | " + path;
 
     els.workloadContextMeta.hidden = false;
     els.workloadContextMeta.innerHTML = [
-      '<div class="access-scope-meta-item"><small>Workload</small>' + cpuContextEscapeHtml(workload.name || "Compute Workload") + '</div>',
-      '<div class="access-scope-meta-item"><small>Environment</small>' + cpuContextEscapeHtml(cpuContextTitleCase(workload.environmentType)) + '</div>',
-      '<div class="access-scope-meta-item"><small>Path</small>' + cpuContextEscapeHtml(cpuContextTitleCase(workload.planningPath)) + '</div>',
-      '<div class="access-scope-meta-item"><small>Criticality</small>' + cpuContextEscapeHtml(cpuContextTitleCase(workload.criticality)) + '</div>',
-      '<div class="access-scope-meta-item"><small>Branches</small>' + cpuContextEscapeHtml(branches.length ? branches.join(", ") : "None") + '</div>'
+      '<div class="access-scope-meta-item"><small>Environment</small>' + cpuContextEscapeHtml(environment) + '</div>',
+      '<div class="access-scope-meta-item"><small>Workload Type</small>' + cpuContextEscapeHtml(workloadType) + '</div>',
+      '<div class="access-scope-meta-item"><small>Path</small>' + cpuContextEscapeHtml(path) + '</div>',
+      '<div class="access-scope-meta-item"><small>Criticality</small>' + cpuContextEscapeHtml(criticality) + '</div>',
+      '<div class="access-scope-meta-item"><small>Branches</small>' + cpuContextEscapeHtml(branchText) + '</div>'
     ].join("");
   }
 
