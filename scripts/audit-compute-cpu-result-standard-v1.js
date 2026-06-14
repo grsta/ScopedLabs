@@ -74,19 +74,19 @@ for (const token of [
   "function buildComputeCpuVisualSvg(result)",
   "function renderComputeCpuVisual(result)",
   "function clearComputeCpuVisual()",
-  "renderComputeCpuVisual(cpuWorkloadResult);",
+  "renderComputeCpuVisual(cpuPipelineResult);",
   "clearComputeCpuVisual();",
-  "renderComputeAssistant(cpuWorkloadResult);",
-  "saveCpuResultToWorkload(cpuWorkloadResult);"
+  "renderComputeAssistant(cpuPipelineResult);",
+  "saveCpuResultToWorkload(cpuPipelineResult);"
 ]) {
   result(script.includes(token) ? "PASS" : "FAIL", "CPU script token: " + token);
 }
 
 result(order(script, [
-  "saveCpuResultToWorkload(cpuWorkloadResult);",
+  "saveCpuResultToWorkload(cpuPipelineResult);",
   "renderWorkloadContext();",
-  "renderComputeAssistant(cpuWorkloadResult);",
-  "renderComputeCpuVisual(cpuWorkloadResult);",
+  "renderComputeAssistant(cpuPipelineResult);",
+  "renderComputeCpuVisual(cpuPipelineResult);",
   "showContinue();"
 ]) ? "PASS" : "FAIL", "CPU calculate order is save -> context -> assistant -> visual -> continue");
 

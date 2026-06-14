@@ -473,19 +473,6 @@
       }
     });
 
-    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
-      category: CATEGORY,
-      step: STEP,
-      data: {
-        cores: rec,
-        physicalCores: physicalRec,
-        eff,
-        workload,
-        status: analyzer.status
-      }
-    });
-
-
     const cpuWorkloadResult = {
       label: "CPU Sizing",
       title: "CPU Sizing",

@@ -402,6 +402,7 @@
     const context = activeWorkloadContext("CPU Sizing");
     const workloadRecord = activeWorkloadRecord();
     const plannerContext = data.plannerContext || null;
+
     const hasPlanner = !!(
       (context && context.hasActiveWorkload) ||
       plannerContext ||
@@ -429,9 +430,15 @@
     const peak = inputs.peakFactor || data.peakFactor || inputValue("peak", "");
     const target = inputs.targetUtilizationPercent || data.targetUtilizationPercent || inputValue("targetUtil", "");
 
-    const recommendation = logical || physical
-      ? logical + " logical cores / " + physical + " physical cores recommended for " + (hasPlanner ? "the active " + workloadName + " workload" : "the current CPU inputs")
-      : "CPU recommendation pending";
+    let recommendation = "CPU recommendation pending";
+
+    if (logical || physical) {
+      if (hasPlanner) {
+        recommendation = logical + " logical cores / " + physical + " physical cores recommended for the active " + workloadName + " workload";
+      } else {
+        recommendation = logical + " logical cores / " + physical + " physical cores recommended for the current CPU inputs";
+      }
+    }
 
     const confidence = status.label === "RISK"
       ? "LOW"
