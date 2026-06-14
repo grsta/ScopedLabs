@@ -595,12 +595,21 @@
     if (!isComputeShellPage()) return;
 
     const calc = document.getElementById("calc");
+
     if (calc) {
       calc.addEventListener("click", function () {
         window.setTimeout(mountCpuSizing, 80);
         window.setTimeout(mountCpuSizing, 240);
       });
     }
+
+    /*
+      CPU Sizing owns its own input invalidation lifecycle in script.js.
+      Do not bind shared assistant input/change clears on CPU, or a late
+      input/change event can erase the freshly rendered top decision card
+      after Calculate.
+    */
+    if (getStep() === "cpu-sizing") return;
 
     ["workload", "concurrency", "cpuPerWorker", "peak", "targetUtil", "smt"].forEach(function (id) {
       const el = document.getElementById(id);
