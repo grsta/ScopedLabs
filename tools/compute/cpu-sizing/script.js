@@ -233,7 +233,7 @@
 
     if (statusText) {
       statusText.textContent = "PENDING";
-      statusText.className = "scopedlabs-result-summary-status watch";
+      statusText.className = "scopedlabs-result-summary-status is-watch";
     }
 
     if (statusCard) statusCard.hidden = true;
@@ -268,7 +268,7 @@
     if (value === "RISK") {
       return {
         label: "RISK",
-        className: "risk",
+        className: "is-risk",
         confidence: "LOW"
       };
     }
@@ -276,14 +276,14 @@
     if (value === "WATCH") {
       return {
         label: "WATCH",
-        className: "watch",
+        className: "is-watch",
         confidence: "MEDIUM"
       };
     }
 
     return {
       label: "GOOD",
-      className: "complete",
+      className: "is-good",
       confidence: "HIGH"
     };
   }

@@ -129,7 +129,7 @@
   </style>
   <link rel="stylesheet" href="/assets/scopedlabs-status-legend.css?v=scopedlabs-status-legend-0614-shared">
   <link rel="stylesheet" href="/assets/scopedlabs-compute-result-visuals.css?v=scopedlabs-compute-result-visuals-0614-cpu-load-profile">
-  <link rel="stylesheet" href="/assets/scopedlabs-result-summary-card.css?v=scopedlabs-result-summary-card-0614-top-summary-card">
+  <link rel="stylesheet" href="/assets/scopedlabs-result-summary-card.css?v=scopedlabs-result-summary-card-0614-cpu-static-polish">
 </head>
 
 <body data-tier="free" data-category="compute" data-step="cpu-sizing" data-lane="v1" data-compute-tool-shell="0614" data-sl-clean-knowledge-card="true" data-sl-square-ctas="true">
@@ -242,7 +242,7 @@
         <div id="analysis-copy" style="display:none;"></div>
       </div>
 
-      <section id="computeAssistantCard" class="card compute-assistant-card" style="margin-top: 14px;" hidden data-compute-assistant-card>
+      <section id="computeAssistantCard" class="card compute-assistant-card compute-static-summary-card-shell" style="margin-top: 14px;" hidden data-compute-assistant-card>
         <div id="computeAssistantMount" data-compute-assistant-mount data-category-slug="compute">
   <section id="computeCpuStatusCard" class="scopedlabs-result-summary-card" hidden aria-live="polite">
     <div class="scopedlabs-result-summary-top">
@@ -250,7 +250,7 @@
         <h3 id="computeCpuStatusTitle" class="scopedlabs-result-summary-title">Run the CPU sizing calculation</h3>
         <p id="computeCpuStatusSubtitle" class="scopedlabs-result-summary-subtitle">The result will show the recommended core baseline, decision status, and downstream Compute action.</p>
       </div>
-      <div id="computeCpuStatusText" class="scopedlabs-result-summary-status watch">PENDING</div>
+      <div id="computeCpuStatusText" class="scopedlabs-result-summary-status is-watch">PENDING</div>
     </div>
     <div class="scopedlabs-result-summary-grid">
       <div class="scopedlabs-result-summary-item">
@@ -384,7 +384,7 @@
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
   <script src="/assets/scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-005-active-title"></script>
   <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-002"></script>
-  <script src="./script.js?v=compute-cpu-context-012-failsafe-static-card"></script>
+  <script src="./script.js?v=compute-cpu-context-013-static-card-polish"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
   <script src="/assets/scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-001"></script>
   <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
