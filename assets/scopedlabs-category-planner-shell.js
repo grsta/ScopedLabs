@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-category-planner-shell-011-muted-summary-chips";
+  var VERSION = "scopedlabs-category-planner-shell-012-status-table-parity";
 
   function escapeHtml(value) {
     return String(value == null ? "" : value)
@@ -64,6 +64,7 @@
       ".access-status-watch,.access-status-authority{color:rgba(251,191,36,.95);font-weight:900}",
       ".access-status-risk{color:rgba(248,113,113,.95);font-weight:900}",
       ".access-status-complete{color:#62ff8d;font-weight:900}",
+      ".access-status-active-text{color:#62ff8d;font-weight:900}",
       ".access-scope-summary-rollup{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0 18px}",
       ".access-scope-summary-metric{border:1px solid rgba(120,255,120,.14);background:rgba(0,0,0,.18);border-radius:14px;padding:12px;max-width:100%}",
       ".access-scope-summary-label{display:block;color:rgba(203,213,225,.66);font-size:.72rem;font-weight:850;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}",

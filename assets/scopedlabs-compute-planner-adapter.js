@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-compute-planner-adapter-008-muted-summary-chips";
+  var VERSION = "scopedlabs-compute-planner-adapter-009-status-table-parity";
   var State = window.ScopedLabsComputePlanState;
   var Shell = window.ScopedLabsCategoryPlannerShell;
 
@@ -419,15 +419,76 @@
     return branchTotal > 0 ? "WATCH" : "PLANNING";
   }
 
+
+  function computeStatusClass(value) {
+    var status = String(value || "").toUpperCase();
+    if (status === "AUTHORITY REVIEW") return "access-status-authority";
+    if (status === "RISK") return "access-status-risk";
+    if (status === "WATCH") return "access-status-watch";
+    if (status === "COMPLETE") return "access-status-complete";
+    if (status === "PENDING") return "access-status-pending";
+    return "access-status-planning";
+  }
+
+  function completedComputeCheckCount(workload) {
+    var completed = workload && workload.completedTools && typeof workload.completedTools === "object"
+      ? workload.completedTools
+      : workload && workload.completedChecks && typeof workload.completedChecks === "object"
+        ? workload.completedChecks
+        : {};
+    return Object.keys(completed).filter(function (key) { return !!completed[key]; }).length;
+  }
+
+  function workloadStatusValue(workload) {
+    if (!workload) return "PLANNING";
+
+    var explicit = String(workload.status || workload.summaryStatus || "").toUpperCase();
+    if (["PLANNING", "PENDING", "WATCH", "RISK", "AUTHORITY REVIEW", "COMPLETE"].indexOf(explicit) >= 0) {
+      return explicit;
+    }
+
+    if (workload.riskFlag || workload.hasRisk || workload.designRisk) return "RISK";
+    if (workload.requiresReview || workload.needsReview || workload.vendorReview || workload.hardwareReview) return "AUTHORITY REVIEW";
+
+    var branches = branchList(workload);
+    if (branches.length) return "WATCH";
+
+    var checks = completedComputeCheckCount(workload);
+    if (checks > 0) return "PENDING";
+
+    return "PLANNING";
+  }
+
+  function selectedWorkloadLabel(workload, active) {
+    return active && workload && workload.id === active.id ? "Active Workload" : "Saved Workload";
+  }
+
+  function workloadKeySavedResult(workload) {
+    var branches = branchList(workload);
+    return [
+      "Env: " + titleCase(workload.environmentType),
+      "Type: " + titleCase(workload.workloadType),
+      "Demand: " + titleCase(workload.demandProfile),
+      "Branches: " + (branches.length ? branches.join(", ") : "None")
+    ].join("; ");
+  }
+
+  function workloadNextAction(workload) {
+    if (!workload) return "Save a workload before continuing.";
+    return "Continue to CPU Sizing.";
+  }
+
   function renderComputeStatusLegend() {
     return [
       '<section class="access-status-legend" aria-label="Compute workload status legend">',
       '<h3 class="access-status-legend-title">Status Legend</h3>',
       '<div class="access-status-legend-grid">',
       '<div class="access-status-legend-item"><strong class="access-status-planning">PLANNING</strong>Workload is defined but downstream sizing has not been validated yet.</div>',
-      '<div class="access-status-legend-item"><strong class="access-status-watch">WATCH</strong>Optional branch checks were selected or seeded by the planning path.</div>',
-      '<div class="access-status-legend-item"><strong class="access-status-pending">PENDING</strong>Required CPU, RAM, storage, or recovery checks still need tool results.</div>',
-      '<div class="access-status-legend-item"><strong class="access-status-complete">COMPLETE</strong>Enough validated Compute tool results exist for summary rollup.</div>',
+      '<div class="access-status-legend-item"><strong class="access-status-pending">PENDING</strong>Required Compute checks are not complete.</div>',
+      '<div class="access-status-legend-item"><strong class="access-status-watch">WATCH</strong>Assumptions or optional branch checks need review, but the workload can continue.</div>',
+      '<div class="access-status-legend-item"><strong class="access-status-risk">RISK</strong>A tool assistant found a likely sizing or design conflict.</div>',
+      '<div class="access-status-legend-item"><strong class="access-status-authority">AUTHORITY REVIEW</strong>Vendor, hardware, recovery, or operational constraints may require review.</div>',
+      '<div class="access-status-legend-item"><strong class="access-status-complete">COMPLETE</strong>Enough validated data exists for Compute summary rollup.</div>',
       '</div>',
       '</section>'
     ].join("");
@@ -599,15 +660,40 @@
     var branchMapHtml = buildComputePlannerBranchMapHtml(workloads, groups, active, { branchTotal: branchTotal });
 
     function table(title, description, list) {
+      var countLabel = list.length + (list.length === 1 ? " WORKLOAD" : " WORKLOADS");
+      var emptyLabel = "No " + String(title || "workload").toLowerCase() + " workloads have been defined yet.";
+
+      var rows = list.length ? list.map(function (workload) {
+        var selected = selectedWorkloadLabel(workload, active);
+        var selectedClass = selected === "Active Workload" ? "access-status-active-text" : "access-status-planning";
+        var status = workloadStatusValue(workload);
+        var checks = completedComputeCheckCount(workload);
+
+        return [
+          '<tr>',
+          '<td><strong>' + escapeHtml(workload.name) + '</strong><br><span class="muted">' + escapeHtml(titleCase(workload.environmentType)) + ' | ' + escapeHtml(titleCase(workload.workloadType)) + ' | ' + escapeHtml(titleCase(workload.demandProfile)) + '</span></td>',
+          '<td><strong class="' + selectedClass + '">' + escapeHtml(selected) + '</strong></td>',
+          '<td><strong class="' + computeStatusClass(status) + '">' + escapeHtml(status) + '</strong></td>',
+          '<td>' + checks + '</td>',
+          '<td>' + escapeHtml(workloadKeySavedResult(workload)) + '</td>',
+          '<td>' + escapeHtml(workloadNextAction(workload)) + '</td>',
+          '</tr>'
+        ].join("");
+      }).join("") : '<tr><td colspan="6" class="muted">' + escapeHtml(emptyLabel) + '</td></tr>';
+
       return [
         '<section class="access-scope-summary-branch">',
-        '<div class="access-scope-summary-branch-head"><h3>' + escapeHtml(title) + '</h3><span class="access-scope-summary-branch-count">' + list.length + ' workloads</span></div>',
+        '<div class="access-scope-summary-branch-head"><h3>' + escapeHtml(title) + '</h3><span class="access-scope-summary-branch-count">' + countLabel + '</span></div>',
         '<p class="access-scope-branch-description">' + escapeHtml(description) + '</p>',
-        '<table class="access-scope-summary-table"><thead><tr><th>Workload</th><th>Path</th><th>Criticality</th><th>Branch Seeds</th><th>Next Action</th></tr></thead><tbody>',
-        list.map(function (workload) {
-          var branches = branchList(workload);
-          return '<tr><td><strong>' + escapeHtml(workload.name) + '</strong><br><span class="muted">' + escapeHtml(titleCase(workload.environmentType)) + '</span></td><td>' + escapeHtml(titleCase(workload.planningPath)) + '</td><td>' + escapeHtml(titleCase(workload.criticality)) + '</td><td>' + (branches.length ? escapeHtml(branches.join(", ")) : "None") + '</td><td>Continue to CPU Sizing.</td></tr>';
-        }).join(""),
+        '<table class="access-scope-summary-table"><thead><tr>',
+        '<th>Workload</th>',
+        '<th>Selected</th>',
+        '<th>Status</th>',
+        '<th>Checks</th>',
+        '<th>Key Saved Result</th>',
+        '<th>Next Action</th>',
+        '</tr></thead><tbody>',
+        rows,
         '</tbody></table></section>'
       ].join("");
     }
