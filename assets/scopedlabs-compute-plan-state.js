@@ -252,6 +252,36 @@
       }) || "N/A";
   }
 
+
+  function workloadDisplayTitle(workload) {
+    var explicitName = String(workload && workload.name || "").trim();
+    var normalized = explicitName.toLowerCase();
+
+    if (
+      explicitName &&
+      normalized !== "compute workload" &&
+      normalized !== "active compute workload" &&
+      normalized !== "new compute workload"
+    ) {
+      return explicitName;
+    }
+
+    var environment = workloadDisplayTitleCase(workload && workload.environmentType);
+    var workloadType = workloadDisplayTitleCase(workload && workload.workloadType);
+    var path = workloadDisplayTitleCase(workload && workload.planningPath);
+
+    function useful(value) {
+      return value && value !== "N/A" && value !== "Unknown";
+    }
+
+    if (useful(environment) && useful(path)) return environment + " " + path;
+    if (useful(path)) return path + " Workload";
+    if (useful(environment) && useful(workloadType)) return environment + " " + workloadType + " Workload";
+    if (useful(workloadType)) return workloadType + " Workload";
+
+    return explicitName || "Compute Workload";
+  }
+
   function ensureWorkloadDisplayStyles() {
     if (typeof document === "undefined" || document.getElementById("compute-workload-display-styles")) return;
 
@@ -363,7 +393,7 @@
 
     return {
       hasActiveWorkload: true,
-      title: workload.name || "Active Compute Workload",
+      title: workloadDisplayTitle(workload),
       lineTarget: toolLabel,
       description: environment + " | " + workloadType + " | " + path,
       rows: [
@@ -377,7 +407,7 @@
         ["Branches", branchText]
       ],
       reportRows: [
-        { label: "Active Workload", value: workload.name || "Active Compute Workload" },
+        { label: "Active Workload", value: workloadDisplayTitle(workload) },
         { label: "Environment", value: environment },
         { label: "Workload Type", value: workloadType },
         { label: "Demand", value: demand },
@@ -424,7 +454,7 @@
 
 
   window.ScopedLabsComputePlanState = Object.freeze({
-    version: "scopedlabs-compute-plan-state-004-access-display-css-clone",
+    version: "scopedlabs-compute-plan-state-005-active-title",
     contract: CONTRACT,
     keys: Object.freeze({
       plan: PLAN_KEY,
