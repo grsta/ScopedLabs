@@ -176,13 +176,37 @@
     return recommendedActions;
   }
 
+  // access-level-sizing-summary-scoped-publisher-0613
   function publishAccessLevelSummaryCarryover(payload) {
     try {
+      const activeScope = typeof readAccessLevelActiveScope === "function" ? readAccessLevelActiveScope() : null;
+      const scopeId = String(activeScope && activeScope.scopeId || "").trim();
+      const scopeName = String(activeScope && activeScope.scopeName || scopeId || "").trim();
+      const summaryText = String(
+        payload.assistantSummary ||
+        payload.summary ||
+        payload.accessLevelStatus ||
+        payload.status ||
+        ""
+      ).trim();
+
       const carryover = {
         category: CATEGORY,
+        categorySlug: CATEGORY,
         step: STEP,
-        tool: "Access Level Sizing",
+        slug: STEP,
+        toolSlug: STEP,
+        tool: STEP,
+        toolId: STEP,
+        toolLabel: "Access Level Sizing",
+        displayTool: "Access Level Sizing",
         generatedAt: new Date().toISOString(),
+        scopeId,
+        accessScopeId: scopeId,
+        activeScopeId: scopeId,
+        scopeName,
+        status: payload.status,
+        overallStatus: payload.status,
         accessLevelStatus: payload.status,
         totalAccessLevels: payload.totalAccessLevels,
         recommendedLimit: payload.recommendedLimit,
@@ -192,8 +216,8 @@
         roles: payload.roles,
         areas: payload.areas,
         schedules: payload.schedules,
-        groups: payload.groups,
-        complexityProfile: payload.complexityProfile,
+        doorGroups: payload.doorGroups,
+        complexity: payload.complexity,
         accessModelType: payload.accessModelType,
         turnoverPressure: payload.turnoverPressure,
         exceptionGroups: payload.exceptionGroups,
@@ -201,11 +225,45 @@
         scheduleChangePressure: payload.scheduleChangePressure,
         adminGovernance: payload.adminGovernance,
         assistantSummary: payload.assistantSummary,
-        recommendedActions: Array.isArray(payload.recommendedActions) ? payload.recommendedActions : []
+        notes: summaryText,
+        customNotes: summaryText,
+        reportNotes: summaryText,
+        summary: summaryText,
+        recommendedActions: Array.isArray(payload.recommendedActions) ? payload.recommendedActions : [],
+        source: "access-level-sizing-summary-scoped-publisher-0613"
       };
 
       localStorage.setItem(SUMMARY_CARRYOVER_KEY, JSON.stringify(carryover));
       localStorage.setItem(ACCESS_CONTROL_SUMMARY_KEY, JSON.stringify({ accessLevelSizing: carryover }));
+
+      if (scopeId) {
+        localStorage.setItem(SUMMARY_CARRYOVER_KEY + ":" + scopeId, JSON.stringify(carryover));
+        localStorage.setItem("scopedlabs:pipeline:access-control:summary:access-level-sizing:" + scopeId, JSON.stringify(carryover));
+        localStorage.setItem("scopedlabs:access-control:guidance:access-level-sizing:" + scopeId, JSON.stringify(carryover));
+        sessionStorage.setItem("scopedlabs:access-control:guidance:access-level-sizing:" + scopeId, JSON.stringify(carryover));
+      }
+
+      try {
+        const memoryKey = "scopedlabs:access-control:guidance-memory:records";
+        const raw = localStorage.getItem(memoryKey);
+        const existing = raw ? JSON.parse(raw) : [];
+        const records = Array.isArray(existing) ? existing : [];
+        const nextRecords = records.filter(function (record) {
+          const recordSlug = String(record && (record.slug || record.toolSlug || record.tool || record.toolId || record.id) || "").trim();
+          const recordScope = String(record && (record.scopeId || record.accessScopeId || record.activeScopeId || record.scope) || "").trim();
+
+          return !(recordSlug === STEP && recordScope === scopeId);
+        });
+
+        nextRecords.push(carryover);
+        localStorage.setItem(memoryKey, JSON.stringify(nextRecords));
+        sessionStorage.setItem(memoryKey, JSON.stringify(nextRecords));
+      } catch (_) {}
+
+      document.dispatchEvent(new CustomEvent("scopedlabs:access-control-guidance-saved", {
+        detail: carryover
+      }));
+
       return carryover;
     } catch (error) {
       console.warn("Access Level summary carryover publish failed", error);
