@@ -313,7 +313,47 @@
     return filtered;
   }
 
- function readGuidanceRecords() {
+ 
+  // access-control-summary-tool-notes-dedupe-0613
+  function guidanceRecordUpdatedTime(record) {
+    const raw = String(
+      record && (
+        record.updatedAt ||
+        record.generatedAt ||
+        record.savedAt ||
+        record.createdAt ||
+        record.timestamp ||
+        ""
+      ) || ""
+    ).trim();
+
+    const parsed = raw ? Date.parse(raw) : NaN;
+
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  function dedupeGuidanceRecordsByToolAndScope(records) {
+    const map = new Map();
+
+    (Array.isArray(records) ? records : []).forEach((record) => {
+      const slug = recordToolSlug(record);
+      const scopeId = recordScopeId(record);
+
+      if (!slug || !scopeId) return;
+
+      const key = slug + "::" + scopeId;
+      const existing = map.get(key);
+
+      if (!existing || guidanceRecordUpdatedTime(record) >= guidanceRecordUpdatedTime(existing)) {
+        map.set(key, record);
+      }
+    });
+
+    return Array.from(map.values());
+  }
+
+
+function readGuidanceRecordsRaw() {
     const candidates = [
       ["ScopedLabsAccessControlGuidanceMemory", "listToolGuidance"],
       ["ScopedLabsAccessControlGuidanceMemory", "list"],
@@ -337,6 +377,10 @@
     });
 
     flattenRecords(readFromStorage(), records); return filterGuidanceRecordsToActiveScopes(records);
+  }
+
+  function readGuidanceRecords() {
+    return dedupeGuidanceRecordsByToolAndScope(readGuidanceRecordsRaw());
   }
 
   function slugFromRecord(record) {
