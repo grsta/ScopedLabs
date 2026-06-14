@@ -187,7 +187,95 @@
     "</tr>";
   }
 
-  function tableForScope(scope, allRecords) {
+  // access-control-summary-per-scope-metadata-export-0613
+  function safeParseJson(value) {
+    if (!value) return {};
+
+    try {
+      const parsed = JSON.parse(value);
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function scopeReportMetadataStorageKey(scopeId) {
+    return "scopedlabs:report-metadata:page:/tools/access-control/#access-scope:" + encodeURIComponent(String(scopeId || "").trim());
+  }
+
+  function readScopeReportMetadata(scopeId) {
+    const key = scopeReportMetadataStorageKey(scopeId);
+    const stores = [];
+
+    try {
+      if (window.localStorage) stores.push(window.localStorage);
+    } catch (_) {}
+
+    try {
+      if (window.sessionStorage) stores.push(window.sessionStorage);
+    } catch (_) {}
+
+    for (const store of stores) {
+      try {
+        const parsed = safeParseJson(store.getItem(key));
+
+        if (parsed && Object.keys(parsed).length) {
+          return parsed;
+        }
+      } catch (_) {}
+    }
+
+    return {};
+  }
+
+  function metadataValue(metadata, key) {
+    return String(metadata && metadata[key] != null ? metadata[key] : "").trim();
+  }
+
+  function hasScopeReportMetadata(metadata) {
+    return ["reportTitle", "projectName", "clientName", "preparedBy", "customNotes"].some(function (key) {
+      return !!metadataValue(metadata, key);
+    });
+  }
+
+  function scopeReportMetadataBlock(scope) {
+    const metadata = readScopeReportMetadata(scope && scope.id);
+    const scopeName = String(scope && scope.name ? scope.name : "Access Scope").trim();
+
+    if (!hasScopeReportMetadata(metadata)) {
+      return "<table class='summary-report-table summary-report-table--scope-metadata' data-export-table-class='extra-export-table--access-control-summary-metadata' data-export-col-widths='24,76' data-export-table-title='Metadata: " + esc(scopeName) + "'>" +
+        "<colgroup><col style='width:24%'><col style='width:76%'></colgroup>" +
+        "<thead><tr><th>Metadata</th><th>Value</th></tr></thead>" +
+        "<tbody>" +
+          "<tr><td>Scope Metadata</td><td>No scope report metadata saved.</td></tr>" +
+        "</tbody>" +
+      "</table>";
+    }
+
+    const rows = [];
+
+    [
+      ["Report Title", "reportTitle"],
+      ["Project Name", "projectName"],
+      ["Client Name", "clientName"],
+      ["Prepared By", "preparedBy"],
+      ["Custom Notes", "customNotes"]
+    ].forEach(function (entry) {
+      const value = metadataValue(metadata, entry[1]);
+
+      if (!value) return;
+
+      rows.push("<tr><td>" + esc(entry[0]) + "</td><td>" + esc(value) + "</td></tr>");
+    });
+
+    return "<table class='summary-report-table summary-report-table--scope-metadata' data-export-table-class='extra-export-table--access-control-summary-metadata' data-export-col-widths='24,76' data-export-table-title='Metadata: " + esc(scopeName) + "'>" +
+      "<colgroup><col style='width:24%'><col style='width:76%'></colgroup>" +
+      "<thead><tr><th>Metadata</th><th>Value</th></tr></thead>" +
+      "<tbody>" + rows.join("") + "</tbody>" +
+    "</table>";
+  }
+
+function tableForScope(scope, allRecords) {
     const rows = [];
 
     rows.push(rowHtml(
