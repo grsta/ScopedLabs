@@ -1,0 +1,115 @@
+/*
+  ScopedLabs Status Legend Standard
+  Source pinned from tools/access-control/fail-safe-fail-secure/index.html.
+  This asset makes the compact Status Legend pattern reusable across categories.
+*/
+
+.access-tool-status-legend {
+      border: 1px solid rgba(148,163,184,.14);
+      background: rgba(255,255,255,.025);
+      border-radius: 14px;
+      margin-top: 12px;
+      padding: 12px;
+    }
+
+.access-tool-status-legend h3 {
+      color: rgba(226,232,240,.9);
+      font-size: .82rem;
+      letter-spacing: .08em;
+      margin: 0 0 8px;
+      text-transform: uppercase;
+    }
+
+.access-tool-status-legend-grid {
+      display: grid;
+      gap: 8px 14px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+.access-tool-status-legend-grid div {
+      color: rgba(203,213,225,.72);
+      font-size: .82rem;
+      line-height: 1.42;
+    }
+
+.access-tool-status-legend-grid strong {
+      display: inline-block;
+      margin-right: 5px;
+    }
+
+.access-fail-safe-status-text.complete,
+    .access-tool-status-complete {
+      color: rgba(125,255,152,.96);
+      font-weight: 950;
+    }
+
+.access-fail-safe-status-text.watch,
+    .access-fail-safe-status-text.authority,
+    .access-tool-status-watch,
+    .access-tool-status-authority {
+      color: rgba(250,204,21,.96);
+      font-weight: 950;
+    }
+
+.access-fail-safe-status-text.risk,
+    .access-tool-status-risk {
+      color: rgba(248,113,113,.96);
+      font-weight: 950;
+    }
+
+/* Generic aliases for future shared modules without breaking the pinned Access class names. */
+.scopedlabs-status-legend {
+  border: 1px solid rgba(148,163,184,.14);
+  background: rgba(255,255,255,.025);
+  border-radius: 14px;
+  margin-top: 12px;
+  padding: 12px;
+}
+
+.scopedlabs-status-legend h3 {
+  color: rgba(226,232,240,.9);
+  font-size: .82rem;
+  letter-spacing: .08em;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
+.scopedlabs-status-legend-grid {
+  display: grid;
+  gap: 8px 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.scopedlabs-status-legend-grid div {
+  color: rgba(203,213,225,.72);
+  font-size: .82rem;
+  line-height: 1.42;
+}
+
+.scopedlabs-status-legend-grid strong {
+  display: inline-block;
+  margin-right: 5px;
+}
+
+.scopedlabs-status-good {
+  color: rgba(125,255,152,.96);
+  font-weight: 950;
+}
+
+.scopedlabs-status-watch,
+.scopedlabs-status-review {
+  color: rgba(250,204,21,.96);
+  font-weight: 950;
+}
+
+.scopedlabs-status-risk {
+  color: rgba(248,113,113,.96);
+  font-weight: 950;
+}
+
+@media (max-width: 720px) {
+  .access-tool-status-legend-grid,
+  .scopedlabs-status-legend-grid {
+    grid-template-columns: 1fr;
+  }
+}

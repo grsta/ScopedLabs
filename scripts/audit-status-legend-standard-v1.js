@@ -3,8 +3,10 @@ const path = require("path");
 const childProcess = require("child_process");
 
 const root = process.cwd();
-const cpuFile = path.join(root, "tools", "compute", "cpu-sizing", "index.html");
+
 const failSafeFile = path.join(root, "tools", "access-control", "fail-safe-fail-secure", "index.html");
+const cpuFile = path.join(root, "tools", "compute", "cpu-sizing", "index.html");
+const sharedCssFile = path.join(root, "assets", "scopedlabs-status-legend.css");
 const lifecycleAudit = path.join(root, "scripts", "audit-assistant-lifecycle-contract-v1.js");
 
 let pass = 0;
@@ -13,9 +15,11 @@ let watch = 0;
 
 function result(kind, label, detail) {
   kind = String(kind || "WATCH").toUpperCase();
+
   if (kind === "PASS") pass++;
   if (kind === "FAIL") fail++;
   if (kind === "WATCH") watch++;
+
   console.log(kind.padEnd(6), label);
   if (detail) console.log("       " + detail);
 }
@@ -28,13 +32,14 @@ function count(text, token) {
   return text.split(token).length - 1;
 }
 
-const cpu = read(cpuFile);
 const failSafe = read(failSafeFile);
+const cpu = read(cpuFile);
+const css = read(sharedCssFile);
 
 console.log("ScopedLabs Status Legend Standard Audit V1");
 console.log("Repo:", root);
 
-const failSafePinned = [
+const failSafeSourceTokens = [
   '<section id="failSafeStatusLegend" class="access-tool-status-legend" aria-label="Fail-Safe status legend">',
   '<h3>Status Legend</h3>',
   '<div class="access-tool-status-legend-grid">',
@@ -44,11 +49,29 @@ const failSafePinned = [
   'access-tool-status-authority'
 ];
 
-for (const token of failSafePinned) {
-  result(failSafe.includes(token) ? "PASS" : "FAIL", "Fail-Safe pinned legend source token: " + token);
+for (const token of failSafeSourceTokens) {
+  result(failSafe.includes(token) ? "PASS" : "FAIL", "Fail-Safe pinned source token: " + token);
+}
+
+const sharedCssTokens = [
+  ".access-tool-status-legend",
+  ".access-tool-status-legend h3",
+  ".access-tool-status-legend-grid",
+  ".access-tool-status-legend-grid div",
+  ".access-tool-status-legend-grid strong",
+  ".access-tool-status-complete",
+  ".access-tool-status-watch",
+  ".access-tool-status-risk",
+  ".access-tool-status-authority",
+  ".scopedlabs-status-legend"
+];
+
+for (const token of sharedCssTokens) {
+  result(css.includes(token) ? "PASS" : "FAIL", "Shared status legend CSS token: " + token);
 }
 
 const cpuRequired = [
+  '/assets/scopedlabs-status-legend.css?v=scopedlabs-status-legend-001',
   'id="computeFirstToolLegend"',
   'class="access-tool-status-legend"',
   'data-compute-first-tool-legend',
