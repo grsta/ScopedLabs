@@ -175,7 +175,8 @@
   }
 
   function cpuPayloadOutputs(data) {
-    return data && data.outputs && typeof data.outputs === "object" ? data.outputs : {};
+    if (data && data.outputs && typeof data.outputs === "object") return data.outputs;
+    return data && typeof data === "object" ? data : {};
   }
 
   function cpuNumber(value, fallback) {
@@ -397,56 +398,84 @@
     data = data || {};
 
     const outputs = cpuPayloadOutputs(data);
-    const rawStatus = data.status || data.analyzerStatus || outputs.status || "PENDING";
+    const inputs = cpuPayloadInputs(data);
+    const context = activeWorkloadContext("CPU Sizing");
+    const workloadRecord = activeWorkloadRecord();
+    const plannerContext = data.plannerContext || null;
+    const hasPlanner = !!(
+      (context && context.hasActiveWorkload) ||
+      plannerContext ||
+      workloadRecord
+    );
+
+    const rawStatus = data.analyzerStatus || data.status || outputs.status || "PENDING";
     const status = computeCpuTopCardStatus(rawStatus);
 
-    const logical = cpuNumber(
-      outputs.recommendedLogicalCores,
-      cpuNumber(outputs.cores, cpuNumber(data.recommendedLogicalCores, cpuNumber(data.cores, 0)))
-    );
+    const logical = cpuNumber(outputs.recommendedLogicalCores, cpuNumber(data.recommendedLogicalCores, cpuNumber(data.cores, 0)));
+    const physical = cpuNumber(outputs.recommendedPhysicalCores, cpuNumber(data.recommendedPhysicalCores, cpuNumber(data.physicalCores, 0)));
+    const effective = cpuNumber(outputs.effectiveDemandCores, cpuNumber(data.effectiveDemandCores, cpuNumber(data.eff, 0)));
+    const required = cpuNumber(outputs.requiredCores, cpuNumber(data.requiredCores, logical));
+    const constraint = titleCase(outputs.primaryConstraint || data.primaryConstraint || data.constraint || "CPU capacity");
 
-    const physical = cpuNumber(
-      outputs.recommendedPhysicalCores,
-      cpuNumber(outputs.physicalCores, cpuNumber(data.recommendedPhysicalCores, cpuNumber(data.physicalCores, 0)))
-    );
+    const workloadType = inputs.workloadType || data.workload || (plannerContext && plannerContext.workloadType) || (workloadRecord && workloadRecord.workloadType) || inputValue("workload", "general");
+    const workloadName =
+      (context && context.hasActiveWorkload && context.title) ||
+      (plannerContext && plannerContext.name) ||
+      (workloadRecord && workloadRecord.name) ||
+      workloadLabel(workloadType);
 
-    const effective = cpuNumber(
-      outputs.effectiveDemandCores,
-      cpuNumber(outputs.eff, cpuNumber(data.effectiveDemandCores, cpuNumber(data.eff, 0)))
-    );
-
-    const required = cpuNumber(
-      outputs.requiredCores,
-      cpuNumber(data.requiredCores, logical)
-    );
-
-    const constraint = titleCase(
-      outputs.primaryConstraint ||
-      data.primaryConstraint ||
-      data.constraint ||
-      "CPU capacity"
-    );
+    const concurrency = inputs.concurrency || data.concurrency || inputValue("concurrency", "");
+    const cpuPerWorker = inputs.cpuPerWorkerPercent || data.cpuPerWorkerPercent || inputValue("cpuPerWorker", "");
+    const peak = inputs.peakFactor || data.peakFactor || inputValue("peak", "");
+    const target = inputs.targetUtilizationPercent || data.targetUtilizationPercent || inputValue("targetUtil", "");
 
     const recommendation = logical || physical
-      ? logical + " logical cores / " + physical + " physical cores recommended"
-      : (data.summary || "CPU recommendation pending");
+      ? logical + " logical cores / " + physical + " physical cores recommended for " + (hasPlanner ? "the active " + workloadName + " workload" : "the current CPU inputs")
+      : "CPU recommendation pending";
+
+    const confidence = status.label === "RISK"
+      ? "LOW"
+      : !hasPlanner
+        ? "MEDIUM"
+        : status.label === "WATCH"
+          ? "MEDIUM"
+          : "HIGH";
 
     const flags = [
+      hasPlanner ? "Planner context active" : "Planner context missing",
       status.label === "WATCH" ? "CPU watch item" : status.label === "RISK" ? "CPU risk item" : "CPU baseline usable",
-      constraint,
-      "RAM sizing next"
+      "Current CPU inputs applied",
+      "RAM sizing next",
+      "Downstream validation pending"
     ].join(" | ");
+
+    const inputSummary = [
+      concurrency ? concurrency + " workers" : "",
+      cpuPerWorker ? cpuPerWorker + "% per worker" : "",
+      peak ? peak + "× burst" : "",
+      target ? target + "% target utilization" : ""
+    ].filter(Boolean).join(" | ");
+
+    const risk = status.label === "RISK"
+      ? "CPU is likely underbuilt under the current planner context and CPU inputs."
+      : status.label === "WATCH"
+        ? "CPU margin is tightening under the current concurrency, peak factor, and target utilization."
+        : "No immediate CPU sizing risk detected from the active planner context and current CPU inputs.";
+
+    const action = status.label === "RISK"
+      ? "Rework the CPU baseline before treating RAM, storage, or specialty branch results as valid."
+      : "Carry this CPU result into RAM sizing. Do not treat the Compute plan as complete until RAM and required downstream branches are validated.";
 
     return {
       title: "CPU SIZING",
-      subtitle: recommendation + ". Effective demand is " + effective.toFixed(2) + " cores against " + required.toFixed(2) + " required cores.",
+      subtitle: recommendation + ". Effective demand is " + effective.toFixed(2) + " cores against " + required.toFixed(2) + " required cores." + (inputSummary ? " Inputs: " + inputSummary + "." : ""),
       statusLabel: status.label,
       statusClass: status.className,
       recommendation,
-      confidence: status.confidence,
+      confidence,
       flags,
-      risk: status.risk,
-      action: status.action
+      risk,
+      action
     };
   }
 

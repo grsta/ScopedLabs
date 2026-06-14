@@ -258,19 +258,22 @@
   }
 
   function buildComputeCpuVisualSvg(result) {
+    result = result || {};
+
     const outputs = result && result.outputs ? result.outputs : {};
     const inputs = result && result.inputs ? result.inputs : {};
-    const status = cpuVisualStatus(result && (result.status || result.analyzerStatus));
-    const logical = Number(outputs.recommendedLogicalCores || 0);
-    const physical = Number(outputs.recommendedPhysicalCores || 0);
-    const effective = Number(outputs.effectiveDemandCores || 0);
-    const required = Number(outputs.requiredCores || logical || 0);
-    const constraint = outputs.primaryConstraint || "CPU capacity";
+    const status = cpuVisualStatus(result && (result.analyzerStatus || result.status));
+
+    const logical = Number(outputs.recommendedLogicalCores || result.recommendedLogicalCores || result.cores || 0);
+    const physical = Number(outputs.recommendedPhysicalCores || result.recommendedPhysicalCores || result.physicalCores || 0);
+    const effective = Number(outputs.effectiveDemandCores || result.effectiveDemandCores || result.eff || 0);
+    const required = Number(outputs.requiredCores || result.requiredCores || logical || 0);
+    const constraint = outputs.primaryConstraint || result.primaryConstraint || result.constraint || "CPU capacity";
 
     const metrics = [
-      { label: "Load Pressure", value: Number(outputs.loadPressure || 0), note: "scheduler pressure" },
-      { label: "Core Demand", value: Number(outputs.coreDemand || 0), note: "core density" },
-      { label: "Utilization", value: Number(outputs.utilizationTarget || inputs.targetUtilizationPercent || 0), note: "target ceiling" }
+      { label: "Load Pressure", value: Number(outputs.loadPressure || result.loadPressure || 0), note: "scheduler pressure" },
+      { label: "Core Demand", value: Number(outputs.coreDemand || result.coreDemand || 0), note: "core density" },
+      { label: "Utilization", value: Number(outputs.utilizationTarget || result.utilizationTarget || inputs.targetUtilizationPercent || 0), note: "target ceiling" }
     ];
 
     const max = Math.max(120, ...metrics.map((item) => cpuVisualClamp(item.value, 0, 180)));
@@ -511,10 +514,41 @@
       updatedAt: new Date().toISOString()
     };
 
-    saveCpuResultToWorkload(cpuWorkloadResult);
+
+    const activeWorkloadForResult = activeComputeWorkload();
+    const cpuPipelineResult = {
+      ...cpuWorkloadResult,
+      cores: rec,
+      physicalCores: physicalRec,
+      eff,
+      requiredCores: Number(cores.toFixed(2)),
+      workload,
+      status: analyzer.status,
+      planStatus: cpuStatusForPlan(analyzer.status),
+      primaryConstraint: dominantConstraint,
+      loadPressure: Number(loadPressure.toFixed(1)),
+      coreDemand: Number(coreDemand.toFixed(1)),
+      utilizationTarget: Number(target.toFixed(1)),
+      plannerContext: activeWorkloadForResult ? {
+        id: activeWorkloadForResult.id || "",
+        name: activeWorkloadForResult.name || "",
+        environmentType: activeWorkloadForResult.environmentType || "",
+        workloadType: activeWorkloadForResult.workloadType || "",
+        planningPath: activeWorkloadForResult.planningPath || "",
+        status: activeWorkloadForResult.status || activeWorkloadForResult.summaryStatus || ""
+      } : null
+    };
+
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+      category: CATEGORY,
+      step: STEP,
+      data: cpuPipelineResult
+    });
+
+    saveCpuResultToWorkload(cpuPipelineResult);
     renderWorkloadContext();
-    renderComputeAssistant(cpuWorkloadResult);
-    renderComputeCpuVisual(cpuWorkloadResult);
+    renderComputeAssistant(cpuPipelineResult);
+    renderComputeCpuVisual(cpuPipelineResult);
 
     showContinue();
 
