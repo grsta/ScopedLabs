@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-compute-planner-adapter-006-access-ledger-line";
+  var VERSION = "scopedlabs-compute-planner-adapter-007-summary-branch-map";
   var State = window.ScopedLabsComputePlanState;
   var Shell = window.ScopedLabsCategoryPlannerShell;
 
@@ -413,6 +413,151 @@
     });
   }
 
+
+  function computePlannerStatusLabel(workloads, branchTotal) {
+    if (!(workloads || []).length) return "PLANNING";
+    return branchTotal > 0 ? "WATCH" : "PLANNING";
+  }
+
+  function renderComputeStatusLegend() {
+    return [
+      '<section class="access-status-legend" aria-label="Compute workload status legend">',
+      '<h3 class="access-status-legend-title">Status Legend</h3>',
+      '<div class="access-status-legend-grid">',
+      '<div class="access-status-legend-item"><strong class="access-status-planning">PLANNING</strong>Workload is defined but downstream sizing has not been validated yet.</div>',
+      '<div class="access-status-legend-item"><strong class="access-status-watch">WATCH</strong>Optional branch checks were selected or seeded by the planning path.</div>',
+      '<div class="access-status-legend-item"><strong class="access-status-pending">PENDING</strong>Required CPU, RAM, storage, or recovery checks still need tool results.</div>',
+      '<div class="access-status-legend-item"><strong class="access-status-complete">COMPLETE</strong>Enough validated Compute tool results exist for summary rollup.</div>',
+      '</div>',
+      '</section>'
+    ].join("");
+  }
+
+  function buildComputePlannerBranchMapHtml(workloads, groups, active, rollup) {
+    workloads = workloads || [];
+    groups = groups || {};
+    rollup = rollup || {};
+
+    var totalWorkloads = workloads.length;
+    var coreCount = (groups.core || []).length;
+    var storageCount = (groups.storage || []).length;
+    var gpuCount = (groups.acceleration || []).length;
+    var infrastructureCount = (groups.infrastructure || []).length;
+    var recoveryCount = (groups.recovery || []).length;
+    var infraRecoveryCount = infrastructureCount + recoveryCount;
+    var branchTotal = typeof rollup.branchTotal === "number"
+      ? rollup.branchTotal
+      : storageCount + gpuCount + infrastructureCount + recoveryCount;
+
+    var activeLabel = active ? active.name : "No active workload";
+    var statusText = computePlannerStatusLabel(workloads, branchTotal);
+    var statusIsWatch = statusText === "WATCH";
+
+    var palette = {
+      gridStroke: "rgba(120,255,120,.045)",
+      shellFill: "rgba(0,0,0,.10)",
+      shellStroke: "rgba(120,255,120,.12)",
+      line: "rgba(120,255,120,.10)",
+      safeFill: "rgba(30,110,48,.34)",
+      safeLine: "rgba(98,255,141,.86)",
+      mutedFill: "rgba(0,0,0,.14)",
+      mutedLine: "rgba(148,163,184,.26)",
+      mutedText: "rgba(203,213,225,.62)",
+      text: "rgba(246,255,248,.96)",
+      title: "rgba(246,255,248,.98)",
+      label: "rgba(180,255,200,.70)",
+      timeline: "rgba(203,213,225,.23)",
+      timelineFill: "rgba(0,0,0,.18)",
+      watchFill: "rgba(251,191,36,.10)",
+      watchLine: "rgba(251,191,36,.82)"
+    };
+
+    function node(key, title, subtitle, count, x, y, width) {
+      var activeNode = count > 0 || key === "core";
+      var fill = activeNode ? palette.safeFill : palette.mutedFill;
+      var line = activeNode ? palette.safeLine : palette.mutedLine;
+      var stateLabel = activeNode ? (key === "core" ? "ACTIVE" : count + " flagged") : "not used";
+      var stateFill = activeNode ? palette.safeLine : "rgba(148,163,184,.44)";
+
+      return [
+        '<rect x="' + x + '" y="' + y + '" width="' + width + '" height="58" rx="10" fill="' + fill + '" stroke="' + line + '" stroke-width="1.25" />',
+        '<text x="' + (x + 12) + '" y="' + (y + 20) + '" font-size="10.5" fill="' + palette.text + '" font-weight="900">' + escapeHtml(title) + '</text>',
+        '<text x="' + (x + 12) + '" y="' + (y + 38) + '" font-size="9" fill="' + palette.mutedText + '" font-weight="800">' + escapeHtml(subtitle) + '</text>',
+        '<text x="' + (x + width - 14) + '" y="' + (y + 38) + '" font-size="8.5" fill="' + stateFill + '" font-weight="900" text-anchor="end">' + escapeHtml(stateLabel) + '</text>'
+      ].join("");
+    }
+
+    function link(x1, y1, x2, y2, count) {
+      var activeLink = count > 0;
+      var stroke = activeLink ? palette.safeLine : "rgba(203,213,225,.20)";
+      var dash = activeLink ? "" : ' stroke-dasharray="7 8"';
+      return '<path d="M' + x1 + ' ' + y1 + ' C' + ((x1 + x2) / 2) + ' ' + y1 + ' ' + ((x1 + x2) / 2) + ' ' + y2 + ' ' + x2 + ' ' + y2 + '" fill="none" stroke="' + stroke + '" stroke-width="1.25"' + dash + ' />';
+    }
+
+    function statusBadge(label, x, y) {
+      var fill = statusIsWatch ? palette.watchFill : "rgba(0,0,0,.16)";
+      var line = statusIsWatch ? palette.watchLine : palette.safeLine;
+      var text = statusIsWatch ? palette.watchLine : palette.safeLine;
+
+      return [
+        '<rect x="' + x + '" y="' + y + '" width="92" height="30" rx="9" fill="' + fill + '" stroke="' + line + '" stroke-width="1.2" />',
+        '<text x="' + (x + 46) + '" y="' + (y + 20) + '" font-size="10.5" fill="' + text + '" font-weight="800" text-anchor="middle">' + escapeHtml(label) + '</text>'
+      ].join("");
+    }
+
+    function chip(label, value, x, y, width) {
+      return [
+        '<rect x="' + x + '" y="' + y + '" width="' + width + '" height="48" rx="8" fill="rgba(0,0,0,.16)" stroke="rgba(120,255,120,.13)" />',
+        '<text x="' + (x + 10) + '" y="' + (y + 17) + '" font-size="8.5" fill="rgba(196,255,214,.62)" font-weight="900" letter-spacing=".9">' + escapeHtml(label.toUpperCase()) + '</text>',
+        '<text x="' + (x + 10) + '" y="' + (y + 36) + '" font-size="18" fill="' + palette.safeLine + '" font-weight="950">' + escapeHtml(value) + '</text>'
+      ].join("");
+    }
+
+    return [
+      '<div class="access-control-planning-visual-shell access-scope-branch-map-shell" data-compute-planner-visual="workload-branch-map">',
+      '<svg viewBox="0 0 760 388" role="img" aria-label="Compute Workload Planner branch map visual" xmlns="http://www.w3.org/2000/svg">',
+      '<defs><pattern id="computeGridWorkloadBranchV1" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="' + palette.gridStroke + '" stroke-width="1"/></pattern></defs>',
+      '<rect x="24" y="24" width="712" height="340" rx="16" fill="' + palette.shellFill + '" stroke="' + palette.shellStroke + '" />',
+      '<rect x="36" y="36" width="688" height="316" rx="12" fill="url(#computeGridWorkloadBranchV1)" stroke="' + palette.line + '" />',
+      '<text x="52" y="62" font-size="11" fill="' + palette.label + '" letter-spacing="1.4">COMPUTE WORKLOAD PLANNER</text>',
+      '<text x="52" y="84" font-size="19" fill="' + palette.title + '" font-weight="650">Workload ledger, core pipeline, and specialty branch map</text>',
+      statusBadge(statusText, 616, 51),
+
+      '<rect x="278" y="112" width="204" height="72" rx="14" fill="' + palette.safeFill + '" stroke="' + palette.safeLine + '" stroke-width="1.35" />',
+      '<text x="380" y="139" font-size="12" fill="' + palette.text + '" font-weight="950" text-anchor="middle">WORKLOAD LEDGER</text>',
+      '<text x="380" y="158" font-size="9.4" fill="' + palette.mutedText + '" font-weight="800" text-anchor="middle">' + escapeHtml(activeLabel) + '</text>',
+      '<text x="380" y="176" font-size="9.4" fill="' + palette.safeLine + '" font-weight="900" text-anchor="middle">' + totalWorkloads + ' workloads / ' + branchTotal + ' branches</text>',
+
+      link(278, 148, 168, 148, coreCount),
+      link(482, 148, 592, 148, storageCount),
+      link(278, 176, 168, 246, gpuCount),
+      link(482, 176, 592, 246, infraRecoveryCount),
+
+      node("core", "Core Compute Pipeline", "CPU / RAM / storage / summary", coreCount, 52, 119, 192),
+      node("storage", "Storage Performance", "IOPS / throughput pressure", storageCount, 516, 119, 192),
+      node("gpu", "GPU / Acceleration", "VRAM / AI / rendering lanes", gpuCount, 52, 220, 192),
+      node("infra", "Infrastructure / Recovery", "Power / NIC / RAID / backup", infraRecoveryCount, 516, 220, 192),
+
+      '<path d="M172 206 H588" stroke="' + palette.timeline + '" stroke-width="1.25" stroke-dasharray="6 7" />',
+      '<circle cx="266" cy="206" r="5" fill="' + palette.timelineFill + '" stroke="' + palette.safeLine + '" />',
+      '<circle cx="380" cy="206" r="5" fill="' + palette.timelineFill + '" stroke="' + palette.safeLine + '" />',
+      '<circle cx="494" cy="206" r="5" fill="' + palette.timelineFill + '" stroke="' + palette.safeLine + '" />',
+      '<text x="266" y="224" font-size="9" fill="' + palette.mutedText + '" text-anchor="middle">define</text>',
+      '<text x="380" y="224" font-size="9" fill="' + palette.mutedText + '" text-anchor="middle">branch</text>',
+      '<text x="494" y="224" font-size="9" fill="' + palette.mutedText + '" text-anchor="middle">continue</text>',
+
+      chip("workloads", String(totalWorkloads), 74, 304, 106),
+      chip("core", String(coreCount), 196, 304, 88),
+      chip("storage", String(storageCount), 300, 304, 92),
+      chip("gpu", String(gpuCount), 408, 304, 82),
+      chip("infra/recovery", String(infraRecoveryCount), 506, 304, 130),
+
+      '</svg>',
+      '<p class="sl-vis-note"><strong>Visual note:</strong> Workload Planner is the Compute entry lane. Use this map to confirm whether each saved workload continues through the core CPU/RAM/storage path or branches into storage performance, GPU acceleration, infrastructure, recovery, or network validation.</p>',
+      '</div>'
+    ].join("");
+  }
+
   function summaryBranches(workloads) {
     var groups = {
       core: [],
@@ -451,6 +596,7 @@
     }
 
     var branchTotal = groups.storage.length + groups.acceleration.length + groups.infrastructure.length + groups.recovery.length;
+    var branchMapHtml = buildComputePlannerBranchMapHtml(workloads, groups, active, { branchTotal: branchTotal });
 
     function table(title, description, list) {
       return [
@@ -467,6 +613,7 @@
     }
 
     els.scopeSummary.innerHTML = [
+      branchMapHtml,
       '<div class="access-scope-summary-rollup">',
       '<div class="access-scope-summary-metric"><span class="access-scope-summary-label">Workloads</span><span class="access-scope-summary-value">' + workloads.length + '</span><div class="access-scope-summary-note">Defined Compute environments.</div></div>',
       '<div class="access-scope-summary-metric"><span class="access-scope-summary-label">Core Pipeline</span><span class="access-scope-summary-value">' + groups.core.length + '</span><div class="access-scope-summary-note">Workloads entering CPU/RAM/storage flow.</div></div>',
@@ -475,6 +622,7 @@
       '<div class="access-scope-summary-metric"><span class="access-scope-summary-label">GPU Flags</span><span class="access-scope-summary-value">' + groups.acceleration.length + '</span><div class="access-scope-summary-note">Acceleration review lanes.</div></div>',
       '<div class="access-scope-summary-metric"><span class="access-scope-summary-label">Infra / Recovery</span><span class="access-scope-summary-value">' + (groups.infrastructure.length + groups.recovery.length) + '</span><div class="access-scope-summary-note">Power, NIC, RAID, or backup checks.</div></div>',
       '</div>',
+      renderComputeStatusLegend(),
       active ? '<div class="access-scope-warn"><strong>Active workload:</strong> ' + escapeHtml(active.name) + ' continues to CPU Sizing.</div>' : '',
       table("Core Compute Pipeline", "Every saved workload starts with CPU Sizing, then moves into RAM and storage checks as required.", groups.core),
       table("Storage / Performance Branches", "Workloads flagged for IOPS or throughput review should not stop at CPU/RAM sizing.", groups.storage),

@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-category-planner-shell-007-access-square-buttons";
+  var VERSION = "scopedlabs-category-planner-shell-008-summary-branch-map";
 
   function escapeHtml(value) {
     return String(value == null ? "" : value)
@@ -51,6 +51,19 @@
       ".access-scope-meta-item small{display:block;color:rgba(196,255,214,.58);font-size:.68rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}",
       ".access-scope-metadata-active{margin:10px 0 14px;color:rgba(246,255,248,.78)}",
       ".access-scope-summary-card{background:rgba(0,0,0,.14)}",
+      ".access-control-planning-visual-shell{border:1px solid rgba(120,255,120,.14);background:radial-gradient(circle at 15% 0%,rgba(125,255,152,.055),transparent 28%),rgba(0,0,0,.12);border-radius:18px;padding:12px;margin:18px 0 16px;overflow:hidden}",
+      ".access-control-planning-visual-shell svg{display:block;width:100%;height:auto}",
+      ".access-scope-branch-map-shell{max-width:900px;margin:18px auto 14px}",
+      ".sl-vis-note{color:rgba(246,255,248,.76);font-size:.88rem;line-height:1.45;margin:12px 0 0}",
+      ".access-status-legend{border-top:1px solid rgba(120,255,120,.12);padding-top:14px;margin-top:16px;margin-bottom:18px}",
+      ".access-status-legend-title{font-size:.9rem;letter-spacing:.06em;text-transform:uppercase;margin:0 0 8px;color:rgba(246,255,248,.9)}",
+      ".access-status-legend-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 18px}",
+      ".access-status-legend-item{font-size:.84rem;color:rgba(246,255,248,.68);line-height:1.35}",
+      ".access-status-legend-item strong{display:inline-block;margin-right:6px}",
+      ".access-status-planning,.access-status-pending{color:rgba(203,213,225,.82);font-weight:850}",
+      ".access-status-watch,.access-status-authority{color:rgba(251,191,36,.95);font-weight:900}",
+      ".access-status-risk{color:rgba(248,113,113,.95);font-weight:900}",
+      ".access-status-complete{color:#62ff8d;font-weight:900}",
       ".access-scope-summary-rollup{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0 18px}",
       ".access-scope-summary-metric{border:1px solid rgba(120,255,120,.14);background:rgba(0,0,0,.18);border-radius:14px;padding:12px;max-width:100%}",
       ".access-scope-summary-label{display:block;color:rgba(196,255,214,.62);font-size:.72rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}",
