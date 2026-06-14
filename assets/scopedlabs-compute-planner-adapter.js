@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-compute-planner-adapter-001";
+  var VERSION = "scopedlabs-compute-planner-adapter-003-path-branches";
   var State = window.ScopedLabsComputePlanState;
   var Shell = window.ScopedLabsCategoryPlannerShell;
 
@@ -148,21 +148,8 @@
       ] },
       { id: "workloadNotes", label: "Known Restrictions / Notes", type: "textarea", full: true, placeholder: "Document vendor limits, site restrictions, service-level expectations, hardware standards, or assumptions that should follow this workload through the Compute pipeline." }
     ],
-    seedChecks: [
-      { id: "needsVmDensity", label: "VM density / consolidation needed" },
-      { id: "storageHeavy", label: "Storage IOPS / throughput likely important" },
-      { id: "needsGpu", label: "GPU / acceleration needed" },
-      { id: "needsPowerThermal", label: "Power / thermal validation needed" },
-      { id: "needsRaid", label: "RAID rebuild exposure matters" },
-      { id: "needsBackup", label: "Backup window validation needed" },
-      { id: "needsNic", label: "NIC bonding / network path review needed" }
-    ],
-    branchCards: [
-      { id: "vmBranchCard", title: "VM Density starter questions", copy: "This workload is flagged for host consolidation review. CPU and RAM sizing should be treated as density inputs, not isolated server estimates." },
-      { id: "gpuBranchCard", title: "GPU / Acceleration starter questions", copy: "This workload is flagged for GPU review. The GPU branch should validate whether acceleration is actually required and how much VRAM reserve is needed." },
-      { id: "protectionBranchCard", title: "Protection / Recovery starter questions", copy: "This workload is flagged for RAID or backup validation. The summary should later compare degraded-state exposure, backup duration, and recovery expectations." },
-      { id: "infrastructureBranchCard", title: "Infrastructure starter questions", copy: "This workload is flagged for power, thermal, or network path validation before the platform design is considered complete." }
-    ]
+    seedChecks: [],
+    branchCards: []
   };
 
   function cacheEls() {
@@ -176,6 +163,22 @@
       "plannerStatus", "printWorkloadSummary", "copyWorkloadSummary", "continue"
     ].forEach(function (id) {
       els[id] = $(id);
+    });
+  }
+
+  function hideStarterPlaceholders() {
+    [
+      "computeBranchStarterCard",
+      "vmBranchCard",
+      "gpuBranchCard",
+      "protectionBranchCard",
+      "infrastructureBranchCard"
+    ].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.hidden = true;
+      el.setAttribute("aria-hidden", "true");
+      el.style.display = "none";
     });
   }
 
@@ -215,11 +218,14 @@
   }
 
   function collect() {
+    var pathValue = els.planningPath ? els.planningPath.value : "standard-server";
+    var defaults = branchDefaults(pathValue);
+
     return {
       id: editingId,
       name: (els.workloadName && els.workloadName.value.trim()) || "Compute Workload",
       environmentType: els.environmentType ? els.environmentType.value : "production",
-      planningPath: els.planningPath ? els.planningPath.value : "standard-server",
+      planningPath: pathValue,
       workloadType: els.workloadType ? els.workloadType.value : "general",
       demandPattern: els.demandPattern ? els.demandPattern.value : "steady",
       criticality: els.criticality ? els.criticality.value : "standard",
@@ -238,13 +244,13 @@
         reportNotes: els.reportNotes ? els.reportNotes.value : ""
       },
       branches: {
-        vmDensity: bool(els.needsVmDensity),
-        storageHeavy: bool(els.storageHeavy),
-        gpu: bool(els.needsGpu),
-        powerThermal: bool(els.needsPowerThermal),
-        raid: bool(els.needsRaid),
-        backup: bool(els.needsBackup),
-        nicBonding: bool(els.needsNic)
+        vmDensity: bool(els.needsVmDensity) || defaults.vmDensity,
+        storageHeavy: bool(els.storageHeavy) || defaults.storageHeavy,
+        gpu: bool(els.needsGpu) || defaults.gpu,
+        powerThermal: bool(els.needsPowerThermal) || defaults.powerThermal,
+        raid: bool(els.needsRaid) || defaults.raid,
+        backup: bool(els.needsBackup) || defaults.backup,
+        nicBonding: bool(els.needsNic) || defaults.nicBonding
       }
     };
   }
@@ -510,6 +516,7 @@
     var mount = document.querySelector("[data-category-planner-shell-mount]");
     Shell.render(mount, config);
     cacheEls();
+    hideStarterPlaceholders();
 
     if (!State) {
       status("Compute plan state module did not load.");
