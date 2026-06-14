@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-category-planner-shell-004-clean-link-hover";
+  var VERSION = "scopedlabs-category-planner-shell-005-ledger-square-ctas";
 
   function escapeHtml(value) {
     return String(value == null ? "" : value)
@@ -37,6 +37,7 @@
       ".access-scope-flow-step-link{color:rgba(246,255,248,.9);text-decoration:none;background:transparent!important;border-radius:0!important;padding:0!important;margin:0!important;transition:color .16s ease}",
       ".access-scope-flow-step-link:hover{color:#fff;background:transparent!important;text-decoration:none}",
       ".access-scope-flow-step-link[aria-current=\"page\"]{color:#fff;font-weight:900;background:transparent!important}",
+      ".access-scope-planner-shell .btn{border-radius:10px!important}",
       ".access-scope-flow-dot{width:9px;height:9px;border-radius:999px;border:1px solid rgba(246,255,248,.24);background:rgba(246,255,248,.10);box-shadow:none}",
       ".access-scope-flow-dot.is-active{border-color:rgba(98,255,141,.9);background:#62ff8d;box-shadow:0 0 14px rgba(98,255,141,.55)}",
       ".access-scope-ledger-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}",
