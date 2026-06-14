@@ -1382,7 +1382,12 @@
       return;
     }
 
-    els.flowNote.hidden = false;
+    // access-level-flow-context-preserved-hidden-0614
+    // Keep the generated flow context in the DOM for background carry-over, but do not show it in the visible tool UI.
+    els.flowNote.hidden = true;
+    els.flowNote.setAttribute("aria-hidden", "true");
+    els.flowNote.dataset.preservedFlowContext = "true";
+    els.flowNote.classList.add("access-level-preserved-flow-context-ui");
     els.flowNote.innerHTML = `
       <strong>Flow Context</strong><br>
       ${lines.join(" | ")}
@@ -2003,6 +2008,92 @@
     document.addEventListener("DOMContentLoaded", bindCompletePipelineSummaryDestination, { once: true });
   } else {
     bindCompletePipelineSummaryDestination();
+  }
+
+
+  // access-level-hidden-generated-flow-ui-0614
+  function ensureGeneratedFlowUiHiddenStyles() {
+    if (document.getElementById("access-level-hidden-generated-flow-ui-0614")) return;
+
+    const style = document.createElement("style");
+    style.id = "access-level-hidden-generated-flow-ui-0614";
+    style.textContent = [
+      "body[data-category='access-control'][data-tool='access-level-sizing'] .access-level-preserved-flow-context-ui{display:none!important;}",
+      "body[data-category='access-control'][data-tool='access-level-sizing'] [data-preserved-generated-flow-ui='true']{display:none!important;}"
+    ].join("\n");
+
+    document.head.appendChild(style);
+  }
+
+  function preserveAndHideGeneratedFlowUi(root) {
+    ensureGeneratedFlowUiHiddenStyles();
+
+    const scope = root && root.querySelectorAll ? root : document;
+    const candidates = Array.from(scope.querySelectorAll([
+      "section",
+      "article",
+      "nav",
+      "aside",
+      "div[class*='pipeline']",
+      "div[id*='pipeline']",
+      "div[class*='flow']",
+      "div[id*='flow']",
+      "[data-pipeline]",
+      "[data-tool-flow]",
+      "[data-flow]"
+    ].join(",")));
+
+    candidates.forEach((element) => {
+      if (!element || element === document.body || element.tagName === "MAIN") return;
+
+      const text = String(element.textContent || "").replace(/\s+/g, " ").trim();
+      const upper = text.toUpperCase();
+
+      if (!text || text.length > 2600) return;
+
+      const looksLikeDesignFlow =
+        upper.includes("DESIGN FLOW") &&
+        (upper.includes("FOUNDATION") || upper.includes("CORE ACCESS PIPELINE") || upper.includes("OPTIONAL SPECIALTY ZONES"));
+
+      const looksLikeFlowContext =
+        upper.includes("FLOW CONTEXT") &&
+        upper.includes("FINAL STEP EVALUATES");
+
+      if (!looksLikeDesignFlow && !looksLikeFlowContext) return;
+
+      element.dataset.preservedGeneratedFlowUi = "true";
+      element.setAttribute("aria-hidden", "true");
+      element.classList.add("access-level-preserved-flow-context-ui");
+    });
+  }
+
+  function bindGeneratedFlowUiPreserver() {
+    preserveAndHideGeneratedFlowUi(document);
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node && node.nodeType === 1) {
+            preserveAndHideGeneratedFlowUi(node);
+          }
+        });
+      });
+    });
+
+    observer.observe(document.body || document.documentElement, {
+      childList: true,
+      subtree: true
+    });
+
+    setTimeout(() => preserveAndHideGeneratedFlowUi(document), 100);
+    setTimeout(() => preserveAndHideGeneratedFlowUi(document), 500);
+    setTimeout(() => preserveAndHideGeneratedFlowUi(document), 1200);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bindGeneratedFlowUiPreserver, { once: true });
+  } else {
+    bindGeneratedFlowUiPreserver();
   }
 
 })();
