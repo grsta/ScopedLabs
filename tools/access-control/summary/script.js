@@ -499,7 +499,7 @@ function readGuidanceRecordsRaw() {
     accessControlSummaryKpis: "Access Control Rollup",
     accessControlMasterAssistant: "Access Control Master Assistant",
     accessControlToolRollup: "Access Control Tool Status",
-    accessControlToolNotes: "Access Control Tool Notes",
+    accessControlToolNotes: "Access Control Assistant Tool Notes",
   };
 
   const SUMMARY_SECTION_INSERT_AFTER = {
@@ -839,7 +839,7 @@ function readGuidanceRecordsRaw() {
     const toolMount = ensureSection("accessControlToolRollup", "Access Control Tool Status", "Tool Guidance");
     toolMount.innerHTML = renderToolRows(rows);
 
-    const notesMount = ensureSection("accessControlToolNotes", "Tool Notes", "Tool Notes");
+    const notesMount = ensureSection("accessControlToolNotes", "Assistant Tool Notes", "Assistant Tool Notes");
     notesMount.innerHTML = renderNotes(records);
 
     document.documentElement.setAttribute("data-access-control-summary-version", VERSION);
