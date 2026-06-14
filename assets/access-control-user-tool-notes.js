@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "access-control-user-tool-notes-001-scoped-contract";
+  const VERSION = "access-control-user-tool-notes-002-export-card-placement";
   const CATEGORY = "access-control";
   const STORAGE_PREFIX = "scopedlabs:access-control:user-tool-notes:";
 
@@ -190,7 +190,9 @@
     const style = document.createElement("style");
     style.id = "access-control-user-tool-notes-styles";
     style.textContent = [
-      ".access-control-user-tool-notes-card textarea{min-height:110px;resize:vertical;}",
+      ".access-control-user-tool-notes-inline{margin-top:1rem;border:1px solid rgba(140,255,170,.18);border-radius:.75rem;padding:.75rem 1rem;background:rgba(0,0,0,.14);}",
+      ".access-control-user-tool-notes-inline summary{cursor:pointer;font-weight:700;color:var(--text,#f4fff7);}",
+      ".access-control-user-tool-notes-inline textarea{min-height:92px;resize:vertical;}",
       ".access-control-user-tool-notes-scope{margin:.35rem 0 .75rem;color:var(--muted,#c9d6cf);font-size:.92rem;}",
       ".access-control-user-tool-notes-status{margin-top:.5rem;color:var(--muted,#c9d6cf);font-size:.86rem;}"
     ].join("\n");

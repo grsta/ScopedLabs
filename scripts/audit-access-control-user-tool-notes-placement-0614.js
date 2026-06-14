@@ -20,9 +20,6 @@ const skippedSlugs = [
   "scope-planner"
 ];
 
-const VERSION = "access-control-user-tool-notes-002-export-card-placement";
-const SUMMARY_SCRIPT_VERSION = "access-control-summary-user-tool-notes-0614";
-
 let failCount = 0;
 
 function read(filePath) {
@@ -38,42 +35,44 @@ function requireMarker(source, label, marker) {
   }
 }
 
-console.log("ScopedLabs Access Control user tool notes contract ready audit - 0614");
+console.log("ScopedLabs Access Control user tool notes placement audit - 0614");
 console.log("Repo:", root);
 console.log("");
 
 const asset = read(path.join(root, "assets", "access-control-user-tool-notes.js"));
-const summaryScript = read(path.join(root, "tools", "access-control", "summary", "script.js"));
-const summaryHtml = read(path.join(root, "tools", "access-control", "summary", "index.html"));
-
-requireMarker(asset, "shared asset", VERSION);
-requireMarker(asset, "shared asset", "scopedlabs:access-control:user-tool-notes:");
-requireMarker(asset, "shared asset", "window.ScopedLabsAccessControlUserToolNotes");
-requireMarker(asset, "shared asset", "function saveRecord");
-requireMarker(asset, "shared asset", "function listRecords");
+requireMarker(asset, "shared asset", "access-control-user-tool-notes-002-export-card-placement");
 requireMarker(asset, "shared asset", ".access-control-user-tool-notes-inline");
-
-requireMarker(summaryScript, "summary script", "access-control-summary-user-tool-notes-0614");
-requireMarker(summaryScript, "summary script", "function renderUserToolNotes");
-requireMarker(summaryScript, "summary script", "function userToolNoteRecords");
-requireMarker(summaryScript, "summary script", "User Tool Notes");
-requireMarker(summaryScript, "summary script", "extra-export-table--access-control-user-tool-notes");
-
-requireMarker(summaryHtml, "summary html", "/assets/access-control-user-tool-notes.js?v=" + VERSION);
-requireMarker(summaryHtml, "summary html", "./script.js?v=" + SUMMARY_SCRIPT_VERSION);
+requireMarker(asset, "shared asset", "scopedlabs:access-control:user-tool-notes:");
 
 activeSlugs.forEach((slug) => {
   const html = read(path.join(accessRoot, slug, "index.html"));
+  const mountIndex = html.indexOf("data-access-control-user-tool-notes");
+  const exportIndex = html.search(/Export Report|Final Report Export|Documentation\s*&\s*Export/i);
+  const footerIndex = html.search(/<footer\b/i);
 
   requireMarker(html, slug, "class=\"access-control-user-tool-notes-inline\"");
   requireMarker(html, slug, "data-access-control-user-tool-notes");
-  requireMarker(html, slug, "/assets/access-control-user-tool-notes.js?v=" + VERSION);
+  requireMarker(html, slug, "/assets/access-control-user-tool-notes.js?v=access-control-user-tool-notes-002-export-card-placement");
 
   if (/class=["']card access-control-user-tool-notes-card["']/i.test(html)) {
-    console.log("FAIL  " + slug + " still has old standalone after-footer card");
+    console.log("FAIL  " + slug + " still has old standalone card class");
     failCount += 1;
   } else {
-    console.log("SAFE  " + slug + " old standalone after-footer card removed");
+    console.log("SAFE  " + slug + " old standalone card removed");
+  }
+
+  if (mountIndex !== -1 && exportIndex !== -1 && mountIndex > exportIndex) {
+    console.log("SAFE  " + slug + " user notes mount is inside/after export card heading");
+  } else {
+    console.log("FAIL  " + slug + " user notes mount is not placed with export card");
+    failCount += 1;
+  }
+
+  if (footerIndex !== -1 && mountIndex > footerIndex) {
+    console.log("FAIL  " + slug + " user notes mount appears after footer");
+    failCount += 1;
+  } else {
+    console.log("SAFE  " + slug + " user notes mount is before footer");
   }
 });
 
@@ -84,7 +83,7 @@ skippedSlugs.forEach((slug) => {
     console.log("FAIL  " + slug + " should be skipped but still has user tool notes mount/asset");
     failCount += 1;
   } else {
-    console.log("SAFE  " + slug + " skipped because it has no export/report card");
+    console.log("SAFE  " + slug + " skipped because it has no export/report tool card");
   }
 });
 
@@ -92,12 +91,11 @@ console.log("");
 console.log("Decision summary");
 
 if (failCount === 0) {
-  console.log("SAFE  USER_TOOL_NOTES_SHARED_HELPER_READY");
-  console.log("SAFE  DOWNSTREAM_TOOL_PAGES_HAVE_SCOPED_USER_TOOL_NOTES_MOUNT");
+  console.log("SAFE  USER_TOOL_NOTES_NOW_LIVE_INSIDE_EXPORT_CARD_AREA");
   console.log("SAFE  SCOPE_PLANNER_SKIPPED_FOR_USER_TOOL_NOTES");
-  console.log("SAFE  SUMMARY_RENDERS_USER_TOOL_NOTES_SEPARATELY_FROM_ASSISTANT_TOOL_NOTES");
+  console.log("SAFE  OLD_AFTER_FOOTER_CARD_REMOVED");
 } else {
-  console.log("FAIL  USER_TOOL_NOTES_CONTRACT_NOT_READY");
+  console.log("FAIL  USER_TOOL_NOTES_PLACEMENT_NOT_READY");
 }
 
 console.log("");
