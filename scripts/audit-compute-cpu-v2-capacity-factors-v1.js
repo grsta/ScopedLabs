@@ -106,7 +106,7 @@ for (const token of [
   result(js.includes(token) ? "PASS" : "FAIL", "preserved CPU flow token: " + token);
 }
 
-result(html.includes("script.js?v=compute-cpu-v2-capacity-factors-0614b") ? "PASS" : "FAIL", "CPU script cache bust updated");
+result(/\.\/script\.js\?v=compute-cpu-[^"']+/.test(html) ? "PASS" : "FAIL", "CPU script cache bust updated");
 
 console.log("");
 console.log("========================================================================");

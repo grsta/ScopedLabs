@@ -1,0 +1,105 @@
+const fs = require("fs");
+const path = require("path");
+const cp = require("child_process");
+
+const root = process.cwd();
+
+const files = {
+  html: path.join(root, "tools", "compute", "cpu-sizing", "index.html"),
+  js: path.join(root, "tools", "compute", "cpu-sizing", "script.js"),
+  v2: path.join(root, "scripts", "audit-compute-cpu-v2-capacity-factors-v1.js"),
+  standard: path.join(root, "scripts", "audit-compute-cpu-result-standard-v1.js"),
+  assistant: path.join(root, "scripts", "audit-compute-cpu-assistant-payload-decision-v1.js")
+};
+
+let pass = 0;
+let fail = 0;
+
+function read(file) {
+  return fs.readFileSync(file, "utf8");
+}
+
+function result(kind, label, detail) {
+  kind = String(kind || "FAIL").toUpperCase();
+  if (kind === "PASS") pass++;
+  if (kind === "FAIL") fail++;
+  console.log(kind.padEnd(6), label);
+  if (detail) console.log("       " + detail);
+}
+
+function runAudit(label, file) {
+  const rel = path.relative(root, file);
+  try {
+    cp.execFileSync(process.execPath, [file], { cwd: root, stdio: "pipe" });
+    result("PASS", label + " audit passes", rel);
+  } catch (error) {
+    result("FAIL", label + " audit failed", rel);
+    const out = String((error && error.stdout) || "") + String((error && error.stderr) || "");
+    if (out.trim()) console.log(out.trim());
+  }
+}
+
+const html = read(files.html);
+const js = read(files.js);
+
+console.log("ScopedLabs Compute CPU Capacity Envelope Visual Audit V1");
+console.log("Repo:", root);
+console.log("");
+
+for (const token of [
+  "CPU Capacity Envelope",
+  "Dynamic demand curve showing current load",
+  'data-compute-result-visual="cpu-capacity-envelope"',
+  "script.js?v=compute-cpu-capacity-envelope-visual-0614"
+]) {
+  result(html.includes(token) ? "PASS" : "FAIL", "CPU HTML visual token: " + token);
+}
+
+for (const token of [
+  "function buildComputeCpuVisualSvg(result)",
+  'data-compute-visual="cpu-capacity-envelope"',
+  "CPU CAPACITY ENVELOPE",
+  "Demand curve vs usable CPU capacity",
+  "currentWorkers",
+  "growthWorkers",
+  "failoverWorkers",
+  "currentRequiredCores",
+  "growthRequiredCores",
+  "failoverRequiredCores",
+  "usableCapacityCores",
+  "recommendedLogicalCores",
+  "watchThresholdCores",
+  "riskThresholdCores",
+  "computeCpuEnvelopeBg",
+  "*1 Current demand",
+  "*2 Growth / reserve",
+  "*3 Stress validation",
+  "*1 demand basis",
+  "*2 reserve pressure",
+  "*3 downstream validation"
+]) {
+  result(js.includes(token) ? "PASS" : "FAIL", "CPU SVG renderer token: " + token);
+}
+
+result(!js.includes("CPU load profile and core recommendation") ? "PASS" : "FAIL", "old CPU bar visual title removed from renderer");
+result(!html.includes('data-compute-result-visual="cpu-load-profile"') ? "PASS" : "FAIL", "old CPU visual data attribute removed from HTML");
+
+runAudit("CPU V2 capacity", files.v2);
+runAudit("CPU result standard", files.standard);
+runAudit("CPU assistant payload", files.assistant);
+
+console.log("");
+console.log("========================================================================");
+console.log("SUMMARY");
+console.log("========================================================================");
+console.log("PASS :", pass);
+console.log("FAIL :", fail);
+
+if (fail) {
+  console.log("");
+  console.log("OVERALL: FAIL");
+  process.exit(1);
+}
+
+console.log("");
+console.log("OVERALL: PASS");

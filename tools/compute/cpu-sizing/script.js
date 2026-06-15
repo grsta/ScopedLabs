@@ -419,67 +419,223 @@
     return { label: "GOOD", fill: "rgba(34,197,94,.13)", line: "rgba(125,255,152,.78)", text: "rgba(125,255,152,.96)" };
   }
 
-  function buildComputeCpuVisualSvg(result) {
-    result = result || {};
-
+    function buildComputeCpuVisualSvg(result) {
     const outputs = result && result.outputs ? result.outputs : {};
     const inputs = result && result.inputs ? result.inputs : {};
-    const status = cpuVisualStatus(result && (result.analyzerStatus || result.status));
 
-    const logical = Number(outputs.recommendedLogicalCores || result.recommendedLogicalCores || result.cores || 0);
-    const physical = Number(outputs.recommendedPhysicalCores || result.recommendedPhysicalCores || result.physicalCores || 0);
-    const effective = Number(outputs.effectiveDemandCores || result.effectiveDemandCores || result.eff || 0);
-    const required = Number(outputs.requiredCores || result.requiredCores || logical || 0);
-    const constraint = outputs.primaryConstraint || result.primaryConstraint || result.constraint || "CPU capacity";
+    function num(value, fallback) {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : fallback;
+    }
 
-    const metrics = [
-      { label: "Load Pressure", value: Number(outputs.loadPressure || result.loadPressure || 0), note: "scheduler pressure" },
-      { label: "Core Demand", value: Number(outputs.coreDemand || result.coreDemand || 0), note: "core density" },
-      { label: "Utilization", value: Number(outputs.utilizationTarget || result.utilizationTarget || inputs.targetUtilizationPercent || 0), note: "target ceiling" }
-    ];
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
 
-    const max = Math.max(120, ...metrics.map((item) => cpuVisualClamp(item.value, 0, 180)));
-    const barX = 206;
-    const barW = 410;
-    const rows = metrics.map((item, index) => {
-      const y = 156 + (index * 54);
-      const value = cpuVisualClamp(item.value, 0, 180);
-      const w = Math.max(4, Math.round((value / max) * barW));
-      const line = value >= 90 ? "rgba(248,113,113,.82)" : value >= 70 ? "rgba(250,204,21,.82)" : "rgba(125,255,152,.82)";
+    function esc(value) {
+      return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
 
+    const status = String(result && (result.analyzerStatus || result.status) || "WATCH").toUpperCase();
+    const statusColor = status === "GOOD" || status === "HEALTHY"
+      ? "rgba(125,255,152,.96)"
+      : status === "RISK"
+        ? "rgba(248,113,113,.96)"
+        : "rgba(250,204,21,.96)";
+    const statusFill = status === "GOOD" || status === "HEALTHY"
+      ? "rgba(34,197,94,.10)"
+      : status === "RISK"
+        ? "rgba(239,68,68,.10)"
+        : "rgba(250,204,21,.10)";
+    const statusLine = status === "GOOD" || status === "HEALTHY"
+      ? "rgba(125,255,152,.90)"
+      : status === "RISK"
+        ? "rgba(248,113,113,.90)"
+        : "rgba(250,204,21,.90)";
+    const statusLabel = status === "HEALTHY" ? "GOOD" : status;
+
+    const currentWorkers = Math.max(1, num(inputs.concurrency || result.concurrency, 16));
+    const growthReserve = clamp(num(inputs.growthReservePercent || result.growthReservePercent, 20), 0, 200);
+    const failoverMultiplier = clamp(num(inputs.failoverMultiplier || result.failoverMultiplier, 1), 1, 2);
+
+    const growthWorkers = Math.max(currentWorkers, Math.round(currentWorkers * (1 + (growthReserve / 100))));
+    const failoverWorkers = Math.max(growthWorkers, Math.round(growthWorkers * failoverMultiplier));
+
+    const currentRequiredCores = Math.max(0, num(outputs.baseDemandCores || result.baseDemandCores, num(outputs.effectiveDemandCores || result.eff, 0)));
+    const growthRequiredCores = Math.max(currentRequiredCores, num(outputs.demandAfterGrowthCores || result.demandAfterGrowthCores, currentRequiredCores * (1 + (growthReserve / 100))));
+    const failoverRequiredCores = Math.max(growthRequiredCores, num(outputs.effectiveDemandCores || result.effectiveDemandCores || result.eff, growthRequiredCores));
+
+    const recommendedLogicalCores = Math.max(1, num(outputs.recommendedLogicalCores || result.recommendedLogicalCores || result.cores, 1));
+    const recommendedPhysicalCores = Math.max(1, num(outputs.recommendedPhysicalCores || result.recommendedPhysicalCores || result.physicalCores, Math.ceil(recommendedLogicalCores / 2)));
+    const targetUtilizationPercent = clamp(num(inputs.targetUtilizationPercent || outputs.utilizationTarget || result.utilizationTarget, 70), 10, 95);
+
+    const usableCapacityCores = Math.max(0.1, recommendedLogicalCores * (targetUtilizationPercent / 100));
+    const watchThresholdCores = recommendedLogicalCores * 0.70;
+    const riskThresholdCores = recommendedLogicalCores * 0.90;
+
+    const width = 760;
+    const height = 430;
+
+    const plot = {
+      x: 64,
+      y: 108,
+      w: 642,
+      h: 222
+    };
+
+    const maxWorkers = Math.max(failoverWorkers, growthWorkers, currentWorkers, 1);
+    const maxCores = Math.max(
+      failoverRequiredCores,
+      recommendedLogicalCores,
+      riskThresholdCores,
+      usableCapacityCores,
+      1
+    );
+
+    const xMax = Math.max(4, Math.ceil(maxWorkers / 4) * 4);
+    const yMax = Math.max(4, Math.ceil(maxCores / 4) * 4);
+
+    function xScale(workers) {
+      return plot.x + (clamp(workers, 0, xMax) / xMax) * plot.w;
+    }
+
+    function yScale(cores) {
+      return plot.y + plot.h - (clamp(cores, 0, yMax) / yMax) * plot.h;
+    }
+
+    const current = {
+      x: xScale(currentWorkers),
+      y: yScale(currentRequiredCores)
+    };
+
+    const growth = {
+      x: xScale(growthWorkers),
+      y: yScale(growthRequiredCores)
+    };
+
+    const failover = {
+      x: xScale(failoverWorkers),
+      y: yScale(failoverRequiredCores)
+    };
+
+    const usableY = yScale(usableCapacityCores);
+    const logicalY = yScale(recommendedLogicalCores);
+    const watchY = yScale(watchThresholdCores);
+    const riskY = yScale(riskThresholdCores);
+
+    const riskZoneY = plot.y;
+    const riskZoneH = Math.max(0, riskY - plot.y);
+
+    const watchZoneY = riskY;
+    const watchZoneH = Math.max(0, watchY - riskY);
+
+    const goodZoneY = watchY;
+    const goodZoneH = Math.max(0, plot.y + plot.h - watchY);
+
+    const curveStartX = plot.x + 18;
+    const curveStartY = yScale(Math.max(1, currentRequiredCores * 0.45));
+
+    const curvePath = [
+      "M " + curveStartX.toFixed(1) + " " + curveStartY.toFixed(1),
+      "Q " + ((curveStartX + current.x) / 2).toFixed(1) + " " + ((curveStartY + current.y) / 2 + 8).toFixed(1) + " " + current.x.toFixed(1) + " " + current.y.toFixed(1),
+      "Q " + ((current.x + growth.x) / 2).toFixed(1) + " " + ((current.y + growth.y) / 2 - 10).toFixed(1) + " " + growth.x.toFixed(1) + " " + growth.y.toFixed(1),
+      "Q " + ((growth.x + failover.x) / 2).toFixed(1) + " " + ((growth.y + failover.y) / 2 - 10).toFixed(1) + " " + failover.x.toFixed(1) + " " + failover.y.toFixed(1)
+    ].join(" ");
+
+    const yTicks = [];
+    const yStep = yMax <= 16 ? 2 : 4;
+    for (let v = 0; v <= yMax; v += yStep) {
+      yTicks.push(v);
+    }
+
+    const xTicks = [0, currentWorkers, growthWorkers, failoverWorkers]
+      .filter((value, index, arr) => arr.indexOf(value) === index)
+      .sort((a, b) => a - b);
+
+    const yGrid = yTicks.map(function (tick) {
+      const y = yScale(tick);
+      const cls = tick === 0 || tick === yMax ? "grid-major" : "grid";
       return [
-        '<text x="64" y="' + (y + 16) + '" fill="rgba(246,255,248,.92)" font-size="12" font-weight="850">' + cpuContextEscapeHtml(item.label) + '</text>',
-        '<text x="64" y="' + (y + 34) + '" fill="rgba(203,213,225,.62)" font-size="10.5">' + cpuContextEscapeHtml(item.note) + '</text>',
-        '<rect x="' + barX + '" y="' + y + '" width="' + barW + '" height="18" rx="8" fill="rgba(0,0,0,.22)" stroke="rgba(148,163,184,.14)" />',
-        '<rect x="' + barX + '" y="' + y + '" width="' + w + '" height="18" rx="8" fill="' + line + '" opacity=".86" />',
-        '<text x="' + (barX + barW + 18) + '" y="' + (y + 14) + '" fill="' + line + '" font-size="12" font-weight="900">' + Math.round(value) + '%</text>'
+        '<path d="M' + plot.x + ' ' + y.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="' + cls + '"/>',
+        '<text x="' + (plot.x - 10) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end" class="tick">' + tick + '</text>'
       ].join("");
     }).join("");
 
-    function chip(label, value, x, y, width) {
+    const xGrid = xTicks.map(function (tick) {
+      const x = xScale(tick);
       return [
-        '<rect x="' + x + '" y="' + y + '" width="' + width + '" height="48" rx="9" fill="rgba(0,0,0,.18)" stroke="rgba(120,255,120,.13)" />',
-        '<text x="' + (x + 10) + '" y="' + (y + 17) + '" font-size="8.5" fill="rgba(203,213,225,.66)" font-weight="850" letter-spacing=".9">' + cpuContextEscapeHtml(label.toUpperCase()) + '</text>',
-        '<text x="' + (x + 10) + '" y="' + (y + 36) + '" font-size="17" fill="rgba(246,255,248,.96)" font-weight="850">' + cpuContextEscapeHtml(value) + '</text>'
+        '<path d="M' + x.toFixed(1) + ' ' + plot.y + ' V' + (plot.y + plot.h) + '" class="grid"/>',
+        '<text x="' + x.toFixed(1) + '" y="' + (plot.y + plot.h + 16) + '" text-anchor="middle" class="tick">' + tick + '</text>'
       ].join("");
-    }
+    }).join("");
+
+    const currentLabel = currentWorkers + " workers · " + currentRequiredCores.toFixed(1) + " cores";
+    const growthLabel = growthWorkers + " workers · " + growthRequiredCores.toFixed(1) + " cores";
+    const failoverLabel = failoverWorkers + " workers · " + failoverRequiredCores.toFixed(1) + " cores";
 
     return [
-      '<svg viewBox="0 0 760 356" role="img" aria-label="CPU load profile visual" xmlns="http://www.w3.org/2000/svg">',
-      '<defs><pattern id="computeCpuGridV1" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="rgba(120,255,120,.055)" stroke-width="1"/></pattern></defs>',
-      '<rect x="24" y="24" width="712" height="308" rx="16" fill="rgba(2,8,7,.72)" stroke="rgba(120,255,120,.14)" />',
-      '<rect x="36" y="36" width="688" height="284" rx="12" fill="url(#computeCpuGridV1)" stroke="rgba(148,163,184,.10)" />',
-      '<text x="54" y="64" fill="rgba(203,213,225,.62)" font-size="10.5" font-weight="850" letter-spacing="1.2">COMPUTE CPU SIZING</text>',
-      '<text x="54" y="90" fill="rgba(246,255,248,.96)" font-size="20" font-weight="750">CPU load profile and core recommendation</text>',
-      '<rect x="610" y="54" width="88" height="30" rx="9" fill="' + status.fill + '" stroke="' + status.line + '" />',
-      '<text x="654" y="74" text-anchor="middle" fill="' + status.text + '" font-size="10.5" font-weight="900">' + status.label + '</text>',
-      chip("Logical cores", String(logical || "-"), 54, 108, 150),
-      chip("Physical cores", String(physical || "-"), 220, 108, 150),
-      chip("Effective demand", (effective ? effective.toFixed(2) : "-") + "c", 386, 108, 150),
-      chip("Required", (required ? required.toFixed(2) : "-") + "c", 552, 108, 146),
-      rows,
-      '<line x1="206" y1="300" x2="616" y2="300" stroke="rgba(148,163,184,.18)" />',
-      '<text x="64" y="304" fill="rgba(203,213,225,.62)" font-size="10.5">Primary constraint: ' + cpuContextEscapeHtml(constraint) + '</text>',
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" width="100%" role="img" aria-label="CPU Capacity Envelope analytic graph" data-compute-visual="cpu-capacity-envelope">',
+      '<defs>',
+      '<linearGradient id="computeCpuEnvelopeBg" x1="0" y1="0" x2="0" y2="1">',
+      '<stop offset="0%" stop-color="#07110f"/>',
+      '<stop offset="100%" stop-color="#040b09"/>',
+      '</linearGradient>',
+      '<style>',
+      '.bg{fill:url(#computeCpuEnvelopeBg);stroke:rgba(126,245,213,.22);stroke-width:1.2}.frame{fill:none;stroke:rgba(126,245,213,.16);stroke-width:1}.plot-frame{fill:rgba(255,255,255,.01);stroke:rgba(126,245,213,.20);stroke-width:1}.zone-good{fill:rgba(34,197,94,.08)}.zone-watch{fill:rgba(250,204,21,.08)}.zone-risk{fill:rgba(239,68,68,.08)}.grid{fill:none;stroke:rgba(238,246,255,.08);stroke-width:1}.grid-major{fill:none;stroke:rgba(238,246,255,.14);stroke-width:1}.axis{fill:none;stroke:rgba(238,246,255,.42);stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}.tick{fill:rgba(203,213,225,.90);font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700}.axis-label{fill:rgba(203,213,225,.92);font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;letter-spacing:.5px}.header{fill:#eef6ff;font-family:Inter,Arial,Helvetica,sans-serif;font-size:18px;font-weight:900;letter-spacing:.5px}.subhead{fill:rgba(203,213,225,.86);font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:600}.zone-label{font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:800;letter-spacing:.7px}.zone-good-text{fill:rgba(74,222,128,.92)}.zone-watch-text{fill:rgba(250,204,21,.95)}.zone-risk-text{fill:rgba(248,113,113,.95)}.capacity-line{fill:none;stroke:#7ef5d5;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}.watch-line{fill:none;stroke:rgba(250,204,21,.72);stroke-width:1;stroke-dasharray:5 5}.risk-line{fill:none;stroke:rgba(248,113,113,.72);stroke-width:1;stroke-dasharray:5 5}.logical-line{fill:none;stroke:rgba(238,246,255,.34);stroke-width:1.1;stroke-dasharray:6 5}.curve-shadow{fill:none;stroke:rgba(126,245,213,.22);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.curve{fill:none;stroke:#9cfccf;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.marker-current{fill:#7ef5d5;stroke:#04110d;stroke-width:1.2}.marker-growth{fill:#facc15;stroke:#04110d;stroke-width:1.2}.marker-failover{fill:#fb7185;stroke:#04110d;stroke-width:1.2}.marker-ring{fill:none;stroke:rgba(238,246,255,.7);stroke-width:1}.point-label{fill:#eef6ff;font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700}.point-note{fill:rgba(203,213,225,.86);font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:600}.ref-line{fill:none;stroke:rgba(238,246,255,.16);stroke-width:1;stroke-dasharray:4 4}.capacity-label{fill:#7ef5d5;font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:800}.logical-label{fill:rgba(203,213,225,.82);font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:700}.status-chip{stroke-width:1}.status-text{font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;letter-spacing:.7px}.footer-strip{fill:rgba(255,255,255,.015);stroke:rgba(126,245,213,.14);stroke-width:1}.footer-text{fill:rgba(203,213,225,.88);font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700}',
+      '</style>',
+      '</defs>',
+      '<rect x="14" y="14" width="732" height="402" rx="16" class="bg"/>',
+      '<rect x="26" y="26" width="708" height="378" rx="12" class="frame"/>',
+      '<text x="38" y="50" class="header">CPU CAPACITY ENVELOPE</text>',
+      '<text x="38" y="68" class="subhead">Demand curve vs usable CPU capacity</text>',
+      '<rect x="654" y="34" width="68" height="26" rx="8" fill="' + statusFill + '" stroke="' + statusLine + '" class="status-chip"/>',
+      '<text x="688" y="51" text-anchor="middle" fill="' + statusColor + '" class="status-text">' + esc(statusLabel) + '</text>',
+      '<rect x="' + plot.x + '" y="' + plot.y + '" width="' + plot.w + '" height="' + plot.h + '" rx="8" class="plot-frame"/>',
+      '<rect x="' + plot.x + '" y="' + riskZoneY.toFixed(1) + '" width="' + plot.w + '" height="' + riskZoneH.toFixed(1) + '" class="zone-risk"/>',
+      '<rect x="' + plot.x + '" y="' + watchZoneY.toFixed(1) + '" width="' + plot.w + '" height="' + watchZoneH.toFixed(1) + '" class="zone-watch"/>',
+      '<rect x="' + plot.x + '" y="' + goodZoneY.toFixed(1) + '" width="' + plot.w + '" height="' + goodZoneH.toFixed(1) + '" class="zone-good"/>',
+      yGrid,
+      xGrid,
+      '<path d="M' + plot.x + ' ' + plot.y + ' V' + (plot.y + plot.h) + '" class="axis"/>',
+      '<path d="M' + plot.x + ' ' + (plot.y + plot.h) + ' H' + (plot.x + plot.w) + '" class="axis"/>',
+      '<text x="42" y="101" class="axis-label">cores</text>',
+      '<text x="385" y="384" text-anchor="middle" class="axis-label">Concurrent workers / projected load</text>',
+      '<text x="690" y="' + Math.max(plot.y + 18, riskY - 8).toFixed(1) + '" text-anchor="end" class="zone-label zone-risk-text">RISK</text>',
+      '<text x="690" y="' + ((riskY + watchY) / 2 + 4).toFixed(1) + '" text-anchor="end" class="zone-label zone-watch-text">WATCH</text>',
+      '<text x="690" y="' + Math.min(plot.y + plot.h - 16, watchY + 72).toFixed(1) + '" text-anchor="end" class="zone-label zone-good-text">GOOD</text>',
+      '<path d="M' + plot.x + ' ' + usableY.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="capacity-line"/>',
+      '<text x="694" y="' + (usableY - 8).toFixed(1) + '" text-anchor="end" class="capacity-label">Usable capacity · ' + usableCapacityCores.toFixed(1) + ' cores</text>',
+      '<path d="M' + plot.x + ' ' + logicalY.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="logical-line"/>',
+      '<text x="694" y="' + (logicalY - 7).toFixed(1) + '" text-anchor="end" class="logical-label">Recommended logical cores · ' + recommendedLogicalCores + '</text>',
+      '<path d="M' + plot.x + ' ' + watchY.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="watch-line"/>',
+      '<path d="M' + plot.x + ' ' + riskY.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="risk-line"/>',
+      '<path d="' + curvePath + '" class="curve-shadow"/>',
+      '<path d="' + curvePath + '" class="curve"/>',
+      '<path d="M' + current.x.toFixed(1) + ' ' + current.y.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="ref-line"/>',
+      '<path d="M' + growth.x.toFixed(1) + ' ' + growth.y.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="ref-line"/>',
+      '<path d="M' + failover.x.toFixed(1) + ' ' + failover.y.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="ref-line"/>',
+      '<circle cx="' + current.x.toFixed(1) + '" cy="' + current.y.toFixed(1) + '" r="6.5" class="marker-ring"/>',
+      '<circle cx="' + current.x.toFixed(1) + '" cy="' + current.y.toFixed(1) + '" r="4.5" class="marker-current"/>',
+      '<text x="' + Math.max(plot.x + 12, current.x - 44).toFixed(1) + '" y="' + (current.y - 12).toFixed(1) + '" class="point-label">*1 Current demand</text>',
+      '<text x="' + Math.max(plot.x + 12, current.x - 44).toFixed(1) + '" y="' + (current.y + 1).toFixed(1) + '" class="point-note">' + esc(currentLabel) + '</text>',
+      '<circle cx="' + growth.x.toFixed(1) + '" cy="' + growth.y.toFixed(1) + '" r="6.5" class="marker-ring"/>',
+      '<circle cx="' + growth.x.toFixed(1) + '" cy="' + growth.y.toFixed(1) + '" r="4.5" class="marker-growth"/>',
+      '<text x="' + Math.max(plot.x + 12, growth.x - 50).toFixed(1) + '" y="' + (growth.y - 16).toFixed(1) + '" class="point-label">*2 Growth / reserve</text>',
+      '<text x="' + Math.max(plot.x + 12, growth.x - 50).toFixed(1) + '" y="' + (growth.y - 3).toFixed(1) + '" class="point-note">' + esc(growthLabel) + '</text>',
+      '<circle cx="' + failover.x.toFixed(1) + '" cy="' + failover.y.toFixed(1) + '" r="6.5" class="marker-ring"/>',
+      '<circle cx="' + failover.x.toFixed(1) + '" cy="' + failover.y.toFixed(1) + '" r="4.5" class="marker-failover"/>',
+      '<text x="' + Math.max(plot.x + 12, failover.x - 86).toFixed(1) + '" y="' + (failover.y - 16).toFixed(1) + '" class="point-label">*3 Stress validation</text>',
+      '<text x="' + Math.max(plot.x + 12, failover.x - 86).toFixed(1) + '" y="' + (failover.y - 3).toFixed(1) + '" class="point-note">' + esc(failoverLabel) + '</text>',
+      '<text x="72" y="' + (watchY - 7).toFixed(1) + '" class="logical-label">WATCH threshold · ' + watchThresholdCores.toFixed(1) + '</text>',
+      '<text x="72" y="' + (riskY - 7).toFixed(1) + '" class="logical-label">RISK threshold · ' + riskThresholdCores.toFixed(1) + '</text>',
+      '<rect x="38" y="390" width="684" height="18" rx="6" class="footer-strip"/>',
+      '<text x="54" y="402.5" class="footer-text">*1 demand basis</text>',
+      '<text x="276" y="402.5" class="footer-text">*2 reserve pressure</text>',
+      '<text x="520" y="402.5" class="footer-text">*3 downstream validation</text>',
       '</svg>'
     ].join("");
   }
