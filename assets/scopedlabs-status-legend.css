@@ -39,7 +39,7 @@
 
 .access-fail-safe-status-text.complete,
     .access-tool-status-complete {
-      color: rgba(125,255,152,.96);
+      color: #2cff9b;
       font-weight: 950;
     }
 
@@ -92,7 +92,7 @@
 }
 
 .scopedlabs-status-good {
-  color: rgba(125,255,152,.96);
+  color: #2cff9b;
   font-weight: 950;
 }
 
@@ -130,4 +130,26 @@
 .access-tool-status-legend [data-status="RISK"]::before {
   background: #CE2029;
   border-color: rgba(206,32,41,.72);
+}
+
+
+/* ScopedLabs stoplight status standard - 0614d */
+.access-fail-safe-status-text.complete,
+.access-tool-status-complete,
+.access-tool-status-legend .complete,
+.access-tool-status-legend .good,
+.access-tool-status-legend .is-good,
+.access-tool-status-legend [data-status="good"],
+.access-tool-status-legend [data-status="GOOD"] {
+  color: #2cff9b;
+  border-color: rgba(44,255,155,.72);
+}
+
+.access-tool-status-legend .complete::before,
+.access-tool-status-legend .good::before,
+.access-tool-status-legend .is-good::before,
+.access-tool-status-legend [data-status="good"]::before,
+.access-tool-status-legend [data-status="GOOD"]::before {
+  background: #2cff9b;
+  border-color: rgba(44,255,155,.72);
 }

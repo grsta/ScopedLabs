@@ -8,6 +8,7 @@ const files = {
   html: path.join(root, "tools", "compute", "cpu-sizing", "index.html"),
   js: path.join(root, "tools", "compute", "cpu-sizing", "script.js"),
   legendCss: path.join(root, "assets", "scopedlabs-status-legend.css"),
+  styleCss: path.join(root, "assets", "style.css"),
   v2: path.join(root, "scripts", "audit-compute-cpu-v2-capacity-factors-v1.js"),
   standard: path.join(root, "scripts", "audit-compute-cpu-result-standard-v1.js"),
   assistant: path.join(root, "scripts", "audit-compute-cpu-assistant-payload-decision-v1.js")
@@ -43,6 +44,7 @@ function runAudit(label, file) {
 const html = read(files.html);
 const js = read(files.js);
 const legendCss = read(files.legendCss);
+const styleCss = read(files.styleCss);
 
 console.log("ScopedLabs Compute CPU Capacity Envelope Visual Audit V1");
 console.log("Repo:", root);
@@ -52,7 +54,7 @@ for (const token of [
   "CPU Capacity Envelope",
   "Dynamic demand curve showing current load",
   'data-compute-result-visual="cpu-capacity-envelope"',
-  "script.js?v=compute-cpu-capacity-envelope-zone-risk-red-0614c"
+  "script.js?v=compute-cpu-capacity-envelope-stoplight-0614d"
 ]) {
   result(html.includes(token) ? "PASS" : "FAIL", "CPU HTML visual token: " + token);
 }
@@ -82,6 +84,8 @@ for (const token of [
   "tone-current",
   "tone-growth",
   "tone-failover",
+  "#2cff9b",
+  "rgba(44,255,155",
   "#CE2029",
   "rgba(206,32,41",
   "*1 demand basis",
@@ -100,6 +104,10 @@ for (const removed of [
   "zone-good-text\">GOOD",
   "point-label",
   "point-note",
+  "#7ef5d5",
+  "#9cfccf",
+  "rgba(126,245,213",
+  "rgba(125,255,152",
   "#fb7185",
   "rgba(248,113,113",
   "CPU load profile and core recommendation"
@@ -108,13 +116,24 @@ for (const removed of [
 }
 
 for (const token of [
+  "#2cff9b",
+  ".sl-pipeline-step.is-current .sl-pipeline-dot"
+]) {
+  result(styleCss.includes(token) ? "PASS" : "FAIL", "pipeline green source token: " + token);
+}
+
+for (const token of [
+  "ScopedLabs stoplight status standard - 0614d",
+  "#2cff9b",
+  "rgba(44,255,155",
   "ScopedLabs fire-engine risk standard - 0614c",
   "#CE2029",
   "rgba(206,32,41"
 ]) {
-  result(legendCss.includes(token) ? "PASS" : "FAIL", "status legend fire-engine risk token: " + token);
+  result(legendCss.includes(token) ? "PASS" : "FAIL", "status legend stoplight token: " + token);
 }
 
+result(!legendCss.includes("rgba(125,255,152,.96)") ? "PASS" : "FAIL", "old legend Good color removed");
 result(!html.includes('data-compute-result-visual="cpu-load-profile"') ? "PASS" : "FAIL", "old CPU visual data attribute removed from HTML");
 
 runAudit("CPU V2 capacity", files.v2);
