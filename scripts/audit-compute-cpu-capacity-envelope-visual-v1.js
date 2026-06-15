@@ -54,7 +54,7 @@ for (const token of [
   "CPU Capacity Envelope",
   "Dynamic demand curve showing current load",
   'data-compute-result-visual="cpu-capacity-envelope"',
-  "script.js?v=compute-cpu-capacity-envelope-soft-risk-accents-0614e"
+  "script.js?v=compute-cpu-capacity-envelope-zone-fill-tones-0615"
 ]) {
   result(html.includes(token) ? "PASS" : "FAIL", "CPU HTML visual token: " + token);
 }
@@ -77,6 +77,9 @@ for (const token of [
   "computeCpuEnvelopeBg",
   "const height = 500",
   "h: 280",
+  "rgba(239,68,68,.06)",
+  "rgba(250,204,21,.055)",
+  "rgba(44,255,155,.05)",
   "markerLabelX",
   "markerLabelY",
   "marker-worker",
