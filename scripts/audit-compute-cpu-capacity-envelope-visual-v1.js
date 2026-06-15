@@ -7,6 +7,7 @@ const root = process.cwd();
 const files = {
   html: path.join(root, "tools", "compute", "cpu-sizing", "index.html"),
   js: path.join(root, "tools", "compute", "cpu-sizing", "script.js"),
+  legendCss: path.join(root, "assets", "scopedlabs-status-legend.css"),
   v2: path.join(root, "scripts", "audit-compute-cpu-v2-capacity-factors-v1.js"),
   standard: path.join(root, "scripts", "audit-compute-cpu-result-standard-v1.js"),
   assistant: path.join(root, "scripts", "audit-compute-cpu-assistant-payload-decision-v1.js")
@@ -41,6 +42,7 @@ function runAudit(label, file) {
 
 const html = read(files.html);
 const js = read(files.js);
+const legendCss = read(files.legendCss);
 
 console.log("ScopedLabs Compute CPU Capacity Envelope Visual Audit V1");
 console.log("Repo:", root);
@@ -50,7 +52,7 @@ for (const token of [
   "CPU Capacity Envelope",
   "Dynamic demand curve showing current load",
   'data-compute-result-visual="cpu-capacity-envelope"',
-  "script.js?v=compute-cpu-capacity-envelope-label-cleanup-0614b"
+  "script.js?v=compute-cpu-capacity-envelope-zone-risk-red-0614c"
 ]) {
   result(html.includes(token) ? "PASS" : "FAIL", "CPU HTML visual token: " + token);
 }
@@ -80,6 +82,8 @@ for (const token of [
   "tone-current",
   "tone-growth",
   "tone-failover",
+  "#CE2029",
+  "rgba(206,32,41",
   "*1 demand basis",
   "*2 reserve pressure",
   "*3 downstream validation"
@@ -91,11 +95,24 @@ for (const removed of [
   "*1 Current demand",
   "*2 Growth / reserve",
   "*3 Stress validation",
+  "zone-risk-text\">RISK",
+  "zone-watch-text\">WATCH",
+  "zone-good-text\">GOOD",
   "point-label",
   "point-note",
+  "#fb7185",
+  "rgba(248,113,113",
   "CPU load profile and core recommendation"
 ]) {
-  result(!js.includes(removed) ? "PASS" : "FAIL", "removed crowded plot label token: " + removed);
+  result(!js.includes(removed) ? "PASS" : "FAIL", "removed CPU visual token: " + removed);
+}
+
+for (const token of [
+  "ScopedLabs fire-engine risk standard - 0614c",
+  "#CE2029",
+  "rgba(206,32,41"
+]) {
+  result(legendCss.includes(token) ? "PASS" : "FAIL", "status legend fire-engine risk token: " + token);
 }
 
 result(!html.includes('data-compute-result-visual="cpu-load-profile"') ? "PASS" : "FAIL", "old CPU visual data attribute removed from HTML");

@@ -53,7 +53,7 @@
 
 .access-fail-safe-status-text.risk,
     .access-tool-status-risk {
-      color: rgba(248,113,113,.96);
+      color: rgba(206,32,41,.96);
       font-weight: 950;
     }
 
@@ -103,7 +103,7 @@
 }
 
 .scopedlabs-status-risk {
-  color: rgba(248,113,113,.96);
+  color: rgba(206,32,41,.96);
   font-weight: 950;
 }
 
@@ -112,4 +112,22 @@
   .scopedlabs-status-legend-grid {
     grid-template-columns: 1fr;
   }
+}
+
+
+/* ScopedLabs fire-engine risk standard - 0614c */
+.access-tool-status-legend .risk,
+.access-tool-status-legend .is-risk,
+.access-tool-status-legend [data-status="risk"],
+.access-tool-status-legend [data-status="RISK"] {
+  color: #CE2029;
+  border-color: rgba(206,32,41,.72);
+}
+
+.access-tool-status-legend .risk::before,
+.access-tool-status-legend .is-risk::before,
+.access-tool-status-legend [data-status="risk"]::before,
+.access-tool-status-legend [data-status="RISK"]::before {
+  background: #CE2029;
+  border-color: rgba(206,32,41,.72);
 }
