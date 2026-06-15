@@ -182,6 +182,7 @@
 
     <section id="toolCard" class="card tool-card" style="margin-top: 18px;">
       <h2 class="card-title" style="margin-top: 0;">Planning Inputs</h2>
+      <p class="muted" style="margin: 6px 0 0;">Model CPU capacity from worker demand, burst behavior, growth reserve, platform overhead, and sustained-load efficiency before carrying the result into RAM sizing.</p>
 
       <div class="form-grid" style="margin-top: 14px;">
         <label class="field">
@@ -225,6 +226,58 @@
           <select id="smt">
             <option value="on" selected>On (logical cores count)</option>
             <option value="off">Off (physical cores only)</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Workload Pattern</span>
+          <select id="workloadPattern">
+            <option value="steady" selected>Steady / predictable</option>
+            <option value="businessPeak">Business-hours peak</option>
+            <option value="burstHeavy">Burst-heavy / queue spikes</option>
+            <option value="scheduledBatch">Scheduled batch windows</option>
+            <option value="sustained247">24/7 sustained load</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Growth Reserve (%)</span>
+          <input id="growthReserve" type="number" min="0" max="200" step="1" value="20" />
+        </label>
+
+        <label class="field">
+          <span class="label">Platform Overhead</span>
+          <select id="platformOverhead">
+            <option value="0">Bare metal / minimal overhead</option>
+            <option value="5">Container host / light overhead</option>
+            <option value="10" selected>Virtualized server / normal overhead</option>
+            <option value="15">Mixed services / heavier platform layer</option>
+            <option value="25">Nested, security-heavy, or dense host</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">OS / Agent Reserve (%)</span>
+          <input id="osReserve" type="number" min="0" max="100" step="1" value="10" />
+        </label>
+
+        <label class="field">
+          <span class="label">Effective Core Efficiency (%)</span>
+          <input id="coreEfficiency" type="number" min="35" max="110" step="1" value="90" />
+        </label>
+
+        <label class="field">
+          <span class="label">Sustained Load Derate (%)</span>
+          <input id="sustainedDerate" type="number" min="0" max="50" step="1" value="0" />
+        </label>
+
+        <label class="field">
+          <span class="label">Failover / Extra Load Mode</span>
+          <select id="failoverMultiplier">
+            <option value="1" selected>Normal single-node load</option>
+            <option value="1.25">Partial failover / shared extra load</option>
+            <option value="1.5">N+1 carry-over planning</option>
+            <option value="2">Full paired-node failover</option>
           </select>
         </label>
       </div>
@@ -384,7 +437,7 @@
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
   <script src="/assets/scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-005-active-title"></script>
   <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-002"></script>
-  <script src="./script.js?v=compute-cpu-context-013-static-card-polish"></script>
+  <script src="./script.js?v=compute-cpu-v2-capacity-factors-0614b"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
   <script src="/assets/scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-001"></script>
   <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>

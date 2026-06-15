@@ -107,7 +107,7 @@ for (const token of [
 }
 
 result(/\/assets\/scopedlabs-compute-assistant-contract\.js\?v=scopedlabs-compute-assistant-contract-[^"']+/.test(html) ? "PASS" : "FAIL", "CPU compute assistant contract has cache-busted asset ref");
-result(/\.\/script\.js\?v=compute-cpu-context-[^"']+/.test(html) ? "PASS" : "FAIL", "CPU script has cache-busted asset ref");
+result(/\.\/script\.js\?v=compute-cpu-[^"']+/.test(html) ? "PASS" : "FAIL", "CPU script has cache-busted asset ref");
 
 runAudit("lifecycle", files.lifecycle);
 runAudit("cpu standard", files.cpuStandard);

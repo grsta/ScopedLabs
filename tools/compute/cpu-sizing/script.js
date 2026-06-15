@@ -30,6 +30,13 @@
     peak: $("peak"),
     targetUtil: $("targetUtil"),
     smt: $("smt"),
+    workloadPattern: $("workloadPattern"),
+    growthReserve: $("growthReserve"),
+    platformOverhead: $("platformOverhead"),
+    osReserve: $("osReserve"),
+    coreEfficiency: $("coreEfficiency"),
+    sustainedDerate: $("sustainedDerate"),
+    failoverMultiplier: $("failoverMultiplier"),
     results: $("results"),
     flowNote: $("flow-note"),
     workloadContextCard: $("computeWorkloadContextCard"),
@@ -494,7 +501,29 @@
     return true;
   }
 
+  function cpuCapacityClamp(value, min, max, fallback) {
+    const num = Number(value);
+    const safe = Number.isFinite(num) ? num : fallback;
+    return Math.min(max, Math.max(min, safe));
+  }
 
+  function cpuWorkloadPatternFactor(pattern) {
+    const map = {
+      steady: 1,
+      businessPeak: 1.1,
+      burstHeavy: 1.22,
+      scheduledBatch: 1.16,
+      sustained247: 1.12
+    };
+
+    return map[String(pattern || "steady")] || 1;
+  }
+
+  function cpuFactorDisplay(value, digits) {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return "-";
+    return num.toFixed(typeof digits === "number" ? digits : 2).replace(/\.00$/, "");
+  }
 
   function calculate() {
     const workload = els.workload.value;
@@ -508,11 +537,38 @@
     );
     const smt = els.smt.value;
 
+    const workloadPattern = els.workloadPattern ? els.workloadPattern.value : "steady";
+    const workloadPatternFactor = cpuWorkloadPatternFactor(workloadPattern);
+    const growthReserve = cpuCapacityClamp(ScopedLabsAnalyzer.safeNumber(els.growthReserve && els.growthReserve.value, 20), 0, 200, 20);
+    const platformOverhead = cpuCapacityClamp(ScopedLabsAnalyzer.safeNumber(els.platformOverhead && els.platformOverhead.value, 10), 0, 100, 10);
+    const osReserve = cpuCapacityClamp(ScopedLabsAnalyzer.safeNumber(els.osReserve && els.osReserve.value, 10), 0, 100, 10);
+    const coreEfficiency = cpuCapacityClamp(ScopedLabsAnalyzer.safeNumber(els.coreEfficiency && els.coreEfficiency.value, 90), 35, 110, 90);
+    const sustainedDerate = cpuCapacityClamp(ScopedLabsAnalyzer.safeNumber(els.sustainedDerate && els.sustainedDerate.value, 0), 0, 50, 0);
+    const failoverMultiplier = cpuCapacityClamp(ScopedLabsAnalyzer.safeNumber(els.failoverMultiplier && els.failoverMultiplier.value, 1), 1, 2, 1);
+
     const avg = concurrency * (cpuPct / 100);
-    const eff = avg * peak * workloadFactor(workload);
+    const baseDemand = avg * peak * workloadFactor(workload);
+    const patternDemand = baseDemand * workloadPatternFactor;
+    const growthDemand = patternDemand * (1 + (growthReserve / 100));
+    const platformDemand = growthDemand * (1 + (platformOverhead / 100));
+    const reserveDemand = platformDemand * (1 + (osReserve / 100));
+    const failoverDemand = reserveDemand * failoverMultiplier;
+    const coreEfficiencyRatio = coreEfficiency / 100;
+    const sustainedRatio = 1 - (sustainedDerate / 100);
+    const eff = failoverDemand / Math.max(coreEfficiencyRatio, 0.35) / Math.max(sustainedRatio, 0.5);
     const cores = eff / (target / 100);
     const rec = Math.ceil(cores);
     const physicalRec = smt === "on" ? Math.ceil(rec / 2) : rec;
+    const planningReservePressure = ScopedLabsAnalyzer.clamp(
+      (growthReserve * 0.28) +
+      (platformOverhead * 0.22) +
+      (osReserve * 0.18) +
+      ((100 - coreEfficiency) * 0.40) +
+      (sustainedDerate * 0.30) +
+      ((failoverMultiplier - 1) * 100 * 0.55),
+      0,
+      180
+    );
 
     const loadPressure = ScopedLabsAnalyzer.clamp((eff / Math.max(rec, 1)) * 100, 0, 180);
     const coreDemand = ScopedLabsAnalyzer.clamp((rec / 32) * 100, 0, 180);
@@ -522,24 +578,30 @@
       {
         label: "Load Pressure",
         value: loadPressure,
-        displayValue: `${Math.round(loadPressure)}%`
+        displayValue: String(Math.round(loadPressure)) + "%"
       },
       {
         label: "Core Demand",
         value: coreDemand,
-        displayValue: `${Math.round(coreDemand)}%`
+        displayValue: String(Math.round(coreDemand)) + "%"
       },
       {
         label: "Utilization",
         value: utilPressure,
-        displayValue: `${Math.round(utilPressure)}%`
+        displayValue: String(Math.round(utilPressure)) + "%"
+      },
+      {
+        label: "Planning Reserve",
+        value: planningReservePressure,
+        displayValue: String(Math.round(planningReservePressure)) + "%"
       }
     ];
 
     const compositeScore = Math.round(
-      (loadPressure * 0.35) +
-      (Math.min(coreDemand, 100) * 0.30) +
-      (utilPressure * 0.35)
+      (loadPressure * 0.30) +
+      (Math.min(coreDemand, 100) * 0.25) +
+      (utilPressure * 0.25) +
+      (planningReservePressure * 0.20)
     );
 
     const analyzer = ScopedLabsAnalyzer.resolveStatus({
@@ -557,6 +619,8 @@
       dominantConstraint = "Core count density";
     } else if (analyzer.dominant.label === "Utilization") {
       dominantConstraint = "Utilization ceiling";
+    } else if (analyzer.dominant.label === "Planning Reserve") {
+      dominantConstraint = "Reserve / platform overhead";
     }
 
     let interpretation = "";
@@ -586,15 +650,21 @@
     }
 
     const summaryRows = [
-      { label: "Effective Demand", value: `${eff.toFixed(2)} cores` },
-      { label: "Required Cores", value: `${cores.toFixed(2)}` },
-      { label: "Recommended Logical Cores", value: `${rec} cores` },
-      { label: "Recommended Physical Cores", value: `${physicalRec} cores` }
+      { label: "Base CPU Demand", value: baseDemand.toFixed(2) + " cores" },
+      { label: "Adjusted Effective Demand", value: eff.toFixed(2) + " cores" },
+      { label: "Required Cores", value: cores.toFixed(2) },
+      { label: "Recommended Logical Cores", value: String(rec) + " cores" },
+      { label: "Recommended Physical Cores", value: String(physicalRec) + " cores" }
     ];
 
     const derivedRows = [
       { label: "Primary Constraint", value: dominantConstraint },
       { label: "Workload Type", value: workload },
+      { label: "Workload Pattern", value: workloadPattern },
+      { label: "Growth Reserve", value: String(growthReserve) + "%" },
+      { label: "Platform / OS Reserve", value: String(platformOverhead) + "% platform + " + String(osReserve) + "% OS/agents" },
+      { label: "Core Efficiency", value: String(coreEfficiency) + "% effective" },
+      { label: "Failover Multiplier", value: cpuFactorDisplay(failoverMultiplier, 2) + "x" },
       { label: "SMT Mode", value: smt === "on" ? "Logical cores counted" : "Physical cores only" }
     ];
 
@@ -641,9 +711,23 @@
         cpuPerWorkerPercent: cpuPct,
         peakFactor: peak,
         targetUtilizationPercent: target,
-        smt: smt
+        smt: smt,
+        workloadPattern: workloadPattern,
+        workloadPatternFactor: workloadPatternFactor,
+        growthReservePercent: growthReserve,
+        platformOverheadPercent: platformOverhead,
+        osReservePercent: osReserve,
+        coreEfficiencyPercent: coreEfficiency,
+        sustainedDeratePercent: sustainedDerate,
+        failoverMultiplier: failoverMultiplier
       },
       outputs: {
+        baseDemandCores: Number(baseDemand.toFixed(2)),
+        demandAfterPatternCores: Number(patternDemand.toFixed(2)),
+        demandAfterGrowthCores: Number(growthDemand.toFixed(2)),
+        demandAfterPlatformReserveCores: Number(platformDemand.toFixed(2)),
+        demandAfterOsReserveCores: Number(reserveDemand.toFixed(2)),
+        demandAfterFailoverCores: Number(failoverDemand.toFixed(2)),
         effectiveDemandCores: Number(eff.toFixed(2)),
         requiredCores: Number(cores.toFixed(2)),
         recommendedLogicalCores: rec,
@@ -651,6 +735,7 @@
         loadPressure: Number(loadPressure.toFixed(1)),
         coreDemand: Number(coreDemand.toFixed(1)),
         utilizationTarget: Number(target.toFixed(1)),
+        planningReservePressure: Number(planningReservePressure.toFixed(1)),
         primaryConstraint: dominantConstraint
       },
       updatedAt: new Date().toISOString()
@@ -671,6 +756,16 @@
       loadPressure: Number(loadPressure.toFixed(1)),
       coreDemand: Number(coreDemand.toFixed(1)),
       utilizationTarget: Number(target.toFixed(1)),
+      planningReservePressure: Number(planningReservePressure.toFixed(1)),
+      baseDemandCores: Number(baseDemand.toFixed(2)),
+      workloadPattern,
+      workloadPatternFactor,
+      growthReservePercent: growthReserve,
+      platformOverheadPercent: platformOverhead,
+      osReservePercent: osReserve,
+      coreEfficiencyPercent: coreEfficiency,
+      sustainedDeratePercent: sustainedDerate,
+      failoverMultiplier,
       plannerContext: activeWorkloadForResult ? {
         id: activeWorkloadForResult.id || "",
         name: activeWorkloadForResult.name || "",
@@ -708,12 +803,21 @@
     els.peak.value = "1.25";
     els.targetUtil.value = 70;
     els.smt.value = "on";
+    if (els.workloadPattern) els.workloadPattern.value = "steady";
+    if (els.growthReserve) els.growthReserve.value = 20;
+    if (els.platformOverhead) els.platformOverhead.value = "10";
+    if (els.osReserve) els.osReserve.value = 10;
+    if (els.coreEfficiency) els.coreEfficiency.value = 90;
+    if (els.sustainedDerate) els.sustainedDerate.value = 0;
+    if (els.failoverMultiplier) els.failoverMultiplier.value = "1";
     invalidate();
   });
 
-  ["workload", "concurrency", "cpuPerWorker", "peak", "targetUtil", "smt"].forEach((id) => {
-    $(id).addEventListener("input", invalidate);
-    $(id).addEventListener("change", invalidate);
+  ["workload", "concurrency", "cpuPerWorker", "peak", "targetUtil", "smt", "workloadPattern", "growthReserve", "platformOverhead", "osReserve", "coreEfficiency", "sustainedDerate", "failoverMultiplier"].forEach((id) => {
+    const input = $(id);
+    if (!input) return;
+    input.addEventListener("input", invalidate);
+    input.addEventListener("change", invalidate);
   });
 
   window.addEventListener("DOMContentLoaded", () => {
