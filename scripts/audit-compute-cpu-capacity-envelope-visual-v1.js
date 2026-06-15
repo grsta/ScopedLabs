@@ -50,7 +50,7 @@ for (const token of [
   "CPU Capacity Envelope",
   "Dynamic demand curve showing current load",
   'data-compute-result-visual="cpu-capacity-envelope"',
-  "script.js?v=compute-cpu-capacity-envelope-visual-0614"
+  "script.js?v=compute-cpu-capacity-envelope-label-cleanup-0614b"
 ]) {
   result(html.includes(token) ? "PASS" : "FAIL", "CPU HTML visual token: " + token);
 }
@@ -71,9 +71,15 @@ for (const token of [
   "watchThresholdCores",
   "riskThresholdCores",
   "computeCpuEnvelopeBg",
-  "*1 Current demand",
-  "*2 Growth / reserve",
-  "*3 Stress validation",
+  "const height = 500",
+  "h: 280",
+  "markerLabelX",
+  "markerLabelY",
+  "marker-worker",
+  "marker-core",
+  "tone-current",
+  "tone-growth",
+  "tone-failover",
   "*1 demand basis",
   "*2 reserve pressure",
   "*3 downstream validation"
@@ -81,7 +87,17 @@ for (const token of [
   result(js.includes(token) ? "PASS" : "FAIL", "CPU SVG renderer token: " + token);
 }
 
-result(!js.includes("CPU load profile and core recommendation") ? "PASS" : "FAIL", "old CPU bar visual title removed from renderer");
+for (const removed of [
+  "*1 Current demand",
+  "*2 Growth / reserve",
+  "*3 Stress validation",
+  "point-label",
+  "point-note",
+  "CPU load profile and core recommendation"
+]) {
+  result(!js.includes(removed) ? "PASS" : "FAIL", "removed crowded plot label token: " + removed);
+}
+
 result(!html.includes('data-compute-result-visual="cpu-load-profile"') ? "PASS" : "FAIL", "old CPU visual data attribute removed from HTML");
 
 runAudit("CPU V2 capacity", files.v2);

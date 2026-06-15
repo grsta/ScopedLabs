@@ -478,13 +478,13 @@
     const riskThresholdCores = recommendedLogicalCores * 0.90;
 
     const width = 760;
-    const height = 430;
+    const height = 500;
 
     const plot = {
       x: 64,
       y: 108,
       w: 642,
-      h: 222
+      h: 280
     };
 
     const maxWorkers = Math.max(failoverWorkers, growthWorkers, currentWorkers, 1);
@@ -577,6 +577,14 @@
     const growthLabel = growthWorkers + " workers · " + growthRequiredCores.toFixed(1) + " cores";
     const failoverLabel = failoverWorkers + " workers · " + failoverRequiredCores.toFixed(1) + " cores";
 
+    function markerLabelX(point) {
+      return Math.max(plot.x + 44, Math.min(plot.x + plot.w - 50, point.x));
+    }
+
+    function markerLabelY(point) {
+      return Math.min(plot.y + plot.h - 28, point.y + 18);
+    }
+
     return [
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" width="100%" role="img" aria-label="CPU Capacity Envelope analytic graph" data-compute-visual="cpu-capacity-envelope">',
       '<defs>',
@@ -585,11 +593,11 @@
       '<stop offset="100%" stop-color="#040b09"/>',
       '</linearGradient>',
       '<style>',
-      '.bg{fill:url(#computeCpuEnvelopeBg);stroke:rgba(126,245,213,.22);stroke-width:1.2}.frame{fill:none;stroke:rgba(126,245,213,.16);stroke-width:1}.plot-frame{fill:rgba(255,255,255,.01);stroke:rgba(126,245,213,.20);stroke-width:1}.zone-good{fill:rgba(34,197,94,.08)}.zone-watch{fill:rgba(250,204,21,.08)}.zone-risk{fill:rgba(239,68,68,.08)}.grid{fill:none;stroke:rgba(238,246,255,.08);stroke-width:1}.grid-major{fill:none;stroke:rgba(238,246,255,.14);stroke-width:1}.axis{fill:none;stroke:rgba(238,246,255,.42);stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}.tick{fill:rgba(203,213,225,.90);font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700}.axis-label{fill:rgba(203,213,225,.92);font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;letter-spacing:.5px}.header{fill:#eef6ff;font-family:Inter,Arial,Helvetica,sans-serif;font-size:18px;font-weight:900;letter-spacing:.5px}.subhead{fill:rgba(203,213,225,.86);font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:600}.zone-label{font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:800;letter-spacing:.7px}.zone-good-text{fill:rgba(74,222,128,.92)}.zone-watch-text{fill:rgba(250,204,21,.95)}.zone-risk-text{fill:rgba(248,113,113,.95)}.capacity-line{fill:none;stroke:#7ef5d5;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}.watch-line{fill:none;stroke:rgba(250,204,21,.72);stroke-width:1;stroke-dasharray:5 5}.risk-line{fill:none;stroke:rgba(248,113,113,.72);stroke-width:1;stroke-dasharray:5 5}.logical-line{fill:none;stroke:rgba(238,246,255,.34);stroke-width:1.1;stroke-dasharray:6 5}.curve-shadow{fill:none;stroke:rgba(126,245,213,.22);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.curve{fill:none;stroke:#9cfccf;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.marker-current{fill:#7ef5d5;stroke:#04110d;stroke-width:1.2}.marker-growth{fill:#facc15;stroke:#04110d;stroke-width:1.2}.marker-failover{fill:#fb7185;stroke:#04110d;stroke-width:1.2}.marker-ring{fill:none;stroke:rgba(238,246,255,.7);stroke-width:1}.point-label{fill:#eef6ff;font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700}.point-note{fill:rgba(203,213,225,.86);font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:600}.ref-line{fill:none;stroke:rgba(238,246,255,.16);stroke-width:1;stroke-dasharray:4 4}.capacity-label{fill:#7ef5d5;font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:800}.logical-label{fill:rgba(203,213,225,.82);font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:700}.status-chip{stroke-width:1}.status-text{font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;letter-spacing:.7px}.footer-strip{fill:rgba(255,255,255,.015);stroke:rgba(126,245,213,.14);stroke-width:1}.footer-text{fill:rgba(203,213,225,.88);font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700}',
+      '.bg{fill:url(#computeCpuEnvelopeBg);stroke:rgba(126,245,213,.22);stroke-width:1.2}.frame{fill:none;stroke:rgba(126,245,213,.16);stroke-width:1}.plot-frame{fill:rgba(255,255,255,.01);stroke:rgba(126,245,213,.20);stroke-width:1}.zone-good{fill:rgba(34,197,94,.08)}.zone-watch{fill:rgba(250,204,21,.08)}.zone-risk{fill:rgba(239,68,68,.08)}.grid{fill:none;stroke:rgba(238,246,255,.08);stroke-width:1}.grid-major{fill:none;stroke:rgba(238,246,255,.14);stroke-width:1}.axis{fill:none;stroke:rgba(238,246,255,.42);stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}.tick{fill:rgba(203,213,225,.90);font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700}.axis-label{fill:rgba(203,213,225,.92);font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;letter-spacing:.5px}.header{fill:#eef6ff;font-family:Inter,Arial,Helvetica,sans-serif;font-size:18px;font-weight:900;letter-spacing:.5px}.subhead{fill:rgba(203,213,225,.86);font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:600}.zone-label{font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:800;letter-spacing:.7px}.zone-good-text{fill:rgba(74,222,128,.92)}.zone-watch-text{fill:rgba(250,204,21,.95)}.zone-risk-text{fill:rgba(248,113,113,.95)}.capacity-line{fill:none;stroke:#7ef5d5;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}.watch-line{fill:none;stroke:rgba(250,204,21,.72);stroke-width:1;stroke-dasharray:5 5}.risk-line{fill:none;stroke:rgba(248,113,113,.72);stroke-width:1;stroke-dasharray:5 5}.logical-line{fill:none;stroke:rgba(238,246,255,.34);stroke-width:1.1;stroke-dasharray:6 5}.curve-shadow{fill:none;stroke:rgba(126,245,213,.22);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.curve{fill:none;stroke:#9cfccf;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.marker-current{fill:#7ef5d5;stroke:#04110d;stroke-width:1.2}.marker-growth{fill:#facc15;stroke:#04110d;stroke-width:1.2}.marker-failover{fill:#fb7185;stroke:#04110d;stroke-width:1.2}.marker-ring{fill:none;stroke:rgba(238,246,255,.7);stroke-width:1}.marker-worker{font-family:Inter,Arial,Helvetica,sans-serif;font-size:9.5px;font-weight:850}.marker-core{fill:rgba(203,213,225,.86);font-family:Inter,Arial,Helvetica,sans-serif;font-size:8.8px;font-weight:650}.marker-worker.tone-current{fill:#7ef5d5}.marker-worker.tone-growth{fill:#facc15}.marker-worker.tone-failover{fill:#fb7185}.footer-text.tone-current{fill:#7ef5d5}.footer-text.tone-growth{fill:#facc15}.footer-text.tone-failover{fill:#fb7185}.ref-line{fill:none;stroke:rgba(238,246,255,.16);stroke-width:1;stroke-dasharray:4 4}.capacity-label{fill:#7ef5d5;font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:800}.logical-label{fill:rgba(203,213,225,.82);font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:700}.status-chip{stroke-width:1}.status-text{font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;letter-spacing:.7px}.footer-strip{fill:rgba(255,255,255,.015);stroke:rgba(126,245,213,.14);stroke-width:1}.footer-text{fill:rgba(203,213,225,.88);font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700}',
       '</style>',
       '</defs>',
-      '<rect x="14" y="14" width="732" height="402" rx="16" class="bg"/>',
-      '<rect x="26" y="26" width="708" height="378" rx="12" class="frame"/>',
+      '<rect x="14" y="14" width="732" height="472" rx="16" class="bg"/>',
+      '<rect x="26" y="26" width="708" height="448" rx="12" class="frame"/>',
       '<text x="38" y="50" class="header">CPU CAPACITY ENVELOPE</text>',
       '<text x="38" y="68" class="subhead">Demand curve vs usable CPU capacity</text>',
       '<rect x="654" y="34" width="68" height="26" rx="8" fill="' + statusFill + '" stroke="' + statusLine + '" class="status-chip"/>',
@@ -603,7 +611,7 @@
       '<path d="M' + plot.x + ' ' + plot.y + ' V' + (plot.y + plot.h) + '" class="axis"/>',
       '<path d="M' + plot.x + ' ' + (plot.y + plot.h) + ' H' + (plot.x + plot.w) + '" class="axis"/>',
       '<text x="42" y="101" class="axis-label">cores</text>',
-      '<text x="385" y="384" text-anchor="middle" class="axis-label">Concurrent workers / projected load</text>',
+      '<text x="385" y="442" text-anchor="middle" class="axis-label">Concurrent workers / projected load</text>',
       '<text x="690" y="' + Math.max(plot.y + 18, riskY - 8).toFixed(1) + '" text-anchor="end" class="zone-label zone-risk-text">RISK</text>',
       '<text x="690" y="' + ((riskY + watchY) / 2 + 4).toFixed(1) + '" text-anchor="end" class="zone-label zone-watch-text">WATCH</text>',
       '<text x="690" y="' + Math.min(plot.y + plot.h - 16, watchY + 72).toFixed(1) + '" text-anchor="end" class="zone-label zone-good-text">GOOD</text>',
@@ -620,22 +628,22 @@
       '<path d="M' + failover.x.toFixed(1) + ' ' + failover.y.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="ref-line"/>',
       '<circle cx="' + current.x.toFixed(1) + '" cy="' + current.y.toFixed(1) + '" r="6.5" class="marker-ring"/>',
       '<circle cx="' + current.x.toFixed(1) + '" cy="' + current.y.toFixed(1) + '" r="4.5" class="marker-current"/>',
-      '<text x="' + Math.max(plot.x + 12, current.x - 44).toFixed(1) + '" y="' + (current.y - 12).toFixed(1) + '" class="point-label">*1 Current demand</text>',
-      '<text x="' + Math.max(plot.x + 12, current.x - 44).toFixed(1) + '" y="' + (current.y + 1).toFixed(1) + '" class="point-note">' + esc(currentLabel) + '</text>',
+      '<text x="' + markerLabelX(current).toFixed(1) + '" y="' + markerLabelY(current).toFixed(1) + '" text-anchor="middle" class="marker-worker tone-current">' + currentWorkers + ' workers</text>',
+      '<text x="' + markerLabelX(current).toFixed(1) + '" y="' + (markerLabelY(current) + 12).toFixed(1) + '" text-anchor="middle" class="marker-core">' + currentRequiredCores.toFixed(1) + ' cores</text>',
       '<circle cx="' + growth.x.toFixed(1) + '" cy="' + growth.y.toFixed(1) + '" r="6.5" class="marker-ring"/>',
       '<circle cx="' + growth.x.toFixed(1) + '" cy="' + growth.y.toFixed(1) + '" r="4.5" class="marker-growth"/>',
-      '<text x="' + Math.max(plot.x + 12, growth.x - 50).toFixed(1) + '" y="' + (growth.y - 16).toFixed(1) + '" class="point-label">*2 Growth / reserve</text>',
-      '<text x="' + Math.max(plot.x + 12, growth.x - 50).toFixed(1) + '" y="' + (growth.y - 3).toFixed(1) + '" class="point-note">' + esc(growthLabel) + '</text>',
+      '<text x="' + markerLabelX(growth).toFixed(1) + '" y="' + markerLabelY(growth).toFixed(1) + '" text-anchor="middle" class="marker-worker tone-growth">' + growthWorkers + ' workers</text>',
+      '<text x="' + markerLabelX(growth).toFixed(1) + '" y="' + (markerLabelY(growth) + 12).toFixed(1) + '" text-anchor="middle" class="marker-core">' + growthRequiredCores.toFixed(1) + ' cores</text>',
       '<circle cx="' + failover.x.toFixed(1) + '" cy="' + failover.y.toFixed(1) + '" r="6.5" class="marker-ring"/>',
       '<circle cx="' + failover.x.toFixed(1) + '" cy="' + failover.y.toFixed(1) + '" r="4.5" class="marker-failover"/>',
-      '<text x="' + Math.max(plot.x + 12, failover.x - 86).toFixed(1) + '" y="' + (failover.y - 16).toFixed(1) + '" class="point-label">*3 Stress validation</text>',
-      '<text x="' + Math.max(plot.x + 12, failover.x - 86).toFixed(1) + '" y="' + (failover.y - 3).toFixed(1) + '" class="point-note">' + esc(failoverLabel) + '</text>',
+      '<text x="' + markerLabelX(failover).toFixed(1) + '" y="' + markerLabelY(failover).toFixed(1) + '" text-anchor="middle" class="marker-worker tone-failover">' + failoverWorkers + ' workers</text>',
+      '<text x="' + markerLabelX(failover).toFixed(1) + '" y="' + (markerLabelY(failover) + 12).toFixed(1) + '" text-anchor="middle" class="marker-core">' + failoverRequiredCores.toFixed(1) + ' cores</text>',
       '<text x="72" y="' + (watchY - 7).toFixed(1) + '" class="logical-label">WATCH threshold · ' + watchThresholdCores.toFixed(1) + '</text>',
       '<text x="72" y="' + (riskY - 7).toFixed(1) + '" class="logical-label">RISK threshold · ' + riskThresholdCores.toFixed(1) + '</text>',
-      '<rect x="38" y="390" width="684" height="18" rx="6" class="footer-strip"/>',
-      '<text x="54" y="402.5" class="footer-text">*1 demand basis</text>',
-      '<text x="276" y="402.5" class="footer-text">*2 reserve pressure</text>',
-      '<text x="520" y="402.5" class="footer-text">*3 downstream validation</text>',
+      '<rect x="38" y="458" width="684" height="24" rx="7" class="footer-strip"/>',
+      '<text x="54" y="473" class="footer-text tone-current">*1 demand basis</text>',
+      '<text x="276" y="473" class="footer-text tone-growth">*2 reserve pressure</text>',
+      '<text x="520" y="473" class="footer-text tone-failover">*3 downstream validation</text>',
       '</svg>'
     ].join("");
   }
