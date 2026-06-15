@@ -120,16 +120,16 @@
 .access-tool-status-legend .is-risk,
 .access-tool-status-legend [data-status="risk"],
 .access-tool-status-legend [data-status="RISK"] {
-  color: #CE2029;
-  border-color: rgba(206,32,41,.72);
+  color: #ef4444;
+  border-color: rgba(239,68,68,.72);
 }
 
 .access-tool-status-legend .risk::before,
 .access-tool-status-legend .is-risk::before,
 .access-tool-status-legend [data-status="risk"]::before,
 .access-tool-status-legend [data-status="RISK"]::before {
-  background: #CE2029;
-  border-color: rgba(206,32,41,.72);
+  background: #ef4444;
+  border-color: rgba(239,68,68,.72);
 }
 
 
@@ -152,4 +152,10 @@
 .access-tool-status-legend [data-status="GOOD"]::before {
   background: #2cff9b;
   border-color: rgba(44,255,155,.72);
+}
+
+
+/* ScopedLabs softened risk accent standard - 0614e */
+.access-tool-status-risk {
+  color: #ef4444;
 }

@@ -54,7 +54,7 @@ for (const token of [
   "CPU Capacity Envelope",
   "Dynamic demand curve showing current load",
   'data-compute-result-visual="cpu-capacity-envelope"',
-  "script.js?v=compute-cpu-capacity-envelope-stoplight-0614d"
+  "script.js?v=compute-cpu-capacity-envelope-soft-risk-accents-0614e"
 ]) {
   result(html.includes(token) ? "PASS" : "FAIL", "CPU HTML visual token: " + token);
 }
@@ -86,8 +86,7 @@ for (const token of [
   "tone-failover",
   "#2cff9b",
   "rgba(44,255,155",
-  "#CE2029",
-  "rgba(206,32,41",
+  "#ef4444",
   "*1 demand basis",
   "*2 reserve pressure",
   "*3 downstream validation"
@@ -126,8 +125,8 @@ for (const token of [
   "ScopedLabs stoplight status standard - 0614d",
   "#2cff9b",
   "rgba(44,255,155",
-  "ScopedLabs fire-engine risk standard - 0614c",
-  "#CE2029",
+  "ScopedLabs softened risk accent standard - 0614e",
+  "#ef4444",
   "rgba(206,32,41"
 ]) {
   result(legendCss.includes(token) ? "PASS" : "FAIL", "status legend stoplight token: " + token);
