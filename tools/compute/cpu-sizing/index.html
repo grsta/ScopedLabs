@@ -130,6 +130,116 @@
   <link rel="stylesheet" href="/assets/scopedlabs-status-legend.css?v=scopedlabs-status-legend-0614-shared">
   <link rel="stylesheet" href="/assets/scopedlabs-compute-result-visuals.css?v=scopedlabs-compute-result-visuals-0614-cpu-load-profile">
   <link rel="stylesheet" href="/assets/scopedlabs-result-summary-card.css?v=scopedlabs-result-summary-card-0614-cpu-static-polish">
+
+  <style data-compute-cpu-proof-style>
+    .compute-cpu-proof-card {
+      margin-top: 14px;
+      background: rgba(0,0,0,.14);
+    }
+
+    .compute-cpu-proof-wrap {
+      margin-top: 16px;
+    }
+
+    .compute-cpu-proof-hero {
+      align-items: center;
+      background: rgba(44,255,155,.055);
+      border: 1px solid rgba(44,255,155,.20);
+      border-radius: 14px;
+      display: grid;
+      gap: 12px;
+      grid-template-columns: 1fr auto;
+      padding: 14px 16px;
+    }
+
+    .compute-cpu-proof-hero strong {
+      color: #eef6ff;
+      display: block;
+      font-size: 14px;
+      letter-spacing: .3px;
+    }
+
+    .compute-cpu-proof-hero span {
+      color: rgba(203,213,225,.88);
+      display: block;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .compute-cpu-proof-status-chip {
+      border-radius: 9px;
+      display: inline-flex;
+      font-size: 11px;
+      font-weight: 900;
+      justify-content: center;
+      letter-spacing: .7px;
+      min-width: 72px;
+      padding: 6px 10px;
+    }
+
+    .compute-cpu-proof-table {
+      border-collapse: collapse;
+      margin-top: 14px;
+      width: 100%;
+    }
+
+    .compute-cpu-proof-table th,
+    .compute-cpu-proof-table td {
+      border-bottom: 1px solid rgba(44,255,155,.14);
+      padding: 11px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .compute-cpu-proof-table th {
+      background: rgba(44,255,155,.075);
+      color: rgba(156,252,207,.95);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .7px;
+      text-transform: uppercase;
+    }
+
+    .compute-cpu-proof-table td {
+      color: rgba(238,246,255,.92);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .compute-cpu-proof-table td:nth-child(3) {
+      color: #eef6ff;
+      font-weight: 800;
+    }
+
+    .compute-cpu-ref-marker {
+      align-items: center;
+      border: 1px solid currentColor;
+      border-radius: 999px;
+      display: inline-flex;
+      font-size: 11px;
+      font-weight: 950;
+      justify-content: center;
+      letter-spacing: .3px;
+      min-width: 28px;
+      padding: 3px 7px;
+      white-space: nowrap;
+    }
+
+    .compute-cpu-ref-marker.tone-current {
+      background: rgba(56,217,255,.08);
+      color: #38d9ff;
+    }
+
+    .compute-cpu-ref-marker.tone-growth {
+      background: rgba(167,139,250,.09);
+      color: #a78bfa;
+    }
+
+    .compute-cpu-ref-marker.tone-failover {
+      background: rgba(245,158,11,.09);
+      color: #f59e0b;
+    }
+  </style>
 </head>
 
 <body data-tier="free" data-category="compute" data-step="cpu-sizing" data-lane="v1" data-compute-tool-shell="0614" data-sl-clean-knowledge-card="true" data-sl-square-ctas="true">
@@ -343,6 +453,18 @@
         <div id="computeCpuVisual" class="compute-result-visual-shell" data-compute-result-visual="cpu-capacity-envelope" role="group" aria-label="CPU load profile visual"></div>
       </section>
 
+      <section id="computeCpuDecisionScheduleCard" class="card compute-cpu-proof-card" hidden data-compute-cpu-decision-schedule-card>
+        <h3 class="h3 compute-result-visual-title" style="margin-top: 0;">CPU Capacity Decision Schedule</h3>
+        <p class="muted" style="margin-bottom: 0;">Compact CPU envelope status, threshold, recommendation, and engineering-note schedule for the active Compute workload.</p>
+        <div id="computeCpuDecisionSchedule" class="compute-cpu-proof-wrap" data-compute-cpu-decision-schedule="true" role="group" aria-label="CPU capacity decision schedule"></div>
+      </section>
+
+      <section id="computeCpuRecommendationReferencesCard" class="card compute-cpu-proof-card" hidden data-compute-cpu-recommendation-references-card>
+        <h3 class="h3 compute-result-visual-title" style="margin-top: 0;">Recommendation References</h3>
+        <p class="muted" style="margin-bottom: 0;">Reference markers shown in the CPU Capacity Envelope. These explain why each plotted point matters before continuing to RAM sizing.</p>
+        <div id="computeCpuRecommendationReferences" class="compute-cpu-proof-wrap" data-compute-cpu-recommendation-references="true" role="group" aria-label="CPU recommendation references"></div>
+      </section>
+
 <section class="card compute-export-card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
         <h3 class="h3" style="margin-top: 0;">Export Report</h3>
         <p class="muted" style="margin-bottom: 0;">
@@ -437,7 +559,7 @@
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
   <script src="/assets/scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-005-active-title"></script>
   <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-002"></script>
-  <script src="./script.js?v=compute-cpu-footer-point-labels-0616d"></script>
+  <script src="./script.js?v=compute-cpu-proof-schedule-references-0616h"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
   <script src="/assets/scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-001"></script>
   <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>

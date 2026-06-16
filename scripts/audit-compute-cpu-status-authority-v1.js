@@ -77,7 +77,7 @@ for (const removed of [
   result(!js.includes(removed) ? "PASS" : "FAIL", "old CPU status authority token removed: " + removed);
 }
 
-result(html.includes("script.js?v=compute-cpu-footer-point-labels-0616d") ? "PASS" : "FAIL", "CPU page cache bust updated");
+result(html.includes("script.js?v=compute-cpu-proof-schedule-references-0616h") ? "PASS" : "FAIL", "CPU page cache bust updated");
 
 runAudit("CPU envelope visual", files.envelope);
 runAudit("CPU V2 capacity", files.v2);

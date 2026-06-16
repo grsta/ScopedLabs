@@ -54,7 +54,7 @@ for (const token of [
   "CPU Capacity Envelope",
   "Dynamic demand curve showing current load",
   'data-compute-result-visual="cpu-capacity-envelope"',
-  "script.js?v=compute-cpu-footer-point-labels-0616d"
+  "script.js?v=compute-cpu-proof-schedule-references-0616h"
 ]) {
   result(html.includes(token) ? "PASS" : "FAIL", "CPU HTML visual token: " + token);
 }
@@ -63,6 +63,10 @@ for (const token of [
   "function buildComputeCpuVisualSvg(result)",
   'data-compute-visual="cpu-capacity-envelope"',
   "CPU CAPACITY ENVELOPE",
+  "buildComputeCpuRecommendationReferences",
+  "buildComputeCpuDecisionScheduleHtml",
+  "computeCpuRecommendationReferencesCard",
+  "computeCpuDecisionScheduleCard",
   "Demand curve vs usable CPU capacity",
   "currentWorkers",
   "growthWorkers",

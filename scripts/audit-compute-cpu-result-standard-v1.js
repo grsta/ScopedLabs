@@ -79,6 +79,10 @@ for (const token of [
   'id="computeFirstToolLegend"',
   'id="computeCpuVisualCard"',
   'id="computeCpuVisual"',
+  'id="computeCpuDecisionScheduleCard"',
+  'id="computeCpuDecisionSchedule"',
+  'id="computeCpuRecommendationReferencesCard"',
+  'id="computeCpuRecommendationReferences"',
   'id="exportReport"',
   'id="saveSnapshot"'
 ]) {
@@ -90,13 +94,23 @@ result(order(html, [
   'id="computeAssistantCard"',
   'id="computeFirstToolLegend"',
   'id="computeCpuVisualCard"',
+  'id="computeCpuDecisionScheduleCard"',
+  'id="computeCpuRecommendationReferencesCard"',
   'id="exportReport"'
-]) ? "PASS" : "FAIL", "CPU result DOM order is ledger -> assistant -> legend -> visual -> export");
+]) ? "PASS" : "FAIL", "CPU result DOM order is ledger -> assistant -> legend -> visual -> decision schedule -> references -> export");
 
 for (const token of [
   "function buildComputeCpuVisualSvg(result)",
   "function renderComputeCpuVisual(result)",
   "function clearComputeCpuVisual()",
+  "Reason",
+  "Reference",
+  "Marker",
+  "recommendationReferences = buildComputeCpuRecommendationReferences",
+  "function clearComputeCpuProofSections()",
+  "function renderComputeCpuProofSections(result)",
+  "function buildComputeCpuRecommendationReferences(result)",
+  "function buildComputeCpuDecisionScheduleHtml(result)",
   "const cpuPipelineResult = {",
   "renderComputeCpuVisual(cpuPipelineResult);",
   "clearComputeCpuVisual();",

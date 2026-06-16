@@ -9,7 +9,8 @@ const files = {
   contract: path.join(root, "assets", "scopedlabs-compute-assistant-contract.js"),
   html: path.join(root, "tools", "compute", "cpu-sizing", "index.html"),
   lifecycle: path.join(root, "scripts", "audit-assistant-lifecycle-contract-v1.js"),
-  cpuStandard: path.join(root, "scripts", "audit-compute-cpu-result-standard-v1.js")
+  cpuStandard: path.join(root, "scripts", "audit-compute-cpu-result-standard-v1.js"),
+  proofReferences: path.join(root, "scripts", "audit-compute-cpu-assistant-proof-references-v1.js")
 };
 
 let pass = 0;
@@ -72,6 +73,21 @@ for (const token of [
     "cpuEnvelopeStatus",
     "cpuEnvelopeThresholds",
     "statusAuthority: \"cpu-capacity-envelope\"",
+  "#f59e0b",
+  "#a78bfa",
+  "#38d9ff",
+  "Downstream validation",
+  "Reserve pressure",
+  "Demand basis",
+  "*3",
+  "*2",
+  "*1",
+  "recommendationReferences = buildComputeCpuRecommendationReferences",
+  "function renderComputeCpuProofSections(result)",
+  "computeCpuDecisionScheduleCard",
+  "computeCpuRecommendationReferencesCard",
+  "function buildComputeCpuDecisionScheduleHtml(result)",
+  "function buildComputeCpuRecommendationReferences(result)",
   "ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP]",
   "saveCpuResultToWorkload(cpuPipelineResult);",
   "renderComputeAssistant(cpuPipelineResult);",
@@ -128,6 +144,7 @@ result(/\.\/script\.js\?v=compute-cpu-[^"']+/.test(html) ? "PASS" : "FAIL", "CPU
 
 runAudit("lifecycle", files.lifecycle);
 runAudit("cpu standard", files.cpuStandard);
+runAudit("cpu assistant proof references", files.proofReferences);
 
 console.log("");
 console.log("========================================================================");

@@ -718,11 +718,177 @@
     ].join("");
   }
 
+
+  function computeCpuProofNumber(value, fallback) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : Number(fallback || 0);
+  }
+
+  function computeCpuProofCores(value, fallback) {
+    return computeCpuProofNumber(value, fallback).toFixed(2) + " cores";
+  }
+
+  function computeCpuProofEsc(value) {
+    return cpuContextEscapeHtml(value);
+  }
+
+  function computeCpuProofOutput(result, key, fallback) {
+    const outputs = result && result.outputs ? result.outputs : {};
+    if (outputs[key] !== undefined && outputs[key] !== null && outputs[key] !== "") return outputs[key];
+    if (result && result[key] !== undefined && result[key] !== null && result[key] !== "") return result[key];
+    return fallback;
+  }
+
+  function computeCpuProofInput(result, key, fallback) {
+    const inputs = result && result.inputs ? result.inputs : {};
+    if (inputs[key] !== undefined && inputs[key] !== null && inputs[key] !== "") return inputs[key];
+    if (result && result[key] !== undefined && result[key] !== null && result[key] !== "") return result[key];
+    return fallback;
+  }
+
+  function computeCpuMarkerToneClass(tone) {
+    const clean = String(tone || "current").toLowerCase();
+    if (clean.includes("fail") || clean.includes("downstream")) return "tone-failover";
+    if (clean.includes("growth") || clean.includes("reserve")) return "tone-growth";
+    return "tone-current";
+  }
+
+  function computeCpuMarkerHtml(id, tone) {
+    return '<span class="compute-cpu-ref-marker ' + computeCpuMarkerToneClass(tone) + '">' + computeCpuProofEsc(id) + '</span>';
+  }
+
+  function buildComputeCpuRecommendationReferences(result) {
+    const currentWorkers = computeCpuProofInput(result, "concurrency", computeCpuProofOutput(result, "currentWorkers", ""));
+    const growthReserve = computeCpuProofInput(result, "growthReservePercent", "0");
+    const platformOverhead = computeCpuProofInput(result, "platformOverheadPercent", "0");
+    const osReserve = computeCpuProofInput(result, "osReservePercent", "0");
+    const coreEfficiency = computeCpuProofInput(result, "coreEfficiencyPercent", "100");
+    const sustainedDerate = computeCpuProofInput(result, "sustainedDeratePercent", "100");
+    const failoverMultiplier = computeCpuProofInput(result, "failoverMultiplier", "1");
+    const baseDemand = computeCpuProofOutput(result, "baseDemandCores", computeCpuProofOutput(result, "currentRequiredCores", 0));
+    const growthDemand = computeCpuProofOutput(result, "demandAfterGrowthCores", computeCpuProofOutput(result, "growthRequiredCores", baseDemand));
+    const finalDemand = computeCpuProofOutput(result, "envelopeFinalDemandCores", computeCpuProofOutput(result, "effectiveDemandCores", computeCpuProofOutput(result, "failoverRequiredCores", growthDemand)));
+    const watchThreshold = computeCpuProofOutput(result, "envelopeWatchThresholdCores", 0);
+    const riskThreshold = computeCpuProofOutput(result, "envelopeRiskThresholdCores", 0);
+
+    return [
+      {
+        id: "*1",
+        label: "Demand basis",
+        reason: "Current demand is based on " + currentWorkers + " concurrent workers and lands at " + computeCpuProofCores(baseDemand) + " before growth and reserve pressure.",
+        tone: "current"
+      },
+      {
+        id: "*2",
+        label: "Reserve pressure",
+        reason: "Growth reserve " + growthReserve + "%, platform overhead " + platformOverhead + "%, OS reserve " + osReserve + "%, core efficiency " + coreEfficiency + "%, and sustained derate " + sustainedDerate + "% raise the planning demand to " + computeCpuProofCores(growthDemand) + ".",
+        tone: "growth"
+      },
+      {
+        id: "*3",
+        label: "Downstream validation",
+        reason: "Failover multiplier " + failoverMultiplier + "× pushes final envelope demand to " + computeCpuProofCores(finalDemand) + " against watch " + computeCpuProofCores(watchThreshold) + " and risk " + computeCpuProofCores(riskThreshold) + ". Continue into RAM sizing before treating Compute as complete.",
+        tone: "failover"
+      }
+    ];
+  }
+
+  function computeCpuDecisionScheduleRow(group, metric, value, note) {
+    return '<tr><td>' + computeCpuProofEsc(group) + '</td><td>' + computeCpuProofEsc(metric) + '</td><td>' + value + '</td><td>' + computeCpuProofEsc(note) + '</td></tr>';
+  }
+
+  function computeCpuProofStatusChip(status) {
+    const visual = cpuVisualStatus(status);
+    return '<span class="compute-cpu-proof-status-chip" style="background:' + visual.fill + ';border:1px solid ' + visual.line + ';color:' + visual.text + ';">' + computeCpuProofEsc(visual.label) + '</span>';
+  }
+
+  function buildComputeCpuDecisionScheduleHtml(result) {
+    const outputs = result && result.outputs ? result.outputs : {};
+    const status = String(result && (result.envelopeStatus || outputs.envelopeStatus || result.status) || "PENDING").toUpperCase();
+    const finalDemand = computeCpuProofOutput(result, "envelopeFinalDemandCores", computeCpuProofOutput(result, "effectiveDemandCores", 0));
+    const watchThreshold = computeCpuProofOutput(result, "envelopeWatchThresholdCores", 0);
+    const riskThreshold = computeCpuProofOutput(result, "envelopeRiskThresholdCores", 0);
+    const logical = computeCpuProofOutput(result, "recommendedLogicalCores", computeCpuProofOutput(result, "cores", 0));
+    const physical = computeCpuProofOutput(result, "recommendedPhysicalCores", computeCpuProofOutput(result, "physicalCores", 0));
+    const usable = computeCpuProofOutput(result, "usableCapacityCores", computeCpuProofNumber(logical, 0) * (computeCpuProofOutput(result, "utilizationTarget", 70) / 100));
+    const authority = computeCpuProofOutput(result, "statusAuthority", "cpu-capacity-envelope");
+    const metricStatus = computeCpuProofOutput(result, "metricAnalyzerStatus", "n/a");
+    const constraint = computeCpuProofOutput(result, "primaryConstraint", "CPU capacity");
+    const interpretation = result && result.interpretation ? result.interpretation : "CPU envelope interpretation pending.";
+
+    const tableRows = [
+      computeCpuDecisionScheduleRow("Capacity", "Status", computeCpuProofStatusChip(status), "Readiness of this CPU result before it is carried into RAM sizing."),
+      computeCpuDecisionScheduleRow("Capacity", "Final Demand", computeCpuProofEsc(computeCpuProofCores(finalDemand)), "Maximum plotted CPU demand after growth, reserve, and failover pressure."),
+      computeCpuDecisionScheduleRow("Threshold", "Watch Threshold", computeCpuProofEsc(computeCpuProofCores(watchThreshold)), "Demand at or above this line changes the CPU plan to Watch."),
+      computeCpuDecisionScheduleRow("Threshold", "Risk Threshold", computeCpuProofEsc(computeCpuProofCores(riskThreshold)), "Demand at or above this line changes the CPU plan to Risk."),
+      computeCpuDecisionScheduleRow("Recommendation", "Logical / Physical Cores", computeCpuProofEsc(logical + " logical / " + physical + " physical"), "Recommended CPU ceiling carried forward into the Compute planning path."),
+      computeCpuDecisionScheduleRow("Capacity", "Usable Capacity", computeCpuProofEsc(computeCpuProofCores(usable)), "CPU capacity available at the selected target utilization."),
+      computeCpuDecisionScheduleRow("Authority", "Status Authority", computeCpuProofEsc(authority), "The chart, summary, and assistant should use this status source."),
+      computeCpuDecisionScheduleRow("Diagnostic", "Metric Analyzer", computeCpuProofEsc(metricStatus), "Secondary diagnostic status preserved for troubleshooting, not the final displayed status."),
+      computeCpuDecisionScheduleRow("Constraint", "Primary Constraint", computeCpuProofEsc(constraint), "Main CPU planning pressure behind the recommendation.")
+    ];
+
+    return [
+      '<div class="compute-cpu-proof-hero">',
+      '<div><strong>' + computeCpuProofEsc(status) + ' CPU Capacity Envelope</strong><span>Final demand is ' + computeCpuProofEsc(computeCpuProofCores(finalDemand)) + ' against watch ' + computeCpuProofEsc(computeCpuProofCores(watchThreshold)) + ' and risk ' + computeCpuProofEsc(computeCpuProofCores(riskThreshold)) + ' thresholds.</span></div>',
+      '<div>' + computeCpuProofStatusChip(status) + '<span>Authority: ' + computeCpuProofEsc(authority) + '</span></div>',
+      '</div>',
+      '<table class="compute-cpu-proof-table" data-compute-cpu-decision-schedule-table="true"><thead><tr><th>Group</th><th>Metric</th><th>Value</th><th>Engineering Note</th></tr></thead><tbody>',
+      tableRows.join(""),
+      '</tbody></table>',
+      '<p class="mini-note"><strong>Engineering Interpretation:</strong> ' + computeCpuProofEsc(interpretation) + '</p>'
+    ].join("");
+  }
+
+  function buildComputeCpuRecommendationReferencesHtml(references) {
+    const rows = (Array.isArray(references) ? references : []).map(function (item) {
+      return '<tr><td>' + computeCpuMarkerHtml(item.id || "", item.tone || "") + '</td><td>' + computeCpuProofEsc(item.label || "Reference") + '</td><td>' + computeCpuProofEsc(item.reason || "Review required.") + '</td></tr>';
+    });
+
+    return [
+      '<table class="compute-cpu-proof-table" data-compute-cpu-recommendation-references-table="true"><thead><tr><th>Marker</th><th>Reference</th><th>Reason</th></tr></thead><tbody>',
+      rows.length ? rows.join("") : '<tr><td></td><td>No references documented</td><td>No CPU recommendation references were supplied.</td></tr>',
+      '</tbody></table>'
+    ].join("");
+  }
+
+  function clearComputeCpuProofSections() {
+    const scheduleCard = document.getElementById("computeCpuDecisionScheduleCard");
+    const scheduleTarget = document.getElementById("computeCpuDecisionSchedule");
+    const referencesCard = document.getElementById("computeCpuRecommendationReferencesCard");
+    const referencesTarget = document.getElementById("computeCpuRecommendationReferences");
+
+    if (scheduleTarget) scheduleTarget.innerHTML = "";
+    if (referencesTarget) referencesTarget.innerHTML = "";
+    if (scheduleCard) scheduleCard.hidden = true;
+    if (referencesCard) referencesCard.hidden = true;
+  }
+
+  function renderComputeCpuProofSections(result) {
+    const scheduleCard = document.getElementById("computeCpuDecisionScheduleCard");
+    const scheduleTarget = document.getElementById("computeCpuDecisionSchedule");
+    const referencesCard = document.getElementById("computeCpuRecommendationReferencesCard");
+    const referencesTarget = document.getElementById("computeCpuRecommendationReferences");
+
+    if (!result || !scheduleCard || !scheduleTarget || !referencesCard || !referencesTarget) return false;
+
+    const references = Array.isArray(result.recommendationReferences) && result.recommendationReferences.length
+      ? result.recommendationReferences
+      : buildComputeCpuRecommendationReferences(result);
+
+    scheduleTarget.innerHTML = buildComputeCpuDecisionScheduleHtml(result);
+    referencesTarget.innerHTML = buildComputeCpuRecommendationReferencesHtml(references);
+    scheduleCard.hidden = false;
+    referencesCard.hidden = false;
+    return true;
+  }
+
   function clearComputeCpuVisual() {
     const card = document.getElementById("computeCpuVisualCard");
     const target = document.getElementById("computeCpuVisual");
     if (target) target.innerHTML = "";
     if (card) card.hidden = true;
+    clearComputeCpuProofSections();
   }
 
   function renderComputeCpuVisual(result) {
@@ -732,6 +898,7 @@
 
     target.innerHTML = buildComputeCpuVisualSvg(result);
     card.hidden = false;
+    renderComputeCpuProofSections(result);
     return true;
   }
 
@@ -1000,6 +1167,7 @@
       updatedAt: new Date().toISOString()
     };
 
+    cpuWorkloadResult.recommendationReferences = buildComputeCpuRecommendationReferences(cpuWorkloadResult);
 
     const activeWorkloadForResult = activeComputeWorkload();
     const cpuPipelineResult = {
