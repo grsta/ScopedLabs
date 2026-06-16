@@ -281,7 +281,7 @@
 
   
 
-  function nextStepSection(status) {
+  function cpuReferenceSection(data) { const outputs = cpuPayloadOutputs(data); const currentWorkers = cpuNumber(outputs.currentWorkers, cpuNumber(data.concurrency, 0)); const growthWorkers = cpuNumber(outputs.growthWorkers, currentWorkers); const failoverWorkers = cpuNumber(outputs.failoverWorkers, growthWorkers); return { title: "Recommendation References", body: "Use these references while reading the CPU Capacity Envelope and the assistant guidance.", items: [ "*1 Demand basis — Current demand is the active workload baseline at " + currentWorkers + " workers.", "*2 Reserve pressure — Growth / reserve expands the planning envelope to " + growthWorkers + " workers.", "*3 Downstream validation — Stress validation checks whether the CPU baseline still holds at " + failoverWorkers + " workers." ] }; } function nextStepSection(status) {
     const value = String(status || "PENDING").toUpperCase();
 
     if (value === "RISK") {
