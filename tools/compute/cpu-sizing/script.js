@@ -22,6 +22,7 @@
 
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
+  let currentComputeCpuExportResult = null;
 
   const els = {
     workload: $("workload"),
@@ -897,6 +898,120 @@
   }
 
   function clearComputeCpuVisual() {
+  function computeCpuExportRowValue(rows, label) {
+    const target = String(label || "").trim().toLowerCase();
+    const row = Array.isArray(rows)
+      ? rows.find((item) => String(item?.label || "").trim().toLowerCase() === target)
+      : null;
+    return row ? row.value : "";
+  }
+
+  function computeCpuSvgDataUri(svg) {
+    const text = String(svg || "").trim();
+    if (!text) return "";
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(text);
+  }
+
+  function computeCpuExportTableFromDom(selector) {
+    const table = document.querySelector(selector);
+    if (!table) return null;
+
+    const headers = Array.from(table.querySelectorAll("thead th"))
+      .map((cell) => String(cell.textContent || "").replace(/\s+/g, " ").trim())
+      .filter(Boolean);
+
+    const rows = Array.from(table.querySelectorAll("tbody tr"))
+      .map((row) => Array.from(row.children || [])
+        .map((cell) => String(cell.textContent || "").replace(/\s+/g, " ").trim()))
+      .filter((row) => row.some(Boolean));
+
+    if (!headers.length && !rows.length) return null;
+    return { headers, rows };
+  }
+
+  function buildComputeCpuReferenceExportSection(result) {
+    const references = Array.isArray(result?.recommendationReferences) && result.recommendationReferences.length
+      ? result.recommendationReferences
+      : buildComputeCpuRecommendationReferences(result || {});
+
+    return {
+      title: "Recommendation References",
+      description: "Reference markers shown in the CPU Capacity Envelope and recommendation proof. These explain the demand basis, reserve pressure, and downstream validation path.",
+      tableClass: "extra-export-table--planner extra-export-table--decision",
+      tables: [
+        {
+          headers: ["Marker", "Reference", "Reason"],
+          rows: references.map((item) => {
+            const marker = item.id || item.marker || "";
+            const color = computeCpuMarkerColor(item.tone, marker);
+            return [
+              {
+                text: marker,
+                style: color && color !== "inherit" ? "color:" + color + ";font-weight:900;" : "font-weight:900;",
+                className: "report-reference-marker"
+              },
+              item.label || item.reference || "",
+              item.reason || ""
+            ];
+          })
+        }
+      ]
+    };
+  }
+
+  function buildComputeCpuDecisionScheduleExportSection() {
+    const table = computeCpuExportTableFromDom("#computeCpuDecisionSchedule table");
+    if (!table) return null;
+
+    return {
+      title: "CPU Capacity Decision Schedule",
+      description: "Decision checkpoints generated from the CPU sizing result.",
+      tableClass: "extra-export-table--planner extra-export-table--decision",
+      tables: [table]
+    };
+  }
+
+  function buildComputeCpuExportPayload(context = {}) {
+    const getInputRows = typeof context.getInputRows === "function" ? context.getInputRows : () => [];
+    const getResultRows = typeof context.getResultRows === "function" ? context.getResultRows : () => [];
+    const options = context.options || {};
+
+    const inputs = getInputRows();
+    const outputs = getResultRows();
+    const result = currentComputeCpuExportResult;
+
+    if (!result || !outputs.length) return null;
+
+    const chartSvg = buildComputeCpuVisualSvg(result);
+    const extraSections = [
+      buildComputeCpuReferenceExportSection(result),
+      buildComputeCpuDecisionScheduleExportSection()
+    ].filter(Boolean);
+
+    const status = computeCpuExportRowValue(outputs, "Status") || result.status || result.analyzerStatus || "";
+    const summary = typeof options.summaryBuilder === "function"
+      ? options.summaryBuilder(outputs)
+      : "CPU sizing export generated from the latest calculated workload result.";
+
+    return {
+      status,
+      summary,
+      interpretation: computeCpuExportRowValue(outputs, "Engineering Interpretation") || result.interpretation || "",
+      inputs,
+      outputs,
+      chartImage: computeCpuSvgDataUri(chartSvg),
+      extraSections,
+      assumptions: Array.isArray(options.assumptions) ? options.assumptions : [],
+      printLowInkChart: false
+    };
+  }
+
+  window.ScopedLabsComputeCpuExport = {
+    buildPayload: buildComputeCpuExportPayload
+  };
+
+
+    currentComputeCpuExportResult = null;
     const card = document.getElementById("computeCpuVisualCard");
     const target = document.getElementById("computeCpuVisual");
     if (target) target.innerHTML = "";
@@ -910,6 +1025,7 @@
     if (!card || !target || !result) return false;
 
     target.innerHTML = buildComputeCpuVisualSvg(result);
+    currentComputeCpuExportResult = result;
     card.hidden = false;
     renderComputeCpuProofSections(result);
     return true;
