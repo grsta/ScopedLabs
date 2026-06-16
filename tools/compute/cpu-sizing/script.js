@@ -746,6 +746,18 @@
     return fallback;
   }
 
+
+  function computeCpuMarkerColor(tone, marker) {
+    const markerValue = String(marker || "").trim();
+    const toneValue = String(tone || "").toLowerCase();
+
+    if (toneValue === "current" || toneValue === "tone-current" || markerValue === "*1") return "#38d9ff";
+    if (toneValue === "growth" || toneValue === "tone-growth" || markerValue === "*2") return "#a78bfa";
+    if (toneValue === "failover" || toneValue === "tone-failover" || markerValue === "*3") return "#f59e0b";
+
+    return "inherit";
+  }
+
   function computeCpuMarkerToneClass(tone) {
     const clean = String(tone || "current").toLowerCase();
     if (clean.includes("fail") || clean.includes("downstream")) return "tone-failover";
@@ -753,8 +765,9 @@
     return "tone-current";
   }
 
-  function computeCpuMarkerHtml(id, tone) {
-    return '<span class="compute-cpu-ref-marker ' + computeCpuMarkerToneClass(tone) + '">' + computeCpuProofEsc(id) + '</span>';
+  function computeCpuMarkerHtml(marker, tone) {
+    const color = computeCpuMarkerColor(tone, marker);
+    return '<span class="compute-cpu-proof-marker ' + computeCpuMarkerToneClass(tone) + '" style="color:' + computeCpuProofEsc(color) + ';font-weight:900;">' + computeCpuProofEsc(marker) + '</span>';
   }
 
   function buildComputeCpuRecommendationReferences(result) {

@@ -183,6 +183,10 @@ console.log("===================================================================
 for (const token of [
   "function buildComputeCpuRecommendationReferences(result)",
   "function buildComputeCpuRecommendationReferencesHtml(references)",
+  "computeCpuMarkerColor(tone, marker)",
+  "function computeCpuMarkerHtml(marker, tone)",
+  "style=\"color:",
+  "function computeCpuMarkerColor",
   "function buildComputeCpuDecisionScheduleHtml(result)",
   "cpuWorkloadResult.recommendationReferences = buildComputeCpuRecommendationReferences(cpuWorkloadResult);",
   "recommendationReferences = buildComputeCpuRecommendationReferences",
