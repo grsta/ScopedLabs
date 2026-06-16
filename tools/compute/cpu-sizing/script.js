@@ -133,7 +133,7 @@
   function cpuStatusForPlan(status) {
     if (status === "RISK") return "RISK";
     if (status === "WATCH") return "WATCH";
-    if (status === "HEALTHY") return "PENDING";
+    if (status === "GOOD" || status === "HEALTHY") return "GOOD";
     return "PENDING";
   }
   function cpuContextEscapeHtml(value) {
@@ -309,7 +309,8 @@
     } catch {}
 
     const hasPlanner = !!(plannerContext || activeWorkload);
-    const status = cpuDecisionStatus(result.analyzerStatus || result.status || outputs.status);
+    const envelopeStatus = cpuEnvelopeStatus(result);
+    const status = cpuDecisionStatus(envelopeStatus || result.analyzerStatus || result.status || outputs.status);
 
     const logical = cpuDecisionNumber(outputs.recommendedLogicalCores, cpuDecisionNumber(result.recommendedLogicalCores, cpuDecisionNumber(result.cores, 0)));
     const physical = cpuDecisionNumber(outputs.recommendedPhysicalCores, cpuDecisionNumber(result.recommendedPhysicalCores, cpuDecisionNumber(result.physicalCores, 0)));
@@ -419,6 +420,79 @@
     return { label: "GOOD", fill: "rgba(44,255,155,.13)", line: "rgba(44,255,155,.78)", text: "rgba(44,255,155,.96)" };
   }
 
+
+  function cpuEnvelopeNumber(value, fallback) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  function cpuEnvelopeClamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function cpuEnvelopeThresholds(result) {
+    result = result || {};
+
+    const outputs = result.outputs && typeof result.outputs === "object" ? result.outputs : {};
+    const inputs = result.inputs && typeof result.inputs === "object" ? result.inputs : {};
+
+    const recommendedLogicalCores = Math.max(1, cpuEnvelopeNumber(
+      outputs.recommendedLogicalCores || result.recommendedLogicalCores || result.cores,
+      1
+    ));
+
+    const targetUtilizationPercent = cpuEnvelopeClamp(cpuEnvelopeNumber(
+      inputs.targetUtilizationPercent || outputs.utilizationTarget || result.utilizationTarget,
+      70
+    ), 10, 95);
+
+    const currentDemandCores = Math.max(0, cpuEnvelopeNumber(
+      outputs.baseDemandCores || result.baseDemandCores,
+      cpuEnvelopeNumber(outputs.effectiveDemandCores || result.effectiveDemandCores || result.eff, 0)
+    ));
+
+    const growthDemandCores = Math.max(currentDemandCores, cpuEnvelopeNumber(
+      outputs.demandAfterGrowthCores || result.demandAfterGrowthCores,
+      currentDemandCores
+    ));
+
+    const failoverDemandCores = Math.max(growthDemandCores, cpuEnvelopeNumber(
+      outputs.effectiveDemandCores || result.effectiveDemandCores || result.eff,
+      growthDemandCores
+    ));
+
+    const finalDemandCores = Math.max(currentDemandCores, growthDemandCores, failoverDemandCores);
+    const usableCapacityCores = Math.max(0.1, recommendedLogicalCores * (targetUtilizationPercent / 100));
+    const watchThresholdCores = recommendedLogicalCores * 0.70;
+    const riskThresholdCores = recommendedLogicalCores * 0.90;
+
+    let status = "GOOD";
+
+    if (finalDemandCores >= riskThresholdCores) {
+      status = "RISK";
+    } else if (finalDemandCores >= watchThresholdCores) {
+      status = "WATCH";
+    }
+
+    return {
+      status,
+      finalDemandCores,
+      currentDemandCores,
+      growthDemandCores,
+      failoverDemandCores,
+      recommendedLogicalCores,
+      usableCapacityCores,
+      watchThresholdCores,
+      riskThresholdCores,
+      targetUtilizationPercent,
+      statusAuthority: "cpu-capacity-envelope"
+    };
+  }
+
+  function cpuEnvelopeStatus(result) {
+    return cpuEnvelopeThresholds(result).status;
+  }
+
     function buildComputeCpuVisualSvg(result) {
     const outputs = result && result.outputs ? result.outputs : {};
     const inputs = result && result.inputs ? result.inputs : {};
@@ -440,7 +514,7 @@
         .replace(/"/g, "&quot;");
     }
 
-    const status = String(result && (result.analyzerStatus || result.status) || "WATCH").toUpperCase();
+    const status = cpuEnvelopeStatus(result || {}).toUpperCase();
     const statusColor = status === "GOOD" || status === "HEALTHY"
       ? "rgba(44,255,155,.96)"
       : status === "RISK"
@@ -784,12 +858,29 @@
       dominantConstraint = "Reserve / platform overhead";
     }
 
+    const cpuEnvelopeAuthority = cpuEnvelopeThresholds({
+      inputs: {
+        targetUtilizationPercent: target
+      },
+      outputs: {
+        baseDemandCores: Number(baseDemand.toFixed(2)),
+        demandAfterGrowthCores: Number(growthDemand.toFixed(2)),
+        effectiveDemandCores: Number(eff.toFixed(2)),
+        recommendedLogicalCores: rec,
+        utilizationTarget: Number(target.toFixed(1))
+      },
+      cores: rec,
+      eff
+    });
+    const finalCpuStatus = cpuEnvelopeAuthority.status;
+    const finalAnalyzerStatus = finalCpuStatus === "GOOD" ? "HEALTHY" : finalCpuStatus;
+
     let interpretation = "";
 
-    if (analyzer.status === "RISK") {
+    if (finalCpuStatus === "RISK") {
       interpretation =
         "CPU sizing is being pushed too close to the edge. The workload is likely to hit scheduling pressure, burst contention, or reduced responsiveness before downstream memory and storage layers can be evaluated cleanly.";
-    } else if (analyzer.status === "WATCH") {
+    } else if (finalCpuStatus === "WATCH") {
       interpretation =
         "CPU sizing is serviceable but tightening. As concurrency rises or burst conditions widen, scheduler pressure and per-core contention will begin reducing the safety margin for later expansion.";
     } else {
@@ -799,10 +890,10 @@
 
     let guidance = "";
 
-    if (analyzer.status === "HEALTHY") {
+    if (finalCpuStatus === "GOOD") {
       guidance =
         "You have usable headroom. The next failure point is more likely to appear in memory density, storage latency, or workload imbalance before raw CPU exhaustion becomes the dominant issue.";
-    } else if (analyzer.status === "WATCH") {
+    } else if (finalCpuStatus === "WATCH") {
       guidance =
         "Watch what fails first: burst handling, sustained queue depth, or poor thread placement across logical cores. This is the point where future growth can force a jump to the next CPU class sooner than expected.";
     } else {
@@ -836,7 +927,7 @@
       existingWrapRef: chartWrapRef,
       summaryRows,
       derivedRows,
-      status: analyzer.status,
+      status: finalAnalyzerStatus,
       interpretation,
       dominantConstraint,
       guidance,
@@ -862,8 +953,11 @@
     const cpuWorkloadResult = {
       label: "CPU Sizing",
       title: "CPU Sizing",
-      status: cpuStatusForPlan(analyzer.status),
-      analyzerStatus: analyzer.status,
+      status: cpuStatusForPlan(finalCpuStatus),
+      analyzerStatus: finalCpuStatus,
+      metricAnalyzerStatus: analyzer.status,
+      envelopeStatus: finalCpuStatus,
+      statusAuthority: "cpu-capacity-envelope",
       summary: rec + " logical cores / " + physicalRec + " physical cores recommended",
       keySavedResult: "Recommended CPU: " + rec + " logical cores; " + physicalRec + " physical cores; effective demand " + eff.toFixed(2) + " cores",
       inputs: {
@@ -897,7 +991,12 @@
         coreDemand: Number(coreDemand.toFixed(1)),
         utilizationTarget: Number(target.toFixed(1)),
         planningReservePressure: Number(planningReservePressure.toFixed(1)),
-        primaryConstraint: dominantConstraint
+        primaryConstraint: dominantConstraint,
+        envelopeStatus: finalCpuStatus,
+        envelopeFinalDemandCores: Number(cpuEnvelopeAuthority.finalDemandCores.toFixed(2)),
+        envelopeWatchThresholdCores: Number(cpuEnvelopeAuthority.watchThresholdCores.toFixed(2)),
+        envelopeRiskThresholdCores: Number(cpuEnvelopeAuthority.riskThresholdCores.toFixed(2)),
+        statusAuthority: cpuEnvelopeAuthority.statusAuthority
       },
       updatedAt: new Date().toISOString()
     };
@@ -911,8 +1010,14 @@
       eff,
       requiredCores: Number(cores.toFixed(2)),
       workload,
-      status: analyzer.status,
-      planStatus: cpuStatusForPlan(analyzer.status),
+      status: finalCpuStatus,
+      planStatus: cpuStatusForPlan(finalCpuStatus),
+      metricAnalyzerStatus: analyzer.status,
+      envelopeStatus: finalCpuStatus,
+      statusAuthority: "cpu-capacity-envelope",
+      envelopeFinalDemandCores: Number(cpuEnvelopeAuthority.finalDemandCores.toFixed(2)),
+      envelopeWatchThresholdCores: Number(cpuEnvelopeAuthority.watchThresholdCores.toFixed(2)),
+      envelopeRiskThresholdCores: Number(cpuEnvelopeAuthority.riskThresholdCores.toFixed(2)),
       primaryConstraint: dominantConstraint,
       loadPressure: Number(loadPressure.toFixed(1)),
       coreDemand: Number(coreDemand.toFixed(1)),
