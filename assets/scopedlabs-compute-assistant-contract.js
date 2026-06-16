@@ -203,16 +203,38 @@
     return Math.round(num) + "%";
   }
 
+  function cpuCores(value, fallback) {
+    return cpuNumber(value, fallback || 0).toFixed(2) + " cores";
+  }
+
+  function cpuMultiplier(value, fallback) {
+    const num = cpuNumber(value, fallback || 1);
+    return num.toFixed(2).replace(/\.00$/, "") + "×";
+  }
+
+  function cpuInputPercent(inputs, data, key, id, fallback) {
+    return cpuNumber(inputs[key] || data[key] || inputValue(id, fallback), Number(fallback));
+  }
+
+  function cpuInputValue(inputs, data, key, id, fallback) {
+    return inputs[key] || data[key] || inputValue(id, fallback);
+  }
+
   
 
   function cpuResultSection(data) {
-    const status = cpuStatusLabel(data.status || data.analyzerStatus);
     const outputs = cpuPayloadOutputs(data);
+    const status = cpuStatusLabel(data.envelopeStatus || outputs.envelopeStatus || data.status || data.analyzerStatus);
 
     const logical = cpuNumber(outputs.recommendedLogicalCores, cpuNumber(data.cores, 0));
     const physical = cpuNumber(outputs.recommendedPhysicalCores, cpuNumber(data.physicalCores, 0));
     const effective = cpuNumber(outputs.effectiveDemandCores, cpuNumber(data.eff, 0));
     const required = cpuNumber(outputs.requiredCores, logical);
+    const finalDemand = cpuNumber(outputs.envelopeFinalDemandCores || data.envelopeFinalDemandCores, effective);
+    const watchThreshold = cpuNumber(outputs.envelopeWatchThresholdCores || data.envelopeWatchThresholdCores, logical * 0.70);
+    const riskThreshold = cpuNumber(outputs.envelopeRiskThresholdCores || data.envelopeRiskThresholdCores, logical * 0.90);
+    const authority = outputs.statusAuthority || data.statusAuthority || "cpu-capacity-envelope";
+    const metricStatus = outputs.metricAnalyzerStatus || data.metricAnalyzerStatus || data.analyzerStatus || "n/a";
     const constraint = titleCase(outputs.primaryConstraint || data.primaryConstraint || data.constraint || "CPU capacity");
 
     return {
@@ -223,6 +245,11 @@
         "Recommended logical cores: " + logical,
         "Recommended physical cores: " + physical,
         "Effective CPU demand: " + effective.toFixed(2) + " cores",
+        "Envelope final demand: " + finalDemand.toFixed(2) + " cores",
+        "Envelope watch threshold: " + watchThreshold.toFixed(2) + " cores",
+        "Envelope risk threshold: " + riskThreshold.toFixed(2) + " cores",
+        "Status authority: " + authority,
+        "Metric analyzer status: " + metricStatus,
         "Required CPU capacity: " + required.toFixed(2) + " cores",
         "Primary constraint: " + constraint
       ]
@@ -234,14 +261,20 @@
     const loadPressure = cpuNumber(outputs.loadPressure, 0);
     const coreDemand = cpuNumber(outputs.coreDemand, 0);
     const utilization = cpuNumber(outputs.utilizationTarget, 0);
+    const finalDemand = cpuNumber(outputs.envelopeFinalDemandCores || data.envelopeFinalDemandCores, outputs.effectiveDemandCores || data.eff || 0);
+    const watchThreshold = cpuNumber(outputs.envelopeWatchThresholdCores || data.envelopeWatchThresholdCores, 0);
+    const riskThreshold = cpuNumber(outputs.envelopeRiskThresholdCores || data.envelopeRiskThresholdCores, 0);
 
     return {
-      title: "CPU Load Profile",
-      body: "The visible CPU load profile below uses the same saved result payload as this assistant readout.",
+      title: "CPU Capacity Envelope",
+      body: "The visible CPU envelope and this assistant readout use the same saved result payload.",
       items: [
         "Load pressure: " + cpuPct(loadPressure),
         "Core demand: " + cpuPct(coreDemand),
-        "Utilization target: " + cpuPct(utilization)
+        "Utilization target: " + cpuPct(utilization),
+        "Final envelope demand: " + cpuCores(finalDemand),
+        "Watch threshold: " + cpuCores(watchThreshold),
+        "Risk threshold: " + cpuCores(riskThreshold)
       ]
     };
   }
@@ -299,6 +332,13 @@
     const peak = inputs.peakFactor || inputValue("peak", "1.25");
     const concurrency = inputs.concurrency || inputValue("concurrency", "");
     const cpuPerWorker = inputs.cpuPerWorkerPercent || inputValue("cpuPerWorker", "");
+    const workloadPattern = inputs.workloadPattern || inputValue("workloadPattern", "balanced");
+    const growthReserve = cpuInputPercent(inputs, data, "growthReservePercent", "growthReserve", "20");
+    const platformOverhead = cpuInputPercent(inputs, data, "platformOverheadPercent", "platformOverhead", "10");
+    const osReserve = cpuInputPercent(inputs, data, "osReservePercent", "osReserve", "5");
+    const coreEfficiency = cpuInputPercent(inputs, data, "coreEfficiencyPercent", "coreEfficiency", "85");
+    const sustainedDerate = cpuInputPercent(inputs, data, "sustainedDeratePercent", "sustainedDerate", "90");
+    const failoverMultiplier = cpuNumber(inputs.failoverMultiplier || data.failoverMultiplier || inputValue("failoverMultiplier", "1"), 1);
     const saved = savedToolResult("cpu-sizing");
 
     return {
@@ -319,6 +359,13 @@
         "Peak factor: " + peak + "×",
         "Target utilization ceiling: " + target + "%",
         "SMT mode: " + (smt === "on" ? "logical cores counted" : "physical cores only"),
+        "Workload pattern: " + titleCase(String(workloadPattern).replace(/-/g, " ")),
+        "Growth reserve: " + Math.round(growthReserve) + "%",
+        "Platform overhead: " + Math.round(platformOverhead) + "%",
+        "OS reserve: " + Math.round(osReserve) + "%",
+        "Core efficiency: " + Math.round(coreEfficiency) + "%",
+        "Sustained derate: " + Math.round(sustainedDerate) + "%",
+        "Failover multiplier: " + cpuMultiplier(failoverMultiplier),
         "Saved to active workload: " + (saved ? "Yes" : "Not confirmed")
       ],
       actions: actionList(actionStatus, data),
@@ -409,13 +456,18 @@
       workloadRecord
     );
 
-    const rawStatus = data.analyzerStatus || data.status || outputs.status || "PENDING";
+    const rawStatus = data.envelopeStatus || outputs.envelopeStatus || data.status || data.analyzerStatus || outputs.status || "PENDING";
     const status = computeCpuTopCardStatus(rawStatus);
 
     const logical = cpuNumber(outputs.recommendedLogicalCores, cpuNumber(data.recommendedLogicalCores, cpuNumber(data.cores, 0)));
     const physical = cpuNumber(outputs.recommendedPhysicalCores, cpuNumber(data.recommendedPhysicalCores, cpuNumber(data.physicalCores, 0)));
     const effective = cpuNumber(outputs.effectiveDemandCores, cpuNumber(data.effectiveDemandCores, cpuNumber(data.eff, 0)));
     const required = cpuNumber(outputs.requiredCores, cpuNumber(data.requiredCores, logical));
+    const finalDemand = cpuNumber(outputs.envelopeFinalDemandCores || data.envelopeFinalDemandCores, effective);
+    const watchThreshold = cpuNumber(outputs.envelopeWatchThresholdCores || data.envelopeWatchThresholdCores, logical * 0.70);
+    const riskThreshold = cpuNumber(outputs.envelopeRiskThresholdCores || data.envelopeRiskThresholdCores, logical * 0.90);
+    const authority = outputs.statusAuthority || data.statusAuthority || "cpu-capacity-envelope";
+    const metricStatus = outputs.metricAnalyzerStatus || data.metricAnalyzerStatus || data.analyzerStatus || "n/a";
     const constraint = titleCase(outputs.primaryConstraint || data.primaryConstraint || data.constraint || "CPU capacity");
 
     const workloadType = inputs.workloadType || data.workload || (plannerContext && plannerContext.workloadType) || (workloadRecord && workloadRecord.workloadType) || inputValue("workload", "general");
@@ -429,6 +481,13 @@
     const cpuPerWorker = inputs.cpuPerWorkerPercent || data.cpuPerWorkerPercent || inputValue("cpuPerWorker", "");
     const peak = inputs.peakFactor || data.peakFactor || inputValue("peak", "");
     const target = inputs.targetUtilizationPercent || data.targetUtilizationPercent || inputValue("targetUtil", "");
+    const workloadPattern = cpuInputValue(inputs, data, "workloadPattern", "workloadPattern", "balanced");
+    const growthReserve = cpuInputPercent(inputs, data, "growthReservePercent", "growthReserve", "20");
+    const platformOverhead = cpuInputPercent(inputs, data, "platformOverheadPercent", "platformOverhead", "10");
+    const osReserve = cpuInputPercent(inputs, data, "osReservePercent", "osReserve", "5");
+    const coreEfficiency = cpuInputPercent(inputs, data, "coreEfficiencyPercent", "coreEfficiency", "85");
+    const sustainedDerate = cpuInputPercent(inputs, data, "sustainedDeratePercent", "sustainedDerate", "90");
+    const failoverMultiplier = cpuNumber(inputs.failoverMultiplier || data.failoverMultiplier || inputValue("failoverMultiplier", "1"), 1);
 
     let recommendation = "CPU recommendation pending";
 
@@ -452,6 +511,9 @@
       hasPlanner ? "Planner context active" : "Planner context missing",
       status.label === "WATCH" ? "CPU watch item" : status.label === "RISK" ? "CPU risk item" : "CPU baseline usable",
       "Current CPU inputs applied",
+      "CPU V2 inputs applied",
+      "Envelope authority: " + authority,
+      "Metric analyzer: " + metricStatus,
       "RAM sizing next",
       "Downstream validation pending"
     ].join(" | ");
@@ -460,22 +522,29 @@
       concurrency ? concurrency + " workers" : "",
       cpuPerWorker ? cpuPerWorker + "% per worker" : "",
       peak ? peak + "× burst" : "",
-      target ? target + "% target utilization" : ""
+      target ? target + "% target utilization" : "",
+      "pattern " + titleCase(String(workloadPattern).replace(/-/g, " ")),
+      "growth reserve " + Math.round(growthReserve) + "%",
+      "platform overhead " + Math.round(platformOverhead) + "%",
+      "OS reserve " + Math.round(osReserve) + "%",
+      "core efficiency " + Math.round(coreEfficiency) + "%",
+      "sustained derate " + Math.round(sustainedDerate) + "%",
+      "failover " + cpuMultiplier(failoverMultiplier)
     ].filter(Boolean).join(" | ");
 
     const risk = status.label === "RISK"
-      ? "CPU is likely underbuilt under the current planner context and CPU inputs."
+      ? "Envelope demand is " + cpuCores(finalDemand) + ", at or above the " + cpuCores(riskThreshold) + " risk threshold."
       : status.label === "WATCH"
-        ? "CPU margin is tightening under the current concurrency, peak factor, and target utilization."
-        : "No immediate CPU sizing risk detected from the active planner context and current CPU inputs.";
+        ? "Envelope demand is " + cpuCores(finalDemand) + ", above the " + cpuCores(watchThreshold) + " watch threshold but below the " + cpuCores(riskThreshold) + " risk threshold."
+        : "Envelope demand is " + cpuCores(finalDemand) + ", below the " + cpuCores(watchThreshold) + " watch threshold.";
 
     const action = status.label === "RISK"
       ? "Rework the CPU baseline before treating RAM, storage, or specialty branch results as valid."
-      : "Carry this CPU result into RAM sizing. Do not treat the Compute plan as complete until RAM and required downstream branches are validated.";
+      : "Carry this CPU envelope into RAM sizing. The metric analyzer is preserved as " + metricStatus + ", but status authority is " + authority + ". Do not treat the Compute plan as complete until RAM and required downstream branches are validated.";
 
     return {
       title: "CPU SIZING",
-      subtitle: recommendation + ". Effective demand is " + effective.toFixed(2) + " cores against " + required.toFixed(2) + " required cores." + (inputSummary ? " Inputs: " + inputSummary + "." : ""),
+      subtitle: recommendation + ". Envelope demand is " + finalDemand.toFixed(2) + " cores; watch starts at " + watchThreshold.toFixed(2) + " and risk starts at " + riskThreshold.toFixed(2) + " cores." + (inputSummary ? " Inputs: " + inputSummary + "." : ""),
       statusLabel: status.label,
       statusClass: status.className,
       recommendation,

@@ -121,7 +121,7 @@ for (const token of [
   "function cpuVisualSection(data)",
   "function renderComputeCpuTopSummaryCard(data)",
   "CPU Sizing Summary",
-  "CPU Load Profile",
+  "CPU Capacity Envelope",
   "recommendedLogicalCores",
   "effectiveDemandCores",
   "utilizationTarget",
