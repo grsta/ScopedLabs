@@ -54,7 +54,7 @@ for (const token of [
   "CPU Capacity Envelope",
   "Dynamic demand curve showing current load",
   'data-compute-result-visual="cpu-capacity-envelope"',
-  "script.js?v=compute-cpu-status-authority-0616b"
+  "script.js?v=compute-cpu-marker-palette-0616c"
 ]) {
   result(html.includes(token) ? "PASS" : "FAIL", "CPU HTML visual token: " + token);
 }
@@ -91,7 +91,9 @@ for (const token of [
   "tone-failover",
   "#2cff9b",
   "rgba(44,255,155",
-  "#ef4444",
+  "#38d9ff",
+  "#a78bfa",
+  "#f59e0b",
   "*1 demand basis",
   "*2 reserve pressure",
   "*3 downstream validation"
