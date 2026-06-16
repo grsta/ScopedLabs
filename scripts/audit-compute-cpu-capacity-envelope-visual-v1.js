@@ -54,7 +54,7 @@ for (const token of [
   "CPU Capacity Envelope",
   "Dynamic demand curve showing current load",
   'data-compute-result-visual="cpu-capacity-envelope"',
-  "script.js?v=compute-cpu-marker-palette-0616c"
+  "script.js?v=compute-cpu-footer-point-labels-0616d"
 ]) {
   result(html.includes(token) ? "PASS" : "FAIL", "CPU HTML visual token: " + token);
 }
@@ -116,7 +116,8 @@ for (const removed of [
   "rgba(125,255,152",
   "#fb7185",
   "rgba(248,113,113",
-  "CPU load profile and core recommendation"
+  "CPU load profile and core recommendation",
+  "footer-strip"
 ]) {
   result(!js.includes(removed) ? "PASS" : "FAIL", "removed CPU visual token: " + removed);
 }
