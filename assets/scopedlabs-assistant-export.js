@@ -84,6 +84,18 @@
       : [];
   }
 
+
+  function recommendationReferenceMarkerColor(item) {
+    const marker = String((item && (item.id || item.marker)) || "").trim();
+    const tone = String((item && item.tone) || "").toLowerCase();
+
+    if (tone === "current" || tone === "tone-current" || marker === "*1") return "#38d9ff";
+    if (tone === "growth" || tone === "tone-growth" || marker === "*2") return "#a78bfa";
+    if (tone === "failover" || tone === "tone-failover" || marker === "*3") return "#f59e0b";
+
+    return "#111827";
+  }
+
   function renderRecommendationReferencesTable(recommendationReferences, options) {
     const rows = normalizeRecommendationReferences(recommendationReferences);
     const opts = options || {};
@@ -103,10 +115,11 @@
           '<tbody>' +
             rows.map(function (item) {
               const marker = item.id || item.marker || "";
+              const markerColor = recommendationReferenceMarkerColor(item);
               const reference = item.label || item.reference || "Reference";
               const reason = item.reason || "Review required.";
               return '<tr>' +
-                '<td style="padding:9px 10px;border:1px solid #d8dee6;color:#111827;font-weight:800;vertical-align:top;">' + escapeHtml(marker) + '</td>' +
+                '<td style="padding:9px 10px;border:1px solid #d8dee6;color:' + escapeHtml(markerColor) + ';font-weight:900;vertical-align:top;">' + escapeHtml(marker) + '</td>' +
                 '<td style="padding:9px 10px;border:1px solid #d8dee6;color:#111827;font-weight:800;vertical-align:top;">' + escapeHtml(reference) + '</td>' +
                 '<td style="padding:9px 10px;border:1px solid #d8dee6;color:#111827;line-height:1.55;vertical-align:top;white-space:pre-line;">' + escapeHtml(reason) + '</td>' +
               '</tr>';
