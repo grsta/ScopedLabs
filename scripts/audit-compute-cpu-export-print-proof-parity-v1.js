@@ -161,6 +161,7 @@ result(indexOrder(html, [
 for (const token of [
   'id="computeCpuRecommendationReferencesCard"',
   'id="computeCpuRecommendationReferences"',
+  "CPU Capacity Envelope",
   "Recommendation References",
   "data-export-section=\"true\"",
   "data-compute-cpu-reference-marker-plain",
