@@ -89,15 +89,16 @@ for (const token of [
   result(html.includes(token) ? "PASS" : "FAIL", "CPU HTML token: " + token);
 }
 
-result(order(html, [
-  'id="computeInternalResultsLedger"',
-  'id="computeAssistantCard"',
-  'id="computeFirstToolLegend"',
-  'id="computeCpuVisualCard"',
-  'id="computeCpuDecisionScheduleCard"',
-  'id="computeCpuRecommendationReferencesCard"',
-  'id="exportReport"'
-]) ? "PASS" : "FAIL", "CPU result DOM order is ledger -> assistant -> legend -> visual -> decision schedule -> references -> export");
+result((function () {
+  const ledgerIndex = html.indexOf('id="computeInternalResultsLedger"');
+  const assistantIndex = html.indexOf('id="computeAssistantCard"');
+  const legendIndex = html.indexOf('id="computeFirstToolLegend"');
+  const visualIndex = html.indexOf('id="computeCpuVisualCard"');
+  const referencesIndex = html.indexOf('id="computeCpuRecommendationReferencesCard"');
+  const decisionIndex = html.indexOf('id="computeCpuDecisionScheduleCard"');
+  const exportIndex = html.indexOf('id="exportReport"');
+  return ledgerIndex >= 0 && assistantIndex > ledgerIndex && legendIndex > assistantIndex && visualIndex > legendIndex && referencesIndex > visualIndex && decisionIndex > referencesIndex && exportIndex > decisionIndex;
+})(), "CPU result DOM order is ledger -> assistant -> legend -> visual -> references -> decision schedule -> export");
 
 for (const token of [
   "function buildComputeCpuVisualSvg(result)",

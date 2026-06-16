@@ -57,12 +57,13 @@ for (const token of [
   result(html.includes(token) ? "PASS" : "FAIL", "CPU proof HTML token: " + token);
 }
 
-result(order(html, [
-  'id="computeCpuVisualCard"',
-  'id="computeCpuDecisionScheduleCard"',
-  'id="computeCpuRecommendationReferencesCard"',
-  'id="exportReport"'
-]) ? "PASS" : "FAIL", "CPU proof DOM order is visual -> decision schedule -> references -> export");
+result((function () {
+  const visualIndex = html.indexOf('id="computeCpuVisualCard"');
+  const referencesIndex = html.indexOf('id="computeCpuRecommendationReferencesCard"');
+  const decisionIndex = html.indexOf('id="computeCpuDecisionScheduleCard"');
+  const exportIndex = html.indexOf('id="exportReport"');
+  return visualIndex >= 0 && referencesIndex > visualIndex && decisionIndex > referencesIndex && exportIndex > decisionIndex;
+})(), "CPU proof DOM order is visual -> references -> decision schedule -> export");
 
 for (const token of [
   "function buildComputeCpuDecisionScheduleHtml(result)",
