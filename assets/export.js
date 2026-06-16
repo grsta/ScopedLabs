@@ -731,13 +731,42 @@
     return cleanExtraTableText(clone.textContent);
   }
 
+
+  function exportableTableCellStyle(cell) {
+    const marker =
+      cell && typeof cell.querySelector === "function"
+        ? cell.querySelector(".compute-cpu-proof-marker, [data-export-marker]")
+        : null;
+
+    if (!marker) return "";
+
+    const styleAttr = String(marker.getAttribute("style") || "");
+    const styleColor = String(marker.style && marker.style.color ? marker.style.color : "").trim();
+    const match = styleAttr.match(/color\s*:\s*([^;]+)/i);
+    const color = styleColor || (match && match[1] ? match[1].trim() : "");
+
+    if (!color || color === "inherit") return "";
+
+    return "color:" + color + ";font-weight:900;";
+  }
+
   function directTableRowCells(row) {
     return Array.from(row?.children || [])
       .filter((cell) => cell.dataset?.exportIgnore !== "true" && cell.getAttribute("data-export-ignore") !== "true")
-      .map((cell) => ({
-        text: exportableTableCellText(cell),
-        colSpan: Number(cell.getAttribute("colspan") || cell.colSpan || 1)
-      }));
+      .map((cell) => {
+        const item = {
+          text: exportableTableCellText(cell),
+          colSpan: Number(cell.getAttribute("colspan") || cell.colSpan || 1)
+        };
+
+        const style = exportableTableCellStyle(cell);
+        if (style) {
+          item.style = style;
+          item.className = "report-reference-marker";
+        }
+
+        return item;
+      });
   }
 
   function readExtraTable(table) {
@@ -779,18 +808,21 @@
       : [];
 
     let bodyRows = Array.from(table.querySelectorAll(":scope > tbody > tr")).map((row) => {
-      return directTableRowCells(row).map((cell) => cell.text);
+      return directTableRowCells(row);
     });
 
     if (!bodyRows.length) {
       const allRows = Array.from(table.querySelectorAll(":scope > tr")).map((row) => {
-        return directTableRowCells(row).map((cell) => cell.text);
+        return directTableRowCells(row);
       });
 
       bodyRows = headerCells.length ? allRows.slice(1) : allRows;
     }
 
-    const rows = bodyRows.filter((row) => row.some(Boolean));
+    const rows = bodyRows.filter((row) => row.some((cell) => {
+      if (cell && typeof cell === "object" && !Array.isArray(cell)) return !!cell.text;
+      return !!cell;
+    }));
 
     if (!rows.length) return null;
 
@@ -933,18 +965,22 @@
           const className = String(cell.className || "")
             .replace(/[^a-zA-Z0-9_\-\s]/g, "")
             .trim();
+          const style = String(cell.style || "")
+            .replace(/[^a-zA-Z0-9:#;.%(),\s\-]/g, "")
+            .trim();
 
           const classes = [
             tone ? "report-tone report-tone--" + tone : "",
             className
           ].filter(Boolean).join(" ");
 
-          return classes
-            ? `<td class="${classes}">${escapeHtml(text)}</td>`
-            : `<td>${escapeHtml(text)}</td>`;
+          const classAttr = classes ? ' class="' + escapeHtml(classes) + '"' : "";
+          const styleAttr = style ? ' style="' + escapeHtml(style) + '"' : "";
+
+          return '<td' + classAttr + styleAttr + '>' + escapeHtml(text) + '</td>';
         }
 
-        return `<td>${escapeHtml(cell)}</td>`;
+        return '<td>' + escapeHtml(cell) + '</td>';
       }
 
       const tableBlocks = (section.tables || []).map((table) => {
