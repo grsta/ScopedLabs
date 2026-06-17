@@ -459,3 +459,10 @@ This file maps where the shared engines, category modules, special tool routes, 
 - CPU export route: per-tool custom payload builder.
 - Fail-Safe export route: Access Control output-shell/export getter pattern.
 - Generic `[data-export-section]` cloning is useful, but not enough for every chart/proof export.
+
+## Compute active upgrade planning
+
+- `scripts/audit-compute-ram-planning-upgrade-v1.js` tracks RAM Sizing readiness to move from simple calculator behavior toward a CPU-style planning tool.
+- RAM Sizing current target: `RAM Capacity Envelope`.
+- RAM Sizing should be upgraded before broad shell rollout.
+- Expected future RAM route: `ScopedLabsComputeRamExport.buildPayload` only after the RAM visual/proof model exists.
