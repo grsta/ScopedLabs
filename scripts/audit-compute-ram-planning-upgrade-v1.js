@@ -9,6 +9,8 @@ const files = {
   cpuHtml: path.join(root, "tools", "compute", "cpu-sizing", "index.html"),
   cpuScript: path.join(root, "tools", "compute", "cpu-sizing", "script.js"),
   exportJs: path.join(root, "assets", "export.js"),
+  capacityVisuals: path.join(root, "assets", "scopedlabs-compute-capacity-visuals.js"),
+  visualCss: path.join(root, "assets", "scopedlabs-compute-result-visuals.css"),
   moduleMap: path.join(root, "docs", "scopedlabs-module-map.md")
 };
 
@@ -18,6 +20,14 @@ let fail = 0;
 
 function read(file) {
   return fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
+}
+
+function has(text, token) {
+  return text.includes(token);
+}
+
+function any(text, tokens) {
+  return tokens.some((token) => text.includes(token));
 }
 
 function passCheck(label, ok, detail = "") {
@@ -40,14 +50,6 @@ function watchCheck(label, ok, detail = "") {
   }
 }
 
-function has(text, token) {
-  return text.includes(token);
-}
-
-function any(text, tokens) {
-  return tokens.some((token) => text.includes(token));
-}
-
 function heading(title) {
   console.log("");
   console.log("========================================================================");
@@ -63,6 +65,8 @@ const ramScript = read(files.ramScript);
 const cpuHtml = read(files.cpuHtml);
 const cpuScript = read(files.cpuScript);
 const exportJs = read(files.exportJs);
+const capacityVisuals = read(files.capacityVisuals);
+const visualCss = read(files.visualCss);
 const moduleMap = read(files.moduleMap);
 
 heading("FILES");
@@ -80,26 +84,30 @@ passCheck("RAM has pipeline continue target", has(ramHtml, "Continue") && has(ra
 passCheck("RAM has existing calculation function", has(ramScript, "function calc"));
 passCheck("RAM has existing workload factor logic", has(ramScript, "function workloadFactor"));
 passCheck("RAM has basic planning terms", any(ramScript, ["growth", "reserve", "overhead", "cache", "swap", "virtual"]));
-
-heading("RAM PROOF LAYER V1");
-
-passCheck("RAM has Capacity Envelope SVG builder", has(ramScript, "function buildRamCapacityEnvelopeSvg"));
-passCheck("RAM has Capacity Envelope live title", has(ramScript, "RAM Capacity Envelope"));
-passCheck("RAM has Recommendation References section", has(ramScript, "Recommendation References") && has(ramScript, "buildRamRecommendationReferences"));
-passCheck("RAM has Capacity Decision Schedule section", has(ramScript, "RAM Capacity Decision Schedule") && has(ramScript, "buildRamDecisionSchedule"));
-passCheck("RAM renders proof sections after analyzer output", has(ramScript, "renderRamProofSections(ramProofModel);"));
 passCheck("RAM keeps analyzer render output path", has(ramScript, "ScopedLabsAnalyzer.renderOutput"));
-passCheck("RAM refreshes export state after calculation", has(ramScript, "refreshRamExportState();"));
-passCheck("RAM invalidates export state on input/reset invalidation", has(ramScript, "invalidateRamExportState();"));
-passCheck("RAM writes recommendation references to flow payload", has(ramScript, "recommendationReferences,"));
-passCheck("RAM writes decision schedule to flow payload", has(ramScript, "ramDecisionSchedule"));
 
-heading("REMAINING UPGRADE WATCHES BEFORE SHELL/EXPORT CLOSEOUT");
+heading("SHARED COMPUTE CAPACITY MODULE WIRING");
 
-watchCheck("RAM does not yet use custom export payload", !has(ramHtml, "customPayloadBuilder"), "Expected later route: ScopedLabsComputeRamExport.buildPayload");
-watchCheck("RAM does not yet load compute assistant contract", !has(ramHtml, "scopedlabs-compute-assistant-contract"), "Expected after planning model is live-proven.");
-watchCheck("RAM does not yet load user tool notes", !has(ramHtml, "scopedlabs-user-tool-notes"), "Expected for report context parity.");
-watchCheck("RAM does not yet expose custom chart image export route", !has(ramScript, "chartImage") && !has(ramScript, "ScopedLabsComputeRamExport"), "Expected after live proof visual is accepted.");
+passCheck("shared capacity module exists", has(capacityVisuals, "ScopedLabsComputeCapacityVisuals"));
+passCheck("shared module owns RAM Capacity Envelope SVG builder", has(capacityVisuals, "function buildRamCapacityEnvelopeSvg"));
+passCheck("shared module exports RAM capacity renderer", has(capacityVisuals, "renderRamCapacityEnvelope"));
+passCheck("shared module exports clear helper", has(capacityVisuals, "clear"));
+passCheck("shared Compute visual CSS includes capacity extension", has(visualCss, "scopedlabs-compute-capacity-visuals-001"));
+
+passCheck("RAM loads shared Compute result visual CSS", has(ramHtml, "scopedlabs-compute-result-visuals.css"));
+passCheck("RAM loads shared Compute capacity visual module", has(ramHtml, "scopedlabs-compute-capacity-visuals.js"));
+passCheck("RAM has shared visual card mount", has(ramHtml, "computeRamVisualCard") && has(ramHtml, "computeRamVisual"));
+passCheck("RAM script calls shared RAM renderer", has(ramScript, "ScopedLabsComputeCapacityVisuals.renderRamCapacityEnvelope"));
+passCheck("RAM script clears shared visual through module", has(ramScript, "ScopedLabsComputeCapacityVisuals.clear"));
+passCheck("RAM writes shared capacity envelope into flow payload", has(ramScript, "capacityEnvelope: ramCapacityEnvelope"));
+
+heading("NO PAGE-LOCAL VISUAL STACK");
+
+passCheck("RAM script does not own page-local Capacity Envelope SVG builder", !has(ramScript, "function buildRamCapacityEnvelopeSvg"));
+passCheck("RAM script does not own page-local proof section renderer", !has(ramScript, "function renderRamProofSections"));
+passCheck("RAM script does not own page-local recommendation reference table", !has(ramScript, "buildRamRecommendationReferences"));
+passCheck("RAM script does not own page-local decision schedule table", !has(ramScript, "buildRamDecisionSchedule"));
+passCheck("RAM HTML does not contain literal backslash-n artifacts", !has(ramHtml, "\\n"));
 
 heading("CPU REFERENCE PATTERN AVAILABLE");
 
@@ -115,18 +123,25 @@ passCheck("shared export supports extra sections", has(exportJs, "extraSections"
 heading("MODULE MAP COVERAGE");
 
 passCheck("module map records RAM sizing path", has(moduleMap, "tools/compute/ram-sizing"));
-passCheck("module map records RAM Capacity Envelope target", has(moduleMap, "RAM Capacity Envelope"));
-passCheck("module map records future RAM export route", has(moduleMap, "ScopedLabsComputeRamExport.buildPayload"));
+passCheck("module map records shared capacity visual module", has(moduleMap, "assets/scopedlabs-compute-capacity-visuals.js"));
+passCheck("module map records no one-off visual rule", has(moduleMap, "Do not add page-local one-off capacity SVG/table stacks"));
+
+heading("REMAINING UPGRADE WATCHES BEFORE SHELL/EXPORT CLOSEOUT");
+
+watchCheck("RAM does not yet use custom export payload", !has(ramHtml, "customPayloadBuilder"), "Expected later route: ScopedLabsComputeRamExport.buildPayload");
+watchCheck("RAM does not yet load compute assistant contract", !has(ramHtml, "scopedlabs-compute-assistant-contract"), "Expected after shared visual is live-accepted.");
+watchCheck("RAM does not yet load user tool notes", !has(ramHtml, "scopedlabs-user-tool-notes"), "Expected for report context parity.");
+watchCheck("RAM does not yet expose custom chart image export route", !has(ramScript, "chartImage") && !has(ramScript, "ScopedLabsComputeRamExport"), "Expected after live visual is accepted.");
 
 heading("RECOMMENDED STATUS");
 
-console.log("STATUS: RAM_PROOF_LAYER_LIVE_PENDING_REVIEW");
+console.log("STATUS: SHARED_RAM_CAPACITY_VISUAL_LIVE_PENDING_REVIEW");
 console.log("");
 console.log("Recommended next patch lane:");
-console.log("- Live-verify RAM Capacity Envelope, Recommendation References, and Decision Schedule.");
-console.log("- If accepted, add RAM custom export payload route.");
+console.log("- Live-verify shared RAM Capacity Envelope visual.");
+console.log("- If accepted, add RAM custom export payload route through the shared capacity module.");
 console.log("- Then connect assistant contract and user notes.");
-console.log("- Defer broad shell rollout until RAM proof/export route is accepted.");
+console.log("- Defer broad shell rollout until RAM shared visual/export route is accepted.");
 
 console.log("");
 console.log("SUMMARY");

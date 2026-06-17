@@ -34,6 +34,7 @@ This file maps where the shared engines, category modules, special tool routes, 
 - `assets/scopedlabs-compute-plan-state.js`
 - `assets/scopedlabs-compute-planner-adapter.js`
 - `assets/scopedlabs-compute-result-visuals.css`
+- `assets/scopedlabs-compute-capacity-visuals.js`
 - `assets/scopedlabs-compute-shell-contract.js`
 
 ### Compute tool routes
@@ -49,6 +50,12 @@ This file maps where the shared engines, category modules, special tool routes, 
 - `tools/compute/storage-throughput`
 - `tools/compute/vm-density`
 - `tools/compute/workload-planner`
+
+### Compute shared capacity visuals
+
+- `assets/scopedlabs-compute-capacity-visuals.js` owns shared Compute capacity-envelope SVG renderers.
+- `tools/compute/ram-sizing/` consumes the shared RAM Capacity Envelope renderer through `window.ScopedLabsComputeCapacityVisuals.renderRamCapacityEnvelope`.
+- Do not add page-local one-off capacity SVG/table stacks when a shared Compute visual renderer can be used or promoted.
 
 ### Compute special export routes
 

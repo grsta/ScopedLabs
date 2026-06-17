@@ -79,6 +79,7 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="/assets/scopedlabs-compute-result-visuals.css?v=scopedlabs-compute-result-visuals-0616-ram-capacity">
 </head>
 
 <body data-tier="free" data-category="compute" data-step="ram-sizing" data-lane="v1">
@@ -196,6 +197,12 @@
         </p>
       </div>
     
+      <section id="computeRamVisualCard" class="card compute-result-visual-card" hidden data-compute-result-visual-card data-output-visual-owner="compute-capacity-visuals">
+        <h3 class="h3 compute-result-visual-title" style="margin-top: 0;">RAM Capacity Envelope</h3>
+        <p class="muted" style="margin-bottom: 0;">Dynamic memory demand curve showing workload demand, reserve pressure, installed RAM tier, and downstream Compute validation.</p>
+        <div id="computeRamVisual" class="compute-result-visual-shell" data-compute-result-visual="ram-capacity-envelope" role="group" aria-label="RAM capacity envelope visual"></div>
+      </section>
+
       <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
         <div class="pill-row">
           <span class="pill pill--pro">Documentation & Export</span>
@@ -287,7 +294,8 @@
 
   <script src="/assets/export.js?v=shared-export-025-tool-notes-column-widths"></script>
 
-  <script src="./script.js?v=compute-export-001"></script>
+  <script src="/assets/scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-001-ram-envelope"></script>
+  <script src="./script.js?v=compute-ram-shared-capacity-0616am"></script>
 
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
