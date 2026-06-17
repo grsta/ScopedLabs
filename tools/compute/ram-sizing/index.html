@@ -51,7 +51,31 @@
       font-size: 0.92rem;
       line-height: 1.5;
     }
-  </style>
+    /* COMPUTE SHELL CONTRACT 0617 RAM */
+  .compute-flow-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+  .compute-flow-actions #continue-wrap {
+    margin: 0 !important;
+  }
+  @media (max-width: 760px) {
+    .compute-flow-actions {
+      align-items: stretch;
+      flex-direction: column;
+    }
+    .compute-flow-actions .btn,
+    .compute-flow-actions #continue-wrap,
+    .compute-flow-actions #continue-wrap .btn {
+      width: 100%;
+    }
+  }
+
+</style>
 
   <style data-scopedlabs-export-card-styles>
     .export-grid {
@@ -250,11 +274,15 @@
 
 </section>
 
-    <div id="continue-wrap" class="btn-row" style="display:none; margin-top:12px;">
+    <div class="compute-flow-actions">
+    <a class="btn" href="/tools/compute/">Back to Compute</a>
+
+    <div id="continue-wrap" class="btn-row" style="display:none;">
       <button id="continue" class="btn btn-primary" disabled>
-        Continue → Storage IOPS
+        Continue ? Storage IOPS
       </button>
     </div>
+  </div>
 
     <footer class="site-footer">
       <div class="muted">© <span data-year></span> ScopedLabs</div>
@@ -294,8 +322,8 @@
 
   <script src="/assets/export.js?v=shared-export-025-tool-notes-column-widths"></script>
 
-  <script src="/assets/scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-001-ram-envelope"></script>
-  <script src="./script.js?v=compute-ram-shared-capacity-0616am"></script>
+  <script src="/assets/scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-002-ram-shell"></script>
+  <script src="./script.js?v=compute-ram-shell-capacity-0617b"></script>
 
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
