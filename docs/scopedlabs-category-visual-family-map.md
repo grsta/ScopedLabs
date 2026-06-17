@@ -183,3 +183,166 @@ Before modernizing a tool, answer:
 5. Is it core pipeline, optional branch, summary, or special path?
 
 Only then wire the shell and modules.
+
+## Category Page Shell Families
+
+Every category should be treated as a planning system, not only a collection of tool pages.
+
+Each category should define three shell levels:
+
+1. Category Planner / Command Page
+2. Individual Tool Pages
+3. Category Summary / Report Page
+
+These pages should use shared/reusable modules instead of page-local one-offs.
+
+---
+
+### category-planner-command-shell
+
+Purpose:
+- Act as the category control center.
+- Start or resume the planning workflow.
+- Show the core path.
+- Show optional specialty branches.
+- Show active planning state.
+- Show completed or pending tools.
+- Route users to the next correct tool.
+- Explain what the category is planning.
+
+Future shared module targets:
+- assets/scopedlabs-category-planner-shell.js
+- assets/scopedlabs-category-progress-state.js
+- assets/scopedlabs-category-workflow-router.js
+
+Category adapter examples:
+- assets/compute-category-planner.js
+- assets/physical-security-category-planner.js
+- assets/access-control-category-planner.js
+
+---
+
+### category-summary-report-shell
+
+Purpose:
+- Act as the category rollup and report host.
+- Read completed tool outputs.
+- Read assumptions, risks, and recommendation references.
+- Present final category-level guidance.
+- Host the category master assistant.
+- Own final category export/report behavior.
+- Prepare cross-category handoff data.
+
+Future shared module targets:
+- assets/scopedlabs-category-summary-shell.js
+- assets/scopedlabs-category-rollup-state.js
+- assets/scopedlabs-category-report-export.js
+- assets/scopedlabs-category-master-assistant.js
+
+Category adapter examples:
+- assets/compute-category-summary.js
+- assets/physical-security-category-summary.js
+- assets/access-control-category-summary.js
+
+---
+
+## Assistant Hierarchy
+
+ScopedLabs assistants should be layered.
+
+### Local tool assistant
+
+Role:
+- Local specialist for one tool.
+- Reads that tool's inputs and outputs.
+- Produces local guidance, assumptions, risks, missing-input notes, and recommendation references.
+- Publishes structured summary-ready data upward.
+
+### Category master assistant
+
+Role:
+- Lives on the category summary page.
+- Oversees the local tool assistants in that category.
+- Reads completed tool outputs and assistant notes.
+- Detects conflicts, gaps, missing assumptions, and unresolved risks.
+- Produces category-level synthesis.
+- Builds final category report guidance.
+- Prepares cross-category handoff data.
+
+### Future site / cross-category assistant
+
+Role:
+- Reads category summaries.
+- Coordinates cross-category dependencies.
+- Detects conflicts between categories.
+- Supports future higher-tier planning workflows.
+
+---
+
+## Assistant Future-Proofing Rule
+
+Assistant modules must be extensible capability contracts, not dead-end page scripts.
+
+Assistant contracts should support future slots for:
+
+- Added planner inputs.
+- Added domain checks.
+- Added reasoning modules.
+- Added recommendation references.
+- Added assumptions and risks.
+- Added export/report sections.
+- Summary publishing.
+- Conflict detection.
+- Cross-category handoff.
+- Future higher-tier/site-wide assistant behavior.
+
+Assistant output should be structured so other modules can consume it later.
+
+---
+
+## Assistant Current-Knowledge Guardrail
+
+Future assistants may support current-knowledge or web lookup capability, but only through a controlled connector and only inside the current planning scope.
+
+Local tool assistants may only request current knowledge directly relevant to the current tool.
+
+Category master assistants may only request current knowledge directly relevant to the current category summary.
+
+Future cross-category assistants may only request current knowledge for explicit cross-category conflicts or handoff needs.
+
+Every current-knowledge lookup should include:
+
+- Declared scope.
+- Reason for lookup.
+- Source or citation.
+- Source date or freshness note.
+- Confidence or uncertainty note.
+- User-visible assumption/risk note when needed.
+
+Assistants must not browse broadly or research unrelated products, categories, or general web topics.
+
+---
+
+## Extensible Capability Contract Rule
+
+When adding modules to tool pages, planner/command pages, or summary/master assistant pages, the contract should leave slots for future capabilities.
+
+Use capability flags, adapter slots, and named PASS/WATCH/SKIP states instead of hard-coded one-off assumptions.
+
+Example capability groups:
+
+- shell
+- flowActions
+- localAssistant
+- masterAssistantPublisher
+- categoryMasterAssistant
+- visualFamilies
+- exportPayload
+- snapshotPayload
+- pipelineCarryForward
+- userNotes
+- reportMetadata
+- currentKnowledgeLookup
+- crossCategoryHandoff
+
+A module can be planned as future without blocking the current closeout, but it must be named with a clear WATCH reason.

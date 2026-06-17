@@ -221,3 +221,161 @@ Then use Compute as the proof category:
 The assistant should not ask the user to re-explain this strategy in future chats.
 
 Future agents should read this document, the category visual family map, and docs/scopedlabs-module-map.md before starting more tool modernization.
+
+## Category System Scope
+
+The modernization scope includes more than individual tool pages.
+
+Every category should be planned as a complete system:
+
+1. Planner / Command Page
+2. Tool Pages
+3. Summary / Report Page
+4. Category Master Assistant
+5. Shared visual families
+6. Shared export/snapshot/pipeline modules
+7. Future cross-category handoff
+
+---
+
+## Category Planner / Command Page
+
+The planner page is the command page for the category.
+
+It should eventually provide:
+
+- Category workflow overview.
+- Start / continue planning.
+- Core tool path.
+- Optional specialty branches.
+- Completed-tool state.
+- Active assumptions.
+- Current planning status.
+- Recommended next step.
+- Links into the correct tool pages.
+
+Planner pages should use shared planner shell modules plus category adapters.
+
+They should not become page-local one-off dashboards.
+
+---
+
+## Category Summary / Master Assistant Page
+
+The summary page is the category rollup, final report host, and master assistant.
+
+It should eventually provide:
+
+- Completed tool output rollups.
+- Local assistant note rollups.
+- Assumptions and risks.
+- Missing input warnings.
+- Cross-tool conflict detection.
+- Category-level recommendation synthesis.
+- Recommendation references.
+- Final category export/report.
+- Cross-category handoff payloads.
+
+The summary page should act like the category lead engineer.
+
+Local tool assistants are specialists.
+
+The summary/master assistant oversees those specialists and produces the category-level guidance.
+
+---
+
+## Shared Modules For Category Pages
+
+Planner and summary pages need reusable modules too.
+
+Candidate shared modules:
+
+- assets/scopedlabs-category-planner-shell.js
+- assets/scopedlabs-category-summary-shell.js
+- assets/scopedlabs-category-progress-state.js
+- assets/scopedlabs-category-workflow-router.js
+- assets/scopedlabs-category-rollup-state.js
+- assets/scopedlabs-category-master-assistant.js
+- assets/scopedlabs-category-report-export.js
+
+Candidate category adapters:
+
+- assets/compute-category-planner.js
+- assets/compute-category-summary.js
+- assets/physical-security-category-planner.js
+- assets/physical-security-category-summary.js
+- assets/access-control-category-planner.js
+- assets/access-control-category-summary.js
+
+Do not add these paths to the module map as implemented modules until files actually exist.
+
+When any shared module or category adapter is added, update docs/scopedlabs-module-map.md and run:
+
+```powershell
+node .\scripts\audit-scopedlabs-module-map-v1.js
+```
+
+---
+
+## Future-Proofing Requirement
+
+All new shell, tool, visual, export, snapshot, pipeline, assistant, planner, and summary modules should be designed as extensible capability contracts.
+
+A module should support future additions without requiring a page rewrite.
+
+Use:
+
+- Capability flags.
+- Adapter slots.
+- Optional future fields.
+- Structured payloads.
+- Named WATCH reasons.
+- Named SKIP/SPECIAL reasons.
+- Versioned module contracts.
+
+Avoid:
+
+- Dead-end local page scripts.
+- Hard-coded one-off assumptions.
+- Hidden behavior that audits cannot detect.
+- Broad assistants that cannot publish structured data upward.
+
+---
+
+## Assistant Knowledge Growth
+
+Assistants should be able to grow over time through versioned knowledge updates.
+
+Allowed future knowledge layers:
+
+1. Built-in ScopedLabs rules and formulas.
+2. Versioned ScopedLabs Knowledge Base content.
+3. Category planning profiles and accepted design rules.
+4. Optional current-knowledge lookup through a controlled connector.
+
+This is not uncontrolled learning.
+
+Assistant growth should be source-tracked, versioned, and auditable.
+
+---
+
+## Strict Assistant Lookup Scope
+
+Any future current-knowledge or web lookup capability must be strictly scoped.
+
+A local tool assistant may only search for current knowledge directly needed for that tool's planning decision.
+
+A category master assistant may only search for current knowledge directly needed for that category summary.
+
+A future cross-category assistant may only search for current knowledge needed to resolve explicit cross-category conflicts or handoff issues.
+
+Every lookup must expose:
+
+- Scope.
+- Reason.
+- Source.
+- Freshness.
+- Confidence.
+- Assumptions or risks.
+
+Assistants must not browse broadly.
