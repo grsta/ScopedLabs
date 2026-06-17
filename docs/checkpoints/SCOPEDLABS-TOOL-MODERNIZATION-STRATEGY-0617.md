@@ -125,3 +125,19 @@ For every tool, decide whether it uses:
 - No visual/icon with documented reason.
 
 Do not create page-local one-off icons or graphics when the asset may belong in a shared library.
+
+## Added Guardrail: Layout Consistency
+
+The user clarified that category/tool pages may have small differences, but the overall layout rhythm should remain consistent across categories.
+
+Future modernization should preserve consistent shells for:
+
+- Category planner/command pages.
+- Individual tool pages.
+- Category summary/master assistant pages.
+
+Category-specific modules, tool-specific planner sections, and different visual families are allowed when needed.
+
+However, future agents should not redesign every page independently.
+
+A page should only break the standard layout when it is intentionally marked SPECIAL_PATH or SKIP_SPECIAL_PATH with a written reason.

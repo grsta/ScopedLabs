@@ -377,3 +377,31 @@ Visual and icon work should follow this order:
 9. Commit and lock.
 
 This prevents one-off page graphics and prevents tools from being revisited repeatedly for visual modernization.
+
+## Layout Rhythm And Visual Consistency
+
+Visual family decisions should support consistent page rhythm.
+
+A tool may use a different visual family when the planning purpose requires it, but the surrounding page layout should still follow the category/tool shell pattern.
+
+Examples:
+
+- Compute CPU/RAM may use a capacity-envelope analytical chart.
+- Compute storage may use an IOPS/latency curve.
+- Compute rack/resource tools may use icon diagrams.
+- Physical Security may use CAD camera layouts.
+- Access Control may use door/panel/lock diagrams.
+
+Different visual families are allowed.
+
+Unrelated one-off page layouts are not.
+
+The visual review should decide:
+
+1. Which shared visual family the tool needs.
+2. Whether new icons are needed in a shared library.
+3. Where the visual sits in the standard tool shell.
+4. Whether the visual also needs export/report support.
+5. Whether the summary/master assistant needs to consume the visual output.
+
+A visual module should fit the shell, not force every tool page into a new layout.

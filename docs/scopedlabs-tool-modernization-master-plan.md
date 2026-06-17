@@ -451,3 +451,114 @@ Access Control candidate icons:
 - anti-passback zone
 
 Icon decisions should be documented in the category planning profile before implementation.
+
+## Layout Consistency Guardrail
+
+ScopedLabs categories may have different content, visuals, assistant modules, and planner requirements, but the page layout rhythm should remain consistent across the product.
+
+Future modernization should not treat every page as a blank canvas.
+
+Use consistent shells for:
+
+1. Category Planner / Command Pages
+2. Individual Tool Pages
+3. Category Summary / Master Assistant Pages
+
+---
+
+### Category Planner / Command Pages
+
+Planner pages should share the same general layout pattern:
+
+- Category introduction.
+- Planning workflow overview.
+- Core path cards.
+- Optional branch cards.
+- Current planning state.
+- Resume/continue guidance.
+- Links into tool pages.
+- Clear route to the category summary/report page.
+
+Category-specific sections are allowed, but they should be implemented as modules inside the planner shell, not as unrelated one-off layouts.
+
+---
+
+### Tool Pages
+
+Tool pages should share the same general rhythm:
+
+- Tool intro / purpose.
+- Inputs.
+- Calculate/reset actions.
+- Results.
+- Visual/proof module when applicable.
+- Local assistant guidance.
+- Export/report/snapshot area when applicable.
+- Back/Continue flow actions.
+- Knowledge Base/help behavior.
+
+Tool-specific sections are allowed when the planner requires them, such as:
+
+- Extra planner inputs.
+- Special warnings.
+- Special validation sections.
+- Specialty branch guidance.
+- Tool-specific report notes.
+- Different visual family.
+
+These sections should still sit inside the shared tool shell rhythm.
+
+---
+
+### Category Summary / Master Assistant Pages
+
+Summary pages should share the same general layout pattern:
+
+- Category rollup.
+- Completed tool outputs.
+- Assumptions.
+- Risks.
+- Local assistant note rollups.
+- Master assistant synthesis.
+- Conflicts/gaps/missing input warnings.
+- Recommendation references.
+- Final report/export.
+- Cross-category handoff.
+
+Category-specific rollup sections are allowed, but the summary page should still behave as the category master assistant/report host.
+
+---
+
+## Consistency Rule
+
+Small inconsistencies are allowed only when they are purposeful and documented.
+
+Allowed:
+- A category-specific module.
+- A tool-specific planner section.
+- A different shared visual family.
+- A specialty branch card.
+- A special warning or validation card.
+- A summary/report section required by the category.
+
+Not allowed:
+- Redesigning each tool independently.
+- Creating unrelated page rhythms for similar tools.
+- Moving core shell sections without a reason.
+- One-off visual/card layouts when a shared module should exist.
+- Treating normal tools as special paths without documenting why.
+
+---
+
+## Special Path Rule
+
+A page may break the standard shell only when it is intentionally marked SPECIAL_PATH or SKIP_SPECIAL_PATH with a written reason.
+
+Examples:
+- Dedicated summary/report host.
+- Dedicated planner/command page.
+- Legacy protected/gold-standard page.
+- Tool with a unique print/copy/export path.
+- Tool that does not use the standard calculator output shell.
+
+Special paths must still be documented in the category planning profile and audits.
