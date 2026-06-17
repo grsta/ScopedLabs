@@ -405,3 +405,48 @@ The visual review should decide:
 5. Whether the summary/master assistant needs to consume the visual output.
 
 A visual module should fit the shell, not force every tool page into a new layout.
+
+## Visual Module Maturity Status
+
+Visual and icon modules should also use maturity states.
+
+Allowed statuses:
+
+- PROPOSED
+- PROOF
+- ACTIVE
+- LOCKED
+- LEGACY
+- DEPRECATED
+
+A visual family should not be treated as category-wide until it reaches ACTIVE.
+
+A LOCKED visual family is an accepted reference and should not be redesigned casually.
+
+Example:
+
+- Compute capacity envelope:
+  - CPU Sizing may be the accepted visual reference.
+  - RAM Sizing should not imitate CPU locally.
+  - The accepted style should be promoted into the shared Compute visual family before wider use.
+
+---
+
+## Visual Data Contract First
+
+Before building or changing a visual, define the visual data contract.
+
+Required fields to decide:
+
+- Source inputs.
+- Source outputs.
+- Units.
+- Thresholds.
+- Status logic.
+- Marker labels.
+- Recommendation references.
+- Export-safe representation.
+- Summary/master assistant payload.
+- Future expansion slots.
+
+Do not build the visual first and then retrofit data later.

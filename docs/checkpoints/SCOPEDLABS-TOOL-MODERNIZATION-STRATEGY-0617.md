@@ -141,3 +141,42 @@ Category-specific modules, tool-specific planner sections, and different visual 
 However, future agents should not redesign every page independently.
 
 A page should only break the standard layout when it is intentionally marked SPECIAL_PATH or SKIP_SPECIAL_PATH with a written reason.
+
+## Added Guardrail: Profile Approval And Data Contract First
+
+The user locked in additional modernization rules:
+
+- Profile Approval Gate.
+- Data Contract First.
+- Tool Lock Checklist.
+- No Mixed Commits.
+- Module Maturity Status.
+
+Before modifying a tool page, create or update its planning profile and data contract.
+
+The intended sequence is:
+
+1. Read.
+2. Profile.
+3. Discuss.
+4. Approve.
+5. Plan modules.
+6. Implement.
+7. Audit.
+8. Live review.
+9. Lock.
+
+Do not start with page patches.
+
+A tool is not complete until planner inputs, data contract, module wiring, visual/icon decision, assistant/export/snapshot/pipeline decisions, summary/master assistant publishing, audits, live review, named WATCH/SKIP items, commit, and clean working tree are addressed.
+
+Shared modules should be labeled as:
+
+- PROPOSED
+- PROOF
+- ACTIVE
+- LOCKED
+- LEGACY
+- DEPRECATED
+
+Keep commits scoped to one intentional lane.

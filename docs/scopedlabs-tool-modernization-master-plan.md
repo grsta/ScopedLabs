@@ -562,3 +562,154 @@ Examples:
 - Tool that does not use the standard calculator output shell.
 
 Special paths must still be documented in the category planning profile and audits.
+
+## Profile Approval Gate
+
+Do not wire modules into a tool until its category/tool planning profile has been reviewed and accepted.
+
+Required sequence:
+
+1. Read the current tool/category.
+2. Create or update the planning profile.
+3. Document current behavior.
+4. Document missing planner inputs.
+5. Document visual/icon needs.
+6. Document assistant/export/snapshot/pipeline needs.
+7. Discuss and approve the intended direction.
+8. Only then apply shell/module/page changes.
+
+This prevents tools from being modernized before the desired planner behavior is understood.
+
+---
+
+## Data Contract First
+
+Before visuals, export, assistant, summary, or pipeline work, define what structured data the tool publishes.
+
+Each tool data contract should identify:
+
+- Input fields.
+- Output/result fields.
+- Derived calculation fields.
+- Assumptions.
+- Risks.
+- Recommendation references.
+- Assistant notes.
+- Visual payload fields.
+- Export/report payload fields.
+- Snapshot payload fields.
+- Pipeline/carry-forward fields.
+- Summary/master assistant publish fields.
+- Future capability slots.
+
+Do not build a visual or assistant card first and then guess what data should carry forward.
+
+The data contract should come before module wiring.
+
+---
+
+## Tool Lock Checklist
+
+A tool is not considered modernized or locked until the closeout checklist is complete.
+
+Required closeout items:
+
+- Planning profile reviewed.
+- Data contract defined.
+- Shell/module plan approved.
+- Planner inputs accepted.
+- Visual/icon decision documented.
+- Local assistant decision documented.
+- Export/report decision documented.
+- Snapshot decision documented.
+- Pipeline/carry-forward decision documented.
+- Summary/master assistant publish behavior documented.
+- Required shared modules wired.
+- Required audits passed.
+- Named WATCH/SKIP/SPECIAL items documented.
+- Live review completed where required.
+- Commit pushed.
+- Git working tree clean.
+
+Do not call a tool complete if major sections are left as vague future polish.
+
+---
+
+## No Mixed Commits Rule
+
+Keep commits scoped to one intentional lane.
+
+Preferred commit types:
+
+- Docs strategy update.
+- Audit script addition/update.
+- Module map update.
+- Shared module implementation.
+- Category profile update.
+- Single tool closeout.
+- Category shell/summary shell closeout.
+
+Avoid mixing unrelated changes such as:
+
+- Strategy docs plus page redesign.
+- RAM visual changes plus unrelated Access Control fixes.
+- Audit creation plus broad page rewrites.
+- Module map changes plus unrelated UI polish.
+
+Mixed commits make rollback harder and confuse future agents.
+
+If a commit must include multiple files, the files should all support the same named lane.
+
+---
+
+## Module Maturity Status
+
+Shared modules should have a documented maturity state.
+
+Allowed statuses:
+
+- PROPOSED
+  - Planned but not implemented.
+  - May be listed in strategy docs, but should not be added to module map as implemented.
+
+- PROOF
+  - Exists and is being validated on one or two reference tools.
+  - May still have WATCH items.
+
+- ACTIVE
+  - Safe for normal tool wiring.
+  - Has audit coverage or clear usage proof.
+
+- LOCKED
+  - Accepted reference module.
+  - Do not redesign without a deliberate lane.
+
+- LEGACY
+  - Existing older behavior still used by some pages.
+  - Should be preserved until replaced safely.
+
+- DEPRECATED
+  - Should not be used for new work.
+  - Replacement path should be documented.
+
+When adding or changing a shared module, document its status and update docs/scopedlabs-module-map.md when applicable.
+
+---
+
+## Before Tool Page Modification Rule
+
+Before modifying any tool page, create or update that tool's planning profile and data contract.
+
+Required order:
+
+1. Read.
+2. Profile.
+3. Discuss.
+4. Approve.
+5. Plan modules.
+6. Implement.
+7. Audit.
+8. Live review.
+9. Lock.
+
+Do not start with page patches.
