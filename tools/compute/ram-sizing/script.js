@@ -135,7 +135,271 @@
 
     hasResult = false;
     hideContinue();
+    invalidateRamExportState();
     refreshFlowNote();
+  }
+
+
+  function ramProofNumber(value, digits) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return "0.0";
+    return n.toFixed(typeof digits === "number" ? digits : 1);
+  }
+
+  function ramProofPercent(value, digits) {
+    return ramProofNumber(value, typeof digits === "number" ? digits : 0) + "%";
+  }
+
+  function ramProofClamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function ramProofStatusLabel(status) {
+    if (status === "RISK") return "Risk";
+    if (status === "WATCH") return "Watch";
+    return "Good";
+  }
+
+  function ramProofStatusColor(status) {
+    if (status === "RISK") return "#ef4444";
+    if (status === "WATCH") return "#f59e0b";
+    return "#22c55e";
+  }
+
+  function ramProofMarkerHtml(marker, tone) {
+    const color = tone === "blue" ? "#38d9ff" : tone === "purple" ? "#a78bfa" : "#f59e0b";
+    return '<span style="display:inline-flex;align-items:center;justify-content:center;min-width:2.1rem;padding:.18rem .45rem;border-radius:.45rem;border:1px solid ' + color + ';color:' + color + ';background:rgba(255,255,255,.035);font-weight:800;font-size:.78rem;letter-spacing:.02em;">' + marker + '</span>';
+  }
+
+  function ramProofEscape(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function buildRamCapacityEnvelopeSvg(model) {
+    const width = 760;
+    const height = 430;
+    const left = 82;
+    const right = 690;
+    const top = 72;
+    const bottom = 342;
+    const usableWidth = right - left;
+    const recommended = Math.max(1, Number(model.recommended) || 1);
+    const subtotalMemory = Math.max(0, Number(model.subtotalMemory) || 0);
+    const totalRequired = Math.max(0, Number(model.totalRequired) || 0);
+    const memoryHeadroom = Math.max(0, Number(model.memoryHeadroom) || 0);
+    const reserveRatio = Math.max(0, Number(model.reserveRatio) || 0);
+    const status = model.status || "HEALTHY";
+    const statusColor = ramProofStatusColor(status);
+
+    const xFor = function(value) {
+      return left + ramProofClamp(value / recommended, 0, 1.12) * usableWidth;
+    };
+
+    const demandX = xFor(subtotalMemory);
+    const requiredX = xFor(totalRequired);
+    const installedX = xFor(recommended);
+    const reserveWidth = Math.max(0, requiredX - demandX);
+    const headroomWidth = Math.max(0, installedX - requiredX);
+
+    const pressurePct = ramProofClamp((totalRequired / recommended) * 100, 0, 140);
+    const pressureX = left + ramProofClamp(pressurePct / 112, 0, 1) * usableWidth;
+
+    return '<svg viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="RAM Capacity Envelope" style="width:100%;height:auto;display:block;">' +
+      '<defs>' +
+        '<linearGradient id="ramBg" x1="0" x2="1" y1="0" y2="1"><stop offset="0%" stop-color="#101923"/><stop offset="100%" stop-color="#05070b"/></linearGradient>' +
+        '<filter id="ramGlow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>' +
+      '</defs>' +
+      '<rect x="0" y="0" width="' + width + '" height="' + height + '" rx="18" fill="url(#ramBg)"/>' +
+      '<g opacity=".18" stroke="#9fb3c8" stroke-width="1">' +
+        '<path d="M82 92H690M82 132H690M82 172H690M82 212H690M82 252H690M82 292H690M82 332H690"/>' +
+        '<path d="M142 72V350M202 72V350M262 72V350M322 72V350M382 72V350M442 72V350M502 72V350M562 72V350M622 72V350"/>' +
+      '</g>' +
+      '<text x="82" y="42" fill="#e6edf3" font-size="22" font-weight="800">RAM Capacity Envelope</text>' +
+      '<text x="82" y="62" fill="#8ea0b4" font-size="12">How close this memory plan is to the installed RAM edge after workload, reserve, and CPU context.</text>' +
+      '<g>' +
+        '<rect x="' + left + '" y="' + top + '" width="' + (usableWidth * .65) + '" height="52" rx="12" fill="rgba(34,197,94,.18)" stroke="rgba(34,197,94,.35)"/>' +
+        '<rect x="' + (left + usableWidth * .65) + '" y="' + top + '" width="' + (usableWidth * .20) + '" height="52" rx="12" fill="rgba(245,158,11,.18)" stroke="rgba(245,158,11,.35)"/>' +
+        '<rect x="' + (left + usableWidth * .85) + '" y="' + top + '" width="' + (usableWidth * .15) + '" height="52" rx="12" fill="rgba(239,68,68,.18)" stroke="rgba(239,68,68,.35)"/>' +
+        '<text x="' + (left + 16) + '" y="' + (top + 31) + '" fill="#86efac" font-size="12" font-weight="800">GOOD</text>' +
+        '<text x="' + (left + usableWidth * .65 + 16) + '" y="' + (top + 31) + '" fill="#fbbf24" font-size="12" font-weight="800">WATCH</text>' +
+        '<text x="' + (left + usableWidth * .85 + 16) + '" y="' + (top + 31) + '" fill="#f87171" font-size="12" font-weight="800">RISK</text>' +
+      '</g>' +
+      '<g transform="translate(0,154)">' +
+        '<rect x="' + left + '" y="0" width="' + usableWidth + '" height="64" rx="13" fill="rgba(255,255,255,.045)" stroke="rgba(148,163,184,.42)"/>' +
+        '<rect x="' + left + '" y="0" width="' + Math.max(0, demandX - left) + '" height="64" rx="13" fill="rgba(56,217,255,.20)" stroke="rgba(56,217,255,.38)"/>' +
+        '<rect x="' + demandX + '" y="0" width="' + reserveWidth + '" height="64" fill="rgba(167,139,250,.22)" stroke="rgba(167,139,250,.38)"/>' +
+        '<rect x="' + requiredX + '" y="0" width="' + headroomWidth + '" height="64" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.30)"/>' +
+        '<path d="M' + demandX + ' -12V80" stroke="#38d9ff" stroke-width="2" stroke-dasharray="5 5"/>' +
+        '<path d="M' + requiredX + ' -12V80" stroke="#a78bfa" stroke-width="2" stroke-dasharray="5 5"/>' +
+        '<path d="M' + installedX + ' -12V80" stroke="#e6edf3" stroke-width="2"/>' +
+        '<text x="' + left + '" y="-22" fill="#8ea0b4" font-size="12">Installed capacity model</text>' +
+        '<text x="' + left + '" y="96" fill="#38d9ff" font-size="12">*1 Demand basis: ' + ramProofNumber(subtotalMemory, 1) + ' GB</text>' +
+        '<text x="' + Math.max(left + 230, demandX - 36) + '" y="96" fill="#a78bfa" font-size="12">*2 Required: ' + ramProofNumber(totalRequired, 1) + ' GB</text>' +
+        '<text x="' + Math.max(left + 430, installedX - 82) + '" y="96" fill="#e6edf3" font-size="12">Installed tier: ' + ramProofNumber(recommended, 0) + ' GB</text>' +
+      '</g>' +
+      '<g transform="translate(82,292)">' +
+        '<text x="0" y="0" fill="#e6edf3" font-size="13" font-weight="800">STATUS</text>' +
+        '<text x="0" y="26" fill="' + statusColor + '" font-size="26" font-weight="900" filter="url(#ramGlow)">' + ramProofStatusLabel(status).toUpperCase() + '</text>' +
+        '<text x="210" y="0" fill="#e6edf3" font-size="13" font-weight="800">USABLE HEADROOM</text>' +
+        '<text x="210" y="26" fill="#fbbf24" font-size="24" font-weight="900">' + ramProofNumber(memoryHeadroom, 1) + ' GB</text>' +
+        '<text x="430" y="0" fill="#e6edf3" font-size="13" font-weight="800">RESERVE RATIO</text>' +
+        '<text x="430" y="26" fill="#c4b5fd" font-size="24" font-weight="900">' + ramProofPercent(reserveRatio, 1) + '</text>' +
+      '</g>' +
+      '<path d="M' + pressureX + ' 70V350" stroke="' + statusColor + '" stroke-width="2" opacity=".75"/>' +
+      '<text x="' + Math.max(left, Math.min(pressureX - 72, right - 170)) + '" y="374" fill="' + statusColor + '" font-size="12" font-weight="800">Capacity pressure ' + ramProofPercent(pressurePct, 0) + '</text>' +
+      '<text x="82" y="404" fill="#66788e" font-size="11">*3 Downstream validation should compare this RAM envelope against Storage IOPS, VM density, and observed memory telemetry.</text>' +
+    '</svg>';
+  }
+
+  function buildRamRecommendationReferences(model) {
+    return [
+      {
+        marker: "*1",
+        tone: "blue",
+        reference: "Demand basis",
+        reason: "Concurrent processes or VMs multiplied by average RAM footprint, then adjusted by workload type."
+      },
+      {
+        marker: "*2",
+        tone: "purple",
+        reference: "Reserve pressure",
+        reason: "OS/base overhead and cache/headroom reserve determine how much of the installed RAM tier remains usable."
+      },
+      {
+        marker: "*3",
+        tone: "amber",
+        reference: "Downstream validation",
+        reason: "CPU coupling and the next Storage IOPS step should confirm memory is not masking another bottleneck."
+      }
+    ];
+  }
+
+  function buildRamDecisionSchedule(model) {
+    const status = model.status || "HEALTHY";
+    const recommended = ramProofNumber(model.recommended, 0) + " GB";
+    const required = ramProofNumber(model.totalRequired, 1) + " GB";
+    const headroom = ramProofNumber(model.memoryHeadroom, 1) + " GB";
+    const reserve = ramProofPercent(model.reserveRatio, 1);
+    const action = status === "RISK"
+      ? "Increase installed RAM tier, reduce density, or lower per-process footprint before continuing."
+      : status === "WATCH"
+        ? "Validate burst behavior, cache use, and growth margin before locking the hardware tier."
+        : "Proceed to Storage IOPS validation while preserving the documented reserve assumptions.";
+
+    return [
+      {
+        item: "Recommended installed RAM tier",
+        value: recommended,
+        decision: "Installed tier is rounded above the calculated requirement of " + required + "."
+      },
+      {
+        item: "Usable headroom",
+        value: headroom,
+        decision: "Remaining installed capacity after workload, base overhead, and reserve are applied."
+      },
+      {
+        item: "Reserve ratio",
+        value: reserve,
+        decision: "Reserve should remain large enough to absorb cache behavior, workload spikes, and growth."
+      },
+      {
+        item: "Next validation",
+        value: ramProofStatusLabel(status),
+        decision: action
+      }
+    ];
+  }
+
+  function renderRamProofSections(model) {
+    if (!els.results) return;
+
+    const old = document.getElementById("ram-proof-sections");
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+
+    const recommendationReferences = buildRamRecommendationReferences(model);
+    const decisionSchedule = buildRamDecisionSchedule(model);
+    const wrap = document.createElement("div");
+    wrap.id = "ram-proof-sections";
+    wrap.setAttribute("data-ram-proof-section", "true");
+    wrap.style.gridColumn = "1 / -1";
+    wrap.style.marginTop = "14px";
+
+    const referenceRows = recommendationReferences.map(function(row) {
+      return '<tr>' +
+        '<td style="padding:.55rem .6rem;border-top:1px solid rgba(148,163,184,.18);vertical-align:top;">' + ramProofMarkerHtml(row.marker, row.tone) + '</td>' +
+        '<td style="padding:.55rem .6rem;border-top:1px solid rgba(148,163,184,.18);vertical-align:top;color:#e6edf3;font-weight:750;">' + ramProofEscape(row.reference) + '</td>' +
+        '<td style="padding:.55rem .6rem;border-top:1px solid rgba(148,163,184,.18);vertical-align:top;color:#9fb0c4;">' + ramProofEscape(row.reason) + '</td>' +
+      '</tr>';
+    }).join("");
+
+    const decisionRows = decisionSchedule.map(function(row) {
+      return '<tr>' +
+        '<td style="padding:.55rem .6rem;border-top:1px solid rgba(148,163,184,.18);vertical-align:top;color:#e6edf3;font-weight:750;">' + ramProofEscape(row.item) + '</td>' +
+        '<td style="padding:.55rem .6rem;border-top:1px solid rgba(148,163,184,.18);vertical-align:top;color:#fbbf24;font-weight:800;">' + ramProofEscape(row.value) + '</td>' +
+        '<td style="padding:.55rem .6rem;border-top:1px solid rgba(148,163,184,.18);vertical-align:top;color:#9fb0c4;">' + ramProofEscape(row.decision) + '</td>' +
+      '</tr>';
+    }).join("");
+
+    wrap.innerHTML =
+      '<section class="card" style="background:rgba(0,0,0,.18);border-color:rgba(56,217,255,.18);margin-top:14px;">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;">' +
+          '<div>' +
+            '<div class="pill" style="width:fit-content;border-color:rgba(56,217,255,.35);color:#38d9ff;background:rgba(56,217,255,.08);">RAM Planning Proof</div>' +
+            '<h3 class="h3" style="margin:10px 0 4px;">RAM Capacity Envelope</h3>' +
+            '<p class="muted" style="margin:0;">Capacity edge view for workload demand, reserve pressure, installed RAM tier, and downstream validation.</p>' +
+          '</div>' +
+          '<div style="font-weight:900;color:' + ramProofStatusColor(model.status) + ';letter-spacing:.04em;">' + ramProofStatusLabel(model.status).toUpperCase() + '</div>' +
+        '</div>' +
+        buildRamCapacityEnvelopeSvg(model) +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:12px;">' +
+          '<div class="card" style="background:rgba(255,255,255,.035);"><div class="muted">Calculated requirement</div><strong>' + ramProofNumber(model.totalRequired, 1) + ' GB</strong></div>' +
+          '<div class="card" style="background:rgba(255,255,255,.035);"><div class="muted">Recommended installed RAM tier</div><strong>' + ramProofNumber(model.recommended, 0) + ' GB</strong></div>' +
+          '<div class="card" style="background:rgba(255,255,255,.035);"><div class="muted">Usable headroom</div><strong>' + ramProofNumber(model.memoryHeadroom, 1) + ' GB</strong></div>' +
+        '</div>' +
+      '</section>' +
+      '<section class="card" style="background:rgba(0,0,0,.18);border-color:rgba(167,139,250,.18);margin-top:14px;">' +
+        '<h3 class="h3" style="margin-top:0;">Recommendation References</h3>' +
+        '<p class="muted">Plain-language proof markers for the RAM recommendation.</p>' +
+        '<table style="width:100%;border-collapse:collapse;font-size:.92rem;">' +
+          '<thead><tr>' +
+            '<th style="text-align:left;padding:.45rem .6rem;color:#8ea0b4;">Marker</th>' +
+            '<th style="text-align:left;padding:.45rem .6rem;color:#8ea0b4;">Reference</th>' +
+            '<th style="text-align:left;padding:.45rem .6rem;color:#8ea0b4;">Reason</th>' +
+          '</tr></thead>' +
+          '<tbody>' + referenceRows + '</tbody>' +
+        '</table>' +
+      '</section>' +
+      '<section class="card" style="background:rgba(0,0,0,.18);border-color:rgba(245,158,11,.18);margin-top:14px;">' +
+        '<h3 class="h3" style="margin-top:0;">RAM Capacity Decision Schedule</h3>' +
+        '<p class="muted">Decision-ready summary of the installed RAM tier, usable headroom, reserve ratio, and next validation step.</p>' +
+        '<table style="width:100%;border-collapse:collapse;font-size:.92rem;">' +
+          '<thead><tr>' +
+            '<th style="text-align:left;padding:.45rem .6rem;color:#8ea0b4;">Item</th>' +
+            '<th style="text-align:left;padding:.45rem .6rem;color:#8ea0b4;">Value</th>' +
+            '<th style="text-align:left;padding:.45rem .6rem;color:#8ea0b4;">Decision</th>' +
+          '</tr></thead>' +
+          '<tbody>' + decisionRows + '</tbody>' +
+        '</table>' +
+      '</section>';
+
+    els.results.appendChild(wrap);
+  }
+
+  function refreshRamExportState() {
+    if (window.ScopedLabsExport && typeof window.ScopedLabsExport.refresh === "function") {
+      window.ScopedLabsExport.refresh();
+    }
+  }
+
+  function invalidateRamExportState() {
+    if (window.ScopedLabsExport && typeof window.ScopedLabsExport.invalidate === "function") {
+      window.ScopedLabsExport.invalidate();
+    }
   }
 
   function calc() {
@@ -285,6 +549,32 @@
       }
     });
 
+    const ramProofModel = {
+      workload,
+      concurrency,
+      perProc,
+      osGb,
+      headroomPct,
+      processMemory,
+      adjustedWorkloadMemory,
+      subtotalMemory,
+      reservedMemory,
+      totalRequired,
+      recommended,
+      memoryHeadroom,
+      reserveRatio,
+      status: analyzer.status,
+      dominantConstraint,
+      cpuCoupling
+    };
+
+    const recommendationReferences = buildRamRecommendationReferences(ramProofModel);
+    const ramDecisionSchedule = buildRamDecisionSchedule(ramProofModel);
+    ramProofModel.recommendationReferences = recommendationReferences;
+    ramProofModel.ramDecisionSchedule = ramDecisionSchedule;
+    renderRamProofSections(ramProofModel);
+    refreshRamExportState();
+
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
       category: CATEGORY,
       step: STEP,
@@ -294,7 +584,9 @@
         reserveRatio,
         dominantConstraint,
         workload,
-        status: analyzer.status
+        status: analyzer.status,
+        recommendationReferences,
+        ramDecisionSchedule
       }
     });
 
