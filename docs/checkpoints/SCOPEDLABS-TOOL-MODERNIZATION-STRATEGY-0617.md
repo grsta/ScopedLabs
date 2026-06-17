@@ -99,3 +99,29 @@ At the time this strategy was created, the user had one modified file:
 ```
 
 Do not accidentally mix unrelated RAM shell recovery changes with the strategy documentation unless intentionally committing them together.
+
+## Added Guardrail: Read-Only Audit Before Wiring
+
+The user clarified that audits should not immediately trigger page rewrites.
+
+The correct workflow is:
+
+1. Read/audit the tool/category.
+2. Discuss what the tool needs.
+3. Decide required planner inputs, modules, assistant behavior, export/snapshot/pipeline behavior, visual family, and icon needs.
+4. Document the decision in the category planning profile.
+5. Then wire the shell and selected modules.
+6. Run audits/live review.
+7. Commit and lock.
+
+Also include icon/graphics decisions in the planning profile.
+
+For every tool, decide whether it uses:
+
+- Existing shared icon.
+- New shared icon.
+- Existing visual family.
+- New visual family.
+- No visual/icon with documented reason.
+
+Do not create page-local one-off icons or graphics when the asset may belong in a shared library.

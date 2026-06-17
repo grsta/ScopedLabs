@@ -379,3 +379,75 @@ Every lookup must expose:
 - Assumptions or risks.
 
 Assistants must not browse broadly.
+
+## Read-Only Audit And Review Gate
+
+The planning audit phase is read-only.
+
+Do not rewrite pages directly from audit results.
+
+The audit should first inventory and document what each category/tool currently does. After the audit, the user and assistant should review the category profile and decide what each tool actually needs before any shell/module wiring is applied.
+
+Required order:
+
+1. Read/audit the current category and tool pages.
+2. Document current behavior.
+3. Discuss what each tool should become as a planner.
+4. Decide missing planner inputs.
+5. Decide required visual family.
+6. Decide required shared icons or graphics.
+7. Decide required assistant/export/snapshot/pipeline modules.
+8. Update the category planning profile.
+9. Only then wire the selected shell/modules into the tool.
+10. Run audits and live review.
+11. Commit and lock, or mark WATCH/SKIP/SPECIAL with a named reason.
+
+The audit is a planning discovery pass, not an automatic migration pass.
+
+---
+
+## Shared Icon And Graphics Review Gate
+
+During category planning, each tool should be reviewed for icon and graphics needs.
+
+For each tool, decide one of these:
+
+- Existing shared icon works.
+- Existing shared visual family works.
+- New icon is needed in a shared category library.
+- New visual family is needed.
+- No visual/icon is needed, with documented reason.
+
+Do not create page-local one-off icons when the icon may be reused by other tools.
+
+Shared icons and graphics should be added to the appropriate category visual library or promoted into a shared visual family module.
+
+Examples:
+
+Compute candidate icons:
+- server/node
+- CPU/core
+- memory/RAM
+- storage disk/array
+- network path
+- throughput/bottleneck
+- reserve/headroom
+
+Physical Security candidate icons:
+- camera
+- target
+- coverage cone
+- blind spot/obstruction
+- mounting pole/wall
+- zone/area marker
+
+Access Control candidate icons:
+- door opening
+- reader
+- lock
+- panel
+- elevator
+- credential/card
+- anti-passback zone
+
+Icon decisions should be documented in the category planning profile before implementation.

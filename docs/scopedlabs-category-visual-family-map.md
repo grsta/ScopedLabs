@@ -346,3 +346,34 @@ Example capability groups:
 - crossCategoryHandoff
 
 A module can be planned as future without blocking the current closeout, but it must be named with a clear WATCH reason.
+
+## Audit Review Gate For Visuals And Icons
+
+The visual family map should be used during the read-only audit and discussion phase.
+
+Do not use the audit to immediately rewrite tool pages.
+
+For each tool, the review should answer:
+
+1. Does the tool need a visual?
+2. Does it fit an existing visual family?
+3. Does it need a new reusable visual family?
+4. Does it need a shared icon from an existing library?
+5. Does a new icon need to be created and added to a shared library?
+6. Is there a justified no-visual/no-icon exemption?
+
+The result should be documented before shell/module wiring.
+
+Visual and icon work should follow this order:
+
+1. Identify visual/icon need.
+2. Decide shared family or shared library placement.
+3. Add/promote shared renderer or icon if needed.
+4. Update docs/scopedlabs-module-map.md when a real shared module path is added or changed.
+5. Run module map audit when required.
+6. Wire the tool to the selected shared visual/icon module.
+7. Run category/tool audits.
+8. Live review.
+9. Commit and lock.
+
+This prevents one-off page graphics and prevents tools from being revisited repeatedly for visual modernization.
