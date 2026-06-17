@@ -90,6 +90,7 @@ heading("SHARED COMPUTE CAPACITY MODULE WIRING");
 
 passCheck("shared capacity module exists", has(capacityVisuals, "ScopedLabsComputeCapacityVisuals"));
 passCheck("shared module owns RAM Capacity Envelope SVG builder", has(capacityVisuals, "function buildRamCapacityEnvelopeSvg"));
+passCheck("shared module uses CPU proof marker palette", has(capacityVisuals, "#38d9ff") && has(capacityVisuals, "#a78bfa") && has(capacityVisuals, "#f59e0b"));
 passCheck("shared module exports RAM capacity renderer", has(capacityVisuals, "renderRamCapacityEnvelope"));
 passCheck("shared module exports clear helper", has(capacityVisuals, "clear"));
 passCheck("shared Compute visual CSS includes capacity extension", has(visualCss, "scopedlabs-compute-capacity-visuals-001"));
