@@ -11,6 +11,7 @@ function check(id, ok, file, detail) {
 
 const state = read("assets/scopedlabs-compute-plan-state.js");
 const cpu = read("tools/compute/cpu-sizing/script.js");
+const cpuIndex = read("tools/compute/cpu-sizing/index.html");
 const ram = read("tools/compute/ram-sizing/script.js");
 
 check(
@@ -58,6 +59,15 @@ check(
     cpu.includes("els.workloadPattern.value"),
   "tools/compute/cpu-sizing/script.js",
   "CPU workload pattern should hydrate from planner demand pattern/profile where possible."
+);
+
+check(
+  "CPU_MAPS_PLANNER_BURSTY_DEMAND_TO_BURST_HEAVY",
+  cpu.includes('bursty: "burstHeavy"') &&
+    cpu.includes("burstHeavy: 1.22") &&
+    cpuIndex.includes("Burst-heavy / queue spikes"),
+  "tools/compute/cpu-sizing/script.js",
+  "Planner Demand value Bursty should hydrate CPU Workload Pattern to Burst-heavy / queue spikes."
 );
 
 check(

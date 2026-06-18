@@ -566,3 +566,9 @@ Example:
 - `tools/compute/cpu-sizing/script.js` hydrates CPU workload, workload pattern, target utilization, and growth reserve from the active Compute Workload Planner context.
 - `tools/compute/ram-sizing/script.js` reads planner context from the upstream CPU result and carries planner/upstream CPU context forward without conflating RAM headroom with planner growth margin.
 - Non-goals: visual module changes, CPU/RAM capacity-envelope chart changes, export.js changes, auth, checkout, Knowledge Base behavior, and page layout redesign.
+
+### Compute planner Bursty demand carryover
+
+- `tools/compute/cpu-sizing/script.js` maps Workload Planner Demand `Bursty` to CPU Workload Pattern `burstHeavy`.
+- `scripts/audit-compute-planner-carryover-contract-v1.js` protects the Bursty -> Burst-heavy carryover alias.
+- Non-goals: RAM behavior, visual modules, export.js, auth, checkout, Knowledge Base behavior, and page layout redesign.

@@ -1921,3 +1921,11 @@ Decision: Planner context now hydrates CPU Sizing inputs where the meaning is eq
 Downstream: CPU Sizing carries planner context into the CPU pipeline payload so RAM Sizing can read planner target/growth context alongside the upstream CPU result. RAM does not silently map planner growth margin into RAM headroom because RAM headroom is an operating/cache reserve, not the same planning concept as future workload growth.
 
 Audit: `scripts/audit-compute-planner-carryover-contract-v1.js` protects planner-to-CPU hydration, CPU-to-RAM planner context carryover, and the RAM headroom/growth distinction.
+
+### Compute planner Bursty demand alias - 2026-06-17
+
+Finding: The Workload Planner can display/store Demand Pattern as `Bursty`, while CPU Sizing expects its matching input value to be `burstHeavy` for the `Burst-heavy / queue spikes` option.
+
+Decision: CPU carryover normalization maps planner `Bursty` to CPU `burstHeavy` so planner Demand hydrates CPU Workload Pattern instead of falling back to `Steady / predictable`.
+
+Audit: `scripts/audit-compute-planner-carryover-contract-v1.js` checks the Bursty -> Burst-heavy mapping.

@@ -221,6 +221,7 @@
       "business-hours-peak": "businessPeak",
       peak: "businessPeak",
       burst: "burstHeavy",
+      bursty: "burstHeavy",
       "burst-heavy": "burstHeavy",
       "queue-spikes": "burstHeavy",
       batch: "scheduledBatch",
