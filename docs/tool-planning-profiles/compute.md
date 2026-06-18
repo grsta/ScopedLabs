@@ -769,3 +769,257 @@ Required next step: review planner inputs, data contracts, visual families, shar
 ## Lock Status
 
 This category is not locked by this audit. This profile must be reviewed and refined before tool/page modernization.
+
+## Human-Reviewed Compute Direction
+
+Status: REVIEW_BASELINE
+
+This section converts the read-only audit output into the first human-readable Compute planning direction.
+
+No tool pages should be modified from this section alone. This is the review baseline for deciding tool data contracts, visual families, icons, assistants, export/report behavior, snapshot behavior, pipeline carry-forward, and summary/master assistant needs.
+
+---
+
+## Compute Category Architecture Direction
+
+The Compute category should be treated as a full planning system.
+
+Expected category structure:
+
+- `/tools/compute/`
+  - Planner / command page.
+  - Starts or resumes the Compute planning workflow.
+  - Shows core path and optional/specialty branches.
+  - Should eventually show category planning state and next-step guidance.
+
+- `/tools/compute/summary/`
+  - Future summary / master assistant / report page.
+  - Should oversee completed Compute tools.
+  - Should synthesize CPU, RAM, storage, network, GPU, density, backup, RAID, and power/thermal findings.
+  - Should produce category-level recommendations, assumptions, risks, conflicts/gaps, export/report sections, and cross-category handoff data.
+
+Current audit note:
+- Compute planner/command page exists.
+- Compute summary/master assistant page is not yet present and should be planned before final category closeout.
+
+---
+
+## Compute Visual Family Direction
+
+Compute should not use one-off page visuals for related planning concepts.
+
+Likely Compute visual families:
+
+### compute-capacity-envelope
+
+Purpose:
+- Show how close resource sizing is to a capacity edge.
+- Analytical chart style.
+- Should use accepted CPU-style proof rhythm when promoted into the shared family.
+
+Known tools:
+- CPU Sizing: accepted/reference style.
+- RAM Sizing: proof consumer needing shared visual family alignment.
+
+### compute-iops-latency
+
+Purpose:
+- Show storage performance pressure, IOPS, latency, rebuild timing, and reserve.
+
+Likely tools:
+- Storage IOPS.
+- RAID Rebuild Time.
+- Backup Window when storage/time pressure is relevant.
+
+### compute-throughput-envelope
+
+Purpose:
+- Show bandwidth, throughput pressure, redundancy, and bottleneck risk.
+
+Likely tools:
+- Storage Throughput.
+- NIC Bonding.
+
+### compute-resource-density
+
+Purpose:
+- Show VM/resource density, consolidation pressure, GPU memory pressure, or node allocation.
+
+Likely tools:
+- VM Density.
+- GPU VRAM.
+- Power/Thermal when resource envelope context is needed.
+
+### compute-icon-library
+
+Purpose:
+- Shared Compute icon primitives for visual modules.
+
+Candidate icons:
+- CPU/core.
+- RAM/memory.
+- Disk/array.
+- NIC/network path.
+- GPU.
+- Thermal/power.
+- VM/node.
+- Backup window/time.
+- RAID/rebuild.
+- Throughput/bottleneck.
+- Reserve/headroom.
+
+Icon decisions must be documented before implementation. Do not create page-local icons when they may belong in the shared Compute icon library.
+
+---
+
+## Compute Tool Grouping From Audit
+
+### CPU Sizing
+
+Current audit status:
+- PASS.
+- Current reference-style Compute tool.
+- Has inputs, results, visual, assistant, export, snapshot, pipeline, flow, and Knowledge Base signals.
+
+Planning direction:
+- Treat as the Compute capacity-envelope visual reference.
+- Review data contract before moving renderer into shared family.
+- Do not redesign casually.
+
+Needed review:
+- Data contract.
+- Shared capacity visual promotion path.
+- Summary/master assistant publish fields.
+- Export/report payload status.
+
+### RAM Sizing
+
+Current audit status:
+- PASS.
+- Has inputs, results, visual, assistant, export, snapshot, pipeline, flow, and Knowledge Base signals.
+
+Planning direction:
+- Treat as first proof consumer of the Compute capacity-envelope family.
+- Do not patch RAM page-local visuals to imitate CPU.
+- Align through shared Compute capacity visual module after data contract review.
+
+Needed review:
+- Data contract.
+- RAM-specific planner inputs.
+- Capacity-envelope payload.
+- Summary/master assistant publish fields.
+- Export/report payload status.
+
+### Storage IOPS
+
+Current audit status:
+- WATCH_ASSISTANT_NOT_DETECTED.
+
+Planning direction:
+- Likely needs compute-iops-latency visual family.
+- Needs local assistant planning.
+- Needs data contract before module wiring.
+
+### Storage Throughput
+
+Current audit status:
+- WATCH_ASSISTANT_NOT_DETECTED.
+
+Planning direction:
+- Likely needs compute-throughput-envelope visual family.
+- Needs local assistant planning.
+- Needs data contract before module wiring.
+
+### NIC Bonding
+
+Current audit status:
+- WATCH_ASSISTANT_NOT_DETECTED.
+
+Planning direction:
+- Likely belongs to compute-throughput-envelope or redundancy/bottleneck visual family.
+- Needs local assistant planning.
+- Needs data contract before module wiring.
+
+### RAID Rebuild Time
+
+Current audit status:
+- WATCH_ASSISTANT_NOT_DETECTED.
+
+Planning direction:
+- Likely needs storage risk/time visual family.
+- May share with compute-iops-latency or backup/time family.
+- Needs local assistant planning.
+- Needs data contract before module wiring.
+
+### Backup Window
+
+Current audit status:
+- WATCH_ASSISTANT_NOT_DETECTED.
+
+Planning direction:
+- Likely needs backup/time/risk visual family.
+- May share storage/time pressure visuals with RAID Rebuild Time.
+- Needs local assistant planning.
+- Needs data contract before module wiring.
+
+### VM Density
+
+Current audit status:
+- WATCH_ASSISTANT_NOT_DETECTED.
+
+Planning direction:
+- Likely needs compute-resource-density visual family.
+- Needs local assistant planning.
+- Needs data contract before module wiring.
+
+### GPU VRAM
+
+Current audit status:
+- WATCH_ASSISTANT_NOT_DETECTED.
+
+Planning direction:
+- Likely needs memory/resource pressure visual family.
+- May share pieces with compute-resource-density or capacity-envelope depending on planner goal.
+- Needs local assistant planning.
+- Needs data contract before module wiring.
+
+### Power Thermal
+
+Current audit status:
+- WATCH_ASSISTANT_NOT_DETECTED.
+
+Planning direction:
+- Likely needs power/thermal envelope or icon-based visual family.
+- Needs local assistant planning.
+- Needs data contract before module wiring.
+
+### Workload Planner
+
+Current audit status:
+- PASS as CANDIDATE_SPECIAL_OR_PLANNER_PATH.
+- No calculator inputs/results detected by the audit.
+
+Planning direction:
+- Review as a possible Compute planner helper or special path.
+- Do not force into normal calculator tool shell without review.
+- May belong closer to the Compute planner/command workflow.
+
+---
+
+## Compute Closeout Rule
+
+Do not modify Compute tool pages until the relevant tool's planning profile and data contract are reviewed.
+
+Required sequence:
+
+1. Read current tool.
+2. Review or update this profile.
+3. Define data contract.
+4. Decide planner inputs.
+5. Decide visual family and icon needs.
+6. Decide assistant/export/snapshot/pipeline/summary publish needs.
+7. Approve module plan.
+8. Implement.
+9. Audit.
+10. Live review.
+11. Lock.
