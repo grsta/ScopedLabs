@@ -585,3 +585,10 @@ Example:
 - `tools/compute/cpu-sizing/index.html` should render Back to Workload Planner and Continue to RAM Sizing in one `compute-flow-actions` row after Export Report.
 - Back remains visible; Continue keeps `id="continue-wrap"` and `id="continue"` so existing show/hide and route logic still works.
 - Non-goals: CPU math, RAM behavior, capacity-envelope visual module, export.js, auth, checkout, Knowledge Base behavior, and page redesign.
+
+### Compute flow actions shell contract
+
+- `assets/scopedlabs-compute-shell-contract.js` version `scopedlabs-compute-shell-contract-002-flow-actions` owns Compute Back/Continue flow-action styling and label normalization.
+- `tools/compute/cpu-sizing/index.html` and `tools/compute/ram-sizing/index.html` use shell-owned `data-compute-flow-owner="compute-shell-contract"` action rows while preserving existing `continue-wrap` / `continue` IDs for page scripts.
+- `scripts/audit-compute-flow-actions-shell-contract-v1.js` verifies shell ownership, duplicate-ID prevention, route targets, and safe arrow entity rendering.
+- Non-goals: CPU math, RAM math, capacity-envelope visuals, export.js, auth, checkout, Knowledge Base behavior, and page redesign.

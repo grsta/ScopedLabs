@@ -1,6 +1,8 @@
 (function () {
   "use strict";
 
+  var VERSION = "scopedlabs-compute-shell-contract-002-flow-actions";
+
   function isComputeShellPage() {
     var body = document.body;
     return !!(
@@ -92,11 +94,42 @@
     });
   }
 
+
+  function normalizeContinueLabel(label) {
+    var text = String(label || "").replace(/\s+/g, " ").trim();
+
+    if (/storage\s+iops/i.test(text)) return "Continue &rarr; Storage IOPS";
+    if (/storage\s+throughput/i.test(text)) return "Continue &rarr; Storage Throughput";
+    if (/ram\s+sizing/i.test(text)) return "Continue &rarr; RAM Sizing";
+
+    return text ? text.replace(/\s+\?\s+/g, " &rarr; ") : "Continue &rarr; Next Step";
+  }
+
+  function normalizeFlowActions() {
+    if (!isComputeShellPage()) return;
+
+    Array.from(document.querySelectorAll(".compute-flow-actions")).forEach(function (row) {
+      row.setAttribute("data-compute-flow-actions", "true");
+
+      Array.from(row.querySelectorAll(".btn")).forEach(function (node) {
+        node.style.borderRadius = "10px";
+      });
+
+      Array.from(row.querySelectorAll("#continue, [data-compute-continue]")).forEach(function (node) {
+        var raw = String(node.textContent || node.innerHTML || "").replace(/\s+/g, " ").trim();
+        if (/^continue/i.test(raw)) {
+          node.innerHTML = normalizeContinueLabel(raw);
+        }
+      });
+    });
+  }
+
   function run() {
     if (!isComputeShellPage()) return;
     injectStyles();
     cleanKnowledgeBaseCard();
     cleanReportMetadata();
+    normalizeFlowActions();
   }
 
   function observe() {
@@ -117,6 +150,12 @@
     window.setTimeout(run, 250);
     window.setTimeout(run, 800);
   }
+
+  window.ScopedLabsComputeShellContract = Object.freeze({
+    version: VERSION,
+    run: run,
+    normalizeFlowActions: normalizeFlowActions
+  });
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", observe);
