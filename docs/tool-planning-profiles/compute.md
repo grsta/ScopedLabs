@@ -1023,3 +1023,243 @@ Required sequence:
 9. Audit.
 10. Live review.
 11. Lock.
+
+## CPU/RAM Capacity Envelope Data Contract Review
+
+Status: REVIEW_BASELINE
+
+This section documents the read-only inspection of CPU Sizing, RAM Sizing, and the current shared Compute capacity visual module.
+
+No tool page changes are approved by this section alone.
+
+---
+
+## Read-Only Inspection Summary
+
+### CPU Sizing
+
+CPU Sizing is the accepted Compute capacity-envelope reference.
+
+Current detected behavior:
+- Owns page-local CPU capacity visual builder:
+  - `buildComputeCpuVisualSvg(result)`
+  - `renderComputeCpuVisual(result)`
+- Owns page-local proof/reference sections:
+  - `buildComputeCpuRecommendationReferences(result)`
+  - `renderComputeCpuProofSections(result)`
+  - `buildComputeCpuDecisionScheduleHtml(result)`
+  - `buildComputeCpuRecommendationReferencesHtml(references)`
+- Owns custom export payload route:
+  - `buildComputeCpuExportPayload(context)`
+  - `window.ScopedLabsComputeCpuExport.buildPayload`
+- Writes CPU result into the Compute flow/workload state.
+- Renders local assistant/status card behavior.
+- Shows Continue only after a valid result.
+
+Planning meaning:
+- CPU has the accepted visual/proof/export behavior, but the visual engine is still page-local.
+- CPU should be treated as the reference for promoting the shared `compute-capacity-envelope` visual family.
+- CPU should not be redesigned during promotion.
+
+### RAM Sizing
+
+RAM Sizing is the first proof consumer of the shared Compute capacity visual module.
+
+Current detected behavior:
+- Loads and calls:
+  - `window.ScopedLabsComputeCapacityVisuals.renderRamCapacityEnvelope(...)`
+  - `window.ScopedLabsComputeCapacityVisuals.clear(...)`
+- Builds a local `ramCapacityEnvelope` object.
+- Writes `capacityEnvelope: ramCapacityEnvelope` into the Compute flow payload.
+- Shows Continue only after a valid result.
+- Does not currently show the same full custom export/proof route that CPU owns.
+
+Planning meaning:
+- RAM is already consuming the shared module.
+- RAM should not receive a page-local visual clone of CPU.
+- RAM should align with CPU only through the shared Compute capacity visual family.
+
+### Shared Compute Capacity Visual Module
+
+Current module:
+- `assets/scopedlabs-compute-capacity-visuals.js`
+
+Current detected status:
+- Version is currently RAM-envelope oriented.
+- Exposes:
+  - `buildRamCapacityEnvelopeSvg`
+  - `renderRamCapacityEnvelope`
+  - `clear`
+- Does not yet expose a shared base capacity-envelope renderer.
+- Does not yet expose a CPU adapter.
+- Does not yet own CPU's accepted visual/proof/export-safe behavior.
+
+Planning meaning:
+- The shared module exists, but it is not yet the final shared CPU/RAM capacity-envelope engine.
+- The next implementation should promote CPU's accepted style and proof rhythm into the shared module, then adapt CPU and RAM through that shared engine.
+
+---
+
+## Proposed Shared Capacity-Envelope Contract
+
+Future shared module direction:
+
+`assets/scopedlabs-compute-capacity-visuals.js` should evolve from a RAM-only renderer into a reusable Compute capacity-envelope family.
+
+Expected future exports:
+
+- `buildCapacityEnvelopeSvg(config)`
+  - Shared base renderer.
+  - Owns frame, grid, axis, status chip, marker rhythm, references, export-safe SVG behavior.
+- `buildCpuCapacityEnvelopeSvg(result)`
+  - CPU adapter using CPU units and fields.
+- `renderCpuCapacityEnvelope(options)`
+  - CPU DOM renderer.
+- `buildRamCapacityEnvelopeSvg(result)`
+  - RAM adapter using GB units and RAM fields.
+- `renderRamCapacityEnvelope(options)`
+  - RAM DOM renderer.
+- `clear(options)`
+  - Shared clear/hide behavior.
+
+The shared family should preserve the accepted CPU visual language:
+- Dark engineering/CAD graph surface.
+- Readable axes and numeric labels.
+- Rectangular engineering status chip.
+- Plain centered `*1/*2/*3` references.
+- CPU-approved marker colors:
+  - `*1 = #38d9ff`
+  - `*2 = #a78bfa`
+  - `*3 = #f59e0b`
+- Export-safe SVG output.
+- Recommendation reference support.
+- Summary/master assistant payload support.
+
+---
+
+## CPU Capacity Data Contract Candidate
+
+CPU capacity-envelope payload should include:
+
+### Inputs
+
+- Workload type.
+- Planning path.
+- Concurrency / worker count.
+- CPU per worker.
+- Peak multiplier.
+- Target utilization.
+- Growth reserve.
+- Platform overhead.
+- OS reserve.
+- Failover multiplier.
+
+### Outputs
+
+- Base CPU demand.
+- Adjusted effective demand.
+- Required cores.
+- Recommended logical cores.
+- Recommended physical cores.
+- Usable capacity.
+- Watch threshold.
+- Risk threshold.
+- Final envelope demand.
+- Primary constraint.
+- Analyzer status.
+- Envelope status.
+- Status authority.
+
+### Assistant / proof fields
+
+- Local recommendation.
+- Confidence/status label.
+- Recommendation references.
+- Decision schedule rows.
+- Downstream validation note.
+- Summary-ready assumption notes.
+- Summary-ready risk notes.
+- Summary/master assistant publish payload.
+
+### Export fields
+
+- Export status.
+- Export summary.
+- Engineering interpretation.
+- Input rows.
+- Output rows.
+- Chart image.
+- Recommendation reference section.
+- Decision schedule section.
+
+---
+
+## RAM Capacity Data Contract Candidate
+
+RAM capacity-envelope payload should include:
+
+### Inputs
+
+- Workload type.
+- Planning path.
+- Concurrency / process count.
+- Memory per process.
+- Workload adjustment factor.
+- OS/base overhead.
+- Reserve/cache allocation.
+- Growth reserve.
+- Failover/redundancy mode if applicable.
+- CPU coupling/alignment status.
+
+### Outputs
+
+- Process memory.
+- Adjusted workload memory.
+- OS/base overhead.
+- Reserve/cache allocation.
+- Demand RAM.
+- Required RAM.
+- Recommended/installed RAM tier.
+- Headroom.
+- Reserve ratio.
+- Pressure/status.
+- Analyzer status.
+- Capacity-envelope status.
+- Status authority.
+
+### Assistant / proof fields
+
+- Local recommendation.
+- Assumptions used.
+- Risk flags.
+- CPU/RAM alignment note.
+- Recommendation references.
+- Missing-input warnings.
+- Summary-ready notes.
+- Summary/master assistant publish payload.
+
+### Export fields
+
+- Export status.
+- Export summary.
+- Engineering interpretation.
+- Input rows.
+- Output rows.
+- Chart image from shared capacity module.
+- Recommendation reference section.
+- Decision/proof section if needed.
+
+---
+
+## Implementation Gate
+
+Do not implement yet until this data contract is reviewed and accepted.
+
+After approval, the implementation lane should be:
+
+1. Promote CPU's accepted capacity-envelope visual style into `assets/scopedlabs-compute-capacity-visuals.js`.
+2. Add a shared base renderer plus CPU/RAM adapters.
+3. Keep CPU visual output visually unchanged.
+4. Keep RAM consuming the shared module.
+5. Add audit checks proving CPU/RAM use the shared capacity-envelope family.
+6. Only then review export payload parity and summary/master assistant publishing.
