@@ -604,3 +604,10 @@ Example:
 - `tools/compute/ram-sizing/index.html` places the shell-owned Back/Continue row directly after the RAM Export Report section instead of below the main page card.
 - `scripts/audit-compute-flow-actions-shell-contract-v1.js` protects RAM action-row placement, route targets, duplicate-ID prevention, and safe arrow rendering.
 - Non-goals: RAM math, CPU math, capacity-envelope visuals, export.js, auth, checkout, Knowledge Base behavior, and broad page redesign.
+
+### Compute shell-owned flow action placement
+
+- `assets/scopedlabs-compute-shell-contract.js` version `scopedlabs-compute-shell-contract-004-flow-actions-placement` owns Compute Back/Continue row config, duplicate cleanup, row construction, and placement after Export Report.
+- CPU and RAM index files load the shell version but do not own static `compute-flow-actions`, `continue-wrap`, or `continue` markup.
+- `scripts/audit-compute-flow-actions-shell-contract-v1.js` verifies shell-owned route contracts, duplicate-ID removal, safe arrow entities, and idempotent observer behavior.
+- Non-goals: CPU math, RAM math, capacity-envelope visuals, export.js, auth, checkout, Knowledge Base behavior, and broad page redesign.

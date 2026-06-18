@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-compute-shell-contract-003-flow-actions-idempotent";
+  var VERSION = "scopedlabs-compute-shell-contract-004-flow-actions-placement";
 
   function isComputeShellPage() {
     var body = document.body;
@@ -95,6 +95,118 @@
   }
 
 
+
+  function computeFlowActionConfig() {
+    var path = String(window.location && window.location.pathname || "").replace(/\/+$/, "/");
+
+    if (path.indexOf("/tools/compute/cpu-sizing/") !== -1) {
+      return {
+        tool: "cpu-sizing",
+        backHref: "/tools/compute/workload-planner/",
+        backLabel: "Back to Workload Planner",
+        continueHref: "/tools/compute/ram-sizing/",
+        continueLabel: "Continue &rarr; RAM Sizing",
+        continueElement: "a",
+        disabled: false
+      };
+    }
+
+    if (path.indexOf("/tools/compute/ram-sizing/") !== -1) {
+      return {
+        tool: "ram-sizing",
+        backHref: "/tools/compute/cpu-sizing/",
+        backLabel: "Back to CPU Sizing",
+        continueHref: "/tools/compute/storage-iops/",
+        continueLabel: "Continue &rarr; Storage IOPS",
+        continueElement: "button",
+        disabled: true
+      };
+    }
+
+    return null;
+  }
+
+  function removeExistingFlowActionRows() {
+    Array.from(document.querySelectorAll(".compute-flow-actions")).forEach(function (row) {
+      row.parentNode.removeChild(row);
+    });
+  }
+
+  function findExportReportSection() {
+    var headings = Array.from(document.querySelectorAll("h2, h3, h4"));
+    var exportHeading = headings.find(function (node) {
+      return /^\s*Export Report\s*$/i.test(String(node.textContent || ""));
+    });
+
+    if (!exportHeading) return null;
+
+    var section = exportHeading.closest("section, .card");
+    return section || exportHeading.parentElement;
+  }
+
+  function buildFlowActionRow(config) {
+    var row = document.createElement("div");
+    row.className = "compute-flow-actions";
+    row.setAttribute("data-compute-flow-actions", "true");
+    row.setAttribute("data-compute-flow-owner", "compute-shell-contract");
+    row.setAttribute("data-compute-flow-tool", config.tool);
+
+    var back = document.createElement("a");
+    back.className = "btn";
+    back.href = config.backHref;
+    back.textContent = config.backLabel;
+    row.appendChild(back);
+
+    var wrap = document.createElement("span");
+    wrap.id = "continue-wrap";
+    wrap.style.display = "none";
+    wrap.style.marginLeft = "auto";
+
+    var next;
+    if (config.continueElement === "a") {
+      next = document.createElement("a");
+      next.href = config.continueHref;
+    } else {
+      next = document.createElement("button");
+      next.type = "button";
+      next.disabled = !!config.disabled;
+      next.setAttribute("data-compute-continue-href", config.continueHref);
+    }
+
+    next.id = "continue";
+    next.className = "btn btn-primary";
+    next.innerHTML = config.continueLabel;
+    wrap.appendChild(next);
+    row.appendChild(wrap);
+
+    return row;
+  }
+
+  function ensureFlowActionsPlacement() {
+    if (!isComputeShellPage()) return;
+
+    var config = computeFlowActionConfig();
+    if (!config) return;
+
+    var existing = document.querySelector('.compute-flow-actions[data-compute-flow-owner="compute-shell-contract"][data-compute-flow-tool="' + config.tool + '"]');
+    if (existing && existing.getAttribute("data-compute-flow-placed") === "true") {
+      normalizeFlowActions();
+    ensureFlowActionsPlacement();
+      return;
+    }
+
+    var exportSection = findExportReportSection();
+    if (!exportSection || !exportSection.parentNode) return;
+
+    removeExistingFlowActionRows();
+
+    var row = buildFlowActionRow(config);
+    row.setAttribute("data-compute-flow-placed", "true");
+
+    exportSection.parentNode.insertBefore(row, exportSection.nextSibling);
+    normalizeFlowActions();
+  }
+
   function normalizeContinueLabel(label) {
     var text = String(label || "").replace(/\s+/g, " ").trim();
 
@@ -174,7 +286,8 @@
   window.ScopedLabsComputeShellContract = Object.freeze({
     version: VERSION,
     run: run,
-    normalizeFlowActions: normalizeFlowActions
+    normalizeFlowActions: normalizeFlowActions,
+    ensureFlowActionsPlacement: ensureFlowActionsPlacement
   });
 
   if (document.readyState === "loading") {
