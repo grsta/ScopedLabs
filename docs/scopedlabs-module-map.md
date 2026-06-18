@@ -572,3 +572,9 @@ Example:
 - `tools/compute/cpu-sizing/script.js` maps Workload Planner Demand `Bursty` to CPU Workload Pattern `burstHeavy`.
 - `scripts/audit-compute-planner-carryover-contract-v1.js` protects the Bursty -> Burst-heavy carryover alias.
 - Non-goals: RAM behavior, visual modules, export.js, auth, checkout, Knowledge Base behavior, and page layout redesign.
+
+### Compute CPU planner back route audit
+
+- `scripts/audit-compute-cpu-back-route-v1.js` protects CPU Sizing back navigation.
+- `tools/compute/cpu-sizing/index.html` should route Back to `/tools/compute/workload-planner/`, keep Continue pointed to RAM Sizing, and keep the back action inside the main CPU page flow.
+- Non-goals: CPU math, RAM behavior, capacity-envelope visual module, export.js, auth, checkout, Knowledge Base behavior, and page redesign.
