@@ -1,32 +1,46 @@
-﻿const fs = require("fs");
+const fs = require("fs");
 
 const file = "tools/compute/cpu-sizing/index.html";
 const src = fs.readFileSync(file, "utf8");
 
+const actionIndex = src.indexOf('data-compute-cpu-flow-actions="true"');
+const exportIndex = src.indexOf("Export Report");
+const footerIndex = src.indexOf("<footer");
+
 const checks = [
   {
-    id: "CPU_BACK_POINTS_TO_WORKLOAD_PLANNER",
-    ok: src.includes('href="/tools/compute/workload-planner/"') && !src.includes('href="/tools/compute/"') && !src.includes(">Back to Compute<"),
-    detail: "CPU back action should return to the Compute Workload Planner, not the Compute tools landing page."
+    id: "CPU_FLOW_ACTION_ROW_EXISTS",
+    ok: actionIndex !== -1,
+    detail: "CPU should have one unified planner-style flow action row."
   },
   {
-    id: "CPU_BACK_ACTION_INSIDE_TOOL_FLOW",
-    ok: src.includes('data-compute-cpu-back-actions="true"') && src.indexOf('data-compute-cpu-back-actions="true"') < src.indexOf("</main>"),
-    detail: "CPU back action should be inside the main CPU page flow."
+    id: "CPU_BACK_POINTS_TO_WORKLOAD_PLANNER",
+    ok: src.includes('href="/tools/compute/workload-planner/"') && !/>\s*Back to Compute\s*</.test(src),
+    detail: "CPU Back should return to Workload Planner, not the Compute landing page."
   },
   {
     id: "CPU_CONTINUE_STILL_RAM",
-    ok: src.includes('/tools/compute/ram-sizing/'),
-    detail: "CPU continue route should still go to RAM Sizing."
+    ok: src.includes('id="continue"') && src.includes("/tools/compute/ram-sizing/"),
+    detail: "CPU Continue should still route to RAM Sizing."
+  },
+  {
+    id: "CPU_CONTINUE_WRAP_PRESERVED",
+    ok: src.includes('id="continue-wrap"') && actionIndex < src.indexOf('id="continue-wrap"'),
+    detail: "Continue wrapper must remain for existing show/hide logic."
+  },
+  {
+    id: "CPU_ACTION_ROW_AFTER_EXPORT_BEFORE_FOOTER",
+    ok: actionIndex > exportIndex && (footerIndex === -1 || actionIndex < footerIndex),
+    detail: "CPU action row should sit in the main page flow after Export Report and before footer."
   },
   {
     id: "CPU_SCRIPT_CACHE_BUSTED",
-    ok: src.includes("script.js?v=compute-cpu-planner-back-0617"),
-    detail: "CPU script cache-bust should be updated with this lane."
+    ok: src.includes("script.js?v=compute-cpu-flow-actions-0617"),
+    detail: "CPU index should reference the current CPU page script version."
   }
 ];
 
-console.log("SCOPEDLABS COMPUTE CPU BACK ROUTE AUDIT V1\n");
+console.log("SCOPEDLABS COMPUTE CPU FLOW ACTIONS AUDIT V1\n");
 
 let pass = 0;
 let fail = 0;

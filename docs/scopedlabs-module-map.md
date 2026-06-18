@@ -578,3 +578,10 @@ Example:
 - `scripts/audit-compute-cpu-back-route-v1.js` protects CPU Sizing back navigation.
 - `tools/compute/cpu-sizing/index.html` should route Back to `/tools/compute/workload-planner/`, keep Continue pointed to RAM Sizing, and keep the back action inside the main CPU page flow.
 - Non-goals: CPU math, RAM behavior, capacity-envelope visual module, export.js, auth, checkout, Knowledge Base behavior, and page redesign.
+
+### Compute CPU planner flow actions audit
+
+- `scripts/audit-compute-cpu-back-route-v1.js` protects CPU Sizing planner-style flow actions.
+- `tools/compute/cpu-sizing/index.html` should render Back to Workload Planner and Continue to RAM Sizing in one `compute-flow-actions` row after Export Report.
+- Back remains visible; Continue keeps `id="continue-wrap"` and `id="continue"` so existing show/hide and route logic still works.
+- Non-goals: CPU math, RAM behavior, capacity-envelope visual module, export.js, auth, checkout, Knowledge Base behavior, and page redesign.
