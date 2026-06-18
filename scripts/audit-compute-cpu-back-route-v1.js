@@ -34,8 +34,13 @@ const checks = [
     detail: "CPU action row should sit in the main page flow after Export Report and before footer."
   },
   {
+    id: "CPU_CONTINUE_TEXT_USES_SAFE_ARROW_ENTITY",
+    ok: src.includes("Continue &rarr; RAM Sizing") && !src.includes("Continue ? RAM Sizing"),
+    detail: "CPU Continue button should use the HTML arrow entity so it renders consistently without source glyph corruption."
+  },
+  {
     id: "CPU_SCRIPT_CACHE_BUSTED",
-    ok: src.includes("script.js?v=compute-cpu-flow-actions-0617"),
+    ok: src.includes("script.js?v=compute-cpu-flow-actions-arrow-0617"),
     detail: "CPU index should reference the current CPU page script version."
   }
 ];
