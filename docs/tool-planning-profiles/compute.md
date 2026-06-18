@@ -1901,3 +1901,13 @@ Do not in this lane:
 - Replace export.js.
 - Rework snapshot behavior.
 - Rework auth or checkout behavior.
+
+### CPU/RAM workload carryover contract gap - 2026-06-17
+
+Finding: CPU Sizing and RAM Sizing both use a `workload` input, but their option vocabularies had drifted. CPU carried values such as `video` and `compute`; RAM only offered `general`, `web`, `db`, `virtualization`, and `analytics`, so unsupported CPU values could not hydrate the RAM dropdown and silently fell back to the RAM default.
+
+Decision: Compute workload type is now treated as a carryover contract. CPU and RAM must expose the same canonical workload option values: `general`, `web`, `db`, `virtualization`, `analytics`, `video`, and `compute`.
+
+Tool-specific interpretation is still allowed. CPU uses the shared workload value as a CPU intensity factor. RAM uses the same value as a memory intensity factor. The value must carry forward cleanly even when the multiplier is different by tool.
+
+Audit: `scripts/audit-compute-workload-carryover-contract-v1.js` verifies canonical CPU/RAM workload options, factor coverage, and RAM hydration from CPU pipeline context.

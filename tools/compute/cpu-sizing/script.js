@@ -54,6 +54,8 @@
   function workloadFactor(workload) {
     if (workload === "web") return 0.9;
     if (workload === "db") return 1.1;
+    if (workload === "virtualization") return 1.15;
+    if (workload === "analytics") return 1.25;
     if (workload === "video") return 1.35;
     if (workload === "compute") return 1.5;
     return 1.0;
@@ -263,6 +265,8 @@
       general: "General / Mixed",
       web: "Web / API",
       db: "Database",
+      virtualization: "Virtualization",
+      analytics: "Analytics / ML",
       video: "Video / Transcode",
       compute: "Compute-heavy / batch"
     };

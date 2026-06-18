@@ -22,6 +22,7 @@
 
   let hasResult = false;
   let cpuContext = null;
+  let carriedWorkloadHydrated = false;
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
 
@@ -56,8 +57,57 @@
     if (workload === "db") return 1.3;
     if (workload === "virtualization") return 1.25;
     if (workload === "analytics") return 1.4;
+    if (workload === "video") return 1.2;
+    if (workload === "compute") return 1.1;
     if (workload === "web") return 1.1;
     return 1.0;
+  }
+
+  function normalizeRamWorkloadValue(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+
+    const key = raw.toLowerCase().replace(/[_\s/]+/g, "-");
+    const map = {
+      general: "general",
+      mixed: "general",
+      web: "web",
+      "web-api": "web",
+      api: "web",
+      db: "db",
+      database: "db",
+      virtualization: "virtualization",
+      virtualized: "virtualization",
+      analytics: "analytics",
+      "analytics-ml": "analytics",
+      ml: "analytics",
+      video: "video",
+      "video-transcode": "video",
+      transcode: "video",
+      compute: "compute",
+      "compute-heavy": "compute",
+      "compute-heavy-batch": "compute",
+      batch: "compute"
+    };
+
+    const normalized = map[key] || raw;
+    if (!els.workload || !els.workload.querySelector('option[value="' + normalized + '"]')) return "";
+    return normalized;
+  }
+
+  function hydrateRamWorkloadFromCpu(data) {
+    if (carriedWorkloadHydrated || !data || !els.workload) return;
+
+    const next = normalizeRamWorkloadValue(
+      data.workload ||
+      data.workloadType ||
+      (data.inputs && data.inputs.workloadType)
+    );
+
+    if (!next) return;
+
+    els.workload.value = next;
+    carriedWorkloadHydrated = true;
   }
 
   function refreshFlowNote() {
@@ -88,6 +138,8 @@
 
     const data = parsed.data || {};
     cpuContext = data;
+
+    hydrateRamWorkloadFromCpu(data);
 
     const lines = [];
     if (typeof data.cores === "number") lines.push(`Recommended Cores: <strong>${data.cores}</strong>`);

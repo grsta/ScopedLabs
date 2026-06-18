@@ -552,3 +552,10 @@ Example:
 - `cores` is used instead of `CPU` to avoid implying the tick values represent physical CPU count.
 - RAM keeps its `GB` unit treatment.
 - Non-goals: CPU math, RAM math, export.js, snapshot behavior, pipeline keys, Continue routes, auth, checkout, Knowledge Base behavior, and page layout order.
+
+### Compute workload carryover contract audit
+
+- `scripts/audit-compute-workload-carryover-contract-v1.js` protects the CPU/RAM workload carryover contract.
+- `tools/compute/cpu-sizing/index.html` and `tools/compute/ram-sizing/index.html` must expose the same canonical `workload` option values.
+- `tools/compute/ram-sizing/script.js` hydrates the RAM workload selector from CPU pipeline context when a previous CPU result exists.
+- Non-goals: visual module changes, CPU/RAM capacity math redesign, export.js changes, auth, checkout, Knowledge Base behavior, and page layout redesign.
