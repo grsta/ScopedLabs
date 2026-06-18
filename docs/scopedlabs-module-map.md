@@ -491,3 +491,20 @@ Purpose:
 Guardrail:
 - Audit output is a discovery/profile draft only.
 - Do not wire modules or rewrite pages until the category/tool planning profile and data contract are reviewed and approved.
+
+## Tool Engineering Readiness Audit
+
+Script:
+- scripts/audit-scopedlabs-tool-engineering-readiness-v1.js
+
+Purpose:
+- Read-only gate between planning/data-contract documentation and tool implementation.
+- Confirms whether a tool has enough documented planning direction to allow engineering-capability work.
+- Reports PASS, WATCH, FAIL, and optional strict failure behavior.
+
+Expected use:
+- Run after the category planning profile and tool data contract review.
+- Run before modifying tool calculations, visuals, assistants, export payloads, snapshot behavior, or pipeline behavior.
+
+Example:
+- node .\scripts\audit-scopedlabs-tool-engineering-readiness-v1.js --category compute --tools cpu-sizing,ram-sizing,storage-iops,storage-throughput

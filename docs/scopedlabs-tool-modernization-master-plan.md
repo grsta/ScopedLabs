@@ -713,3 +713,27 @@ Required order:
 9. Lock.
 
 Do not start with page patches.
+
+## Engineering Capability Gate
+
+Before any tool calculation is upgraded for deeper engineering capability, the tool must pass a separate readiness gate.
+
+This gate is different from the planning/profile audit.
+
+Planning/profile audit answers:
+- What exists now?
+- What category/tool decisions need review?
+- What data contract appears to be needed?
+
+Engineering readiness audit answers:
+- Is the tool allowed to be modified yet?
+- Does the planning profile exist?
+- Does the data contract exist?
+- Is the visual family decision documented?
+- Is the summary/master assistant publishing direction documented?
+- Is the implementation gate documented?
+- Are formula and threshold changes protected by an explicit engineering review?
+
+The engineering readiness audit must remain read-only. It must not rewrite tool pages, formulas, visuals, exports, snapshots, or pipeline behavior.
+
+A tool should not receive engineering-capability calculation changes until its missing domain factors, formula/threshold guardrails, assistant behavior, visual family, export/report behavior, snapshot behavior, pipeline carry-forward, and summary/master assistant payload are documented and approved.
