@@ -78,6 +78,14 @@ check(
 );
 
 check(
+  "RAM_ACTION_ROW_INSIDE_MAIN_CARD",
+  ram.indexOf('data-compute-flow-owner="compute-shell-contract"') > ram.indexOf("Export Report") &&
+    ram.indexOf('data-compute-flow-owner="compute-shell-contract"') < ram.indexOf('<footer class="site-footer">'),
+  "tools/compute/ram-sizing/index.html",
+  "RAM flow action row should sit in the main page flow after Export Report and before footer."
+);
+
+check(
   "RAM_LOADS_FLOW_ACTION_SHELL_VERSION",
   ram.includes("scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-003-flow-actions-idempotent"),
   "tools/compute/ram-sizing/index.html",

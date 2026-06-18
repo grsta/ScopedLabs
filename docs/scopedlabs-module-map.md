@@ -598,3 +598,9 @@ Example:
 - `assets/scopedlabs-compute-shell-contract.js` version `scopedlabs-compute-shell-contract-003-flow-actions-idempotent` prevents flow-action normalization from retriggering the shell MutationObserver continuously.
 - CPU and RAM now load the idempotent shell contract version.
 - `scripts/audit-compute-flow-actions-shell-contract-v1.js` checks the idempotent helper guards and debounced observer.
+
+### Compute RAM flow action placement
+
+- `tools/compute/ram-sizing/index.html` places the shell-owned Back/Continue row directly after the RAM Export Report section instead of below the main page card.
+- `scripts/audit-compute-flow-actions-shell-contract-v1.js` protects RAM action-row placement, route targets, duplicate-ID prevention, and safe arrow rendering.
+- Non-goals: RAM math, CPU math, capacity-envelope visuals, export.js, auth, checkout, Knowledge Base behavior, and broad page redesign.
