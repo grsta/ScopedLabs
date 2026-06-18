@@ -21,9 +21,12 @@ function count(source, pattern) {
 check(
   "SHELL_OWNS_COMPUTE_FLOW_ACTIONS",
   shell.includes("normalizeFlowActions") &&
+    shell.includes("setAttributeIfNeeded") &&
+    shell.includes("setStyleIfNeeded") &&
+    shell.includes("var scheduled = false") &&
     shell.includes(".compute-flow-actions") &&
     shell.includes("window.ScopedLabsComputeShellContract") &&
-    shell.includes("scopedlabs-compute-shell-contract-002-flow-actions"),
+    shell.includes("scopedlabs-compute-shell-contract-003-flow-actions-idempotent"),
   "assets/scopedlabs-compute-shell-contract.js",
   "Compute shell contract should own flow action styles and normalization."
 );
@@ -50,7 +53,7 @@ check(
 
 check(
   "CPU_LOADS_FLOW_ACTION_SHELL_VERSION",
-  cpu.includes("scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-002-flow-actions"),
+  cpu.includes("scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-003-flow-actions-idempotent"),
   "tools/compute/cpu-sizing/index.html",
   "CPU should load the current Compute shell contract version."
 );
@@ -76,7 +79,7 @@ check(
 
 check(
   "RAM_LOADS_FLOW_ACTION_SHELL_VERSION",
-  ram.includes("scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-002-flow-actions"),
+  ram.includes("scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-003-flow-actions-idempotent"),
   "tools/compute/ram-sizing/index.html",
   "RAM should load the current Compute shell contract version."
 );

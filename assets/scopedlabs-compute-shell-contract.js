@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-compute-shell-contract-002-flow-actions";
+  var VERSION = "scopedlabs-compute-shell-contract-003-flow-actions-idempotent";
 
   function isComputeShellPage() {
     var body = document.body;
@@ -105,20 +105,33 @@
     return text ? text.replace(/\s+\?\s+/g, " &rarr; ") : "Continue &rarr; Next Step";
   }
 
+  function setAttributeIfNeeded(node, name, value) {
+    if (!node || node.getAttribute(name) === value) return;
+    node.setAttribute(name, value);
+  }
+
+  function setStyleIfNeeded(node, name, value) {
+    if (!node || node.style[name] === value) return;
+    node.style[name] = value;
+  }
+
   function normalizeFlowActions() {
     if (!isComputeShellPage()) return;
 
     Array.from(document.querySelectorAll(".compute-flow-actions")).forEach(function (row) {
-      row.setAttribute("data-compute-flow-actions", "true");
+      setAttributeIfNeeded(row, "data-compute-flow-actions", "true");
 
       Array.from(row.querySelectorAll(".btn")).forEach(function (node) {
-        node.style.borderRadius = "10px";
+        setStyleIfNeeded(node, "borderRadius", "10px");
       });
 
       Array.from(row.querySelectorAll("#continue, [data-compute-continue]")).forEach(function (node) {
         var raw = String(node.textContent || node.innerHTML || "").replace(/\s+/g, " ").trim();
-        if (/^continue/i.test(raw)) {
-          node.innerHTML = normalizeContinueLabel(raw);
+        if (!/^continue/i.test(raw)) return;
+
+        var next = normalizeContinueLabel(raw);
+        if (node.innerHTML !== next) {
+          node.innerHTML = next;
         }
       });
     });
@@ -137,8 +150,15 @@
 
     run();
 
+    var scheduled = false;
     var observer = new MutationObserver(function () {
-      run();
+      if (scheduled) return;
+      scheduled = true;
+
+      window.setTimeout(function () {
+        scheduled = false;
+        run();
+      }, 80);
     });
 
     observer.observe(document.documentElement, {

@@ -592,3 +592,9 @@ Example:
 - `tools/compute/cpu-sizing/index.html` and `tools/compute/ram-sizing/index.html` use shell-owned `data-compute-flow-owner="compute-shell-contract"` action rows while preserving existing `continue-wrap` / `continue` IDs for page scripts.
 - `scripts/audit-compute-flow-actions-shell-contract-v1.js` verifies shell ownership, duplicate-ID prevention, route targets, and safe arrow entity rendering.
 - Non-goals: CPU math, RAM math, capacity-envelope visuals, export.js, auth, checkout, Knowledge Base behavior, and page redesign.
+
+### Compute flow actions idempotent hotfix
+
+- `assets/scopedlabs-compute-shell-contract.js` version `scopedlabs-compute-shell-contract-003-flow-actions-idempotent` prevents flow-action normalization from retriggering the shell MutationObserver continuously.
+- CPU and RAM now load the idempotent shell contract version.
+- `scripts/audit-compute-flow-actions-shell-contract-v1.js` checks the idempotent helper guards and debounced observer.
