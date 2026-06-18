@@ -1687,3 +1687,217 @@ After this section is committed, the engineering readiness audit for these tools
 That PASS only means the tools are allowed to enter implementation planning.
 
 It does not mean the tools are already modernized or engineering-complete.
+
+## CPU/RAM Shared Capacity-Envelope Implementation Plan
+
+Status: APPROVED_FOR_IMPLEMENTATION_PLANNING
+
+This section defines the implementation plan for promoting CPU and RAM into the shared Compute capacity-envelope visual family.
+
+This plan does not change code by itself. It authorizes the next implementation lane only if the implementation preserves formulas, tool behavior, export behavior, snapshot behavior, pipeline behavior, and Continue routing.
+
+---
+
+## Implementation Scope
+
+First implementation lane:
+
+- CPU Sizing.
+- RAM Sizing.
+- Shared Compute capacity visual module.
+
+Files expected in the implementation lane:
+
+- `assets/scopedlabs-compute-capacity-visuals.js`
+- `tools/compute/cpu-sizing/script.js`
+- `tools/compute/ram-sizing/script.js`
+- `tools/compute/cpu-sizing/index.html` only if shared module script loading/cache-bust needs adjustment.
+- `tools/compute/ram-sizing/index.html` only if shared module script loading/cache-bust needs adjustment.
+- `docs/scopedlabs-module-map.md` if shared module exports or audit gates change.
+- A new audit script if needed to prove CPU/RAM shared capacity-envelope adoption.
+
+No Storage IOPS or Storage Throughput code changes are included in this lane.
+
+---
+
+## Required Preservation Rules
+
+The implementation must preserve:
+
+- CPU formulas.
+- RAM formulas.
+- CPU recommendation behavior.
+- RAM recommendation behavior.
+- Existing input IDs.
+- Existing output/result containers.
+- Existing pipeline keys.
+- Existing snapshot behavior.
+- Existing export behavior.
+- Existing Continue routing.
+- Existing Knowledge Base behavior.
+- Existing auth and checkout behavior.
+- Existing script order except where a documented shared module load is required.
+
+---
+
+## Shared Module Direction
+
+Current shared module:
+
+- `assets/scopedlabs-compute-capacity-visuals.js`
+
+Current issue:
+
+- The module currently behaves as a RAM-envelope renderer.
+- CPU still owns the accepted capacity-envelope visual locally.
+- RAM consumes the shared module, but the shared module is not yet the CPU/RAM base engine.
+
+Implementation direction:
+
+- Promote the accepted CPU capacity-envelope visual language into the shared module.
+- Add a shared base renderer.
+- Add CPU adapter functions.
+- Preserve RAM adapter functions.
+- Keep CPU output visually unchanged or intentionally equivalent.
+- Keep RAM visual aligned through the shared engine.
+
+---
+
+## Expected Shared Exports
+
+The shared module should move toward these exports:
+
+- `version`
+- `buildCapacityEnvelopeSvg(config)`
+- `buildCpuCapacityEnvelopeSvg(result)`
+- `renderCpuCapacityEnvelope(options)`
+- `buildRamCapacityEnvelopeSvg(result)`
+- `renderRamCapacityEnvelope(options)`
+- `clear(options)`
+
+The CPU adapter should map CPU result fields into the shared base renderer.
+
+The RAM adapter should map RAM result fields into the shared base renderer.
+
+The base renderer should own:
+
+- SVG frame.
+- Grid.
+- Axes.
+- Status zones.
+- Status chip style.
+- Reference marker rendering.
+- Export-safe SVG output.
+- Dark engineering/CAD visual rhythm.
+
+---
+
+## CPU Adapter Requirements
+
+The CPU adapter must preserve:
+
+- Accepted CPU Capacity Envelope visual concept.
+- Current CPU data fields.
+- Recommendation references.
+- Decision/proof rhythm.
+- Export-safe SVG output.
+- Existing custom export payload route until parity replacement is separately approved.
+
+CPU implementation rule:
+
+- The first CPU migration may call the shared visual builder while keeping the existing custom export route intact.
+- Do not remove `window.ScopedLabsComputeCpuExport.buildPayload` unless a separate export-parity audit proves the replacement.
+
+---
+
+## RAM Adapter Requirements
+
+The RAM adapter must preserve:
+
+- Current RAM calculation behavior.
+- Current `ramCapacityEnvelope` payload behavior.
+- Current Continue routing to Storage IOPS.
+- Current shared module consumer pattern.
+- Export/snapshot availability.
+
+RAM implementation rule:
+
+- RAM should continue consuming `window.ScopedLabsComputeCapacityVisuals`.
+- RAM should not receive a page-local CPU visual clone.
+- RAM visual parity should come from the shared base renderer and RAM adapter.
+
+---
+
+## Visual Acceptance Rules
+
+The shared capacity-envelope family should follow the accepted CPU visual language:
+
+- Dark CAD/engineering background.
+- Thin grid lines.
+- Green / amber / red capacity zones.
+- Small technical labels.
+- No large icons.
+- No decorative dashboard styling.
+- Plain reference markers such as `*1`, `*2`, `*3`.
+- Rectangular engineering status chip, not pill styling.
+- Export-safe SVG.
+
+Accepted marker colors:
+
+- `*1 = #38d9ff`
+- `*2 = #a78bfa`
+- `*3 = #f59e0b`
+
+---
+
+## Audit Requirement
+
+Before implementation is considered complete, add or update an audit proving:
+
+- CPU loads or calls the shared capacity-envelope module.
+- RAM loads or calls the shared capacity-envelope module.
+- CPU has no unauthorized page-local duplicate of the final shared visual engine.
+- RAM has no page-local visual clone.
+- Shared module exposes expected CPU/RAM adapter exports.
+- CPU export route remains available.
+- RAM flow payload still includes capacity-envelope data.
+- Pipeline and Continue behavior remain intact.
+- Cache-bust versions are aligned.
+
+Suggested audit name:
+
+- `scripts/audit-compute-capacity-envelope-shared-contract-v1.js`
+
+---
+
+## Implementation Order
+
+Recommended order:
+
+1. Inspect current CPU visual builder and RAM shared visual builder.
+2. Replace shared module with a base renderer plus CPU/RAM adapters.
+3. Wire CPU to shared CPU adapter while preserving current CPU export route.
+4. Keep RAM wired to shared RAM adapter.
+5. Add audit coverage.
+6. Run syntax checks.
+7. Run engineering readiness gate.
+8. Run new shared capacity-envelope audit.
+9. Commit implementation separately from documentation.
+10. Push and live-review CPU first, then RAM.
+
+---
+
+## Explicit Non-Goals
+
+Do not in this lane:
+
+- Change CPU formulas.
+- Change RAM formulas.
+- Change Storage IOPS.
+- Change Storage Throughput.
+- Create Compute Summary page.
+- Add web/current-knowledge lookup.
+- Redesign the Compute category page.
+- Replace export.js.
+- Rework snapshot behavior.
+- Rework auth or checkout behavior.
