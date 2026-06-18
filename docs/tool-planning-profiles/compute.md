@@ -1502,3 +1502,188 @@ After approval, the implementation lane should be:
 5. Add richer summary/master assistant publish payloads.
 6. Add audit checks proving assistant, visual, export, snapshot, and flow contracts.
 7. Then wire implementation one tool at a time.
+
+## Compute Engineering Capability Review - CPU RAM Storage
+
+Status: REVIEW_BASELINE
+
+This section satisfies the engineering capability review gate for the first Compute proof group:
+
+- CPU Sizing.
+- RAM Sizing.
+- Storage IOPS.
+- Storage Throughput.
+
+No formulas, thresholds, visuals, exports, snapshots, assistants, or pipeline behavior are changed by this section alone.
+
+---
+
+## Formula Guardrail
+
+Engineering-capability work is allowed only after these rules are accepted:
+
+- Preserve current formulas unless a specific formula change is documented and approved.
+- Preserve existing input IDs, output IDs, pipeline keys, export behavior, snapshot behavior, and Continue routing unless a specific change is documented and approved.
+- Do not replace existing calculations with generic assumptions.
+- Do not add vendor-specific sizing rules unless they are explicitly labeled as optional assumptions or future current-knowledge inputs.
+- Do not move a tool into a shared module until the tool-specific adapter preserves the current result behavior.
+- Any new threshold must identify whether it is:
+  - existing behavior,
+  - a normalized planning threshold,
+  - a warning threshold,
+  - a risk threshold,
+  - or a future placeholder requiring validation.
+
+---
+
+## CPU Sizing Engineering Review
+
+Current engineering role:
+- Estimate CPU demand from workload concurrency, CPU per worker, burst/peak multiplier, reserve, overhead, target utilization, and failover pressure.
+
+Engineering-capable direction:
+- Keep CPU as the accepted Compute capacity-envelope reference.
+- Do not change CPU math during visual-module promotion.
+- Preserve the current recommendation proof rhythm and export route.
+- Treat status authority as the capacity-envelope status, not the secondary analyzer diagnostic.
+
+Missing domain factors to consider later:
+- Physical core versus logical thread assumptions.
+- NUMA/socket effects for larger systems.
+- Virtualization scheduler overhead.
+- CPU generation/per-core performance class.
+- Sustained versus burst workload profile.
+- HA/failover operating state.
+- Licensing constraints tied to cores or sockets.
+- CPU/RAM/storage coupling if another subsystem becomes the first bottleneck.
+
+Allowed next implementation:
+- Promote current accepted CPU visual style into the shared capacity-envelope module without changing calculation results.
+- Add an adapter only after proving visual/export parity.
+
+Blocked until separately approved:
+- Changing CPU sizing formula.
+- Changing recommended core rounding behavior.
+- Changing status thresholds.
+- Changing Continue route.
+- Replacing custom export payload before parity is proven.
+
+---
+
+## RAM Sizing Engineering Review
+
+Current engineering role:
+- Estimate RAM demand from workload type, concurrency/process count, per-process memory, workload factor, OS/base overhead, reserve/cache allocation, and recommended RAM tier.
+
+Engineering-capable direction:
+- RAM should become the first true consumer of the shared CPU/RAM capacity-envelope family.
+- RAM should align visually with CPU through the shared module, not through page-local cloning.
+- RAM should gain clearer local assistant assumptions and summary-ready notes before being called complete.
+
+Missing domain factors to consider later:
+- Workload memory working set versus allocated memory.
+- Cache/buffer pool behavior.
+- Hypervisor overhead.
+- Memory oversubscription policy.
+- NUMA memory locality.
+- ECC/reserved hardware memory.
+- Growth reserve and HA/failover memory posture.
+- CPU/RAM balance warning when CPU sizing and RAM sizing disagree.
+
+Allowed next implementation:
+- Preserve current RAM math while improving shared visual adapter behavior.
+- Add local assistant and summary payload only after contract fields are mapped.
+
+Blocked until separately approved:
+- Changing recommended RAM tier rounding.
+- Changing workload factors.
+- Changing reserve/cache defaults.
+- Changing flow payload keys.
+- Changing Continue route.
+
+---
+
+## Storage IOPS Engineering Review
+
+Current engineering role:
+- Estimate random storage IOPS from transaction rate, read/write demand, RAID write penalty, and headroom.
+
+Engineering-capable direction:
+- Preserve the existing storage IOPS calculation until a formula review is explicitly approved.
+- Treat current tool as a working pipeline calculator, not a broken page.
+- Add engineering capability through local assistant guidance, better assumptions, richer payload, and a future storage performance visual family.
+
+Missing domain factors to consider later:
+- Read/write latency targets.
+- Storage media tier and per-device IOPS assumptions.
+- Controller/cache behavior.
+- RAID level and degraded-mode behavior.
+- Queue depth.
+- Random versus sequential workload split.
+- Write amplification beyond simple RAID penalty.
+- Sustained versus burst transactions.
+- Backup/rebuild contention.
+- Database/log/data separation.
+- Virtualization datastore contention.
+
+Allowed next implementation:
+- Add local assistant guidance explaining RAID penalty, burst risk, and media validation.
+- Add summary/master assistant publish payload.
+- Preserve existing formulas, output rows, flow keys, and Continue route.
+
+Blocked until separately approved:
+- Changing IOPS math.
+- Changing RAID penalty handling.
+- Adding latency calculation as if it were validated.
+- Replacing analyzer visual with a new shared visual before contract approval.
+
+---
+
+## Storage Throughput Engineering Review
+
+Current engineering role:
+- Estimate storage throughput from IOPS, average I/O size, read/write mix, overhead, and upstream IOPS context.
+
+Engineering-capable direction:
+- Preserve the current throughput calculation until a formula review is explicitly approved.
+- Keep the IOPS/throughput cross-check behavior.
+- Add engineering capability through local assistant guidance, richer payload, and a future throughput-envelope visual family.
+
+Missing domain factors to consider later:
+- Storage path bandwidth limit.
+- Network transport bandwidth limit.
+- Protocol overhead by storage type.
+- Compression/deduplication effects.
+- Sequential versus random transfer shape.
+- Backup/archive transfer window.
+- Concurrent copy/replication jobs.
+- Controller/HBA/NIC bottlenecks.
+- Read/write asymmetry.
+- Sustained versus burst transfer behavior.
+
+Allowed next implementation:
+- Add local assistant guidance explaining throughput pressure, transport overhead, and IOPS/throughput mismatch.
+- Add summary/master assistant publish payload.
+- Preserve existing formulas, output rows, flow keys, and Continue route.
+
+Blocked until separately approved:
+- Changing throughput math.
+- Changing I/O size interpretation.
+- Changing overhead defaults.
+- Changing cross-check logic.
+- Changing Continue route.
+
+---
+
+## Engineering Capability Gate Result Target
+
+After this section is committed, the engineering readiness audit for these tools should move from WATCH to PASS:
+
+- cpu-sizing.
+- ram-sizing.
+- storage-iops.
+- storage-throughput.
+
+That PASS only means the tools are allowed to enter implementation planning.
+
+It does not mean the tools are already modernized or engineering-complete.
