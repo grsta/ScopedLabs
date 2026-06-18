@@ -44,7 +44,7 @@ const ramScriptSrc = read(ramScriptFile);
   check(results, moduleSrc.includes(name), "MODULE_EXPORT_" + name, moduleFile);
 });
 
-check(results, moduleSrc.includes("scopedlabs-compute-capacity-visuals-003-cpu-ram-envelope"), "MODULE_VERSION_003_CPU_RAM_ENVELOPE", moduleFile);
+check(results, moduleSrc.includes("scopedlabs-compute-capacity-visuals-004-ram-envelope-layout"), "MODULE_VERSION_003_CPU_RAM_ENVELOPE", moduleFile);
 check(results, moduleSrc.includes("data-compute-visual=\"cpu-capacity-envelope\""), "MODULE_OWNS_CPU_CAPACITY_SVG", moduleFile);
 check(results, moduleSrc.includes("data-compute-capacity-visual=\"ram-envelope\""), "MODULE_OWNS_RAM_CAPACITY_SVG", moduleFile);
 
@@ -57,7 +57,7 @@ check(results, !cpuScriptSrc.includes("data-compute-visual=\"cpu-capacity-envelo
 check(results, cpuScriptSrc.includes("window.ScopedLabsComputeCpuExport"), "CPU_CUSTOM_EXPORT_ROUTE_STILL_PRESENT", cpuScriptFile);
 check(results, cpuIndex.includes('href="/tools/compute/ram-sizing/"'), "CPU_CONTINUE_ROUTE_STILL_RAM", cpuIndexFile);
 
-check(results, ramIndex.includes("/assets/scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-003-cpu-ram-envelope"), "RAM_INDEX_LOADS_VERSIONED_SHARED_CAPACITY_MODULE", ramIndexFile);
+check(results, ramIndex.includes("/assets/scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-004-ram-envelope-layout"), "RAM_INDEX_LOADS_VERSIONED_SHARED_CAPACITY_MODULE", ramIndexFile);
 check(results, ramScriptSrc.includes("ScopedLabsComputeCapacityVisuals.renderRamCapacityEnvelope"), "RAM_SCRIPT_USES_SHARED_RAM_RENDERER", ramScriptFile);
 check(results, ramScriptSrc.includes("capacityEnvelope: ramCapacityEnvelope"), "RAM_FLOW_PAYLOAD_INCLUDES_CAPACITY_ENVELOPE", ramScriptFile);
 check(results, ramScriptSrc.includes('window.location.href = "/tools/compute/storage-iops/"'), "RAM_CONTINUE_ROUTE_STILL_STORAGE_IOPS", ramScriptFile);

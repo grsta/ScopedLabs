@@ -521,3 +521,9 @@ Example:
   - `clear`
 - CPU Sizing delegates the CPU Capacity Envelope SVG builder to the shared module while preserving `window.ScopedLabsComputeCpuExport.buildPayload`.
 - RAM Sizing continues to consume the shared RAM renderer and keeps `capacityEnvelope` in the flow payload.
+
+### Compute capacity-envelope live-review correction 004
+
+- `assets/scopedlabs-compute-capacity-visuals.js` version `scopedlabs-compute-capacity-visuals-004-ram-envelope-layout` keeps CPU as the accepted reference and tightens the RAM adapter layout.
+- Live-review correction scope: RAM SVG layout spacing, label placement, shorter status chip, CPU-style chart rhythm, and matching cache-bust/audit version.
+- Non-goals: CPU math, RAM math, export.js, snapshot behavior, pipeline keys, Continue routes, auth, checkout, and Knowledge Base behavior.
