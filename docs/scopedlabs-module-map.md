@@ -473,3 +473,21 @@ This file maps where the shared engines, category modules, special tool routes, 
 - RAM Sizing current target: `RAM Capacity Envelope`.
 - RAM Sizing should be upgraded before broad shell rollout.
 - Expected future RAM route: `ScopedLabsComputeRamExport.buildPayload` only after the RAM visual/proof model exists.
+
+## Tool Planning Profile Audit
+
+Status: ACTIVE
+
+Implemented audit:
+- `scripts/audit-scopedlabs-tool-planning-profile-v1.js`
+
+Purpose:
+- Reusable read-only inventory audit for category/tool planning profiles.
+- Scans category planner pages, summary pages, and tool pages.
+- Detects inputs, actions, loaded scripts/modules, visual signals, assistant signals, export/snapshot/pipeline signals, Back/Continue flow signals, local SVG/visual signals, and named WATCH items.
+- May write category planning profile drafts under `docs/tool-planning-profiles/`.
+- Does not rewrite tool pages.
+
+Guardrail:
+- Audit output is a discovery/profile draft only.
+- Do not wire modules or rewrite pages until the category/tool planning profile and data contract are reviewed and approved.
