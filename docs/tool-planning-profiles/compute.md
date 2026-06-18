@@ -1263,3 +1263,242 @@ After approval, the implementation lane should be:
 4. Keep RAM consuming the shared module.
 5. Add audit checks proving CPU/RAM use the shared capacity-envelope family.
 6. Only then review export payload parity and summary/master assistant publishing.
+
+## Storage IOPS / Storage Throughput Data Contract Review
+
+Status: REVIEW_BASELINE
+
+This section documents the read-only inspection of Storage IOPS and Storage Throughput.
+
+No tool page changes are approved by this section alone.
+
+---
+
+## Read-Only Inspection Summary
+
+### Storage IOPS
+
+Current detected behavior:
+- Pipeline step: `storage-iops`.
+- Previous step: `ram-sizing`.
+- Reads RAM flow context from session storage.
+- Invalidates downstream Compute steps when inputs change.
+- Uses `ScopedLabsAnalyzer.renderOutput(...)`.
+- Writes flow data through `ScopedLabsAnalyzer.writeFlow(...)`.
+- Shows Continue only after a valid result.
+- Continue target: `/tools/compute/storage-throughput/`.
+- Has Documentation & Export card.
+- Has Save Snapshot button.
+- Loads shared export module.
+- No local assistant module detected.
+- No dedicated shared Storage IOPS visual module detected.
+- No custom export payload route detected.
+
+Current calculation/output concepts:
+- Read IOPS.
+- Base write IOPS.
+- Penalized write IOPS.
+- Subtotal IOPS.
+- Reserve/headroom IOPS.
+- Estimated required IOPS.
+- Storage pressure.
+- Primary constraint.
+- RAID penalty.
+- Analyzer status.
+
+Planning meaning:
+- Storage IOPS is a functional pipeline calculator.
+- It should not be treated as broken.
+- It needs a data contract before adding assistant, shared visual, richer export, or summary/master assistant publishing.
+- It likely belongs to a future `compute-iops-latency` visual family.
+
+### Storage Throughput
+
+Current detected behavior:
+- Pipeline step: `storage-throughput`.
+- Previous step: `storage-iops`.
+- Reads Storage IOPS flow context from session storage.
+- Invalidates downstream Compute steps when inputs change.
+- Uses `ScopedLabsAnalyzer.renderOutput(...)`.
+- Writes flow data through `ScopedLabsAnalyzer.writeFlow(...)`.
+- Shows Continue only after a valid result.
+- Continue target: `/tools/compute/vm-density/`.
+- Has Documentation & Export card.
+- Has Save Snapshot button.
+- Loads shared export module.
+- No local assistant module detected.
+- No dedicated shared Storage Throughput visual module detected.
+- No custom export payload route detected.
+
+Current calculation/output concepts:
+- Read throughput.
+- Write throughput.
+- Base throughput.
+- Estimated required throughput.
+- Read/write mix.
+- Average I/O size.
+- Throughput class.
+- Workload pattern.
+- IOPS/throughput cross-check.
+- Analyzer status.
+
+Planning meaning:
+- Storage Throughput is a functional pipeline calculator.
+- It should not be treated as broken.
+- It needs a data contract before adding assistant, shared visual, richer export, or summary/master assistant publishing.
+- It likely belongs to a future `compute-throughput-envelope` visual family.
+- It also needs to preserve the existing IOPS cross-check behavior.
+
+---
+
+## Proposed Storage IOPS Data Contract Candidate
+
+### Inputs
+
+- Transaction rate.
+- Read operations per transaction.
+- Write operations per transaction.
+- RAID/write penalty.
+- Reserve/headroom percentage.
+- Upstream RAM context.
+- Workload type / planning path when available.
+- Storage tier or media type if added later.
+- Latency target if added later.
+- Controller/cache assumption if added later.
+
+### Outputs
+
+- Read IOPS.
+- Base write IOPS.
+- Penalized write IOPS.
+- Subtotal IOPS.
+- Reserve/headroom IOPS.
+- Estimated required IOPS.
+- Storage pressure.
+- Primary constraint.
+- RAID penalty.
+- Analyzer status.
+- Future IOPS/latency envelope status.
+- Status authority.
+
+### Assistant / proof fields
+
+- Local recommendation.
+- Write amplification warning.
+- Burst/headroom warning.
+- RAID penalty explanation.
+- Latency/media validation note.
+- Upstream RAM context note.
+- Downstream throughput validation note.
+- Summary-ready assumption notes.
+- Summary-ready risk notes.
+- Summary/master assistant publish payload.
+
+### Export fields
+
+- Export status.
+- Export summary.
+- Engineering interpretation.
+- Input rows.
+- Output rows.
+- Chart image or shared visual image.
+- Storage IOPS decision/proof section.
+- Recommendation references if added.
+
+---
+
+## Proposed Storage Throughput Data Contract Candidate
+
+### Inputs
+
+- IOPS.
+- Average I/O size.
+- Read/write mix.
+- Protocol/filesystem overhead.
+- Upstream Storage IOPS context.
+- Workload type / planning path when available.
+- Storage path type if added later.
+- Network/storage transport limit if added later.
+- Backup/transfer window context if added later.
+
+### Outputs
+
+- Read throughput.
+- Write throughput.
+- Base throughput.
+- Estimated required throughput.
+- Read/write mix.
+- Average I/O size.
+- Throughput class.
+- Workload pattern.
+- IOPS/throughput cross-check.
+- Analyzer status.
+- Future throughput-envelope status.
+- Status authority.
+
+### Assistant / proof fields
+
+- Local recommendation.
+- Sequential transfer warning.
+- Protocol/transport overhead warning.
+- Bottleneck explanation.
+- IOPS/throughput alignment note.
+- Downstream VM density validation note.
+- Summary-ready assumption notes.
+- Summary-ready risk notes.
+- Summary/master assistant publish payload.
+
+### Export fields
+
+- Export status.
+- Export summary.
+- Engineering interpretation.
+- Input rows.
+- Output rows.
+- Chart image or shared visual image.
+- Storage throughput decision/proof section.
+- Recommendation references if added.
+
+---
+
+## Visual Family Direction
+
+Storage IOPS and Storage Throughput should not receive one-off page-local visuals.
+
+Recommended future visual families:
+
+### compute-iops-latency
+
+Likely owner for:
+- Storage IOPS.
+- RAID Rebuild Time if rebuild pressure is expressed through random I/O or write-amplification risk.
+- Backup Window if storage performance pressure affects completion time.
+
+Visual purpose:
+- Show required IOPS, reserve/headroom, write penalty, latency/media risk, and capacity pressure.
+
+### compute-throughput-envelope
+
+Likely owner for:
+- Storage Throughput.
+- NIC Bonding when network/storage path throughput needs to be compared.
+- Backup Window when transfer window pressure is the main constraint.
+
+Visual purpose:
+- Show required MB/s or Gbps, reserve/headroom, protocol overhead, sequential transfer pressure, and bottleneck risk.
+
+---
+
+## Implementation Gate
+
+Do not implement yet until these data contracts are reviewed and accepted.
+
+After approval, the implementation lane should be:
+
+1. Decide whether Storage IOPS and Storage Throughput share one storage-performance visual module or two separate visual families.
+2. Define the shared module export names.
+3. Preserve current formulas and pipeline order.
+4. Add local assistant contracts.
+5. Add richer summary/master assistant publish payloads.
+6. Add audit checks proving assistant, visual, export, snapshot, and flow contracts.
+7. Then wire implementation one tool at a time.
