@@ -19,75 +19,65 @@ function count(source, pattern) {
 }
 
 check(
-  "SHELL_OWNS_FLOW_ACTION_PLACEMENT",
-  shell.includes("scopedlabs-compute-shell-contract-004-flow-actions-placement") &&
-    shell.includes("function computeFlowActionConfig") &&
-    shell.includes("function ensureFlowActionsPlacement") &&
-    shell.includes("function buildFlowActionRow") &&
-    shell.includes("removeExistingFlowActionRows") &&
-    shell.includes("findExportReportSection") &&
-    shell.includes("data-compute-flow-owner") &&
-    shell.includes("ensureFlowActionsPlacement();"),
-  "assets/scopedlabs-compute-shell-contract.js",
-  "Compute shell contract should own Back/Continue row config, duplicate cleanup, build, and placement."
-);
-
-check(
-  "SHELL_DEFINES_CPU_ROUTE_CONTRACT",
-  shell.includes('/tools/compute/workload-planner/') &&
-    shell.includes("Back to Workload Planner") &&
-    shell.includes('/tools/compute/ram-sizing/') &&
-    shell.includes("Continue &rarr; RAM Sizing"),
-  "assets/scopedlabs-compute-shell-contract.js",
-  "CPU flow routes and labels should be defined in the shell contract."
-);
-
-check(
-  "SHELL_DEFINES_RAM_ROUTE_CONTRACT",
-  shell.includes('/tools/compute/cpu-sizing/') &&
-    shell.includes("Back to CPU Sizing") &&
-    shell.includes('/tools/compute/storage-iops/') &&
-    shell.includes("Continue &rarr; Storage IOPS"),
-  "assets/scopedlabs-compute-shell-contract.js",
-  "RAM flow routes and labels should be defined in the shell contract."
-);
-
-check(
-  "CPU_HAS_NO_STATIC_FLOW_ACTION_ROW",
-  count(cpu, /class="compute-flow-actions"/g) === 0 &&
-    count(cpu, /id="continue-wrap"/g) === 0 &&
-    count(cpu, /id="continue"/g) === 0 &&
-    !cpu.includes(">Back to Compute<"),
-  "tools/compute/cpu-sizing/index.html",
-  "CPU index should not own static flow-action placement or duplicate continue IDs."
-);
-
-check(
-  "RAM_HAS_NO_STATIC_FLOW_ACTION_ROW",
-  count(ram, /class="compute-flow-actions"/g) === 0 &&
-    count(ram, /id="continue-wrap"/g) === 0 &&
-    count(ram, /id="continue"/g) === 0 &&
-    !ram.includes(">Back to Compute<") &&
-    !ram.includes("Continue ?"),
-  "tools/compute/ram-sizing/index.html",
-  "RAM index should not own static flow-action placement or duplicate continue IDs."
-);
-
-check(
-  "CPU_AND_RAM_LOAD_FLOW_PLACEMENT_SHELL",
-  cpu.includes("scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-004-flow-actions-placement") &&
-    ram.includes("scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-004-flow-actions-placement"),
-  "tools/compute/*/index.html",
-  "CPU and RAM should load the shell version that owns flow-action placement."
-);
-
-check(
-  "SHELL_NORMALIZER_IS_IDEMPOTENT",
-  shell.includes("setAttributeIfNeeded") &&
+  "SHELL_IS_STATIC_SAFE",
+  shell.includes("scopedlabs-compute-shell-contract-005-flow-actions-static-safe") &&
+    shell.includes('data-compute-flow-owner") === "compute-shell-contract"') &&
+    shell.includes("normalizeFlowActions") &&
+    shell.includes("setAttributeIfNeeded") &&
     shell.includes("setStyleIfNeeded") &&
     shell.includes("var scheduled = false"),
   "assets/scopedlabs-compute-shell-contract.js",
-  "Shell observer and normalizer should remain idempotent to avoid page responsiveness regressions."
+  "Shell should normalize flow actions but must not delete valid shell-owned rows."
+);
+
+check(
+  "CPU_HAS_ONE_VISIBLE_FLOW_ROW_CONTRACT",
+  count(cpu, /data-compute-flow-owner="compute-shell-contract"/g) === 1 &&
+    count(cpu, /id="continue-wrap"/g) === 1 &&
+    count(cpu, /id="continue"/g) === 1,
+  "tools/compute/cpu-sizing/index.html",
+  "CPU should have exactly one shell-owned Back/Continue row."
+);
+
+check(
+  "CPU_ROUTES_AND_TEXT_ARE_CORRECT",
+  cpu.includes('href="/tools/compute/workload-planner/"') &&
+    cpu.includes('href="/tools/compute/ram-sizing/"') &&
+    cpu.includes("Back to Workload Planner") &&
+    cpu.includes("Continue &rarr; RAM Sizing") &&
+    !cpu.includes(">Back to Compute<") &&
+    !cpu.includes("Continue ?"),
+  "tools/compute/cpu-sizing/index.html",
+  "CPU Back should go to Planner and Continue should go to RAM with safe arrow entity."
+);
+
+check(
+  "RAM_HAS_ONE_VISIBLE_FLOW_ROW_CONTRACT",
+  count(ram, /data-compute-flow-owner="compute-shell-contract"/g) === 1 &&
+    count(ram, /id="continue-wrap"/g) === 1 &&
+    count(ram, /id="continue"/g) === 1,
+  "tools/compute/ram-sizing/index.html",
+  "RAM should have exactly one shell-owned Back/Continue row."
+);
+
+check(
+  "RAM_ROUTES_AND_TEXT_ARE_CORRECT",
+  ram.includes('href="/tools/compute/cpu-sizing/"') &&
+    ram.includes('data-compute-continue-href="/tools/compute/storage-iops/"') &&
+    ram.includes("Back to CPU Sizing") &&
+    ram.includes("Continue &rarr; Storage IOPS") &&
+    !ram.includes(">Back to Compute<") &&
+    !ram.includes("Continue ?"),
+  "tools/compute/ram-sizing/index.html",
+  "RAM Back should go to CPU and Continue should target Storage IOPS with safe arrow entity."
+);
+
+check(
+  "CPU_AND_RAM_LOAD_STATIC_SAFE_SHELL",
+  cpu.includes("scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-005-flow-actions-static-safe") &&
+    ram.includes("scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-005-flow-actions-static-safe"),
+  "tools/compute/*/index.html",
+  "CPU and RAM should load the static-safe Compute shell contract."
 );
 
 console.log("SCOPEDLABS COMPUTE FLOW ACTIONS SHELL CONTRACT AUDIT V1\n");

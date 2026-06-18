@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-compute-shell-contract-004-flow-actions-placement";
+  var VERSION = "scopedlabs-compute-shell-contract-005-flow-actions-static-safe";
 
   function isComputeShellPage() {
     var body = document.body;
@@ -128,7 +128,8 @@
 
   function removeExistingFlowActionRows() {
     Array.from(document.querySelectorAll(".compute-flow-actions")).forEach(function (row) {
-      row.parentNode.removeChild(row);
+      if (row.getAttribute("data-compute-flow-owner") === "compute-shell-contract") return;
+      if (row.parentNode) row.parentNode.removeChild(row);
     });
   }
 

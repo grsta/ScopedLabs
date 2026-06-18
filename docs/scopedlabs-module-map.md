@@ -611,3 +611,10 @@ Example:
 - CPU and RAM index files load the shell version but do not own static `compute-flow-actions`, `continue-wrap`, or `continue` markup.
 - `scripts/audit-compute-flow-actions-shell-contract-v1.js` verifies shell-owned route contracts, duplicate-ID removal, safe arrow entities, and idempotent observer behavior.
 - Non-goals: CPU math, RAM math, capacity-envelope visuals, export.js, auth, checkout, Knowledge Base behavior, and broad page redesign.
+
+### Compute flow actions static-safe shell hotfix
+
+- `assets/scopedlabs-compute-shell-contract.js` version `scopedlabs-compute-shell-contract-005-flow-actions-static-safe` keeps Compute flow-action normalization shell-owned while preventing deletion of valid shell-owned rows.
+- CPU and RAM keep one declarative `data-compute-flow-owner="compute-shell-contract"` row so critical Back/Continue navigation does not disappear if shell-created placement fails.
+- `scripts/audit-compute-flow-actions-shell-contract-v1.js` verifies one row per page, correct routes, safe arrow entities, and static-safe shell behavior.
+- Non-goals: CPU math, RAM math, capacity-envelope visuals, export.js, auth, checkout, Knowledge Base behavior, and broad page redesign.
