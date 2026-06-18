@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-compute-capacity-visuals-008-cpu-ram-clean-family";
+  const VERSION = "scopedlabs-compute-capacity-visuals-009-cpu-cores-axis-label";
 
   function clamp(value, min, max) {
       return Math.max(min, Math.min(max, value));
@@ -538,6 +538,7 @@
       '<path d="M' + plot.x + ' ' + plot.y + ' V' + (plot.y + plot.h) + '" class="axis"/>',
       '<path d="M' + plot.x + ' ' + (plot.y + plot.h) + ' H' + (plot.x + plot.w) + '" class="axis"/>',
       '<text x="390" y="389" text-anchor="middle" class="axis-label">CPU planning checkpoints</text>',
+      '<text x="42" y="212" text-anchor="middle" transform="rotate(-90 42 212)" class="axis-label">cores</text>',
       '<path d="M' + plot.x + ' ' + riskY.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="risk-line"/>',
       '<path d="M' + plot.x + ' ' + watchY.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="watch-line"/>',
       '<path d="M' + plot.x + ' ' + usableY.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="capacity-line"/>',

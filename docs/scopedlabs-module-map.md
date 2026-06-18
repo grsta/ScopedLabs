@@ -545,3 +545,10 @@ Example:
 - `assets/scopedlabs-compute-capacity-visuals.js` version `scopedlabs-compute-capacity-visuals-008-cpu-ram-clean-family` aligns CPU and RAM adapters to the same clean capacity-envelope family rhythm.
 - CPU adapter now uses the same clean module-level pattern as RAM: short status chip, zone labels on chart, marker hover titles, and a single color-coded reference legend.
 - Non-goals: CPU math, RAM math, export.js, snapshot behavior, pipeline keys, Continue routes, auth, checkout, Knowledge Base behavior, and page layout order.
+
+### Compute capacity-envelope CPU cores axis label 009
+
+- `assets/scopedlabs-compute-capacity-visuals.js` version `scopedlabs-compute-capacity-visuals-009-cpu-cores-axis-label` adds a compact `cores` left-axis label to the CPU Capacity Envelope adapter.
+- `cores` is used instead of `CPU` to avoid implying the tick values represent physical CPU count.
+- RAM keeps its `GB` unit treatment.
+- Non-goals: CPU math, RAM math, export.js, snapshot behavior, pipeline keys, Continue routes, auth, checkout, Knowledge Base behavior, and page layout order.
