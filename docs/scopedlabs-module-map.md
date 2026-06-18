@@ -533,3 +533,9 @@ Example:
 - `assets/scopedlabs-compute-capacity-visuals.js` version `scopedlabs-compute-capacity-visuals-006-ram-declutter-legend` removes RAM footer clutter while preserving a single color-coded reference legend.
 - RAM marker detail is moved to SVG hover titles on the marker points.
 - Non-goals: CPU math, RAM math, CPU visual behavior, export.js, snapshot behavior, pipeline keys, Continue routes, auth, checkout, Knowledge Base behavior, and page layout order.
+
+### Compute capacity-envelope RAM clean card 007
+
+- `assets/scopedlabs-compute-capacity-visuals.js` version `scopedlabs-compute-capacity-visuals-007-ram-clean-card` removes the RAM SVG's extra rounded background layer.
+- RAM chart cleanup removes the redundant vertical GB axis label and replaces problematic separator glyphs with plain hyphens.
+- Non-goals: CPU math, RAM math, CPU visual behavior, export.js, snapshot behavior, pipeline keys, Continue routes, auth, checkout, Knowledge Base behavior, and page layout order.
