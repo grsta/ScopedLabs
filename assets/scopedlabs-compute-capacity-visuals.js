@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-compute-capacity-visuals-004-ram-envelope-layout";
+  const VERSION = "scopedlabs-compute-capacity-visuals-006-ram-declutter-legend";
 
   function clamp(value, min, max) {
       return Math.max(min, Math.min(max, value));
@@ -48,32 +48,22 @@
     const demand = Math.max(0, number(result.demandRamGb, result.subtotalMemory || 0));
     const required = Math.max(0, number(result.requiredRamGb, result.totalRequired || demand));
     const reserve = Math.max(0, number(result.reserveRamGb, result.reservedMemory || Math.max(0, required - demand)));
-    const headroom = Math.max(0, number(result.headroomRamGb, result.memoryHeadroom || Math.max(0, installed - required)));
     const reserveRatio = Math.max(0, number(result.reserveRatio, 0));
     const workloadLabel = result.workloadLabel || result.workload || "Current workload";
     const cpuCoupling = result.cpuCoupling || "CPU/RAM alignment to verify downstream";
 
-    const pressure = installed > 0 ? clamp((required / installed) * 100, 0, 140) : 0;
-
     const statusLabel = status.label === "HEALTHY" ? "GOOD" : status.label;
-    const statusColor = status.color || (statusLabel === "GOOD" ? "rgba(44,255,155,.96)" : statusLabel === "RISK" ? "rgba(206,32,41,.96)" : "rgba(250,204,21,.96)");
-    const statusFill = statusLabel === "GOOD"
-      ? "rgba(44,255,155,.10)"
-      : statusLabel === "RISK"
-        ? "rgba(206,32,41,.12)"
-        : "rgba(250,204,21,.10)";
+    const isRisk = statusLabel === "RISK";
+    const isWatch = statusLabel === "WATCH";
+    const statusColor = isRisk ? "#ff4d5a" : isWatch ? "#facc15" : "#2cff9b";
+    const statusFill = isRisk ? "rgba(206,32,41,.12)" : isWatch ? "rgba(250,204,21,.10)" : "rgba(44,255,155,.10)";
 
     const width = 760;
-    const height = 500;
+    const height = 430;
 
-    const plot = {
-      x: 64,
-      y: 108,
-      w: 642,
-      h: 280
-    };
+    const plot = { x: 70, y: 102, w: 640, h: 238 };
 
-    const maxRaw = Math.max(installed, required, demand, 8) * 1.18;
+    const maxRaw = Math.max(installed, required, demand, 8) * 1.20;
     const yMax = Math.max(8, Math.ceil(maxRaw / 8) * 8);
 
     function yScale(value) {
@@ -84,9 +74,35 @@
       return plot.x + clamp(position, 0, 1) * plot.w;
     }
 
-    const current = { x: xScale(0.16), y: yScale(demand), label: "*1 demand basis", short: "*1", value: demand, tone: "current" };
-    const reservePoint = { x: xScale(0.56), y: yScale(required), label: "*2 reserve pressure", short: "*2", value: required, tone: "growth" };
-    const installedPoint = { x: xScale(0.88), y: yScale(installed), label: "*3 downstream validation", short: "*3", value: installed, tone: "failover" };
+    const points = [
+      {
+        x: xScale(0.16),
+        y: yScale(demand),
+        value: demand,
+        tone: "current",
+        label: "Demand",
+        ref: "*1 demand basis",
+        detail: "Current RAM demand basis: " + gb(demand, 1) + ". Workload: " + workloadLabel + "."
+      },
+      {
+        x: xScale(0.56),
+        y: yScale(required),
+        value: required,
+        tone: "growth",
+        label: "Required",
+        ref: "*2 reserve pressure",
+        detail: "Required RAM with reserve pressure: " + gb(required, 1) + ". Reserve: " + gb(reserve, 1) + " / " + pct(reserveRatio) + "."
+      },
+      {
+        x: xScale(0.88),
+        y: yScale(installed),
+        value: installed,
+        tone: "failover",
+        label: "Installed",
+        ref: "*3 downstream validation",
+        detail: "Installed RAM tier: " + gb(installed, 0) + ". " + cpuCoupling + "."
+      }
+    ];
 
     const watchThreshold = installed * 0.70;
     const riskThreshold = installed * 0.90;
@@ -96,60 +112,46 @@
     const capacityY = yScale(installed);
     const requiredY = yScale(required);
 
-    const riskZoneY = plot.y;
     const riskZoneH = Math.max(0, riskY - plot.y);
-    const watchZoneY = riskY;
     const watchZoneH = Math.max(0, watchY - riskY);
-    const goodZoneY = watchY;
     const goodZoneH = Math.max(0, plot.y + plot.h - watchY);
 
     const curvePath = [
-      "M " + current.x.toFixed(1) + " " + current.y.toFixed(1),
-      "Q " + ((current.x + reservePoint.x) / 2).toFixed(1) + " " + ((current.y + reservePoint.y) / 2 - 12).toFixed(1) + " " + reservePoint.x.toFixed(1) + " " + reservePoint.y.toFixed(1),
-      "Q " + ((reservePoint.x + installedPoint.x) / 2).toFixed(1) + " " + ((reservePoint.y + installedPoint.y) / 2 - 10).toFixed(1) + " " + installedPoint.x.toFixed(1) + " " + installedPoint.y.toFixed(1)
+      "M " + points[0].x.toFixed(1) + " " + points[0].y.toFixed(1),
+      "Q " + ((points[0].x + points[1].x) / 2).toFixed(1) + " " + ((points[0].y + points[1].y) / 2 - 12).toFixed(1) + " " + points[1].x.toFixed(1) + " " + points[1].y.toFixed(1),
+      "Q " + ((points[1].x + points[2].x) / 2).toFixed(1) + " " + ((points[1].y + points[2].y) / 2 - 10).toFixed(1) + " " + points[2].x.toFixed(1) + " " + points[2].y.toFixed(1)
     ].join(" ");
 
     const tickStep = yMax <= 32 ? 8 : 12;
     const yTicks = [];
-    for (let value = 0; value <= yMax; value += tickStep) {
-      yTicks.push(value);
-    }
+    for (let value = 0; value <= yMax; value += tickStep) yTicks.push(value);
     if (yTicks[yTicks.length - 1] !== yMax) yTicks.push(yMax);
 
     const yGrid = yTicks.map(function (tick) {
       const y = yScale(tick);
-      const cls = tick === 0 || tick === yMax ? "grid-major" : "grid";
       return [
-        '<path d="M' + plot.x + ' ' + y.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="' + cls + '"/>',
+        '<path d="M' + plot.x + ' ' + y.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="' + (tick === 0 || tick === yMax ? "grid-major" : "grid") + '"/>',
         '<text x="' + (plot.x - 10) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end" class="tick">' + svgText(gb(tick, tick >= 10 ? 0 : 1)) + '</text>'
       ].join("");
     }).join("");
 
-    const xTicks = [
-      { label: "Demand", x: current.x },
-      { label: "Required", x: reservePoint.x },
-      { label: "Installed", x: installedPoint.x }
-    ].map(function (tick) {
+    const xTicks = points.map(function (point) {
       return [
-        '<path d="M' + tick.x.toFixed(1) + ' ' + plot.y + ' V' + (plot.y + plot.h) + '" class="grid"/>',
-        '<text x="' + tick.x.toFixed(1) + '" y="' + (plot.y + plot.h + 16) + '" text-anchor="middle" class="tick">' + svgText(tick.label) + '</text>'
+        '<path d="M' + point.x.toFixed(1) + ' ' + plot.y + ' V' + (plot.y + plot.h) + '" class="grid"/>',
+        '<text x="' + point.x.toFixed(1) + '" y="' + (plot.y + plot.h + 20) + '" text-anchor="middle" class="tick">' + svgText(point.label) + '</text>'
       ].join("");
     }).join("");
 
-    function markerSvg(point, labelAnchor, valueAnchor, dx, dy) {
-      const labelX = clamp(point.x + dx, plot.x + 58, plot.x + plot.w - 58);
-      const labelY = clamp(point.y + dy, plot.y + 34, plot.y + plot.h - 24);
+    function markerSvg(point) {
       return [
+        '<g>',
+        '<title>' + svgText(point.ref + " - " + point.detail) + '</title>',
         '<path d="M' + point.x.toFixed(1) + ' ' + point.y.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="ref-line"/>',
-        '<circle cx="' + point.x.toFixed(1) + '" cy="' + point.y.toFixed(1) + '" r="6.5" class="marker-ring"/>',
-        '<circle cx="' + point.x.toFixed(1) + '" cy="' + point.y.toFixed(1) + '" r="4.5" class="marker-' + point.tone + '"/>',
-        '<text x="' + labelX.toFixed(1) + '" y="' + labelY.toFixed(1) + '" text-anchor="' + labelAnchor + '" class="marker-worker tone-' + point.tone + '">' + svgText(point.short + " " + gb(point.value, point.tone === "failover" ? 0 : 1)) + '</text>',
-        '<text x="' + labelX.toFixed(1) + '" y="' + (labelY + 13).toFixed(1) + '" text-anchor="' + valueAnchor + '" class="marker-core">' + svgText(point.label.replace(point.short + " ", "")) + '</text>'
+        '<circle cx="' + point.x.toFixed(1) + '" cy="' + point.y.toFixed(1) + '" r="7" class="marker-ring"/>',
+        '<circle cx="' + point.x.toFixed(1) + '" cy="' + point.y.toFixed(1) + '" r="4.8" class="marker-' + point.tone + '"/>',
+        '</g>'
       ].join("");
     }
-
-    const footerCoupling = String(cpuCoupling).length > 46 ? String(cpuCoupling).slice(0, 43) + "..." : String(cpuCoupling);
-    const workloadFooter = String(workloadLabel).length > 28 ? String(workloadLabel).slice(0, 25) + "..." : String(workloadLabel);
 
     return [
       '<svg data-export-svg="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" width="100%" role="img" aria-label="RAM Capacity Envelope analytic graph" data-compute-capacity-visual="ram-envelope" data-compute-visual="ram-capacity-envelope">',
@@ -159,44 +161,39 @@
       '<stop offset="100%" stop-color="#040b09"/>',
       '</linearGradient>',
       '<style>',
-      '.bg{fill:url(#computeRamEnvelopeBg);stroke:rgba(44,255,155,.22);stroke-width:1.2}.frame{fill:none;stroke:rgba(44,255,155,.16);stroke-width:1}.plot-frame{fill:rgba(255,255,255,.01);stroke:rgba(44,255,155,.20);stroke-width:1}.zone-good{fill:rgba(44,255,155,.05)}.zone-watch{fill:rgba(250,204,21,.055)}.zone-risk{fill:rgba(239,68,68,.06)}.grid{fill:none;stroke:rgba(238,246,255,.08);stroke-width:1}.grid-major{fill:none;stroke:rgba(238,246,255,.14);stroke-width:1}.axis{fill:none;stroke:rgba(238,246,255,.42);stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}.tick{fill:rgba(203,213,225,.90);font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700}.axis-label{fill:rgba(203,213,225,.92);font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;letter-spacing:.5px}.header{fill:#eef6ff;font-family:Inter,Arial,Helvetica,sans-serif;font-size:18px;font-weight:900;letter-spacing:.5px}.subhead{fill:rgba(203,213,225,.86);font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:600}.zone-label{font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:800;letter-spacing:.7px}.zone-good-text{fill:rgba(44,255,155,.92)}.zone-watch-text{fill:rgba(250,204,21,.95)}.zone-risk-text{fill:rgba(206,32,41,.95)}.capacity-line{fill:none;stroke:#2cff9b;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}.watch-line{fill:none;stroke:rgba(250,204,21,.72);stroke-width:1;stroke-dasharray:5 5}.risk-line{fill:none;stroke:rgba(206,32,41,.86);stroke-width:1;stroke-dasharray:5 5}.required-line{fill:none;stroke:rgba(238,246,255,.34);stroke-width:1.1;stroke-dasharray:6 5}.curve-shadow{fill:none;stroke:rgba(44,255,155,.22);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.curve{fill:none;stroke:#2cff9b;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.marker-current{fill:#38d9ff;stroke:#04110d;stroke-width:1.2}.marker-growth{fill:#a78bfa;stroke:#04110d;stroke-width:1.2}.marker-failover{fill:#f59e0b;stroke:#04110d;stroke-width:1.2}.marker-ring{fill:none;stroke:rgba(238,246,255,.7);stroke-width:1}.marker-worker{font-family:Inter,Arial,Helvetica,sans-serif;font-size:9.5px;font-weight:850}.marker-core{fill:rgba(203,213,225,.86);font-family:Inter,Arial,Helvetica,sans-serif;font-size:8.8px;font-weight:650}.marker-worker.tone-current{fill:#38d9ff}.marker-worker.tone-growth{fill:#a78bfa}.marker-worker.tone-failover{fill:#f59e0b}.footer-text.tone-current{fill:#38d9ff}.footer-text.tone-growth{fill:#a78bfa}.footer-text.tone-failover{fill:#f59e0b}.ref-line{fill:none;stroke:rgba(238,246,255,.16);stroke-width:1;stroke-dasharray:4 4}.capacity-label{fill:#2cff9b;font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:800}.required-label{fill:rgba(203,213,225,.82);font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:700}.status-chip{stroke-width:1}.status-text{font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;letter-spacing:.7px}.footer-text{fill:rgba(203,213,225,.88);font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700}',
+      '.bg{fill:url(#computeRamEnvelopeBg);stroke:rgba(44,255,155,.22);stroke-width:1.2}.plot-frame{fill:rgba(255,255,255,.012);stroke:rgba(44,255,155,.20);stroke-width:1}.zone-good{fill:rgba(44,255,155,.055)}.zone-watch{fill:rgba(250,204,21,.055)}.zone-risk{fill:rgba(239,68,68,.06)}.grid{fill:none;stroke:rgba(238,246,255,.08);stroke-width:1}.grid-major{fill:none;stroke:rgba(238,246,255,.14);stroke-width:1}.axis{fill:none;stroke:rgba(238,246,255,.42);stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}.tick{fill:rgba(203,213,225,.90);font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700}.axis-label{fill:rgba(203,213,225,.92);font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:750;letter-spacing:.5px}.header{fill:#eef6ff;font-family:Inter,Arial,Helvetica,sans-serif;font-size:18px;font-weight:900;letter-spacing:.5px}.subhead{fill:rgba(203,213,225,.86);font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:650}.zone-label{font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;letter-spacing:.8px}.zone-good-text{fill:rgba(44,255,155,.96)}.zone-watch-text{fill:rgba(250,204,21,.95)}.zone-risk-text{fill:rgba(255,77,90,.95)}.capacity-line{fill:none;stroke:#2cff9b;stroke-width:1.6;stroke-linecap:round}.watch-line{fill:none;stroke:rgba(250,204,21,.70);stroke-width:1;stroke-dasharray:5 5}.risk-line{fill:none;stroke:rgba(255,77,90,.82);stroke-width:1;stroke-dasharray:5 5}.required-line{fill:none;stroke:rgba(238,246,255,.32);stroke-width:1;stroke-dasharray:6 5}.curve-shadow{fill:none;stroke:rgba(44,255,155,.22);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.curve{fill:none;stroke:#2cff9b;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}.marker-current{fill:#38d9ff;stroke:#04110d;stroke-width:1.2}.marker-growth{fill:#a78bfa;stroke:#04110d;stroke-width:1.2}.marker-failover{fill:#f59e0b;stroke:#04110d;stroke-width:1.2}.marker-ring{fill:none;stroke:rgba(238,246,255,.72);stroke-width:1}.ref-line{fill:none;stroke:rgba(238,246,255,.16);stroke-width:1;stroke-dasharray:4 4}.capacity-label{fill:#2cff9b;font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:850}.required-label{fill:rgba(203,213,225,.82);font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:700}.status-chip{stroke-width:1}.status-text{font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;letter-spacing:.7px}.legend-current{fill:#38d9ff}.legend-growth{fill:#a78bfa}.legend-failover{fill:#f59e0b}.legend-text{font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:800}',
       '</style>',
       '</defs>',
-      '<rect x="14" y="14" width="732" height="402" rx="16" class="bg"/>',
-      '<rect x="28" y="28" width="704" height="374" rx="12" class="frame"/>',
-      '<text x="46" y="58" class="header">RAM CAPACITY ENVELOPE</text>',
-      '<text x="46" y="77" class="subhead">Demand curve vs installed RAM capacity</text>',
-      '<rect x="628" y="42" width="68" height="28" rx="7" fill="' + statusFill + '" stroke="' + statusColor + '" class="status-chip"/>',
-      '<text x="662" y="61" text-anchor="middle" fill="' + statusColor + '" class="status-text">' + svgText(statusLabel) + '</text>',
+      '<rect x="20" y="18" width="720" height="386" rx="16" class="bg"/>',
+      '<text x="50" y="56" class="header">RAM CAPACITY ENVELOPE</text>',
+      '<text x="50" y="76" class="subhead">Demand curve vs installed RAM capacity</text>',
+      '<rect x="632" y="38" width="64" height="28" rx="7" fill="' + statusFill + '" stroke="' + statusColor + '" class="status-chip"/>',
+      '<text x="664" y="57" text-anchor="middle" fill="' + statusColor + '" class="status-text">' + svgText(statusLabel) + '</text>',
       '<rect x="' + plot.x + '" y="' + plot.y + '" width="' + plot.w + '" height="' + riskZoneH.toFixed(1) + '" class="zone-risk"/>',
-      '<rect x="' + plot.x + '" y="' + watchZoneY.toFixed(1) + '" width="' + plot.w + '" height="' + watchZoneH.toFixed(1) + '" class="zone-watch"/>',
-      '<rect x="' + plot.x + '" y="' + goodZoneY.toFixed(1) + '" width="' + plot.w + '" height="' + goodZoneH.toFixed(1) + '" class="zone-good"/>',
+      '<rect x="' + plot.x + '" y="' + riskY.toFixed(1) + '" width="' + plot.w + '" height="' + watchZoneH.toFixed(1) + '" class="zone-watch"/>',
+      '<rect x="' + plot.x + '" y="' + watchY.toFixed(1) + '" width="' + plot.w + '" height="' + goodZoneH.toFixed(1) + '" class="zone-good"/>',
       '<rect x="' + plot.x + '" y="' + plot.y + '" width="' + plot.w + '" height="' + plot.h + '" class="plot-frame"/>',
       yGrid,
       xTicks,
       '<path d="M' + plot.x + ' ' + plot.y + ' V' + (plot.y + plot.h) + '" class="axis"/>',
       '<path d="M' + plot.x + ' ' + (plot.y + plot.h) + ' H' + (plot.x + plot.w) + '" class="axis"/>',
-      '<text x="385" y="456" text-anchor="middle" class="axis-label">RAM planning checkpoints</text>',
-      '<text x="37" y="206" text-anchor="middle" transform="rotate(-90 37 206)" class="axis-label">GB</text>',
+      '<text x="390" y="389" text-anchor="middle" class="axis-label">RAM planning checkpoints</text>',
+      '<text x="42" y="212" text-anchor="middle" transform="rotate(-90 42 212)" class="axis-label">GB</text>',
       '<path d="M' + plot.x + ' ' + riskY.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="risk-line"/>',
-      '<text x="' + (plot.x + 10) + '" y="' + (riskY - 7).toFixed(1) + '" class="zone-label zone-risk-text">RISK threshold ? ' + svgText(gb(riskThreshold, 1)) + '</text>',
       '<path d="M' + plot.x + ' ' + watchY.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="watch-line"/>',
-      '<text x="' + (plot.x + 10) + '" y="' + (watchY - 7).toFixed(1) + '" class="zone-label zone-watch-text">WATCH threshold ? ' + svgText(gb(watchThreshold, 1)) + '</text>',
       '<path d="M' + plot.x + ' ' + capacityY.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="capacity-line"/>',
-      '<text x="' + (plot.x + plot.w - 10) + '" y="' + (capacityY - 9).toFixed(1) + '" text-anchor="end" class="capacity-label">Installed capacity ? ' + svgText(gb(installed, 0)) + '</text>',
       '<path d="M' + plot.x + ' ' + requiredY.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="required-line"/>',
-      '<text x="' + (plot.x + plot.w - 10) + '" y="' + (requiredY + 14).toFixed(1) + '" text-anchor="end" class="required-label">Required ? ' + svgText(gb(required, 1)) + '</text>',
+      '<text x="' + (plot.x + 18) + '" y="' + (plot.y + 24) + '" class="zone-label zone-risk-text">RISK</text>',
+      '<text x="' + (plot.x + 18) + '" y="' + (riskY + 22).toFixed(1) + '" class="zone-label zone-watch-text">WATCH</text>',
+      '<text x="' + (plot.x + 18) + '" y="' + (plot.y + plot.h - 20) + '" class="zone-label zone-good-text">GOOD</text>',
+      '<text x="' + (plot.x + plot.w - 12) + '" y="' + (capacityY - 10).toFixed(1) + '" text-anchor="end" class="capacity-label">Installed capacity ? ' + svgText(gb(installed, 0)) + '</text>',
+      '<text x="' + (plot.x + plot.w - 12) + '" y="' + (requiredY + 15).toFixed(1) + '" text-anchor="end" class="required-label">Required ? ' + svgText(gb(required, 1)) + '</text>',
       '<path d="' + curvePath + '" class="curve-shadow"/>',
       '<path d="' + curvePath + '" class="curve"/>',
-      markerSvg(current, "start", "start", 14, -24),
-      markerSvg(reservePoint, "middle", "middle", 0, -30),
-      markerSvg(installedPoint, "end", "end", -14, 30),
-      '<text x="' + (plot.x + 18) + '" y="' + (plot.y + plot.h - 18) + '" class="zone-label zone-good-text">GOOD</text>',
-      '<text x="176" y="430" text-anchor="middle" class="footer-text tone-current">*1 demand basis</text>',
-      '<text x="380" y="430" text-anchor="middle" class="footer-text tone-growth">*2 reserve pressure</text>',
-      '<text x="584" y="430" text-anchor="middle" class="footer-text tone-failover">*3 downstream validation</text>',
-      '<text x="46" y="478" class="tick">' + svgText(workloadFooter) + ' ? headroom ' + svgText(gb(headroom, 1)) + ' ? reserve ' + svgText(pct(reserveRatio)) + ' ? required pressure ' + svgText(pct(pressure)) + '</text>',
-      '<text x="706" y="478" text-anchor="end" class="tick">' + svgText(footerCoupling) + '</text>',
+      points.map(markerSvg).join(""),
+      '<text x="190" y="416" text-anchor="middle" class="legend-text legend-current">*1 demand basis</text>',
+      '<text x="382" y="416" text-anchor="middle" class="legend-text legend-growth">*2 reserve pressure</text>',
+      '<text x="586" y="416" text-anchor="middle" class="legend-text legend-failover">*3 downstream validation</text>',
       '</svg>'
     ].join("");
   }

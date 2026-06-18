@@ -527,3 +527,9 @@ Example:
 - `assets/scopedlabs-compute-capacity-visuals.js` version `scopedlabs-compute-capacity-visuals-004-ram-envelope-layout` keeps CPU as the accepted reference and tightens the RAM adapter layout.
 - Live-review correction scope: RAM SVG layout spacing, label placement, shorter status chip, CPU-style chart rhythm, and matching cache-bust/audit version.
 - Non-goals: CPU math, RAM math, export.js, snapshot behavior, pipeline keys, Continue routes, auth, checkout, and Knowledge Base behavior.
+
+### Compute capacity-envelope RAM declutter legend 006
+
+- `assets/scopedlabs-compute-capacity-visuals.js` version `scopedlabs-compute-capacity-visuals-006-ram-declutter-legend` removes RAM footer clutter while preserving a single color-coded reference legend.
+- RAM marker detail is moved to SVG hover titles on the marker points.
+- Non-goals: CPU math, RAM math, CPU visual behavior, export.js, snapshot behavior, pipeline keys, Continue routes, auth, checkout, Knowledge Base behavior, and page layout order.
