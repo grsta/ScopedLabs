@@ -110,6 +110,26 @@
     carriedWorkloadHydrated = true;
   }
 
+  function ramPlannerContextFromCpu(data) {
+    return data && data.plannerContext && typeof data.plannerContext === "object" ? data.plannerContext : null;
+  }
+
+  function ramUpstreamCpuContext(data) {
+    if (!data || typeof data !== "object") return null;
+
+    return {
+      cores: data.cores,
+      physicalCores: data.physicalCores,
+      eff: data.eff,
+      workload: data.workload,
+      status: data.status,
+      utilizationTarget: data.utilizationTarget,
+      growthReservePercent: data.growthReservePercent,
+      workloadPattern: data.workloadPattern,
+      plannerContext: ramPlannerContextFromCpu(data)
+    };
+  }
+
   function refreshFlowNote() {
     const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
     if (!raw) {
@@ -146,6 +166,10 @@
     if (typeof data.eff === "number") lines.push(`Effective Load: <strong>${Number(data.eff).toFixed(2)} core-eq</strong>`);
     if (typeof data.workload === "string") lines.push(`Workload: <strong>${data.workload}</strong>`);
     if (typeof data.status === "string") lines.push(`CPU Status: <strong>${data.status}</strong>`);
+
+    const plannerContext = ramPlannerContextFromCpu(data);
+    if (plannerContext && plannerContext.targetUtilization) lines.push(`Planner Target: <strong>${plannerContext.targetUtilization}%</strong>`);
+    if (plannerContext && plannerContext.growthMargin) lines.push(`Planner Growth Margin: <strong>${plannerContext.growthMargin}%</strong>`);
 
     if (!lines.length) {
       els.flowNote.hidden = true;
@@ -359,6 +383,9 @@
       }
     });
 
+    const plannerContext = cpuContext ? ramPlannerContextFromCpu(cpuContext) : null;
+    const upstreamCpuContext = cpuContext ? ramUpstreamCpuContext(cpuContext) : null;
+
     const ramCapacityEnvelope = {
       workload,
       workloadLabel: els.workload.options[els.workload.selectedIndex] ? els.workload.options[els.workload.selectedIndex].text : workload,
@@ -374,7 +401,9 @@
       reserveRatio,
       status: analyzer.status,
       dominantConstraint,
-      cpuCoupling
+      cpuCoupling,
+      plannerContext,
+      upstreamCpuContext
     };
 
     renderRamCapacityVisual(ramCapacityEnvelope);
@@ -388,6 +417,8 @@
         reserveRatio,
         dominantConstraint,
         workload,
+        plannerContext,
+        upstreamCpuContext,
         status: analyzer.status,
         capacityEnvelope: ramCapacityEnvelope}
     });

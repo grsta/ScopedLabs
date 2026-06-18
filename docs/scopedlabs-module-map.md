@@ -559,3 +559,10 @@ Example:
 - `tools/compute/cpu-sizing/index.html` and `tools/compute/ram-sizing/index.html` must expose the same canonical `workload` option values.
 - `tools/compute/ram-sizing/script.js` hydrates the RAM workload selector from CPU pipeline context when a previous CPU result exists.
 - Non-goals: visual module changes, CPU/RAM capacity math redesign, export.js changes, auth, checkout, Knowledge Base behavior, and page layout redesign.
+
+### Compute planner carryover contract audit
+
+- `scripts/audit-compute-planner-carryover-contract-v1.js` protects Compute Planner -> CPU -> RAM carryover.
+- `tools/compute/cpu-sizing/script.js` hydrates CPU workload, workload pattern, target utilization, and growth reserve from the active Compute Workload Planner context.
+- `tools/compute/ram-sizing/script.js` reads planner context from the upstream CPU result and carries planner/upstream CPU context forward without conflating RAM headroom with planner growth margin.
+- Non-goals: visual module changes, CPU/RAM capacity-envelope chart changes, export.js changes, auth, checkout, Knowledge Base behavior, and page layout redesign.

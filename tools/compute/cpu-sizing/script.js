@@ -51,6 +51,8 @@
     reset: $("reset")
   };
 
+  let plannerInputsHydrated = false;
+
   function workloadFactor(workload) {
     if (workload === "web") return 0.9;
     if (workload === "db") return 1.1;
@@ -166,7 +168,126 @@
     }
   }
 
+
+  function normalizeComputeCarryoverWorkloadValue(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+
+    const key = raw.toLowerCase().replace(/[_\s/]+/g, "-");
+    const map = {
+      general: "general",
+      mixed: "general",
+      web: "web",
+      "web-api": "web",
+      api: "web",
+      db: "db",
+      database: "db",
+      virtualization: "virtualization",
+      virtualized: "virtualization",
+      analytics: "analytics",
+      "analytics-ml": "analytics",
+      ml: "analytics",
+      video: "video",
+      "video-transcode": "video",
+      transcode: "video",
+      compute: "compute",
+      "compute-heavy": "compute",
+      "compute-heavy-batch": "compute",
+      batch: "compute"
+    };
+
+    const normalized = map[key] || raw;
+    if (!els.workload || !els.workload.querySelector('option[value="' + normalized + '"]')) return "";
+    return normalized;
+  }
+
+  function computeCarryoverPercent(value, fallback) {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : fallback;
+  }
+
+  function normalizeCpuCarryoverPattern(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+
+    const key = raw.toLowerCase().replace(/[_\s/]+/g, "-");
+    const map = {
+      steady: "steady",
+      predictable: "steady",
+      "steady-predictable": "steady",
+      standard: "steady",
+      "business-peak": "businessPeak",
+      "business-hours": "businessPeak",
+      "business-hours-peak": "businessPeak",
+      peak: "businessPeak",
+      burst: "burstHeavy",
+      "burst-heavy": "burstHeavy",
+      "queue-spikes": "burstHeavy",
+      batch: "scheduledBatch",
+      "scheduled-batch": "scheduledBatch",
+      scheduled: "scheduledBatch",
+      sustained: "sustained247",
+      "24-7": "sustained247",
+      "24/7": "sustained247",
+      "sustained-24-7": "sustained247"
+    };
+
+    const normalized = map[key] || "";
+    if (!normalized || !els.workloadPattern || !els.workloadPattern.querySelector('option[value="' + normalized + '"]')) return "";
+    return normalized;
+  }
+
+  function hydrateCpuInputsFromPlanner(workload) {
+    if (plannerInputsHydrated || !workload) return false;
+
+    let changed = false;
+
+    const carriedWorkload = normalizeComputeCarryoverWorkloadValue(workload.workloadType);
+    if (carriedWorkload && els.workload && els.workload.value !== carriedWorkload) {
+      els.workload.value = carriedWorkload;
+      changed = true;
+    }
+
+    const carriedTarget = computeCarryoverPercent(
+      workload.targetUtilization != null ? workload.targetUtilization : workload.targetUtilizationPercent,
+      null
+    );
+
+    if (carriedTarget != null && els.targetUtil) {
+      els.targetUtil.value = String(cpuCapacityClamp(carriedTarget, 10, 95, 70));
+      changed = true;
+    }
+
+    const carriedGrowth = computeCarryoverPercent(
+      workload.growthMargin != null ? workload.growthMargin :
+        workload.growthMarginPercent != null ? workload.growthMarginPercent :
+          workload.growthReserve != null ? workload.growthReserve :
+            workload.growthReservePercent,
+      null
+    );
+
+    if (carriedGrowth != null && els.growthReserve) {
+      els.growthReserve.value = String(cpuCapacityClamp(carriedGrowth, 0, 200, 20));
+      changed = true;
+    }
+
+    const carriedPattern = normalizeCpuCarryoverPattern(
+      workload.demandPattern || workload.demandProfile || workload.demand
+    );
+
+    if (carriedPattern && els.workloadPattern && els.workloadPattern.value !== carriedPattern) {
+      els.workloadPattern.value = carriedPattern;
+      changed = true;
+    }
+
+    plannerInputsHydrated = true;
+    return changed;
+  }
+
   function renderWorkloadContext() {
+    const plannerWorkload = activeComputeWorkload();
+    hydrateCpuInputsFromPlanner(plannerWorkload);
+
     if (State && typeof State.renderWorkloadDisplay === "function") {
       return State.renderWorkloadDisplay({
         card: els.workloadContextCard,
@@ -177,7 +298,7 @@
       });
     }
 
-    const workload = activeComputeWorkload();
+    const workload = plannerWorkload;
 
     if (!els.workloadContextCard || !els.workloadContextTitle || !els.workloadContextCopy || !els.workloadContextMeta) return null;
 
@@ -1120,7 +1241,11 @@
         name: activeWorkloadForResult.name || "",
         environmentType: activeWorkloadForResult.environmentType || "",
         workloadType: activeWorkloadForResult.workloadType || "",
+        demandPattern: activeWorkloadForResult.demandPattern || activeWorkloadForResult.demandProfile || "",
         planningPath: activeWorkloadForResult.planningPath || "",
+        targetUtilization: activeWorkloadForResult.targetUtilization || activeWorkloadForResult.targetUtilizationPercent || "",
+        growthMargin: activeWorkloadForResult.growthMargin || activeWorkloadForResult.growthMarginPercent || "",
+        branches: activeWorkloadForResult.branches || {},
         status: activeWorkloadForResult.status || activeWorkloadForResult.summaryStatus || ""
       } : null
     };

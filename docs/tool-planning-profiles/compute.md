@@ -1911,3 +1911,13 @@ Decision: Compute workload type is now treated as a carryover contract. CPU and 
 Tool-specific interpretation is still allowed. CPU uses the shared workload value as a CPU intensity factor. RAM uses the same value as a memory intensity factor. The value must carry forward cleanly even when the multiplier is different by tool.
 
 Audit: `scripts/audit-compute-workload-carryover-contract-v1.js` verifies canonical CPU/RAM workload options, factor coverage, and RAM hydration from CPU pipeline context.
+
+### Compute planner-to-CPU-to-RAM carryover contract - 2026-06-17
+
+Finding: The Compute Workload Planner is the command gate and exposes planner-owned context such as workload type, demand pattern/profile, target utilization, and growth margin. CPU Sizing displayed that context but did not hydrate matching CPU inputs from it, which allowed the planner card to show one value while CPU calculated with default local values.
+
+Decision: Planner context now hydrates CPU Sizing inputs where the meaning is equivalent: `workloadType` -> CPU `workload`, `demandPattern` / `demandProfile` -> CPU `workloadPattern`, `targetUtilization` -> CPU `targetUtil`, and `growthMargin` -> CPU `growthReserve`.
+
+Downstream: CPU Sizing carries planner context into the CPU pipeline payload so RAM Sizing can read planner target/growth context alongside the upstream CPU result. RAM does not silently map planner growth margin into RAM headroom because RAM headroom is an operating/cache reserve, not the same planning concept as future workload growth.
+
+Audit: `scripts/audit-compute-planner-carryover-contract-v1.js` protects planner-to-CPU hydration, CPU-to-RAM planner context carryover, and the RAM headroom/growth distinction.
