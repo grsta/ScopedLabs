@@ -508,3 +508,16 @@ Expected use:
 
 Example:
 - node .\scripts\audit-scopedlabs-tool-engineering-readiness-v1.js --category compute --tools cpu-sizing,ram-sizing,storage-iops,storage-throughput
+
+### Compute capacity-envelope shared contract audit
+
+- `scripts/audit-compute-capacity-envelope-shared-contract-v1.js` proves CPU/RAM shared capacity-envelope adoption.
+- `assets/scopedlabs-compute-capacity-visuals.js` exposes CPU and RAM adapter exports:
+  - `buildCapacityEnvelopeSvg`
+  - `buildCpuCapacityEnvelopeSvg`
+  - `renderCpuCapacityEnvelope`
+  - `buildRamCapacityEnvelopeSvg`
+  - `renderRamCapacityEnvelope`
+  - `clear`
+- CPU Sizing delegates the CPU Capacity Envelope SVG builder to the shared module while preserving `window.ScopedLabsComputeCpuExport.buildPayload`.
+- RAM Sizing continues to consume the shared RAM renderer and keeps `capacityEnvelope` in the flow payload.
