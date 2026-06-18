@@ -539,3 +539,9 @@ Example:
 - `assets/scopedlabs-compute-capacity-visuals.js` version `scopedlabs-compute-capacity-visuals-007-ram-clean-card` removes the RAM SVG's extra rounded background layer.
 - RAM chart cleanup removes the redundant vertical GB axis label and replaces problematic separator glyphs with plain hyphens.
 - Non-goals: CPU math, RAM math, CPU visual behavior, export.js, snapshot behavior, pipeline keys, Continue routes, auth, checkout, Knowledge Base behavior, and page layout order.
+
+### Compute capacity-envelope clean family 008
+
+- `assets/scopedlabs-compute-capacity-visuals.js` version `scopedlabs-compute-capacity-visuals-008-cpu-ram-clean-family` aligns CPU and RAM adapters to the same clean capacity-envelope family rhythm.
+- CPU adapter now uses the same clean module-level pattern as RAM: short status chip, zone labels on chart, marker hover titles, and a single color-coded reference legend.
+- Non-goals: CPU math, RAM math, export.js, snapshot behavior, pipeline keys, Continue routes, auth, checkout, Knowledge Base behavior, and page layout order.
