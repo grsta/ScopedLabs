@@ -651,3 +651,10 @@ Example:
 - `scripts/run-scopedlabs-audit-batch-v1.js` runs selected audit scripts and prints a consolidated bottom summary.
 - It reports which audit failed and repeats structured `[FAIL]` / `[WATCH]` items at the bottom so terminal search hits like `fail-safe` are not confused with actual audit failures.
 - Default Compute closeout batch includes CPU status guidance, Compute export proof stack order, Compute flow actions shell, and module map audits.
+
+### Compute CPU export table cell styling
+
+- `tools/compute/cpu-sizing/script.js` now sends explicit report cell objects for CPU Recommended Actions and CPU Capacity Decision Schedule export tables.
+- Action, Group, Metric, Reason, and Engineering Note cells use normal report weight; the Decision Schedule Value column remains value-emphasized and status-color capable.
+- `scripts/audit-compute-cpu-status-guidance-v1.js` protects this CPU export table cell contract.
+- Non-goals: global `assets/export.js`, CPU math, visual geometry, auth, checkout, snapshots, Knowledge Base, and shell behavior.

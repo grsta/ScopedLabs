@@ -122,10 +122,10 @@ function auditCpuSizing() {
   );
 
   check(
-    html.includes("script.js?v=compute-cpu-export-order-0618") ? "PASS" : "WATCH",
+    html.includes("script.js?v=compute-cpu-export-table-style-0618") ? "PASS" : "WATCH",
     "CPU_EXPORT_ORDER_CACHE_BUST",
     "tools/compute/cpu-sizing/index.html",
-    "CPU page should cache-bust the script version that owns the final export order contract."
+    "CPU page should cache-bust the script version that owns the final export order and table-style contract."
   );
 }
 

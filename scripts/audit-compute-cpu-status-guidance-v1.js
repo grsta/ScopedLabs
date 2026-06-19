@@ -139,9 +139,26 @@ check(
 
 check(
   "CPU_CACHE_BUSTED_FOR_GUIDANCE_EXPORT",
-  html.includes("script.js?v=compute-cpu-export-order-0618"),
+  html.includes("script.js?v=compute-cpu-export-table-style-0618"),
   "tools/compute/cpu-sizing/index.html",
-  "CPU page should load the final export-order script version."
+  "CPU page should load the final export table-style script version."
+);
+
+
+check(
+  "CPU_EXPORT_TABLE_CELL_STYLE_CONTRACT",
+  script.includes("function computeCpuExportStatusTone(value)") &&
+    script.includes("function computeCpuExportPlainCell(value)") &&
+    script.includes("function computeCpuExportValueCell(value)") &&
+    script.includes('if (normalized === "WATCH") return "#d97706"') &&
+    script.includes("computeCpuExportPlainCell(item.action") &&
+    script.includes("computeCpuExportPlainCell(item.reason") &&
+    script.includes("computeCpuExportPlainCell(cols[0]") &&
+    script.includes("computeCpuExportPlainCell(cols[1]") &&
+    script.includes("computeCpuExportValueCell(cols[2]") &&
+    script.includes("computeCpuExportPlainCell(cols[3]"),
+  "tools/compute/cpu-sizing/script.js",
+  "CPU export action/group/metric/note cells should render as normal-weight report cells, while the Value column supports status color."
 );
 
 console.log("SCOPEDLABS COMPUTE CPU STATUS GUIDANCE AUDIT V1\n");

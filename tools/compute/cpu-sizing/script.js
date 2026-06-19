@@ -952,6 +952,37 @@
   }
 
 
+
+  function computeCpuExportStatusTone(value) {
+    const normalized = String(value || "").trim().toUpperCase();
+
+    if (normalized === "GOOD" || normalized === "HEALTHY") return "#16a34a";
+    if (normalized === "WATCH") return "#d97706";
+    if (normalized === "RISK") return "#dc2626";
+
+    return "";
+  }
+
+  function computeCpuExportPlainCell(value) {
+    return {
+      text: String(value || ""),
+      style: "font-weight:400;color:#334155;"
+    };
+  }
+
+  function computeCpuExportValueCell(value) {
+    const text = String(value || "");
+    const tone = computeCpuExportStatusTone(text);
+
+    return {
+      text,
+      style: tone
+        ? "font-weight:700;color:" + tone + ";"
+        : "font-weight:700;color:#0f172a;"
+    };
+  }
+
+
   function buildComputeCpuRecommendedActionsExportSection(result) {
     const actions = buildComputeCpuRecommendedActions(result || {});
 
@@ -962,11 +993,16 @@
       tables: [
         {
           headers: ["Action", "Reason"],
-          rows: actions.map((item) => [item.action || "Review CPU plan", item.reason || "Engineering review required."])
+          rows: actions.map((item) => [
+            computeCpuExportPlainCell(item.action || "Review CPU plan"),
+            computeCpuExportPlainCell(item.reason || "Engineering review required.")
+          ])
         }
       ]
     };
   }
+
+
   function buildComputeCpuDecisionScheduleExportSection() {
     const table = computeCpuExportTableFromDom("#computeCpuDecisionSchedule table");
     if (!table) return null;
@@ -975,7 +1011,23 @@
       title: "CPU Capacity Decision Schedule",
       description: "Decision checkpoints generated from the CPU sizing result.",
       tableClass: "extra-export-table--planner extra-export-table--decision",
-      tables: [table]
+      tables: [
+        {
+          headers: Array.isArray(table.headers) && table.headers.length
+            ? table.headers
+            : ["Group", "Metric", "Value", "Engineering Note"],
+          rows: (Array.isArray(table.rows) ? table.rows : []).map((row) => {
+            const cols = Array.isArray(row) ? row : [];
+
+            return [
+              computeCpuExportPlainCell(cols[0] || ""),
+              computeCpuExportPlainCell(cols[1] || ""),
+              computeCpuExportValueCell(cols[2] || ""),
+              computeCpuExportPlainCell(cols[3] || "")
+            ];
+          })
+        }
+      ]
     };
   }
 
