@@ -25,6 +25,24 @@ check(
   "CPU page should include a Recommended Actions card."
 );
 
+
+check(
+  "CPU_RECOMMENDED_ACTIONS_DOM_EXPORT_VISIBLE",
+  html.includes('id="computeCpuRecommendedActionsCard"') &&
+    html.includes('data-compute-cpu-recommended-actions-card data-export-section="true" data-export-title="Recommended Actions"'),
+  "tools/compute/cpu-sizing/index.html",
+  "Recommended Actions must be visible to the fallback DOM export scanner."
+);
+
+check(
+  "CPU_RECOMMENDED_ACTIONS_DOM_EXPORT_ORDER",
+  html.indexOf('id="computeCpuRecommendationReferencesCard"') >= 0 &&
+    html.indexOf('id="computeCpuRecommendedActionsCard"') > html.indexOf('id="computeCpuRecommendationReferencesCard"') &&
+    html.indexOf('id="computeCpuDecisionScheduleCard"') > html.indexOf('id="computeCpuRecommendedActionsCard"'),
+  "tools/compute/cpu-sizing/index.html",
+  "Fallback DOM export order should be Recommendation References, Recommended Actions, then CPU Capacity Decision Schedule."
+);
+
 check(
   "CPU_RECOMMENDED_ACTIONS_RENDER_OPTIONALLY",
   script.includes("function buildComputeCpuRecommendedActions(result)") &&
