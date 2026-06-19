@@ -666,3 +666,11 @@ Example:
 - `scripts/audit-compute-export-proof-table-contract-v1.js` protects the shared helper and CPU consumption path.
 - The audit batch runner includes the proof-table contract audit so future Compute tools cannot silently reintroduce cramped proof-table columns or local-only cell styling.
 - Non-goals: global `assets/export.js`, CPU math, visual geometry, auth, checkout, snapshots, Knowledge Base, and shell behavior.
+
+### Pattern promotion gate
+
+- `docs/scopedlabs-pattern-promotion-ledger.md` records reusable-looking fixes before closeout.
+- `scripts/audit-scopedlabs-pattern-promotion-v1.js` fails when a recurring fix is left as an unclassified page-local patch.
+- Required classification: `SHARED_PATTERN`, `ADAPTER_CONSUMER`, or `APPROVED_LOCAL_EXCEPTION`.
+- Blocking state: `BLOCKED_PROMOTION_REQUIRED`.
+- Purpose: prevent assistant drift from known fixes into one-off tool patches.

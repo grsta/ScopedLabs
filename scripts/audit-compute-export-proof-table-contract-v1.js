@@ -1,7 +1,18 @@
 const fs = require("fs");
 
 function read(file) {
-  return fs.readFileSync(file, "utf8").replace(/\r\n/g, "\n");
+  return fs.existsSync(file)
+    ? fs.readFileSync(file, "utf8").replace(/\r\n/g, "\n")
+    : "";
+}
+
+function exists(file) {
+  return fs.existsSync(file);
+}
+
+function localScriptIndex(html) {
+  const match = html.match(/<script\s+src=["'](?:\.\/)?script\.js(?:\?v=[^"']*)?["']\s*><\/script>/);
+  return match ? match.index : -1;
 }
 
 const checks = [];
@@ -14,9 +25,15 @@ const shared = read("assets/scopedlabs-compute-export-proof-tables.js");
 const cpuHtml = read("tools/compute/cpu-sizing/index.html");
 const cpuScript = read("tools/compute/cpu-sizing/script.js");
 
+const helperIndex = cpuHtml.indexOf("scopedlabs-compute-export-proof-tables.js");
+const cpuLocalScriptIndex = localScriptIndex(cpuHtml);
+
+console.log("SCOPEDLABS COMPUTE EXPORT PROOF TABLE CONTRACT AUDIT V1\n");
+
 check(
   "COMPUTE_EXPORT_PROOF_TABLE_MODULE_EXISTS",
-  shared.includes("window.ScopedLabsComputeExportProofTables") &&
+  exists("assets/scopedlabs-compute-export-proof-tables.js") &&
+    shared.includes("window.ScopedLabsComputeExportProofTables") &&
     shared.includes("widthsFor") &&
     shared.includes("plainCell") &&
     shared.includes("valueCell") &&
@@ -36,8 +53,9 @@ check(
 
 check(
   "CPU_LOADS_SHARED_PROOF_TABLE_MODULE_BEFORE_LOCAL_SCRIPT",
-  cpuHtml.indexOf("scopedlabs-compute-export-proof-tables.js") >= 0 &&
-    cpuHtml.indexOf("scopedlabs-compute-export-proof-tables.js") < cpuHtml.indexOf("./script.js?v="),
+  helperIndex >= 0 &&
+    cpuLocalScriptIndex >= 0 &&
+    helperIndex < cpuLocalScriptIndex,
   "tools/compute/cpu-sizing/index.html",
   "CPU page should load the shared proof-table helper before the CPU local script."
 );
@@ -62,7 +80,23 @@ check(
   "CPU Recommended Actions and Decision Schedule export tables should consume shared width keys."
 );
 
-console.log("SCOPEDLABS COMPUTE EXPORT PROOF TABLE CONTRACT AUDIT V1\n");
+check(
+  "CPU_EXPORT_VALUE_COLUMN_ONLY_GETS_STATUS_COLOR",
+  cpuScript.includes("computeCpuExportValueCell(cols[2]") &&
+    !cpuScript.includes("computeCpuExportValueCell(cols[0]") &&
+    !cpuScript.includes("computeCpuExportValueCell(cols[1]") &&
+    !cpuScript.includes("computeCpuExportValueCell(cols[3]"),
+  "tools/compute/cpu-sizing/script.js",
+  "Only the Decision Schedule Value column should use status-color capable value cells."
+);
+
+check(
+  "CPU_EXPORT_ENGINEERING_NOTE_REMAINS_EMPHASIZED",
+  cpuScript.includes("computeCpuExportNoteCell(cols[3]") &&
+    !cpuScript.includes("computeCpuExportPlainCell(cols[3]"),
+  "tools/compute/cpu-sizing/script.js",
+  "Engineering Note should remain emphasized and should not be downgraded to plain-cell styling."
+);
 
 let pass = 0;
 let fail = 0;

@@ -8,7 +8,8 @@ const defaultAudits = [
   "scripts/audit-compute-export-proof-stack-order-v1.js",
   "scripts/audit-compute-export-proof-table-contract-v1.js",
   "scripts/audit-compute-flow-actions-shell-contract-v1.js",
-  "scripts/audit-scopedlabs-module-map-v1.js"
+  "scripts/audit-scopedlabs-module-map-v1.js",
+  "scripts/audit-scopedlabs-pattern-promotion-v1.js"
 ];
 
 const list = audits.length ? audits : defaultAudits;
