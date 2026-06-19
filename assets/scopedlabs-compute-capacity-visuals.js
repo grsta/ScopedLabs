@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-compute-capacity-visuals-010-ram-mobile-refs";
+  const VERSION = "scopedlabs-compute-capacity-visuals-011-restore-ram-reference-labels";
 
   function clamp(value, min, max) {
       return Math.max(min, Math.min(max, value));
@@ -191,6 +191,9 @@
       '<path d="' + curvePath + '" class="curve-shadow"/>',
       '<path d="' + curvePath + '" class="curve"/>',
       points.map(markerSvg).join(""),
+      '<text x="190" y="416" text-anchor="middle" class="legend-text legend-current">*1 demand basis</text>',
+      '<text x="382" y="416" text-anchor="middle" class="legend-text legend-growth">*2 reserve pressure</text>',
+      '<text x="586" y="416" text-anchor="middle" class="legend-text legend-failover">*3 downstream validation</text>',
       '</svg>'
     ].join("");
   }
