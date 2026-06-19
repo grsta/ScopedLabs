@@ -848,10 +848,13 @@
 
     scheduleTarget.innerHTML = buildComputeCpuDecisionScheduleHtml(result);
     referencesTarget.innerHTML = buildComputeCpuRecommendationReferencesHtml(references);
-    actionsTarget.innerHTML = buildComputeCpuRecommendedActionsHtml(buildComputeCpuRecommendedActions(result));
     scheduleCard.hidden = false;
     referencesCard.hidden = false;
-    actionsCard.hidden = false;
+    
+    if (actionsCard && actionsTarget) {
+      actionsTarget.innerHTML = buildComputeCpuRecommendedActionsHtml(buildComputeCpuRecommendedActions(result));
+      actionsCard.hidden = false;
+    }
     return true;
   }
 
