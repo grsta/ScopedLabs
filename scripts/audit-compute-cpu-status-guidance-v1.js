@@ -69,6 +69,17 @@ check(
   "CPU custom export payload should have a Recommended Actions export section helper."
 );
 
+
+check(
+  "CPU_EXPORT_ORDER_VISUAL_BEFORE_REFERENCES",
+  script.includes("function buildComputeCpuVisualExportSection(result, chartSvg)") &&
+    /const extraSections = \[[\s\S]*buildComputeCpuVisualExportSection\(result, chartSvg\),[\s\S]*buildComputeCpuReferenceExportSection\(result\),[\s\S]*buildComputeCpuRecommendedActionsExportSection\(result\),[\s\S]*buildComputeCpuDecisionScheduleExportSection\(\)[\s\S]*\]\.filter\(Boolean\);/.test(script) &&
+    script.includes('chartImage: ""') &&
+    script.includes('exportSectionsContract: "cpu-visual-references-actions-schedule"'),
+  "tools/compute/cpu-sizing/script.js",
+  "CPU export should render the Capacity Envelope first, followed by references, actions, and decision schedule, without duplicating the chart at the bottom."
+);
+
 check(
   "CPU_EXPORT_PAYLOAD_INCLUDES_RECOMMENDED_ACTIONS",
   payloadBlock.includes("buildComputeCpuReferenceExportSection(result)") &&

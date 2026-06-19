@@ -911,6 +911,16 @@
     return { headers, rows };
   }
 
+
+  function buildComputeCpuVisualExportSection(result, chartSvg) {
+    const status = String(result && (result.envelopeStatus || result.status) || "").toUpperCase();
+    return {
+      title: "CPU Capacity Envelope",
+      description: "Demand curve versus usable CPU capacity, including demand basis, reserve pressure, downstream validation, and the active CPU envelope status." + (status ? " Status: " + status + "." : ""),
+      compactSvg: false,
+      svgs: [chartSvg]
+    };
+  }
   function buildComputeCpuReferenceExportSection(result) {
     const references = Array.isArray(result?.recommendationReferences) && result.recommendationReferences.length
       ? result.recommendationReferences
@@ -981,7 +991,8 @@
     if (!result || !outputs.length) return null;
 
     const chartSvg = buildComputeCpuVisualSvg(result);
-        const extraSections = [
+    const extraSections = [
+      buildComputeCpuVisualExportSection(result, chartSvg),
       buildComputeCpuReferenceExportSection(result),
       buildComputeCpuRecommendedActionsExportSection(result),
       buildComputeCpuDecisionScheduleExportSection()
@@ -998,9 +1009,9 @@
       interpretation: computeCpuExportRowValue(outputs, "Engineering Interpretation") || result.interpretation || "",
       inputs,
       outputs,
-      chartImage: computeCpuSvgDataUri(chartSvg),
+      chartImage: "",
       extraSections,
-      exportSectionsContract: "cpu-references-actions-schedule",
+      exportSectionsContract: "cpu-visual-references-actions-schedule",
       assumptions: Array.isArray(options.assumptions) ? options.assumptions : [],
       printLowInkChart: false
     };
