@@ -954,16 +954,20 @@
 
 
   function computeCpuExportStatusTone(value) {
-    const normalized = String(value || "").trim().toUpperCase();
+    const api = computeCpuExportProofTables();
+    if (api && typeof api.statusTone === "function") return api.statusTone(value);
 
+    const normalized = String(value || "").trim().toUpperCase();
     if (normalized === "GOOD" || normalized === "HEALTHY") return "#16a34a";
     if (normalized === "WATCH") return "#d97706";
     if (normalized === "RISK") return "#dc2626";
-
     return "";
   }
 
   function computeCpuExportPlainCell(value) {
+    const api = computeCpuExportProofTables();
+    if (api && typeof api.plainCell === "function") return api.plainCell(value);
+
     return {
       text: String(value || ""),
       style: "font-weight:400;color:#334155;"
@@ -971,6 +975,9 @@
   }
 
   function computeCpuExportValueCell(value) {
+    const api = computeCpuExportProofTables();
+    if (api && typeof api.valueCell === "function") return api.valueCell(value);
+
     const text = String(value || "");
     const tone = computeCpuExportStatusTone(text);
 
@@ -985,10 +992,29 @@
 
 
   function computeCpuExportNoteCell(value) {
+    const api = computeCpuExportProofTables();
+    if (api && typeof api.noteCell === "function") return api.noteCell(value);
+
     return {
       text: String(value || ""),
       style: "font-weight:700;color:#0f172a;"
     };
+  }
+
+  function computeCpuExportProofTables() {
+    return window.ScopedLabsComputeExportProofTables || null;
+  }
+
+  function computeCpuProofTableWidths(kind) {
+    const api = computeCpuExportProofTables();
+    if (api && typeof api.widthsFor === "function") {
+      const widths = api.widthsFor(kind);
+      if (Array.isArray(widths) && widths.length) return widths;
+    }
+
+    if (kind === "recommendedActions") return ["34%", "66%"];
+    if (kind === "decisionSchedule") return ["16%", "22%", "18%", "44%"];
+    return [];
   }
 
   function buildComputeCpuRecommendedActionsExportSection(result) {
@@ -1001,6 +1027,7 @@
       tables: [
         {
           headers: ["Action", "Reason"],
+          colWidths: computeCpuProofTableWidths("recommendedActions"),
           rows: actions.map((item) => [
             computeCpuExportPlainCell(item.action || "Review CPU plan"),
             computeCpuExportPlainCell(item.reason || "Engineering review required.")
@@ -1024,6 +1051,7 @@
           headers: Array.isArray(table.headers) && table.headers.length
             ? table.headers
             : ["Group", "Metric", "Value", "Engineering Note"],
+          colWidths: computeCpuProofTableWidths("decisionSchedule"),
           rows: (Array.isArray(table.rows) ? table.rows : []).map((row) => {
             const cols = Array.isArray(row) ? row : [];
 

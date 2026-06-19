@@ -139,9 +139,9 @@ check(
 
 check(
   "CPU_CACHE_BUSTED_FOR_GUIDANCE_EXPORT",
-  html.includes("script.js?v=compute-cpu-export-table-style-0618b"),
+  html.includes("script.js?v=compute-cpu-export-proof-tables-0618"),
   "tools/compute/cpu-sizing/index.html",
-  "CPU page should load the final export table-style script version."
+  "CPU page should load the shared proof-table contract script version."
 );
 
 

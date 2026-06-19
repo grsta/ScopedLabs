@@ -1962,3 +1962,16 @@ Required order:
 Decision: when the chart is included as the first ordered export section, the custom payload must leave `chartImage` blank so shared export does not duplicate or move the chart down to the generic Planning Visual slot.
 
 Audit: `scripts/audit-compute-export-proof-stack-order-v1.js` protects CPU now and flags future Compute tools if they adopt proof visuals/guidance without this export order.
+
+### Compute export proof table contract - 2026-06-18
+
+Decision: Compute tools with proof export tables should consume `assets/scopedlabs-compute-export-proof-tables.js` for shared cell styles and width contracts.
+
+Shared table-width keys:
+
+- `recommendedActions`: Action 34%, Reason 66%
+- `decisionSchedule`: Group 16%, Metric 22%, Value 18%, Engineering Note 44%
+
+Decision: Action, Group, Metric, and Reason cells use normal report weight. Value cells remain value-emphasized and status-color capable. Engineering Note remains emphasized for readability.
+
+Audit: `scripts/audit-compute-export-proof-table-contract-v1.js` protects shared module loading and CPU consumption.

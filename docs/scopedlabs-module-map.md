@@ -658,3 +658,11 @@ Example:
 - Action, Group, Metric, and Reason cells use normal report weight; the Decision Schedule Value column remains value-emphasized and status-color capable; Engineering Note remains emphasized for readability.
 - `scripts/audit-compute-cpu-status-guidance-v1.js` protects this CPU export table cell contract.
 - Non-goals: global `assets/export.js`, CPU math, visual geometry, auth, checkout, snapshots, Knowledge Base, and shell behavior.
+
+### Compute export proof table helper
+
+- `assets/scopedlabs-compute-export-proof-tables.js` owns shared Compute proof-table export cell helpers and width contracts.
+- `tools/compute/cpu-sizing/script.js` consumes the shared helper for Recommended Actions and CPU Capacity Decision Schedule export tables.
+- `scripts/audit-compute-export-proof-table-contract-v1.js` protects the shared helper and CPU consumption path.
+- The audit batch runner includes the proof-table contract audit so future Compute tools cannot silently reintroduce cramped proof-table columns or local-only cell styling.
+- Non-goals: global `assets/export.js`, CPU math, visual geometry, auth, checkout, snapshots, Knowledge Base, and shell behavior.
