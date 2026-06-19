@@ -22,14 +22,6 @@ check(
 );
 
 check(
-  "CPU_RECOMMENDED_ACTIONS_STYLES_EXIST",
-  html.includes(".compute-cpu-proof-actions-list") &&
-    html.includes(".compute-cpu-proof-action"),
-  "tools/compute/cpu-sizing/index.html",
-  "CPU page should include styling for Recommended Actions."
-);
-
-check(
   "CPU_RECOMMENDED_ACTIONS_RENDER_OPTIONALLY",
   script.includes("function buildComputeCpuRecommendedActions(result)") &&
     script.includes("actionsCard && actionsTarget") &&
@@ -47,11 +39,19 @@ check(
 );
 
 check(
-  "CPU_EXPORT_RECOMMENDED_ACTIONS",
+  "CPU_EXPORT_RECOMMENDED_ACTIONS_HELPER_EXISTS",
   script.includes("function buildComputeCpuRecommendedActionsExportSection(result)") &&
-    script.includes("buildComputeCpuRecommendedActionsExportSection(result),"),
+    script.includes('title: "Recommended Actions"') &&
+    script.includes('headers: ["Action", "Reason"]'),
   "tools/compute/cpu-sizing/script.js",
-  "CPU export should include Recommended Actions."
+  "CPU custom export payload should have a Recommended Actions export section helper."
+);
+
+check(
+  "CPU_EXPORT_EXTRA_SECTIONS_INCLUDE_RECOMMENDED_ACTIONS",
+  /const extraSections = \[[\s\S]*buildComputeCpuReferenceExportSection\(result\),[\s\S]*buildComputeCpuRecommendedActionsExportSection\(result\),[\s\S]*buildComputeCpuDecisionScheduleExportSection\(\)[\s\S]*\]\.filter\(Boolean\);/.test(script),
+  "tools/compute/cpu-sizing/script.js",
+  "CPU custom export payload should place Recommended Actions between Recommendation References and CPU Capacity Decision Schedule."
 );
 
 check(
@@ -63,10 +63,10 @@ check(
 );
 
 check(
-  "CPU_CACHE_BUSTED_FOR_GUIDANCE_ACTIONS",
-  html.includes("script.js?v=compute-cpu-guidance-actions-0618c"),
+  "CPU_CACHE_BUSTED_FOR_GUIDANCE_EXPORT",
+  html.includes("script.js?v=compute-cpu-guidance-export-0618"),
   "tools/compute/cpu-sizing/index.html",
-  "CPU page should load the guidance-actions script version."
+  "CPU page should load the guidance-export script version."
 );
 
 console.log("SCOPEDLABS COMPUTE CPU STATUS GUIDANCE AUDIT V1\n");

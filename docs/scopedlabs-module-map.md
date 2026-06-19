@@ -625,3 +625,10 @@ Example:
 - `tools/compute/cpu-sizing/script.js` uses `computeCpuAuthoritativeExportStatus` so the export header follows `envelopeStatus` before generic status fallbacks.
 - `tools/compute/cpu-sizing/index.html` adds the CPU Recommended Actions proof card and local compact status chip styling.
 - Non-goals: CPU chart math, shared capacity visual geometry, RAM behavior, auth, checkout, Knowledge Base behavior, and broad page redesign.
+
+### Compute CPU Recommended Actions export route
+
+- `tools/compute/cpu-sizing/script.js` adds `buildComputeCpuRecommendedActionsExportSection(result)` to the CPU custom export payload.
+- Recommended Actions export between Recommendation References and CPU Capacity Decision Schedule.
+- `scripts/audit-compute-cpu-status-guidance-v1.js` protects the custom export payload route so live guidance is also report-visible.
+- Non-goals: CPU chart math, shared capacity visual geometry, RAM behavior, auth, checkout, Knowledge Base behavior, and broad page redesign.
