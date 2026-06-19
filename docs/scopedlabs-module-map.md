@@ -655,6 +655,6 @@ Example:
 ### Compute CPU export table cell styling
 
 - `tools/compute/cpu-sizing/script.js` now sends explicit report cell objects for CPU Recommended Actions and CPU Capacity Decision Schedule export tables.
-- Action, Group, Metric, Reason, and Engineering Note cells use normal report weight; the Decision Schedule Value column remains value-emphasized and status-color capable.
+- Action, Group, Metric, and Reason cells use normal report weight; the Decision Schedule Value column remains value-emphasized and status-color capable; Engineering Note remains emphasized for readability.
 - `scripts/audit-compute-cpu-status-guidance-v1.js` protects this CPU export table cell contract.
 - Non-goals: global `assets/export.js`, CPU math, visual geometry, auth, checkout, snapshots, Knowledge Base, and shell behavior.

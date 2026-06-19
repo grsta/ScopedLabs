@@ -983,6 +983,14 @@
   }
 
 
+
+  function computeCpuExportNoteCell(value) {
+    return {
+      text: String(value || ""),
+      style: "font-weight:700;color:#0f172a;"
+    };
+  }
+
   function buildComputeCpuRecommendedActionsExportSection(result) {
     const actions = buildComputeCpuRecommendedActions(result || {});
 
@@ -1023,7 +1031,7 @@
               computeCpuExportPlainCell(cols[0] || ""),
               computeCpuExportPlainCell(cols[1] || ""),
               computeCpuExportValueCell(cols[2] || ""),
-              computeCpuExportPlainCell(cols[3] || "")
+              computeCpuExportNoteCell(cols[3] || "")
             ];
           })
         }
