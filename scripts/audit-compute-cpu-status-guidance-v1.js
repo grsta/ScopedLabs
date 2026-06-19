@@ -73,16 +73,26 @@ check(
 check(
   "CPU_EXPORT_ORDER_VISUAL_BEFORE_REFERENCES",
   (() => {
-    const extraBlock = (script.match(/const\\s+extraSections\\s*=\\s*\\[[\\s\\S]*?\\]\\.filter\\(Boolean\\);/) || [""])[0];
-    const order = [
+    const extraStart = script.indexOf("const extraSections = [");
+    const extraEnd = extraStart >= 0
+      ? script.indexOf("].filter(Boolean);", extraStart)
+      : -1;
+
+    const extraBlock = extraStart >= 0 && extraEnd > extraStart
+      ? script.slice(extraStart, extraEnd + "].filter(Boolean);".length)
+      : "";
+
+    const tokens = [
       "buildComputeCpuVisualExportSection(result, chartSvg)",
       "buildComputeCpuReferenceExportSection(result)",
       "buildComputeCpuRecommendedActionsExportSection(result)",
       "buildComputeCpuDecisionScheduleExportSection()"
-    ].map((token) => extraBlock.indexOf(token));
+    ];
+
+    const positions = tokens.map((token) => extraBlock.indexOf(token));
 
     return script.includes("function buildComputeCpuVisualExportSection(result, chartSvg)") &&
-      order.every((value, index) => value >= 0 && (index === 0 || value > order[index - 1])) &&
+      positions.every((value, index) => value >= 0 && (index === 0 || value > positions[index - 1])) &&
       script.includes('chartImage: ""') &&
       script.includes('exportSectionsContract: "cpu-visual-references-actions-schedule"');
   })(),

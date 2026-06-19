@@ -645,3 +645,9 @@ Example:
 - `scripts/audit-compute-cpu-status-guidance-v1.js` follows the final CPU export proof-stack order.
 - Final CPU order: CPU Capacity Envelope, Recommendation References, Recommended Actions, CPU Capacity Decision Schedule.
 - The audit no longer expects the older references/actions/schedule-only stack or the older guidance-export cache-bust token.
+
+### ScopedLabs audit batch runner
+
+- `scripts/run-scopedlabs-audit-batch-v1.js` runs selected audit scripts and prints a consolidated bottom summary.
+- It reports which audit failed and repeats structured `[FAIL]` / `[WATCH]` items at the bottom so terminal search hits like `fail-safe` are not confused with actual audit failures.
+- Default Compute closeout batch includes CPU status guidance, Compute export proof stack order, Compute flow actions shell, and module map audits.
