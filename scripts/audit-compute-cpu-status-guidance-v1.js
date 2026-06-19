@@ -18,26 +18,17 @@ const payloadBlock = payloadStart >= 0 && payloadEnd > payloadStart ? script.sli
 
 
 check(
-  "CPU_REVIEW_LEGEND_NOT_RED",
-  html.includes("CPU REVIEW LEGEND CONTRACT 0618") &&
-    html.includes(".access-tool-status-authority") &&
-    html.includes("#7dd3fc"),
-  "tools/compute/cpu-sizing/index.html",
-  "Review legend label should use a neutral/cyan authority color, not the red Risk color."
-);
-
-
-check(
-  "CPU_REVIEW_LEGEND_AUTHORITY_NOT_RISK",
+  "CPU_REVIEW_LEGEND_AUTHORITY_OVERRIDES_GENERIC_STATUS_STYLE",
   (() => {
-    const match = html.match(/\.access-tool-status-authority\s*\{[\s\S]*?\}/);
+    const match = html.match(/\.access-tool-status-legend\s+\.access-tool-status-authority\s*\{[\s\S]*?\}/);
     const rule = match ? match[0] : "";
 
     return rule.includes("#7dd3fc") &&
+      rule.includes("!important") &&
       !/(#ff|red|risk|ef4444|f87171|dc2626)/i.test(rule);
   })(),
   "tools/compute/cpu-sizing/index.html",
-  "Review legend is an authority note and must not use the red Risk color."
+  "Review legend should use a specific authority selector that overrides generic status legend styling."
 );
 
 check(
