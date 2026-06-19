@@ -863,7 +863,6 @@
     return true;
   }
 
-  function clearComputeCpuVisual() {
   function computeCpuExportRowValue(rows, label) {
     const target = String(label || "").trim().toLowerCase();
     const row = Array.isArray(rows)
@@ -1011,7 +1010,7 @@
     buildPayload: buildComputeCpuExportPayload
   };
 
-
+  function clearComputeCpuVisual() {
     currentComputeCpuExportResult = null;
     const card = document.getElementById("computeCpuVisualCard");
     const target = document.getElementById("computeCpuVisual");
