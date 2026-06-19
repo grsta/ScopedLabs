@@ -710,3 +710,12 @@ Example:
 - Existing marker hover/title behavior is left untouched.
 - The RAM status chip uses a squared engineering shape, and `tools/compute/ram-sizing/index.html` only receives a cache-bust update for the shared visual module.
 - Non-goals: no RAM math change, no RAM page-local SVG proof renderer, no export/snapshot/pipeline behavior change.
+
+### Compute tool shell consumption matrix
+
+- `scripts/audit-compute-tool-shell-consumption-v1.js` tracks which Compute tools consume the CPU-grade Compute tool shell/module stack.
+- Current baseline: `cpu-sizing` is the READY gold consumer.
+- Current next target: `ram-sizing` is PARTIAL_NEXT because it has the shared capacity visual, Compute shell contract, and analyzer source, but still needs CPU-grade shell modules, assistant mount, internal results ledger, assistant export, local assistant, Compute assistant contract, and user notes.
+- `workload-planner` is classified as SPECIAL_PLANNER because it is a category planner/command page, not a normal calculator output shell.
+- Remaining Compute calculators are LEGACY_PENDING and should not be patched one-off; each should be upgraded through the shared Compute shell/profile lane.
+- This audit is a roadmap and anti-regression gate: READY regressions fail, partial/special/legacy states are reported as WATCH until their lanes are intentionally upgraded.

@@ -11,7 +11,8 @@ const defaultAudits = [
   "scripts/audit-scopedlabs-module-map-v1.js",
   "scripts/audit-scopedlabs-pattern-promotion-v1.js",
   "scripts/audit-scopedlabs-planner-summary-nav-contract-v1.js",
-  "scripts/audit-scopedlabs-tool-assistant-contract-v1.js"
+  "scripts/audit-scopedlabs-tool-assistant-contract-v1.js",
+  "scripts/audit-compute-tool-shell-consumption-v1.js"
 ];
 
 const list = audits.length ? audits : defaultAudits;
