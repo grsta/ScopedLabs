@@ -1939,3 +1939,11 @@ Decision: CPU should render and export Recommended Actions so Watch/Risk results
 UI: CPU status chips should use compact rectangular engineering-box styling rather than wide rounded pills.
 
 Audit: `scripts/audit-compute-cpu-status-guidance-v1.js` protects chip shape, status authority, output Status row, live Recommended Actions, and export Recommended Actions.
+
+### CPU recommended actions guidance - 2026-06-18
+
+Decision: CPU Recommendation References and Decision Schedule must remain independent of the Recommended Actions card.
+
+Decision: Recommended Actions should render live and export when the mount exists, but missing guidance markup must not suppress accepted proof sections.
+
+Audit: `scripts/audit-compute-cpu-status-guidance-v1.js` protects the Recommended Actions mount, optional render behavior, export section, and CPU envelope status authority.

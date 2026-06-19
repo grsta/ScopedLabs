@@ -825,6 +825,8 @@
     const scheduleTarget = document.getElementById("computeCpuDecisionSchedule");
     const referencesCard = document.getElementById("computeCpuRecommendationReferencesCard");
     const referencesTarget = document.getElementById("computeCpuRecommendationReferences");
+    const actionsCard = document.getElementById("computeCpuRecommendedActionsCard");
+    const actionsTarget = document.getElementById("computeCpuRecommendedActions");
 
     if (scheduleTarget) scheduleTarget.innerHTML = "";
     if (referencesTarget) referencesTarget.innerHTML = "";
@@ -839,6 +841,8 @@
     const scheduleTarget = document.getElementById("computeCpuDecisionSchedule");
     const referencesCard = document.getElementById("computeCpuRecommendationReferencesCard");
     const referencesTarget = document.getElementById("computeCpuRecommendationReferences");
+    const actionsCard = document.getElementById("computeCpuRecommendedActionsCard");
+    const actionsTarget = document.getElementById("computeCpuRecommendedActions");
 
     if (!result || !scheduleCard || !scheduleTarget || !referencesCard || !referencesTarget) return false;
 
@@ -850,11 +854,12 @@
     referencesTarget.innerHTML = buildComputeCpuRecommendationReferencesHtml(references);
     scheduleCard.hidden = false;
     referencesCard.hidden = false;
-    
+
     if (actionsCard && actionsTarget) {
       actionsTarget.innerHTML = buildComputeCpuRecommendedActionsHtml(buildComputeCpuRecommendedActions(result));
       actionsCard.hidden = false;
     }
+
     return true;
   }
 

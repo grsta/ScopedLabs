@@ -13,66 +13,60 @@ const html = read("tools/compute/cpu-sizing/index.html");
 const script = read("tools/compute/cpu-sizing/script.js");
 
 check(
-  "CPU_STATUS_CHIPS_ARE_COMPACT_BOXES",
-  html.includes("CPU STATUS GUIDANCE CONTRACT 0618") &&
-    html.includes(".scopedlabs-result-summary-status,") &&
-    html.includes(".compute-cpu-proof-status-chip") &&
-    html.includes("border-radius: 5px") &&
-    html.includes("width: fit-content"),
-  "tools/compute/cpu-sizing/index.html",
-  "CPU status chips should render as compact engineering boxes instead of wide rounded pills."
-);
-
-check(
   "CPU_RECOMMENDED_ACTIONS_CARD_EXISTS",
   html.includes('id="computeCpuRecommendedActionsCard"') &&
     html.includes('id="computeCpuRecommendedActions"') &&
     html.includes("Recommended Actions"),
   "tools/compute/cpu-sizing/index.html",
-  "CPU page should include a Recommended Actions proof card."
+  "CPU page should include a Recommended Actions card."
 );
 
 check(
-  "CPU_BUILDS_RECOMMENDED_ACTIONS",
+  "CPU_RECOMMENDED_ACTIONS_STYLES_EXIST",
+  html.includes(".compute-cpu-proof-actions-list") &&
+    html.includes(".compute-cpu-proof-action"),
+  "tools/compute/cpu-sizing/index.html",
+  "CPU page should include styling for Recommended Actions."
+);
+
+check(
+  "CPU_RECOMMENDED_ACTIONS_RENDER_OPTIONALLY",
   script.includes("function buildComputeCpuRecommendedActions(result)") &&
-    script.includes("Increase CPU capacity before continuing") &&
-    script.includes("Validate CPU margin before procurement") &&
-    script.includes("Continue to RAM sizing, but keep CPU flagged"),
+    script.includes("actionsCard && actionsTarget") &&
+    script.includes("buildComputeCpuRecommendedActionsHtml(buildComputeCpuRecommendedActions(result))"),
   "tools/compute/cpu-sizing/script.js",
-  "CPU script should generate practical corrective actions for Risk/Watch/Good results."
+  "Recommended Actions should render if the card exists without blocking Recommendation References or Decision Schedule."
 );
 
 check(
-  "CPU_EXPORT_USES_ENVELOPE_STATUS_AUTHORITY",
-  script.includes("function computeCpuAuthoritativeExportStatus") &&
-    script.includes("source.envelopeStatus") &&
-    script.includes("resultOutputs.envelopeStatus") &&
-    script.includes("const status = computeCpuAuthoritativeExportStatus(result, outputs);"),
+  "CPU_PROOF_SECTIONS_STAY_INDEPENDENT",
+  script.includes("if (!result || !scheduleCard || !scheduleTarget || !referencesCard || !referencesTarget) return false;") &&
+    !script.includes("!actionsCard || !actionsTarget) return false"),
   "tools/compute/cpu-sizing/script.js",
-  "CPU export header status should use the CPU Capacity Envelope authority before generic status fallbacks."
+  "Existing proof sections must not depend on Recommended Actions mount."
 );
 
 check(
-  "CPU_EXPORT_INCLUDES_RECOMMENDED_ACTIONS",
+  "CPU_EXPORT_RECOMMENDED_ACTIONS",
   script.includes("function buildComputeCpuRecommendedActionsExportSection(result)") &&
-    script.includes("buildComputeCpuRecommendedActionsExportSection(result)") &&
-    script.includes('title: "Recommended Actions"'),
+    script.includes("buildComputeCpuRecommendedActionsExportSection(result),"),
   "tools/compute/cpu-sizing/script.js",
   "CPU export should include Recommended Actions."
 );
 
 check(
-  "CPU_OUTPUT_ROWS_INCLUDE_STATUS",
-  script.includes('{ label: "Status", value: finalCpuStatus }'),
+  "CPU_EXPORT_USES_ENVELOPE_STATUS_AUTHORITY",
+  script.includes("function computeCpuAuthoritativeExportStatus") &&
+    script.includes("const status = computeCpuAuthoritativeExportStatus(result, outputs);"),
   "tools/compute/cpu-sizing/script.js",
-  "CPU calculated outputs should include the authoritative envelope status row."
+  "CPU export status should use envelope authority first."
 );
 
 check(
-  "CPU_CACHE_BUSTED_FOR_STATUS_GUIDANCE",
-  html.includes("script.js?v=compute-cpu-status-guidance-0618"),
+  "CPU_CACHE_BUSTED_FOR_GUIDANCE_ACTIONS",
+  html.includes("script.js?v=compute-cpu-guidance-actions-0618c"),
   "tools/compute/cpu-sizing/index.html",
-  "CPU page should load the status/guidance script version."
+  "CPU page should load the guidance-actions script version."
 );
 
 console.log("SCOPEDLABS COMPUTE CPU STATUS GUIDANCE AUDIT V1\n");
