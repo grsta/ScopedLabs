@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-compute-capacity-visuals-009-cpu-cores-axis-label";
+  const VERSION = "scopedlabs-compute-capacity-visuals-010-ram-hover-clean";
 
   function clamp(value, min, max) {
       return Math.max(min, Math.min(max, value));
@@ -143,9 +143,11 @@
     }).join("");
 
     function markerSvg(point) {
+      const tooltip = svgText(point.ref + " ? " + point.detail);
+
       return [
-        '<g>',
-        '<title>' + svgText(point.ref + " - " + point.detail) + '</title>',
+        '<g data-ref="' + svgText(point.ref) + '" tabindex="0" role="img" aria-label="' + tooltip + '">',
+        '<title>' + tooltip + '</title>',
         '<path d="M' + point.x.toFixed(1) + ' ' + point.y.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="ref-line"/>',
         '<circle cx="' + point.x.toFixed(1) + '" cy="' + point.y.toFixed(1) + '" r="7" class="marker-ring"/>',
         '<circle cx="' + point.x.toFixed(1) + '" cy="' + point.y.toFixed(1) + '" r="4.8" class="marker-' + point.tone + '"/>',
@@ -166,7 +168,7 @@
       '</defs>',
       '<text x="50" y="56" class="header">RAM CAPACITY ENVELOPE</text>',
       '<text x="50" y="76" class="subhead">Demand curve vs installed RAM capacity</text>',
-      '<rect x="632" y="38" width="64" height="28" rx="7" fill="' + statusFill + '" stroke="' + statusColor + '" class="status-chip"/>',
+      '<rect x="632" y="38" width="64" height="28" rx="3" fill="' + statusFill + '" stroke="' + statusColor + '" class="status-chip"/>',
       '<text x="664" y="57" text-anchor="middle" fill="' + statusColor + '" class="status-text">' + svgText(statusLabel) + '</text>',
       '<rect x="' + plot.x + '" y="' + plot.y + '" width="' + plot.w + '" height="' + riskZoneH.toFixed(1) + '" class="zone-risk"/>',
       '<rect x="' + plot.x + '" y="' + riskY.toFixed(1) + '" width="' + plot.w + '" height="' + watchZoneH.toFixed(1) + '" class="zone-watch"/>',
@@ -189,9 +191,6 @@
       '<path d="' + curvePath + '" class="curve-shadow"/>',
       '<path d="' + curvePath + '" class="curve"/>',
       points.map(markerSvg).join(""),
-      '<text x="190" y="416" text-anchor="middle" class="legend-text legend-current">*1 demand basis</text>',
-      '<text x="382" y="416" text-anchor="middle" class="legend-text legend-growth">*2 reserve pressure</text>',
-      '<text x="586" y="416" text-anchor="middle" class="legend-text legend-failover">*3 downstream validation</text>',
       '</svg>'
     ].join("");
   }

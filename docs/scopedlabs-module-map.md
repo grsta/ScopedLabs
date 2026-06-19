@@ -702,3 +702,10 @@ Example:
 - Category adapter owners: `assets/access-control-tool-assistant-adapters.js`, `assets/access-control-report-summary.js`, `assets/physical-security-local-assistant.js`, `assets/physical-security-tool-assistant-adapters.js`, `assets/physical-security-guidance-event-bridge.js`, `assets/physical-security-category-guidance.js`, and `assets/scopedlabs-compute-assistant-contract.js`.
 - Audit: `scripts/audit-scopedlabs-tool-assistant-contract-v1.js`.
 - Non-goals: no tool page rewrites and no new assistant UI in this step.
+
+### Compute RAM capacity visual hover cleanup
+
+- `assets/scopedlabs-compute-capacity-visuals.js` version `scopedlabs-compute-capacity-visuals-010-ram-hover-clean` keeps RAM Capacity Envelope rendering in the shared Compute visual module.
+- RAM marker references now use native SVG `<title>` tooltips for demand basis, reserve pressure, and downstream validation instead of bottom stacked reference rows.
+- The RAM status chip uses a squared engineering shape, and `tools/compute/ram-sizing/index.html` only receives a cache-bust update for the shared visual module.
+- Non-goals: no RAM math change, no RAM page-local SVG proof renderer, no export/snapshot/pipeline behavior change.
