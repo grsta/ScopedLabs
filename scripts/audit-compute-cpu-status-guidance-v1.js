@@ -26,6 +26,20 @@ check(
   "Review legend label should use a neutral/cyan authority color, not the red Risk color."
 );
 
+
+check(
+  "CPU_REVIEW_LEGEND_AUTHORITY_NOT_RISK",
+  (() => {
+    const match = html.match(/\.access-tool-status-authority\s*\{[\s\S]*?\}/);
+    const rule = match ? match[0] : "";
+
+    return rule.includes("#7dd3fc") &&
+      !/(#ff|red|risk|ef4444|f87171|dc2626)/i.test(rule);
+  })(),
+  "tools/compute/cpu-sizing/index.html",
+  "Review legend is an authority note and must not use the red Risk color."
+);
+
 check(
   "CPU_RECOMMENDED_ACTIONS_CARD_EXISTS",
   html.includes('id="computeCpuRecommendedActionsCard"') &&
