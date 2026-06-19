@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-compute-capacity-visuals-010-ram-hover-clean";
+  const VERSION = "scopedlabs-compute-capacity-visuals-010-ram-mobile-refs";
 
   function clamp(value, min, max) {
       return Math.max(min, Math.min(max, value));

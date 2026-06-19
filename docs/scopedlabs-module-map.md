@@ -703,9 +703,10 @@ Example:
 - Audit: `scripts/audit-scopedlabs-tool-assistant-contract-v1.js`.
 - Non-goals: no tool page rewrites and no new assistant UI in this step.
 
-### Compute RAM capacity visual hover cleanup
+### Compute RAM capacity visual mobile reference retention
 
-- `assets/scopedlabs-compute-capacity-visuals.js` version `scopedlabs-compute-capacity-visuals-010-ram-hover-clean` keeps RAM Capacity Envelope rendering in the shared Compute visual module.
-- RAM marker references now use native SVG `<title>` tooltips for demand basis, reserve pressure, and downstream validation instead of bottom stacked reference rows.
+- `assets/scopedlabs-compute-capacity-visuals.js` version `scopedlabs-compute-capacity-visuals-010-ram-mobile-refs` keeps RAM Capacity Envelope rendering in the shared Compute visual module.
+- The visible bottom `*1 demand basis`, `*2 reserve pressure`, and `*3 downstream validation` labels are retained for mobile, keyboard, print, and export readability.
+- Existing marker hover/title behavior is left in place; this patch does not add or replace that behavior.
 - The RAM status chip uses a squared engineering shape, and `tools/compute/ram-sizing/index.html` only receives a cache-bust update for the shared visual module.
 - Non-goals: no RAM math change, no RAM page-local SVG proof renderer, no export/snapshot/pipeline behavior change.
