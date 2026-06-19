@@ -1947,3 +1947,18 @@ Decision: CPU Recommendation References and Decision Schedule must remain indepe
 Decision: Recommended Actions should render live and export when the mount exists, but missing guidance markup must not suppress accepted proof sections.
 
 Audit: `scripts/audit-compute-cpu-status-guidance-v1.js` protects the Recommended Actions mount, optional render behavior, export section, and CPU envelope status authority.
+
+### Compute export proof stack order - 2026-06-18
+
+Decision: Compute tools with a proof visual, recommendation references, recommended actions, or decision schedule must keep those report sections in one ordered custom export stack.
+
+Required order:
+
+1. Tool proof visual / chart
+2. Recommendation References / marker footnotes
+3. Recommended Actions / guidance
+4. Decision Schedule / engineering notes
+
+Decision: when the chart is included as the first ordered export section, the custom payload must leave `chartImage` blank so shared export does not duplicate or move the chart down to the generic Planning Visual slot.
+
+Audit: `scripts/audit-compute-export-proof-stack-order-v1.js` protects CPU now and flags future Compute tools if they adopt proof visuals/guidance without this export order.

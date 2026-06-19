@@ -632,3 +632,16 @@ Example:
 - Recommended Actions export between Recommendation References and CPU Capacity Decision Schedule.
 - `scripts/audit-compute-cpu-status-guidance-v1.js` protects the custom export payload route so live guidance is also report-visible.
 - Non-goals: CPU chart math, shared capacity visual geometry, RAM behavior, auth, checkout, Knowledge Base behavior, and broad page redesign.
+
+### Compute export proof stack order audit
+
+- `scripts/audit-compute-export-proof-stack-order-v1.js` protects Compute custom export proof stack order.
+- CPU required order: CPU Capacity Envelope, Recommendation References, Recommended Actions, CPU Capacity Decision Schedule.
+- Future Compute tools with proof visuals/guidance should use the same custom payload pattern: visual first in `extraSections`, references/actions/schedule below it, and blank `chartImage` to avoid a duplicate bottom Planning Visual.
+- Non-goals: global `assets/export.js` behavior, auth, checkout, Knowledge Base, snapshot behavior, and tool calculation math.
+
+### Compute CPU status guidance audit final export order
+
+- `scripts/audit-compute-cpu-status-guidance-v1.js` follows the final CPU export proof-stack order.
+- Final CPU order: CPU Capacity Envelope, Recommendation References, Recommended Actions, CPU Capacity Decision Schedule.
+- The audit no longer expects the older references/actions/schedule-only stack or the older guidance-export cache-bust token.

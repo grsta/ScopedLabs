@@ -72,24 +72,36 @@ check(
 
 check(
   "CPU_EXPORT_ORDER_VISUAL_BEFORE_REFERENCES",
-  script.includes("function buildComputeCpuVisualExportSection(result, chartSvg)") &&
-    /const extraSections = \[[\s\S]*buildComputeCpuVisualExportSection\(result, chartSvg\),[\s\S]*buildComputeCpuReferenceExportSection\(result\),[\s\S]*buildComputeCpuRecommendedActionsExportSection\(result\),[\s\S]*buildComputeCpuDecisionScheduleExportSection\(\)[\s\S]*\]\.filter\(Boolean\);/.test(script) &&
-    script.includes('chartImage: ""') &&
-    script.includes('exportSectionsContract: "cpu-visual-references-actions-schedule"'),
+  (() => {
+    const extraBlock = (script.match(/const\\s+extraSections\\s*=\\s*\\[[\\s\\S]*?\\]\\.filter\\(Boolean\\);/) || [""])[0];
+    const order = [
+      "buildComputeCpuVisualExportSection(result, chartSvg)",
+      "buildComputeCpuReferenceExportSection(result)",
+      "buildComputeCpuRecommendedActionsExportSection(result)",
+      "buildComputeCpuDecisionScheduleExportSection()"
+    ].map((token) => extraBlock.indexOf(token));
+
+    return script.includes("function buildComputeCpuVisualExportSection(result, chartSvg)") &&
+      order.every((value, index) => value >= 0 && (index === 0 || value > order[index - 1])) &&
+      script.includes('chartImage: ""') &&
+      script.includes('exportSectionsContract: "cpu-visual-references-actions-schedule"');
+  })(),
   "tools/compute/cpu-sizing/script.js",
   "CPU export should render the Capacity Envelope first, followed by references, actions, and decision schedule, without duplicating the chart at the bottom."
 );
 
 check(
   "CPU_EXPORT_PAYLOAD_INCLUDES_RECOMMENDED_ACTIONS",
-  payloadBlock.includes("buildComputeCpuReferenceExportSection(result)") &&
+  payloadBlock.includes("buildComputeCpuVisualExportSection(result, chartSvg)") &&
+    payloadBlock.includes("buildComputeCpuReferenceExportSection(result)") &&
     payloadBlock.includes("buildComputeCpuRecommendedActionsExportSection(result)") &&
     payloadBlock.includes("buildComputeCpuDecisionScheduleExportSection()") &&
+    payloadBlock.indexOf("buildComputeCpuVisualExportSection(result, chartSvg)") < payloadBlock.indexOf("buildComputeCpuReferenceExportSection(result)") &&
     payloadBlock.indexOf("buildComputeCpuReferenceExportSection(result)") < payloadBlock.indexOf("buildComputeCpuRecommendedActionsExportSection(result)") &&
     payloadBlock.indexOf("buildComputeCpuRecommendedActionsExportSection(result)") < payloadBlock.indexOf("buildComputeCpuDecisionScheduleExportSection()") &&
-    payloadBlock.includes('exportSectionsContract: "cpu-references-actions-schedule"'),
+    payloadBlock.includes('exportSectionsContract: "cpu-visual-references-actions-schedule"'),
   "tools/compute/cpu-sizing/script.js",
-  "CPU custom export payload should pass Recommendation References, Recommended Actions, then CPU Capacity Decision Schedule."
+  "CPU custom export payload should pass CPU Capacity Envelope, Recommendation References, Recommended Actions, then CPU Capacity Decision Schedule."
 );
 
 check(
@@ -102,9 +114,9 @@ check(
 
 check(
   "CPU_CACHE_BUSTED_FOR_GUIDANCE_EXPORT",
-  html.includes("script.js?v=compute-cpu-guidance-export-0618b"),
+  html.includes("script.js?v=compute-cpu-export-order-0618"),
   "tools/compute/cpu-sizing/index.html",
-  "CPU page should load the guidance-export script version."
+  "CPU page should load the final export-order script version."
 );
 
 console.log("SCOPEDLABS COMPUTE CPU STATUS GUIDANCE AUDIT V1\n");
