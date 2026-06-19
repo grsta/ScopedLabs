@@ -16,6 +16,16 @@ const payloadStart = script.indexOf("function buildComputeCpuExportPayload");
 const payloadEnd = payloadStart >= 0 ? script.indexOf("window.ScopedLabsComputeCpuExport", payloadStart) : -1;
 const payloadBlock = payloadStart >= 0 && payloadEnd > payloadStart ? script.slice(payloadStart, payloadEnd) : "";
 
+
+check(
+  "CPU_REVIEW_LEGEND_NOT_RED",
+  html.includes("CPU REVIEW LEGEND CONTRACT 0618") &&
+    html.includes(".access-tool-status-authority") &&
+    html.includes("#7dd3fc"),
+  "tools/compute/cpu-sizing/index.html",
+  "Review legend label should use a neutral/cyan authority color, not the red Risk color."
+);
+
 check(
   "CPU_RECOMMENDED_ACTIONS_CARD_EXISTS",
   html.includes('id="computeCpuRecommendedActionsCard"') &&
