@@ -57,6 +57,49 @@ const ledger = read(ledgerFile);
 const moduleMap = read(moduleMapFile);
 const batchRunner = read(batchRunnerFile);
 const changedFiles = gitStatusFiles();
+function ledgerEntryBodyById(id) {
+  const marker = "### " + id;
+  const start = ledger.indexOf(marker);
+  if (start === -1) return "";
+
+  const nextEntry = ledger.indexOf("\n### ", start + marker.length);
+  const nextSection = ledger.indexOf("\n## ", start + marker.length);
+  const candidates = [nextEntry, nextSection].filter((value) => value > start);
+  const end = candidates.length ? Math.min.apply(null, candidates) : ledger.length;
+
+  return ledger.slice(start, end);
+}
+
+function gitDiffForFile(file) {
+  try {
+    return require("child_process").execFileSync("git", ["diff", "--", file], { encoding: "utf8" });
+  } catch {
+    return "";
+  }
+}
+
+function isClassifiedCacheBustConsumerUpdate(file) {
+  const normalized = String(file || "").replace(/\\/g, "/");
+
+  if (!/^tools\/access-control\/[^/]+\/index\.html$/.test(normalized)) return false;
+
+  const navEntry = ledgerEntryBodyById("CATEGORY-PLANNER-SUMMARY-NAV-0618");
+
+  if (!/Status:\s*ADAPTER_CONSUMER/i.test(navEntry)) return false;
+  if (!navEntry.includes("assets/access-control-category-nav.js")) return false;
+
+  const diff = gitDiffForFile(normalized);
+  const changedLines = diff
+    .split("\n")
+    .filter((line) => /^[+-]/.test(line) && !/^(---|\+\+\+)/.test(line));
+
+  if (!changedLines.length) return false;
+
+  return changedLines.every((line) =>
+    /access-control-category-nav\.js\?v=/.test(line)
+  );
+}
+
 
 console.log("SCOPEDLABS PATTERN PROMOTION AUDIT V1\n");
 
@@ -145,6 +188,8 @@ const reusableSmells = changedFiles
   .map((file) => ({ file, content: read(file) }))
   .filter((item) => hasReusablePatternSmell(item.file, item.content))
   .filter((item) => {
+    if (isClassifiedCacheBustConsumerUpdate(item.file)) return false;
+
     const documented = ledger.includes(item.file) || moduleMap.includes(item.file);
     const consumesShared =
       item.content.includes("ScopedLabs") &&

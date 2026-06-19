@@ -74,7 +74,8 @@
   const steps = [
     makeStep("Tools", "/tools/", "complete"),
     makeStep("Access Control", "/tools/access-control/", "complete"),
-    makeStep(currentLabel, window.location.pathname || "#", "current")
+    makeStep(currentLabel, window.location.pathname || "#", "current"),
+    makeStep("Summary", "/tools/access-control/summary/", "")
   ];
 
   steps.forEach((step, index) => {

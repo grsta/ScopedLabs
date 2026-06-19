@@ -674,3 +674,31 @@ Example:
 - Required classification: `SHARED_PATTERN`, `ADAPTER_CONSUMER`, or `APPROVED_LOCAL_EXCEPTION`.
 - Blocking state: `BLOCKED_PROMOTION_REQUIRED`.
 - Purpose: prevent assistant drift from known fixes into one-off tool patches.
+
+### Category navigation and assistant contract promotions
+
+- `docs/scopedlabs-pattern-promotion-ledger.md` now tracks `CATEGORY-PLANNER-SUMMARY-NAV-0618` and `TOOL-ASSISTANT-SUMMARY-CONTRACT-0618` as blocked promotion items.
+- These entries prevent manual page-by-page Summary nav links or isolated Tool Assistant wiring from closing without a shared owner, adapter contract, or approved local exception.
+- Planned audits: `scripts/audit-scopedlabs-planner-summary-nav-contract-v1.js` and `scripts/audit-scopedlabs-tool-assistant-contract-v1.js`.
+- Non-goals: no tool page rewrites, no Summary page scaffolding, no assistant behavior changes in this step.
+
+### Planner/summary nav contract audit
+
+- `scripts/audit-scopedlabs-planner-summary-nav-contract-v1.js` enforces the `CATEGORY-PLANNER-SUMMARY-NAV-0618` promotion lane.
+- It excludes `tools/index.html` from category detection by scanning only real category directories.
+- Categories with existing Summary pages must expose Summary/rollup links from the category Planner page and tool pipeline navs.
+- Categories without Summary pages must be explicitly treated as pending instead of silently failing or receiving broken links.
+- Non-goals: no page rewrites and no Summary scaffolding in this audit step.
+- Planner/Summary nav contract audit uses actual anchor `href` checks for Summary links and excludes `_factory` paths from category detection.
+
+- `CATEGORY-PLANNER-SUMMARY-NAV-0618` is promoted as an adapter-consumer pattern: Physical Security uses `assets/pipelines.js` + `assets/pipeline.js`; Access Control uses `assets/access-control-category-nav.js`.
+
+- `scripts/audit-scopedlabs-pattern-promotion-v1.js` classifies cache-bust-only Access Control nav consumer updates under `CATEGORY-PLANNER-SUMMARY-NAV-0618` when that ledger entry is `ADAPTER_CONSUMER`.
+
+### Tool assistant to summary contract audit
+
+- `TOOL-ASSISTANT-SUMMARY-CONTRACT-0618` is promoted as an adapter-consumer pattern.
+- Shared owner: `assets/scopedlabs-tool-shell.js` for assistant diagnostics and shell expectations.
+- Category adapter owners: `assets/access-control-tool-assistant-adapters.js`, `assets/access-control-report-summary.js`, `assets/physical-security-local-assistant.js`, `assets/physical-security-tool-assistant-adapters.js`, `assets/physical-security-guidance-event-bridge.js`, `assets/physical-security-category-guidance.js`, and `assets/scopedlabs-compute-assistant-contract.js`.
+- Audit: `scripts/audit-scopedlabs-tool-assistant-contract-v1.js`.
+- Non-goals: no tool page rewrites and no new assistant UI in this step.
