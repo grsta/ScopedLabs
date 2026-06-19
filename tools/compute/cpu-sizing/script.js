@@ -1001,6 +1001,7 @@
       outputs,
       chartImage: computeCpuSvgDataUri(chartSvg),
       extraSections,
+      exportSectionsContract: "cpu-references-actions-schedule",
       assumptions: Array.isArray(options.assumptions) ? options.assumptions : [],
       printLowInkChart: false
     };

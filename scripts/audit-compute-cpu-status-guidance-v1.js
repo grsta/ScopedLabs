@@ -12,6 +12,10 @@ function check(id, ok, file, detail) {
 const html = read("tools/compute/cpu-sizing/index.html");
 const script = read("tools/compute/cpu-sizing/script.js");
 
+const payloadStart = script.indexOf("function buildComputeCpuExportPayload");
+const payloadEnd = payloadStart >= 0 ? script.indexOf("window.ScopedLabsComputeCpuExport", payloadStart) : -1;
+const payloadBlock = payloadStart >= 0 && payloadEnd > payloadStart ? script.slice(payloadStart, payloadEnd) : "";
+
 check(
   "CPU_RECOMMENDED_ACTIONS_CARD_EXISTS",
   html.includes('id="computeCpuRecommendedActionsCard"') &&
@@ -48,10 +52,15 @@ check(
 );
 
 check(
-  "CPU_EXPORT_EXTRA_SECTIONS_INCLUDE_RECOMMENDED_ACTIONS",
-  /const extraSections = \[[\s\S]*buildComputeCpuReferenceExportSection\(result\),[\s\S]*buildComputeCpuRecommendedActionsExportSection\(result\),[\s\S]*buildComputeCpuDecisionScheduleExportSection\(\)[\s\S]*\]\.filter\(Boolean\);/.test(script),
+  "CPU_EXPORT_PAYLOAD_INCLUDES_RECOMMENDED_ACTIONS",
+  payloadBlock.includes("buildComputeCpuReferenceExportSection(result)") &&
+    payloadBlock.includes("buildComputeCpuRecommendedActionsExportSection(result)") &&
+    payloadBlock.includes("buildComputeCpuDecisionScheduleExportSection()") &&
+    payloadBlock.indexOf("buildComputeCpuReferenceExportSection(result)") < payloadBlock.indexOf("buildComputeCpuRecommendedActionsExportSection(result)") &&
+    payloadBlock.indexOf("buildComputeCpuRecommendedActionsExportSection(result)") < payloadBlock.indexOf("buildComputeCpuDecisionScheduleExportSection()") &&
+    payloadBlock.includes('exportSectionsContract: "cpu-references-actions-schedule"'),
   "tools/compute/cpu-sizing/script.js",
-  "CPU custom export payload should place Recommended Actions between Recommendation References and CPU Capacity Decision Schedule."
+  "CPU custom export payload should pass Recommendation References, Recommended Actions, then CPU Capacity Decision Schedule."
 );
 
 check(
@@ -64,7 +73,7 @@ check(
 
 check(
   "CPU_CACHE_BUSTED_FOR_GUIDANCE_EXPORT",
-  html.includes("script.js?v=compute-cpu-guidance-export-0618"),
+  html.includes("script.js?v=compute-cpu-guidance-export-0618b"),
   "tools/compute/cpu-sizing/index.html",
   "CPU page should load the guidance-export script version."
 );
