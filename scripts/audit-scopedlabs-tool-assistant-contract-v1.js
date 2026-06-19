@@ -112,6 +112,44 @@ check(
   "Compute should have a category assistant contract owner for CPU/RAM and future Compute tools."
 );
 
+
+check(
+  "COMPUTE_RAM_PAGE_HAS_ASSISTANT_MOUNT",
+  exists("tools/compute/ram-sizing/index.html") &&
+    hasAnyToken("tools/compute/ram-sizing/index.html", ["data-compute-assistant-card"]) &&
+    hasAnyToken("tools/compute/ram-sizing/index.html", ["data-compute-assistant-mount"]),
+  "tools/compute/ram-sizing/index.html",
+  "RAM page must consume the shared Compute assistant card/mount contract."
+);
+
+check(
+  "COMPUTE_RAM_PAGE_LOADS_ASSISTANT_SCRIPTS",
+  exists("tools/compute/ram-sizing/index.html") &&
+    hasAnyToken("tools/compute/ram-sizing/index.html", ["scopedlabs-local-assistant.js"]) &&
+    hasAnyToken("tools/compute/ram-sizing/index.html", ["scopedlabs-compute-assistant-contract.js"]),
+  "tools/compute/ram-sizing/index.html",
+  "RAM page must load the shared Local Assistant renderer and Compute assistant contract."
+);
+
+check(
+  "COMPUTE_RAM_SCRIPT_RENDERS_SHARED_ASSISTANT",
+  exists("tools/compute/ram-sizing/script.js") &&
+    hasAnyToken("tools/compute/ram-sizing/script.js", ["renderRamAssistant"]) &&
+    hasAnyToken("tools/compute/ram-sizing/script.js", ["ScopedLabsComputeAssistant.renderToolAssistant"]) &&
+    hasAnyToken("tools/compute/ram-sizing/script.js", ["toolSlug: \"ram-sizing\""]),
+  "tools/compute/ram-sizing/script.js",
+  "RAM script must render the shared Compute assistant from the calculated RAM capacity payload."
+);
+
+check(
+  "COMPUTE_ASSISTANT_CONTRACT_HAS_RAM_MODEL",
+  exists("assets/scopedlabs-compute-assistant-contract.js") &&
+    hasAnyToken("assets/scopedlabs-compute-assistant-contract.js", ["buildRamSizingAssistantModel"]) &&
+    hasAnyToken("assets/scopedlabs-compute-assistant-contract.js", ["ramReferenceSection"]) &&
+    hasAnyToken("assets/scopedlabs-compute-assistant-contract.js", ["toolSlug === \"ram-sizing\""]),
+  "assets/scopedlabs-compute-assistant-contract.js",
+  "Shared Compute assistant contract must include a real RAM Sizing model and recommendation references."
+);
 check(
   "ACCESS_CONTROL_SUMMARY_PAGE_EXISTS",
   exists("tools/access-control/summary/index.html"),

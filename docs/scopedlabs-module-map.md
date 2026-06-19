@@ -719,3 +719,13 @@ Example:
 - `workload-planner` is classified as SPECIAL_PLANNER because it is a category planner/command page, not a normal calculator output shell.
 - Remaining Compute calculators are LEGACY_PENDING and should not be patched one-off; each should be upgraded through the shared Compute shell/profile lane.
 - This audit is a roadmap and anti-regression gate: READY regressions fail, partial/special/legacy states are reported as WATCH until their lanes are intentionally upgraded.
+
+### Compute RAM shell and assistant upgrade
+
+- `tools/compute/ram-sizing/index.html` is upgraded from PARTIAL_NEXT to READY for the CPU-grade Compute tool shell/module stack.
+- RAM keeps the analyzer `results` and `analysis-copy` source inside `computeInternalResultsLedger` so source values remain available while the legacy visible Results card stays hidden.
+- RAM consumes `assets/scopedlabs-tool-shell.js`, `assets/scopedlabs-compute-plan-state.js`, `assets/scopedlabs-assistant-export.js`, `assets/scopedlabs-local-assistant.js`, `assets/scopedlabs-compute-assistant-contract.js`, and `assets/scopedlabs-user-tool-notes.js`.
+- `tools/compute/ram-sizing/script.js` renders the local assistant from the existing `ramCapacityEnvelope` payload, preserving RAM math, flow keys, export behavior, snapshot behavior, Continue route, and Knowledge Base behavior.
+- `assets/scopedlabs-compute-assistant-contract.js` owns the RAM Sizing assistant model and `*1/*2/*3` Recommendation References.
+- `scripts/audit-compute-tool-shell-consumption-v1.js` now treats `ram-sizing` as a READY required Compute shell consumer.
+- `scripts/audit-scopedlabs-tool-assistant-contract-v1.js` verifies RAM assistant mount, script loading, shared assistant rendering, and shared RAM model ownership.

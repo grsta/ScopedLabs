@@ -106,7 +106,7 @@
   <link rel="stylesheet" href="/assets/scopedlabs-compute-result-visuals.css?v=scopedlabs-compute-result-visuals-0616-ram-capacity">
 </head>
 
-<body data-tier="free" data-category="compute" data-step="ram-sizing" data-lane="v1">
+<body data-tier="free" data-category="compute" data-step="ram-sizing" data-lane="v1" data-compute-tool-shell="0614">
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/" aria-label="ScopedLabs Home">
@@ -211,17 +211,17 @@
         <button id="reset" class="btn" type="button">Reset</button>
       </div>
 
-      <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+      <div id="computeInternalResultsLedger" class="card compute-internal-results-ledger" style="display:none;" hidden aria-hidden="true" data-internal-results-ledger>
         <h3 class="h3" style="margin-top: 0;">Results</h3>
         <div id="results" class="results-grid" aria-live="polite">
           <div class="muted">Enter values and press Calculate.</div>
         </div>
         <div id="analysis-copy" style="display:none;"></div>
-
-        <p class="mini-note">
-          Model: total RAM is based on concurrent process footprint, workload multiplier, OS/base overhead, and configured reserve. This is a planning estimator, not a replacement for measured application telemetry.
-        </p>
       </div>
+
+      <section id="computeAssistantCard" class="card compute-assistant-card compute-static-summary-card-shell" style="margin-top: 14px;" hidden data-compute-assistant-card>
+        <div id="computeAssistantMount" data-compute-assistant-mount data-category-slug="compute"></div>
+      </section>
     
       <section id="computeRamVisualCard" class="card compute-result-visual-card" hidden data-compute-result-visual-card data-output-visual-owner="compute-capacity-visuals">
         <h3 class="h3 compute-result-visual-title" style="margin-top: 0;">RAM Capacity Envelope</h3>
@@ -319,12 +319,19 @@
   </script>
 
   <script src="/assets/export.js?v=shared-export-025-tool-notes-column-widths"></script>
+  <script src="/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-008-access-control-category-scope-key"></script>
 
+  <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
+  <script src="/assets/scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-005-active-title"></script>
+  <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-002"></script>
   <script src="/assets/scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-011-restore-ram-reference-labels"></script>
-  <script src="./script.js?v=compute-planner-carryover-0617"></script>
+  <script src="./script.js?v=compute-ram-shell-assistant-0619"></script>
 
   <script defer src="/assets/help.js?v=help-026"></script>
   <script src="/assets/scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-005-flow-actions-static-safe"></script>
+  <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
+  <script src="/assets/scopedlabs-compute-assistant-contract.js?v=compute-assistant-ram-sizing-0619"></script>
+  <script src="/assets/scopedlabs-user-tool-notes.js?v=scopedlabs-user-tool-notes-001-compute-proof"></script>
 </body>
 </html>
 

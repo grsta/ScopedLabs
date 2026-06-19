@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-compute-assistant-contract-004-no-stale-automount";
+  const VERSION = "scopedlabs-compute-assistant-contract-005-ram-sizing-model";
 
   function isComputeShellPage() {
     const body = document.body;
@@ -378,12 +378,124 @@
     };
   }
 
+
+  function ramPick(data, keys, fallback) {
+    data = data || {};
+    for (const key of keys) {
+      if (data[key] !== undefined && data[key] !== null && data[key] !== "") return cpuNumber(data[key], fallback || 0);
+    }
+    return cpuNumber(fallback, 0);
+  }
+
+  function ramGb(value, digits) {
+    return cpuNumber(value, 0).toFixed(digits == null ? 1 : digits) + " GB";
+  }
+
+  function ramPct(value) {
+    return cpuNumber(value, 0).toFixed(1) + "%";
+  }
+
+  function ramStatusLabel(status) {
+    const value = String(status || "PENDING").toUpperCase();
+    if (value === "RISK") return "RISK";
+    if (value === "WATCH") return "WATCH";
+    if (value === "GOOD" || value === "HEALTHY" || value === "COMPLETE") return "GOOD";
+    return "PENDING";
+  }
+
+  function ramSummary(status) {
+    const value = ramStatusLabel(status);
+    if (value === "RISK") return "RAM is being pushed too close to the installed memory edge. Resolve memory pressure before treating downstream storage, density, or platform checks as valid.";
+    if (value === "WATCH") return "RAM is workable, but reserve margin is tightening. Carry this as a watch item while validating storage and workload density.";
+    if (value === "GOOD") return "RAM is inside a workable planning envelope. Continue downstream validation while keeping the same workload assumptions tied to this result.";
+    return "Run RAM sizing to generate local Compute assistant guidance.";
+  }
+
+  function ramValues(data) {
+    data = data || {};
+    const demand = ramPick(data, ["demandRamGb", "demandGb", "adjustedWorkloadRamGb"], 0);
+    const required = ramPick(data, ["requiredRamGb", "totalRequired", "totalRequiredGb"], demand);
+    const reserve = ramPick(data, ["reserveRamGb", "reserveGb"], Math.max(required - demand, 0));
+    const recommended = ramPick(data, ["recommendedRamGb", "installedRamGb", "recommended"], required);
+    const headroom = ramPick(data, ["headroomRamGb", "remainingHeadroomGb"], Math.max(recommended - required, 0));
+    return { demand, required, reserve, recommended, headroom };
+  }
+
+  function ramResultSection(data) {
+    data = data || {};
+    const values = ramValues(data);
+    return {
+      title: "RAM Sizing Summary",
+      body: "The RAM result combines workload memory, base overhead, reserve/cache allowance, and the installed memory tier.",
+      items: [
+        "Status: " + ramStatusLabel(data.status),
+        "Workload: " + (data.workloadLabel || workloadLabel(data.workload) || "Current workload"),
+        "Concurrent processes / VMs: " + cpuNumber(data.concurrency, 0),
+        "Average RAM per process: " + ramGb(data.perProc, 1),
+        "OS / base overhead: " + ramGb(data.osGb, 1),
+        "Cache / headroom target: " + ramPct(data.headroomPct),
+        "Demand RAM: " + ramGb(values.demand, 1),
+        "Total required RAM: " + ramGb(values.required, 1),
+        "Recommended installed RAM: " + ramGb(values.recommended, 0),
+        "Remaining installed headroom: " + ramGb(values.headroom, 1),
+        "Reserve ratio: " + ramPct(data.reserveRatio)
+      ]
+    };
+  }
+
+  function ramReferenceSection(data) {
+    data = data || {};
+    const values = ramValues(data);
+    return {
+      title: "Recommendation References",
+      body: "Use these references while reading the RAM Capacity Envelope, assistant guidance, and export report.",
+      items: [
+        "*1 Demand basis ? Current demand is " + ramGb(values.demand, 1) + " before reserve pressure is added.",
+        "*2 Reserve pressure ? Required RAM is " + ramGb(values.required, 1) + " after " + ramGb(values.reserve, 1) + " of reserve/cache allocation.",
+        "*3 Downstream validation ? Installed RAM tier is " + ramGb(values.recommended, 0) + ". " + (data.cpuCoupling || "Validate against CPU, storage, and workload density next.")
+      ]
+    };
+  }
+
+  function ramNextStepSection(status) {
+    const value = ramStatusLabel(status);
+    if (value === "RISK") return { title: "Next Planning Step", body: "Do not continue downstream as if the Compute plan is stable while RAM is at risk.", items: ["Increase installed RAM or reduce workload density before continuing.", "Check whether per-process footprint, VM density, or cache reserve assumptions are too aggressive.", "Recalculate RAM sizing before treating storage or VM density results as valid."] };
+    if (value === "WATCH") return { title: "Next Planning Step", body: "Continue, but keep memory margin under review.", items: ["Carry RAM as a watch item into storage IOPS and throughput validation.", "Validate memory-heavy spikes, virtualization growth, and cache behavior before locking hardware.", "Recheck RAM if concurrency or per-process footprint changes."] };
+    return { title: "Next Planning Step", body: "Use this RAM baseline as the second Compute planning checkpoint.", items: ["Continue to Storage IOPS.", "Keep CPU and RAM tied to the same active workload assumptions.", "Use branch tools only when the active workload calls for them."] };
+  }
+
+  function buildRamSizingAssistantModel(data) {
+    data = data || {};
+    const status = ramStatusLabel(data.status);
+    const upstream = data.upstreamCpuContext || {};
+    const cpuStatus = upstream.status ? "Upstream CPU status: " + upstream.status : "Upstream CPU status: not available";
+    const next = ramNextStepSection(status);
+    return {
+      category: "compute",
+      tool: "ram-sizing",
+      title: "RAM Sizing Result",
+      kicker: "Compute Assistant",
+      status,
+      summary: ramSummary(status),
+      hideHeaderPills: true,
+      hideStandardLists: false,
+      assumptionsTitle: "Current RAM Planning Inputs",
+      actionsTitle: "Recommended Next Actions",
+      assumptions: ["Workload: " + (data.workloadLabel || workloadLabel(data.workload) || "Current workload"), "Concurrent processes / VMs: " + cpuNumber(data.concurrency, 0), "Average RAM per process: " + ramGb(data.perProc, 1), "OS / base overhead: " + ramGb(data.osGb, 1), "Cache / headroom: " + ramPct(data.headroomPct), cpuStatus],
+      actions: next.items,
+      sections: [workloadContextSection("RAM Sizing"), ramResultSection(data), ramReferenceSection(data), next]
+    };
+  }
   function buildToolAssistantModel(config) {
     const data = config && config.result ? config.result : null;
     const toolSlug = config && config.toolSlug ? config.toolSlug : getStep();
 
     if (toolSlug === "cpu-sizing" && data) {
       return buildCpuSizingAssistantModel(data);
+    }
+
+    if (toolSlug === "ram-sizing" && data) {
+      return buildRamSizingAssistantModel(data);
     }
 
     return {

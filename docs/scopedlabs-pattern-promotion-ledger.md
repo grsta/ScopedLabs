@@ -71,7 +71,7 @@ Audit: scripts/audit-scopedlabs-tool-assistant-contract-v1.js
 Drift guard: scripts/audit-scopedlabs-pattern-promotion-v1.js  
 Approved local exception: none  
 Revisit trigger: Before wiring any new category Summary page, local Tool Assistant, or assistant-to-export/report closeout  
-Notes: Shared Tool Shell owns assistant diagnostics and the category adapters own category-specific assistant behavior. Access Control uses assets/access-control-tool-assistant-adapters.js plus assets/access-control-report-summary.js. Physical Security uses assets/physical-security-local-assistant.js, assets/physical-security-tool-assistant-adapters.js, assets/physical-security-guidance-event-bridge.js, and assets/physical-security-category-guidance.js. Compute uses assets/scopedlabs-compute-assistant-contract.js while its Summary page remains pending.
+Notes: Shared Tool Shell owns assistant diagnostics and the category adapters own category-specific assistant behavior. Access Control uses assets/access-control-tool-assistant-adapters.js plus assets/access-control-report-summary.js. Physical Security uses assets/physical-security-local-assistant.js, assets/physical-security-tool-assistant-adapters.js, assets/physical-security-guidance-event-bridge.js, and assets/physical-security-category-guidance.js. Compute uses assets/scopedlabs-compute-assistant-contract.js while its Summary page remains pending. RAM Sizing now consumes the shared Compute assistant contract through the CPU-grade Compute tool shell stack and renders from the existing RAM capacity payload.
 
 ## Approved local exceptions
 

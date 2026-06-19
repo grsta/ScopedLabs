@@ -31,8 +31,8 @@ const MODULES = [
   ["scopedlabs-user-tool-notes.js", "User tool notes"]
 ];
 
-const READY_REQUIRED = new Set(["cpu-sizing"]);
-const PARTIAL_NEXT = new Set(["ram-sizing"]);
+const READY_REQUIRED = new Set(["cpu-sizing", "ram-sizing"]);
+const PARTIAL_NEXT = new Set([]);
 const SPECIAL_PLANNER = new Set(["workload-planner"]);
 
 function hasAssistantMount(html) {

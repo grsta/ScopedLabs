@@ -205,6 +205,28 @@
     }
   }
 
+  function clearRamAssistant() {
+    if (window.ScopedLabsComputeAssistant && typeof window.ScopedLabsComputeAssistant.clear === "function") {
+      window.ScopedLabsComputeAssistant.clear();
+      return;
+    }
+
+    const mount = document.querySelector("[data-compute-assistant-mount]");
+    const card = document.querySelector("[data-compute-assistant-card]");
+    if (mount) mount.innerHTML = "";
+    if (card) card.hidden = true;
+  }
+
+  function renderRamAssistant(result) {
+    if (!window.ScopedLabsComputeAssistant || typeof window.ScopedLabsComputeAssistant.renderToolAssistant !== "function") return false;
+
+    return window.ScopedLabsComputeAssistant.renderToolAssistant({
+      toolSlug: "ram-sizing",
+      toolLabel: "RAM Sizing",
+      result
+    });
+  }
+
   function invalidate() {
     try {
       sessionStorage.removeItem(FLOW_KEYS[STEP]);
@@ -216,6 +238,8 @@
       sessionStorage.removeItem(FLOW_KEYS["raid-rebuild-time"]);
       sessionStorage.removeItem(FLOW_KEYS["backup-window"]);
     } catch {}
+
+    clearRamAssistant();
 
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
@@ -407,6 +431,7 @@
     };
 
     renderRamCapacityVisual(ramCapacityEnvelope);
+    renderRamAssistant(ramCapacityEnvelope);
 
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
       category: CATEGORY,
