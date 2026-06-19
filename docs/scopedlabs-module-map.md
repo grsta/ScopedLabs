@@ -618,3 +618,10 @@ Example:
 - CPU and RAM keep one declarative `data-compute-flow-owner="compute-shell-contract"` row so critical Back/Continue navigation does not disappear if shell-created placement fails.
 - `scripts/audit-compute-flow-actions-shell-contract-v1.js` verifies one row per page, correct routes, safe arrow entities, and static-safe shell behavior.
 - Non-goals: CPU math, RAM math, capacity-envelope visuals, export.js, auth, checkout, Knowledge Base behavior, and broad page redesign.
+
+### Compute CPU status guidance audit
+
+- `scripts/audit-compute-cpu-status-guidance-v1.js` protects CPU Capacity Envelope status authority, compact status chip styling, and Recommended Actions live/export sections.
+- `tools/compute/cpu-sizing/script.js` uses `computeCpuAuthoritativeExportStatus` so the export header follows `envelopeStatus` before generic status fallbacks.
+- `tools/compute/cpu-sizing/index.html` adds the CPU Recommended Actions proof card and local compact status chip styling.
+- Non-goals: CPU chart math, shared capacity visual geometry, RAM behavior, auth, checkout, Knowledge Base behavior, and broad page redesign.

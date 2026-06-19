@@ -716,6 +716,51 @@
     ];
   }
 
+
+  function buildComputeCpuRecommendedActions(result) {
+    const outputs = result && result.outputs ? result.outputs : {};
+    const inputs = result && result.inputs ? result.inputs : {};
+    const status = String(result && (result.envelopeStatus || outputs.envelopeStatus || result.status) || "PENDING").toUpperCase();
+    const constraint = computeCpuProofOutput(result, "primaryConstraint", result && result.primaryConstraint ? result.primaryConstraint : "CPU capacity");
+    const target = computeCpuProofInput(result, "targetUtilizationPercent", computeCpuProofOutput(result, "utilizationTarget", ""));
+    const finalDemand = computeCpuProofOutput(result, "envelopeFinalDemandCores", computeCpuProofOutput(result, "effectiveDemandCores", 0));
+    const usable = computeCpuProofOutput(result, "usableCapacityCores", 0);
+    const workload = computeCpuProofInput(result, "workloadType", inputs.workloadType || result?.workload || "active workload");
+
+    if (status === "RISK") {
+      return [
+        { action: "Increase CPU capacity before continuing", reason: "Final CPU demand is " + computeCpuProofCores(finalDemand) + " against usable capacity near " + computeCpuProofCores(usable) + ". Step up the CPU class or core count before using this as a downstream baseline." },
+        { action: "Lower the target utilization ceiling", reason: "A lower target creates more scheduling headroom for burst, failover, and background services instead of running the CPU plan at the edge." },
+        { action: "Reduce peak/burst pressure where possible", reason: "Queue smoothing, job staggering, or workload throttling can reduce the burst multiplier that is pushing the envelope into Risk." },
+        { action: "Review GPU or acceleration branch", reason: "For video, analytics, or AI-style workloads, offloading eligible work may be safer than continuing to add general CPU cores." },
+        { action: "Do not treat RAM/storage results as final yet", reason: "Downstream sizing depends on this CPU baseline. Rework CPU first, then continue into RAM validation." }
+      ];
+    }
+
+    if (status === "WATCH") {
+      return [
+        { action: "Validate CPU margin before procurement", reason: "The CPU plan is serviceable but tightening. Confirm whether " + constraint + " is acceptable for the active " + workload + " workload." },
+        { action: "Add headroom or choose the next CPU tier", reason: "If this is production, critical, edge, or video-heavy, move the plan farther away from the Watch threshold before locking hardware." },
+        { action: "Check whether the utilization target is too aggressive", reason: "Current target utilization is " + target + "%. A lower target may be more appropriate when burst and failover behavior matter." },
+        { action: "Smooth bursts or reduce concurrent workers", reason: "Reducing simultaneous CPU demand can pull final demand below the Watch line without changing the whole platform." },
+        { action: "Continue to RAM sizing, but keep CPU flagged", reason: "RAM validation should proceed next, but carry this as a CPU watch item until downstream capacity confirms the plan." }
+      ];
+    }
+
+    return [
+      { action: "Carry CPU result into RAM sizing", reason: "The CPU envelope is currently inside the usable range, so RAM should be checked next for density, cache, and memory pressure." },
+      { action: "Preserve the CPU assumptions", reason: "Keep workload type, concurrency, burst factor, target utilization, and reserve settings attached to the report so the baseline remains defensible." },
+      { action: "Recheck CPU if planner context changes", reason: "Changes to workload branch, growth margin, redundancy, or operating window can move this result back into Watch or Risk." }
+    ];
+  }
+
+  function buildComputeCpuRecommendedActionsHtml(actions) {
+    const rows = (Array.isArray(actions) ? actions : []).map(function (item) {
+      return '<div class="compute-cpu-proof-action"><strong>' + computeCpuProofEsc(item.action || "Review CPU plan") + '</strong><span>' + computeCpuProofEsc(item.reason || "Engineering review required.") + '</span></div>';
+    });
+
+    return '<div class="compute-cpu-proof-actions-list">' + (rows.length ? rows.join("") : '<div class="compute-cpu-proof-action"><strong>No corrective actions generated</strong><span>Run the CPU calculation again to refresh recommendations.</span></div>') + '</div>';
+  }
   function computeCpuDecisionScheduleRow(group, metric, value, note) {
     return '<tr><td>' + computeCpuProofEsc(group) + '</td><td>' + computeCpuProofEsc(metric) + '</td><td>' + value + '</td><td>' + computeCpuProofEsc(note) + '</td></tr>';
   }
@@ -783,8 +828,10 @@
 
     if (scheduleTarget) scheduleTarget.innerHTML = "";
     if (referencesTarget) referencesTarget.innerHTML = "";
+    if (actionsTarget) actionsTarget.innerHTML = "";
     if (scheduleCard) scheduleCard.hidden = true;
     if (referencesCard) referencesCard.hidden = true;
+    if (actionsCard) actionsCard.hidden = true;
   }
 
   function renderComputeCpuProofSections(result) {
@@ -801,8 +848,10 @@
 
     scheduleTarget.innerHTML = buildComputeCpuDecisionScheduleHtml(result);
     referencesTarget.innerHTML = buildComputeCpuRecommendationReferencesHtml(references);
+    actionsTarget.innerHTML = buildComputeCpuRecommendedActionsHtml(buildComputeCpuRecommendedActions(result));
     scheduleCard.hidden = false;
     referencesCard.hidden = false;
+    actionsCard.hidden = false;
     return true;
   }
 
@@ -815,6 +864,23 @@
     return row ? row.value : "";
   }
 
+
+  function computeCpuAuthoritativeExportStatus(result, outputs) {
+    const source = result || {};
+    const resultOutputs = source.outputs && typeof source.outputs === "object" ? source.outputs : {};
+    const envelope = String(source.envelopeStatus || resultOutputs.envelopeStatus || "").toUpperCase();
+
+    if (envelope === "RISK") return "RISK";
+    if (envelope === "WATCH") return "WATCH";
+    if (envelope === "GOOD" || envelope === "HEALTHY") return "HEALTHY";
+
+    const rowStatus = String(computeCpuExportRowValue(outputs || [], "Status") || source.status || source.analyzerStatus || "").toUpperCase();
+    if (rowStatus === "RISK") return "RISK";
+    if (rowStatus === "WATCH") return "WATCH";
+    if (rowStatus === "GOOD" || rowStatus === "HEALTHY") return "HEALTHY";
+
+    return rowStatus || "";
+  }
   function computeCpuSvgDataUri(svg) {
     const text = String(svg || "").trim();
     if (!text) return "";
@@ -868,6 +934,22 @@
     };
   }
 
+
+  function buildComputeCpuRecommendedActionsExportSection(result) {
+    const actions = buildComputeCpuRecommendedActions(result || {});
+
+    return {
+      title: "Recommended Actions",
+      description: "Corrective or validation steps generated from the CPU Capacity Envelope status authority.",
+      tableClass: "extra-export-table--planner extra-export-table--decision",
+      tables: [
+        {
+          headers: ["Action", "Reason"],
+          rows: actions.map((item) => [item.action || "Review CPU plan", item.reason || "Engineering review required."])
+        }
+      ]
+    };
+  }
   function buildComputeCpuDecisionScheduleExportSection() {
     const table = computeCpuExportTableFromDom("#computeCpuDecisionSchedule table");
     if (!table) return null;
@@ -892,12 +974,13 @@
     if (!result || !outputs.length) return null;
 
     const chartSvg = buildComputeCpuVisualSvg(result);
-    const extraSections = [
+        const extraSections = [
       buildComputeCpuReferenceExportSection(result),
+      buildComputeCpuRecommendedActionsExportSection(result),
       buildComputeCpuDecisionScheduleExportSection()
     ].filter(Boolean);
 
-    const status = computeCpuExportRowValue(outputs, "Status") || result.status || result.analyzerStatus || "";
+    const status = computeCpuAuthoritativeExportStatus(result, outputs);
     const summary = typeof options.summaryBuilder === "function"
       ? options.summaryBuilder(outputs)
       : "CPU sizing export generated from the latest calculated workload result.";
@@ -1106,6 +1189,7 @@
     }
 
     const summaryRows = [
+      { label: "Status", value: finalCpuStatus },
       { label: "Base CPU Demand", value: baseDemand.toFixed(2) + " cores" },
       { label: "Adjusted Effective Demand", value: eff.toFixed(2) + " cores" },
       { label: "Required Cores", value: cores.toFixed(2) },

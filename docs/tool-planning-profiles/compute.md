@@ -1929,3 +1929,13 @@ Finding: The Workload Planner can display/store Demand Pattern as `Bursty`, whil
 Decision: CPU carryover normalization maps planner `Bursty` to CPU `burstHeavy` so planner Demand hydrates CPU Workload Pattern instead of falling back to `Steady / predictable`.
 
 Audit: `scripts/audit-compute-planner-carryover-contract-v1.js` checks the Bursty -> Burst-heavy mapping.
+
+### CPU status authority and recommended actions - 2026-06-18
+
+Decision: CPU export/report status must use the CPU Capacity Envelope authority (`envelopeStatus`) before generic analyzer/report fallbacks.
+
+Decision: CPU should render and export Recommended Actions so Watch/Risk results tell the user how to reduce pressure or validate the plan.
+
+UI: CPU status chips should use compact rectangular engineering-box styling rather than wide rounded pills.
+
+Audit: `scripts/audit-compute-cpu-status-guidance-v1.js` protects chip shape, status authority, output Status row, live Recommended Actions, and export Recommended Actions.

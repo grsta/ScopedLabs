@@ -126,7 +126,44 @@
         width: 100%;
       }
     }
+  
+    /* CPU STATUS GUIDANCE CONTRACT 0618 */
+    [data-compute-cpu-status-guidance-style] {}
+    .scopedlabs-result-summary-status,
+    .compute-cpu-proof-status-chip {
+      border-radius: 5px !important;
+      width: fit-content !important;
+      min-width: 0 !important;
+      max-width: max-content !important;
+      padding: 5px 10px !important;
+      line-height: 1.15 !important;
+    }
+
+    .compute-cpu-proof-actions-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .compute-cpu-proof-action {
+      border: 1px solid rgba(120,255,120,.14);
+      border-radius: 10px;
+      background: rgba(0,0,0,.16);
+      padding: 10px 12px;
+    }
+
+    .compute-cpu-proof-action strong {
+      display: block;
+      color: rgba(255,255,255,.92);
+      margin-bottom: 4px;
+    }
+
+    .compute-cpu-proof-action span {
+      color: rgba(205,238,220,.76);
+      line-height: 1.45;
+    }
   </style>
+  <style data-compute-cpu-status-guidance-style></style>
   <link rel="stylesheet" href="/assets/scopedlabs-status-legend.css?v=scopedlabs-status-legend-0614-shared">
   <link rel="stylesheet" href="/assets/scopedlabs-compute-result-visuals.css?v=scopedlabs-compute-result-visuals-0614-cpu-load-profile">
   <link rel="stylesheet" href="/assets/scopedlabs-result-summary-card.css?v=scopedlabs-result-summary-card-0614-cpu-static-polish">
@@ -167,7 +204,7 @@
     }
 
     .compute-cpu-proof-status-chip {
-      border-radius: 9px;
+      border-radius: 5px;
       display: inline-flex;
       font-size: 11px;
       font-weight: 900;
@@ -484,6 +521,12 @@
         <div id="computeCpuDecisionSchedule" class="compute-cpu-proof-wrap" data-compute-cpu-decision-schedule="true" role="group" aria-label="CPU capacity decision schedule"></div>
       </section>
 
+
+      <section id="computeCpuRecommendedActionsCard" class="card compute-cpu-proof-card" hidden data-compute-cpu-recommended-actions-card>
+        <h3 class="h3 compute-result-visual-title" style="margin-top: 0;">Recommended Actions</h3>
+        <p class="muted" style="margin-bottom: 0;">Practical steps to reduce CPU pressure or validate the result before continuing downstream.</p>
+        <div id="computeCpuRecommendedActions" class="compute-cpu-proof-wrap" data-compute-cpu-recommended-actions="true" role="group" aria-label="CPU recommended actions"></div>
+      </section>
       <section class="card compute-export-card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
         <h3 class="h3" style="margin-top: 0;">Export Report</h3>
         <p class="muted" style="margin-bottom: 0;">
@@ -577,7 +620,7 @@
   <script src="/assets/scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-005-active-title"></script>
   <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-002"></script>
   <script src="/assets/scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-009-cpu-cores-axis-label"></script>
-  <script src="./script.js?v=compute-cpu-flow-actions-arrow-0617"></script>
+  <script src="./script.js?v=compute-cpu-status-guidance-0618"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
   <script src="/assets/scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-005-flow-actions-static-safe"></script>
   <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
