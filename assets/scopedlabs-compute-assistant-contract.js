@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-compute-assistant-contract-005-ram-sizing-model";
+  const VERSION = "scopedlabs-compute-assistant-contract-006-ram-summary-card";
 
   function isComputeShellPage() {
     const body = document.body;
@@ -692,6 +692,82 @@
 
   
 
+
+  function ramAssistantEscapeHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, '&#39;');
+  }
+
+  function ramAssistantStatusClass(status) {
+    const value = ramStatusLabel(status);
+    if (value === "RISK") return "is-risk";
+    if (value === "WATCH") return "is-watch";
+    if (value === "GOOD") return "is-good";
+    return "is-review";
+  }
+
+  function ramAssistantValue(data, keys, fallback) {
+    data = data || {};
+    for (const key of keys) {
+      if (data[key] !== undefined && data[key] !== null && data[key] !== "") return cpuNumber(data[key], fallback || 0);
+    }
+    return cpuNumber(fallback, 0);
+  }
+
+  function ramAssistantGb(value, digits) {
+    return cpuNumber(value, 0).toFixed(digits == null ? 1 : digits) + " GB";
+  }
+
+  function ramAssistantCompactLine(data) {
+    data = data || {};
+    const demand = ramAssistantValue(data, ["demandRamGb", "demandGb", "adjustedWorkloadRamGb"], 0);
+    const required = ramAssistantValue(data, ["requiredRamGb", "totalRequired", "totalRequiredGb"], demand);
+    const installed = ramAssistantValue(data, ["recommendedRamGb", "installedRamGb", "recommended"], required);
+    const headroom = ramAssistantValue(data, ["headroomRamGb", "remainingHeadroomGb"], Math.max(installed - required, 0));
+    return { demand, required, installed, headroom };
+  }
+
+  function renderComputeRamTopSummaryCard(data) {
+    data = data || {};
+    const status = ramStatusLabel(data.status);
+    const values = ramAssistantCompactLine(data);
+    const workload = data.workloadLabel || workloadLabel(data.workload) || "Current workload";
+    const reserveRatio = ramPct(data.reserveRatio);
+    const primaryRisk = status === "RISK"
+      ? "Memory headroom is exhausted at the current RAM tier."
+      : status === "WATCH"
+        ? "Reserve margin should be reviewed before downstream validation."
+        : "RAM plan is inside the current planning envelope.";
+    const confidence = status === "RISK" ? "LOW" : status === "WATCH" ? "MEDIUM" : "HIGH";
+
+    return [
+      '<section id="computeRamStatusCard" class="scopedlabs-result-summary-card" aria-live="polite">',
+      '  <div class="scopedlabs-result-summary-top">',
+      '    <div>',
+      '      <h3 id="computeRamStatusTitle" class="scopedlabs-result-summary-title">RAM SIZING</h3>',
+      '      <p id="computeRamStatusSubtitle" class="scopedlabs-result-summary-subtitle">' + ramAssistantEscapeHtml(ramSummary(status)) + '</p>',
+      '    </div>',
+      '    <div id="computeRamStatusText" class="scopedlabs-result-summary-status ' + ramAssistantStatusClass(status) + '">' + ramAssistantEscapeHtml(status) + '</div>',
+      '  </div>',
+      '  <div class="scopedlabs-result-summary-grid">',
+      '    <div class="scopedlabs-result-summary-item"><strong>Recommendation</strong><span>' + ramAssistantEscapeHtml(ramAssistantGb(values.installed, 0) + " installed RAM recommended for the active " + workload + " workload") + '</span></div>',
+      '    <div class="scopedlabs-result-summary-item"><strong>Confidence</strong><span>' + ramAssistantEscapeHtml(confidence) + '</span></div>',
+      '    <div class="scopedlabs-result-summary-item"><strong>Decision Flags</strong><span>' + ramAssistantEscapeHtml("Demand " + ramAssistantGb(values.demand, 1) + " | Required " + ramAssistantGb(values.required, 1) + " | Headroom " + ramAssistantGb(values.headroom, 1)) + '</span></div>',
+      '    <div class="scopedlabs-result-summary-item"><strong>Primary Risk</strong><span>' + ramAssistantEscapeHtml(primaryRisk) + '</span></div>',
+      '  </div>',
+      '  <p class="scopedlabs-result-summary-note">Carry this RAM result into Storage IOPS. Do not treat the Compute plan as complete until storage and density checks validate the same workload assumptions.</p>',
+      '  <div class="scopedlabs-result-summary-grid" style="margin-top: 12px;">',
+      '    <div class="scopedlabs-result-summary-item"><strong>*1 Demand basis</strong><span>' + ramAssistantEscapeHtml(ramAssistantGb(values.demand, 1) + " current memory demand") + '</span></div>',
+      '    <div class="scopedlabs-result-summary-item"><strong>*2 Reserve pressure</strong><span>' + ramAssistantEscapeHtml(ramAssistantGb(values.required, 1) + " required after reserve/cache allocation") + '</span></div>',
+      '    <div class="scopedlabs-result-summary-item"><strong>*3 Downstream validation</strong><span>' + ramAssistantEscapeHtml("Installed tier " + ramAssistantGb(values.installed, 0) + " | Reserve ratio " + reserveRatio) + '</span></div>',
+      '  </div>',
+      '</section>'
+    ].join("");
+  }
   function renderToolAssistant(config) {
     config = config || {};
 
@@ -704,6 +780,11 @@
 
     if (toolSlug === "cpu-sizing" && data) {
       mount.innerHTML = renderComputeCpuTopSummaryCard(data);
+      card.hidden = false;
+      return true;
+    }
+    if (toolSlug === "ram-sizing" && data) {
+      mount.innerHTML = renderComputeRamTopSummaryCard(data);
       card.hidden = false;
       return true;
     }

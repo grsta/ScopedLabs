@@ -141,6 +141,15 @@ check(
   "RAM script must render the shared Compute assistant from the calculated RAM capacity payload."
 );
 
+
+check(
+  "COMPUTE_RAM_ASSISTANT_USES_CUSTOM_SUMMARY_CARD",
+  exists("assets/scopedlabs-compute-assistant-contract.js") &&
+    hasAnyToken("assets/scopedlabs-compute-assistant-contract.js", ["renderComputeRamTopSummaryCard"]) &&
+    hasAnyToken("assets/scopedlabs-compute-assistant-contract.js", ["renderComputeRamTopSummaryCard(data)"]),
+  "assets/scopedlabs-compute-assistant-contract.js",
+  "RAM live assistant must use the Compute result-summary card renderer instead of falling through to the generic bullet-list assistant renderer."
+);
 check(
   "COMPUTE_ASSISTANT_CONTRACT_HAS_RAM_MODEL",
   exists("assets/scopedlabs-compute-assistant-contract.js") &&

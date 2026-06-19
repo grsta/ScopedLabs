@@ -729,3 +729,10 @@ Example:
 - `assets/scopedlabs-compute-assistant-contract.js` owns the RAM Sizing assistant model and `*1/*2/*3` Recommendation References.
 - `scripts/audit-compute-tool-shell-consumption-v1.js` now treats `ram-sizing` as a READY required Compute shell consumer.
 - `scripts/audit-scopedlabs-tool-assistant-contract-v1.js` verifies RAM assistant mount, script loading, shared assistant rendering, and shared RAM model ownership.
+
+### Compute RAM assistant summary card hotfix
+
+- `assets/scopedlabs-compute-assistant-contract.js` now routes `ram-sizing` to `renderComputeRamTopSummaryCard(data)` so the RAM live assistant uses the same compact result-summary card rhythm as CPU instead of the generic Local Assistant bullet-list renderer.
+- `tools/compute/ram-sizing/index.html` cache-busts the shared Compute assistant contract to `compute-assistant-ram-summary-card-0620`.
+- `scripts/audit-scopedlabs-tool-assistant-contract-v1.js` verifies RAM uses the custom Compute summary-card renderer.
+- Non-goals: no RAM math change, no RAM visual change, no export/snapshot/pipeline/Knowledge Base behavior change.
