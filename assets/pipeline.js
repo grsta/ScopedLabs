@@ -67,19 +67,20 @@
     return "core";
   }
 
-  function appendStepAnchor(row, step) {
-    const index = Number(step.__slIndex || 0);
-    const currentStepData = indexedSteps[currentIndex] || {};
+  function appendStepAnchor(parent, step) {
+    const index = steps.indexOf(step);
+    const currentStepData = steps[currentIndex];
     const currentGroup = hasFlowGroups ? flowGroupFor(currentStepData) : "";
     const stepGroup = hasFlowGroups ? flowGroupFor(step) : "";
+    const isCategoryEndpoint = !!(step && step.categoryEndpoint);
     const isCurrent = index === currentIndex;
-    const isPast = hasFlowGroups
+    const isPast = !isCategoryEndpoint && (hasFlowGroups
       ? (
           stepGroup === currentGroup &&
           index < currentIndex &&
           currentGroup !== "optional-specialty-zone"
         )
-      : index < currentIndex;
+      : index < currentIndex);
 
     const a = document.createElement("a");
     a.href = step.href;
@@ -87,6 +88,10 @@
     if (isPast) a.classList.add("is-complete");
     if (isCurrent) a.classList.add("is-current");
     if (step.optional) a.classList.add("is-optional");
+    if (isCategoryEndpoint) {
+      a.classList.add("is-category-endpoint");
+      a.setAttribute("data-category-endpoint", String(step.categoryEndpoint));
+    }
     a.setAttribute("data-step", step.id);
     if (step.optional) a.setAttribute("data-optional-step", "true");
     if (isCurrent) a.setAttribute("aria-current", "step");
@@ -101,7 +106,7 @@
 
     a.appendChild(dot);
     a.appendChild(label);
-    row.appendChild(a);
+    parent.appendChild(a);
   }
 
   function appendStepRow(parent, groupSteps, ariaLabel) {

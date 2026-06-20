@@ -102,6 +102,7 @@
         label: "Compute",
         lanes: {
           v1: [
+            { id: "workload-planner", label: "Planner", href: "/tools/compute/", categoryEndpoint: "planner" },
             { id: "cpu-sizing", label: "CPU", href: "/tools/compute/cpu-sizing/" },
             { id: "ram-sizing", label: "RAM", href: "/tools/compute/ram-sizing/" },
             { id: "storage-iops", label: "IOPS", href: "/tools/compute/storage-iops/" },
@@ -110,7 +111,8 @@
             { id: "gpu-vram", label: "GPU (Optional)", href: "/tools/compute/gpu-vram/" },
             { id: "power-thermal", label: "Power / Thermal", href: "/tools/compute/power-thermal/" },
             { id: "raid-rebuild-time", label: "RAID Rebuild", href: "/tools/compute/raid-rebuild-time/" },
-            { id: "backup-window", label: "Backup Window", href: "/tools/compute/backup-window/" }
+            { id: "backup-window", label: "Backup Window", href: "/tools/compute/backup-window/" },
+            { id: "summary", label: "Summary", href: "/tools/compute/summary/", categoryEndpoint: "summary" }
           ]
         }
       },

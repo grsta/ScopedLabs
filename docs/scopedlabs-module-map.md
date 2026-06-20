@@ -820,3 +820,12 @@ Example:
 - `tools/compute/ram-sizing/script.js` now populates `computeWorkloadContextCard` from the existing CPU/planner carry-forward context instead of showing the old flow-note copy.
 - `scripts/audit-compute-ram-top-shell-parity-v1.js` verifies RAM top-shell order, active workload card structure, Planning Inputs copy, script wiring, cache-bust, module-map documentation, and batch inclusion.
 - Non-goals: no RAM math change, no chart/proof/export/snapshot/pipeline/Knowledge Base behavior change.
+
+### Compute Planner/Summary pipeline nav
+
+- `assets/pipelines.js` now includes Compute category endpoints in the shared `v1` lane: Planner at `/tools/compute/` and Summary at `/tools/compute/summary/`.
+- Planner and Summary are marked with `categoryEndpoint` so the shared pipeline renderer can expose navigation without treating them as ordinary calculator completion steps.
+- `assets/pipeline.js` adds `is-category-endpoint` and `data-category-endpoint` semantics and prevents category endpoints from being marked complete just because they are before the current calculator step.
+- Compute tool pages that load the shared pipeline assets are cache-busted to `compute-planner-summary-nav-0620`.
+- `scripts/audit-compute-planner-summary-pipeline-nav-v1.js` verifies endpoint presence, endpoint order, renderer semantics, tool page consumption, no page-local fake nav, module-map documentation, and batch inclusion.
+- Non-goals: no Compute math change, no RAM/CPU proof/export/snapshot behavior change, no checkout/auth/Knowledge Base behavior change.
