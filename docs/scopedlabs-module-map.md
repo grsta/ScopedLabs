@@ -753,3 +753,11 @@ Example:
 - `assets/scopedlabs-compute-result-visuals.css` restores the normal dark-green ScopedLabs panel styling for shared Compute assistant summary cards and owns the recommendation references card/table styles.
 - `scripts/audit-compute-ram-proof-layout-v1.js` prevents detailed footnote rows from returning to the top assistant card and enforces visual-before-references proof stack order.
 - Non-goals: no RAM math change, no RAM Capacity Envelope math change, no export/snapshot/pipeline/Knowledge Base behavior change.
+
+### Compute reference marker tone contract
+
+- `assets/scopedlabs-compute-capacity-visuals.js` remains the source of truth for chart footnote marker colors through `.legend-current`, `.legend-growth`, and `.legend-failover`.
+- `assets/scopedlabs-compute-result-visuals.css` maps Recommendation References marker numbers to the exact same colors through `--compute-reference-marker-demand`, `--compute-reference-marker-reserve`, and `--compute-reference-marker-validation`.
+- Recommendation References table marker cells use the same `*1`, `*2`, and `*3` visual tones as the chart footnotes: demand, reserve pressure, and downstream validation.
+- `scripts/audit-compute-reference-marker-tone-v1.js` verifies the CSS marker variables match the chart footnote colors and that table marker-number selectors/classes exist.
+- Non-goals: no RAM math change, no CPU/RAM chart geometry change, no export/snapshot/pipeline/Knowledge Base behavior change.

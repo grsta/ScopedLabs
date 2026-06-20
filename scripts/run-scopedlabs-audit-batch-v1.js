@@ -14,6 +14,7 @@ const defaultAudits = [
   "scripts/audit-scopedlabs-tool-assistant-contract-v1.js",
   "scripts/audit-compute-assistant-rendering-contract-v1.js",
   "scripts/audit-compute-ram-proof-layout-v1.js",
+  "scripts/audit-compute-reference-marker-tone-v1.js",
   "scripts/audit-compute-tool-shell-consumption-v1.js"
 ];
 

@@ -255,3 +255,32 @@
     padding: 6px 0;
   }
 }
+
+/* compute-reference-marker-tone-0620
+   Recommendation References marker numbers use the exact same colors as the chart footnote labels
+   from assets/scopedlabs-compute-capacity-visuals.js. */
+:root {
+  --compute-reference-marker-demand: #38d9ff;
+  --compute-reference-marker-reserve: #a78bfa;
+  --compute-reference-marker-validation: #f59e0b;
+}
+
+.compute-recommendation-references-table tbody tr:nth-child(1) td:first-child,
+.compute-recommendation-references-table .compute-reference-marker--demand {
+  color: var(--compute-reference-marker-demand);
+}
+
+.compute-recommendation-references-table tbody tr:nth-child(2) td:first-child,
+.compute-recommendation-references-table .compute-reference-marker--reserve {
+  color: var(--compute-reference-marker-reserve);
+}
+
+.compute-recommendation-references-table tbody tr:nth-child(3) td:first-child,
+.compute-recommendation-references-table .compute-reference-marker--validation {
+  color: var(--compute-reference-marker-validation);
+}
+
+.compute-recommendation-references-table tbody td:first-child {
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
