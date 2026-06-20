@@ -34,6 +34,10 @@
     headroom: $("headroom"),
     results: $("results"),
     flowNote: $("flow-note"),
+    workloadContextCard: $("computeWorkloadContextCard"),
+    workloadContextTitle: $("computeWorkloadContextTitle"),
+    workloadContextCopy: $("computeWorkloadContextCopy"),
+    workloadContextMeta: $("computeWorkloadContextMeta"),
     analysisCopy: $("analysis-copy"),
     ramVisualCard: $("computeRamVisualCard"),
     ramVisual: $("computeRamVisual"),
@@ -137,10 +141,44 @@
   }
 
   function refreshFlowNote() {
+    function hideWorkloadContext() {
+      if (els.flowNote) {
+        els.flowNote.hidden = true;
+        els.flowNote.innerHTML = "";
+      }
+      if (els.workloadContextCard) els.workloadContextCard.hidden = true;
+      if (els.workloadContextTitle) els.workloadContextTitle.textContent = "No active Compute workload selected";
+      if (els.workloadContextCopy) els.workloadContextCopy.textContent = "Continue from CPU sizing or open a Compute workload before using this tool so the RAM result can be tied to the right workload plan.";
+      if (els.workloadContextMeta) els.workloadContextMeta.innerHTML = "";
+    }
+
+    function escapeHtml(value) {
+      return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function firstValue() {
+      for (let i = 0; i < arguments.length; i += 1) {
+        const value = arguments[i];
+        if (value !== undefined && value !== null && value !== "") return value;
+      }
+      return "Not specified";
+    }
+
+    function pct(value) {
+      if (value === undefined || value === null || value === "") return "Not specified";
+      const n = Number(value);
+      if (!Number.isFinite(n)) return String(value);
+      return Math.round(n) + "%";
+    }
+
     const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
     if (!raw) {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
+      hideWorkloadContext();
       cpuContext = null;
       return;
     }
@@ -149,47 +187,57 @@
     try {
       parsed = JSON.parse(raw);
     } catch {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
+      hideWorkloadContext();
       cpuContext = null;
       return;
     }
 
     if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
+      hideWorkloadContext();
       cpuContext = null;
       return;
     }
 
-    const data = parsed.data || {};
+    const data = parsed.data && typeof parsed.data === "object" ? parsed.data : parsed;
     cpuContext = data;
+    hydrateWorkloadFromCpu(data);
 
-    hydrateRamWorkloadFromCpu(data);
-
-    const lines = [];
-    if (typeof data.cores === "number") lines.push(`Recommended Cores: <strong>${data.cores}</strong>`);
-    if (typeof data.eff === "number") lines.push(`Effective Load: <strong>${Number(data.eff).toFixed(2)} core-eq</strong>`);
-    if (typeof data.workload === "string") lines.push(`Workload: <strong>${data.workload}</strong>`);
-    if (typeof data.status === "string") lines.push(`CPU Status: <strong>${data.status}</strong>`);
-
-    const plannerContext = ramPlannerContextFromCpu(data);
-    if (plannerContext && plannerContext.targetUtilization) lines.push(`Planner Target: <strong>${plannerContext.targetUtilization}%</strong>`);
-    if (plannerContext && plannerContext.growthMargin) lines.push(`Planner Growth Margin: <strong>${plannerContext.growthMargin}%</strong>`);
-
-    if (!lines.length) {
+    if (els.flowNote) {
       els.flowNote.hidden = true;
       els.flowNote.innerHTML = "";
-      return;
     }
 
-    els.flowNote.hidden = false;
-    els.flowNote.innerHTML = `
-      <strong>Flow Context</strong><br>
-      ${lines.join(" | ")}
-      <br><br>
-      This step checks whether memory becomes the next scaling wall after the CPU envelope already defined upstream.
-    `;
+    const planner = ramPlannerContextFromCpu(data) || {};
+    const title = firstValue(
+      planner.title,
+      planner.name,
+      planner.workloadName,
+      planner.projectName,
+      planner.label,
+      "Active Compute workload"
+    );
+
+    const workloadType = firstValue(planner.workloadType, planner.workload, data.workloadPattern, data.workload);
+    const branches = Array.isArray(planner.branches) ? planner.branches.join(", ") : firstValue(planner.branches, planner.branch, "None selected");
+    const meta = [
+      ["Environment", firstValue(planner.environment, planner.environmentType, planner.location)],
+      ["Workload Type", workloadType],
+      ["Demand", firstValue(planner.demand, planner.demandProfile, planner.loadProfile, data.demand)],
+      ["Status", firstValue(data.status, planner.status)],
+      ["Path", firstValue(planner.path, planner.workflowPath, planner.pipelinePath)],
+      ["Target Utilization", pct(firstValue(planner.targetUtilization, data.utilizationTarget))],
+      ["Growth Margin", pct(firstValue(planner.growthMargin, data.growthReservePercent))],
+      ["Branches", branches]
+    ];
+
+    if (els.workloadContextTitle) els.workloadContextTitle.textContent = String(title);
+    if (els.workloadContextCopy) els.workloadContextCopy.textContent = String(title) + " is the active workload context for this RAM sizing result.";
+    if (els.workloadContextMeta) {
+      els.workloadContextMeta.innerHTML = meta.map(function (item) {
+        return '<div><span>' + escapeHtml(item[0]) + '</span><strong>' + escapeHtml(item[1]) + '</strong></div>';
+      }).join("");
+    }
+    if (els.workloadContextCard) els.workloadContextCard.hidden = false;
   }
 
   function clearRamCapacityVisual() {

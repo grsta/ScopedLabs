@@ -135,41 +135,28 @@
   </header>
 
   <main class="container page">
-    <div class="crumbs">
-      <a href="/tools/">Tools</a>
-      <span class="sep">/</span>
-      <a href="/tools/compute/">Compute</a>
-      <span class="sep">/</span>
-      <span>RAM Sizing</span>
-    </div>
-
-    <div class="pill-row" style="margin-top: 6px;">
-      <span class="pill pill--free">Free Tier</span>
-    </div>
-
     <h1>RAM Sizing Estimator</h1>
 
     <div id="pipeline"></div>
 
-    <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-      <div class="pill pill--free" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
-      <h2 class="h3" style="margin-top: 0;">This tool continues the Compute design flow</h2>
-      <p class="muted" style="margin-bottom: 0;">
-        Use this step to validate whether memory becomes the next practical scaling limit after CPU sizing, especially once reserve, cache, and workload density are included.
-      </p>
-      <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-        This is where process count, per-process footprint, base system overhead, and growth margin become a real installed RAM recommendation instead of a rough guess.
-      </p>
-    </section>
-
-    <p class="tool-best-for">
-      <strong>Best for:</strong> validating memory requirements and detecting memory pressure after CPU sizing.
-    </p>
-
     <div id="flow-note" class="flow-note" hidden></div>
 
+    <section id="computeWorkloadContextCard" class="card access-scope-context-card" style="margin-top: 18px;" hidden>
+      <div class="access-scope-context-line">
+        <span>Active Workload</span>
+        <span class="arrow">&rarr;</span>
+        <span>RAM Sizing</span>
+      </div>
+      <h2 class="card-title" id="computeWorkloadContextTitle" style="margin-top: 0;">No active Compute workload selected</h2>
+      <p class="muted" id="computeWorkloadContextCopy" style="margin-bottom: 0;">
+        Continue from CPU sizing or open a Compute workload before using this tool so the RAM result can be tied to the right workload plan.
+      </p>
+      <div id="computeWorkloadContextMeta" class="access-scope-context-grid" aria-label="Active Compute workload context"></div>
+    </section>
+
     <section id="toolCard" class="card tool-card" style="margin-top: 18px;">
-      <h2 class="card-title" style="margin-top: 0;">Inputs</h2>
+      <h2 class="card-title" style="margin-top: 0;">Planning Inputs</h2>
+      <p class="muted" style="margin: 6px 0 0;">Model installed RAM from workload memory demand, base overhead, reserve/cache allowance, and CPU carry-forward context before continuing to Storage IOPS.</p>
 
       <div class="form-grid" style="margin-top: 14px;">
         <label class="field">
@@ -317,7 +304,7 @@
   <script src="/assets/scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-005-active-title"></script>
   <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-002"></script>
   <script src="/assets/scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-011-restore-ram-reference-labels"></script>
-  <script src="./script.js?v=compute-ram-reset-clears-proof-stack-0620"></script>
+  <script src="./script.js?v=compute-ram-top-shell-parity-0620"></script>
 
   <script defer src="/assets/help.js?v=help-026"></script>
   <script src="/assets/scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-005-flow-actions-static-safe"></script>

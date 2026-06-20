@@ -812,3 +812,11 @@ Example:
 - `tools/compute/ram-sizing/index.html` cache-busts the RAM script to `compute-ram-reset-clears-proof-stack-0620`.
 - `scripts/audit-compute-ram-proof-layout-v1.js` verifies RAM invalidation clears the visual mount/card and that Reset uses the shared invalidation path.
 - Non-goals: no RAM math change, no chart geometry change, no assistant/export/snapshot/pipeline/Knowledge Base behavior change.
+
+### Compute RAM top shell parity
+
+- `tools/compute/ram-sizing/index.html` now matches the CPU-grade top shell rhythm: title, design pipeline, hidden flow note, active workload context card, then Planning Inputs.
+- Legacy RAM top-shell clutter was removed: breadcrumbs, Free Tier pill, Part of a Design Flow card, and loose Best for line.
+- `tools/compute/ram-sizing/script.js` now populates `computeWorkloadContextCard` from the existing CPU/planner carry-forward context instead of showing the old flow-note copy.
+- `scripts/audit-compute-ram-top-shell-parity-v1.js` verifies RAM top-shell order, active workload card structure, Planning Inputs copy, script wiring, cache-bust, module-map documentation, and batch inclusion.
+- Non-goals: no RAM math change, no chart/proof/export/snapshot/pipeline/Knowledge Base behavior change.
