@@ -27,6 +27,9 @@ console.log("SCOPEDLABS COMPUTE PLANNER/SUMMARY PIPELINE NAV AUDIT V1\n");
 
 const pipelines = read("assets/pipelines.js");
 const renderer = read("assets/pipeline.js");
+const planState = read("assets/scopedlabs-compute-plan-state.js");
+const plannerShell = read("assets/scopedlabs-category-planner-shell.js");
+const plannerAdapter = read("assets/scopedlabs-compute-planner-adapter.js");
 const moduleMap = read("docs/scopedlabs-module-map.md");
 const batch = read("scripts/run-scopedlabs-audit-batch-v1.js");
 
@@ -54,10 +57,19 @@ check(
 );
 
 
+
+check(
+  "COMPUTE_FOUNDATION_LABEL_IS_DYNAMIC_WORKLOAD_PLANNER",
+  pipelines.includes('flowGroupLabel: "Compute Workload Planner"') &&
+    !pipelines.includes('flowGroupLabel: "FOUNDATION",\n              flowGroupDescription: "Create or select the compute workload being planned."'),
+  "assets/pipelines.js",
+  "Compute foundation group must display Compute Workload Planner, not a generic Foundation label."
+);
+
 check(
   "COMPUTE_PIPELINE_USES_ACCESS_STYLE_GROUPS",
   pipelines.includes('flowGroup: "foundation"') &&
-    pipelines.includes('flowGroupLabel: "FOUNDATION"') &&
+    pipelines.includes('flowGroupLabel: "Compute Workload Planner"') &&
     pipelines.includes('flowGroupLabel: "CORE COMPUTE PIPELINE"') &&
     pipelines.includes('flowGroupLabel: "OPTIONAL SPECIALTY ZONES"') &&
     pipelines.includes('flowGroupDescription: "Create or select the compute workload being planned."') &&
@@ -84,8 +96,8 @@ check(
   renderer.includes("const representativeStep = groupSteps.find(function") &&
     renderer.includes("const resolvedLabel = representativeStep.flowGroupLabel") &&
     renderer.includes("const resolvedDescription = representativeStep.flowGroupDescription") &&
-    renderer.includes("groupTitle.textContent = resolvedLabel") &&
-    renderer.includes("groupDescription.textContent = resolvedDescription"),
+    renderer.includes("groupLabel.textContent = resolvedLabel") &&
+    renderer.includes("desc.textContent = resolvedDescription"),
   "assets/pipeline.js",
   "Shared pipeline renderer must allow category-specific grouped labels/descriptions without hardcoding Access labels for Compute."
 );
@@ -97,6 +109,78 @@ check(
     renderer.includes('currentGroup !== "optional-specialty-zone"'),
   "assets/pipeline.js",
   "Foundation Planner should be able to glow as complete when the user is in core Compute steps."
+);
+
+
+check(
+  "COMPUTE_PLAN_STATE_DISPATCHES_WORKLOAD_NAV_EVENTS",
+  planState.includes('var PLAN_CHANGE_EVENT = "scopedlabs:compute:workload-plan-change"') &&
+    planState.includes("function emitPlanChange(") &&
+    planState.includes("function onPlanChange(") &&
+    planState.includes('emitPlanChange("save"') &&
+    planState.includes('emitPlanChange("remove"') &&
+    planState.includes('emitPlanChange("reset"'),
+  "assets/scopedlabs-compute-plan-state.js",
+  "Compute plan state must dispatch shared workload-plan change events when workloads are saved, selected, removed, or reset."
+);
+
+check(
+  "COMPUTE_PLAN_STATE_OWNS_DYNAMIC_WORKLOAD_PLANNER_NAV",
+  planState.includes("function renderWorkloadPlannerNav(") &&
+    planState.includes("function bindWorkloadPlannerNav(") &&
+    planState.includes("function bindAllWorkloadPlannerNavs(") &&
+    planState.includes("data-compute-workload-nav-item") &&
+    planState.includes("setActiveWorkload(id)") &&
+    planState.includes("workloads.forEach(function (workload"),
+  "assets/scopedlabs-compute-plan-state.js",
+  "Shared Compute plan-state module must render the saved workload nav list and active workload state."
+);
+
+check(
+  "COMPUTE_PLAN_STATE_OWNS_REMOVE_WORKLOAD",
+  planState.includes("function removeWorkload(") &&
+    planState.includes("localStorage.removeItem(ACTIVE_KEY)") &&
+    planState.includes("sessionStorage.removeItem(CONTEXT_KEY)") &&
+    planState.includes("removeWorkload: removeWorkload"),
+  "assets/scopedlabs-compute-plan-state.js",
+  "Deleting workloads must go through shared state so the active workload and nav update consistently."
+);
+
+check(
+  "PIPELINE_RENDERER_DELEGATES_COMPUTE_FOUNDATION_TO_DYNAMIC_NAV",
+  renderer.includes('category === "compute"') &&
+    renderer.includes('data-compute-workload-planner-nav-pipeline') &&
+    renderer.includes("ScopedLabsComputePlanState.bindWorkloadPlannerNav") &&
+    renderer.includes('group.setAttribute("data-pipeline-group", "Compute Workload Planner")'),
+  "assets/pipeline.js",
+  "Shared pipeline renderer must delegate the Compute foundation group to the dynamic workload planner nav."
+);
+
+check(
+  "PLANNER_SHELL_SUPPORTS_DYNAMIC_WORKLOAD_NAV_MOUNT",
+  plannerShell.includes("section.dynamicWorkloadPlanner") &&
+    plannerShell.includes("data-compute-workload-planner-nav") &&
+    plannerShell.includes("data-compute-workload-planner-title"),
+  "assets/scopedlabs-category-planner-shell.js",
+  "Category planner shell must support a dynamic workload planner nav mount instead of only static flow steps."
+);
+
+check(
+  "COMPUTE_PLANNER_ADAPTER_USES_DYNAMIC_WORKLOAD_NAV",
+  plannerAdapter.includes('label: "Compute Workload Planner"') &&
+    plannerAdapter.includes("dynamicWorkloadPlanner: true") &&
+    !plannerAdapter.includes('label: "FOUNDATION"'),
+  "assets/scopedlabs-compute-planner-adapter.js",
+  "Compute workload planner page must use the dynamic workload nav section instead of a static Foundation label."
+);
+
+check(
+  "COMPUTE_PLANNER_DELETE_USES_SHARED_REMOVE_WORKLOAD",
+  plannerAdapter.includes("State.removeWorkload(id)") &&
+    plannerAdapter.includes("clearForm();") &&
+    plannerAdapter.includes("status(\"Compute workload deleted.\")"),
+  "assets/scopedlabs-compute-planner-adapter.js",
+  "Planner delete must use shared removeWorkload so deleted workloads disappear from all dynamic navs."
 );
 
 check(
@@ -147,8 +231,8 @@ check(
   "COMPUTE_PIPELINE_PAGES_CACHE_BUST_INDEX_FIX",
   toolPages.every((file) => {
     const html = read(file);
-    return html.includes("/assets/pipelines.js?v=compute-grouped-pipeline-nav-0620") &&
-      html.includes("/assets/pipeline.js?v=compute-grouped-pipeline-nav-0620");
+    return html.includes("/assets/pipelines.js?v=compute-dynamic-workload-planner-nav-0620") &&
+      html.includes("/assets/pipeline.js?v=compute-dynamic-workload-planner-nav-0620");
   }),
   "tools/compute/*/index.html",
   "Compute pipeline-consuming pages must cache-bust the Planner endpoint progress fix."

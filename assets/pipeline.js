@@ -158,9 +158,36 @@
       group.style.borderTop = "1px solid rgba(255,255,255,.08)";
     }
 
+    if (category === "compute" && flowGroupFor(groupSteps[0] || {}) === "foundation") {
+      group.setAttribute("data-pipeline-group", "Compute Workload Planner");
+      group.setAttribute("data-compute-workload-planner-nav", "true");
+      group.setAttribute("data-compute-workload-planner-nav-pipeline", "true");
+      group.setAttribute("data-compute-workload-planner-title", "Compute Workload Planner");
+      group.setAttribute("data-compute-workload-planner-href", "/tools/compute/workload-planner/");
+
+      if (
+        window.ScopedLabsComputePlanState &&
+        typeof window.ScopedLabsComputePlanState.bindWorkloadPlannerNav === "function"
+      ) {
+        window.ScopedLabsComputePlanState.bindWorkloadPlannerNav({ mount: group, title: "Compute Workload Planner", href: "/tools/compute/workload-planner/" });
+      } else if (typeof window !== "undefined") {
+        window.addEventListener("DOMContentLoaded", function () {
+          if (
+            window.ScopedLabsComputePlanState &&
+            typeof window.ScopedLabsComputePlanState.bindWorkloadPlannerNav === "function"
+          ) {
+            window.ScopedLabsComputePlanState.bindWorkloadPlannerNav({ mount: group, title: "Compute Workload Planner", href: "/tools/compute/workload-planner/" });
+          }
+        }, { once: true });
+      }
+
+      parent.appendChild(group);
+      return;
+    }
+
     const groupLabel = document.createElement("div");
     groupLabel.className = "sl-pipeline-group-label";
-    groupLabel.textContent = label;
+    groupLabel.textContent = resolvedLabel;
     groupLabel.style.fontSize = ".74rem";
     groupLabel.style.fontWeight = "800";
     groupLabel.style.letterSpacing = ".08em";
@@ -172,7 +199,7 @@
     if (resolvedDescription) {
       const desc = document.createElement("div");
       desc.className = "sl-pipeline-group-description";
-      desc.textContent = description;
+      desc.textContent = resolvedDescription;
       desc.style.fontSize = ".86rem";
       desc.style.color = "rgba(255,255,255,.68)";
       desc.style.margin = "0 0 8px 0";

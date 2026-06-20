@@ -6,6 +6,7 @@
   var PLAN_KEY = "scopedlabs:pipeline:compute:workload-plan";
   var ACTIVE_KEY = "scopedlabs:pipeline:compute:active-workload";
   var CONTEXT_KEY = "scopedlabs:pipeline:compute:workload-context";
+  var PLAN_CHANGE_EVENT = "scopedlabs:compute:workload-plan-change";
 
   function now() {
     return new Date().toISOString();
@@ -26,6 +27,7 @@
   function defaultPlan() {
     return {
       contract: CONTRACT,
+    eventName: PLAN_CHANGE_EVENT,
       category: CATEGORY,
       activeWorkloadId: null,
       workloads: [],
@@ -44,6 +46,42 @@
     return next;
   }
 
+
+  function emitPlanChange(action, plan, workload) {
+    if (typeof window === "undefined" || typeof window.dispatchEvent !== "function") return;
+
+    var source = normalizePlan(plan || load());
+    var active = workload || activeWorkload(source);
+    var detail = {
+      action: action || "updated",
+      plan: source,
+      activeWorkload: active,
+      activeWorkloadId: source.activeWorkloadId || null,
+      workloads: source.workloads.slice(),
+      updatedAt: now()
+    };
+
+    try {
+      window.dispatchEvent(new CustomEvent(PLAN_CHANGE_EVENT, { detail: detail }));
+    } catch {
+      var event = document.createEvent("Event");
+      event.initEvent(PLAN_CHANGE_EVENT, true, true);
+      event.detail = detail;
+      window.dispatchEvent(event);
+    }
+  }
+
+  function onPlanChange(handler) {
+    if (typeof window === "undefined" || typeof window.addEventListener !== "function" || typeof handler !== "function") {
+      return function () {};
+    }
+
+    window.addEventListener(PLAN_CHANGE_EVENT, handler);
+    return function () {
+      window.removeEventListener(PLAN_CHANGE_EVENT, handler);
+    };
+  }
+
   function load() {
     return normalizePlan(safeParse(localStorage.getItem(PLAN_KEY), null));
   }
@@ -53,6 +91,7 @@
     next.updatedAt = now();
     localStorage.setItem(PLAN_KEY, JSON.stringify(next));
     sessionStorage.setItem(PLAN_KEY, JSON.stringify(next));
+    emitPlanChange("save", next, activeWorkload(next));
     return next;
   }
 
@@ -222,6 +261,40 @@
     return save(plan);
   }
 
+
+  function removeWorkload(id) {
+    var plan = load();
+    var removed = null;
+
+    plan.workloads = (plan.workloads || []).filter(function (item) {
+      if (item.id === id) {
+        removed = item;
+        return false;
+      }
+      return true;
+    });
+
+    if (plan.activeWorkloadId === id) {
+      plan.activeWorkloadId = plan.workloads[0] ? plan.workloads[0].id : null;
+    }
+
+    plan = save(plan);
+
+    var active = activeWorkload(plan);
+    if (active) {
+      writeContext(active, plan);
+      writeBranchSeeds(active);
+    } else {
+      localStorage.removeItem(ACTIVE_KEY);
+      sessionStorage.removeItem(ACTIVE_KEY);
+      localStorage.removeItem(CONTEXT_KEY);
+      sessionStorage.removeItem(CONTEXT_KEY);
+    }
+
+    emitPlanChange("remove", plan, active);
+    return { plan: plan, workload: active, removed: removed };
+  }
+
   function reset() {
     localStorage.removeItem(PLAN_KEY);
     sessionStorage.removeItem(PLAN_KEY);
@@ -229,7 +302,9 @@
     sessionStorage.removeItem(ACTIVE_KEY);
     localStorage.removeItem(CONTEXT_KEY);
     sessionStorage.removeItem(CONTEXT_KEY);
-    return defaultPlan();
+    var next = defaultPlan();
+    emitPlanChange("reset", next, null);
+    return next;
   }
 
 
@@ -453,8 +528,121 @@
   }
 
 
+
+  function workloadPlannerNavMeta(workload) {
+    if (!workload) return "Create or select the compute workload being planned.";
+
+    var parts = [
+      workloadDisplayTitleCase(workload.environmentType),
+      workloadDisplayTitleCase(workload.workloadType),
+      workloadDisplayTitleCase(workload.planningPath)
+    ].filter(function (value) {
+      return value && value !== "N/A" && value !== "Unknown";
+    });
+
+    return parts.join(" | ") || "Active Compute workload";
+  }
+
+  function renderWorkloadPlannerNav(config) {
+    config = config || {};
+    if (typeof document === "undefined") return null;
+
+    var mount = typeof config.mount === "string" ? document.getElementById(config.mount) : config.mount;
+    if (!mount) return null;
+
+    ensureWorkloadDisplayStyles();
+
+    var plannerHref = config.href || config.plannerHref || "/tools/compute/workload-planner/";
+    var title = config.title || "Compute Workload Planner";
+    var plan = load();
+    var workloads = plan.workloads || [];
+    var active = activeWorkload(plan);
+
+    mount.classList.add("sl-compute-workload-planner-nav");
+    mount.setAttribute("data-compute-workload-planner-nav-rendered", "true");
+
+    var description = active
+      ? "Active: " + workloadDisplayTitle(active) + " ? " + workloadPlannerNavMeta(active)
+      : "Create or select the compute workload being planned.";
+
+    var rows = [];
+
+    rows.push('<div class="sl-pipeline-group-label" style="font-size:.74rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(125,255,158,.86);margin-bottom:6px;">' + workloadDisplayEscapeHtml(title) + '</div>');
+    rows.push('<div class="sl-pipeline-group-description" style="font-size:.86rem;color:rgba(255,255,255,.68);margin:0 0 8px 0;">' + workloadDisplayEscapeHtml(description) + '</div>');
+    rows.push('<nav class="sl-pipeline-row sl-compute-workload-planner-row" aria-label="Compute workload planner saved workloads">');
+
+    if (!workloads.length) {
+      rows.push('<a class="sl-pipeline-step is-current is-category-endpoint" href="' + workloadDisplayEscapeHtml(plannerHref) + '" data-category-endpoint="planner" data-step="workload-planner"><span class="sl-pipeline-dot" aria-hidden="true"></span><span class="sl-pipeline-label">Open Workload Planner</span></a>');
+    } else {
+      workloads.forEach(function (workload, index) {
+        var isActive = active && workload.id === active.id;
+        var label = workloadDisplayTitle(workload);
+        var meta = workloadPlannerNavMeta(workload);
+        rows.push('<a class="sl-pipeline-step sl-compute-workload-nav-step' + (isActive ? ' is-current' : ' is-complete') + '" href="' + workloadDisplayEscapeHtml(plannerHref) + '" data-compute-workload-nav-item="true" data-workload-id="' + workloadDisplayEscapeHtml(workload.id) + '"><span class="sl-pipeline-dot" aria-hidden="true"></span><span class="sl-pipeline-label"><strong>' + workloadDisplayEscapeHtml(label) + '</strong><small style="display:block;font-size:.68rem;color:rgba(226,232,240,.62);font-weight:700;line-height:1.25;margin-top:2px;">' + workloadDisplayEscapeHtml(meta) + '</small></span></a>');
+
+        if (index < workloads.length - 1) {
+          rows.push('<span class="sl-pipeline-sep" aria-hidden="true">?</span>');
+        }
+      });
+    }
+
+    rows.push("</nav>");
+    mount.innerHTML = rows.join("");
+
+    Array.from(mount.querySelectorAll("[data-compute-workload-nav-item]")).forEach(function (link) {
+      link.addEventListener("click", function (event) {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+
+        var id = link.getAttribute("data-workload-id");
+        if (id) setActiveWorkload(id);
+        renderWorkloadPlannerNav(config);
+      });
+    });
+
+    return { plan: plan, activeWorkload: active, workloads: workloads };
+  }
+
+  function bindWorkloadPlannerNav(config) {
+    config = config || {};
+    var mount = typeof config.mount === "string" ? document.getElementById(config.mount) : config.mount;
+    if (!mount) return null;
+
+    renderWorkloadPlannerNav(Object.assign({}, config, { mount: mount }));
+
+    if (mount.__slComputeWorkloadPlannerNavBound) return mount;
+    mount.__slComputeWorkloadPlannerNavBound = true;
+
+    var rerender = function () {
+      renderWorkloadPlannerNav(Object.assign({}, config, { mount: mount }));
+    };
+
+    onPlanChange(rerender);
+
+    if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+      window.addEventListener("storage", function (event) {
+        if (!event || event.key === PLAN_KEY || event.key === ACTIVE_KEY || event.key === CONTEXT_KEY) {
+          rerender();
+        }
+      });
+    }
+
+    return mount;
+  }
+
+  function bindAllWorkloadPlannerNavs() {
+    if (typeof document === "undefined") return [];
+    return Array.from(document.querySelectorAll("[data-compute-workload-planner-nav]")).map(function (mount) {
+      return bindWorkloadPlannerNav({
+        mount: mount,
+        title: mount.getAttribute("data-compute-workload-planner-title") || "Compute Workload Planner",
+        href: mount.getAttribute("data-compute-workload-planner-href") || "/tools/compute/workload-planner/"
+      });
+    });
+  }
+
   window.ScopedLabsComputePlanState = Object.freeze({
-    version: "scopedlabs-compute-plan-state-005-active-title",
+    version: "scopedlabs-compute-plan-state-006-dynamic-workload-nav",
     contract: CONTRACT,
     keys: Object.freeze({
       plan: PLAN_KEY,
@@ -472,6 +660,24 @@
     ensureWorkloadDisplayStyles: ensureWorkloadDisplayStyles,
     buildWorkloadDisplayContext: buildWorkloadDisplayContext,
     renderWorkloadDisplay: renderWorkloadDisplay,
+    onPlanChange: onPlanChange,
+    removeWorkload: removeWorkload,
+    renderWorkloadPlannerNav: renderWorkloadPlannerNav,
+    bindWorkloadPlannerNav: bindWorkloadPlannerNav,
+    bindAllWorkloadPlannerNavs: bindAllWorkloadPlannerNavs,
     reset: reset
   });
+
+  if (typeof document !== "undefined") {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", function () {
+        window.ScopedLabsComputePlanState.bindAllWorkloadPlannerNavs();
+      }, { once: true });
+    } else {
+      setTimeout(function () {
+        window.ScopedLabsComputePlanState.bindAllWorkloadPlannerNavs();
+      }, 0);
+    }
+  }
+
 })();

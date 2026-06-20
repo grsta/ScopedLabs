@@ -80,9 +80,10 @@
       eyebrow: "Design Flow",
       sections: [
         {
-          label: "FOUNDATION",
+          label: "Compute Workload Planner",
           copy: "Create or select the compute workload being planned.",
-          steps: [{ label: "Compute Workload Planner", href: "/tools/compute/workload-planner/", active: true }]
+          dynamicWorkloadPlanner: true,
+          steps: []
         },
         {
           label: "CORE COMPUTE PIPELINE",
@@ -403,10 +404,20 @@
     Array.from(els.scopeList.querySelectorAll("[data-delete-workload]")).forEach(function (button) {
       button.addEventListener("click", function () {
         var id = button.getAttribute("data-delete-workload");
-        var plan = State.load();
-        plan.workloads = (plan.workloads || []).filter(function (item) { return item.id !== id; });
-        if (plan.activeWorkloadId === id) plan.activeWorkloadId = plan.workloads[0] ? plan.workloads[0].id : null;
-        State.save(plan);
+        if (typeof State.removeWorkload === "function") {
+          var result = State.removeWorkload(id);
+          if (result && result.workload) {
+            editingId = result.workload.id;
+            hydrate(result.workload);
+          } else {
+            clearForm();
+          }
+        } else {
+          var plan = State.load();
+          plan.workloads = (plan.workloads || []).filter(function (item) { return item.id !== id; });
+          if (plan.activeWorkloadId === id) plan.activeWorkloadId = plan.workloads[0] ? plan.workloads[0].id : null;
+          State.save(plan);
+        }
         render();
         status("Compute workload deleted.");
       });

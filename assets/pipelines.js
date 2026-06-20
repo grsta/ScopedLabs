@@ -104,11 +104,11 @@
           v1: [
             {
               id: "workload-planner",
-              label: "Workload Planner",
+              label: "Compute Workload Planner",
               href: "/tools/compute/workload-planner/",
               categoryEndpoint: "planner",
               flowGroup: "foundation",
-              flowGroupLabel: "FOUNDATION",
+              flowGroupLabel: "Compute Workload Planner",
               flowGroupDescription: "Create or select the compute workload being planned."
             },
             {

@@ -885,3 +885,12 @@ Example:
 - Compute pages that consume the shared pipeline assets are cache-busted to `compute-grouped-pipeline-nav-0620`.
 - `scripts/audit-compute-planner-summary-pipeline-nav-v1.js` verifies grouped Compute pipeline ownership and renderer support.
 - Non-goals: no RAM math change, no active workload card behavior change, no export/snapshot/Knowledge Base behavior change.
+
+### Compute dynamic workload planner nav
+
+- `assets/scopedlabs-compute-plan-state.js` now owns a dynamic Compute workload planner nav renderer and dispatches `scopedlabs:compute:workload-plan-change` when workloads are saved, selected, removed, or reset.
+- `assets/pipeline.js` delegates the Compute foundation group to the shared dynamic workload nav, so tool pages show saved workloads and the active workload instead of a static Foundation step.
+- `assets/scopedlabs-category-planner-shell.js` supports a dynamic workload-planner nav mount, and `assets/scopedlabs-compute-planner-adapter.js` uses it for the planner page.
+- Compute workload deletion now uses shared `State.removeWorkload(id)` so deleted workloads disappear from active navs and active context is cleaned or advanced.
+- Compute pages are cache-busted to `compute-dynamic-workload-planner-nav-0620`; the plan-state module is cache-busted to `scopedlabs-compute-plan-state-006-dynamic-workload-nav`.
+- Non-goals: no CPU/RAM math change, no export/snapshot/Knowledge Base behavior change.

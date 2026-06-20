@@ -131,6 +131,12 @@
     return '<section id="' + escapeHtml(flow.id || "plannerDesignFlowCard") + '" class="card">' +
       '<p class="access-scope-section-title">' + escapeHtml(flow.eyebrow || "Design Flow") + '</p>' +
       (flow.sections || []).map(function (section) {
+        if (section.dynamicWorkloadPlanner) {
+          return '<div style="padding:12px 0;border-top:1px solid rgba(120,255,120,.12);">' +
+            '<div data-compute-workload-planner-nav="true" data-compute-workload-planner-title="' + escapeHtml(section.label || "Compute Workload Planner") + '" data-compute-workload-planner-href="/tools/compute/workload-planner/"></div>' +
+          '</div>';
+        }
+
         return '<div style="padding:12px 0;border-top:1px solid rgba(120,255,120,.12);">' +
           '<p class="access-scope-section-title">' + escapeHtml(section.label) + '</p>' +
           '<p class="muted">' + escapeHtml(section.copy || "") + '</p>' +
