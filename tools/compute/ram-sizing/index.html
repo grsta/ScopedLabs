@@ -103,7 +103,7 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="/assets/scopedlabs-compute-result-visuals.css?v=scopedlabs-compute-result-visuals-0620-assistant-summary-card">
+  <link rel="stylesheet" href="/assets/scopedlabs-compute-result-visuals.css?v=scopedlabs-compute-result-visuals-0620-ram-proof-layout">
 </head>
 
 <body data-tier="free" data-category="compute" data-step="ram-sizing" data-lane="v1" data-compute-tool-shell="0614">
@@ -228,6 +228,11 @@
         <p class="muted" style="margin-bottom: 0;">Dynamic memory demand curve showing workload demand, reserve pressure, installed RAM tier, and downstream Compute validation.</p>
         <div id="computeRamVisual" class="compute-result-visual-shell" data-compute-result-visual="ram-capacity-envelope" role="group" aria-label="RAM capacity envelope visual"></div>
       </section>
+      <section id="computeRamReferencesCard" class="card compute-recommendation-references-card" hidden data-compute-recommendation-references-card data-output-references-owner="compute-assistant-contract">
+        <h3 class="h3" style="margin-top: 0;">Recommendation References</h3>
+        <p class="muted" style="margin-bottom: 0;">Reference markers shown in the RAM Capacity Envelope. These explain why each plotted point matters before continuing to Storage IOPS.</p>
+        <div id="computeRamReferences" data-compute-recommendation-references="ram-sizing"></div>
+      </section>
 
       <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
         <div class="pill-row">
@@ -325,12 +330,12 @@
   <script src="/assets/scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-005-active-title"></script>
   <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-002"></script>
   <script src="/assets/scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-011-restore-ram-reference-labels"></script>
-  <script src="./script.js?v=compute-ram-shell-assistant-0619"></script>
+  <script src="./script.js?v=compute-ram-proof-layout-0620"></script>
 
   <script defer src="/assets/help.js?v=help-026"></script>
   <script src="/assets/scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-005-flow-actions-static-safe"></script>
   <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
-  <script src="/assets/scopedlabs-compute-assistant-contract.js?v=compute-assistant-ram-summary-card-0620"></script>
+  <script src="/assets/scopedlabs-compute-assistant-contract.js?v=compute-assistant-ram-proof-layout-0620"></script>
   <script src="/assets/scopedlabs-user-tool-notes.js?v=scopedlabs-user-tool-notes-001-compute-proof"></script>
 </body>
 </html>

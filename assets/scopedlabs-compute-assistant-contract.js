@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-compute-assistant-contract-006-ram-summary-card";
+  const VERSION = "scopedlabs-compute-assistant-contract-007-ram-proof-layout";
 
   function isComputeShellPage() {
     const body = document.body;
@@ -760,12 +760,26 @@
       '    <div class="scopedlabs-result-summary-item"><strong>Primary Risk</strong><span>' + ramAssistantEscapeHtml(primaryRisk) + '</span></div>',
       '  </div>',
       '  <p class="scopedlabs-result-summary-note">Carry this RAM result into Storage IOPS. Do not treat the Compute plan as complete until storage and density checks validate the same workload assumptions.</p>',
-      '  <div class="scopedlabs-result-summary-grid" style="margin-top: 12px;">',
-      '    <div class="scopedlabs-result-summary-item"><strong>*1 Demand basis</strong><span>' + ramAssistantEscapeHtml(ramAssistantGb(values.demand, 1) + " current memory demand") + '</span></div>',
-      '    <div class="scopedlabs-result-summary-item"><strong>*2 Reserve pressure</strong><span>' + ramAssistantEscapeHtml(ramAssistantGb(values.required, 1) + " required after reserve/cache allocation") + '</span></div>',
-      '    <div class="scopedlabs-result-summary-item"><strong>*3 Downstream validation</strong><span>' + ramAssistantEscapeHtml("Installed tier " + ramAssistantGb(values.installed, 0) + " | Reserve ratio " + reserveRatio) + '</span></div>',
-      '  </div>',
       '</section>'
+    ].join("");
+  }
+
+  function renderComputeRamRecommendationReferences(data) {
+    data = data || {};
+    const values = ramAssistantCompactLine(data);
+    const reserve = ramAssistantValue(data, ["reserveRamGb", "reserveGb"], Math.max(values.required - values.demand, 0));
+    const reserveRatio = ramPct(data.reserveRatio);
+    const cpuCoupling = data.cpuCoupling || "Validate against CPU, storage, and workload density next."; 
+
+    return [
+      '<table class="compute-recommendation-references-table">',
+      '  <thead><tr><th>Marker</th><th>Reference</th><th>Reason</th></tr></thead>',
+      '  <tbody>',
+      '    <tr><td>*1</td><td>Demand basis</td><td>' + ramAssistantEscapeHtml(ramAssistantGb(values.demand, 1) + " current memory demand before reserve pressure is added.") + '</td></tr>',
+      '    <tr><td>*2</td><td>Reserve pressure</td><td>' + ramAssistantEscapeHtml(ramAssistantGb(values.required, 1) + " required after " + ramAssistantGb(reserve, 1) + " of reserve/cache allocation.") + '</td></tr>',
+      '    <tr><td>*3</td><td>Downstream validation</td><td>' + ramAssistantEscapeHtml("Installed tier " + ramAssistantGb(values.installed, 0) + " | Reserve ratio " + reserveRatio + ". " + cpuCoupling) + '</td></tr>',
+      '  </tbody>',
+      '</table>'
     ].join("");
   }
   function renderToolAssistant(config) {
@@ -884,6 +898,7 @@
     version: VERSION,
     buildToolAssistantModel,
     renderToolAssistant,
+    renderRamRecommendationReferences: renderComputeRamRecommendationReferences,
     mountCpuSizing,
     clear: clearAssistant
   });

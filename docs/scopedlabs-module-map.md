@@ -744,3 +744,12 @@ Example:
 - `tools/compute/ram-sizing/index.html` cache-busts the shared Compute result visual CSS to `scopedlabs-compute-result-visuals-0620-assistant-summary-card`.
 - The audit requires RAM to route through `renderComputeRamTopSummaryCard(data)` before the generic Local Assistant fallback, preventing bullet-list fallback from being treated as READY.
 - Non-goals: no RAM math change, no Capacity Envelope change, no export/snapshot/pipeline/Knowledge Base behavior change.
+
+### Compute RAM proof layout
+
+- `tools/compute/ram-sizing/index.html` now places `computeRamReferencesCard` below the RAM Capacity Envelope card.
+- `assets/scopedlabs-compute-assistant-contract.js` keeps `renderComputeRamTopSummaryCard(data)` compact and moves detailed `*1/*2/*3` Recommendation References to `renderComputeRamRecommendationReferences(data)`.
+- `tools/compute/ram-sizing/script.js` renders the references card from the existing `ramCapacityEnvelope` payload after the RAM visual and clears it during invalidation.
+- `assets/scopedlabs-compute-result-visuals.css` restores the normal dark-green ScopedLabs panel styling for shared Compute assistant summary cards and owns the recommendation references card/table styles.
+- `scripts/audit-compute-ram-proof-layout-v1.js` prevents detailed footnote rows from returning to the top assistant card and enforces visual-before-references proof stack order.
+- Non-goals: no RAM math change, no RAM Capacity Envelope math change, no export/snapshot/pipeline/Knowledge Base behavior change.

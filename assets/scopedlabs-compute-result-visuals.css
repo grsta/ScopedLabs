@@ -46,14 +46,15 @@
 
 /* scopedlabs-compute-assistant-summary-card-0620
    Shared Compute assistant result-summary card contract.
-   Promoted from CPU page-local styling so RAM and future Compute tools do not rely on page-local CSS. */
+   Normal ScopedLabs dark/green panel styling shared by CPU, RAM, and future Compute tools. */
 
 .compute-assistant-card .scopedlabs-result-summary-card,
 .scopedlabs-result-summary-card {
-  border: 1px solid rgba(148, 163, 184, 0.22);
+  border: 1px solid rgba(42, 169, 93, 0.28);
   border-radius: 14px;
   background:
-    linear-gradient(180deg, rgba(15, 23, 42, 0.94), rgba(2, 6, 23, 0.92));
+    radial-gradient(circle at 0 0, rgba(22, 163, 74, 0.10), transparent 34%),
+    linear-gradient(180deg, rgba(3, 20, 13, 0.94), rgba(1, 10, 7, 0.94));
   box-shadow: 0 18px 44px rgba(0, 0, 0, 0.24);
   padding: 16px;
 }
@@ -68,7 +69,7 @@
 
 .scopedlabs-result-summary-title {
   margin: 0;
-  color: #e5eef8;
+  color: #f1f5f9;
   font-size: 0.95rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -76,7 +77,7 @@
 
 .scopedlabs-result-summary-subtitle {
   margin: 6px 0 0;
-  color: rgba(203, 213, 225, 0.78);
+  color: rgba(203, 213, 225, 0.80);
   line-height: 1.45;
   max-width: 760px;
 }
@@ -129,16 +130,16 @@
 
 .scopedlabs-result-summary-item {
   min-width: 0;
-  border: 1px solid rgba(148, 163, 184, 0.16);
+  border: 1px solid rgba(42, 169, 93, 0.18);
   border-radius: 10px;
-  background: rgba(15, 23, 42, 0.48);
+  background: rgba(0, 0, 0, 0.16);
   padding: 11px 12px;
 }
 
 .scopedlabs-result-summary-item strong {
   display: block;
   margin: 0 0 5px;
-  color: rgba(148, 163, 184, 0.9);
+  color: rgba(148, 163, 184, 0.92);
   font-size: 0.68rem;
   letter-spacing: 0.075em;
   text-transform: uppercase;
@@ -146,17 +147,70 @@
 
 .scopedlabs-result-summary-item span {
   display: block;
-  color: #e5eef8;
+  color: #f8fafc;
   line-height: 1.42;
   overflow-wrap: anywhere;
 }
 
 .scopedlabs-result-summary-note {
   margin: 12px 0 0;
-  border-left: 3px solid rgba(56, 189, 248, 0.5);
+  border-left: 3px solid rgba(42, 169, 93, 0.62);
   padding-left: 11px;
-  color: rgba(203, 213, 225, 0.82);
+  color: rgba(203, 213, 225, 0.84);
   line-height: 1.45;
+}
+
+.compute-recommendation-references-card {
+  margin-top: 14px;
+  border-color: rgba(42, 169, 93, 0.28);
+  background:
+    radial-gradient(circle at 0 0, rgba(22, 163, 74, 0.08), transparent 34%),
+    rgba(0, 0, 0, 0.14);
+}
+
+.compute-recommendation-references-card[hidden] {
+  display: none !important;
+}
+
+.compute-recommendation-references-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.compute-recommendation-references-table th,
+.compute-recommendation-references-table td {
+  border-bottom: 1px solid rgba(42, 169, 93, 0.18);
+  padding: 10px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.compute-recommendation-references-table th {
+  color: #bbf7d0;
+  background: rgba(22, 163, 74, 0.10);
+  font-size: 0.68rem;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+.compute-recommendation-references-table td {
+  color: rgba(241, 245, 249, 0.92);
+  line-height: 1.42;
+}
+
+.compute-recommendation-references-table td:first-child {
+  width: 64px;
+  color: #86efac;
+  font-weight: 800;
+}
+
+.compute-recommendation-references-table td:nth-child(2) {
+  width: 180px;
+  color: #e5eef8;
+  font-weight: 700;
 }
 
 @media (max-width: 720px) {
@@ -170,5 +224,34 @@
 
   .scopedlabs-result-summary-grid {
     grid-template-columns: 1fr;
+  }
+
+  .compute-recommendation-references-table,
+  .compute-recommendation-references-table thead,
+  .compute-recommendation-references-table tbody,
+  .compute-recommendation-references-table tr,
+  .compute-recommendation-references-table th,
+  .compute-recommendation-references-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .compute-recommendation-references-table thead {
+    display: none;
+  }
+
+  .compute-recommendation-references-table td:first-child,
+  .compute-recommendation-references-table td:nth-child(2) {
+    width: auto;
+  }
+
+  .compute-recommendation-references-table td {
+    border-bottom: 0;
+    padding: 8px 10px;
+  }
+
+  .compute-recommendation-references-table tr {
+    border-bottom: 1px solid rgba(42, 169, 93, 0.18);
+    padding: 6px 0;
   }
 }
