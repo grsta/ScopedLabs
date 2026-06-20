@@ -68,7 +68,7 @@
   }
 
   function appendStepAnchor(parent, step) {
-    const index = steps.indexOf(step);
+    const index = Number.isInteger(step && step.__slIndex) ? step.__slIndex : steps.indexOf(step);
     const currentStepData = steps[currentIndex];
     const currentGroup = hasFlowGroups ? flowGroupFor(currentStepData) : "";
     const stepGroup = hasFlowGroups ? flowGroupFor(step) : "";
@@ -81,12 +81,14 @@
           currentGroup !== "optional-specialty-zone"
         )
       : index < currentIndex);
+    const isFuture = !isCurrent && !isPast;
 
     const a = document.createElement("a");
     a.href = step.href;
     a.className = "sl-pipeline-step";
     if (isPast) a.classList.add("is-complete");
     if (isCurrent) a.classList.add("is-current");
+    if (isFuture) a.classList.add("is-future");
     if (step.optional) a.classList.add("is-optional");
     if (isCategoryEndpoint) {
       a.classList.add("is-category-endpoint");

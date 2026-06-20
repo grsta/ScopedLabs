@@ -829,3 +829,12 @@ Example:
 - Compute tool pages that load the shared pipeline assets are cache-busted to `compute-planner-summary-nav-0620`.
 - `scripts/audit-compute-planner-summary-pipeline-nav-v1.js` verifies endpoint presence, endpoint order, renderer semantics, tool page consumption, no page-local fake nav, module-map documentation, and batch inclusion.
 - Non-goals: no Compute math change, no RAM/CPU proof/export/snapshot behavior change, no checkout/auth/Knowledge Base behavior change.
+
+### Compute pipeline indexed progress fix
+
+- `assets/pipelines.js` keeps Planner and Summary in the shared Compute `v1` lane, with Planner linked to `/tools/compute/workload-planner/` and Summary linked to `/tools/compute/summary/`.
+- `assets/pipeline.js` now resolves rendered step state from `step.__slIndex` before falling back to `steps.indexOf(step)`, preserving original progress LEDs when grouped/cloned step objects are rendered.
+- This fixes the regression where every Compute step appeared complete/current after adding Planner/Summary endpoints.
+- The renderer preserves the original progress model: current page gets `is-current`, previous completed/past steps get `is-complete`, future steps get `is-future`, and Planner/Summary remain category endpoints.
+- `scripts/audit-compute-planner-summary-pipeline-nav-v1.js` verifies endpoint URLs/order, indexed progress logic, category endpoint semantics, cache-busts, no fake page-local nav, module-map documentation, and batch inclusion.
+- Non-goals: no current-only progress mode, no Compute math change, no RAM/CPU proof/export/snapshot behavior change, no checkout/auth/Knowledge Base behavior change.

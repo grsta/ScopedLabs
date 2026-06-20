@@ -102,7 +102,7 @@
         label: "Compute",
         lanes: {
           v1: [
-            { id: "workload-planner", label: "Planner", href: "/tools/compute/", categoryEndpoint: "planner" },
+            { id: "workload-planner", label: "Planner", href: "/tools/compute/workload-planner/", categoryEndpoint: "planner" },
             { id: "cpu-sizing", label: "CPU", href: "/tools/compute/cpu-sizing/" },
             { id: "ram-sizing", label: "RAM", href: "/tools/compute/ram-sizing/" },
             { id: "storage-iops", label: "IOPS", href: "/tools/compute/storage-iops/" },

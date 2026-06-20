@@ -37,7 +37,7 @@ const summaryIndex = indexOfToken(pipelines, 'id: "summary"');
 
 check(
   "COMPUTE_PIPELINE_HAS_PLANNER_AND_SUMMARY_ENDPOINTS",
-  pipelines.includes('{ id: "workload-planner", label: "Planner", href: "/tools/compute/", categoryEndpoint: "planner" }') &&
+  pipelines.includes('{ id: "workload-planner", label: "Planner", href: "/tools/compute/workload-planner/", categoryEndpoint: "planner" }') &&
     pipelines.includes('{ id: "summary", label: "Summary", href: "/tools/compute/summary/", categoryEndpoint: "summary" }'),
   "assets/pipelines.js",
   "Compute pipeline must expose Planner and Summary as clickable category endpoints."
@@ -51,13 +51,25 @@ check(
 );
 
 check(
+  "PIPELINE_RENDERER_USES_STABLE_INDEXED_STEP_PROGRESS",
+  renderer.includes("Number.isInteger(step && step.__slIndex) ? step.__slIndex : steps.indexOf(step)") &&
+    renderer.includes("const isPast = !isCategoryEndpoint &&") &&
+    renderer.includes('if (isPast) a.classList.add("is-complete");') &&
+    renderer.includes('if (isCurrent) a.classList.add("is-current");') &&
+    renderer.includes('if (isFuture) a.classList.add("is-future");') &&
+    !renderer.includes("isCurrentOnlyProgress") &&
+    !renderer.includes("progressMode"),
+  "assets/pipeline.js",
+  "Renderer must preserve progress LEDs using stable indexed step positions, not steps.indexOf() against cloned step objects."
+);
+
+check(
   "PIPELINE_RENDERER_TREATS_CATEGORY_ENDPOINTS_SEMANTICALLY",
   renderer.includes("const isCategoryEndpoint = !!(step && step.categoryEndpoint);") &&
     renderer.includes('a.classList.add("is-category-endpoint");') &&
-    renderer.includes('a.setAttribute("data-category-endpoint", String(step.categoryEndpoint));') &&
-    renderer.includes("const isPast = !isCategoryEndpoint &&"),
+    renderer.includes('a.setAttribute("data-category-endpoint", String(step.categoryEndpoint));'),
   "assets/pipeline.js",
-  "Shared pipeline renderer must mark Planner/Summary as category endpoints and avoid treating them as normal completed calculator steps."
+  "Shared pipeline renderer must mark Planner/Summary as category endpoints."
 );
 
 const toolPages = [
@@ -74,33 +86,33 @@ const toolPages = [
 ].filter((file) => fs.existsSync(file));
 
 check(
-  "COMPUTE_TOOL_PAGES_MOUNT_SHARED_PIPELINE",
+  "COMPUTE_PIPELINE_PAGES_CACHE_BUST_INDEX_FIX",
   toolPages.every((file) => {
     const html = read(file);
-    return html.includes("/assets/pipelines.js?v=compute-planner-summary-nav-0620") &&
-      html.includes("/assets/pipeline.js?v=compute-planner-summary-nav-0620");
+    return html.includes("/assets/pipelines.js?v=compute-pipeline-index-fix-0620") &&
+      html.includes("/assets/pipeline.js?v=compute-pipeline-index-fix-0620");
   }),
   "tools/compute/*/index.html",
-  "Compute pipeline-consuming pages must cache-bust the Planner/Summary nav update."
+  "Compute pipeline-consuming pages must cache-bust the Planner/Summary index fix."
 );
 
 check(
-  "NO_COMPUTE_TOOL_PAGE_HAS_PAGE_LOCAL_PLANNER_SUMMARY_FAKE_NAV",
+  "NO_PAGE_LOCAL_PLANNER_SUMMARY_FAKE_NAV",
   toolPages.every((file) => {
     const html = read(file);
-    return !html.includes('data-page-local-planner-summary-nav') &&
-      !html.includes('compute-fake-planner-summary-nav');
+    return !html.includes("data-page-local-planner-summary-nav") &&
+      !html.includes("compute-fake-planner-summary-nav");
   }),
   "tools/compute/*/index.html",
   "Planner/Summary links must come from shared pipeline nav, not page-local fake navigation."
 );
 
 check(
-  "MODULE_MAP_RECORDS_COMPUTE_PLANNER_SUMMARY_PIPELINE_NAV",
-  moduleMap.includes("### Compute Planner/Summary pipeline nav") &&
+  "MODULE_MAP_RECORDS_COMPUTE_PIPELINE_INDEX_FIX",
+  moduleMap.includes("### Compute pipeline indexed progress fix") &&
     moduleMap.includes("audit-compute-planner-summary-pipeline-nav-v1.js"),
   "docs/scopedlabs-module-map.md",
-  "Module map must document Compute Planner/Summary pipeline nav contract and audit."
+  "Module map must document the Compute Planner/Summary pipeline index fix."
 );
 
 check(
