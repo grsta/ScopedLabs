@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-compute-planner-adapter-009-status-table-parity";
+  var VERSION = "scopedlabs-compute-planner-adapter-011-active-workload-visual";
   var State = window.ScopedLabsComputePlanState;
   var Shell = window.ScopedLabsCategoryPlannerShell;
 
@@ -510,7 +510,7 @@
     groups = groups || {};
     rollup = rollup || {};
 
-    var totalWorkloads = workloads.length;
+    var totalWorkloads = typeof rollup.totalWorkloads === "number" ? rollup.totalWorkloads : workloads.length;
     var coreCount = (groups.core || []).length;
     var storageCount = (groups.storage || []).length;
     var gpuCount = (groups.acceleration || []).length;
@@ -520,10 +520,16 @@
     var branchTotal = typeof rollup.branchTotal === "number"
       ? rollup.branchTotal
       : storageCount + gpuCount + infrastructureCount + recoveryCount;
+    var aggregateBranchTotal = typeof rollup.aggregateBranchTotal === "number"
+      ? rollup.aggregateBranchTotal
+      : branchTotal;
 
     var activeLabel = active ? active.name : "No active workload";
-    var statusText = computePlannerStatusLabel(workloads, branchTotal);
-    var statusIsWatch = statusText === "WATCH";
+    var branchMapCountLabel = active
+      ? "active workload / " + branchTotal + (branchTotal === 1 ? " branch" : " branches")
+      : totalWorkloads + " workloads / " + aggregateBranchTotal + " branches";
+    var statusText = active ? workloadStatusValue(active) : computePlannerStatusLabel(workloads, branchTotal);
+    var statusIsWatch = statusText === "WATCH" || statusText === "PENDING";
 
     var palette = {
       gridStroke: "rgba(120,255,120,.045)",
@@ -598,7 +604,7 @@
       '<rect x="278" y="112" width="204" height="72" rx="14" fill="' + palette.safeFill + '" stroke="' + palette.safeLine + '" stroke-width="1.35" />',
       '<text x="380" y="139" font-size="12" fill="' + palette.text + '" font-weight="950" text-anchor="middle">WORKLOAD LEDGER</text>',
       '<text x="380" y="158" font-size="9.4" fill="' + palette.mutedText + '" font-weight="800" text-anchor="middle">' + escapeHtml(activeLabel) + '</text>',
-      '<text x="380" y="176" font-size="9.4" fill="' + palette.safeLine + '" font-weight="900" text-anchor="middle">' + totalWorkloads + ' workloads / ' + branchTotal + ' branches</text>',
+      '<text x="380" y="176" font-size="9.4" fill="' + palette.safeLine + '" font-weight="900" text-anchor="middle">' + escapeHtml(branchMapCountLabel) + '</text>',
 
       link(278, 148, 168, 148, coreCount),
       link(482, 148, 592, 148, storageCount),
@@ -625,7 +631,7 @@
       chip("infra/recovery", String(infraRecoveryCount), 506, 304, 130),
 
       '</svg>',
-      '<p class="sl-vis-note"><strong>Visual note:</strong> Workload Planner is the Compute entry lane. Use this map to confirm whether each saved workload continues through the core CPU/RAM/storage path or branches into storage performance, GPU acceleration, infrastructure, recovery, or network validation.</p>',
+      '<p class="sl-vis-note"><strong>Visual note:</strong> Workload Planner is the Compute entry lane. This map follows the current active workload while the rollup metrics below still summarize all saved workloads.</p>',
       '</div>'
     ].join("");
   }
@@ -655,6 +661,7 @@
     var workloads = plan.workloads || [];
     var active = State.activeWorkload(plan);
     var groups = summaryBranches(workloads);
+    var activeGroups = active ? summaryBranches([active]) : groups;
 
     if (els.activeWorkloadLabel) {
       els.activeWorkloadLabel.textContent = "Active workload: " + (active ? active.name : "No active workload selected");
@@ -668,7 +675,20 @@
     }
 
     var branchTotal = groups.storage.length + groups.acceleration.length + groups.infrastructure.length + groups.recovery.length;
-    var branchMapHtml = buildComputePlannerBranchMapHtml(workloads, groups, active, { branchTotal: branchTotal });
+    var activeBranchTotal = active
+      ? activeGroups.storage.length + activeGroups.acceleration.length + activeGroups.infrastructure.length + activeGroups.recovery.length
+      : branchTotal;
+    var branchMapHtml = buildComputePlannerBranchMapHtml(
+      active ? [active] : workloads,
+      activeGroups,
+      active,
+      {
+        branchTotal: activeBranchTotal,
+        totalWorkloads: workloads.length,
+        aggregateBranchTotal: branchTotal,
+        visualMode: active ? "active-workload" : "aggregate"
+      }
+    );
 
     function table(title, description, list) {
       var countLabel = list.length + (list.length === 1 ? " WORKLOAD" : " WORKLOADS");
@@ -729,11 +749,22 @@
   }
 
   function render() {
+    bindActiveVisualRefresh();
     var plan = State.load();
     var active = State.activeWorkload(plan);
     renderLedger(plan);
     renderSummary(plan);
     if (active && !editingId) hydrate(active);
+  }
+
+
+  function bindActiveVisualRefresh() {
+    if (!State || typeof State.onPlanChange !== "function" || bindActiveVisualRefresh.bound) return;
+
+    bindActiveVisualRefresh.bound = true;
+    State.onPlanChange(function () {
+      render();
+    });
   }
 
   function copySummary() {

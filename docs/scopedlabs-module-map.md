@@ -903,3 +903,12 @@ Example:
 - Saved workload nav items link back to `/tools/compute/workload-planner/` and set that workload active before navigation.
 - Compute pages are cache-busted to `scopedlabs-compute-plan-state-007-workload-nav-links`.
 - Non-goals: no CPU/RAM math change, no export/snapshot/Knowledge Base behavior change.
+
+### Compute active workload planner visual
+
+- `assets/scopedlabs-compute-planner-adapter.js` now renders the main Workload Planner branch-map visual from the current active workload, while keeping the lower rollup metrics/tables aggregate across all saved workloads.
+- The visual center count now reports the active workload branch count; workload count chips still show the total saved workload count.
+- The planner adapter subscribes to `ScopedLabsComputePlanState.onPlanChange()` so save/select/delete/reset updates refresh the chart from shared plan state.
+- `tools/compute/workload-planner/index.html` cache-busts the adapter to `scopedlabs-compute-planner-adapter-011-active-workload-visual`.
+- `scripts/audit-compute-planner-summary-pipeline-nav-v1.js` verifies active-scoped chart rendering and shared plan-state re-render behavior.
+- Non-goals: no CPU/RAM math change, no export/snapshot/Knowledge Base behavior change.

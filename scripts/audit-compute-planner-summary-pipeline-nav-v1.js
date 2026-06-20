@@ -193,6 +193,35 @@ check(
   "Planner delete must use shared removeWorkload so deleted workloads disappear from all dynamic navs."
 );
 
+
+check(
+  "COMPUTE_WORKLOAD_PLANNER_VISUAL_IS_ACTIVE_SCOPED",
+  plannerAdapter.includes("var activeGroups = active ? summaryBranches([active]) : groups;") &&
+    plannerAdapter.includes("active ? [active] : workloads") &&
+    plannerAdapter.includes('visualMode: active ? "active-workload" : "aggregate"') &&
+    plannerAdapter.includes("branchMapCountLabel") &&
+    plannerAdapter.includes("var statusText = active ? workloadStatusValue(active)"),
+  "assets/scopedlabs-compute-planner-adapter.js",
+  "Workload Planner branch map must render the main chart from the current active workload while preserving aggregate rollups below."
+);
+
+check(
+  "COMPUTE_WORKLOAD_PLANNER_VISUAL_RERENDERS_ON_PLAN_CHANGE",
+  plannerAdapter.includes("function bindActiveVisualRefresh()") &&
+    plannerAdapter.includes("State.onPlanChange(function ()") &&
+    plannerAdapter.includes("render();") &&
+    plannerAdapter.includes("bindActiveVisualRefresh.bound = true;"),
+  "assets/scopedlabs-compute-planner-adapter.js",
+  "Workload Planner branch map must re-render from shared plan-state changes when workloads are saved, selected, removed, or reset."
+);
+
+check(
+  "COMPUTE_WORKLOAD_PLANNER_ADAPTER_CACHE_BUST_ACTIVE_VISUAL",
+  read("tools/compute/workload-planner/index.html").includes("/assets/scopedlabs-compute-planner-adapter.js?v=scopedlabs-compute-planner-adapter-011-active-workload-visual"),
+  "tools/compute/workload-planner/index.html",
+  "Workload Planner page must load the active-workload visual version of the compute planner adapter."
+);
+
 check(
   "COMPUTE_WORKLOAD_NAV_LINKS_TO_PLANNER_WITH_ACTIVE_ONLY_GLOW",
   planState.includes("function renderWorkloadPlannerNav(") &&
