@@ -12,7 +12,6 @@ const defaultAudits = [
   "scripts/audit-scopedlabs-pattern-promotion-v1.js",
   "scripts/audit-scopedlabs-planner-summary-nav-contract-v1.js",
   "scripts/audit-compute-planner-summary-pipeline-nav-v1.js",
-  "scripts/audit-compute-workload-ledger-v1.js",
   "scripts/audit-scopedlabs-tool-assistant-contract-v1.js",
   "scripts/audit-compute-assistant-rendering-contract-v1.js",
   "scripts/audit-compute-ram-proof-layout-v1.js",
