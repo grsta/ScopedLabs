@@ -80,6 +80,25 @@ check(
   "RAM input card should use Planning Inputs title and RAM planning copy."
 );
 
+
+check(
+  "RAM_SCRIPT_READS_ACTIVE_COMPUTE_WORKLOAD_CONTEXT",
+  ramScript.includes("scopedlabs:pipeline:compute:workload-plan") &&
+    ramScript.includes("scopedlabs:pipeline:compute:active-workload") &&
+    ramScript.includes("scopedlabs:pipeline:compute:workload-context") &&
+    ramScript.includes("activePlannerFromStorage") &&
+    ramScript.includes("activePlannerFromApi") &&
+    ramScript.includes("plannerContextFallback"),
+  "tools/compute/ram-sizing/script.js",
+  "RAM must populate the Active Workload card from active Compute planner/workload context even before CPU carry-forward is available."
+);
+
+check(
+  "RAM_RESULT_CARRIES_PLANNER_CONTEXT_WITHOUT_CPU_RESULT",
+  ramScript.includes("const plannerContext = cpuContext ? ramPlannerContextFromCpu(cpuContext) : plannerContextFallback;"),
+  "tools/compute/ram-sizing/script.js",
+  "RAM result payload should retain planner context even when there is no CPU flow result in sessionStorage."
+);
 check(
   "RAM_SCRIPT_RENDERS_ACTIVE_WORKLOAD_CONTEXT_CARD",
   ramScript.includes('workloadContextCard: $("computeWorkloadContextCard")') &&
@@ -93,7 +112,7 @@ check(
 
 check(
   "RAM_TOP_SHELL_CACHE_BUST_UPDATED",
-  ramHtml.includes("./script.js?v=compute-ram-top-shell-parity-0620"),
+  ramHtml.includes("./script.js?v=compute-ram-active-workload-context-0620"),
   "tools/compute/ram-sizing/index.html",
   "RAM page should cache-bust the local script after top shell parity wiring."
 );

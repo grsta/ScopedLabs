@@ -847,3 +847,12 @@ Example:
 - Compute pages that load the shared pipeline assets are cache-busted to `compute-planner-progress-endpoint-0620`.
 - `scripts/audit-compute-planner-summary-pipeline-nav-v1.js` verifies Planner endpoint progress participation, Summary endpoint semantics, stable indexed progress, endpoint URLs, and cache-busts.
 - Non-goals: no current-only mode, no Compute math change, no RAM/CPU proof/export/snapshot behavior change.
+
+### Compute RAM active workload context
+
+- `tools/compute/ram-sizing/script.js` now reads active Compute workload context from `ScopedLabsComputePlanState` when available and from Compute workload plan storage keys as fallback.
+- RAM shows the CPU-grade `computeWorkloadContextCard` from planner/workload context even when a CPU flow result is not present in session storage.
+- When CPU carry-forward exists, RAM enriches the same card with CPU sizing context and carries that planner context into the RAM result payload.
+- `tools/compute/ram-sizing/index.html` cache-busts the RAM script to `compute-ram-active-workload-context-0620`.
+- `scripts/audit-compute-ram-top-shell-parity-v1.js` verifies active workload context reading and planner context carry-forward.
+- Non-goals: no RAM math change, no chart/proof/export/snapshot/pipeline/Knowledge Base behavior change.

@@ -22,6 +22,7 @@
 
   let hasResult = false;
   let cpuContext = null;
+  let plannerContextFallback = null;
   let carriedWorkloadHydrated = false;
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
@@ -141,16 +142,9 @@
   }
 
   function refreshFlowNote() {
-    function hideWorkloadContext() {
-      if (els.flowNote) {
-        els.flowNote.hidden = true;
-        els.flowNote.innerHTML = "";
-      }
-      if (els.workloadContextCard) els.workloadContextCard.hidden = true;
-      if (els.workloadContextTitle) els.workloadContextTitle.textContent = "No active Compute workload selected";
-      if (els.workloadContextCopy) els.workloadContextCopy.textContent = "Continue from CPU sizing or open a Compute workload before using this tool so the RAM result can be tied to the right workload plan.";
-      if (els.workloadContextMeta) els.workloadContextMeta.innerHTML = "";
-    }
+    const PLAN_KEY = "scopedlabs:pipeline:compute:workload-plan";
+    const ACTIVE_KEY = "scopedlabs:pipeline:compute:active-workload";
+    const CONTEXT_KEY = "scopedlabs:pipeline:compute:workload-context";
 
     function escapeHtml(value) {
       return String(value == null ? "" : value)
@@ -159,6 +153,41 @@
         .replace(/>/g, "&gt;")
         .replace(/\"/g, "&quot;")
         .replace(/'/g, "&#39;");
+    }
+
+    function safeStorageValue(storage, key) {
+      try {
+        const raw = storage.getItem(key);
+        if (!raw) return null;
+        try {
+          return JSON.parse(raw);
+        } catch {
+          return raw;
+        }
+      } catch {
+        return null;
+      }
+    }
+
+    function objectOrNull(value) {
+      return value && typeof value === "object" && !Array.isArray(value) ? value : null;
+    }
+
+    function unwrapContext(value) {
+      const obj = objectOrNull(value);
+      if (!obj) return null;
+      if (objectOrNull(obj.workload)) return obj.workload;
+      if (objectOrNull(obj.activeWorkload)) return obj.activeWorkload;
+      if (objectOrNull(obj.context)) return obj.context;
+      if (objectOrNull(obj.plannerContext)) return obj.plannerContext;
+      return obj;
+    }
+
+    function valueLabel(value) {
+      if (value === undefined || value === null || value === "") return "Not specified";
+      if (Array.isArray(value)) return value.length ? value.map(valueLabel).join(", ") : "None selected";
+      if (typeof value === "object") return value.label || value.name || value.title || value.id || "Not specified";
+      return String(value);
     }
 
     function firstValue() {
@@ -170,16 +199,107 @@
     }
 
     function pct(value) {
-      if (value === undefined || value === null || value === "") return "Not specified";
-      const n = Number(value);
-      if (!Number.isFinite(n)) return String(value);
+      const raw = firstValue(value);
+      if (raw === "Not specified") return raw;
+      const n = Number(raw);
+      if (!Number.isFinite(n)) return valueLabel(raw);
       return Math.round(n) + "%";
     }
 
+    function activePlannerFromApi() {
+      const api = window.ScopedLabsComputePlanState;
+      if (!api || typeof api !== "object") return null;
+      const names = ["getActiveWorkload", "getActiveContext", "getContext", "activeWorkload", "loadActiveWorkload"];
+      for (const name of names) {
+        if (typeof api[name] !== "function") continue;
+        try {
+          const value = unwrapContext(api[name]());
+          if (value) return value;
+        } catch {}
+      }
+      return null;
+    }
+
+    function activePlannerFromStorage() {
+      const context = unwrapContext(safeStorageValue(sessionStorage, CONTEXT_KEY)) || unwrapContext(safeStorageValue(localStorage, CONTEXT_KEY));
+      if (context) return context;
+
+      const active = safeStorageValue(localStorage, ACTIVE_KEY) || safeStorageValue(sessionStorage, ACTIVE_KEY);
+      const activeObject = unwrapContext(active);
+      if (activeObject) return activeObject;
+
+      const plan = objectOrNull(safeStorageValue(localStorage, PLAN_KEY)) || objectOrNull(safeStorageValue(sessionStorage, PLAN_KEY));
+      if (!plan) return null;
+
+      const activeId = typeof active === "string" ? active : firstValue(plan.activeWorkloadId, plan.activeId, plan.currentWorkloadId, "");
+      const workloads = Array.isArray(plan.workloads) ? plan.workloads : [];
+      const matched = workloads.find(function (item) {
+        return item && String(firstValue(item.id, item.workloadId, item.key, "")) === String(activeId);
+      });
+      if (matched) return unwrapContext(matched);
+      if (workloads.length) return unwrapContext(workloads[0]);
+      return plan;
+    }
+
+    function hideWorkloadContext() {
+      if (els.flowNote) {
+        els.flowNote.hidden = true;
+        els.flowNote.innerHTML = "";
+      }
+      if (els.workloadContextCard) els.workloadContextCard.hidden = true;
+      if (els.workloadContextTitle) els.workloadContextTitle.textContent = "No active Compute workload selected";
+      if (els.workloadContextCopy) els.workloadContextCopy.textContent = "Open or create a Compute workload before using this tool so the RAM result can be tied to the right workload plan.";
+      if (els.workloadContextMeta) els.workloadContextMeta.innerHTML = "";
+      plannerContextFallback = null;
+    }
+
+    function showWorkloadContext(planner, cpuData) {
+      const safePlanner = objectOrNull(planner) || {};
+      const safeCpu = objectOrNull(cpuData) || {};
+      const title = firstValue(safePlanner.title, safePlanner.name, safePlanner.workloadName, safePlanner.projectName, safePlanner.label, "Active Compute workload");
+      const workloadType = firstValue(safePlanner.workloadType, safePlanner.workload, safeCpu.workloadPattern, safeCpu.workload);
+      const branches = firstValue(safePlanner.branches, safePlanner.branch, safePlanner.pathBranch, "None selected");
+      const meta = [
+        ["Environment", firstValue(safePlanner.environment, safePlanner.environmentType, safePlanner.location)],
+        ["Workload Type", workloadType],
+        ["Demand", firstValue(safePlanner.demand, safePlanner.demandProfile, safePlanner.loadProfile, safeCpu.demand)],
+        ["Status", firstValue(safeCpu.status, safePlanner.status)],
+        ["Path", firstValue(safePlanner.path, safePlanner.workflowPath, safePlanner.pipelinePath)],
+        ["Target Utilization", pct(firstValue(safePlanner.targetUtilization, safeCpu.utilizationTarget))],
+        ["Growth Margin", pct(firstValue(safePlanner.growthMargin, safeCpu.growthReservePercent))],
+        ["Branches", valueLabel(branches)]
+      ];
+
+      if (els.flowNote) {
+        els.flowNote.hidden = true;
+        els.flowNote.innerHTML = "";
+      }
+      if (els.workloadContextTitle) els.workloadContextTitle.textContent = String(title);
+      if (els.workloadContextCopy) {
+        els.workloadContextCopy.textContent = cpuData
+          ? String(title) + " includes CPU sizing carry-forward and is the active workload context for this RAM result."
+          : String(title) + " is the active workload context for this RAM sizing result.";
+      }
+      if (els.workloadContextMeta) {
+        els.workloadContextMeta.innerHTML = meta.map(function (item) {
+          return '<div><span>' + escapeHtml(item[0]) + '</span><strong>' + escapeHtml(valueLabel(item[1])) + '</strong></div>';
+        }).join("");
+      }
+      if (els.workloadContextCard) els.workloadContextCard.hidden = false;
+    }
+
+    const activePlannerContext = activePlannerFromApi() || activePlannerFromStorage();
+    plannerContextFallback = activePlannerContext || null;
+
     const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
     if (!raw) {
-      hideWorkloadContext();
       cpuContext = null;
+      if (activePlannerContext) {
+        hydrateWorkloadFromCpu(activePlannerContext);
+        showWorkloadContext(activePlannerContext, null);
+      } else {
+        hideWorkloadContext();
+      }
       return;
     }
 
@@ -187,57 +307,33 @@
     try {
       parsed = JSON.parse(raw);
     } catch {
-      hideWorkloadContext();
       cpuContext = null;
+      if (activePlannerContext) {
+        hydrateWorkloadFromCpu(activePlannerContext);
+        showWorkloadContext(activePlannerContext, null);
+      } else {
+        hideWorkloadContext();
+      }
       return;
     }
 
     if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
-      hideWorkloadContext();
       cpuContext = null;
+      if (activePlannerContext) {
+        hydrateWorkloadFromCpu(activePlannerContext);
+        showWorkloadContext(activePlannerContext, null);
+      } else {
+        hideWorkloadContext();
+      }
       return;
     }
 
     const data = parsed.data && typeof parsed.data === "object" ? parsed.data : parsed;
     cpuContext = data;
+    const carriedPlanner = ramPlannerContextFromCpu(data) || activePlannerContext;
+    plannerContextFallback = carriedPlanner || null;
     hydrateWorkloadFromCpu(data);
-
-    if (els.flowNote) {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
-    }
-
-    const planner = ramPlannerContextFromCpu(data) || {};
-    const title = firstValue(
-      planner.title,
-      planner.name,
-      planner.workloadName,
-      planner.projectName,
-      planner.label,
-      "Active Compute workload"
-    );
-
-    const workloadType = firstValue(planner.workloadType, planner.workload, data.workloadPattern, data.workload);
-    const branches = Array.isArray(planner.branches) ? planner.branches.join(", ") : firstValue(planner.branches, planner.branch, "None selected");
-    const meta = [
-      ["Environment", firstValue(planner.environment, planner.environmentType, planner.location)],
-      ["Workload Type", workloadType],
-      ["Demand", firstValue(planner.demand, planner.demandProfile, planner.loadProfile, data.demand)],
-      ["Status", firstValue(data.status, planner.status)],
-      ["Path", firstValue(planner.path, planner.workflowPath, planner.pipelinePath)],
-      ["Target Utilization", pct(firstValue(planner.targetUtilization, data.utilizationTarget))],
-      ["Growth Margin", pct(firstValue(planner.growthMargin, data.growthReservePercent))],
-      ["Branches", branches]
-    ];
-
-    if (els.workloadContextTitle) els.workloadContextTitle.textContent = String(title);
-    if (els.workloadContextCopy) els.workloadContextCopy.textContent = String(title) + " is the active workload context for this RAM sizing result.";
-    if (els.workloadContextMeta) {
-      els.workloadContextMeta.innerHTML = meta.map(function (item) {
-        return '<div><span>' + escapeHtml(item[0]) + '</span><strong>' + escapeHtml(item[1]) + '</strong></div>';
-      }).join("");
-    }
-    if (els.workloadContextCard) els.workloadContextCard.hidden = false;
+    showWorkloadContext(carriedPlanner, data);
   }
 
   function clearRamCapacityVisual() {
@@ -506,7 +602,7 @@
       }
     });
 
-    const plannerContext = cpuContext ? ramPlannerContextFromCpu(cpuContext) : null;
+    const plannerContext = cpuContext ? ramPlannerContextFromCpu(cpuContext) : plannerContextFallback;
     const upstreamCpuContext = cpuContext ? ramUpstreamCpuContext(cpuContext) : null;
 
     const ramCapacityEnvelope = {
