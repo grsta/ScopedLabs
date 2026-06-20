@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-compute-assistant-contract-008-ram-actions-card";
+  const VERSION = "scopedlabs-compute-assistant-contract-009-ram-decision-schedule";
 
   function isComputeShellPage() {
     const body = document.body;
@@ -823,6 +823,65 @@
 
     return '<div class="compute-recommended-actions-list">' + (rows.length ? rows.join("") : '<div class="compute-recommended-action"><strong>No corrective actions generated</strong><span>Run the RAM calculation again to refresh recommendations.</span></div>') + '</div>';
   }
+
+  function ramDecisionScheduleRows(data) {
+    data = data || {};
+    const status = ramStatusLabel(data.status);
+    const values = ramAssistantCompactLine(data);
+    const reserve = ramAssistantValue(data, ["reserveRamGb", "reserveGb"], Math.max(values.required - values.demand, 0));
+    const reserveRatio = ramPct(data.reserveRatio);
+    const dominant = data.dominantConstraint || (status === "RISK" ? "Installed memory edge" : status === "WATCH" ? "Reserve margin" : "Within RAM envelope");
+    const authority = "ram-capacity-envelope";
+    const interpretation = status === "RISK"
+      ? "RAM demand is at or beyond the current installed tier. Correct the memory baseline before downstream validation."
+      : status === "WATCH"
+        ? "RAM is usable but tightening. Carry this as a watch item through storage and density checks."
+        : "RAM sizing fits the active workload assumptions with workable headroom.";
+
+    return {
+      status,
+      authority,
+      interpretation,
+      rows: [
+        { group: "Capacity", metric: "Status", value: status, note: "Readiness of this RAM result before it is carried into Storage IOPS." },
+        { group: "Demand", metric: "Demand RAM", value: ramAssistantGb(values.demand, 1), note: "Current memory demand before reserve/cache pressure is added." },
+        { group: "Reserve", metric: "Reserve / Cache", value: ramAssistantGb(reserve, 1), note: "Memory margin added for cache, buffers, and operating reserve." },
+        { group: "Capacity", metric: "Required RAM", value: ramAssistantGb(values.required, 1), note: "Total RAM required after reserve/cache allocation." },
+        { group: "Recommendation", metric: "Installed RAM Tier", value: ramAssistantGb(values.installed, 0), note: "Recommended installed RAM tier carried forward into the Compute planning path." },
+        { group: "Capacity", metric: "Remaining Headroom", value: ramAssistantGb(values.headroom, 1), note: "Headroom remaining at the recommended installed RAM tier." },
+        { group: "Pressure", metric: "Reserve Ratio", value: reserveRatio, note: "Reserve pressure signal used by the RAM assistant and downstream validation." },
+        { group: "Authority", metric: "Status Authority", value: authority, note: "The chart, summary, and assistant should use this status source." },
+        { group: "Constraint", metric: "Primary Constraint", value: dominant, note: "Main RAM planning pressure behind the recommendation." }
+      ]
+    };
+  }
+
+  function ramDecisionStatusClass(status) {
+    const value = ramStatusLabel(status);
+    if (value === "RISK") return "is-risk";
+    if (value === "WATCH") return "is-watch";
+    if (value === "GOOD") return "is-good";
+    return "is-review";
+  }
+
+  function renderComputeRamDecisionSchedule(data) {
+    const schedule = ramDecisionScheduleRows(data);
+    const rows = schedule.rows.map(function (row) {
+      return '<tr><td>' + ramAssistantEscapeHtml(row.group) + '</td><td>' + ramAssistantEscapeHtml(row.metric) + '</td><td><strong>' + ramAssistantEscapeHtml(row.value) + '</strong></td><td>' + ramAssistantEscapeHtml(row.note) + '</td></tr>';
+    }).join("");
+
+    return [
+      '<div class="compute-decision-schedule-status">',
+      '  <div><strong>' + ramAssistantEscapeHtml(schedule.status) + ' RAM Capacity Envelope</strong><span>' + ramAssistantEscapeHtml(schedule.interpretation) + '</span></div>',
+      '  <div class="scopedlabs-result-summary-status ' + ramDecisionStatusClass(schedule.status) + '">' + ramAssistantEscapeHtml(schedule.status) + '</div>',
+      '</div>',
+      '<table class="compute-decision-schedule-table">',
+      '  <thead><tr><th>Group</th><th>Metric</th><th>Value</th><th>Engineering Note</th></tr></thead>',
+      '  <tbody>' + rows + '</tbody>',
+      '</table>',
+      '<p class="compute-decision-schedule-interpretation"><strong>Engineering Interpretation:</strong> ' + ramAssistantEscapeHtml(schedule.interpretation) + '</p>'
+    ].join("");
+  }
   function renderToolAssistant(config) {
     config = config || {};
 
@@ -941,6 +1000,7 @@
     renderToolAssistant,
     renderRamRecommendationReferences: renderComputeRamRecommendationReferences,
     renderRamRecommendedActions: renderComputeRamRecommendedActions,
+    renderRamDecisionSchedule: renderComputeRamDecisionSchedule,
     mountCpuSizing,
     clear: clearAssistant
   });

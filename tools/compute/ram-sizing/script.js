@@ -41,6 +41,8 @@
     ramReferences: $("computeRamReferences"),
     ramRecommendedActionsCard: $("computeRamRecommendedActionsCard"),
     ramRecommendedActions: $("computeRamRecommendedActions"),
+    ramDecisionScheduleCard: $("computeRamDecisionScheduleCard"),
+    ramDecisionSchedule: $("computeRamDecisionSchedule"),
     continueWrap: $("continue-wrap"),
     continue: $("continue"),
     calc: $("calc"),
@@ -237,6 +239,20 @@
     return true;
   }
 
+  function clearRamDecisionSchedule() {
+    if (els.ramDecisionSchedule) els.ramDecisionSchedule.innerHTML = "";
+    if (els.ramDecisionScheduleCard) els.ramDecisionScheduleCard.hidden = true;
+  }
+
+  function renderRamDecisionSchedule(result) {
+    if (!els.ramDecisionSchedule || !els.ramDecisionScheduleCard) return false;
+    if (!window.ScopedLabsComputeAssistant || typeof window.ScopedLabsComputeAssistant.renderRamDecisionSchedule !== "function") return false;
+
+    els.ramDecisionSchedule.innerHTML = window.ScopedLabsComputeAssistant.renderRamDecisionSchedule(result);
+    els.ramDecisionScheduleCard.hidden = false;
+    return true;
+  }
+
   function clearRamAssistant() {
     if (window.ScopedLabsComputeAssistant && typeof window.ScopedLabsComputeAssistant.clear === "function") {
       window.ScopedLabsComputeAssistant.clear();
@@ -271,6 +287,7 @@
       sessionStorage.removeItem(FLOW_KEYS["backup-window"]);
     } catch {}
 
+    clearRamDecisionSchedule();
     clearRamRecommendedActions();
     clearRamReferences();
     clearRamAssistant();
@@ -468,6 +485,7 @@
     renderRamAssistant(ramCapacityEnvelope);
     renderRamReferences(ramCapacityEnvelope);
     renderRamRecommendedActions(ramCapacityEnvelope);
+    renderRamDecisionSchedule(ramCapacityEnvelope);
 
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
       category: CATEGORY,

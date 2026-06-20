@@ -103,7 +103,7 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="/assets/scopedlabs-compute-result-visuals.css?v=scopedlabs-compute-result-visuals-0620-ram-actions-card">
+  <link rel="stylesheet" href="/assets/scopedlabs-compute-result-visuals.css?v=scopedlabs-compute-result-visuals-0620-ram-decision-schedule">
 </head>
 
 <body data-tier="free" data-category="compute" data-step="ram-sizing" data-lane="v1" data-compute-tool-shell="0614">
@@ -238,6 +238,11 @@
         <p class="muted" style="margin-bottom: 0;">Practical steps to reduce RAM pressure or validate the result before continuing downstream.</p>
         <div id="computeRamRecommendedActions" data-compute-recommended-actions="ram-sizing" role="group" aria-label="RAM recommended actions"></div>
       </section>
+      <section id="computeRamDecisionScheduleCard" class="card compute-decision-schedule-card" hidden data-compute-decision-schedule-card data-output-decision-owner="compute-assistant-contract">
+        <h3 class="h3" style="margin-top: 0;">RAM Capacity Decision Schedule</h3>
+        <p class="muted" style="margin-bottom: 0;">Compact RAM envelope status, threshold, recommendation, and engineering-note schedule for the active Compute workload.</p>
+        <div id="computeRamDecisionSchedule" data-compute-decision-schedule="ram-sizing" role="group" aria-label="RAM capacity decision schedule"></div>
+      </section>
 
       <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
         <div class="pill-row">
@@ -335,12 +340,12 @@
   <script src="/assets/scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-005-active-title"></script>
   <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-002"></script>
   <script src="/assets/scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-011-restore-ram-reference-labels"></script>
-  <script src="./script.js?v=compute-ram-actions-card-0620"></script>
+  <script src="./script.js?v=compute-ram-decision-schedule-0620"></script>
 
   <script defer src="/assets/help.js?v=help-026"></script>
   <script src="/assets/scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-005-flow-actions-static-safe"></script>
   <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
-  <script src="/assets/scopedlabs-compute-assistant-contract.js?v=compute-assistant-ram-actions-card-0620"></script>
+  <script src="/assets/scopedlabs-compute-assistant-contract.js?v=compute-assistant-ram-decision-schedule-0620"></script>
   <script src="/assets/scopedlabs-user-tool-notes.js?v=scopedlabs-user-tool-notes-001-compute-proof"></script>
 </body>
 </html>

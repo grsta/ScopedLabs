@@ -143,11 +143,57 @@ check(
   "assets/scopedlabs-compute-result-visuals.css",
   "Shared Compute CSS must own RAM Recommended Actions card/list styling."
 );
+
+check(
+  "RAM_DECISION_SCHEDULE_RENDERER_EXISTS",
+  assistant.includes("function renderComputeRamDecisionSchedule") &&
+    assistant.includes("compute-decision-schedule-table") &&
+    assistant.includes("renderRamDecisionSchedule: renderComputeRamDecisionSchedule"),
+  "assets/scopedlabs-compute-assistant-contract.js",
+  "Shared Compute assistant contract must own the RAM decision schedule renderer."
+);
+
+check(
+  "RAM_DECISION_SCHEDULE_CARD_IS_BELOW_ACTIONS_AND_ABOVE_EXPORT",
+  ramHtml.indexOf("computeRamRecommendedActionsCard") !== -1 &&
+    ramHtml.indexOf("computeRamDecisionScheduleCard") !== -1 &&
+    ramHtml.indexOf("Export Report") !== -1 &&
+    ramHtml.indexOf("computeRamRecommendedActionsCard") < ramHtml.indexOf("computeRamDecisionScheduleCard") &&
+    ramHtml.indexOf("computeRamDecisionScheduleCard") < ramHtml.indexOf("Export Report"),
+  "tools/compute/ram-sizing/index.html",
+  "RAM Decision Schedule card must render below Recommended Actions and above Export Report."
+);
+
+check(
+  "RAM_SCRIPT_RENDERS_DECISION_SCHEDULE_AFTER_ACTIONS",
+  ramScript.indexOf("renderRamRecommendedActions(ramCapacityEnvelope);") !== -1 &&
+    ramScript.indexOf("renderRamDecisionSchedule(ramCapacityEnvelope);") !== -1 &&
+    ramScript.indexOf("renderRamRecommendedActions(ramCapacityEnvelope);") < ramScript.indexOf("renderRamDecisionSchedule(ramCapacityEnvelope);"),
+  "tools/compute/ram-sizing/script.js",
+  "RAM script must render Decision Schedule after Recommended Actions from the same ramCapacityEnvelope payload."
+);
+
+check(
+  "RAM_DECISION_SCHEDULE_CLEAR_ON_INVALIDATE",
+  ramScript.includes("clearRamDecisionSchedule();") &&
+    ramScript.indexOf("clearRamDecisionSchedule();") < ramScript.indexOf("ScopedLabsAnalyzer.invalidate"),
+  "tools/compute/ram-sizing/script.js",
+  "RAM Decision Schedule should clear when inputs invalidate the result."
+);
+
+check(
+  "SHARED_COMPUTE_CSS_OWNS_DECISION_SCHEDULE_CARD",
+  css.includes(".compute-decision-schedule-card") &&
+    css.includes(".compute-decision-schedule-table") &&
+    css.includes(".compute-decision-schedule-status"),
+  "assets/scopedlabs-compute-result-visuals.css",
+  "Shared Compute CSS must own RAM Decision Schedule card/table styling."
+);
 check(
   "RAM_CACHE_BUSTS_PROOF_LAYOUT_ASSETS",
-  ramHtml.includes("scopedlabs-compute-result-visuals-0620-ram-actions-card") &&
-    ramHtml.includes("compute-assistant-ram-actions-card-0620") &&
-    ramHtml.includes("compute-ram-actions-card-0620"),
+  ramHtml.includes("scopedlabs-compute-result-visuals-0620-ram-decision-schedule") &&
+    ramHtml.includes("compute-assistant-ram-decision-schedule-0620") &&
+    ramHtml.includes("compute-ram-decision-schedule-0620"),
   "tools/compute/ram-sizing/index.html",
   "RAM page should cache-bust CSS, assistant contract, and local script after the proof layout change."
 );

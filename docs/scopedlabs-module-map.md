@@ -770,3 +770,12 @@ Example:
 - `assets/scopedlabs-compute-result-visuals.css` owns shared `.compute-recommended-actions-*` card/list styles.
 - `scripts/audit-compute-ram-proof-layout-v1.js` now enforces RAM order: Capacity Envelope, Recommendation References, Recommended Actions, then Export Report.
 - Non-goals: no RAM math change, no Capacity Envelope change, no export/snapshot/pipeline/Knowledge Base behavior change.
+
+### Compute RAM decision schedule proof card
+
+- `tools/compute/ram-sizing/index.html` now places `computeRamDecisionScheduleCard` below Recommended Actions and above Export Report, matching the CPU proof stack rhythm.
+- `assets/scopedlabs-compute-assistant-contract.js` owns `renderComputeRamDecisionSchedule(data)` and exports it through `window.ScopedLabsComputeAssistant.renderRamDecisionSchedule`.
+- `tools/compute/ram-sizing/script.js` renders the RAM Decision Schedule from the existing `ramCapacityEnvelope` payload after Recommended Actions and clears the card during invalidation.
+- `assets/scopedlabs-compute-result-visuals.css` owns shared `.compute-decision-schedule-*` card/table styles.
+- `scripts/audit-compute-ram-proof-layout-v1.js` now enforces RAM order: Capacity Envelope, Recommendation References, Recommended Actions, Decision Schedule, then Export Report.
+- Non-goals: no RAM math change, no Capacity Envelope change, no export/snapshot/pipeline/Knowledge Base behavior change.

@@ -323,3 +323,92 @@
   color: rgba(203, 213, 225, 0.84);
   line-height: 1.44;
 }
+
+/* compute-ram-decision-schedule-card-0620
+   Shared Compute RAM decision schedule proof card used below Recommended Actions. */
+.compute-decision-schedule-card {
+  margin-top: 14px;
+  border-color: rgba(42, 169, 93, 0.28);
+  background:
+    radial-gradient(circle at 0 0, rgba(22, 163, 74, 0.08), transparent 34%),
+    rgba(0, 0, 0, 0.14);
+}
+
+.compute-decision-schedule-card[hidden] {
+  display: none !important;
+}
+
+.compute-decision-schedule-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid rgba(42, 169, 93, 0.26);
+  border-radius: 10px;
+  background: rgba(22, 163, 74, 0.08);
+  margin-top: 12px;
+  padding: 11px 12px;
+}
+
+.compute-decision-schedule-status strong,
+.compute-decision-schedule-status span {
+  display: block;
+}
+
+.compute-decision-schedule-status strong {
+  color: #f8fafc;
+}
+
+.compute-decision-schedule-status span {
+  color: rgba(203, 213, 225, 0.84);
+  margin-top: 4px;
+  line-height: 1.42;
+}
+
+.compute-decision-schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+.compute-decision-schedule-table th,
+.compute-decision-schedule-table td {
+  border-bottom: 1px solid rgba(42, 169, 93, 0.18);
+  padding: 10px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.compute-decision-schedule-table th {
+  color: #bbf7d0;
+  background: rgba(22, 163, 74, 0.10);
+  font-size: 0.68rem;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+.compute-decision-schedule-table td {
+  color: rgba(241, 245, 249, 0.92);
+  line-height: 1.42;
+}
+
+.compute-decision-schedule-table td:nth-child(1),
+.compute-decision-schedule-table td:nth-child(2) {
+  color: #e5eef8;
+}
+
+.compute-decision-schedule-interpretation {
+  margin: 12px 0 0;
+  color: rgba(203, 213, 225, 0.84);
+  line-height: 1.45;
+}
+
+@media (max-width: 720px) {
+  .compute-decision-schedule-status {
+    display: block;
+  }
+
+  .compute-decision-schedule-status .scopedlabs-result-summary-status {
+    margin-top: 10px;
+  }
+}
