@@ -53,16 +53,25 @@ check(
 check(
   "PIPELINE_RENDERER_USES_STABLE_INDEXED_STEP_PROGRESS",
   renderer.includes("Number.isInteger(step && step.__slIndex) ? step.__slIndex : steps.indexOf(step)") &&
-    renderer.includes("const isPast = !isCategoryEndpoint &&") &&
+    renderer.includes("const isPast = !isSummaryEndpoint &&") &&
     renderer.includes('if (isPast) a.classList.add("is-complete");') &&
     renderer.includes('if (isCurrent) a.classList.add("is-current");') &&
     renderer.includes('if (isFuture) a.classList.add("is-future");') &&
     !renderer.includes("isCurrentOnlyProgress") &&
     !renderer.includes("progressMode"),
   "assets/pipeline.js",
-  "Renderer must preserve progress LEDs using stable indexed step positions, not steps.indexOf() against cloned step objects."
+  "Renderer must preserve progress LEDs using stable indexed step positions, allow Planner to complete as a past endpoint, and keep Summary as a future endpoint until reached."
 );
 
+
+check(
+  "COMPUTE_PLANNER_ENDPOINT_PARTICIPATES_IN_PROGRESS",
+  renderer.includes('const isSummaryEndpoint = step && step.categoryEndpoint === "summary";') &&
+    renderer.includes("const isPast = !isSummaryEndpoint &&") &&
+    renderer.includes('a.setAttribute("data-category-endpoint", String(step.categoryEndpoint));'),
+  "assets/pipeline.js",
+  "Planner must remain a category endpoint link while still participating in normal past/completed pipeline progress; Summary is the endpoint excluded from auto-complete."
+);
 check(
   "PIPELINE_RENDERER_TREATS_CATEGORY_ENDPOINTS_SEMANTICALLY",
   renderer.includes("const isCategoryEndpoint = !!(step && step.categoryEndpoint);") &&
@@ -89,11 +98,11 @@ check(
   "COMPUTE_PIPELINE_PAGES_CACHE_BUST_INDEX_FIX",
   toolPages.every((file) => {
     const html = read(file);
-    return html.includes("/assets/pipelines.js?v=compute-pipeline-index-fix-0620") &&
-      html.includes("/assets/pipeline.js?v=compute-pipeline-index-fix-0620");
+    return html.includes("/assets/pipelines.js?v=compute-planner-progress-endpoint-0620") &&
+      html.includes("/assets/pipeline.js?v=compute-planner-progress-endpoint-0620");
   }),
   "tools/compute/*/index.html",
-  "Compute pipeline-consuming pages must cache-bust the Planner/Summary index fix."
+  "Compute pipeline-consuming pages must cache-bust the Planner endpoint progress fix."
 );
 
 check(

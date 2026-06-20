@@ -73,8 +73,9 @@
     const currentGroup = hasFlowGroups ? flowGroupFor(currentStepData) : "";
     const stepGroup = hasFlowGroups ? flowGroupFor(step) : "";
     const isCategoryEndpoint = !!(step && step.categoryEndpoint);
+    const isSummaryEndpoint = step && step.categoryEndpoint === "summary";
     const isCurrent = index === currentIndex;
-    const isPast = !isCategoryEndpoint && (hasFlowGroups
+    const isPast = !isSummaryEndpoint && (hasFlowGroups
       ? (
           stepGroup === currentGroup &&
           index < currentIndex &&

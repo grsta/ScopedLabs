@@ -838,3 +838,12 @@ Example:
 - The renderer preserves the original progress model: current page gets `is-current`, previous completed/past steps get `is-complete`, future steps get `is-future`, and Planner/Summary remain category endpoints.
 - `scripts/audit-compute-planner-summary-pipeline-nav-v1.js` verifies endpoint URLs/order, indexed progress logic, category endpoint semantics, cache-busts, no fake page-local nav, module-map documentation, and batch inclusion.
 - Non-goals: no current-only progress mode, no Compute math change, no RAM/CPU proof/export/snapshot behavior change, no checkout/auth/Knowledge Base behavior change.
+
+### Compute Planner endpoint progress fix
+
+- `assets/pipeline.js` now treats only the Summary endpoint as excluded from automatic past/completed progress.
+- Planner remains a category endpoint link but participates in normal pipeline progress, so it glows as complete on CPU/RAM and downstream Compute tool pages.
+- `assets/pipelines.js` keeps Planner linked to `/tools/compute/workload-planner/` and Summary linked to `/tools/compute/summary/`.
+- Compute pages that load the shared pipeline assets are cache-busted to `compute-planner-progress-endpoint-0620`.
+- `scripts/audit-compute-planner-summary-pipeline-nav-v1.js` verifies Planner endpoint progress participation, Summary endpoint semantics, stable indexed progress, endpoint URLs, and cache-busts.
+- Non-goals: no current-only mode, no Compute math change, no RAM/CPU proof/export/snapshot behavior change.
