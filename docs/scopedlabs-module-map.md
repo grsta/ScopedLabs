@@ -804,3 +804,11 @@ Example:
 - RAM keeps the same `exportReport`, `saveSnapshot`, and `exportStatus` IDs so export/snapshot behavior remains intact.
 - `scripts/audit-compute-ram-export-shell-parity-v1.js` verifies RAM export shell parity with CPU, report metadata mount consumption, legacy export-grid removal, button preservation, proof-stack placement, module-map documentation, and batch inclusion.
 - Non-goals: no RAM math change, no proof card content change, no chart geometry change, no snapshot/pipeline/Knowledge Base behavior change.
+
+### Compute RAM reset proof stack clearing
+
+- `tools/compute/ram-sizing/script.js` now owns `clearRamCapacityVisual()` and calls it from `invalidate()` before the analyzer invalidation path.
+- Reset already uses `invalidate()`, so RAM Reset now clears the Capacity Envelope visual/card along with Recommendation References, Recommended Actions, Decision Schedule, assistant output, flow state, and export readiness.
+- `tools/compute/ram-sizing/index.html` cache-busts the RAM script to `compute-ram-reset-clears-proof-stack-0620`.
+- `scripts/audit-compute-ram-proof-layout-v1.js` verifies RAM invalidation clears the visual mount/card and that Reset uses the shared invalidation path.
+- Non-goals: no RAM math change, no chart geometry change, no assistant/export/snapshot/pipeline/Knowledge Base behavior change.

@@ -98,6 +98,26 @@ check(
 );
 
 
+
+check(
+  "RAM_INVALIDATE_CLEARS_CAPACITY_VISUAL",
+  ramScript.includes("function clearRamCapacityVisual()") &&
+    ramScript.includes("els.ramVisual.innerHTML = \"\";") &&
+    ramScript.includes("els.ramVisualCard.hidden = true;") &&
+    ramScript.indexOf("clearRamCapacityVisual();") !== -1 &&
+    ramScript.indexOf("clearRamCapacityVisual();") < ramScript.indexOf("ScopedLabsAnalyzer.invalidate"),
+  "tools/compute/ram-sizing/script.js",
+  "RAM invalidation/reset must clear the Capacity Envelope mount and hide the visual card before the analyzer is invalidated."
+);
+
+check(
+  "RAM_RESET_USES_INVALIDATE_FOR_FULL_PROOF_STACK_CLEAR",
+  ramScript.includes("els.reset.addEventListener(\"click\"") &&
+    ramScript.includes("invalidate();") &&
+    ramScript.indexOf("els.reset.addEventListener(\"click\"") < ramScript.lastIndexOf("invalidate();"),
+  "tools/compute/ram-sizing/script.js",
+  "RAM Reset should use invalidate() so the visual, references, actions, decision schedule, assistant, flow state, and export readiness clear together."
+);
 check(
   "RAM_RECOMMENDED_ACTIONS_RENDERER_EXISTS",
   assistant.includes("function renderComputeRamRecommendedActions") &&

@@ -193,11 +193,11 @@
   }
 
   function clearRamCapacityVisual() {
-    if (window.ScopedLabsComputeCapacityVisuals && typeof window.ScopedLabsComputeCapacityVisuals.clear === "function") {
-      window.ScopedLabsComputeCapacityVisuals.clear({
-        card: els.ramVisualCard,
-        mount: els.ramVisual
-      });
+    if (els.ramVisual) {
+      els.ramVisual.innerHTML = "";
+    }
+    if (els.ramVisualCard) {
+      els.ramVisualCard.hidden = true;
     }
   }
 
@@ -286,7 +286,7 @@
       sessionStorage.removeItem(FLOW_KEYS["raid-rebuild-time"]);
       sessionStorage.removeItem(FLOW_KEYS["backup-window"]);
     } catch {}
-
+    clearRamCapacityVisual();
     clearRamDecisionSchedule();
     clearRamRecommendedActions();
     clearRamReferences();
