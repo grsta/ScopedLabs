@@ -894,3 +894,12 @@ Example:
 - Compute workload deletion now uses shared `State.removeWorkload(id)` so deleted workloads disappear from active navs and active context is cleaned or advanced.
 - Compute pages are cache-busted to `compute-dynamic-workload-planner-nav-0620`; the plan-state module is cache-busted to `scopedlabs-compute-plan-state-006-dynamic-workload-nav`.
 - Non-goals: no CPU/RAM math change, no export/snapshot/Knowledge Base behavior change.
+
+### Compute workload planner nav link cleanup
+
+- `assets/scopedlabs-compute-plan-state.js` now renders dynamic saved workload nav items without the extra `Active:` sentence under the Compute Workload Planner label.
+- Saved workload nav items no longer render separator arrows between workloads.
+- Only the actual active workload receives the current/glowing pipeline state; non-active saved workloads use future/muted state.
+- Saved workload nav items link back to `/tools/compute/workload-planner/` and set that workload active before navigation.
+- Compute pages are cache-busted to `scopedlabs-compute-plan-state-007-workload-nav-links`.
+- Non-goals: no CPU/RAM math change, no export/snapshot/Knowledge Base behavior change.

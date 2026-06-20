@@ -543,6 +543,7 @@
     return parts.join(" | ") || "Active Compute workload";
   }
 
+
   function renderWorkloadPlannerNav(config) {
     config = config || {};
     if (typeof document === "undefined") return null;
@@ -561,28 +562,19 @@
     mount.classList.add("sl-compute-workload-planner-nav");
     mount.setAttribute("data-compute-workload-planner-nav-rendered", "true");
 
-    var description = active
-      ? "Active: " + workloadDisplayTitle(active) + " ? " + workloadPlannerNavMeta(active)
-      : "Create or select the compute workload being planned.";
-
     var rows = [];
 
     rows.push('<div class="sl-pipeline-group-label" style="font-size:.74rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(125,255,158,.86);margin-bottom:6px;">' + workloadDisplayEscapeHtml(title) + '</div>');
-    rows.push('<div class="sl-pipeline-group-description" style="font-size:.86rem;color:rgba(255,255,255,.68);margin:0 0 8px 0;">' + workloadDisplayEscapeHtml(description) + '</div>');
     rows.push('<nav class="sl-pipeline-row sl-compute-workload-planner-row" aria-label="Compute workload planner saved workloads">');
 
     if (!workloads.length) {
       rows.push('<a class="sl-pipeline-step is-current is-category-endpoint" href="' + workloadDisplayEscapeHtml(plannerHref) + '" data-category-endpoint="planner" data-step="workload-planner"><span class="sl-pipeline-dot" aria-hidden="true"></span><span class="sl-pipeline-label">Open Workload Planner</span></a>');
     } else {
-      workloads.forEach(function (workload, index) {
+      workloads.forEach(function (workload) {
         var isActive = active && workload.id === active.id;
         var label = workloadDisplayTitle(workload);
         var meta = workloadPlannerNavMeta(workload);
-        rows.push('<a class="sl-pipeline-step sl-compute-workload-nav-step' + (isActive ? ' is-current' : ' is-complete') + '" href="' + workloadDisplayEscapeHtml(plannerHref) + '" data-compute-workload-nav-item="true" data-workload-id="' + workloadDisplayEscapeHtml(workload.id) + '"><span class="sl-pipeline-dot" aria-hidden="true"></span><span class="sl-pipeline-label"><strong>' + workloadDisplayEscapeHtml(label) + '</strong><small style="display:block;font-size:.68rem;color:rgba(226,232,240,.62);font-weight:700;line-height:1.25;margin-top:2px;">' + workloadDisplayEscapeHtml(meta) + '</small></span></a>');
-
-        if (index < workloads.length - 1) {
-          rows.push('<span class="sl-pipeline-sep" aria-hidden="true">?</span>');
-        }
+        rows.push('<a class="sl-pipeline-step sl-compute-workload-nav-step' + (isActive ? ' is-current' : ' is-future') + '" href="' + workloadDisplayEscapeHtml(plannerHref) + '" data-compute-workload-nav-item="true" data-workload-id="' + workloadDisplayEscapeHtml(workload.id) + '"><span class="sl-pipeline-dot" aria-hidden="true"></span><span class="sl-pipeline-label"><strong>' + workloadDisplayEscapeHtml(label) + '</strong><small style="display:block;font-size:.68rem;color:rgba(226,232,240,.62);font-weight:700;line-height:1.25;margin-top:2px;">' + workloadDisplayEscapeHtml(meta) + '</small></span></a>');
       });
     }
 
@@ -590,13 +582,9 @@
     mount.innerHTML = rows.join("");
 
     Array.from(mount.querySelectorAll("[data-compute-workload-nav-item]")).forEach(function (link) {
-      link.addEventListener("click", function (event) {
-        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-        event.preventDefault();
-
+      link.addEventListener("click", function () {
         var id = link.getAttribute("data-workload-id");
         if (id) setActiveWorkload(id);
-        renderWorkloadPlannerNav(config);
       });
     });
 
@@ -642,7 +630,7 @@
   }
 
   window.ScopedLabsComputePlanState = Object.freeze({
-    version: "scopedlabs-compute-plan-state-006-dynamic-workload-nav",
+    version: "scopedlabs-compute-plan-state-007-workload-nav-links",
     contract: CONTRACT,
     keys: Object.freeze({
       plan: PLAN_KEY,

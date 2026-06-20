@@ -33,6 +33,19 @@ const plannerAdapter = read("assets/scopedlabs-compute-planner-adapter.js");
 const moduleMap = read("docs/scopedlabs-module-map.md");
 const batch = read("scripts/run-scopedlabs-audit-batch-v1.js");
 
+const toolPages = [
+  "tools/compute/cpu-sizing/index.html",
+  "tools/compute/ram-sizing/index.html",
+  "tools/compute/storage-iops/index.html",
+  "tools/compute/storage-throughput/index.html",
+  "tools/compute/vm-density/index.html",
+  "tools/compute/gpu-vram/index.html",
+  "tools/compute/power-thermal/index.html",
+  "tools/compute/raid-rebuild-time/index.html",
+  "tools/compute/backup-window/index.html",
+  "tools/compute/workload-planner/index.html"
+].filter((file) => fs.existsSync(file));
+
 const plannerIndex = indexOfToken(pipelines, 'id: "workload-planner"');
 const cpuIndex = indexOfToken(pipelines, 'id: "cpu-sizing"');
 const backupIndex = indexOfToken(pipelines, 'id: "backup-window"');
@@ -41,12 +54,12 @@ const summaryIndex = indexOfToken(pipelines, 'id: "summary"');
 check(
   "COMPUTE_PIPELINE_HAS_PLANNER_AND_SUMMARY_ENDPOINTS",
   pipelines.includes('id: "workload-planner"') &&
-    pipelines.includes('label: "Workload Planner"') &&
+    pipelines.includes('label: "Compute Workload Planner"') &&
     pipelines.includes('categoryEndpoint: "planner"') &&
     pipelines.includes('id: "summary"') &&
     pipelines.includes('categoryEndpoint: "summary"'),
   "assets/pipelines.js",
-  "Compute pipeline must expose Workload Planner and Summary as clickable category endpoints."
+  "Compute pipeline must expose Compute Workload Planner and Summary as clickable category endpoints."
 );
 
 check(
@@ -55,8 +68,6 @@ check(
   "assets/pipelines.js",
   "Compute pipeline order must be Planner, core tool steps, Summary, then optional specialty tools."
 );
-
-
 
 check(
   "COMPUTE_FOUNDATION_LABEL_IS_DYNAMIC_WORKLOAD_PLANNER",
@@ -75,7 +86,7 @@ check(
     pipelines.includes('flowGroupDescription: "Create or select the compute workload being planned."') &&
     pipelines.includes('flowGroupDescription: "Run this path for normal compute sizing and carry each result into the next planning step."'),
   "assets/pipelines.js",
-  "Compute pipeline must use the same grouped foundation/core/optional structure as Access, with Compute-specific labels."
+  "Compute pipeline must use grouped planner/core/optional structure with Compute-specific labels."
 );
 
 check(
@@ -88,7 +99,7 @@ check(
     pipelines.includes('id: "gpu-vram"') &&
     pipelines.includes('flowGroup: "optional-specialty-zone"'),
   "assets/pipelines.js",
-  "Planner must be isolated in the Foundation group, core tools must be core, and GPU/RAID/Backup tools must be optional specialty."
+  "Planner must be isolated in the dynamic planner group, core tools must be core, and GPU/RAID/Backup tools must be optional specialty."
 );
 
 check(
@@ -110,7 +121,6 @@ check(
   "assets/pipeline.js",
   "Foundation Planner should be able to glow as complete when the user is in core Compute steps."
 );
-
 
 check(
   "COMPUTE_PLAN_STATE_DISPATCHES_WORKLOAD_NAV_EVENTS",
@@ -178,9 +188,41 @@ check(
   "COMPUTE_PLANNER_DELETE_USES_SHARED_REMOVE_WORKLOAD",
   plannerAdapter.includes("State.removeWorkload(id)") &&
     plannerAdapter.includes("clearForm();") &&
-    plannerAdapter.includes("status(\"Compute workload deleted.\")"),
+    plannerAdapter.includes('status("Compute workload deleted.")'),
   "assets/scopedlabs-compute-planner-adapter.js",
   "Planner delete must use shared removeWorkload so deleted workloads disappear from all dynamic navs."
+);
+
+check(
+  "COMPUTE_WORKLOAD_NAV_LINKS_TO_PLANNER_WITH_ACTIVE_ONLY_GLOW",
+  planState.includes("function renderWorkloadPlannerNav(") &&
+    planState.includes("data-compute-workload-nav-item") &&
+    planState.includes("setActiveWorkload(id)") &&
+    planState.includes("isActive ? ' is-current' : ' is-future'") &&
+    !planState.includes("isActive ? ' is-current' : ' is-complete'") &&
+    !planState.includes("event.preventDefault();"),
+  "assets/scopedlabs-compute-plan-state.js",
+  "Saved workload nav items must link back to the planner, set active workload on click, and only glow the actual active workload."
+);
+
+check(
+  "COMPUTE_WORKLOAD_NAV_REMOVES_ACTIVE_SENTENCE_AND_SEPARATORS",
+  planState.includes('rows.push(\'<div class="sl-pipeline-group-label"') &&
+    !planState.includes('Active: " + workloadDisplayTitle(active)') &&
+    !planState.includes('rows.push(\'<div class="sl-pipeline-group-description"') &&
+    !planState.includes('rows.push(\'<span class="sl-pipeline-sep"'),
+  "assets/scopedlabs-compute-plan-state.js",
+  "Compute workload planner nav should not show the extra Active sentence or separator arrows between saved workloads."
+);
+
+check(
+  "COMPUTE_PLAN_STATE_CACHE_BUSTS_WORKLOAD_NAV_LINKS",
+  toolPages.every((file) => {
+    const html = read(file);
+    return html.includes("/assets/scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-007-workload-nav-links");
+  }),
+  "tools/compute/*/index.html",
+  "Compute pages must load the workload nav link cleanup version of the plan-state module."
 );
 
 check(
@@ -196,7 +238,6 @@ check(
   "Renderer must preserve progress LEDs using stable indexed step positions, allow Planner to complete as a past endpoint, and keep Summary as a future endpoint until reached."
 );
 
-
 check(
   "COMPUTE_PLANNER_ENDPOINT_PARTICIPATES_IN_PROGRESS",
   renderer.includes('const isSummaryEndpoint = step && step.categoryEndpoint === "summary";') &&
@@ -205,6 +246,7 @@ check(
   "assets/pipeline.js",
   "Planner must remain a category endpoint link while still participating in normal past/completed pipeline progress; Summary is the endpoint excluded from auto-complete."
 );
+
 check(
   "PIPELINE_RENDERER_TREATS_CATEGORY_ENDPOINTS_SEMANTICALLY",
   renderer.includes("const isCategoryEndpoint = !!(step && step.categoryEndpoint);") &&
@@ -214,19 +256,6 @@ check(
   "Shared pipeline renderer must mark Planner/Summary as category endpoints."
 );
 
-const toolPages = [
-  "tools/compute/cpu-sizing/index.html",
-  "tools/compute/ram-sizing/index.html",
-  "tools/compute/storage-iops/index.html",
-  "tools/compute/storage-throughput/index.html",
-  "tools/compute/vm-density/index.html",
-  "tools/compute/gpu-vram/index.html",
-  "tools/compute/power-thermal/index.html",
-  "tools/compute/raid-rebuild-time/index.html",
-  "tools/compute/backup-window/index.html",
-  "tools/compute/workload-planner/index.html"
-].filter((file) => fs.existsSync(file));
-
 check(
   "COMPUTE_PIPELINE_PAGES_CACHE_BUST_INDEX_FIX",
   toolPages.every((file) => {
@@ -235,7 +264,7 @@ check(
       html.includes("/assets/pipeline.js?v=compute-dynamic-workload-planner-nav-0620");
   }),
   "tools/compute/*/index.html",
-  "Compute pipeline-consuming pages must cache-bust the Planner endpoint progress fix."
+  "Compute pipeline-consuming pages must cache-bust the dynamic workload planner nav pipeline assets."
 );
 
 check(
@@ -243,25 +272,26 @@ check(
   toolPages.every((file) => {
     const html = read(file);
     return !html.includes("data-page-local-planner-summary-nav") &&
-      !html.includes("compute-fake-planner-summary-nav");
+      !html.includes("compute-planner-summary-fake-nav");
   }),
   "tools/compute/*/index.html",
-  "Planner/Summary links must come from shared pipeline nav, not page-local fake navigation."
+  "Planner/Summary nav must be rendered by shared pipeline assets, not page-local fake nav."
 );
 
 check(
-  "MODULE_MAP_RECORDS_COMPUTE_PIPELINE_INDEX_FIX",
-  moduleMap.includes("### Compute pipeline indexed progress fix") &&
+  "MODULE_MAP_RECORDS_COMPUTE_DYNAMIC_PIPELINE_NAV",
+  moduleMap.includes("### Compute dynamic workload planner nav") &&
+    moduleMap.includes("assets/scopedlabs-compute-plan-state.js") &&
     moduleMap.includes("audit-compute-planner-summary-pipeline-nav-v1.js"),
   "docs/scopedlabs-module-map.md",
-  "Module map must document the Compute Planner/Summary pipeline index fix."
+  "Module map must document the dynamic Compute workload planner nav shared owner."
 );
 
 check(
-  "BATCH_RUNNER_INCLUDES_COMPUTE_PLANNER_SUMMARY_PIPELINE_NAV_AUDIT",
-  batch.includes("scripts/audit-compute-planner-summary-pipeline-nav-v1.js"),
+  "AUDIT_BATCH_INCLUDES_COMPUTE_PIPELINE_NAV",
+  batch.includes("audit-compute-planner-summary-pipeline-nav-v1.js"),
   "scripts/run-scopedlabs-audit-batch-v1.js",
-  "Closeout batch runner must include Compute Planner/Summary pipeline nav audit."
+  "Audit batch should include Compute planner/summary pipeline nav gate."
 );
 
 console.log("\nSUMMARY");
