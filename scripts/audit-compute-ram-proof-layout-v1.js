@@ -153,6 +153,17 @@ check(
   "Shared Compute assistant contract must own the RAM decision schedule renderer."
 );
 
+
+check(
+  "RAM_DECISION_SCHEDULE_STATUS_VALUE_IS_COLORED_BADGE",
+  assistant.includes("function ramDecisionScheduleValueCell") &&
+    assistant.includes("row.metric === \"Status\"") &&
+    assistant.includes("scopedlabs-result-summary-status") &&
+    assistant.includes("ramDecisionStatusClass(status)") &&
+    ramHtml.includes("compute-assistant-ram-decision-status-badge-0620"),
+  "assets/scopedlabs-compute-assistant-contract.js",
+  "RAM Decision Schedule Status value must render as the colored engineering badge class, matching the CPU decision schedule visual contract."
+);
 check(
   "RAM_DECISION_SCHEDULE_CARD_IS_BELOW_ACTIONS_AND_ABOVE_EXPORT",
   ramHtml.indexOf("computeRamRecommendedActionsCard") !== -1 &&

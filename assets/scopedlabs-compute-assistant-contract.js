@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-compute-assistant-contract-009-ram-decision-schedule";
+  const VERSION = "scopedlabs-compute-assistant-contract-010-ram-decision-status-badge";
 
   function isComputeShellPage() {
     const body = document.body;
@@ -864,10 +864,19 @@
     return "is-review";
   }
 
+
+  function ramDecisionScheduleValueCell(row, status) {
+    const value = row && row.value != null ? row.value : "";
+    if (row && row.metric === "Status") {
+      return '<span class="scopedlabs-result-summary-status ' + ramDecisionStatusClass(status) + '">' + ramAssistantEscapeHtml(value) + '</span>';
+    }
+
+    return '<strong>' + ramAssistantEscapeHtml(value) + '</strong>';
+  }
   function renderComputeRamDecisionSchedule(data) {
     const schedule = ramDecisionScheduleRows(data);
     const rows = schedule.rows.map(function (row) {
-      return '<tr><td>' + ramAssistantEscapeHtml(row.group) + '</td><td>' + ramAssistantEscapeHtml(row.metric) + '</td><td><strong>' + ramAssistantEscapeHtml(row.value) + '</strong></td><td>' + ramAssistantEscapeHtml(row.note) + '</td></tr>';
+      return '<tr><td>' + ramAssistantEscapeHtml(row.group) + '</td><td>' + ramAssistantEscapeHtml(row.metric) + '</td><td>' + ramDecisionScheduleValueCell(row, schedule.status) + '</td><td>' + ramAssistantEscapeHtml(row.note) + '</td></tr>';
     }).join("");
 
     return [

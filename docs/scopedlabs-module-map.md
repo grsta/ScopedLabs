@@ -779,3 +779,11 @@ Example:
 - `assets/scopedlabs-compute-result-visuals.css` owns shared `.compute-decision-schedule-*` card/table styles.
 - `scripts/audit-compute-ram-proof-layout-v1.js` now enforces RAM order: Capacity Envelope, Recommendation References, Recommended Actions, Decision Schedule, then Export Report.
 - Non-goals: no RAM math change, no Capacity Envelope change, no export/snapshot/pipeline/Knowledge Base behavior change.
+
+### Compute RAM decision schedule status badge
+
+- `assets/scopedlabs-compute-assistant-contract.js` now renders the RAM Decision Schedule `Status` value through `ramDecisionScheduleValueCell(row, status)`.
+- The Status value uses the shared `scopedlabs-result-summary-status` class plus `ramDecisionStatusClass(status)`, matching the CPU decision schedule colored status badge pattern.
+- `tools/compute/ram-sizing/index.html` cache-busts the shared Compute assistant contract to `compute-assistant-ram-decision-status-badge-0620`.
+- `scripts/audit-compute-ram-proof-layout-v1.js` now checks the RAM Decision Schedule Status value renders through the colored badge contract.
+- Non-goals: no RAM math change, no chart geometry change, no export/snapshot/pipeline/Knowledge Base behavior change.
