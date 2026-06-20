@@ -81,6 +81,16 @@ check(
 );
 
 
+
+check(
+  "RAM_ACTIVE_WORKLOAD_CONTEXT_INITIALIZES_ON_SCRIPT_LOAD",
+  ramScript.includes("let workloadContextInitialized = false;") &&
+    ramScript.includes("function initializeWorkloadContext()") &&
+    ramScript.includes("initializeWorkloadContext();") &&
+    ramScript.indexOf("initializeWorkloadContext();") < ramScript.indexOf("els.calc.addEventListener"),
+  "tools/compute/ram-sizing/script.js",
+  "RAM should initialize the Active Workload card immediately after defining the context reader, before later event wiring can interrupt the page."
+);
 check(
   "RAM_SCRIPT_READS_ACTIVE_COMPUTE_WORKLOAD_CONTEXT",
   ramScript.includes("scopedlabs:pipeline:compute:workload-plan") &&
@@ -112,7 +122,7 @@ check(
 
 check(
   "RAM_TOP_SHELL_CACHE_BUST_UPDATED",
-  ramHtml.includes("./script.js?v=compute-ram-active-workload-context-0620"),
+  ramHtml.includes("./script.js?v=compute-ram-active-workload-context-init-0620"),
   "tools/compute/ram-sizing/index.html",
   "RAM page should cache-bust the local script after top shell parity wiring."
 );

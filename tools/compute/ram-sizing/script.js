@@ -23,6 +23,7 @@
   let hasResult = false;
   let cpuContext = null;
   let plannerContextFallback = null;
+  let workloadContextInitialized = false;
   let carriedWorkloadHydrated = false;
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
@@ -335,6 +336,17 @@
     hydrateWorkloadFromCpu(data);
     showWorkloadContext(carriedPlanner, data);
   }
+
+  function initializeWorkloadContext() {
+    if (workloadContextInitialized) return;
+    workloadContextInitialized = true;
+    try {
+      refreshFlowNote();
+    } catch {
+      workloadContextInitialized = false;
+    }
+  }
+  initializeWorkloadContext();
 
   function clearRamCapacityVisual() {
     if (els.ramVisual) {
@@ -674,6 +686,8 @@
   window.addEventListener("DOMContentLoaded", () => {
     const year = document.querySelector("[data-year]");
     if (year) year.textContent = new Date().getFullYear();
+
+    initializeWorkloadContext();
 
     refreshFlowNote();
     hideContinue();

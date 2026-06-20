@@ -856,3 +856,11 @@ Example:
 - `tools/compute/ram-sizing/index.html` cache-busts the RAM script to `compute-ram-active-workload-context-0620`.
 - `scripts/audit-compute-ram-top-shell-parity-v1.js` verifies active workload context reading and planner context carry-forward.
 - Non-goals: no RAM math change, no chart/proof/export/snapshot/pipeline/Knowledge Base behavior change.
+
+### Compute RAM active workload context initialization
+
+- `tools/compute/ram-sizing/script.js` now initializes the RAM Active Workload card immediately after the context reader is defined, before later event wiring.
+- This preserves the CPU-style top rhythm on RAM: pipeline, guide, Active Workload card, then Planning Inputs.
+- `tools/compute/ram-sizing/index.html` cache-busts the RAM script to `compute-ram-active-workload-context-init-0620`.
+- `scripts/audit-compute-ram-top-shell-parity-v1.js` verifies the immediate initialization path.
+- Non-goals: no RAM math change, no chart/proof/export/snapshot/pipeline/Knowledge Base behavior change.
