@@ -97,11 +97,57 @@ check(
   "Shared Compute assistant/proof styling should use the normal dark-green ScopedLabs panel style and include references-card/table styles."
 );
 
+
+check(
+  "RAM_RECOMMENDED_ACTIONS_RENDERER_EXISTS",
+  assistant.includes("function renderComputeRamRecommendedActions") &&
+    assistant.includes("compute-recommended-actions-list") &&
+    assistant.includes("renderRamRecommendedActions: renderComputeRamRecommendedActions"),
+  "assets/scopedlabs-compute-assistant-contract.js",
+  "Shared Compute assistant contract must own the RAM recommended actions renderer."
+);
+
+check(
+  "RAM_RECOMMENDED_ACTIONS_CARD_IS_BELOW_REFERENCES_AND_ABOVE_EXPORT",
+  ramHtml.indexOf("computeRamReferencesCard") !== -1 &&
+    ramHtml.indexOf("computeRamRecommendedActionsCard") !== -1 &&
+    ramHtml.indexOf("Export Report") !== -1 &&
+    ramHtml.indexOf("computeRamReferencesCard") < ramHtml.indexOf("computeRamRecommendedActionsCard") &&
+    ramHtml.indexOf("computeRamRecommendedActionsCard") < ramHtml.indexOf("Export Report"),
+  "tools/compute/ram-sizing/index.html",
+  "RAM Recommended Actions card must render below Recommendation References and above Export Report."
+);
+
+check(
+  "RAM_SCRIPT_RENDERS_ACTIONS_AFTER_REFERENCES",
+  ramScript.indexOf("renderRamReferences(ramCapacityEnvelope);") !== -1 &&
+    ramScript.indexOf("renderRamRecommendedActions(ramCapacityEnvelope);") !== -1 &&
+    ramScript.indexOf("renderRamReferences(ramCapacityEnvelope);") < ramScript.indexOf("renderRamRecommendedActions(ramCapacityEnvelope);"),
+  "tools/compute/ram-sizing/script.js",
+  "RAM script must render Recommended Actions after Recommendation References from the same ramCapacityEnvelope payload."
+);
+
+check(
+  "RAM_RECOMMENDED_ACTIONS_CLEAR_ON_INVALIDATE",
+  ramScript.includes("clearRamRecommendedActions();") &&
+    ramScript.indexOf("clearRamRecommendedActions();") < ramScript.indexOf("ScopedLabsAnalyzer.invalidate"),
+  "tools/compute/ram-sizing/script.js",
+  "RAM Recommended Actions should clear when inputs invalidate the result."
+);
+
+check(
+  "SHARED_COMPUTE_CSS_OWNS_RECOMMENDED_ACTIONS_CARD",
+  css.includes(".compute-recommended-actions-card") &&
+    css.includes(".compute-recommended-actions-list") &&
+    css.includes(".compute-recommended-action"),
+  "assets/scopedlabs-compute-result-visuals.css",
+  "Shared Compute CSS must own RAM Recommended Actions card/list styling."
+);
 check(
   "RAM_CACHE_BUSTS_PROOF_LAYOUT_ASSETS",
-  ramHtml.includes("scopedlabs-compute-result-visuals-0620-ram-proof-layout") &&
-    ramHtml.includes("compute-assistant-ram-proof-layout-0620") &&
-    ramHtml.includes("compute-ram-proof-layout-0620"),
+  ramHtml.includes("scopedlabs-compute-result-visuals-0620-ram-actions-card") &&
+    ramHtml.includes("compute-assistant-ram-actions-card-0620") &&
+    ramHtml.includes("compute-ram-actions-card-0620"),
   "tools/compute/ram-sizing/index.html",
   "RAM page should cache-bust CSS, assistant contract, and local script after the proof layout change."
 );

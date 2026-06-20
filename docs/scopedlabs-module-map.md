@@ -761,3 +761,12 @@ Example:
 - Recommendation References table marker cells use the same `*1`, `*2`, and `*3` visual tones as the chart footnotes: demand, reserve pressure, and downstream validation.
 - `scripts/audit-compute-reference-marker-tone-v1.js` verifies the CSS marker variables match the chart footnote colors and that table marker-number selectors/classes exist.
 - Non-goals: no RAM math change, no CPU/RAM chart geometry change, no export/snapshot/pipeline/Knowledge Base behavior change.
+
+### Compute RAM recommended actions proof card
+
+- `tools/compute/ram-sizing/index.html` now places `computeRamRecommendedActionsCard` below `computeRamReferencesCard` and above Export Report, matching the CPU proof stack rhythm.
+- `assets/scopedlabs-compute-assistant-contract.js` owns `renderComputeRamRecommendedActions(data)` and exports it through `window.ScopedLabsComputeAssistant.renderRamRecommendedActions`.
+- `tools/compute/ram-sizing/script.js` renders RAM Recommended Actions from the existing `ramCapacityEnvelope` payload after Recommendation References and clears the card during invalidation.
+- `assets/scopedlabs-compute-result-visuals.css` owns shared `.compute-recommended-actions-*` card/list styles.
+- `scripts/audit-compute-ram-proof-layout-v1.js` now enforces RAM order: Capacity Envelope, Recommendation References, Recommended Actions, then Export Report.
+- Non-goals: no RAM math change, no Capacity Envelope change, no export/snapshot/pipeline/Knowledge Base behavior change.

@@ -39,6 +39,8 @@
     ramVisual: $("computeRamVisual"),
     ramReferencesCard: $("computeRamReferencesCard"),
     ramReferences: $("computeRamReferences"),
+    ramRecommendedActionsCard: $("computeRamRecommendedActionsCard"),
+    ramRecommendedActions: $("computeRamRecommendedActions"),
     continueWrap: $("continue-wrap"),
     continue: $("continue"),
     calc: $("calc"),
@@ -221,6 +223,20 @@
     return true;
   }
 
+  function clearRamRecommendedActions() {
+    if (els.ramRecommendedActions) els.ramRecommendedActions.innerHTML = "";
+    if (els.ramRecommendedActionsCard) els.ramRecommendedActionsCard.hidden = true;
+  }
+
+  function renderRamRecommendedActions(result) {
+    if (!els.ramRecommendedActions || !els.ramRecommendedActionsCard) return false;
+    if (!window.ScopedLabsComputeAssistant || typeof window.ScopedLabsComputeAssistant.renderRamRecommendedActions !== "function") return false;
+
+    els.ramRecommendedActions.innerHTML = window.ScopedLabsComputeAssistant.renderRamRecommendedActions(result);
+    els.ramRecommendedActionsCard.hidden = false;
+    return true;
+  }
+
   function clearRamAssistant() {
     if (window.ScopedLabsComputeAssistant && typeof window.ScopedLabsComputeAssistant.clear === "function") {
       window.ScopedLabsComputeAssistant.clear();
@@ -255,6 +271,7 @@
       sessionStorage.removeItem(FLOW_KEYS["backup-window"]);
     } catch {}
 
+    clearRamRecommendedActions();
     clearRamReferences();
     clearRamAssistant();
 
@@ -450,6 +467,7 @@
     renderRamCapacityVisual(ramCapacityEnvelope);
     renderRamAssistant(ramCapacityEnvelope);
     renderRamReferences(ramCapacityEnvelope);
+    renderRamRecommendedActions(ramCapacityEnvelope);
 
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
       category: CATEGORY,

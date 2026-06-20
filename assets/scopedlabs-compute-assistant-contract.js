@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-compute-assistant-contract-007-ram-proof-layout";
+  const VERSION = "scopedlabs-compute-assistant-contract-008-ram-actions-card";
 
   function isComputeShellPage() {
     const body = document.body;
@@ -782,6 +782,47 @@
       '</table>'
     ].join("");
   }
+
+  function ramRecommendedActionRows(data) {
+    data = data || {};
+    const status = ramStatusLabel(data.status);
+    const values = ramAssistantCompactLine(data);
+    const workload = data.workloadLabel || workloadLabel(data.workload) || "active workload";
+    const concurrency = cpuNumber(data.concurrency, 0);
+    const perProc = ramAssistantValue(data, ["perProc", "perProcessRamGb", "perProcessGb"], 0);
+
+    if (status === "RISK") {
+      return [
+        { action: "Increase installed RAM before continuing", reason: "Required RAM is " + ramAssistantGb(values.required, 1) + " against a " + ramAssistantGb(values.installed, 0) + " installed tier. Resolve the memory edge before treating storage or density results as valid." },
+        { action: "Reduce concurrency or per-process memory pressure", reason: "The active " + workload + " plan uses " + concurrency + " processes / VMs at about " + ramAssistantGb(perProc, 1) + " each before overhead and reserve." },
+        { action: "Review cache and reserve assumptions", reason: "Reserve pressure can move quickly on memory-heavy workloads. Confirm cache/buffer behavior before locking the RAM tier." },
+        { action: "Recalculate RAM before downstream validation", reason: "Storage IOPS, throughput, and VM density should use the corrected RAM baseline, not the current Risk state." }
+      ];
+    }
+
+    if (status === "WATCH") {
+      return [
+        { action: "Validate RAM margin before procurement", reason: "The RAM plan is usable but reserve margin is tightening. Confirm whether " + ramAssistantGb(values.headroom, 1) + " of remaining headroom is acceptable." },
+        { action: "Confirm cache/buffer pool behavior", reason: "The current headroom target may be enough for planning, but memory-heavy services can consume reserve faster than expected." },
+        { action: "Keep RAM flagged through Storage IOPS", reason: "Continue downstream, but carry RAM as a watch item until storage and density checks validate the same workload assumptions." },
+        { action: "Recheck RAM if workload assumptions change", reason: "Concurrency, per-process footprint, planner branch, and upstream CPU context can all shift the required RAM tier." }
+      ];
+    }
+
+    return [
+      { action: "Carry RAM baseline into Storage IOPS", reason: "The RAM envelope is inside the current planning range, so storage validation should use this memory baseline." },
+      { action: "Preserve CPU and RAM assumptions together", reason: "Keep workload type, concurrency, CPU status, RAM reserve, and planner context attached so downstream results stay defensible." },
+      { action: "Recheck RAM if density changes", reason: "VM density, GPU branch decisions, or workload growth can move memory pressure back into Watch or Risk." }
+    ];
+  }
+
+  function renderComputeRamRecommendedActions(data) {
+    const rows = ramRecommendedActionRows(data).map(function (item) {
+      return '<div class="compute-recommended-action"><strong>' + ramAssistantEscapeHtml(item.action || "Review RAM plan") + '</strong><span>' + ramAssistantEscapeHtml(item.reason || "Engineering review required.") + '</span></div>';
+    });
+
+    return '<div class="compute-recommended-actions-list">' + (rows.length ? rows.join("") : '<div class="compute-recommended-action"><strong>No corrective actions generated</strong><span>Run the RAM calculation again to refresh recommendations.</span></div>') + '</div>';
+  }
   function renderToolAssistant(config) {
     config = config || {};
 
@@ -899,6 +940,7 @@
     buildToolAssistantModel,
     renderToolAssistant,
     renderRamRecommendationReferences: renderComputeRamRecommendationReferences,
+    renderRamRecommendedActions: renderComputeRamRecommendedActions,
     mountCpuSizing,
     clear: clearAssistant
   });

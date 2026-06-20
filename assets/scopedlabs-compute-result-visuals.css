@@ -284,3 +284,42 @@
   font-weight: 900;
   letter-spacing: 0.06em;
 }
+
+/* compute-ram-recommended-actions-card-0620
+   Shared Compute recommended-actions proof card used below Recommendation References. */
+.compute-recommended-actions-card {
+  margin-top: 14px;
+  border-color: rgba(42, 169, 93, 0.28);
+  background:
+    radial-gradient(circle at 0 0, rgba(22, 163, 74, 0.08), transparent 34%),
+    rgba(0, 0, 0, 0.14);
+}
+
+.compute-recommended-actions-card[hidden] {
+  display: none !important;
+}
+
+.compute-recommended-actions-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.compute-recommended-action {
+  border: 1px solid rgba(42, 169, 93, 0.18);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.14);
+  padding: 11px 12px;
+}
+
+.compute-recommended-action strong {
+  display: block;
+  margin-bottom: 5px;
+  color: #f8fafc;
+}
+
+.compute-recommended-action span {
+  display: block;
+  color: rgba(203, 213, 225, 0.84);
+  line-height: 1.44;
+}
