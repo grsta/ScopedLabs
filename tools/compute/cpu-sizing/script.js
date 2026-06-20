@@ -558,6 +558,13 @@
   }
 
   function cpuEnvelopeThresholds(result) {
+    if (
+      window.ScopedLabsComputeCapacityVisuals &&
+      typeof window.ScopedLabsComputeCapacityVisuals.cpuEnvelopeThresholds === "function"
+    ) {
+      return window.ScopedLabsComputeCapacityVisuals.cpuEnvelopeThresholds(result);
+    }
+
     result = result || {};
 
     const outputs = result.outputs && typeof result.outputs === "object" ? result.outputs : {};
@@ -569,7 +576,7 @@
     ));
 
     const targetUtilizationPercent = cpuEnvelopeClamp(cpuEnvelopeNumber(
-      inputs.targetUtilizationPercent || outputs.utilizationTarget || result.utilizationTarget,
+      inputs.targetUtilizationPercent || result.targetUtilizationPercent || outputs.utilizationTarget || result.utilizationTarget,
       70
     ), 10, 95);
 
@@ -584,14 +591,17 @@
     ));
 
     const failoverDemandCores = Math.max(growthDemandCores, cpuEnvelopeNumber(
-      outputs.effectiveDemandCores || result.effectiveDemandCores || result.eff,
+      outputs.envelopeFinalDemandCores || result.envelopeFinalDemandCores || outputs.effectiveDemandCores || result.effectiveDemandCores || result.eff,
       growthDemandCores
     ));
 
     const finalDemandCores = Math.max(currentDemandCores, growthDemandCores, failoverDemandCores);
-    const usableCapacityCores = Math.max(0.1, recommendedLogicalCores * (targetUtilizationPercent / 100));
-    const watchThresholdCores = recommendedLogicalCores * 0.70;
-    const riskThresholdCores = recommendedLogicalCores * 0.90;
+    const usableCapacityCores = Math.max(0.1, cpuEnvelopeNumber(
+      outputs.usableCapacityCores || result.usableCapacityCores || outputs.envelopeUsableCapacityCores || result.envelopeUsableCapacityCores,
+      recommendedLogicalCores * (targetUtilizationPercent / 100)
+    ));
+    const watchThresholdCores = usableCapacityCores * 0.70;
+    const riskThresholdCores = usableCapacityCores * 0.90;
 
     let status = "GOOD";
 

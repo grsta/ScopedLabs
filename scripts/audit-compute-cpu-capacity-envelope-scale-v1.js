@@ -19,104 +19,109 @@ function check(id, ok, file, detail) {
   console.log("  " + detail);
 }
 
-function buildSvg(source, payload) {
+function runShared(payload) {
+  const source = read("assets/scopedlabs-compute-capacity-visuals.js");
   const context = { window: {}, console };
   vm.createContext(context);
   vm.runInContext(source, context, { filename: "assets/scopedlabs-compute-capacity-visuals.js" });
-  return context.window.ScopedLabsComputeCapacityVisuals.buildCpuCapacityEnvelopeSvg(payload);
+  return {
+    api: context.window.ScopedLabsComputeCapacityVisuals,
+    thresholds: context.window.ScopedLabsComputeCapacityVisuals.cpuEnvelopeThresholds(payload),
+    svg: context.window.ScopedLabsComputeCapacityVisuals.buildCpuCapacityEnvelopeSvg(payload)
+  };
 }
 
 console.log("SCOPEDLABS CPU CAPACITY ENVELOPE SCALE AUDIT V1\n");
 
 const visual = read("assets/scopedlabs-compute-capacity-visuals.js");
+const cpuScript = read("tools/compute/cpu-sizing/script.js");
 const cpuHtml = read("tools/compute/cpu-sizing/index.html");
 const ramHtml = read("tools/compute/ram-sizing/index.html");
 const moduleMap = read("docs/scopedlabs-module-map.md");
 
 check(
-  "CPU_SCALE_IS_SHARED_MODULE_PATCH",
-  visual.includes('const VERSION = "scopedlabs-compute-capacity-visuals-013-cpu-scale-callout"') &&
-    visual.includes("buildCpuCapacityEnvelopeSvg") &&
-    visual.includes("renderCpuCapacityEnvelope"),
+  "CPU_STATUS_AUTHORITY_EXPORTED_BY_SHARED_VISUAL_MODULE",
+  visual.includes("cpuEnvelopeThresholds,") &&
+    visual.includes("cpuEnvelopeStatus,") &&
+    visual.includes('const VERSION = "scopedlabs-compute-capacity-visuals-014-unified-cpu-status"'),
   "assets/scopedlabs-compute-capacity-visuals.js",
-  "CPU readable scale fix must live in the shared compute capacity visual module."
+  "Shared Compute capacity visual module must export CPU envelope thresholds/status authority."
 );
 
 check(
-  "CPU_SCALE_EXCLUDES_RAW_RECOMMENDED_FROM_YMAX",
-  visual.includes("visualPeakCores") &&
-    visual.includes("visualRecommendedDisplayCores") &&
-    visual.includes("visualScaleBasisCores") &&
-    visual.includes("recommendedAbovePlotScale") &&
-    !visual.includes("const yMax = Math.max(4, Math.ceil(Math.max(\n      recommendedLogicalCores"),
+  "CPU_STATUS_THRESHOLDS_USE_USABLE_CAPACITY",
+  visual.includes("const watchThresholdCores = usableCapacityCores * 0.70;") &&
+    visual.includes("const riskThresholdCores = usableCapacityCores * 0.90;") &&
+    !visual.includes("const watchThresholdCores = recommendedLogicalCores * 0.70;") &&
+    !visual.includes("const riskThresholdCores = recommendedLogicalCores * 0.90;"),
   "assets/scopedlabs-compute-capacity-visuals.js",
-  "Raw recommended logical cores should not be the first-order Y-axis scale driver."
+  "CPU status thresholds must align to usable capacity so chart zones and status chip agree."
 );
 
 check(
-  "CPU_SCALE_KEEP_RECOMMENDED_AS_CALLOUT",
-  visual.includes("const logicalLabel = \"Recommended - \" + recommendedLogicalCores + \" logical cores\"") &&
-    visual.includes("svgText(logicalLabel)") &&
-    visual.includes("(above scale)"),
-  "assets/scopedlabs-compute-capacity-visuals.js",
-  "Recommended logical cores must remain visible as a callout when it is above the readable plot scale."
+  "CPU_PAGE_DELEGATES_THRESHOLDS_TO_SHARED_MODULE",
+  cpuScript.includes("window.ScopedLabsComputeCapacityVisuals.cpuEnvelopeThresholds(result)") &&
+    !cpuScript.includes("const watchThresholdCores = recommendedLogicalCores * 0.70;") &&
+    !cpuScript.includes("const riskThresholdCores = recommendedLogicalCores * 0.90;"),
+  "tools/compute/cpu-sizing/script.js",
+  "CPU page script should delegate CPU envelope thresholds to the shared capacity visual module."
 );
 
-let lowSvg = "";
-let lowError = null;
+let stress = null;
+let error = null;
 try {
-  lowSvg = buildSvg(visual, {
-    inputs: { targetUtilizationPercent: 10, concurrency: 100, growthReservePercent: 20, failoverMultiplier: 1 },
+  stress = runShared({
+    inputs: {
+      targetUtilizationPercent: 10,
+      concurrency: 100,
+      growthReservePercent: 21,
+      failoverMultiplier: 1
+    },
     outputs: {
-      recommendedLogicalCores: 161,
-      recommendedPhysicalCores: 81,
-      baseDemandCores: 4.8,
-      demandAfterGrowthCores: 12.4,
-      effectiveDemandCores: 16.1,
-      usableCapacityCores: 16.1
+      recommendedLogicalCores: 1005,
+      recommendedPhysicalCores: 1005,
+      baseDemandCores: 50,
+      demandAfterGrowthCores: 75,
+      effectiveDemandCores: 100.5,
+      usableCapacityCores: 100.5
     },
     status: "GOOD"
   });
-} catch (error) {
-  lowError = error;
+} catch (err) {
+  error = err;
 }
 
 check(
-  "CPU_LOW_UTILIZATION_SVG_BUILDS",
-  !!lowSvg &&
-    lowSvg.includes("<svg") &&
-    lowSvg.includes("CPU CAPACITY ENVELOPE") &&
-    lowSvg.includes("Usable capacity - 16.1 cores") &&
-    lowSvg.includes("Recommended - 161 logical cores (above scale)") &&
-    !lowSvg.includes("NaN") &&
-    !lowSvg.includes("undefined"),
+  "CPU_LOW_UTILIZATION_STATUS_MATCHES_CHART",
+  !!stress &&
+    stress.thresholds.status === "RISK" &&
+    Math.abs(stress.thresholds.watchThresholdCores - 70.35) < 0.02 &&
+    Math.abs(stress.thresholds.riskThresholdCores - 90.45) < 0.02 &&
+    stress.svg.includes(">RISK</text>") &&
+    stress.svg.includes("Usable capacity - 100.5 cores") &&
+    stress.svg.includes("Recommended - 1005 logical cores (above scale)") &&
+    !stress.svg.includes("NaN") &&
+    !stress.svg.includes("undefined"),
   "assets/scopedlabs-compute-capacity-visuals.js",
-  lowError ? "Runtime error: " + lowError.message : "Low-utilization case renders without dropping the chart."
+  error ? "Runtime error: " + error.message : "10% target / high recommended-core case must render a readable chart with matching Risk status."
 );
 
 check(
-  "CPU_LOW_UTILIZATION_AXIS_REMAINS_READABLE",
-  !!lowSvg &&
-    !lowSvg.includes(">160<") &&
-    !lowSvg.includes(">188<"),
-  "assets/scopedlabs-compute-capacity-visuals.js",
-  "Low-utilization chart should not display a huge axis scale that crushes the demand curve."
-);
-
-check(
-  "CPU_RAM_LOAD_READABLE_SCALE_VERSION",
-  cpuHtml.includes("/assets/scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-013-cpu-scale-callout") &&
-    ramHtml.includes("/assets/scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-013-cpu-scale-callout"),
+  "CPU_RAM_LOAD_UNIFIED_STATUS_VISUAL_VERSION",
+  cpuHtml.includes("/assets/scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-014-unified-cpu-status") &&
+    ramHtml.includes("/assets/scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-014-unified-cpu-status") &&
+    cpuHtml.includes("./script.js?v=compute-cpu-unified-envelope-status-0620"),
   "tools/compute/cpu-sizing/index.html; tools/compute/ram-sizing/index.html",
-  "CPU/RAM pages should load the shared readable-scale capacity visual version."
+  "CPU/RAM pages must load the unified status shared visual, and CPU must load the delegating script."
 );
 
 check(
-  "MODULE_MAP_RECORDS_READABLE_SCALE_AUDIT",
+  "MODULE_MAP_RECORDS_UNIFIED_CPU_STATUS",
   moduleMap.includes("### Compute CPU capacity readable scale") &&
+    moduleMap.includes("usable CPU capacity") &&
     moduleMap.includes("audit-compute-cpu-capacity-envelope-scale-v1.js"),
   "docs/scopedlabs-module-map.md",
-  "Module map must document the shared visual scale fix and audit."
+  "Module map must document the shared status/scale authority fix."
 );
 
 console.log("\nSUMMARY");
