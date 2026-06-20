@@ -796,3 +796,11 @@ Example:
 - `scripts/audit-compute-ram-export-parity-v1.js` verifies RAM export-aware proof sections, CPU baseline export sections, stack order, shared export collector presence, module-map documentation, and batch inclusion.
 - Cache-bust checks in RAM proof/rendering audits now validate the active Compute RAM 0620 proof-stack version families instead of stale single-lane tokens.
 - Non-goals: no RAM math change, no chart geometry change, no assistant content change, no snapshot/pipeline/Knowledge Base behavior change.
+
+### Compute RAM export shell parity
+
+- `tools/compute/ram-sizing/index.html` now uses the CPU-grade `compute-export-card` shell with the shared `reportMetadataMount` collapsed Report details UI.
+- The legacy RAM `export-grid` fields and `Documentation & Export` pill are removed from the visible page shell; shared `assets/scopedlabs-report-metadata.js` owns report metadata rendering.
+- RAM keeps the same `exportReport`, `saveSnapshot`, and `exportStatus` IDs so export/snapshot behavior remains intact.
+- `scripts/audit-compute-ram-export-shell-parity-v1.js` verifies RAM export shell parity with CPU, report metadata mount consumption, legacy export-grid removal, button preservation, proof-stack placement, module-map documentation, and batch inclusion.
+- Non-goals: no RAM math change, no proof card content change, no chart geometry change, no snapshot/pipeline/Knowledge Base behavior change.

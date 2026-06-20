@@ -15,6 +15,7 @@ const defaultAudits = [
   "scripts/audit-compute-assistant-rendering-contract-v1.js",
   "scripts/audit-compute-ram-proof-layout-v1.js",
   "scripts/audit-compute-ram-export-parity-v1.js",
+  "scripts/audit-compute-ram-export-shell-parity-v1.js",
   "scripts/audit-compute-reference-marker-tone-v1.js",
   "scripts/audit-compute-tool-shell-consumption-v1.js"
 ];
