@@ -736,3 +736,11 @@ Example:
 - `tools/compute/ram-sizing/index.html` cache-busts the shared Compute assistant contract to `compute-assistant-ram-summary-card-0620`.
 - `scripts/audit-scopedlabs-tool-assistant-contract-v1.js` verifies RAM uses the custom Compute summary-card renderer.
 - Non-goals: no RAM math change, no RAM visual change, no export/snapshot/pipeline/Knowledge Base behavior change.
+
+### Compute assistant rendering contract
+
+- `scripts/audit-compute-assistant-rendering-contract-v1.js` verifies runtime rendering dependencies for Compute assistant summary cards.
+- `assets/scopedlabs-compute-result-visuals.css` owns the shared `.scopedlabs-result-summary-*` classes required by CPU/RAM assistant summary-card renderers.
+- `tools/compute/ram-sizing/index.html` cache-busts the shared Compute result visual CSS to `scopedlabs-compute-result-visuals-0620-assistant-summary-card`.
+- The audit requires RAM to route through `renderComputeRamTopSummaryCard(data)` before the generic Local Assistant fallback, preventing bullet-list fallback from being treated as READY.
+- Non-goals: no RAM math change, no Capacity Envelope change, no export/snapshot/pipeline/Knowledge Base behavior change.
