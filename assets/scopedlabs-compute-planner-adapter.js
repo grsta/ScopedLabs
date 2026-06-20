@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-compute-planner-adapter-011-active-workload-visual";
+  var VERSION = "scopedlabs-compute-planner-adapter-012-workload-ledger";
   var State = window.ScopedLabsComputePlanState;
   var Shell = window.ScopedLabsCategoryPlannerShell;
 
@@ -441,13 +441,71 @@
     return "access-status-planning";
   }
 
-  function completedComputeCheckCount(workload) {
-    var completed = workload && workload.completedTools && typeof workload.completedTools === "object"
-      ? workload.completedTools
-      : workload && workload.completedChecks && typeof workload.completedChecks === "object"
-        ? workload.completedChecks
-        : {};
-    return Object.keys(completed).filter(function (key) { return !!completed[key]; }).length;
+  var COMPUTE_LEDGER_TOOL_ORDER = [
+    "cpu-sizing",
+    "ram-sizing",
+    "storage-iops",
+    "storage-throughput",
+    "vm-density",
+    "gpu-vram",
+    "power-thermal",
+    "raid-rebuild-time",
+    "backup-window",
+    "nic-bonding"
+  ];
+
+  function computeLedgerToolLabel(toolSlug) {
+    var labels = {
+      "cpu-sizing": "CPU Sizing",
+      "ram-sizing": "RAM Sizing",
+      "storage-iops": "Storage IOPS",
+      "storage-throughput": "Storage Throughput",
+      "vm-density": "VM Density",
+      "gpu-vram": "GPU VRAM",
+      "power-thermal": "Power & Thermal",
+      "raid-rebuild-time": "RAID Rebuild Time",
+      "backup-window": "Backup Window",
+      "nic-bonding": "NIC Bonding"
+    };
+    return labels[toolSlug] || titleCase(toolSlug);
+  }
+
+  function workloadResultMap(workload, plan) {
+    if (!workload) return {};
+    var byWorkload = plan && plan.results && workload.id ? plan.results[workload.id] : null;
+    return byWorkload && typeof byWorkload === "object" ? byWorkload : {};
+  }
+
+  function workloadHasToolResult(workload, plan, toolSlug) {
+    var completed = workload && workload.completedTools && typeof workload.completedTools === "object" ? workload.completedTools : {};
+    var checks = workload && workload.completedChecks && typeof workload.completedChecks === "object" ? workload.completedChecks : {};
+    var results = workloadResultMap(workload, plan);
+    return !!(completed[toolSlug] || checks[toolSlug] || results[toolSlug]);
+  }
+
+  function completedComputeCheckCount(workload, plan) {
+    var completed = workload && workload.completedTools && typeof workload.completedTools === "object" ? workload.completedTools : {};
+    var checks = workload && workload.completedChecks && typeof workload.completedChecks === "object" ? workload.completedChecks : {};
+    var results = workloadResultMap(workload, plan);
+    var keys = {};
+
+    Object.keys(completed).forEach(function (key) { if (completed[key]) keys[key] = true; });
+    Object.keys(checks).forEach(function (key) { if (checks[key]) keys[key] = true; });
+    Object.keys(results).forEach(function (key) { if (results[key]) keys[key] = true; });
+
+    return Object.keys(keys).length;
+  }
+
+  function latestWorkloadToolResult(workload, plan) {
+    var results = workloadResultMap(workload, plan);
+    var latest = null;
+
+    COMPUTE_LEDGER_TOOL_ORDER.forEach(function (toolSlug) {
+      var item = results[toolSlug] || (workload && workload.toolLedger && workload.toolLedger[toolSlug]) || null;
+      if (item) latest = item;
+    });
+
+    return latest;
   }
 
   function workloadStatusValue(workload) {
@@ -464,7 +522,7 @@
     var branches = branchList(workload);
     if (branches.length) return "WATCH";
 
-    var checks = completedComputeCheckCount(workload);
+    var checks = completedComputeCheckCount(workload, plan);
     if (checks > 0) return "PENDING";
 
     return "PLANNING";
@@ -474,7 +532,7 @@
     return active && workload && workload.id === active.id ? "Active Workload" : "Saved Workload";
   }
 
-  function workloadKeySavedResult(workload) {
+  function workloadKeySavedResult(workload, plan) {
     var branches = branchList(workload);
     return [
       "Env: " + titleCase(workload.environmentType),
@@ -484,7 +542,7 @@
     ].join("; ");
   }
 
-  function workloadNextAction(workload) {
+  function workloadNextAction(workload, plan) {
     if (!workload) return "Save a workload before continuing.";
     return "Continue to CPU Sizing.";
   }
@@ -636,7 +694,7 @@
     ].join("");
   }
 
-  function summaryBranches(workloads) {
+  function summaryBranches(workloads, plan) {
     var groups = {
       core: [],
       storage: [],
@@ -648,10 +706,11 @@
     (workloads || []).forEach(function (workload) {
       groups.core.push(workload);
       var branches = workload.branches || {};
-      if (branches.storageHeavy) groups.storage.push(workload);
-      if (branches.gpu) groups.acceleration.push(workload);
-      if (branches.powerThermal || branches.nicBonding) groups.infrastructure.push(workload);
-      if (branches.raid || branches.backup) groups.recovery.push(workload);
+
+      if (branches.storageHeavy || workloadHasToolResult(workload, plan, "storage-iops") || workloadHasToolResult(workload, plan, "storage-throughput")) groups.storage.push(workload);
+      if (branches.gpu || workloadHasToolResult(workload, plan, "gpu-vram")) groups.acceleration.push(workload);
+      if (branches.powerThermal || branches.nicBonding || workloadHasToolResult(workload, plan, "power-thermal") || workloadHasToolResult(workload, plan, "nic-bonding")) groups.infrastructure.push(workload);
+      if (branches.raid || branches.backup || workloadHasToolResult(workload, plan, "raid-rebuild-time") || workloadHasToolResult(workload, plan, "backup-window")) groups.recovery.push(workload);
     });
 
     return groups;
@@ -660,8 +719,8 @@
   function renderSummary(plan) {
     var workloads = plan.workloads || [];
     var active = State.activeWorkload(plan);
-    var groups = summaryBranches(workloads);
-    var activeGroups = active ? summaryBranches([active]) : groups;
+    var groups = summaryBranches(workloads, plan);
+    var activeGroups = active ? summaryBranches([active], plan) : groups;
 
     if (els.activeWorkloadLabel) {
       els.activeWorkloadLabel.textContent = "Active workload: " + (active ? active.name : "No active workload selected");

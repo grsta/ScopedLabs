@@ -207,21 +207,117 @@
     return match;
   }
 
+
+  var COMPUTE_TOOL_SEQUENCE = [
+    "cpu-sizing",
+    "ram-sizing",
+    "storage-iops",
+    "storage-throughput",
+    "vm-density",
+    "gpu-vram",
+    "power-thermal",
+    "raid-rebuild-time",
+    "backup-window",
+    "nic-bonding"
+  ];
+
+  function computeToolLabel(toolSlug) {
+    var labels = {
+      "cpu-sizing": "CPU Sizing",
+      "ram-sizing": "RAM Sizing",
+      "storage-iops": "Storage IOPS",
+      "storage-throughput": "Storage Throughput",
+      "vm-density": "VM Density",
+      "gpu-vram": "GPU VRAM",
+      "power-thermal": "Power & Thermal",
+      "raid-rebuild-time": "RAID Rebuild Time",
+      "backup-window": "Backup Window",
+      "nic-bonding": "NIC Bonding"
+    };
+
+    return labels[toolSlug] || String(toolSlug || "Compute Tool")
+      .replace(/[-_]+/g, " ")
+      .replace(/\b\w/g, function (letter) { return letter.toUpperCase(); });
+  }
+
+  function computeNextToolSlug(toolSlug, workload) {
+    var branches = workload && workload.branches && typeof workload.branches === "object" ? workload.branches : {};
+    var base = ["cpu-sizing", "ram-sizing"];
+
+    if (branches.storageHeavy) base.push("storage-iops", "storage-throughput");
+    base.push("vm-density");
+    if (branches.gpu) base.push("gpu-vram");
+    if (branches.powerThermal || branches.nicBonding) base.push("power-thermal");
+    if (branches.raid) base.push("raid-rebuild-time");
+    if (branches.backup) base.push("backup-window");
+    if (branches.nicBonding) base.push("nic-bonding");
+
+    var index = base.indexOf(toolSlug);
+    if (index === -1) return base[0] || "";
+    return base[index + 1] || "summary";
+  }
+
+  function normalizeResultStatus(savedResult) {
+    var outputs = savedResult && savedResult.outputs && typeof savedResult.outputs === "object" ? savedResult.outputs : {};
+    return String(
+      savedResult.status ||
+      savedResult.envelopeStatus ||
+      savedResult.summaryStatus ||
+      outputs.status ||
+      outputs.envelopeStatus ||
+      "PENDING"
+    ).toUpperCase();
+  }
+
+  function summarizeToolResult(toolSlug, savedResult) {
+    var outputs = savedResult && savedResult.outputs && typeof savedResult.outputs === "object" ? savedResult.outputs : {};
+    var summary = savedResult.summary || savedResult.keySavedResult || savedResult.interpretation || outputs.summary || "";
+
+    if (!summary && outputs.recommendedLogicalCores) {
+      summary = "Recommended " + outputs.recommendedLogicalCores + " logical cores" + (outputs.usableCapacityCores ? "; usable " + outputs.usableCapacityCores + " cores" : "");
+    }
+
+    if (!summary && outputs.recommendedRamGb) summary = "Recommended RAM " + outputs.recommendedRamGb + " GB";
+    if (!summary) summary = computeToolLabel(toolSlug) + " completed.";
+
+    return String(summary).replace(/\s+/g, " ").trim();
+  }
+
+  function rollupToolStatuses(toolStatuses, completedCount) {
+    var values = Object.keys(toolStatuses || {}).map(function (key) {
+      return String(toolStatuses[key] || "").toUpperCase();
+    });
+
+    if (values.indexOf("RISK") >= 0) return "RISK";
+    if (values.indexOf("AUTHORITY REVIEW") >= 0) return "AUTHORITY REVIEW";
+    if (values.indexOf("WATCH") >= 0) return "WATCH";
+    if (completedCount > 0) return "PENDING";
+
+    return "PLANNING";
+  }
+
+
   function recordToolResult(toolSlug, result) {
     var plan = load();
     var active = activeWorkload(plan);
     var workloadId = active ? active.id : "unscoped";
     var savedResult = result || {};
-    var statusValue = String(savedResult.status || savedResult.summaryStatus || "PENDING").toUpperCase();
+    var statusValue = normalizeResultStatus(savedResult);
+    var resultSummary = summarizeToolResult(toolSlug, savedResult);
+    var resultLabel = savedResult.label || savedResult.title || computeToolLabel(toolSlug);
+    var stampedAt = now();
 
     plan.results[workloadId] = plan.results[workloadId] || {};
     plan.results[workloadId][toolSlug] = {
       contract: "scopedlabs.compute.tool-result." + toolSlug + ".v1",
       category: CATEGORY,
       tool: toolSlug,
+      toolLabel: resultLabel,
       workloadId: workloadId,
+      status: statusValue,
+      summary: resultSummary,
       result: savedResult,
-      updatedAt: now()
+      updatedAt: stampedAt
     };
 
     if (active) {
@@ -229,26 +325,30 @@
       active.completedChecks = active.completedChecks && typeof active.completedChecks === "object" ? active.completedChecks : {};
       active.toolStatuses = active.toolStatuses && typeof active.toolStatuses === "object" ? active.toolStatuses : {};
       active.keyResults = active.keyResults && typeof active.keyResults === "object" ? active.keyResults : {};
+      active.toolLedger = active.toolLedger && typeof active.toolLedger === "object" ? active.toolLedger : {};
 
       active.completedTools[toolSlug] = true;
       active.completedChecks[toolSlug] = true;
       active.toolStatuses[toolSlug] = statusValue;
+      active.toolLedger[toolSlug] = plan.results[workloadId][toolSlug];
       active.keyResults[toolSlug] = {
-        label: savedResult.label || savedResult.title || toolSlug,
-        summary: savedResult.summary || savedResult.keySavedResult || "",
+        label: resultLabel,
+        summary: resultSummary,
         status: statusValue,
-        updatedAt: now()
+        updatedAt: stampedAt
       };
 
-      if (statusValue === "RISK") {
-        active.status = "RISK";
-      } else if (statusValue === "WATCH" && active.status !== "RISK") {
-        active.status = "WATCH";
-      } else if (active.status !== "RISK" && active.status !== "WATCH") {
-        active.status = "PENDING";
-      }
+      active.completedToolCount = Object.keys(active.completedTools).filter(function (key) {
+        return !!active.completedTools[key];
+      }).length;
 
-      active.updatedAt = now();
+      active.lastCompletedTool = toolSlug;
+      active.lastCompletedToolLabel = computeToolLabel(toolSlug);
+      active.lastCompletedAt = stampedAt;
+      active.nextSuggestedTool = computeNextToolSlug(toolSlug, active);
+      active.nextSuggestedToolLabel = active.nextSuggestedTool === "summary" ? "Compute Summary" : computeToolLabel(active.nextSuggestedTool);
+      active.status = rollupToolStatuses(active.toolStatuses, active.completedToolCount);
+      active.updatedAt = stampedAt;
 
       plan.workloads = plan.workloads.map(function (item) {
         return item.id === active.id ? active : item;
@@ -260,7 +360,6 @@
 
     return save(plan);
   }
-
 
   function removeWorkload(id) {
     var plan = load();

@@ -922,3 +922,12 @@ Example:
 - CPU/RAM pages load `scopedlabs-compute-capacity-visuals-015-adaptive-cpu-scale`; CPU loads `compute-cpu-unified-envelope-status-0620`.
 - `scripts/audit-compute-cpu-capacity-envelope-scale-v1.js` runtime-tests both the small 2-core case and the 10% target / high-recommended-core case.
 - Non-goals: no CPU sizing input math change, no RAM chart math change, no export/snapshot/Knowledge Base behavior change.
+
+### Compute workload tool ledger
+
+- `assets/scopedlabs-compute-plan-state.js` owns the persistent per-workload Compute tool ledger: completed tools, check count, statuses, key saved results, last completed tool, rollup status, and next suggested tool.
+- `assets/scopedlabs-compute-tool-ledger-publisher.js` is the shared tool-page publisher that detects completed Compute tool results and calls `ScopedLabsComputePlanState.recordToolResult()`.
+- `assets/scopedlabs-compute-planner-adapter.js` reads the shared ledger so the Workload Planner shows where each workload left off, including completed branch tools such as IOPS, throughput, GPU VRAM, power, RAID, and backup.
+- Compute tool pages load plan-state `scopedlabs-compute-plan-state-008-tool-ledger` and publisher `scopedlabs-compute-tool-ledger-publisher-001`; page-local planner ledger logic is not used.
+- `scripts/audit-compute-workload-ledger-v1.js` verifies shared ledger ownership, page loading, planner rendering, module-map documentation, and audit-batch inclusion.
+- Non-goals: no CPU/RAM math change, no checkout/auth/export/snapshot/Knowledge Base behavior change.
