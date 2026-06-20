@@ -912,3 +912,11 @@ Example:
 - `tools/compute/workload-planner/index.html` cache-busts the adapter to `scopedlabs-compute-planner-adapter-011-active-workload-visual`.
 - `scripts/audit-compute-planner-summary-pipeline-nav-v1.js` verifies active-scoped chart rendering and shared plan-state re-render behavior.
 - Non-goals: no CPU/RAM math change, no export/snapshot/Knowledge Base behavior change.
+
+### Compute CPU capacity readable scale
+
+- `assets/scopedlabs-compute-capacity-visuals.js` now keeps the CPU Capacity Envelope readable when low target utilization creates a large raw recommended logical-core count.
+- The shared renderer scales around demand plus usable CPU capacity and treats raw recommended logical cores as an above-scale callout when needed.
+- CPU/RAM pages that load the shared capacity visual are cache-busted to `scopedlabs-compute-capacity-visuals-013-cpu-scale-callout`.
+- `scripts/audit-compute-cpu-capacity-envelope-scale-v1.js` runtime-tests the 10% target / 161 logical-core case so the chart cannot silently disappear.
+- Non-goals: no CPU sizing math change, no RAM chart math change, no export/snapshot/Knowledge Base behavior change.

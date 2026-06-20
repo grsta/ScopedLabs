@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-compute-capacity-visuals-011-restore-ram-reference-labels";
+  const VERSION = "scopedlabs-compute-capacity-visuals-013-cpu-scale-callout";
 
   function clamp(value, min, max) {
       return Math.max(min, Math.min(max, value));
@@ -416,15 +416,25 @@
     const height = 430;
     const plot = { x: 70, y: 102, w: 640, h: 238 };
 
-    const yMax = Math.max(4, Math.ceil(Math.max(
-      recommendedLogicalCores,
-      usableCapacityCores,
-      riskThresholdCores,
-      finalDemand,
-      growthDemand,
+    const visualPeakCores = Math.max(
       currentDemand,
+      growthDemand,
+      finalDemand,
+      usableCapacityCores,
       4
-    ) * 1.16 / 2) * 2);
+    );
+    const visualRecommendedDisplayCores = Math.min(
+      recommendedLogicalCores,
+      Math.max(visualPeakCores * 1.35, 8)
+    );
+    const visualScaleBasisCores = Math.max(
+      visualPeakCores * 1.22,
+      visualRecommendedDisplayCores,
+      8
+    );
+    const visualRoundStep = visualScaleBasisCores <= 32 ? 4 : visualScaleBasisCores <= 96 ? 8 : 16;
+    const yMax = Math.max(4, Math.ceil(visualScaleBasisCores / visualRoundStep) * visualRoundStep);
+    const recommendedAbovePlotScale = recommendedLogicalCores > yMax;
 
     function yScale(value) {
       return plot.y + plot.h - (localClamp(value, 0, yMax) / yMax) * plot.h;
@@ -467,10 +477,17 @@
       }
     ];
 
-    const watchY = yScale(watchThresholdCores);
-    const riskY = yScale(riskThresholdCores);
+    const visualWatchThresholdCores = watchThresholdCores > yMax
+      ? usableCapacityCores * 0.70
+      : watchThresholdCores;
+    const visualRiskThresholdCores = riskThresholdCores > yMax
+      ? usableCapacityCores * 0.90
+      : riskThresholdCores;
+    const watchY = yScale(visualWatchThresholdCores);
+    const riskY = yScale(Math.max(visualRiskThresholdCores, visualWatchThresholdCores + (yMax * 0.04)));
     const usableY = yScale(usableCapacityCores);
-    const logicalY = yScale(recommendedLogicalCores);
+    const logicalY = yScale(Math.min(recommendedLogicalCores, yMax));
+    const logicalLabel = "Recommended - " + recommendedLogicalCores + " logical cores" + (recommendedAbovePlotScale ? " (above scale)" : "");
 
     const riskZoneH = Math.max(0, riskY - plot.y);
     const watchZoneH = Math.max(0, watchY - riskY);
@@ -549,7 +566,7 @@
       '<text x="' + (plot.x + 18) + '" y="' + (riskY + 22).toFixed(1) + '" class="zone-label zone-watch-text">WATCH</text>',
       '<text x="' + (plot.x + 18) + '" y="' + (plot.y + plot.h - 20) + '" class="zone-label zone-good-text">GOOD</text>',
       '<text x="' + (plot.x + plot.w - 12) + '" y="' + (usableY - 10).toFixed(1) + '" text-anchor="end" class="capacity-label">Usable capacity - ' + svgText(coreText(usableCapacityCores, 1)) + '</text>',
-      '<text x="' + (plot.x + plot.w - 12) + '" y="' + (logicalY + 15).toFixed(1) + '" text-anchor="end" class="logical-label">Recommended - ' + recommendedLogicalCores + ' logical cores</text>',
+      '<text x="' + (plot.x + plot.w - 12) + '" y="' + (logicalY + 15).toFixed(1) + '" text-anchor="end" class="logical-label">' + svgText(logicalLabel) + '</text>',
       '<path d="' + curvePath + '" class="curve-shadow"/>',
       '<path d="' + curvePath + '" class="curve"/>',
       points.map(markerSvg).join(""),
