@@ -24,6 +24,7 @@ const cpuHtml = read("tools/compute/cpu-sizing/index.html");
 const ramScript = read("tools/compute/ram-sizing/script.js");
 const cpuScript = read("tools/compute/cpu-sizing/script.js");
 const planState = read("assets/scopedlabs-compute-plan-state.js");
+const shell = read("assets/scopedlabs-compute-shell-contract.js");
 const moduleMap = read("docs/scopedlabs-module-map.md");
 
 check(
@@ -59,6 +60,25 @@ check(
     ramHtml.includes("computeWorkloadContextMeta"),
   "tools/compute/ram-sizing/index.html",
   "RAM must keep the CPU-grade active workload context card structure."
+);
+
+
+check(
+  "COMPUTE_SHELL_OWNS_SHARED_WORKLOAD_CONTEXT_CARD",
+  shell.includes("function renderSharedComputeWorkloadContextCard()") &&
+    shell.includes("State.renderWorkloadDisplay") &&
+    shell.includes("computeWorkloadToolLabelFromPage()") &&
+    shell.includes("data-compute-workload-display-owner") &&
+    shell.includes("initSharedComputeWorkloadContextCard();"),
+  "assets/scopedlabs-compute-shell-contract.js",
+  "Compute shell contract must own shared workload card initialization for Compute tools with the standard card slot."
+);
+
+check(
+  "RAM_LOADS_WORKLOAD_CONTEXT_SHELL_VERSION",
+  ramHtml.includes("/assets/scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-006-workload-context-card"),
+  "tools/compute/ram-sizing/index.html",
+  "RAM must load the shell version that initializes the shared Active Workload card."
 );
 
 check(

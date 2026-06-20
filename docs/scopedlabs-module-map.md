@@ -873,3 +873,5 @@ Example:
 - `tools/compute/ram-sizing/index.html` cache-busts the RAM script to `compute-ram-shared-workload-display-0620`.
 - `scripts/audit-compute-ram-top-shell-parity-v1.js` verifies shared module consumption and blocks RAM from re-owning a local active workload reader.
 - Non-goals: no RAM math change, no chart/proof/export/snapshot/pipeline/Knowledge Base behavior change.
+
+### Compute shell workload context card owner\n\n- `assets/scopedlabs-compute-shell-contract.js` now initializes the standard Compute Active Workload card slot by calling `ScopedLabsComputePlanState.renderWorkloadDisplay()`.\n- This moves Active Workload card rendering ownership into the shared Compute shell contract instead of relying on RAM-local page logic.\n- Compute pages that load the shell contract are cache-busted to `scopedlabs-compute-shell-contract-006-workload-context-card`.\n- `scripts/audit-compute-ram-top-shell-parity-v1.js` verifies shell ownership and RAM shell-version consumption.\n- Non-goals: no RAM math change, no chart/proof/export/snapshot/pipeline/Knowledge Base behavior change.

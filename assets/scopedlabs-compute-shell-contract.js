@@ -96,6 +96,64 @@
 
 
 
+
+  function computeWorkloadToolLabelFromPage() {
+    var body = document.body;
+    var step = body && body.dataset ? String(body.dataset.step || "") : "";
+    var map = {
+      "cpu-sizing": "CPU Sizing",
+      "ram-sizing": "RAM Sizing",
+      "storage-iops": "Storage IOPS",
+      "storage-throughput": "Storage Throughput",
+      "vm-density": "VM Density",
+      "gpu-vram": "GPU VRAM",
+      "power-thermal": "Power / Thermal",
+      "raid-rebuild-time": "RAID Rebuild",
+      "backup-window": "Backup Window"
+    };
+
+    if (map[step]) return map[step];
+
+    var line = document.querySelector("#computeWorkloadContextCard .access-scope-context-line span:last-child");
+    var text = line && line.textContent ? String(line.textContent).trim() : "";
+    return text || "Compute Tool";
+  }
+
+  function renderSharedComputeWorkloadContextCard() {
+    var State = window.ScopedLabsComputePlanState;
+    if (!State || typeof State.renderWorkloadDisplay !== "function") return false;
+
+    var card = document.getElementById("computeWorkloadContextCard");
+    if (!card) return false;
+
+    var title = document.getElementById("computeWorkloadContextTitle");
+    var copy = document.getElementById("computeWorkloadContextCopy");
+    var meta = document.getElementById("computeWorkloadContextMeta");
+
+    State.renderWorkloadDisplay({
+      card: card,
+      title: title,
+      description: copy,
+      meta: meta,
+      toolLabel: computeWorkloadToolLabelFromPage()
+    });
+
+    card.setAttribute("data-compute-workload-display-owner", "compute-shell-contract");
+    return true;
+  }
+
+  function initSharedComputeWorkloadContextCard() {
+    function run() {
+      renderSharedComputeWorkloadContextCard();
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", run, { once: true });
+    } else {
+      run();
+    }
+  }
+
   function computeFlowActionConfig() {
     var path = String(window.location && window.location.pathname || "").replace(/\/+$/, "/");
 
@@ -296,4 +354,6 @@
   } else {
     observe();
   }
+  initSharedComputeWorkloadContextCard();
+
 })();
