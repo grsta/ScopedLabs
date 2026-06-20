@@ -223,22 +223,22 @@
         <div id="computeAssistantMount" data-compute-assistant-mount data-category-slug="compute"></div>
       </section>
     
-      <section id="computeRamVisualCard" class="card compute-result-visual-card" hidden data-compute-result-visual-card data-output-visual-owner="compute-capacity-visuals">
+      <section id="computeRamVisualCard" class="card compute-result-visual-card" hidden data-compute-result-visual-card data-output-visual-owner="compute-capacity-visuals" data-export-section="true" data-export-title="RAM Capacity Envelope">
         <h3 class="h3 compute-result-visual-title" style="margin-top: 0;">RAM Capacity Envelope</h3>
         <p class="muted" style="margin-bottom: 0;">Dynamic memory demand curve showing workload demand, reserve pressure, installed RAM tier, and downstream Compute validation.</p>
         <div id="computeRamVisual" class="compute-result-visual-shell" data-compute-result-visual="ram-capacity-envelope" role="group" aria-label="RAM capacity envelope visual"></div>
       </section>
-      <section id="computeRamReferencesCard" class="card compute-recommendation-references-card" hidden data-compute-recommendation-references-card data-output-references-owner="compute-assistant-contract">
+      <section id="computeRamReferencesCard" class="card compute-recommendation-references-card" hidden data-compute-recommendation-references-card data-output-references-owner="compute-assistant-contract" data-export-section="true" data-export-title="Recommendation References">
         <h3 class="h3" style="margin-top: 0;">Recommendation References</h3>
         <p class="muted" style="margin-bottom: 0;">Reference markers shown in the RAM Capacity Envelope. These explain why each plotted point matters before continuing to Storage IOPS.</p>
         <div id="computeRamReferences" data-compute-recommendation-references="ram-sizing"></div>
       </section>
-      <section id="computeRamRecommendedActionsCard" class="card compute-recommended-actions-card" hidden data-compute-recommended-actions-card data-output-actions-owner="compute-assistant-contract">
+      <section id="computeRamRecommendedActionsCard" class="card compute-recommended-actions-card" hidden data-compute-recommended-actions-card data-output-actions-owner="compute-assistant-contract" data-export-section="true" data-export-title="Recommended Actions">
         <h3 class="h3" style="margin-top: 0;">Recommended Actions</h3>
         <p class="muted" style="margin-bottom: 0;">Practical steps to reduce RAM pressure or validate the result before continuing downstream.</p>
         <div id="computeRamRecommendedActions" data-compute-recommended-actions="ram-sizing" role="group" aria-label="RAM recommended actions"></div>
       </section>
-      <section id="computeRamDecisionScheduleCard" class="card compute-decision-schedule-card" hidden data-compute-decision-schedule-card data-output-decision-owner="compute-assistant-contract">
+      <section id="computeRamDecisionScheduleCard" class="card compute-decision-schedule-card" hidden data-compute-decision-schedule-card data-output-decision-owner="compute-assistant-contract" data-export-section="true" data-export-title="RAM Capacity Decision Schedule">
         <h3 class="h3" style="margin-top: 0;">RAM Capacity Decision Schedule</h3>
         <p class="muted" style="margin-bottom: 0;">Compact RAM envelope status, threshold, recommendation, and engineering-note schedule for the active Compute workload.</p>
         <div id="computeRamDecisionSchedule" data-compute-decision-schedule="ram-sizing" role="group" aria-label="RAM capacity decision schedule"></div>

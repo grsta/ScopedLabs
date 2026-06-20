@@ -202,11 +202,11 @@ check(
 );
 check(
   "RAM_CACHE_BUSTS_PROOF_LAYOUT_ASSETS",
-  ramHtml.includes("scopedlabs-compute-result-visuals-0620-ram-decision-schedule") &&
-    ramHtml.includes("compute-assistant-ram-decision-schedule-0620") &&
-    ramHtml.includes("compute-ram-decision-schedule-0620"),
+  ramHtml.includes("scopedlabs-compute-result-visuals.css?v=scopedlabs-compute-result-visuals-0620-") &&
+    ramHtml.includes("scopedlabs-compute-assistant-contract.js?v=compute-assistant-ram-") &&
+    ramHtml.includes("./script.js?v=compute-ram-"),
   "tools/compute/ram-sizing/index.html",
-  "RAM page should cache-bust CSS, assistant contract, and local script after the proof layout change."
+  "RAM page should cache-bust CSS, assistant contract, and local script using the active Compute RAM proof-stack version families."
 );
 
 console.log("\nSUMMARY");

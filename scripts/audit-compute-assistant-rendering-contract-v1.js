@@ -90,9 +90,9 @@ check(
 
 check(
   "RAM_ASSISTANT_CSS_CACHE_BUST_UPDATED",
-  ramHtml.includes("scopedlabs-compute-result-visuals-0620-assistant-summary-card"),
+  ramHtml.includes("scopedlabs-compute-result-visuals.css?v=scopedlabs-compute-result-visuals-0620-"),
   "tools/compute/ram-sizing/index.html",
-  "RAM should cache-bust the shared CSS after the summary-card classes are promoted."
+  "RAM must cache-bust the shared Compute result visual CSS using the active 0620 Compute proof-stack CSS version family."
 );
 
 console.log("\nSUMMARY");

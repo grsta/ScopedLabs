@@ -787,3 +787,12 @@ Example:
 - `tools/compute/ram-sizing/index.html` cache-busts the shared Compute assistant contract to `compute-assistant-ram-decision-status-badge-0620`.
 - `scripts/audit-compute-ram-proof-layout-v1.js` now checks the RAM Decision Schedule Status value renders through the colored badge contract.
 - Non-goals: no RAM math change, no chart geometry change, no export/snapshot/pipeline/Knowledge Base behavior change.
+
+### Compute RAM export proof parity
+
+- `tools/compute/ram-sizing/index.html` now marks the RAM proof stack cards as export sections: RAM Capacity Envelope, Recommendation References, Recommended Actions, and RAM Capacity Decision Schedule.
+- RAM follows the CPU export proof stack order: visual, references, actions, decision schedule, then Export Report.
+- `assets/export.js` remains the shared export collector through `[data-export-section]`; no global export hack was added.
+- `scripts/audit-compute-ram-export-parity-v1.js` verifies RAM export-aware proof sections, CPU baseline export sections, stack order, shared export collector presence, module-map documentation, and batch inclusion.
+- Cache-bust checks in RAM proof/rendering audits now validate the active Compute RAM 0620 proof-stack version families instead of stale single-lane tokens.
+- Non-goals: no RAM math change, no chart geometry change, no assistant content change, no snapshot/pipeline/Knowledge Base behavior change.
