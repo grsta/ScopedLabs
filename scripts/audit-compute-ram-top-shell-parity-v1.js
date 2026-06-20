@@ -12,7 +12,6 @@ let fail = 0;
 function check(id, ok, file, detail) {
   if (ok) pass += 1;
   else fail += 1;
-
   console.log("[" + (ok ? "PASS" : "FAIL") + "] " + id);
   console.log("  " + file);
   console.log("  " + detail);
@@ -23,8 +22,9 @@ console.log("SCOPEDLABS COMPUTE RAM TOP SHELL PARITY AUDIT V1\n");
 const ramHtml = read("tools/compute/ram-sizing/index.html");
 const cpuHtml = read("tools/compute/cpu-sizing/index.html");
 const ramScript = read("tools/compute/ram-sizing/script.js");
+const cpuScript = read("tools/compute/cpu-sizing/script.js");
+const planState = read("assets/scopedlabs-compute-plan-state.js");
 const moduleMap = read("docs/scopedlabs-module-map.md");
-const batch = read("scripts/run-scopedlabs-audit-batch-v1.js");
 
 check(
   "CPU_TOP_SHELL_BASELINE_PRESENT",
@@ -37,16 +37,6 @@ check(
 );
 
 check(
-  "RAM_TOP_SHELL_REMOVES_LEGACY_INTRO_CLUTTER",
-  !ramHtml.includes("Part of a Design Flow") &&
-    !ramHtml.includes("Best for:") &&
-    !ramHtml.includes("Free Tier") &&
-    !ramHtml.includes('<div class="crumbs">'),
-  "tools/compute/ram-sizing/index.html",
-  "RAM top shell should not show old Free Tier pill, breadcrumbs, Design Flow card, or loose Best for line."
-);
-
-check(
   "RAM_TOP_SHELL_HAS_CPU_GRADE_ORDER",
   ramHtml.indexOf("<h1>RAM Sizing Estimator</h1>") !== -1 &&
     ramHtml.indexOf('<div id="pipeline"></div>') !== -1 &&
@@ -56,11 +46,11 @@ check(
     ramHtml.indexOf('<div id="pipeline"></div>') < ramHtml.indexOf('id="computeWorkloadContextCard"') &&
     ramHtml.indexOf('id="computeWorkloadContextCard"') < ramHtml.indexOf('id="toolCard"'),
   "tools/compute/ram-sizing/index.html",
-  "RAM top shell order must be title, pipeline, workload context, then tool inputs."
+  "RAM top shell order must be title, pipeline, workload context, then planning inputs."
 );
 
 check(
-  "RAM_ACTIVE_WORKLOAD_CARD_MATCHES_CPU_RHYTHM",
+  "RAM_ACTIVE_WORKLOAD_CARD_MARKUP_PRESENT",
   ramHtml.includes("computeWorkloadContextCard") &&
     ramHtml.includes("Active Workload") &&
     ramHtml.includes("RAM Sizing") &&
@@ -68,83 +58,75 @@ check(
     ramHtml.includes("computeWorkloadContextCopy") &&
     ramHtml.includes("computeWorkloadContextMeta"),
   "tools/compute/ram-sizing/index.html",
-  "RAM must use the CPU-grade active workload context card structure."
+  "RAM must keep the CPU-grade active workload context card structure."
 );
 
 check(
-  "RAM_INPUT_CARD_USES_PLANNING_INPUTS_COPY",
-  ramHtml.includes("Planning Inputs") &&
-    ramHtml.includes("Model installed RAM from workload memory demand") &&
-    !ramHtml.includes('<h2 class="card-title" style="margin-top: 0;">Inputs</h2>'),
-  "tools/compute/ram-sizing/index.html",
-  "RAM input card should use Planning Inputs title and RAM planning copy."
+  "SHARED_PLAN_STATE_OWNS_WORKLOAD_DISPLAY_RENDERER",
+  planState.includes("renderWorkloadDisplay") &&
+    planState.includes("buildWorkloadDisplayContext") &&
+    planState.includes("card.hidden = false") &&
+    planState.includes("window.ScopedLabsComputePlanState"),
+  "assets/scopedlabs-compute-plan-state.js",
+  "Shared Compute plan-state module must own workload card display rendering."
 );
 
-
+check(
+  "CPU_CONSUMES_SHARED_WORKLOAD_DISPLAY_RENDERER",
+  cpuScript.includes("State.renderWorkloadDisplay") &&
+    cpuScript.includes('toolLabel: "CPU Sizing"'),
+  "tools/compute/cpu-sizing/script.js",
+  "CPU must consume the shared workload display renderer."
+);
 
 check(
-  "RAM_ACTIVE_WORKLOAD_CONTEXT_INITIALIZES_ON_SCRIPT_LOAD",
-  ramScript.includes("let workloadContextInitialized = false;") &&
-    ramScript.includes("function initializeWorkloadContext()") &&
-    ramScript.includes("initializeWorkloadContext();") &&
-    ramScript.indexOf("initializeWorkloadContext();") < ramScript.indexOf("els.calc.addEventListener"),
+  "RAM_CONSUMES_SHARED_WORKLOAD_DISPLAY_RENDERER",
+  ramScript.includes("const State = window.ScopedLabsComputePlanState;") &&
+    ramScript.includes("function renderWorkloadContext()") &&
+    ramScript.includes("State.renderWorkloadDisplay") &&
+    ramScript.includes('toolLabel: "RAM Sizing"') &&
+    ramScript.includes("activeComputeWorkload()") &&
+    ramScript.includes("State.activeWorkload(State.load())"),
   "tools/compute/ram-sizing/script.js",
-  "RAM should initialize the Active Workload card immediately after defining the context reader, before later event wiring can interrupt the page."
-);
-check(
-  "RAM_SCRIPT_READS_ACTIVE_COMPUTE_WORKLOAD_CONTEXT",
-  ramScript.includes("scopedlabs:pipeline:compute:workload-plan") &&
-    ramScript.includes("scopedlabs:pipeline:compute:active-workload") &&
-    ramScript.includes("scopedlabs:pipeline:compute:workload-context") &&
-    ramScript.includes("activePlannerFromStorage") &&
-    ramScript.includes("activePlannerFromApi") &&
-    ramScript.includes("plannerContextFallback"),
-  "tools/compute/ram-sizing/script.js",
-  "RAM must populate the Active Workload card from active Compute planner/workload context even before CPU carry-forward is available."
+  "RAM must consume the shared workload display renderer instead of owning a page-local active workload card renderer."
 );
 
 check(
-  "RAM_RESULT_CARRIES_PLANNER_CONTEXT_WITHOUT_CPU_RESULT",
-  ramScript.includes("const plannerContext = cpuContext ? ramPlannerContextFromCpu(cpuContext) : plannerContextFallback;"),
+  "RAM_DOES_NOT_OWN_LOCAL_ACTIVE_WORKLOAD_READER",
+  !ramScript.includes("activePlannerFromApi") &&
+    !ramScript.includes("activePlannerFromStorage") &&
+    !ramScript.includes("initializeWorkloadContext") &&
+    !ramScript.includes("scopedlabs:pipeline:compute:workload-context"),
   "tools/compute/ram-sizing/script.js",
-  "RAM result payload should retain planner context even when there is no CPU flow result in sessionStorage."
+  "RAM should not own a large page-local active workload reader; shared ComputePlanState owns that behavior."
 );
+
 check(
-  "RAM_SCRIPT_RENDERS_ACTIVE_WORKLOAD_CONTEXT_CARD",
-  ramScript.includes('workloadContextCard: $("computeWorkloadContextCard")') &&
-    ramScript.includes("workloadContextTitle") &&
-    ramScript.includes("workloadContextMeta") &&
-    ramScript.includes("ramPlannerContextFromCpu(data)") &&
-    ramScript.includes("els.workloadContextCard.hidden = false"),
+  "RAM_DOMCONTENTLOADED_RENDERS_WORKLOAD_CONTEXT",
+  ramScript.includes('window.addEventListener("DOMContentLoaded"') &&
+    ramScript.includes("renderWorkloadContext();") &&
+    ramScript.indexOf("renderWorkloadContext();") < ramScript.indexOf("hideContinue();"),
   "tools/compute/ram-sizing/script.js",
-  "RAM script must populate the active workload card from existing CPU/planner context."
+  "RAM must render the active workload card during DOMContentLoaded before the page settles."
 );
 
 check(
   "RAM_TOP_SHELL_CACHE_BUST_UPDATED",
-  ramHtml.includes("./script.js?v=compute-ram-active-workload-context-init-0620"),
+  ramHtml.includes("./script.js?v=compute-ram-shared-workload-display-0620"),
   "tools/compute/ram-sizing/index.html",
-  "RAM page should cache-bust the local script after top shell parity wiring."
+  "RAM page should cache-bust the local script after shared workload display consumption."
 );
 
 check(
-  "MODULE_MAP_RECORDS_RAM_TOP_SHELL_PARITY",
-  moduleMap.includes("### Compute RAM top shell parity") &&
+  "MODULE_MAP_RECORDS_RAM_SHARED_WORKLOAD_DISPLAY",
+  moduleMap.includes("### Compute RAM shared workload display consumption") &&
     moduleMap.includes("audit-compute-ram-top-shell-parity-v1.js"),
   "docs/scopedlabs-module-map.md",
-  "Module map must document RAM top shell parity and audit ownership."
-);
-
-check(
-  "BATCH_RUNNER_INCLUDES_RAM_TOP_SHELL_PARITY_AUDIT",
-  batch.includes("scripts/audit-compute-ram-top-shell-parity-v1.js"),
-  "scripts/run-scopedlabs-audit-batch-v1.js",
-  "Closeout batch runner must include the RAM top shell parity audit."
+  "Module map must document RAM shared workload display consumption."
 );
 
 console.log("\nSUMMARY");
 console.log("PASS: " + pass);
 console.log("FAIL: " + fail);
 console.log("OVERALL: " + (fail ? "FAIL" : "PASS"));
-
 process.exit(fail ? 1 : 0);

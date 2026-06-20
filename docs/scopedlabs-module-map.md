@@ -864,3 +864,12 @@ Example:
 - `tools/compute/ram-sizing/index.html` cache-busts the RAM script to `compute-ram-active-workload-context-init-0620`.
 - `scripts/audit-compute-ram-top-shell-parity-v1.js` verifies the immediate initialization path.
 - Non-goals: no RAM math change, no chart/proof/export/snapshot/pipeline/Knowledge Base behavior change.
+
+### Compute RAM shared workload display consumption
+
+- `tools/compute/ram-sizing/script.js` now consumes `ScopedLabsComputePlanState.renderWorkloadDisplay()` for the Active Workload card, matching CPU's shared-module pattern.
+- The large RAM-local active workload reader path was removed; `assets/scopedlabs-compute-plan-state.js` owns active workload display context and card rendering.
+- RAM keeps only a small tool adapter: `toolLabel: "RAM Sizing"`, target card/title/copy/meta elements, and existing RAM-specific input hydration.
+- `tools/compute/ram-sizing/index.html` cache-busts the RAM script to `compute-ram-shared-workload-display-0620`.
+- `scripts/audit-compute-ram-top-shell-parity-v1.js` verifies shared module consumption and blocks RAM from re-owning a local active workload reader.
+- Non-goals: no RAM math change, no chart/proof/export/snapshot/pipeline/Knowledge Base behavior change.

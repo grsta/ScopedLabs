@@ -4,6 +4,7 @@
   const CATEGORY = "compute";
   const STEP = "ram-sizing";
   const LANE = "v1";
+  const State = window.ScopedLabsComputePlanState;
   const PREVIOUS_STEP = "cpu-sizing";
 
   const FLOW_KEYS = {
@@ -23,7 +24,6 @@
   let hasResult = false;
   let cpuContext = null;
   let plannerContextFallback = null;
-  let workloadContextInitialized = false;
   let carriedWorkloadHydrated = false;
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
@@ -143,210 +143,48 @@
   }
 
   function refreshFlowNote() {
-    const PLAN_KEY = "scopedlabs:pipeline:compute:workload-plan";
-    const ACTIVE_KEY = "scopedlabs:pipeline:compute:active-workload";
-    const CONTEXT_KEY = "scopedlabs:pipeline:compute:workload-context";
-
-    function escapeHtml(value) {
-      return String(value == null ? "" : value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/\"/g, "&quot;")
-        .replace(/'/g, "&#39;");
+    if (els.flowNote) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
     }
+  }
 
-    function safeStorageValue(storage, key) {
-      try {
-        const raw = storage.getItem(key);
-        if (!raw) return null;
-        try {
-          return JSON.parse(raw);
-        } catch {
-          return raw;
-        }
-      } catch {
-        return null;
-      }
-    }
+  function activeComputeWorkload() {
+    if (!State || typeof State.load !== "function" || typeof State.activeWorkload !== "function") return null;
 
-    function objectOrNull(value) {
-      return value && typeof value === "object" && !Array.isArray(value) ? value : null;
-    }
-
-    function unwrapContext(value) {
-      const obj = objectOrNull(value);
-      if (!obj) return null;
-      if (objectOrNull(obj.workload)) return obj.workload;
-      if (objectOrNull(obj.activeWorkload)) return obj.activeWorkload;
-      if (objectOrNull(obj.context)) return obj.context;
-      if (objectOrNull(obj.plannerContext)) return obj.plannerContext;
-      return obj;
-    }
-
-    function valueLabel(value) {
-      if (value === undefined || value === null || value === "") return "Not specified";
-      if (Array.isArray(value)) return value.length ? value.map(valueLabel).join(", ") : "None selected";
-      if (typeof value === "object") return value.label || value.name || value.title || value.id || "Not specified";
-      return String(value);
-    }
-
-    function firstValue() {
-      for (let i = 0; i < arguments.length; i += 1) {
-        const value = arguments[i];
-        if (value !== undefined && value !== null && value !== "") return value;
-      }
-      return "Not specified";
-    }
-
-    function pct(value) {
-      const raw = firstValue(value);
-      if (raw === "Not specified") return raw;
-      const n = Number(raw);
-      if (!Number.isFinite(n)) return valueLabel(raw);
-      return Math.round(n) + "%";
-    }
-
-    function activePlannerFromApi() {
-      const api = window.ScopedLabsComputePlanState;
-      if (!api || typeof api !== "object") return null;
-      const names = ["getActiveWorkload", "getActiveContext", "getContext", "activeWorkload", "loadActiveWorkload"];
-      for (const name of names) {
-        if (typeof api[name] !== "function") continue;
-        try {
-          const value = unwrapContext(api[name]());
-          if (value) return value;
-        } catch {}
-      }
+    try {
+      return State.activeWorkload(State.load());
+    } catch {
       return null;
     }
+  }
 
-    function activePlannerFromStorage() {
-      const context = unwrapContext(safeStorageValue(sessionStorage, CONTEXT_KEY)) || unwrapContext(safeStorageValue(localStorage, CONTEXT_KEY));
-      if (context) return context;
+  function renderWorkloadContext() {
+    const workload = activeComputeWorkload();
+    plannerContextFallback = workload || null;
 
-      const active = safeStorageValue(localStorage, ACTIVE_KEY) || safeStorageValue(sessionStorage, ACTIVE_KEY);
-      const activeObject = unwrapContext(active);
-      if (activeObject) return activeObject;
+    if (workload) hydrateWorkloadFromCpu(workload);
 
-      const plan = objectOrNull(safeStorageValue(localStorage, PLAN_KEY)) || objectOrNull(safeStorageValue(sessionStorage, PLAN_KEY));
-      if (!plan) return null;
-
-      const activeId = typeof active === "string" ? active : firstValue(plan.activeWorkloadId, plan.activeId, plan.currentWorkloadId, "");
-      const workloads = Array.isArray(plan.workloads) ? plan.workloads : [];
-      const matched = workloads.find(function (item) {
-        return item && String(firstValue(item.id, item.workloadId, item.key, "")) === String(activeId);
+    if (State && typeof State.renderWorkloadDisplay === "function") {
+      return State.renderWorkloadDisplay({
+        card: els.workloadContextCard,
+        title: els.workloadContextTitle,
+        description: els.workloadContextCopy,
+        meta: els.workloadContextMeta,
+        toolLabel: "RAM Sizing"
       });
-      if (matched) return unwrapContext(matched);
-      if (workloads.length) return unwrapContext(workloads[0]);
-      return plan;
     }
 
-    function hideWorkloadContext() {
-      if (els.flowNote) {
-        els.flowNote.hidden = true;
-        els.flowNote.innerHTML = "";
-      }
-      if (els.workloadContextCard) els.workloadContextCard.hidden = true;
-      if (els.workloadContextTitle) els.workloadContextTitle.textContent = "No active Compute workload selected";
-      if (els.workloadContextCopy) els.workloadContextCopy.textContent = "Open or create a Compute workload before using this tool so the RAM result can be tied to the right workload plan.";
-      if (els.workloadContextMeta) els.workloadContextMeta.innerHTML = "";
-      plannerContextFallback = null;
-    }
+    if (!els.workloadContextCard || !els.workloadContextTitle || !els.workloadContextCopy || !els.workloadContextMeta) return null;
 
-    function showWorkloadContext(planner, cpuData) {
-      const safePlanner = objectOrNull(planner) || {};
-      const safeCpu = objectOrNull(cpuData) || {};
-      const title = firstValue(safePlanner.title, safePlanner.name, safePlanner.workloadName, safePlanner.projectName, safePlanner.label, "Active Compute workload");
-      const workloadType = firstValue(safePlanner.workloadType, safePlanner.workload, safeCpu.workloadPattern, safeCpu.workload);
-      const branches = firstValue(safePlanner.branches, safePlanner.branch, safePlanner.pathBranch, "None selected");
-      const meta = [
-        ["Environment", firstValue(safePlanner.environment, safePlanner.environmentType, safePlanner.location)],
-        ["Workload Type", workloadType],
-        ["Demand", firstValue(safePlanner.demand, safePlanner.demandProfile, safePlanner.loadProfile, safeCpu.demand)],
-        ["Status", firstValue(safeCpu.status, safePlanner.status)],
-        ["Path", firstValue(safePlanner.path, safePlanner.workflowPath, safePlanner.pipelinePath)],
-        ["Target Utilization", pct(firstValue(safePlanner.targetUtilization, safeCpu.utilizationTarget))],
-        ["Growth Margin", pct(firstValue(safePlanner.growthMargin, safeCpu.growthReservePercent))],
-        ["Branches", valueLabel(branches)]
-      ];
-
-      if (els.flowNote) {
-        els.flowNote.hidden = true;
-        els.flowNote.innerHTML = "";
-      }
-      if (els.workloadContextTitle) els.workloadContextTitle.textContent = String(title);
-      if (els.workloadContextCopy) {
-        els.workloadContextCopy.textContent = cpuData
-          ? String(title) + " includes CPU sizing carry-forward and is the active workload context for this RAM result."
-          : String(title) + " is the active workload context for this RAM sizing result.";
-      }
-      if (els.workloadContextMeta) {
-        els.workloadContextMeta.innerHTML = meta.map(function (item) {
-          return '<div><span>' + escapeHtml(item[0]) + '</span><strong>' + escapeHtml(valueLabel(item[1])) + '</strong></div>';
-        }).join("");
-      }
-      if (els.workloadContextCard) els.workloadContextCard.hidden = false;
-    }
-
-    const activePlannerContext = activePlannerFromApi() || activePlannerFromStorage();
-    plannerContextFallback = activePlannerContext || null;
-
-    const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
-    if (!raw) {
-      cpuContext = null;
-      if (activePlannerContext) {
-        hydrateWorkloadFromCpu(activePlannerContext);
-        showWorkloadContext(activePlannerContext, null);
-      } else {
-        hideWorkloadContext();
-      }
-      return;
-    }
-
-    let parsed = null;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      cpuContext = null;
-      if (activePlannerContext) {
-        hydrateWorkloadFromCpu(activePlannerContext);
-        showWorkloadContext(activePlannerContext, null);
-      } else {
-        hideWorkloadContext();
-      }
-      return;
-    }
-
-    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
-      cpuContext = null;
-      if (activePlannerContext) {
-        hydrateWorkloadFromCpu(activePlannerContext);
-        showWorkloadContext(activePlannerContext, null);
-      } else {
-        hideWorkloadContext();
-      }
-      return;
-    }
-
-    const data = parsed.data && typeof parsed.data === "object" ? parsed.data : parsed;
-    cpuContext = data;
-    const carriedPlanner = ramPlannerContextFromCpu(data) || activePlannerContext;
-    plannerContextFallback = carriedPlanner || null;
-    hydrateWorkloadFromCpu(data);
-    showWorkloadContext(carriedPlanner, data);
+    els.workloadContextCard.hidden = false;
+    els.workloadContextTitle.textContent = workload && workload.name ? workload.name : "No active Compute workload selected";
+    els.workloadContextCopy.textContent = workload
+      ? "This active Compute workload is being carried into RAM sizing."
+      : "Open or create a Compute workload before using this tool so the RAM result can be tied to the right workload plan.";
+    els.workloadContextMeta.innerHTML = "";
+    return workload;
   }
-
-  function initializeWorkloadContext() {
-    if (workloadContextInitialized) return;
-    workloadContextInitialized = true;
-    try {
-      refreshFlowNote();
-    } catch {
-      workloadContextInitialized = false;
-    }
-  }
-  initializeWorkloadContext();
 
   function clearRamCapacityVisual() {
     if (els.ramVisual) {
@@ -686,9 +524,7 @@
   window.addEventListener("DOMContentLoaded", () => {
     const year = document.querySelector("[data-year]");
     if (year) year.textContent = new Date().getFullYear();
-
-    initializeWorkloadContext();
-
+    renderWorkloadContext();
     refreshFlowNote();
     hideContinue();
   });
