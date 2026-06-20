@@ -916,8 +916,9 @@ Example:
 ### Compute CPU capacity readable scale
 
 - `assets/scopedlabs-compute-capacity-visuals.js` is the shared authority for CPU Capacity Envelope scale, Watch/Risk thresholds, and chart status.
-- CPU Watch/Risk thresholds now align to usable CPU capacity, not raw recommended logical-core count, so low target-utilization scenarios keep the chart zones and status chip in agreement.
+- CPU Watch/Risk thresholds align to usable CPU capacity, not raw recommended logical-core count, so low target-utilization scenarios keep the chart zones and status chip in agreement.
+- The CPU visual now uses an adaptive scale floor: small CPU plans can render on a small core range, while very large recommendations still render as above-scale callouts.
 - `tools/compute/cpu-sizing/script.js` delegates CPU envelope threshold/status calculation to the shared module when available, keeping the CPU page as a consumer instead of a second authority.
-- CPU/RAM pages load `scopedlabs-compute-capacity-visuals-014-unified-cpu-status`; CPU loads `compute-cpu-unified-envelope-status-0620`.
-- `scripts/audit-compute-cpu-capacity-envelope-scale-v1.js` runtime-tests the 10% target / high-recommended-core case so readable chart scale and status cannot diverge again.
+- CPU/RAM pages load `scopedlabs-compute-capacity-visuals-015-adaptive-cpu-scale`; CPU loads `compute-cpu-unified-envelope-status-0620`.
+- `scripts/audit-compute-cpu-capacity-envelope-scale-v1.js` runtime-tests both the small 2-core case and the 10% target / high-recommended-core case.
 - Non-goals: no CPU sizing input math change, no RAM chart math change, no export/snapshot/Knowledge Base behavior change.

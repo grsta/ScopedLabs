@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-compute-capacity-visuals-014-unified-cpu-status";
+  const VERSION = "scopedlabs-compute-capacity-visuals-015-adaptive-cpu-scale";
 
   function clamp(value, min, max) {
       return Math.max(min, Math.min(max, value));
@@ -444,19 +444,35 @@
       growthDemand,
       finalDemand,
       usableCapacityCores,
-      4
+      0.25
     );
+    const visualMinimumScaleCores = visualPeakCores <= 3
+      ? 2
+      : visualPeakCores <= 8
+        ? 4
+        : 8;
     const visualRecommendedDisplayCores = Math.min(
       recommendedLogicalCores,
-      Math.max(visualPeakCores * 1.35, 8)
+      Math.max(visualPeakCores * 1.35, visualMinimumScaleCores)
     );
     const visualScaleBasisCores = Math.max(
       visualPeakCores * 1.22,
       visualRecommendedDisplayCores,
-      8
+      visualMinimumScaleCores
     );
-    const visualRoundStep = visualScaleBasisCores <= 32 ? 4 : visualScaleBasisCores <= 96 ? 8 : 16;
-    const yMax = Math.max(4, Math.ceil(visualScaleBasisCores / visualRoundStep) * visualRoundStep);
+    const visualRoundStep = visualScaleBasisCores <= 4
+      ? 0.5
+      : visualScaleBasisCores <= 12
+        ? 1
+        : visualScaleBasisCores <= 32
+          ? 4
+          : visualScaleBasisCores <= 96
+            ? 8
+            : 16;
+    const yMax = Math.max(
+      visualMinimumScaleCores,
+      Math.ceil(visualScaleBasisCores / visualRoundStep) * visualRoundStep
+    );
     const recommendedAbovePlotScale = recommendedLogicalCores > yMax;
 
     function yScale(value) {
@@ -525,16 +541,35 @@
       "Q " + ((points[1].x + points[2].x) / 2).toFixed(1) + " " + ((points[1].y + points[2].y) / 2 - 10).toFixed(1) + " " + points[2].x.toFixed(1) + " " + points[2].y.toFixed(1)
     ].join(" ");
 
-    const yStep = yMax <= 16 ? 2 : 4;
+    const yStep = yMax <= 4
+      ? 0.5
+      : yMax <= 8
+        ? 1
+        : yMax <= 16
+          ? 2
+          : yMax <= 40
+            ? 4
+            : yMax <= 96
+              ? 8
+              : 16;
     const yTicks = [];
-    for (let value = 0; value <= yMax; value += yStep) yTicks.push(value);
+    for (let value = 0; value <= yMax + 0.0001; value += yStep) {
+      yTicks.push(Math.round(value * 10) / 10);
+    }
     if (yTicks[yTicks.length - 1] !== yMax) yTicks.push(yMax);
+
+    function yTickLabel(tick) {
+      const rounded = Math.round(Number(tick) * 10) / 10;
+      return Math.abs(rounded - Math.round(rounded)) < 0.01
+        ? String(Math.round(rounded))
+        : rounded.toFixed(1);
+    }
 
     const yGrid = yTicks.map(function (tick) {
       const y = yScale(tick);
       return [
         '<path d="M' + plot.x + ' ' + y.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="' + (tick === 0 || tick === yMax ? "grid-major" : "grid") + '"/>',
-        '<text x="' + (plot.x - 10) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end" class="tick">' + tick + '</text>'
+        '<text x="' + (plot.x - 10) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end" class="tick">' + svgText(yTickLabel(tick)) + '</text>'
       ].join("");
     }).join("");
 
