@@ -77,9 +77,16 @@
     const isCurrent = index === currentIndex;
     const isPast = !isSummaryEndpoint && (hasFlowGroups
       ? (
-          stepGroup === currentGroup &&
-          index < currentIndex &&
-          currentGroup !== "optional-specialty-zone"
+          (
+            stepGroup === "foundation" &&
+            currentGroup !== "foundation" &&
+            index < currentIndex
+          ) ||
+          (
+            stepGroup === currentGroup &&
+            index < currentIndex &&
+            currentGroup !== "optional-specialty-zone"
+          )
         )
       : index < currentIndex);
     const isFuture = !isCurrent && !isPast;
@@ -135,9 +142,15 @@
   function appendGroupedFlow(parent, label, description, groupSteps, ariaLabel) {
     if (!groupSteps.length) return;
 
+    const representativeStep = groupSteps.find(function (step) {
+      return step && (step.flowGroupLabel || step.groupLabel || step.flowGroupDescription || step.groupDescription);
+    }) || groupSteps[0] || {};
+    const resolvedLabel = representativeStep.flowGroupLabel || representativeStep.groupLabel || label;
+    const resolvedDescription = representativeStep.flowGroupDescription || representativeStep.groupDescription || description;
+
     const group = document.createElement("div");
     group.className = "sl-pipeline-group";
-    group.setAttribute("data-pipeline-group", label);
+    group.setAttribute("data-pipeline-group", resolvedLabel);
 
     if (parent.childElementCount > 0) {
       group.style.marginTop = "12px";
@@ -156,7 +169,7 @@
     groupLabel.style.marginBottom = "6px";
     group.appendChild(groupLabel);
 
-    if (description) {
+    if (resolvedDescription) {
       const desc = document.createElement("div");
       desc.className = "sl-pipeline-group-description";
       desc.textContent = description;

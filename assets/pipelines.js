@@ -102,17 +102,40 @@
         label: "Compute",
         lanes: {
           v1: [
-            { id: "workload-planner", label: "Planner", href: "/tools/compute/workload-planner/", categoryEndpoint: "planner" },
-            { id: "cpu-sizing", label: "CPU", href: "/tools/compute/cpu-sizing/" },
-            { id: "ram-sizing", label: "RAM", href: "/tools/compute/ram-sizing/" },
-            { id: "storage-iops", label: "IOPS", href: "/tools/compute/storage-iops/" },
-            { id: "storage-throughput", label: "Throughput", href: "/tools/compute/storage-throughput/" },
-            { id: "vm-density", label: "VM Density", href: "/tools/compute/vm-density/" },
-            { id: "gpu-vram", label: "GPU (Optional)", href: "/tools/compute/gpu-vram/" },
-            { id: "power-thermal", label: "Power / Thermal", href: "/tools/compute/power-thermal/" },
-            { id: "raid-rebuild-time", label: "RAID Rebuild", href: "/tools/compute/raid-rebuild-time/" },
-            { id: "backup-window", label: "Backup Window", href: "/tools/compute/backup-window/" },
-            { id: "summary", label: "Summary", href: "/tools/compute/summary/", categoryEndpoint: "summary" }
+            {
+              id: "workload-planner",
+              label: "Workload Planner",
+              href: "/tools/compute/workload-planner/",
+              categoryEndpoint: "planner",
+              flowGroup: "foundation",
+              flowGroupLabel: "FOUNDATION",
+              flowGroupDescription: "Create or select the compute workload being planned."
+            },
+            {
+              id: "cpu-sizing",
+              label: "CPU",
+              href: "/tools/compute/cpu-sizing/",
+              flowGroup: "core",
+              flowGroupLabel: "CORE COMPUTE PIPELINE",
+              flowGroupDescription: "Run this path for normal compute sizing and carry each result into the next planning step."
+            },
+            { id: "ram-sizing", label: "RAM", href: "/tools/compute/ram-sizing/", flowGroup: "core" },
+            { id: "storage-iops", label: "IOPS", href: "/tools/compute/storage-iops/", flowGroup: "core" },
+            { id: "storage-throughput", label: "Throughput", href: "/tools/compute/storage-throughput/", flowGroup: "core" },
+            { id: "vm-density", label: "VM Density", href: "/tools/compute/vm-density/", flowGroup: "core" },
+            { id: "summary", label: "Summary", href: "/tools/compute/summary/", categoryEndpoint: "summary", flowGroup: "core" },
+            {
+              id: "gpu-vram",
+              label: "GPU VRAM",
+              href: "/tools/compute/gpu-vram/",
+              flowGroup: "optional-specialty-zone",
+              flowGroupLabel: "OPTIONAL SPECIALTY ZONES",
+              flowGroupDescription: "Use only when the compute design needs GPU, power/thermal, RAID, or backup checks.",
+              optional: true
+            },
+            { id: "power-thermal", label: "Power / Thermal", href: "/tools/compute/power-thermal/", flowGroup: "optional-specialty-zone", optional: true },
+            { id: "raid-rebuild-time", label: "RAID Rebuild", href: "/tools/compute/raid-rebuild-time/", flowGroup: "optional-specialty-zone", optional: true },
+            { id: "backup-window", label: "Backup Window", href: "/tools/compute/backup-window/", flowGroup: "optional-specialty-zone", optional: true }
           ]
         }
       },

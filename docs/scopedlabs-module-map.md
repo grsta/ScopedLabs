@@ -875,3 +875,13 @@ Example:
 - Non-goals: no RAM math change, no chart/proof/export/snapshot/pipeline/Knowledge Base behavior change.
 
 ### Compute shell workload context card owner\n\n- `assets/scopedlabs-compute-shell-contract.js` now initializes the standard Compute Active Workload card slot by calling `ScopedLabsComputePlanState.renderWorkloadDisplay()`.\n- This moves Active Workload card rendering ownership into the shared Compute shell contract instead of relying on RAM-local page logic.\n- Compute pages that load the shell contract are cache-busted to `scopedlabs-compute-shell-contract-006-workload-context-card`.\n- `scripts/audit-compute-ram-top-shell-parity-v1.js` verifies shell ownership and RAM shell-version consumption.\n- Non-goals: no RAM math change, no chart/proof/export/snapshot/pipeline/Knowledge Base behavior change.
+
+### Compute grouped pipeline nav
+
+- `assets/pipelines.js` now models Compute like Access Control: Foundation / Core Compute Pipeline / Optional Specialty Zones.
+- `Workload Planner` is isolated in the Foundation group; CPU, RAM, Storage IOPS, Storage Throughput, VM Density, and Summary are core; GPU VRAM, Power / Thermal, RAID Rebuild, and Backup Window are optional specialty.
+- `assets/pipeline.js` now supports category-specific grouped labels/descriptions from step metadata, so Compute does not inherit Access-specific group names.
+- Foundation progress can complete across groups, allowing Workload Planner to glow when the active tool is in the core Compute pipeline.
+- Compute pages that consume the shared pipeline assets are cache-busted to `compute-grouped-pipeline-nav-0620`.
+- `scripts/audit-compute-planner-summary-pipeline-nav-v1.js` verifies grouped Compute pipeline ownership and renderer support.
+- Non-goals: no RAM math change, no active workload card behavior change, no export/snapshot/Knowledge Base behavior change.

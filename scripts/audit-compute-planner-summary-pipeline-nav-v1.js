@@ -37,17 +37,66 @@ const summaryIndex = indexOfToken(pipelines, 'id: "summary"');
 
 check(
   "COMPUTE_PIPELINE_HAS_PLANNER_AND_SUMMARY_ENDPOINTS",
-  pipelines.includes('{ id: "workload-planner", label: "Planner", href: "/tools/compute/workload-planner/", categoryEndpoint: "planner" }') &&
-    pipelines.includes('{ id: "summary", label: "Summary", href: "/tools/compute/summary/", categoryEndpoint: "summary" }'),
+  pipelines.includes('id: "workload-planner"') &&
+    pipelines.includes('label: "Workload Planner"') &&
+    pipelines.includes('categoryEndpoint: "planner"') &&
+    pipelines.includes('id: "summary"') &&
+    pipelines.includes('categoryEndpoint: "summary"'),
   "assets/pipelines.js",
-  "Compute pipeline must expose Planner and Summary as clickable category endpoints."
+  "Compute pipeline must expose Workload Planner and Summary as clickable category endpoints."
 );
 
 check(
   "COMPUTE_PIPELINE_ENDPOINT_ORDER_IS_VALID",
-  plannerIndex < cpuIndex && cpuIndex < backupIndex && backupIndex < summaryIndex,
+  plannerIndex < cpuIndex && cpuIndex < summaryIndex && summaryIndex < backupIndex,
   "assets/pipelines.js",
-  "Compute pipeline order must be Planner, tool steps, then Summary."
+  "Compute pipeline order must be Planner, core tool steps, Summary, then optional specialty tools."
+);
+
+
+check(
+  "COMPUTE_PIPELINE_USES_ACCESS_STYLE_GROUPS",
+  pipelines.includes('flowGroup: "foundation"') &&
+    pipelines.includes('flowGroupLabel: "FOUNDATION"') &&
+    pipelines.includes('flowGroupLabel: "CORE COMPUTE PIPELINE"') &&
+    pipelines.includes('flowGroupLabel: "OPTIONAL SPECIALTY ZONES"') &&
+    pipelines.includes('flowGroupDescription: "Create or select the compute workload being planned."') &&
+    pipelines.includes('flowGroupDescription: "Run this path for normal compute sizing and carry each result into the next planning step."'),
+  "assets/pipelines.js",
+  "Compute pipeline must use the same grouped foundation/core/optional structure as Access, with Compute-specific labels."
+);
+
+check(
+  "COMPUTE_PLANNER_NOT_IN_FLAT_CORE_ROW",
+  pipelines.indexOf('id: "workload-planner"') < pipelines.indexOf('id: "cpu-sizing"') &&
+    pipelines.includes('id: "workload-planner"') &&
+    pipelines.includes('flowGroup: "foundation"') &&
+    pipelines.includes('id: "cpu-sizing"') &&
+    pipelines.includes('flowGroup: "core"') &&
+    pipelines.includes('id: "gpu-vram"') &&
+    pipelines.includes('flowGroup: "optional-specialty-zone"'),
+  "assets/pipelines.js",
+  "Planner must be isolated in the Foundation group, core tools must be core, and GPU/RAID/Backup tools must be optional specialty."
+);
+
+check(
+  "PIPELINE_RENDERER_SUPPORTS_GROUP_SPECIFIC_LABELS",
+  renderer.includes("const representativeStep = groupSteps.find(function") &&
+    renderer.includes("const resolvedLabel = representativeStep.flowGroupLabel") &&
+    renderer.includes("const resolvedDescription = representativeStep.flowGroupDescription") &&
+    renderer.includes("groupTitle.textContent = resolvedLabel") &&
+    renderer.includes("groupDescription.textContent = resolvedDescription"),
+  "assets/pipeline.js",
+  "Shared pipeline renderer must allow category-specific grouped labels/descriptions without hardcoding Access labels for Compute."
+);
+
+check(
+  "FOUNDATION_PROGRESS_CAN_COMPLETE_ACROSS_GROUPS",
+  renderer.includes('stepGroup === "foundation"') &&
+    renderer.includes('currentGroup !== "foundation"') &&
+    renderer.includes('currentGroup !== "optional-specialty-zone"'),
+  "assets/pipeline.js",
+  "Foundation Planner should be able to glow as complete when the user is in core Compute steps."
 );
 
 check(
@@ -98,8 +147,8 @@ check(
   "COMPUTE_PIPELINE_PAGES_CACHE_BUST_INDEX_FIX",
   toolPages.every((file) => {
     const html = read(file);
-    return html.includes("/assets/pipelines.js?v=compute-planner-progress-endpoint-0620") &&
-      html.includes("/assets/pipeline.js?v=compute-planner-progress-endpoint-0620");
+    return html.includes("/assets/pipelines.js?v=compute-grouped-pipeline-nav-0620") &&
+      html.includes("/assets/pipeline.js?v=compute-grouped-pipeline-nav-0620");
   }),
   "tools/compute/*/index.html",
   "Compute pipeline-consuming pages must cache-bust the Planner endpoint progress fix."
