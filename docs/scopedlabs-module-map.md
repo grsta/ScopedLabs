@@ -922,3 +922,12 @@ Example:
 - CPU/RAM pages load `scopedlabs-compute-capacity-visuals-015-adaptive-cpu-scale`; CPU loads `compute-cpu-unified-envelope-status-0620`.
 - `scripts/audit-compute-cpu-capacity-envelope-scale-v1.js` runtime-tests both the small 2-core case and the 10% target / high-recommended-core case.
 - Non-goals: no CPU sizing input math change, no RAM chart math change, no export/snapshot/Knowledge Base behavior change.
+
+### ScopedLabs category module coverage audit
+
+- `scripts/audit-scopedlabs-category-module-coverage-v1.js` is the reusable module coverage and compatibility audit for category tool modernization.
+- The audit inventories each tool page/script, reads `docs/scopedlabs-module-map.md`, scans existing `assets/` and `scripts/` modules, then classifies each tool as `GOLD_REFERENCE`, `MODERN_READY`, `PARTIAL_MODERN`, `LEGACY_EXPORT_TOOL`, `SPECIAL_PATH_REVIEW`, `NEEDS_MODULE_REVIEW`, or `MISSING_FILE`.
+- Compute uses `cpu-sizing` as the current gold reference because it has the accepted modern stack: plan-state, active workload context, shared shell, local assistant, export/report metadata, KB/help, flow controls, and `recordToolResult` ledger publishing.
+- The audit does not auto-install modules. It reports current coverage and recommends compatible existing modules for missing capabilities.
+- The audit is registered in `scripts/run-scopedlabs-audit-batch-v1.js` and should be run before broad category modernization patches.
+- Initial supported category config: `compute`; other categories can be added as adapters/manifests without rewriting the audit engine.
