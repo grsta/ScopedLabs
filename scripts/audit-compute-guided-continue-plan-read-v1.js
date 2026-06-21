@@ -1,0 +1,95 @@
+const fs = require("fs");
+
+function read(file) {
+  return fs.existsSync(file) ? fs.readFileSync(file, "utf8").replace(/\r\n/g, "\n") : "";
+}
+
+let failures = 0;
+
+function check(label, ok, detail) {
+  console.log((ok ? "PASS" : "FAIL") + "  " + label);
+  if (detail) console.log("      " + detail);
+  if (!ok) failures += 1;
+}
+
+function hasVersionedScript(page, scriptName, prefix) {
+  const marker = scriptName + "?v=" + prefix + "-";
+  const index = page.indexOf(marker);
+  if (index < 0) return false;
+  const after = page.slice(index + marker.length);
+  return /^[0-9]{3}(?:-[a-z0-9-]+)?/.test(after);
+}
+
+const shell = read("assets/scopedlabs-compute-shell-contract.js");
+const cpu = read("tools/compute/cpu-sizing/index.html");
+const ram = read("tools/compute/ram-sizing/index.html");
+const moduleMap = read("docs/scopedlabs-module-map.md");
+const batch = read("scripts/run-scopedlabs-audit-batch-v1.js");
+
+console.log("Compute Guided Continue Plan Read Audit V1");
+console.log("");
+
+check(
+  "SHELL_READS_PLAN_STATE_LOAD_API",
+  shell.includes("\"load\"") && shell.includes("getPlanSnapshot") && shell.includes("readPlan"),
+  "shared shell must use current Compute plan-state API, including load()"
+);
+
+check(
+  "SHELL_READS_ACTUAL_WORKLOAD_PLAN_KEYS",
+  shell.includes("scopedlabs:compute:workload-plan") && shell.includes("scopedlabs:pipeline:compute:workload-plan"),
+  "shared shell must read current workload plan storage keys before legacy fallbacks"
+);
+
+check(
+  "SHELL_PASSES_GUIDED_CONTEXT_TO_ROUTE_ENGINE",
+  shell.includes("guidedContext: context") && shell.includes("routeMode: \"compute-guided\""),
+  "route engine should receive explicit guided context"
+);
+
+check(
+  "SHELL_CAN_USE_CONTEXT_EMBEDDED_WORKLOAD",
+  shell.includes("context.workload") && shell.includes("return context.workload"),
+  "guided fallback should use the workload carried in context"
+);
+
+check(
+  "SHELL_UPDATES_VISIBLE_ROW_CTA_FIRST",
+  shell.includes("row.querySelector(\"[data-compute-continue-href], #continue, a.btn, button.btn\") || document.getElementById(\"continue\")"),
+  "refresh should target the shell-owned visible CTA before legacy page controls"
+);
+
+check(
+  "SHELL_MARKS_GUIDED_NEXT_TOOL",
+  shell.includes("data-compute-guided-next-tool"),
+  "guided Continue CTA should expose the resolved next tool"
+);
+
+check(
+  "CPU_RAM_LOAD_UPDATED_SHELL",
+  hasVersionedScript(cpu, "scopedlabs-compute-shell-contract.js", "scopedlabs-compute-shell-contract") &&
+    hasVersionedScript(ram, "scopedlabs-compute-shell-contract.js", "scopedlabs-compute-shell-contract") &&
+    ram.includes("008-guided-plan-read") &&
+    cpu.includes("008-guided-plan-read"),
+  "CPU/RAM pages must load the patched shared shell"
+);
+
+check(
+  "MODULE_MAP_DOCUMENTS_GUIDED_CONTINUE_PLAN_READ",
+  moduleMap.includes("Compute guided Continue plan read"),
+  "docs/scopedlabs-module-map.md"
+);
+
+check(
+  "BATCH_INCLUDES_GUIDED_CONTINUE_PLAN_READ_AUDIT",
+  batch.includes("scripts/audit-compute-guided-continue-plan-read-v1.js"),
+  "scripts/run-scopedlabs-audit-batch-v1.js"
+);
+
+console.log("");
+console.log("SUMMARY");
+console.log("PASS: " + (9 - failures));
+console.log("FAIL: " + failures);
+console.log("OVERALL: " + (failures ? "FAIL" : "PASS"));
+
+process.exit(failures ? 1 : 0);

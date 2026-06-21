@@ -386,7 +386,7 @@
 
   function readComputeGuidedContinuePlan() {
     var State = window.ScopedLabsComputePlanState || {};
-    var methods = ["getPlanSnapshot", "getPlan", "readPlan", "loadPlan", "getState"];
+    var methods = ["getPlanSnapshot", "getPlan", "readPlan", "loadPlan", "load", "getState"];
 
     for (var i = 0; i < methods.length; i += 1) {
       var name = methods[i];
@@ -401,6 +401,8 @@
     }
 
     var keys = [
+      "scopedlabs:compute:workload-plan",
+      "scopedlabs:pipeline:compute:workload-plan",
       "scopedlabs:pipeline:compute:plan",
       "scopedlabs:compute:plan",
       "scopedlabs:compute:workload-planner",
@@ -443,6 +445,10 @@
       }
     } catch (error) {
       /* ignore optional workload reader */
+    }
+
+    if (context && context.workload && (context.workload.id === workloadId || context.workload.workloadId === workloadId)) {
+      return context.workload;
     }
 
     if (!plan || !workloadId) return null;
@@ -490,6 +496,7 @@
         guidedFlow: true,
         routeMode: "compute-guided",
         context: context,
+        guidedContext: context,
         plan: plan,
         workload: workload
       });
@@ -508,6 +515,7 @@
 
     button.setAttribute("data-compute-guided-route-continue", "true");
     button.setAttribute("data-compute-continue-href", decision.nextHref);
+    button.setAttribute("data-compute-guided-next-tool", decision.nextTool || "");
 
     if (button.tagName && button.tagName.toLowerCase() === "a") {
       button.setAttribute("href", decision.nextHref);
@@ -523,7 +531,7 @@
     if (!row) return;
 
     var tool = row.getAttribute("data-compute-flow-tool");
-    var button = document.getElementById("continue") || row.querySelector("[data-compute-continue-href]");
+    var button = row.querySelector("[data-compute-continue-href], #continue, a.btn, button.btn") || document.getElementById("continue");
     if (!tool || !button) return;
 
     var decision = resolveComputeGuidedContinueDecision(tool);

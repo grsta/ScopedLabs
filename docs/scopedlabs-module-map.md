@@ -1010,3 +1010,10 @@ Example:
 - Summary should not be marked complete simply because an optional branch page is current.
 - `tools/compute/gpu-vram/index.html` loads the Compute guided route engine before `assets/pipeline.js` for the GPU branch proof.
 - `scripts/audit-compute-guided-pipeline-led-state-v1.js` guards this shared renderer contract.
+### Compute guided Continue plan read
+
+- `assets/scopedlabs-compute-shell-contract.js` owns the shared Compute Back/Continue shell.
+- In explicit Compute guided mode, the shell must resolve Continue through `assets/scopedlabs-compute-guided-route-engine.js` using the active workload plan from `assets/scopedlabs-compute-plan-state.js`.
+- The shell reads current plan-state APIs including `load()` and current workload-plan storage keys before legacy fallbacks.
+- CPU/RAM direct visits remain standalone; guided routing only applies when `guidedFlow: true` and `routeMode: compute-guided` are present.
+- `scripts/audit-compute-guided-continue-plan-read-v1.js` guards the shared shell plan-read contract.
