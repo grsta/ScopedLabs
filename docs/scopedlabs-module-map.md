@@ -1052,3 +1052,7 @@ Example:
 - `assets/scopedlabs-compute-planner-adapter.js` uses one delegated capture click handler for the planner Start Guided Flow CTA.
 - This avoids whole-page MutationObserver loops while still catching the CTA after the planner shell renders it.
 - The handler routes saved workloads or scrolls/focuses Active Compute Workload Setup when no workloads exist.
+#### Compute planner zero-workload guided start focus
+
+- With zero saved workloads, `Start Guided Flow` now scrolls to and briefly highlights the Active Compute Workload Setup area.
+- This keeps the CTA visible while preventing blank/default workload auto-save behavior.

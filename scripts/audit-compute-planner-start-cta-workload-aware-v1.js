@@ -54,9 +54,20 @@ check(
 );
 
 check(
+  "PLANNER_ZERO_WORKLOAD_HAS_VISIBLE_FOCUS_CUE",
+  adapter.includes("ensureComputePlannerStartFocusStyle") &&
+    adapter.includes("computePlannerStartFocusStyle") &&
+    adapter.includes("window.scrollTo") &&
+    adapter.includes("getBoundingClientRect") &&
+    adapter.includes("data-compute-start-guided-focus"),
+  "0-workload click should visibly scroll/focus the setup area"
+);
+
+check(
   "PLANNER_ZERO_WORKLOAD_DOES_NOT_AUTOSAVE",
-  !adapter.includes("if (!workload) workload = save();") &&
-    adapter.includes("Define and save a Compute workload before starting guided flow."),
+  !/workload\s*=\s*save\s*\(/.test(adapter) &&
+    adapter.includes("Define and save a Compute workload before starting guided flow.") &&
+    adapter.includes("promptForComputeWorkloadSetup();"),
   "Start Guided Flow must not auto-save default form values"
 );
 
@@ -96,7 +107,7 @@ check(
 check(
   "PLANNER_PAGE_LOADS_WORKLOAD_AWARE_ADAPTER",
   hasVersionedScript(page, "scopedlabs-compute-planner-adapter.js", "scopedlabs-compute-planner-adapter") &&
-    page.includes("022-start-click-delegate"),
+    page.includes("024-zero-workload-no-autosave"),
   "tools/compute/workload-planner/index.html"
 );
 
@@ -114,7 +125,7 @@ check(
 
 console.log("");
 console.log("SUMMARY");
-console.log("PASS: " + (11 - failures));
+console.log("PASS: " + (12 - failures));
 console.log("FAIL: " + failures);
 console.log("OVERALL: " + (failures ? "FAIL" : "PASS"));
 

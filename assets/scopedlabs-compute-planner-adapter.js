@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-compute-planner-adapter-022-start-click-delegate";
+  var VERSION = "scopedlabs-compute-planner-adapter-024-zero-workload-no-autosave";
   var State = window.ScopedLabsComputePlanState;
   var Shell = window.ScopedLabsCategoryPlannerShell;
 
@@ -525,32 +525,52 @@
   }
 
   function computePlannerSetupTarget() {
-    var headings = Array.from(document.querySelectorAll("h1, h2, h3, h4, label, .h3, .eyebrow"));
+    var direct = document.getElementById("computeWorkloadIntroCard") || document.getElementById("saveWorkload") || document.getElementById("plannerStatus");
+    var headings = Array.from(document.querySelectorAll("h1, h2, h3, h4, label, .h3, .eyebrow, p"));
     var node = headings.find(function (item) {
       var text = String(item.textContent || "");
-      return /Active\s+Compute\s+Workload\s+Setup|Workload\s*\/\s*Environment\s+Name/i.test(text);
+      return /Active\s+Compute\s+Workload\s+Setup|Workload\s*\/\s*Environment\s+Name|Define\s+the\s+workloads/i.test(text);
     });
 
-    var target = node && node.closest ? node.closest("section, .card, .panel, form") || node : null;
-    if (!target) target = document.querySelector("form") || document.querySelector("main") || document.body;
+    var target = null;
+    if (node && node.closest) target = node.closest("section, .card, .panel, form, article") || node;
+    if (!target && direct && direct.closest) target = direct.closest("section, .card, .panel, form, article") || direct;
+    if (!target) target = document.querySelector("main .card, main section, form, main") || document.body;
     if (target && !target.id) target.id = "compute-workload-setup";
     return target;
   }
 
+  function ensureComputePlannerStartFocusStyle() {
+    if (document.getElementById("computePlannerStartFocusStyle")) return;
+    var style = document.createElement("style");
+    style.id = "computePlannerStartFocusStyle";
+    style.textContent = "[data-compute-start-guided-focus='true']{outline:2px solid rgba(34,197,94,.72);box-shadow:0 0 0 4px rgba(34,197,94,.16),0 0 28px rgba(34,197,94,.20);transition:outline .18s ease,box-shadow .18s ease;}";
+    document.head.appendChild(style);
+  }
+
   function promptForComputeWorkloadSetup() {
+    ensureComputePlannerStartFocusStyle();
     var target = computePlannerSetupTarget();
     if (!target) return;
 
     target.setAttribute("data-compute-start-guided-focus", "true");
-    if (typeof target.scrollIntoView === "function") {
+
+    var y = Math.max(0, target.getBoundingClientRect().top + window.pageYOffset - 96);
+    if (typeof window.scrollTo === "function") {
+      window.scrollTo({ top: y, behavior: "smooth" });
+    } else if (typeof target.scrollIntoView === "function") {
       target.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
-    var field = target.querySelector ? target.querySelector("input, select, textarea, button") : null;
+    var field = target.querySelector ? target.querySelector("input, select, textarea") : null;
     if (!field) field = document.querySelector("input, select, textarea");
     if (field && typeof field.focus === "function") {
-      window.setTimeout(function () { field.focus({ preventScroll: true }); }, 250);
+      window.setTimeout(function () { field.focus({ preventScroll: true }); }, 350);
     }
+
+    window.setTimeout(function () {
+      target.removeAttribute("data-compute-start-guided-focus");
+    }, 1800);
   }
 
   function updateGuidedRouteCta(providedDecision) {
