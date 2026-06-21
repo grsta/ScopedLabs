@@ -97,6 +97,12 @@
     return null;
   }
 
+  function readComputeActivePipelineContext() {
+    return readScopedJsonStorage("scopedlabs:pipeline:compute:active-workload") ||
+      readScopedJsonStorage("scopedlabs:pipeline:compute:workload-context") ||
+      null;
+  }
+
   function readComputePipelinePlan() {
     var State = window.ScopedLabsComputePlanState || {};
     var methodNames = ["getPlanSnapshot", "getPlan", "readPlan", "loadPlan", "getWorkloadPlan"];
@@ -117,9 +123,10 @@
   }
 
   function findComputePipelineWorkload(plan, context) {
-    if (!plan || !context) return null;
-    var workloadId = context.workloadId || context.activeWorkloadId || "";
-    var lists = [plan.workloads, plan.items, plan.scopes, plan.entries];
+    if (!plan && !context) return null;
+
+    var workloadId = context && (context.workloadId || context.activeWorkloadId || "");
+    var lists = plan ? [plan.workloads, plan.items, plan.scopes, plan.entries] : [];
 
     for (var i = 0; i < lists.length; i += 1) {
       var list = Array.isArray(lists[i]) ? lists[i] : [];
@@ -127,6 +134,29 @@
         var item = list[j];
         if (item && String(item.id || item.workloadId || "") === String(workloadId)) return item;
       }
+    }
+
+    if (context && context.workload && typeof context.workload === "object") {
+      if (!workloadId || String(context.workload.id || context.workload.workloadId || "") === String(workloadId)) return context.workload;
+    }
+
+    var activeContext = readComputeActivePipelineContext();
+    if (activeContext && activeContext.workload && typeof activeContext.workload === "object") {
+      var activeWorkload = activeContext.workload;
+      var activeId = activeContext.activeWorkloadId || activeContext.workloadId || activeWorkload.id || activeWorkload.workloadId || "";
+      if (!workloadId || String(activeId) === String(workloadId)) return activeWorkload;
+    }
+
+    if (plan && Array.isArray(plan.workloads)) {
+      var activePlanId = plan.activeWorkloadId || plan.activeId || plan.currentWorkloadId || "";
+      if (activePlanId) {
+        var activePlanWorkload = plan.workloads.find(function (item) {
+          return item && String(item.id || item.workloadId || "") === String(activePlanId);
+        });
+        if (activePlanWorkload) return activePlanWorkload;
+      }
+
+      if (plan.workloads.length === 1) return plan.workloads[0];
     }
 
     return null;
@@ -171,11 +201,23 @@
     var applicable = {};
     var applicableTools = [];
 
+    function addApplicable(toolId) {
+      if (!toolId || applicable[toolId]) return;
+      applicable[toolId] = true;
+      applicableTools.push(toolId);
+    }
+
     applicableSteps.forEach(function (item) {
-      if (!item || !item.tool) return;
-      applicable[item.tool] = true;
-      applicableTools.push(item.tool);
+      if (item && item.tool) addApplicable(item.tool);
     });
+
+    if (Array.isArray(context.selectedBranchTools)) {
+      context.selectedBranchTools.forEach(addApplicable);
+    }
+
+    if (!applicable[currentStep] && currentStep !== "workload-planner" && currentStep !== "summary") {
+      addApplicable(currentStep);
+    }
 
     var currentApplicableIndex = applicableTools.indexOf(currentStep);
     var toolApplicableIndex = applicableTools.indexOf(tool);

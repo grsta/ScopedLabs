@@ -1078,3 +1078,8 @@ Example:
 - `assets/pipeline.js` now marks applicable upstream Compute steps as complete when the current guided tool is downstream in the active workload route.
 - This keeps GPU guided flow visuals aligned with the route: CPU and RAM show complete before GPU VRAM, while unrelated tools remain skipped or future.
 - `scripts/audit-compute-guided-pipeline-led-state-v1.js` guards the upstream-completion inference.
+#### Compute guided pipeline active workload fallback
+
+- `assets/pipeline.js` now falls back to the active Compute workload context or single saved workload when the guided-flow id does not resolve directly in the plan ledger.
+- Guided specialty pages also treat the current selected branch as applicable, so upstream CPU/RAM steps can render complete before GPU VRAM even when branch metadata is recovered from active context.
+- `scripts/audit-compute-guided-pipeline-led-state-v1.js` guards the active-workload fallback and current-branch applicability behavior.

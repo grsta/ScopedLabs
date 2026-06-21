@@ -56,6 +56,23 @@ check(
 );
 
 check(
+  "PIPELINE_FALLS_BACK_TO_ACTIVE_WORKLOAD_CONTEXT",
+  pipeline.includes("function readComputeActivePipelineContext") &&
+    pipeline.includes("scopedlabs:pipeline:compute:active-workload") &&
+    pipeline.includes("scopedlabs:pipeline:compute:workload-context") &&
+    pipeline.includes("if (plan.workloads.length === 1) return plan.workloads[0];"),
+  "guided pipeline should recover the active/single saved workload when guided id lookup is stale or incomplete"
+);
+
+check(
+  "PIPELINE_TREATS_GUIDED_CURRENT_OR_SELECTED_BRANCH_AS_APPLICABLE",
+  pipeline.includes("context.selectedBranchTools") &&
+    pipeline.includes("addApplicable(currentStep)") &&
+    pipeline.includes("applicableTools.indexOf(currentStep)"),
+  "guided branch pages should let upstream CPU/RAM resolve as complete before current specialty tool"
+);
+
+check(
   "PIPELINE_INFERS_UPSTREAM_APPLICABLE_STEPS_COMPLETE",
   pipeline.includes("var applicableTools = []") &&
     pipeline.includes("currentApplicableIndex") &&
@@ -118,7 +135,7 @@ check(
 
 console.log("");
 console.log("SUMMARY");
-console.log("PASS: " + (8 - failures));
+console.log("PASS: " + (10 - failures));
 console.log("FAIL: " + failures);
 console.log("OVERALL: " + (failures ? "FAIL" : "PASS"));
 
