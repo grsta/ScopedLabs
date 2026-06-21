@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-compute-planner-adapter-026-start-any-cta-click";
+  var VERSION = "scopedlabs-compute-planner-adapter-027-direct-owned-start-if";
   var State = window.ScopedLabsComputePlanState;
   var Shell = window.ScopedLabsCategoryPlannerShell;
 
@@ -576,35 +576,60 @@
     }, 1800);
   }
 
+  function bindComputePlannerStartGuidedFlowCta(link) {
+    if (!link || link.__scopedlabsComputePlannerStartBound) return;
+    link.__scopedlabsComputePlannerStartBound = true;
+    link.setAttribute("data-compute-planner-start-guided-flow", "true");
+    link.addEventListener("click", function (event) {
+      startGuidedFlowFromPlanner(event);
+    }, true);
+  }
+
   function updateGuidedRouteCta(providedDecision) {
     var link = document.getElementById("continue");
     if (!link) link = document.querySelector("[data-planner-continue], .compute-flow-actions a:last-child, .flow-actions a:last-child");
     if (!link) return;
 
+    link.setAttribute("data-compute-planner-start-guided-flow", "true");
+    bindComputePlannerStartGuidedFlowCta(link);
+
     var plan = readComputePlannerPlanSnapshot();
     var workloads = computePlannerSavedWorkloads(plan);
     var hasWorkloads = workloads.length > 0;
-    var decision = hasWorkloads ? (providedDecision || resolveGuidedRouteFromPlanner()) : computeGuidedRouteCtaDefault();
-    var nextHref = hasWorkloads && decision && decision.nextHref ? decision.nextHref : "#compute-workload-setup";
+
+    var decision = null;
+    var nextHref = "#compute-workload-setup";
     var nextLabel = "Start Guided Flow";
+
+    if (!hasWorkloads) {
+      var setupTarget = computePlannerSetupTarget();
+      var setupId = setupTarget && setupTarget.id ? setupTarget.id : "compute-workload-setup";
+      nextHref = "#" + setupId;
+      link.setAttribute("data-compute-guided-route-cta", "setup");
+      link.setAttribute("data-compute-guided-route-state", "setup");
+      link.removeAttribute("data-compute-guided-route-workload-id");
+      link.removeAttribute("data-compute-guided-route-alt-workload");
+    } else {
+      decision = providedDecision || resolveGuidedRouteFromPlanner();
+      nextHref = decision && decision.nextHref ? decision.nextHref : "/tools/compute/cpu-sizing/";
+      link.setAttribute("data-compute-guided-route-cta", decision && decision.action ? decision.action : "route");
+      link.setAttribute("data-compute-guided-route-state", "route");
+
+      if (decision && (decision.plannerWorkloadId || decision.workloadId)) {
+        link.setAttribute("data-compute-guided-route-workload-id", decision.plannerWorkloadId || decision.workloadId);
+      } else {
+        link.removeAttribute("data-compute-guided-route-workload-id");
+      }
+
+      if (decision && decision.plannerAlternateWorkload) {
+        link.setAttribute("data-compute-guided-route-alt-workload", "true");
+      } else {
+        link.removeAttribute("data-compute-guided-route-alt-workload");
+      }
+    }
 
     if (link.getAttribute("href") !== nextHref) link.setAttribute("href", nextHref);
     if ((link.textContent || "").trim() !== nextLabel) link.textContent = nextLabel;
-
-    link.setAttribute("data-compute-guided-route-cta", hasWorkloads && decision ? decision.action || "route" : "setup");
-    link.setAttribute("data-compute-guided-route-state", hasWorkloads ? "route" : "setup");
-
-    if (hasWorkloads && decision && (decision.plannerWorkloadId || decision.workloadId)) {
-      link.setAttribute("data-compute-guided-route-workload-id", decision.plannerWorkloadId || decision.workloadId);
-    } else {
-      link.removeAttribute("data-compute-guided-route-workload-id");
-    }
-
-    if (hasWorkloads && decision && decision.plannerAlternateWorkload) {
-      link.setAttribute("data-compute-guided-route-alt-workload", "true");
-    } else {
-      link.removeAttribute("data-compute-guided-route-alt-workload");
-    }
   }
 
   function armGuidedRouteCtaRefresh() {
@@ -660,13 +685,16 @@
 
   function startGuidedFlowFromPlanner(event) {
     if (event && typeof event.preventDefault === "function") event.preventDefault();
+    if (event && typeof event.stopPropagation === "function") event.stopPropagation();
+    if (event && typeof event.stopImmediatePropagation === "function") event.stopImmediatePropagation();
 
     var link = null;
     if (event && event.target && event.target.closest) {
-      link = event.target.closest("a, button");
+      link = event.target.closest("[data-compute-planner-start-guided-flow], #continue, [data-planner-continue], a, button");
     }
     if (!link && event && event.currentTarget && event.currentTarget !== document) link = event.currentTarget;
     if (!link) link = document.getElementById("continue");
+
     var plan = readComputePlannerPlanSnapshot();
     var workloads = computePlannerSavedWorkloads(plan);
 
@@ -689,6 +717,7 @@
     }
 
     if (!workload) workload = workloads[0];
+
     if (!workload || !workload.id) {
       status("Select or save a Compute workload before starting guided flow.");
       promptForComputeWorkloadSetup();

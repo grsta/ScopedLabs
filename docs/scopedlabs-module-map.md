@@ -1067,3 +1067,9 @@ Example:
 - `assets/scopedlabs-compute-planner-adapter.js` now catches the rendered `Start Guided Flow` CTA as a plain `a` or `button`, then filters by label/data state.
 - This prevents zero-workload planner clicks from falling through to the default `#compute-workload-setup` anchor without running the workload-aware setup-focus handler.
 - `scripts/audit-compute-planner-start-cta-workload-aware-v1.js` guards the rendered text-link selector contract.
+#### Compute planner direct Start Guided Flow if-branch
+
+- `assets/scopedlabs-compute-planner-adapter.js` stamps the rendered CTA with `data-compute-planner-start-guided-flow="true"` and binds that exact owner directly.
+- The click path now uses an explicit `if (!workloads.length)` branch for zero saved workloads, then scrolls/focuses setup and returns.
+- Saved workloads continue through the guided route engine to the next incomplete applicable tool.
+- `scripts/audit-compute-planner-start-cta-workload-aware-v1.js` guards direct owner binding and explicit zero-workload branching.

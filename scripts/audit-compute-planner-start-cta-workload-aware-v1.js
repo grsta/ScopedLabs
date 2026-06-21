@@ -53,21 +53,29 @@ check(
 );
 
 check(
-  "PLANNER_START_CTA_HAS_DELEGATED_CLICK_HANDLER",
-  adapter.includes("function armPlannerStartGuidedFlowClickDelegate") &&
-    adapter.includes("__scopedlabsComputePlannerStartClickDelegate") &&
-    adapter.includes("startGuidedFlowFromPlanner(event)") &&
-    adapter.includes("}, true);"),
-  "Start Guided Flow click should be caught by one delegated capture handler"
+  "PLANNER_START_CTA_HAS_CLICK_HANDLER",
+  adapter.includes("function bindComputePlannerStartGuidedFlowCta") &&
+    adapter.includes("function armPlannerStartGuidedFlowClickDelegate"),
+  "Start Guided Flow should have a direct owner binding plus delegated fallback"
 );
 
 check(
-  "PLANNER_START_CTA_DELEGATE_MATCHES_RENDERED_TEXT_LINKS",
-  /event\.target\.closest\(["\']a, button["\']\)/.test(adapter) &&
-    /Start\\s\+Guided\\s\+Flow/.test(adapter) &&
-    adapter.includes("var isStart =") &&
+  "PLANNER_START_CTA_DIRECTLY_BINDS_RENDERED_OWNER",
+  adapter.includes("function bindComputePlannerStartGuidedFlowCta") &&
+    adapter.includes("data-compute-planner-start-guided-flow") &&
+    adapter.includes("__scopedlabsComputePlannerStartBound") &&
+    adapter.includes("link.addEventListener(\"click\"") &&
     adapter.includes("startGuidedFlowFromPlanner(event)"),
-  "delegated click handler must catch the rendered plain Start Guided Flow anchor/button"
+  "planner should directly bind the rendered Start Guided Flow owner CTA"
+);
+
+check(
+  "PLANNER_ZERO_WORKLOAD_BRANCH_IS_EXPLICIT_IF",
+  adapter.includes("if (!workloads.length)") &&
+    adapter.includes("promptForComputeWorkloadSetup();") &&
+    adapter.includes("return;") &&
+    adapter.includes("if (!hasWorkloads)"),
+  "zero-workload behavior should be a direct if branch, not selector side effects"
 );
 
 check(
@@ -141,7 +149,7 @@ check(
 check(
   "PLANNER_PAGE_LOADS_WORKLOAD_AWARE_ADAPTER",
   hasVersionedScript(page, "scopedlabs-compute-planner-adapter.js", "scopedlabs-compute-planner-adapter") &&
-    page.includes("026-start-any-cta-click"),
+    page.includes("027-direct-owned-start-if"),
   "tools/compute/workload-planner/index.html"
 );
 
@@ -159,7 +167,7 @@ check(
 
 console.log("");
 console.log("SUMMARY");
-console.log("PASS: " + (14 - failures));
+console.log("PASS: " + (15 - failures));
 console.log("FAIL: " + failures);
 console.log("OVERALL: " + (failures ? "FAIL" : "PASS"));
 
