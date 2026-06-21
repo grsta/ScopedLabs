@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-compute-planner-adapter-016-guided-flow-entry";
+  var VERSION = "scopedlabs-compute-planner-adapter-021-start-cta-workload-aware";
   var State = window.ScopedLabsComputePlanState;
   var Shell = window.ScopedLabsCategoryPlannerShell;
 
@@ -74,7 +74,7 @@
     backHref: "/tools/compute/",
     backLabel: "Back to Compute",
     continueHref: "/tools/compute/cpu-sizing/",
-    continueLabel: "Start Guided Flow \u2192 CPU Sizing",
+    continueLabel: "Start Guided Flow",
     flow: {
       id: "computeWorkloadDesignFlowCard",
       eyebrow: "Design Flow",
@@ -321,7 +321,7 @@
   function computeGuidedRouteCtaDefault() {
     return {
       nextHref: "/tools/compute/cpu-sizing/",
-      nextLabel: "Start Guided Flow \u2192 CPU Sizing",
+      nextLabel: "Start Guided Flow",
       action: "start"
     };
   }
@@ -505,26 +505,79 @@
     return decision;
   }
 
+  function computePlannerSavedWorkloads(plan) {
+    if (!plan) return [];
+
+    var arrays = [plan.workloads, plan.items, plan.records, plan.savedWorkloads];
+    for (var i = 0; i < arrays.length; i += 1) {
+      if (Array.isArray(arrays[i])) return arrays[i].filter(Boolean);
+    }
+
+    var maps = [plan.workloadMap, plan.workloadsById, plan.byId];
+    for (var j = 0; j < maps.length; j += 1) {
+      if (maps[j] && typeof maps[j] === "object") {
+        return Object.keys(maps[j]).map(function (key) { return maps[j][key]; }).filter(Boolean);
+      }
+    }
+
+    if (plan.activeWorkload && (plan.activeWorkload.id || plan.activeWorkload.workloadId || plan.activeWorkload.name)) return [plan.activeWorkload];
+    return [];
+  }
+
+  function computePlannerSetupTarget() {
+    var headings = Array.from(document.querySelectorAll("h1, h2, h3, h4, label, .h3, .eyebrow"));
+    var node = headings.find(function (item) {
+      var text = String(item.textContent || "");
+      return /Active\s+Compute\s+Workload\s+Setup|Workload\s*\/\s*Environment\s+Name/i.test(text);
+    });
+
+    var target = node && node.closest ? node.closest("section, .card, .panel, form") || node : null;
+    if (!target) target = document.querySelector("form") || document.querySelector("main") || document.body;
+    if (target && !target.id) target.id = "compute-workload-setup";
+    return target;
+  }
+
+  function promptForComputeWorkloadSetup() {
+    var target = computePlannerSetupTarget();
+    if (!target) return;
+
+    target.setAttribute("data-compute-start-guided-focus", "true");
+    if (typeof target.scrollIntoView === "function") {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    var field = target.querySelector ? target.querySelector("input, select, textarea, button") : null;
+    if (!field) field = document.querySelector("input, select, textarea");
+    if (field && typeof field.focus === "function") {
+      window.setTimeout(function () { field.focus({ preventScroll: true }); }, 250);
+    }
+  }
+
   function updateGuidedRouteCta(providedDecision) {
     var link = document.getElementById("continue");
     if (!link) link = document.querySelector("[data-planner-continue], .compute-flow-actions a:last-child, .flow-actions a:last-child");
     if (!link) return;
 
-    var decision = providedDecision || resolveGuidedRouteFromPlanner();
-    var nextHref = decision.nextHref || "/tools/compute/cpu-sizing/";
-    var nextLabel = decision.nextLabel || "Start Guided Flow \u2192 CPU Sizing";
+    var plan = readComputePlannerPlanSnapshot();
+    var workloads = computePlannerSavedWorkloads(plan);
+    var hasWorkloads = workloads.length > 0;
+    var decision = hasWorkloads ? (providedDecision || resolveGuidedRouteFromPlanner()) : computeGuidedRouteCtaDefault();
+    var nextHref = hasWorkloads && decision && decision.nextHref ? decision.nextHref : "#compute-workload-setup";
+    var nextLabel = "Start Guided Flow";
 
     if (link.getAttribute("href") !== nextHref) link.setAttribute("href", nextHref);
     if ((link.textContent || "").trim() !== nextLabel) link.textContent = nextLabel;
-    link.setAttribute("data-compute-guided-route-cta", decision.action || "start");
 
-    if (decision.plannerWorkloadId || decision.workloadId) {
+    link.setAttribute("data-compute-guided-route-cta", hasWorkloads && decision ? decision.action || "route" : "setup");
+    link.setAttribute("data-compute-guided-route-state", hasWorkloads ? "route" : "setup");
+
+    if (hasWorkloads && decision && (decision.plannerWorkloadId || decision.workloadId)) {
       link.setAttribute("data-compute-guided-route-workload-id", decision.plannerWorkloadId || decision.workloadId);
     } else {
       link.removeAttribute("data-compute-guided-route-workload-id");
     }
 
-    if (decision.plannerAlternateWorkload) {
+    if (hasWorkloads && decision && decision.plannerAlternateWorkload) {
       link.setAttribute("data-compute-guided-route-alt-workload", "true");
     } else {
       link.removeAttribute("data-compute-guided-route-alt-workload");
@@ -544,13 +597,15 @@
 
     window.setTimeout(refresh, 0);
     window.setTimeout(refresh, 100);
+    window.setTimeout(refresh, 500);
 
-    if (document.body && !window.__scopedlabsComputeGuidedRouteCtaObserver) {
-      window.__scopedlabsComputeGuidedRouteCtaObserver = new MutationObserver(function () {
-        updateGuidedRouteCta();
-      });
-      window.__scopedlabsComputeGuidedRouteCtaObserver.observe(document.body, { childList: true, subtree: true });
-    }
+    window.addEventListener("storage", refresh);
+    window.addEventListener("scopedlabs:compute:plan-change", refresh);
+    window.addEventListener("scopedlabs-compute-plan-change", refresh);
+
+    document.addEventListener("click", function () {
+      window.setTimeout(refresh, 80);
+    });
   }
 
   armGuidedRouteCtaRefresh();
@@ -561,13 +616,31 @@
     if (event && typeof event.preventDefault === "function") event.preventDefault();
 
     var link = event && event.currentTarget ? event.currentTarget : document.getElementById("continue");
-    var requestedWorkloadId = link && link.getAttribute ? link.getAttribute("data-compute-guided-route-workload-id") : "";
     var plan = readComputePlannerPlanSnapshot();
+    var workloads = computePlannerSavedWorkloads(plan);
+
+    if (!workloads.length) {
+      status("Define and save a Compute workload before starting guided flow.");
+      updateGuidedRouteCta();
+      promptForComputeWorkloadSetup();
+      return;
+    }
+
+    var routeDecision = resolveGuidedRouteFromPlanner();
+    var requestedWorkloadId = link && link.getAttribute ? link.getAttribute("data-compute-guided-route-workload-id") : "";
+    if (!requestedWorkloadId && routeDecision) requestedWorkloadId = routeDecision.plannerWorkloadId || routeDecision.workloadId || "";
+
     var workload = requestedWorkloadId ? findComputePlannerWorkload(plan, requestedWorkloadId) : null;
 
-    if (!workload) workload = save();
+    if (!workload && plan) {
+      var activeId = plan.activeWorkloadId || plan.activeId || plan.currentWorkloadId || "";
+      if (activeId) workload = findComputePlannerWorkload(plan, activeId);
+    }
+
+    if (!workload) workload = workloads[0];
     if (!workload || !workload.id) {
-      status("Save a Compute workload before starting guided flow.");
+      status("Select or save a Compute workload before starting guided flow.");
+      promptForComputeWorkloadSetup();
       return;
     }
 
@@ -576,16 +649,16 @@
       context = State.startGuidedFlow(workload.id);
     }
 
-    var decision = resolveGuidedRouteFromPlanner(context, workload);
+    var decision = resolveGuidedRouteFromPlanner(context, workload) || routeDecision;
     updateGuidedRouteCta(decision);
 
     if (decision && decision.nextHref) {
-      status("Guided flow ready for " + (workload.name || "Compute Workload") + ": " + (decision.nextLabel || "Continue") + ".");
+      status("Guided flow ready for " + (workload.name || "Compute Workload") + ".");
       window.location.href = decision.nextHref;
       return;
     }
 
-    window.location.href = context && context.nextHref || "/tools/compute/cpu-sizing/";
+    window.location.href = context && context.nextHref ? context.nextHref : "/tools/compute/cpu-sizing/";
   }
 
   function clearForm() {
