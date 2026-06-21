@@ -36,6 +36,15 @@ check(
 );
 
 check(
+  "PLANNER_START_CTA_HAS_DELEGATED_CLICK_HANDLER",
+  adapter.includes("function armPlannerStartGuidedFlowClickDelegate") &&
+    adapter.includes("__scopedlabsComputePlannerStartClickDelegate") &&
+    adapter.includes("startGuidedFlowFromPlanner(event)") &&
+    adapter.includes("}, true);"),
+  "Start Guided Flow click should be caught by one delegated capture handler"
+);
+
+check(
   "PLANNER_ZERO_WORKLOAD_CLICK_SCROLLS_TO_SETUP",
   adapter.includes("function promptForComputeWorkloadSetup") &&
     adapter.includes("scrollIntoView") &&
@@ -87,7 +96,7 @@ check(
 check(
   "PLANNER_PAGE_LOADS_WORKLOAD_AWARE_ADAPTER",
   hasVersionedScript(page, "scopedlabs-compute-planner-adapter.js", "scopedlabs-compute-planner-adapter") &&
-    page.includes("021-start-cta-workload-aware"),
+    page.includes("022-start-click-delegate"),
   "tools/compute/workload-planner/index.html"
 );
 
@@ -105,7 +114,7 @@ check(
 
 console.log("");
 console.log("SUMMARY");
-console.log("PASS: " + (10 - failures));
+console.log("PASS: " + (11 - failures));
 console.log("FAIL: " + failures);
 console.log("OVERALL: " + (failures ? "FAIL" : "PASS"));
 

@@ -1047,3 +1047,8 @@ Example:
 - If workloads exist, clicking the CTA starts explicit Compute guided context and routes to the next incomplete core or selected specialty tool using the existing guided route resolver.
 - The planner CTA refresh is event/timer driven and does not use a whole-page `MutationObserver` loop.
 - `scripts/audit-compute-planner-start-cta-workload-aware-v1.js` guards this workload-aware start behavior.
+#### Compute planner Start Guided Flow delegated click
+
+- `assets/scopedlabs-compute-planner-adapter.js` uses one delegated capture click handler for the planner Start Guided Flow CTA.
+- This avoids whole-page MutationObserver loops while still catching the CTA after the planner shell renders it.
+- The handler routes saved workloads or scrolls/focuses Active Compute Workload Setup when no workloads exist.

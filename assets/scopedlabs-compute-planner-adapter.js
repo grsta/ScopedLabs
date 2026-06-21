@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-compute-planner-adapter-021-start-cta-workload-aware";
+  var VERSION = "scopedlabs-compute-planner-adapter-022-start-click-delegate";
   var State = window.ScopedLabsComputePlanState;
   var Shell = window.ScopedLabsCategoryPlannerShell;
 
@@ -610,12 +610,40 @@
 
   armGuidedRouteCtaRefresh();
 
+  function armPlannerStartGuidedFlowClickDelegate() {
+    if (window.__scopedlabsComputePlannerStartClickDelegate) return;
+    window.__scopedlabsComputePlannerStartClickDelegate = true;
+
+    document.addEventListener("click", function (event) {
+      if (!event || !event.target || !event.target.closest) return;
+      var link = event.target.closest("#continue, [data-compute-guided-route-cta], [data-compute-guided-route-state]");
+      if (!link) return;
+
+      var text = String(link.textContent || "").replace(/\s+/g, " ").trim();
+      var isStart = /Start\s+Guided\s+Flow|Resume\s+Guided\s+Flow|Continue\s+Guided\s+Flow/i.test(text);
+      var isPlannerCta = link.hasAttribute("data-compute-guided-route-cta") || link.hasAttribute("data-compute-guided-route-state");
+      if (!isStart && !isPlannerCta) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      if (typeof event.stopImmediatePropagation === "function") event.stopImmediatePropagation();
+      startGuidedFlowFromPlanner(event);
+    }, true);
+  }
+
+  armPlannerStartGuidedFlowClickDelegate();
+
 
 
   function startGuidedFlowFromPlanner(event) {
     if (event && typeof event.preventDefault === "function") event.preventDefault();
 
-    var link = event && event.currentTarget ? event.currentTarget : document.getElementById("continue");
+    var link = null;
+    if (event && event.target && event.target.closest) {
+      link = event.target.closest("#continue, [data-compute-guided-route-cta], [data-compute-guided-route-state]");
+    }
+    if (!link && event && event.currentTarget && event.currentTarget !== document) link = event.currentTarget;
+    if (!link) link = document.getElementById("continue");
     var plan = readComputePlannerPlanSnapshot();
     var workloads = computePlannerSavedWorkloads(plan);
 
