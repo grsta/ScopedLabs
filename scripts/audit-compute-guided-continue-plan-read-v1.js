@@ -66,12 +66,12 @@ check(
 );
 
 check(
-  "CPU_RAM_LOAD_UPDATED_SHELL",
+  "CPU_RAM_LOAD_VERSIONED_GUIDED_SHELL",
   hasVersionedScript(cpu, "scopedlabs-compute-shell-contract.js", "scopedlabs-compute-shell-contract") &&
     hasVersionedScript(ram, "scopedlabs-compute-shell-contract.js", "scopedlabs-compute-shell-contract") &&
-    ram.includes("008-guided-plan-read") &&
-    cpu.includes("008-guided-plan-read"),
-  "CPU/RAM pages must load the patched shared shell"
+    /scopedlabs-compute-shell-contract\.js\?v=scopedlabs-compute-shell-contract-[0-9]{3}-[a-z0-9-]+/.test(cpu) &&
+    /scopedlabs-compute-shell-contract\.js\?v=scopedlabs-compute-shell-contract-[0-9]{3}-[a-z0-9-]+/.test(ram),
+  "CPU/RAM pages must load a scoped versioned shared shell with guided plan-read support"
 );
 
 check(

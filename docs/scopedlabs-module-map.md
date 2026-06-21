@@ -1017,3 +1017,10 @@ Example:
 - The shell reads current plan-state APIs including `load()` and current workload-plan storage keys before legacy fallbacks.
 - CPU/RAM direct visits remain standalone; guided routing only applies when `guidedFlow: true` and `routeMode: compute-guided` are present.
 - `scripts/audit-compute-guided-continue-plan-read-v1.js` guards the shared shell plan-read contract.
+### Compute guided CTA ownership
+
+- `assets/scopedlabs-compute-shell-contract.js` owns the visible Compute Back/Continue action row for CPU/RAM shell pages.
+- In guided mode, legacy page-level `#continue-wrap` and `#continue` controls are suppressed so users do not see duplicate forward actions.
+- The shared shell-owned `.compute-flow-actions[data-compute-flow-owner="compute-shell-contract"]` row remains visible and is the authoritative CTA target.
+- Direct tool visits keep normal standalone behavior; this only removes duplicate visual controls on shell-owned pages.
+- `scripts/audit-compute-guided-cta-ownership-v1.js` guards this ownership rule.

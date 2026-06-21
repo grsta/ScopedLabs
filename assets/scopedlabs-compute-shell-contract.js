@@ -246,6 +246,7 @@
 
     var config = computeFlowActionConfig();
     if (!config) return;
+    suppressLegacyContinueControls(config);
 
     var existing = document.querySelector('.compute-flow-actions[data-compute-flow-owner="compute-shell-contract"][data-compute-flow-tool="' + config.tool + '"]');
     if (existing && existing.getAttribute("data-compute-flow-placed") === "true") {
@@ -263,7 +264,43 @@
     row.setAttribute("data-compute-flow-placed", "true");
 
     exportSection.parentNode.insertBefore(row, exportSection.nextSibling);
+    suppressLegacyContinueControls(config);
     normalizeFlowActions();
+  }
+
+  function ensureComputeGuidedCtaOwnershipStyles() {
+    if (!isComputeShellPage()) return;
+    if (document.getElementById("scopedlabs-compute-guided-cta-ownership-styles")) return;
+
+    var style = document.createElement("style");
+    style.id = "scopedlabs-compute-guided-cta-ownership-styles";
+    style.textContent = [
+      'body[data-category="compute"][data-compute-tool-shell="0614"] [data-compute-legacy-continue-suppressed="true"] {',
+      '  display: none !important;',
+      '  visibility: hidden !important;',
+      '}',
+      'body[data-category="compute"][data-compute-tool-shell="0614"] .compute-flow-actions[data-compute-flow-owner="compute-shell-contract"] {',
+      '  width: 100%;',
+      '}'
+    ].join("\n");
+
+    document.head.appendChild(style);
+  }
+
+  function suppressLegacyContinueControls(config) {
+    if (!isComputeShellPage()) return;
+    ensureComputeGuidedCtaOwnershipStyles();
+
+    Array.from(document.querySelectorAll("#continue-wrap, #continue")).forEach(function (node) {
+      var ownerRow = node.closest && node.closest('.compute-flow-actions[data-compute-flow-owner="compute-shell-contract"]');
+      if (ownerRow) return;
+
+      node.setAttribute("data-compute-legacy-continue-suppressed", "true");
+      node.setAttribute("aria-hidden", "true");
+      node.hidden = true;
+      node.style.display = "none";
+      node.style.visibility = "hidden";
+    });
   }
 
   function normalizeContinueLabel(label) {
@@ -288,6 +325,8 @@
 
   function normalizeFlowActions() {
     if (!isComputeShellPage()) return;
+    var ownershipConfig = computeFlowActionConfig();
+    if (ownershipConfig) suppressLegacyContinueControls(ownershipConfig);
 
     Array.from(document.querySelectorAll(".compute-flow-actions")).forEach(function (row) {
       setAttributeIfNeeded(row, "data-compute-flow-actions", "true");
