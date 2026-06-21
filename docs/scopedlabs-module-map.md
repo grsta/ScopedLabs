@@ -1040,9 +1040,3 @@ Example:
 - `assets/scopedlabs-compute-shell-contract.js` captures guided Continue clicks before legacy page-level handlers can use stale static targets.
 - The visible label, stored target, and actual click route all resolve from the active guided route decision.
 - This prevents cases where RAM displays `Continue to GPU VRAM` but a legacy static handler sends the user to Storage IOPS.
-### Compute planner workload-aware Start Guided Flow CTA
-
-- `assets/scopedlabs-compute-planner-adapter.js` keeps the planner CTA visible as `Start Guided Flow`.
-- If no Compute workloads are saved, clicking the CTA scrolls/focuses the Active Compute Workload Setup form instead of opening CPU with no workload context.
-- If workloads exist, clicking the CTA starts explicit Compute guided context and routes to the next incomplete core or selected specialty tool using `assets/scopedlabs-compute-guided-route-engine.js`.
-- `scripts/audit-compute-planner-start-cta-workload-aware-v1.js` guards this workload-aware start behavior.

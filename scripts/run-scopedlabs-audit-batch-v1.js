@@ -17,7 +17,6 @@ const defaultAudits = [
   "scripts/audit-compute-planner-input-contract-v1.js",
   "scripts/audit-compute-planner-route-cta-v1.js",
   "scripts/audit-compute-planner-multi-workload-route-v1.js",
-  "scripts/audit-compute-planner-start-cta-workload-aware-v1.js",
   "scripts/audit-compute-tool-continue-route-v1.js",
   "scripts/audit-compute-guided-continue-plan-read-v1.js",
   "scripts/audit-compute-dynamic-continue-cta-v1.js",
