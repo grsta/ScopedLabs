@@ -83,6 +83,16 @@ check(
 );
 
 check(
+  "SHELL_CAPTURE_GUARDS_DYNAMIC_CLICK",
+  shell.includes("function initComputeGuidedContinueClickGuard") &&
+    shell.includes("stopImmediatePropagation") &&
+    shell.includes("window.location.assign(href)") &&
+    shell.includes("data-compute-guided-click-target") &&
+    shell.includes("}, true);"),
+  "guided Continue clicks must use the dynamic href before legacy static handlers fire"
+);
+
+check(
   "SHELL_UPDATES_BUTTON_TARGET_AND_ENABLES_BUTTONS",
   shell.includes("data-compute-continue-href") &&
     shell.includes("setAttribute(\"href\", decision.nextHref)") &&
@@ -95,9 +105,9 @@ check(
   hasVersionedScript(cpu, "scopedlabs-compute-shell-contract.js", "scopedlabs-compute-shell-contract") &&
     hasVersionedScript(ram, "scopedlabs-compute-shell-contract.js", "scopedlabs-compute-shell-contract") &&
     hasVersionedScript(gpu, "scopedlabs-compute-shell-contract.js", "scopedlabs-compute-shell-contract") &&
-    cpu.includes("011-single-dynamic-continue") &&
-    ram.includes("011-single-dynamic-continue") &&
-    gpu.includes("011-single-dynamic-continue"),
+    cpu.includes("012-dynamic-click-guard") &&
+    ram.includes("012-dynamic-click-guard") &&
+    gpu.includes("012-dynamic-click-guard"),
   "proof pages should load the dynamic Continue shell"
 );
 
@@ -123,7 +133,7 @@ check(
 
 console.log("");
 console.log("SUMMARY");
-console.log("PASS: " + (11 - failures));
+console.log("PASS: " + (12 - failures));
 console.log("FAIL: " + failures);
 console.log("OVERALL: " + (failures ? "FAIL" : "PASS"));
 

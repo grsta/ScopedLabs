@@ -1035,3 +1035,8 @@ Example:
 - `assets/scopedlabs-compute-shell-contract.js` targets the shell-owned `.compute-flow-actions[data-compute-flow-owner="compute-shell-contract"]` row first.
 - In explicit guided mode, duplicate legacy `#continue-wrap` / `#continue` controls are suppressed so users see one normal bottom Continue action.
 - The same button dynamically resolves Standard Core to Compute Summary and branch paths to their next selected tool.
+#### Compute dynamic Continue click guard
+
+- `assets/scopedlabs-compute-shell-contract.js` captures guided Continue clicks before legacy page-level handlers can use stale static targets.
+- The visible label, stored target, and actual click route all resolve from the active guided route decision.
+- This prevents cases where RAM displays `Continue to GPU VRAM` but a legacy static handler sends the user to Storage IOPS.

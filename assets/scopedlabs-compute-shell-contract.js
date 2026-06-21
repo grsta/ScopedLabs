@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-compute-shell-contract-011-single-dynamic-continue";
+  var VERSION = "scopedlabs-compute-shell-contract-012-dynamic-click-guard";
 
   function isComputeShellPage() {
     var body = document.body;
@@ -557,6 +557,7 @@
     button.setAttribute("data-compute-guided-route-continue", "true");
     button.setAttribute("data-compute-continue-href", decision.nextHref);
     button.setAttribute("data-compute-guided-next-tool", decision.nextTool || "");
+    button.setAttribute("data-compute-guided-click-target", decision.nextHref);
 
     if (button.tagName && button.tagName.toLowerCase() === "a") {
       button.setAttribute("href", decision.nextHref);
@@ -599,6 +600,34 @@
     }
   }
 
+  function initComputeGuidedContinueClickGuard() {
+    if (window.__ScopedLabsComputeGuidedContinueClickGuard) return;
+    window.__ScopedLabsComputeGuidedContinueClickGuard = true;
+
+    document.addEventListener("click", function (event) {
+      var target = event.target && event.target.closest ? event.target.closest("#continue, [data-compute-continue-href], [data-compute-guided-click-target]") : null;
+      if (!target) return;
+
+      var context = readComputeGuidedContinueContext();
+      if (!context) return;
+
+      var row = target.closest ? target.closest(".compute-flow-actions[data-compute-flow-tool]") : null;
+      var tool = row ? row.getAttribute("data-compute-flow-tool") : "";
+      var decision = tool ? resolveComputeGuidedContinueDecision(tool) : null;
+
+      var href = decision && decision.nextHref ? decision.nextHref : "";
+      if (!href) href = target.getAttribute("data-compute-guided-click-target") || target.getAttribute("data-compute-continue-href") || target.getAttribute("href") || "";
+      if (!href) return;
+
+      if (decision && decision.nextHref) applyComputeGuidedContinueDecision(target, decision);
+
+      event.preventDefault();
+      event.stopPropagation();
+      if (typeof event.stopImmediatePropagation === "function") event.stopImmediatePropagation();
+      window.location.assign(href);
+    }, true);
+  }
+
   function initComputeGuidedContinueRouting() {
     function runRefreshLoop() {
       refreshComputeGuidedContinueCta();
@@ -634,4 +663,5 @@
   }
 
   initComputeGuidedContinueRouting();
+  initComputeGuidedContinueClickGuard();
 })();
