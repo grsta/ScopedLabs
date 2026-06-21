@@ -943,3 +943,8 @@ Example:
 - `assets/scopedlabs-compute-planner-adapter.js` must keep branch tables scoped to the branch being displayed.
 - Core rows may show CPU/RAM progress and global next action, but storage, GPU, infrastructure, and recovery branch tables must not inherit unrelated CPU/RAM checks.
 - `scripts/audit-compute-workload-ledger-v1.js` includes a behavior fixture for the case where CPU/RAM are complete, the GPU branch is flagged, and GPU VRAM has not run; expected GPU branch checks are `0` with a pending GPU VRAM action.
+### Compute workload planner metadata placement
+
+- `assets/scopedlabs-compute-planner-adapter.js` owns the Compute-specific placement rule that moves `computeWorkloadReportMetadataSection` after `scopeSummaryCard` after the shared category planner shell renders.
+- `tools/compute/workload-planner/index.html` cache-busts the adapter with `scopedlabs-compute-planner-adapter-014-metadata-bottom`.
+- `scripts/audit-compute-workload-planner-metadata-placement-v1.js` verifies the metadata section is moved below the workload summary/report actions instead of sitting between the workload ledger and summary.

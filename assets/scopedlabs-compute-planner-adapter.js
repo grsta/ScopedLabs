@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-compute-planner-adapter-011-active-workload-visual";
+  var VERSION = "scopedlabs-compute-planner-adapter-014-metadata-bottom";
   var State = window.ScopedLabsComputePlanState;
   var Shell = window.ScopedLabsCategoryPlannerShell;
 
@@ -1027,6 +1027,18 @@
     window.print();
   }
 
+
+  function moveReportMetadataToBottom() {
+    var metadata = document.getElementById(config.metadataSectionId || "categoryPlannerReportMetadataSection");
+    var summary = document.getElementById("scopeSummaryCard");
+
+    if (!metadata || !summary || !summary.parentNode) return false;
+    if (metadata.previousElementSibling === summary) return true;
+
+    summary.parentNode.insertBefore(metadata, summary.nextSibling);
+    metadata.setAttribute("data-compute-metadata-placement", "after-summary");
+    return true;
+  }
   function boot() {
     if (!Shell) {
       console.error("ScopedLabsCategoryPlannerShell did not load.");
@@ -1035,6 +1047,7 @@
 
     var mount = document.querySelector("[data-category-planner-shell-mount]");
     Shell.render(mount, config);
+    moveReportMetadataToBottom();
     cacheEls();
     hideStarterPlaceholders();
 
