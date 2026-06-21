@@ -931,3 +931,10 @@ Example:
 - The audit does not auto-install modules. It reports current coverage and recommends compatible existing modules for missing capabilities.
 - The audit is registered in `scripts/run-scopedlabs-audit-batch-v1.js` and should be run before broad category modernization patches.
 - Initial supported category config: `compute`; other categories can be added as adapters/manifests without rewriting the audit engine.
+### Compute workload ledger contract
+
+- `scripts/audit-compute-workload-ledger-v1.js` verifies the Compute workload ledger publisher contract.
+- Compute tool pages must load `assets/scopedlabs-compute-plan-state.js` before their local calculator script when they publish workload results.
+- Compute tool scripts publish explicit calculator payloads through `ScopedLabsComputePlanState.recordToolResult()` using a local `saveComputeLedgerResult()` wrapper.
+- `assets/scopedlabs-compute-planner-adapter.js` reads `plan.results` so Workload Planner can show completed checks, latest saved results, and the next action for each workload.
+- This contract intentionally avoids generic DOM/MuationObserver scraping; ledger publishers must be explicit tool-result hooks.

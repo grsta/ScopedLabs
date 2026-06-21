@@ -5,6 +5,7 @@
   const STEP = "gpu-vram";
   const LANE = "v1";
   const PREVIOUS_STEP = "vm-density";
+  const State = window.ScopedLabsComputePlanState;
 
   const FLOW_KEYS = {
     "cpu-sizing": "scopedlabs:pipeline:compute:cpu-sizing",
@@ -141,6 +142,16 @@
     if (els.continueWrap) els.continueWrap.style.display = "flex";
   }
 
+
+  function saveComputeLedgerResult(payload) {
+    if (!State || typeof State.recordToolResult !== "function") return null;
+
+    try {
+      return State.recordToolResult(STEP, payload);
+    } catch {
+      return null;
+    }
+  }
   function invalidate() {
     try {
       sessionStorage.removeItem(FLOW_KEYS[STEP]);
@@ -204,6 +215,19 @@
         gpu: "none",
         vram: 0,
         status: "HEALTHY",
+        gpuRequired: false
+      }
+    });
+
+    saveComputeLedgerResult({
+      label: "GPU VRAM",
+      summary: "GPU not required for this workload path",
+      status: "HEALTHY",
+      summaryStatus: "HEALTHY",
+      keySavedResult: "No GPU required / HEALTHY",
+      outputs: {
+        gpu: "none",
+        vram: 0,
         gpuRequired: false
       }
     });
@@ -359,6 +383,21 @@
         gpuClass,
         crossCheck,
         status: analyzer.status,
+        gpuRequired: true
+      }
+    });
+
+    saveComputeLedgerResult({
+      label: "GPU VRAM",
+      summary: totalGb.toFixed(1) + " GB VRAM required; " + gpuClass,
+      status: analyzer.status,
+      summaryStatus: analyzer.status,
+      keySavedResult: totalGb.toFixed(1) + " GB VRAM / " + analyzer.status,
+      outputs: {
+        gpu: "required",
+        vram: totalGb,
+        gpuClass,
+        crossCheck,
         gpuRequired: true
       }
     });

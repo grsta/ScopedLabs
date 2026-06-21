@@ -1,6 +1,8 @@
 (() => {
   const CATEGORY = "compute";
   const TOOL_KEY = "scopedlabs:analyzer:compute:nic-bonding";
+  const STEP = "nic-bonding";
+  const State = window.ScopedLabsComputePlanState;
 
   const $ = (id) => document.getElementById(id);
 
@@ -110,6 +112,16 @@
     `;
   }
 
+
+  function saveComputeLedgerResult(payload) {
+    if (!State || typeof State.recordToolResult !== "function") return null;
+
+    try {
+      return State.recordToolResult(STEP, payload);
+    } catch {
+      return null;
+    }
+  }
   function invalidate() {
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
@@ -295,6 +307,21 @@
         status: analyzer.status
       }
     });
+    saveComputeLedgerResult({
+      label: "NIC Bonding",
+      summary: aggregate.toFixed(1) + " Gbps aggregate; " + bondingClass,
+      status: analyzer.status,
+      summaryStatus: analyzer.status,
+      keySavedResult: aggregate.toFixed(1) + " Gbps / " + analyzer.status,
+      outputs: {
+        mode,
+        aggregate,
+        perFlowCap,
+        bondingClass,
+        dominantConstraint
+      }
+    });
+
   }
 
   function reset() {

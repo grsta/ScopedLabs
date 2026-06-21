@@ -5,6 +5,7 @@
   const STEP = "power-thermal";
   const LANE = "v1";
   const PREVIOUS_STEP = "gpu-vram";
+  const State = window.ScopedLabsComputePlanState;
 
   const FLOW_KEYS = {
     "cpu-sizing": "scopedlabs:pipeline:compute:cpu-sizing",
@@ -142,6 +143,16 @@
     if (els.continueWrap) els.continueWrap.style.display = "flex";
   }
 
+
+  function saveComputeLedgerResult(payload) {
+    if (!State || typeof State.recordToolResult !== "function") return null;
+
+    try {
+      return State.recordToolResult(STEP, payload);
+    } catch {
+      return null;
+    }
+  }
   function invalidate() {
     try {
       sessionStorage.removeItem(FLOW_KEYS[STEP]);
@@ -325,6 +336,23 @@
         insight,
         gpuNote,
         status: analyzer.status
+      }
+    });
+
+    saveComputeLedgerResult({
+      label: "Power & Thermal",
+      summary: totalW.toFixed(0) + " W / " + tons.toFixed(2) + " cooling tons; " + pressure,
+      status: analyzer.status,
+      summaryStatus: analyzer.status,
+      keySavedResult: totalW.toFixed(0) + " W / " + analyzer.status,
+      outputs: {
+        totalW,
+        btu,
+        tons,
+        pressure,
+        insight,
+        gpuNote,
+        dominantConstraint
       }
     });
 

@@ -441,31 +441,120 @@
     return "access-status-planning";
   }
 
-  function completedComputeCheckCount(workload) {
-    var completed = workload && workload.completedTools && typeof workload.completedTools === "object"
-      ? workload.completedTools
-      : workload && workload.completedChecks && typeof workload.completedChecks === "object"
-        ? workload.completedChecks
-        : {};
+  var COMPUTE_LEDGER_ORDER = [
+    "cpu-sizing",
+    "ram-sizing",
+    "storage-iops",
+    "storage-throughput",
+    "vm-density",
+    "gpu-vram",
+    "power-thermal",
+    "raid-rebuild-time",
+    "backup-window",
+    "nic-bonding"
+  ];
+
+  var COMPUTE_LEDGER_LABELS = {
+    "cpu-sizing": "CPU Sizing",
+    "ram-sizing": "RAM Sizing",
+    "storage-iops": "Storage IOPS",
+    "storage-throughput": "Storage Throughput",
+    "vm-density": "VM Density",
+    "gpu-vram": "GPU VRAM",
+    "power-thermal": "Power & Thermal",
+    "raid-rebuild-time": "RAID Rebuild Time",
+    "backup-window": "Backup Window",
+    "nic-bonding": "NIC Bonding"
+  };
+
+  function workloadResultMap(workload, plan) {
+    var id = workload && (workload.id || workload.workloadId);
+    var results = plan && plan.results && typeof plan.results === "object" ? plan.results : {};
+    return id && results[id] && typeof results[id] === "object" ? results[id] : {};
+  }
+
+  function workloadResultPayload(entry) {
+    if (!entry) return null;
+    return entry.result && typeof entry.result === "object" ? entry.result : entry;
+  }
+
+  function normalizeLedgerStatus(value) {
+    var status = String(value || "").toUpperCase();
+    if (status === "RISK") return "RISK";
+    if (status === "WATCH") return "WATCH";
+    if (status === "GOOD" || status === "HEALTHY" || status === "COMPLETE") return "COMPLETE";
+    if (status === "AUTHORITY REVIEW") return "AUTHORITY REVIEW";
+    if (status === "PENDING") return "PENDING";
+    return "";
+  }
+
+  function workloadCompletedMap(workload, plan) {
+    var map = {};
+    var completedTools = workload && workload.completedTools && typeof workload.completedTools === "object" ? workload.completedTools : {};
+    var completedChecks = workload && workload.completedChecks && typeof workload.completedChecks === "object" ? workload.completedChecks : {};
+    var results = workloadResultMap(workload, plan);
+
+    Object.keys(completedTools).forEach(function (key) { if (completedTools[key]) map[key] = true; });
+    Object.keys(completedChecks).forEach(function (key) { if (completedChecks[key]) map[key] = true; });
+    Object.keys(results).forEach(function (key) { if (results[key]) map[key] = true; });
+
+    return map;
+  }
+
+  function completedComputeCheckCount(workload, plan) {
+    var completed = workloadCompletedMap(workload, plan);
     return Object.keys(completed).filter(function (key) { return !!completed[key]; }).length;
   }
 
-  function workloadStatusValue(workload) {
+  function latestWorkloadToolResult(workload, plan) {
+    var results = workloadResultMap(workload, plan);
+    var latest = null;
+
+    COMPUTE_LEDGER_ORDER.forEach(function (tool) {
+      if (results[tool]) latest = { tool: tool, entry: results[tool], payload: workloadResultPayload(results[tool]) || {} };
+    });
+
+    if (latest) return latest;
+
+    Object.keys(results).forEach(function (tool) {
+      var entry = results[tool];
+      if (!latest || String(entry.updatedAt || "") > String(latest.entry.updatedAt || "")) {
+        latest = { tool: tool, entry: entry, payload: workloadResultPayload(entry) || {} };
+      }
+    });
+
+    return latest;
+  }
+
+  function workloadStatusValue(workload, plan) {
     if (!workload) return "PLANNING";
 
     var explicit = String(workload.status || workload.summaryStatus || "").toUpperCase();
-    if (["PLANNING", "PENDING", "WATCH", "RISK", "AUTHORITY REVIEW", "COMPLETE"].indexOf(explicit) >= 0) {
-      return explicit;
-    }
+    if (["RISK", "WATCH", "AUTHORITY REVIEW", "COMPLETE"].indexOf(explicit) >= 0) return explicit;
 
+    var results = workloadResultMap(workload, plan);
+    var sawComplete = false;
+    var sawPending = false;
+
+    Object.keys(results).forEach(function (tool) {
+      var payload = workloadResultPayload(results[tool]) || {};
+      var resultStatus = normalizeLedgerStatus(payload.status || payload.summaryStatus || results[tool].status);
+      if (resultStatus === "RISK") explicit = "RISK";
+      else if (resultStatus === "WATCH" && explicit !== "RISK") explicit = "WATCH";
+      else if (resultStatus === "COMPLETE") sawComplete = true;
+      else if (resultStatus === "PENDING") sawPending = true;
+    });
+
+    if (explicit === "RISK" || explicit === "WATCH") return explicit;
     if (workload.riskFlag || workload.hasRisk || workload.designRisk) return "RISK";
     if (workload.requiresReview || workload.needsReview || workload.vendorReview || workload.hardwareReview) return "AUTHORITY REVIEW";
 
+    var checks = completedComputeCheckCount(workload, plan);
+    if (checks >= COMPUTE_LEDGER_ORDER.length) return "COMPLETE";
+    if (checks > 0 || sawComplete || sawPending || explicit === "PENDING") return "PENDING";
+
     var branches = branchList(workload);
     if (branches.length) return "WATCH";
-
-    var checks = completedComputeCheckCount(workload);
-    if (checks > 0) return "PENDING";
 
     return "PLANNING";
   }
@@ -474,7 +563,34 @@
     return active && workload && workload.id === active.id ? "Active Workload" : "Saved Workload";
   }
 
-  function workloadKeySavedResult(workload) {
+  function formatLedgerSummary(latest) {
+    if (!latest || !latest.payload) return "";
+    var payload = latest.payload;
+    if (payload.keySavedResult) return String(payload.keySavedResult);
+    if (payload.summary) return String(payload.summary);
+
+    var outputs = payload.outputs && typeof payload.outputs === "object" ? payload.outputs : payload;
+    if (typeof outputs.cores === "number") return outputs.cores + " cores";
+    if (typeof outputs.ram === "number") return outputs.ram + " GB RAM";
+    if (typeof outputs.finalIops === "number") return outputs.finalIops.toFixed(0) + " IOPS";
+    if (typeof outputs.finalMBps === "number") return outputs.finalMBps.toFixed(1) + " MB/s";
+    if (typeof outputs.vms === "number") return outputs.vms + " VMs";
+    if (typeof outputs.vram === "number") return outputs.vram.toFixed(1) + " GB VRAM";
+    if (typeof outputs.totalW === "number") return outputs.totalW.toFixed(0) + " W";
+    if (typeof outputs.hours === "number") return outputs.hours.toFixed(1) + " hrs";
+    if (typeof outputs.aggregate === "number") return outputs.aggregate.toFixed(1) + " Gbps";
+
+    return "Result saved";
+  }
+
+  function workloadKeySavedResult(workload, plan) {
+    var latest = latestWorkloadToolResult(workload, plan);
+    if (latest) {
+      var label = COMPUTE_LEDGER_LABELS[latest.tool] || titleCase(latest.tool);
+      var summary = formatLedgerSummary(latest);
+      return "Latest: " + label + (summary ? " - " + summary : "");
+    }
+
     var branches = branchList(workload);
     return [
       "Env: " + titleCase(workload.environmentType),
@@ -484,9 +600,12 @@
     ].join("; ");
   }
 
-  function workloadNextAction(workload) {
+  function workloadNextAction(workload, plan) {
     if (!workload) return "Save a workload before continuing.";
-    return "Continue to CPU Sizing.";
+    var completed = workloadCompletedMap(workload, plan);
+    var nextTool = COMPUTE_LEDGER_ORDER.find(function (tool) { return !completed[tool]; });
+    if (!nextTool) return "Review Compute Summary.";
+    return "Continue to " + (COMPUTE_LEDGER_LABELS[nextTool] || titleCase(nextTool)) + ".";
   }
 
   function renderComputeStatusLegend() {
@@ -528,7 +647,7 @@
     var branchMapCountLabel = active
       ? "active workload / " + branchTotal + (branchTotal === 1 ? " branch" : " branches")
       : totalWorkloads + " workloads / " + aggregateBranchTotal + " branches";
-    var statusText = active ? workloadStatusValue(active) : computePlannerStatusLabel(workloads, branchTotal);
+    var statusText = active ? workloadStatusValue(active, rollup.plan) : computePlannerStatusLabel(workloads, branchTotal);
     var statusIsWatch = statusText === "WATCH" || statusText === "PENDING";
 
     var palette = {
@@ -636,7 +755,7 @@
     ].join("");
   }
 
-  function summaryBranches(workloads) {
+  function summaryBranches(workloads, plan) {
     var groups = {
       core: [],
       storage: [],
@@ -648,10 +767,12 @@
     (workloads || []).forEach(function (workload) {
       groups.core.push(workload);
       var branches = workload.branches || {};
-      if (branches.storageHeavy) groups.storage.push(workload);
-      if (branches.gpu) groups.acceleration.push(workload);
-      if (branches.powerThermal || branches.nicBonding) groups.infrastructure.push(workload);
-      if (branches.raid || branches.backup) groups.recovery.push(workload);
+      var results = workloadResultMap(workload, plan);
+
+      if (branches.storageHeavy || results["storage-iops"] || results["storage-throughput"]) groups.storage.push(workload);
+      if (branches.gpu || results["gpu-vram"]) groups.acceleration.push(workload);
+      if (branches.powerThermal || branches.nicBonding || results["power-thermal"] || results["nic-bonding"]) groups.infrastructure.push(workload);
+      if (branches.raid || branches.backup || results["raid-rebuild-time"] || results["backup-window"]) groups.recovery.push(workload);
     });
 
     return groups;
@@ -660,8 +781,8 @@
   function renderSummary(plan) {
     var workloads = plan.workloads || [];
     var active = State.activeWorkload(plan);
-    var groups = summaryBranches(workloads);
-    var activeGroups = active ? summaryBranches([active]) : groups;
+    var groups = summaryBranches(workloads, plan);
+    var activeGroups = active ? summaryBranches([active], plan) : groups;
 
     if (els.activeWorkloadLabel) {
       els.activeWorkloadLabel.textContent = "Active workload: " + (active ? active.name : "No active workload selected");
@@ -686,7 +807,8 @@
         branchTotal: activeBranchTotal,
         totalWorkloads: workloads.length,
         aggregateBranchTotal: branchTotal,
-        visualMode: active ? "active-workload" : "aggregate"
+        visualMode: active ? "active-workload" : "aggregate",
+        plan: plan
       }
     );
 
@@ -697,8 +819,8 @@
       var rows = list.length ? list.map(function (workload) {
         var selected = selectedWorkloadLabel(workload, active);
         var selectedClass = selected === "Active Workload" ? "access-status-active-text" : "access-status-planning";
-        var status = workloadStatusValue(workload);
-        var checks = completedComputeCheckCount(workload);
+        var status = workloadStatusValue(workload, plan);
+        var checks = completedComputeCheckCount(workload, plan);
 
         return [
           '<tr>',
@@ -706,8 +828,8 @@
           '<td><strong class="' + selectedClass + '">' + escapeHtml(selected) + '</strong></td>',
           '<td><strong class="' + computeStatusClass(status) + '">' + escapeHtml(status) + '</strong></td>',
           '<td>' + checks + '</td>',
-          '<td>' + escapeHtml(workloadKeySavedResult(workload)) + '</td>',
-          '<td>' + escapeHtml(workloadNextAction(workload)) + '</td>',
+          '<td>' + escapeHtml(workloadKeySavedResult(workload, plan)) + '</td>',
+          '<td>' + escapeHtml(workloadNextAction(workload, plan)) + '</td>',
           '</tr>'
         ].join("");
       }).join("") : '<tr><td colspan="6" class="muted">' + escapeHtml(emptyLabel) + '</td></tr>';

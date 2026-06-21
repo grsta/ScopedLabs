@@ -5,6 +5,7 @@
   const STEP = "storage-throughput";
   const LANE = "v1";
   const PREVIOUS_STEP = "storage-iops";
+  const State = window.ScopedLabsComputePlanState;
 
   const FLOW_KEYS = {
     "cpu-sizing": "scopedlabs:pipeline:compute:cpu-sizing",
@@ -142,6 +143,16 @@
     `;
   }
 
+
+  function saveComputeLedgerResult(payload) {
+    if (!State || typeof State.recordToolResult !== "function") return null;
+
+    try {
+      return State.recordToolResult(STEP, payload);
+    } catch {
+      return null;
+    }
+  }
   function invalidate() {
     try {
       sessionStorage.removeItem(FLOW_KEYS[STEP]);
@@ -333,6 +344,21 @@
         workloadPattern,
         crossCheck,
         status: analyzer.status
+      }
+    });
+
+    saveComputeLedgerResult({
+      label: "Storage Throughput",
+      summary: finalMBps.toFixed(1) + " MB/s required; " + workloadPattern,
+      status: analyzer.status,
+      summaryStatus: analyzer.status,
+      keySavedResult: finalMBps.toFixed(1) + " MB/s / " + analyzer.status,
+      outputs: {
+        finalMBps,
+        throughputClass,
+        workloadPattern,
+        crossCheck,
+        dominantConstraint
       }
     });
 

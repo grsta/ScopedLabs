@@ -10,6 +10,7 @@ const defaultAudits = [
   "scripts/audit-compute-flow-actions-shell-contract-v1.js",
   "scripts/audit-scopedlabs-module-map-v1.js",
   "scripts/audit-scopedlabs-category-module-coverage-v1.js",
+  "scripts/audit-compute-workload-ledger-v1.js",
   "scripts/audit-scopedlabs-pattern-promotion-v1.js",
   "scripts/audit-scopedlabs-planner-summary-nav-contract-v1.js",
   "scripts/audit-compute-planner-summary-pipeline-nav-v1.js",

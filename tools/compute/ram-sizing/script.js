@@ -269,6 +269,16 @@
     });
   }
 
+
+  function saveComputeLedgerResult(payload) {
+    if (!State || typeof State.recordToolResult !== "function") return null;
+
+    try {
+      return State.recordToolResult(STEP, payload);
+    } catch {
+      return null;
+    }
+  }
   function invalidate() {
     try {
       sessionStorage.removeItem(FLOW_KEYS[STEP]);
@@ -494,6 +504,22 @@
         upstreamCpuContext,
         status: analyzer.status,
         capacityEnvelope: ramCapacityEnvelope}
+    });
+
+    saveComputeLedgerResult({
+      label: "RAM Sizing",
+      summary: String(recommended) + " GB recommended; " + totalRequired.toFixed(1) + " GB required",
+      status: analyzer.status,
+      summaryStatus: analyzer.status,
+      keySavedResult: String(recommended) + " GB RAM / " + analyzer.status,
+      outputs: {
+        ram: recommended,
+        totalRequired,
+        reserveRatio,
+        dominantConstraint,
+        workload,
+        cpuCoupling
+      }
     });
 
     hasResult = true;

@@ -5,6 +5,7 @@
   const STEP = "vm-density";
   const LANE = "v1";
   const PREVIOUS_STEP = "storage-throughput";
+  const State = window.ScopedLabsComputePlanState;
 
   const FLOW_KEYS = {
     "cpu-sizing": "scopedlabs:pipeline:compute:cpu-sizing",
@@ -147,6 +148,16 @@
     `;
   }
 
+
+  function saveComputeLedgerResult(payload) {
+    if (!State || typeof State.recordToolResult !== "function") return null;
+
+    try {
+      return State.recordToolResult(STEP, payload);
+    } catch {
+      return null;
+    }
+  }
   function invalidate() {
     try {
       sessionStorage.removeItem(FLOW_KEYS[STEP]);
@@ -343,6 +354,21 @@
         densityClass,
         crossCheck,
         status: analyzer.status
+      }
+    });
+
+    saveComputeLedgerResult({
+      label: "VM Density",
+      summary: String(vms) + " modeled VMs; limiting factor " + limiting,
+      status: analyzer.status,
+      summaryStatus: analyzer.status,
+      keySavedResult: String(vms) + " VMs / " + analyzer.status,
+      outputs: {
+        vms,
+        limiting,
+        densityClass,
+        crossCheck,
+        dominantConstraint
       }
     });
 
