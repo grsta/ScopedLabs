@@ -1062,3 +1062,8 @@ Example:
 - With zero saved workloads, the CTA does not auto-save default form state; it scrolls/focuses the Active Compute Workload Setup path.
 - With saved workloads, the CTA starts explicit Compute guided context and routes to the next incomplete applicable core or selected specialty tool.
 - `scripts/audit-compute-planner-start-cta-workload-aware-v1.js` guards the no-autosave, saved-ledger-only, no-MutationObserver, and guided-route behavior.
+#### Compute planner rendered Start Guided Flow click selector
+
+- `assets/scopedlabs-compute-planner-adapter.js` now catches the rendered `Start Guided Flow` CTA as a plain `a` or `button`, then filters by label/data state.
+- This prevents zero-workload planner clicks from falling through to the default `#compute-workload-setup` anchor without running the workload-aware setup-focus handler.
+- `scripts/audit-compute-planner-start-cta-workload-aware-v1.js` guards the rendered text-link selector contract.

@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-compute-planner-adapter-025-saved-ledger-only";
+  var VERSION = "scopedlabs-compute-planner-adapter-026-start-any-cta-click";
   var State = window.ScopedLabsComputePlanState;
   var Shell = window.ScopedLabsCategoryPlannerShell;
 
@@ -639,7 +639,7 @@
 
     document.addEventListener("click", function (event) {
       if (!event || !event.target || !event.target.closest) return;
-      var link = event.target.closest("#continue, [data-compute-guided-route-cta], [data-compute-guided-route-state]");
+      var link = event.target.closest("a, button");
       if (!link) return;
 
       var text = String(link.textContent || "").replace(/\s+/g, " ").trim();
@@ -663,7 +663,7 @@
 
     var link = null;
     if (event && event.target && event.target.closest) {
-      link = event.target.closest("#continue, [data-compute-guided-route-cta], [data-compute-guided-route-state]");
+      link = event.target.closest("a, button");
     }
     if (!link && event && event.currentTarget && event.currentTarget !== document) link = event.currentTarget;
     if (!link) link = document.getElementById("continue");

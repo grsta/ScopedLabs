@@ -62,6 +62,15 @@ check(
 );
 
 check(
+  "PLANNER_START_CTA_DELEGATE_MATCHES_RENDERED_TEXT_LINKS",
+  /event\.target\.closest\(["\']a, button["\']\)/.test(adapter) &&
+    /Start\\s\+Guided\\s\+Flow/.test(adapter) &&
+    adapter.includes("var isStart =") &&
+    adapter.includes("startGuidedFlowFromPlanner(event)"),
+  "delegated click handler must catch the rendered plain Start Guided Flow anchor/button"
+);
+
+check(
   "PLANNER_ZERO_WORKLOAD_CLICK_SCROLLS_TO_SETUP",
   adapter.includes("function promptForComputeWorkloadSetup") &&
     adapter.includes("scrollIntoView") &&
@@ -132,7 +141,7 @@ check(
 check(
   "PLANNER_PAGE_LOADS_WORKLOAD_AWARE_ADAPTER",
   hasVersionedScript(page, "scopedlabs-compute-planner-adapter.js", "scopedlabs-compute-planner-adapter") &&
-    page.includes("025-saved-ledger-only"),
+    page.includes("026-start-any-cta-click"),
   "tools/compute/workload-planner/index.html"
 );
 
@@ -150,7 +159,7 @@ check(
 
 console.log("");
 console.log("SUMMARY");
-console.log("PASS: " + (13 - failures));
+console.log("PASS: " + (14 - failures));
 console.log("FAIL: " + failures);
 console.log("OVERALL: " + (failures ? "FAIL" : "PASS"));
 
