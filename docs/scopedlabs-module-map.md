@@ -1017,3 +1017,10 @@ Example:
 - The shell reads current plan-state APIs including `load()` and current workload-plan storage keys before legacy fallbacks.
 - CPU/RAM direct visits remain standalone; guided routing only applies when `guidedFlow: true` and `routeMode: compute-guided` are present.
 - `scripts/audit-compute-guided-continue-plan-read-v1.js` guards the shared shell plan-read contract.
+### Compute guided action strip
+
+- `assets/scopedlabs-compute-guided-action-strip.js` owns the user-facing guided route card/action strip for Compute proof tools.
+- The strip appears only in explicit Compute guided mode and leaves direct tool visits standalone.
+- It resolves the next action through `assets/scopedlabs-compute-guided-route-engine.js`, displays plain `Continue to [next tool]` wording, and separates non-applicable optional checks from the active path.
+- CPU/RAM/GPU load this shared proof module first; future Compute tools should consume the same module as guided routing expands.
+- `scripts/audit-compute-guided-action-strip-v1.js` guards the shared guided action strip contract.
