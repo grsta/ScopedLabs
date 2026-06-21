@@ -79,9 +79,20 @@ check(
   "scripts/run-scopedlabs-audit-batch-v1.js"
 );
 
+check(
+  "GUIDED_ROUTE_CTA_HAS_NO_CORRUPT_ARROW_SEPARATOR",
+  !adapter.includes("Start Guided Flow ?") &&
+    !adapter.includes("Resume Guided Flow ?") &&
+    !route.includes("Start Guided Flow ?") &&
+    !route.includes("Resume Guided Flow ?") &&
+    adapter.includes("\\u2192") &&
+    route.includes("\\u2192"),
+  "guided route labels must use ASCII-safe Unicode escape, not corrupted '?' text"
+);
+
 console.log("");
 console.log("SUMMARY");
-console.log("PASS: " + (8 - failures));
+console.log("PASS: " + (9 - failures));
 console.log("FAIL: " + failures);
 console.log("OVERALL: " + (failures ? "FAIL" : "PASS"));
 

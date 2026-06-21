@@ -74,7 +74,7 @@
     backHref: "/tools/compute/",
     backLabel: "Back to Compute",
     continueHref: "/tools/compute/cpu-sizing/",
-    continueLabel: "Start Guided Flow ? CPU Sizing",
+    continueLabel: "Start Guided Flow \u2192 CPU Sizing",
     flow: {
       id: "computeWorkloadDesignFlowCard",
       eyebrow: "Design Flow",
@@ -321,7 +321,7 @@
   function computeGuidedRouteCtaDefault() {
     return {
       nextHref: "/tools/compute/cpu-sizing/",
-      nextLabel: "Start Guided Flow ? CPU Sizing",
+      nextLabel: "Start Guided Flow \u2192 CPU Sizing",
       action: "start"
     };
   }
@@ -407,7 +407,7 @@
 
     var decision = resolveGuidedRouteFromPlanner();
     var nextHref = decision.nextHref || "/tools/compute/cpu-sizing/";
-    var nextLabel = decision.nextLabel || "Start Guided Flow ? CPU Sizing";
+    var nextLabel = decision.nextLabel || "Start Guided Flow \u2192 CPU Sizing";
 
     if (link.getAttribute("href") !== nextHref) link.setAttribute("href", nextHref);
     if ((link.textContent || "").trim() !== nextLabel) link.textContent = nextLabel;
@@ -459,7 +459,7 @@
     var decision = resolveGuidedRouteFromPlanner(context, workload);
     updateGuidedRouteCta();
 
-    status("Guided flow ready for " + (workload.name || "Compute Workload") + ": " + (decision.nextLabel || "Start Guided Flow ? CPU Sizing") + ".");
+    status("Guided flow ready for " + (workload.name || "Compute Workload") + ": " + (decision.nextLabel || "Start Guided Flow \u2192 CPU Sizing") + ".");
     window.location.href = decision.nextHref || context.nextHref || "/tools/compute/cpu-sizing/";
   }
 

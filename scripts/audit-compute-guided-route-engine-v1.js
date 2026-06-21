@@ -83,7 +83,7 @@ result = Engine.resolve({ plan: planFor(cpuRamOnly, []), guidedContext: guided(c
 check("NEW_GUIDED_FLOW_STARTS_AT_CPU", result.mode === "guided" && result.action === "start" && result.nextTool === "cpu-sizing", JSON.stringify(result));
 
 result = Engine.resolve({ plan: planFor(cpuRamOnly, ["cpu-sizing"]), guidedContext: guided(cpuRamOnly), currentTool: "workload-planner" });
-check("MID_PIPELINE_RESUMES_AT_RAM", result.action === "resume" && result.nextTool === "ram-sizing" && /Resume Guided Flow/.test(result.nextLabel), JSON.stringify(result));
+check("MID_PIPELINE_RESUMES_AT_RAM", result.action === "resume" && result.nextTool === "ram-sizing" && /Resume Guided Flow \u2192/.test(result.nextLabel), JSON.stringify(result));
 
 result = Engine.resolve({ plan: planFor(cpuRamOnly, ["cpu-sizing", "ram-sizing"]), guidedContext: guided(cpuRamOnly), currentTool: "workload-planner" });
 check("CPU_RAM_COMPLETE_REVIEWS_SUMMARY_NOT_AUTO_REDIRECT", result.action === "review-summary" && result.nextTool === "summary" && /Review Compute Summary/.test(result.nextLabel), JSON.stringify(result));

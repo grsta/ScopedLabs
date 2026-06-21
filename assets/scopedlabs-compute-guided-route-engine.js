@@ -185,7 +185,7 @@
       workloadName: workload.name || "Compute Workload",
       currentTool: input.currentTool || guidedContext.currentTool || "workload-planner",
       nextTool: next.tool,
-      nextLabel: (action === "resume" ? "Resume Guided Flow ? " : "Start Guided Flow ? ") + (next.label || TOOL_LABELS[next.tool] || next.tool),
+      nextLabel: (action === "resume" ? "Resume Guided Flow \u2192? " : "Start Guided Flow ? ") + (next.label || TOOL_LABELS[next.tool] || next.tool),
       nextHref: next.href || TOOL_HREFS[next.tool] || "",
       reason: next.reason || "Continue the guided Compute workflow from the next incomplete applicable check.",
       applicableTools: steps.map(function (step) { return step.tool; }),
