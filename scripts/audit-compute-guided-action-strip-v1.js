@@ -59,6 +59,35 @@ check(
 );
 
 check(
+  "GUIDED_ACTION_STRIP_PLACED_BEFORE_EXPORT",
+  mod.includes("function findExportReportSection") &&
+    mod.includes("before-export-report") &&
+    mod.includes("insertBefore(section, exportSection)"),
+  "guided strip should sit above Export Report, not at the top of the page"
+);
+
+check(
+  "GUIDED_ACTION_STRIP_REMOVES_EXTRA_TITLE_SENTENCE",
+  !mod.includes("This page is following your selected workload path."),
+  "remove redundant sentence from the guided card"
+);
+
+check(
+  "GUIDED_ACTION_STRIP_BALANCES_CTA_BUTTONS",
+  mod.includes("min-height: 42px") &&
+    mod.includes("width: 100%") &&
+    mod.includes("display: inline-flex"),
+  "Back and Continue buttons should share the same visual sizing"
+);
+
+check(
+  "GUIDED_ACTION_STRIP_CHIPS_ARE_LIGHT_WEIGHT",
+  mod.includes("font-weight: 500") &&
+    mod.includes("rgba(156,255,180,.76)"),
+  "path chips should be lighter and use decision-label green"
+);
+
+check(
   "GUIDED_ACTION_STRIP_SEPARATES_OPTIONAL_CHECKS",
   mod.includes("Other optional checks") && mod.includes("OPTIONAL_TOOLS"),
   "non-applicable tools should not look mandatory"
@@ -98,7 +127,7 @@ check(
 
 console.log("");
 console.log("SUMMARY");
-console.log("PASS: " + (10 - failures));
+console.log("PASS: " + (14 - failures));
 console.log("FAIL: " + failures);
 console.log("OVERALL: " + (failures ? "FAIL" : "PASS"));
 

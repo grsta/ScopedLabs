@@ -1024,3 +1024,8 @@ Example:
 - It resolves the next action through `assets/scopedlabs-compute-guided-route-engine.js`, displays plain `Continue to [next tool]` wording, and separates non-applicable optional checks from the active path.
 - CPU/RAM/GPU load this shared proof module first; future Compute tools should consume the same module as guided routing expands.
 - `scripts/audit-compute-guided-action-strip-v1.js` guards the shared guided action strip contract.
+#### Compute guided action strip UI polish
+
+- `assets/scopedlabs-compute-guided-action-strip.js` places the guided route card above Export Report so the next action appears after the user has reviewed the page output.
+- The guided card removes redundant route-engine language, matches standard card surface styling, uses Decision Schedule-style header/chip color, and keeps Back/Continue buttons visually balanced.
+- The shared module remains guided-mode-only and direct tool visits remain standalone.

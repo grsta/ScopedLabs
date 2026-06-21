@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-compute-guided-action-strip-001";
+  var VERSION = "scopedlabs-compute-guided-action-strip-002-placement-polish";
   var CATEGORY = "compute";
   var GUIDED_KEY = "scopedlabs:pipeline:compute:guided-flow";
 
@@ -220,27 +220,35 @@
     var style = document.createElement("style");
     style.id = "scopedlabs-compute-guided-action-strip-styles";
     style.textContent = [
-      '#compute-guided-action-strip { margin: 14px 0 18px; }',
-      '#compute-guided-action-strip .cg-card { border: 1px solid rgba(120,255,120,.16); background: rgba(3,12,10,.72); border-radius: 16px; padding: 16px; box-shadow: 0 18px 45px rgba(0,0,0,.22); }',
-      '#compute-guided-action-strip .cg-eyebrow { color: rgba(156,255,180,.76); font-size: .76rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 850; }',
-      '#compute-guided-action-strip .cg-title { margin-top: 4px; font-size: 1.02rem; font-weight: 900; color: rgba(246,255,248,.96); }',
+      '#compute-guided-action-strip { margin: 18px 0 18px; }',
+      '#compute-guided-action-strip .cg-card { border: 1px solid rgba(120,255,120,.18); background: rgba(9,24,18,.68); border-radius: 16px; padding: 16px; box-shadow: 0 18px 45px rgba(0,0,0,.18); }',
+      '#compute-guided-action-strip .cg-eyebrow { color: rgba(156,255,180,.76); font-size: .72rem; letter-spacing: .075em; text-transform: uppercase; font-weight: 850; }',
+      '#compute-guided-action-strip .cg-title { display: none; }',
       '#compute-guided-action-strip .cg-copy { margin-top: 6px; color: rgba(235,246,239,.72); line-height: 1.45; }',
       '#compute-guided-action-strip .cg-path { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }',
-      '#compute-guided-action-strip .cg-step { border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.045); color: rgba(232,244,237,.72); border-radius: 10px; padding: 6px 9px; font-size: .84rem; font-weight: 760; }',
-      '#compute-guided-action-strip .cg-step.is-complete { border-color: rgba(92,255,160,.38); color: rgba(178,255,206,.96); background: rgba(26,120,72,.16); }',
-      '#compute-guided-action-strip .cg-step.is-current { border-color: rgba(92,255,160,.64); color: rgba(240,255,246,.98); background: rgba(36,160,92,.24); box-shadow: 0 0 0 1px rgba(92,255,160,.14); }',
+      '#compute-guided-action-strip .cg-step { border: 1px solid rgba(156,255,180,.26); background: rgba(16,80,48,.12); color: rgba(156,255,180,.76); border-radius: 9px; padding: 6px 9px; font-size: .84rem; font-weight: 500; }',
+      '#compute-guided-action-strip .cg-step.is-complete { border-color: rgba(156,255,180,.38); color: rgba(156,255,180,.86); background: rgba(26,120,72,.15); }',
+      '#compute-guided-action-strip .cg-step.is-current { border-color: rgba(156,255,180,.58); color: rgba(218,255,228,.96); background: rgba(36,160,92,.22); box-shadow: 0 0 0 1px rgba(92,255,160,.12); }',
       '#compute-guided-action-strip .cg-step.is-future { opacity: .72; }',
       '#compute-guided-action-strip .cg-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, .45fr); gap: 14px; align-items: start; margin-top: 14px; }',
       '#compute-guided-action-strip .cg-meta { display: grid; gap: 8px; color: rgba(235,246,239,.74); font-size: .9rem; }',
       '#compute-guided-action-strip .cg-meta strong { color: rgba(246,255,248,.95); }',
-      '#compute-guided-action-strip .cg-actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }',
-      '#compute-guided-action-strip .cg-actions .btn { border-radius: 10px !important; }',
+      '#compute-guided-action-strip .cg-actions { display: grid; justify-content: stretch; align-content: start; gap: 10px; min-width: 190px; }',
+      '#compute-guided-action-strip .cg-actions .btn { border-radius: 10px !important; min-height: 42px; width: 100%; display: inline-flex; align-items: center; justify-content: center; text-align: center; }',
       '#compute-guided-action-strip .cg-optional { margin-top: 12px; color: rgba(235,246,239,.56); font-size: .86rem; line-height: 1.45; }',
       'body[data-category="compute"] [data-compute-guided-action-strip-hidden="true"] { display: none !important; visibility: hidden !important; }',
       '@media (max-width: 760px) { #compute-guided-action-strip .cg-grid { grid-template-columns: 1fr; } #compute-guided-action-strip .cg-actions { justify-content: stretch; } #compute-guided-action-strip .cg-actions .btn { width: 100%; text-align: center; } }'
     ].join("\n");
 
     document.head.appendChild(style);
+  }
+
+  function findExportReportSection() {
+    var headings = Array.from(document.querySelectorAll("h2, h3, h4"));
+    var heading = headings.find(function (node) {
+      return /^\s*Export Report\s*$/i.test(String(node.textContent || ""));
+    });
+    return heading ? heading.closest("section, .card, .compute-export-card, .panel") : null;
   }
 
   function mountNode() {
@@ -251,21 +259,32 @@
     section.id = "compute-guided-action-strip";
     section.setAttribute("data-compute-guided-action-strip", VERSION);
 
-    var pipeline = document.getElementById("sl-design-pipeline");
-    if (pipeline && pipeline.parentNode) {
-      pipeline.parentNode.insertBefore(section, pipeline.nextSibling);
+    var exportSection = findExportReportSection();
+    if (exportSection && exportSection.parentNode) {
+      exportSection.parentNode.insertBefore(section, exportSection);
+      section.setAttribute("data-compute-guided-action-strip-placement", "before-export-report");
+      return section;
+    }
+
+    var results = document.getElementById("results");
+    var resultsCard = results && results.closest ? results.closest("section, .card, .panel") : null;
+    if (resultsCard && resultsCard.parentNode) {
+      resultsCard.parentNode.insertBefore(section, resultsCard.nextSibling);
+      section.setAttribute("data-compute-guided-action-strip-placement", "after-results");
       return section;
     }
 
     var contextCard = document.getElementById("computeWorkloadContextCard");
     if (contextCard && contextCard.parentNode) {
       contextCard.parentNode.insertBefore(section, contextCard.nextSibling);
+      section.setAttribute("data-compute-guided-action-strip-placement", "after-workload-context");
       return section;
     }
 
     var h1 = document.querySelector("main h1, h1");
     if (h1 && h1.parentNode) {
       h1.parentNode.insertBefore(section, h1.nextSibling);
+      section.setAttribute("data-compute-guided-action-strip-placement", "after-heading");
       return section;
     }
 
@@ -298,7 +317,6 @@
 
     var card = create("div", "cg-card");
     card.appendChild(create("div", "cg-eyebrow", "Guided Compute Path"));
-    card.appendChild(create("div", "cg-title", "This page is following your selected workload path."));
 
     var selected = context.workloadName || (context.workload && context.workload.name) || "Current workload";
     card.appendChild(create("div", "cg-copy", "ScopedLabs will only route the tools that apply to this workload. Other Compute checks stay optional unless you add them from the planner."));
@@ -353,6 +371,7 @@
     grid.appendChild(actions);
     card.appendChild(grid);
     section.appendChild(card);
+    section.setAttribute("data-compute-guided-action-strip-rendered", "true");
 
     suppressLegacyGuidedControls();
   }
