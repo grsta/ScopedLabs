@@ -982,3 +982,10 @@ Example:
 - `tools/compute/workload-planner/index.html` cache-busts both the planner adapter and route engine when guided CTA label behavior changes.
 - `scripts/audit-compute-planner-route-cta-v1.js` guards against `Start Guided Flow ?`, `Resume Guided Flow ?`, `\\u2192?`, and `\\u2192 ?` label corruption.
 - This is part of the ScopedLabs golden rule: do not introduce literal special glyphs or smart punctuation in code patches where encoding/cache can corrupt them.
+### ScopedLabs audit quality rule
+
+- Permanent audits should validate stable contracts and user-facing outcomes, not yesterday's exact cache-bust name or temporary patch wording.
+- Exact cache-bust checks are allowed only when the exact value is itself the contract or when the audit is a temporary migration gate.
+- Durable cache-bust checks should verify that a scoped, versioned script is present, for example `module-name-[0-9]{3}-meaningful-token`, rather than pinning one old token forever.
+- UI text audits should guard bad outcomes such as corrupted question-mark separators, missing route-engine decisions, missing standalone guards, or missing module-map updates.
+- JS/HTML/CSS patches should avoid literal special glyphs where encoding/cache can corrupt them. Use ASCII-safe escapes or entities, such as `\\u2192` in JS and `&rarr;` in HTML.

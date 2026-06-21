@@ -12,6 +12,14 @@ function check(label, ok, detail) {
   if (!ok) failures += 1;
 }
 
+function hasVersionedPlannerAdapter(page) {
+  const marker = "scopedlabs-compute-planner-adapter.js?v=scopedlabs-compute-planner-adapter-";
+  const index = page.indexOf(marker);
+  if (index < 0) return false;
+  const after = page.slice(index + marker.length);
+  return /^[0-9]{3}-[a-z0-9-]+/.test(after);
+}
+
 const state = read("assets/scopedlabs-compute-plan-state.js");
 const adapter = read("assets/scopedlabs-compute-planner-adapter.js");
 const page = read("tools/compute/workload-planner/index.html");
@@ -64,14 +72,9 @@ check(
 );
 
 check(
-  "WORKLOAD_PLANNER_CACHE_BUSTS_GUIDED_ENTRY",
-  page.includes("scopedlabs-compute-planner-adapter.js?v=") &&
-    (
-      page.includes("scopedlabs-compute-planner-adapter-019-route-arrow-cleanup") ||
-      page.includes("scopedlabs-compute-planner-adapter-017-route-cta") ||
-      page.includes("scopedlabs-compute-planner-adapter-016-guided-flow-entry")
-    ),
-  "tools/compute/workload-planner/index.html"
+  "WORKLOAD_PLANNER_HAS_VERSIONED_GUIDED_ADAPTER",
+  hasVersionedPlannerAdapter(page),
+  "contract: planner page must load a versioned guided adapter, not one exact old cache-bust"
 );
 
 check(

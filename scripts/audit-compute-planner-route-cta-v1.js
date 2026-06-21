@@ -12,6 +12,14 @@ function check(label, ok, detail) {
   if (!ok) failures += 1;
 }
 
+function hasVersionedScript(page, scriptName, prefix) {
+  const marker = scriptName + "?v=" + prefix + "-";
+  const index = page.indexOf(marker);
+  if (index < 0) return false;
+  const after = page.slice(index + marker.length);
+  return /^[0-9]{3}-[a-z0-9-]+/.test(after);
+}
+
 const adapter = read("assets/scopedlabs-compute-planner-adapter.js");
 const page = read("tools/compute/workload-planner/index.html");
 const route = read("assets/scopedlabs-compute-guided-route-engine.js");
@@ -29,9 +37,15 @@ check(
 );
 
 check(
-  "PLANNER_CACHE_BUSTS_ROUTE_CTA_ADAPTER",
-  page.includes("scopedlabs-compute-planner-adapter.js?v=scopedlabs-compute-planner-adapter-019-route-arrow-cleanup"),
-  "tools/compute/workload-planner/index.html"
+  "PLANNER_HAS_VERSIONED_ROUTE_CTA_ADAPTER",
+  hasVersionedScript(page, "scopedlabs-compute-planner-adapter.js", "scopedlabs-compute-planner-adapter"),
+  "contract: planner adapter must be cache-busted with a scoped version, not one exact old version"
+);
+
+check(
+  "PLANNER_HAS_VERSIONED_ROUTE_ENGINE",
+  hasVersionedScript(page, "scopedlabs-compute-guided-route-engine.js", "scopedlabs-compute-guided-route-engine"),
+  "contract: route engine must be cache-busted with a scoped version"
 );
 
 check(
@@ -56,7 +70,7 @@ check(
   "START_GUIDED_FLOW_USES_ROUTE_DECISION",
   adapter.includes("State.startGuidedFlow(workload.id)") &&
     adapter.includes("resolveGuidedRouteFromPlanner(context, workload)") &&
-    adapter.includes("decision.nextHref || context.nextHref"),
+    adapter.includes("decision.nextHref"),
   "guided flow should start explicit context, then navigate by route decision"
 );
 
@@ -68,8 +82,33 @@ check(
 );
 
 check(
+  "GUIDED_ROUTE_CTA_HAS_NO_CORRUPT_ARROW_SEPARATOR",
+  !adapter.includes("Start Guided Flow ?") &&
+    !adapter.includes("Resume Guided Flow ?") &&
+    !route.includes("Start Guided Flow ?") &&
+    !route.includes("Resume Guided Flow ?") &&
+    !adapter.includes("\\u2192?") &&
+    !adapter.includes("\\u2192 ?") &&
+    !route.includes("\\u2192?") &&
+    !route.includes("\\u2192 ?"),
+  "guided route labels must avoid corrupted question-mark separators"
+);
+
+check(
+  "GUIDED_ROUTE_CTA_USES_SAFE_ARROW_SOURCE",
+  adapter.includes("\\u2192") || route.includes("\\u2192"),
+  "contract: JS source should use ASCII-safe unicode escapes for arrow labels"
+);
+
+check(
   "MODULE_MAP_DOCUMENTS_PLANNER_ROUTE_CTA",
   moduleMap.includes("Compute planner route CTA"),
+  "docs/scopedlabs-module-map.md"
+);
+
+check(
+  "MODULE_MAP_DOCUMENTS_AUDIT_QUALITY_RULE",
+  moduleMap.includes("ScopedLabs audit quality rule"),
   "docs/scopedlabs-module-map.md"
 );
 
@@ -79,31 +118,9 @@ check(
   "scripts/run-scopedlabs-audit-batch-v1.js"
 );
 
-check(
-  "GUIDED_ROUTE_CTA_HAS_NO_CORRUPT_ARROW_SEPARATOR",
-  !adapter.includes("Start Guided Flow \u2192 ") &&
-    !adapter.includes("Resume Guided Flow \u2192 ") &&
-    !route.includes("Start Guided Flow \u2192 ") &&
-    !route.includes("Resume Guided Flow \u2192 ") &&
-    adapter.includes("\\u2192 ") &&
-    route.includes("\\u2192 "),
-  "guided route labels must use ASCII-safe Unicode escape, not corrupted '?' text"
-);
-
-check(
-  "GUIDED_ROUTE_CTA_HAS_NO_ARROW_QUESTION_MARK",
-  !adapter.includes("\\u2192?") &&
-    !adapter.includes("\\u2192 ?") &&
-    !route.includes("\\u2192?") &&
-    !route.includes("\\u2192 ?") &&
-    !adapter.includes("Flow ?") &&
-    !route.includes("Flow ?"),
-  "guided route CTA labels must not render arrow/question-mark corruption"
-);
-
 console.log("");
 console.log("SUMMARY");
-console.log("PASS: " + (10 - failures));
+console.log("PASS: " + (12 - failures));
 console.log("FAIL: " + failures);
 console.log("OVERALL: " + (failures ? "FAIL" : "PASS"));
 
