@@ -955,3 +955,10 @@ Example:
 - Direct tool visits remain standalone by default; guided routing, dynamic branch queues, return-to-core behavior, and stop logic must consume `getGuidedFlowContext()` defensively in later route-engine work.
 - `assets/scopedlabs-compute-planner-adapter.js` changes the planner Continue CTA into `Start Guided Flow ? CPU Sizing`, saves the active workload, starts guided context, and then navigates to the first routed tool.
 - `scripts/audit-compute-guided-flow-mode-v1.js` verifies the guided-flow key, API, planner entry action, cache bust, and module-map documentation.
+### Compute guided route engine
+
+- `assets/scopedlabs-compute-guided-route-engine.js` owns Compute guided-flow route decisions without forcing standalone tool pages into workflow mode.
+- The route engine consumes explicit guided context, active workload branches, and workload-scoped completed ledger results.
+- Base guided route is CPU Sizing then RAM Sizing. Storage, VM Density, GPU VRAM, Power & Thermal, NIC Bonding, RAID Rebuild, and Backup Window are included only when their planner branch is selected.
+- The engine returns `standalone` when no guided context exists, `start` or `resume` when work remains, and `review-summary` only after all applicable selected/required checks are complete.
+- `scripts/audit-compute-guided-route-engine-v1.js` proves standalone mode, start/resume behavior, mid-pipeline resume, branch queue order, specialty branch completion, and summary-only-after-applicable-work-complete behavior.
