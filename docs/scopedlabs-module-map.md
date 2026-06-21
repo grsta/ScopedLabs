@@ -938,3 +938,8 @@ Example:
 - Compute tool scripts publish explicit calculator payloads through `ScopedLabsComputePlanState.recordToolResult()` using a local `saveComputeLedgerResult()` wrapper.
 - `assets/scopedlabs-compute-planner-adapter.js` reads `plan.results` so Workload Planner can show completed checks, latest saved results, and the next action for each workload.
 - This contract intentionally avoids generic DOM/MuationObserver scraping; ledger publishers must be explicit tool-result hooks.
+### Compute workload planner branch-scoped ledger
+
+- `assets/scopedlabs-compute-planner-adapter.js` must keep branch tables scoped to the branch being displayed.
+- Core rows may show CPU/RAM progress and global next action, but storage, GPU, infrastructure, and recovery branch tables must not inherit unrelated CPU/RAM checks.
+- `scripts/audit-compute-workload-ledger-v1.js` includes a behavior fixture for the case where CPU/RAM are complete, the GPU branch is flagged, and GPU VRAM has not run; expected GPU branch checks are `0` with a pending GPU VRAM action.

@@ -608,6 +608,129 @@
     return "Continue to " + (COMPUTE_LEDGER_LABELS[nextTool] || titleCase(nextTool)) + ".";
   }
 
+  var COMPUTE_BRANCH_LEDGER_TOOLS = {
+    core: ["cpu-sizing", "ram-sizing"],
+    storage: ["storage-iops", "storage-throughput"],
+    acceleration: ["gpu-vram"],
+    infrastructure: ["power-thermal", "nic-bonding"],
+    recovery: ["raid-rebuild-time", "backup-window"],
+    infrastructureRecovery: ["power-thermal", "nic-bonding", "raid-rebuild-time", "backup-window"]
+  };
+
+  var COMPUTE_BRANCH_COMPLETE_LABELS = {
+    core: "Core checks complete.",
+    storage: "Storage checks complete.",
+    acceleration: "GPU checks complete.",
+    infrastructure: "Infrastructure checks complete.",
+    recovery: "Recovery checks complete.",
+    infrastructureRecovery: "Infrastructure / recovery checks complete."
+  };
+
+  function branchLedgerTools(branchScope) {
+    return COMPUTE_BRANCH_LEDGER_TOOLS[branchScope] || COMPUTE_LEDGER_ORDER;
+  }
+
+  function scopedWorkloadResultMap(workload, plan, branchScope) {
+    var tools = branchLedgerTools(branchScope);
+    var results = workloadResultMap(workload, plan);
+    var scoped = {};
+
+    tools.forEach(function (tool) {
+      if (results[tool]) scoped[tool] = results[tool];
+    });
+
+    return scoped;
+  }
+
+  function scopedCompletedMap(workload, plan, branchScope) {
+    var tools = branchLedgerTools(branchScope);
+    var global = workloadCompletedMap(workload, plan);
+    var scoped = {};
+
+    tools.forEach(function (tool) {
+      if (global[tool]) scoped[tool] = true;
+    });
+
+    return scoped;
+  }
+
+  function completedComputeBranchCheckCount(workload, plan, branchScope) {
+    if (!branchScope || branchScope === "all") return completedComputeCheckCount(workload, plan);
+    var completed = scopedCompletedMap(workload, plan, branchScope);
+    return Object.keys(completed).filter(function (key) { return !!completed[key]; }).length;
+  }
+
+  function latestWorkloadBranchResult(workload, plan, branchScope) {
+    if (!branchScope || branchScope === "all") return latestWorkloadToolResult(workload, plan);
+
+    var results = scopedWorkloadResultMap(workload, plan, branchScope);
+    var latest = null;
+
+    branchLedgerTools(branchScope).forEach(function (tool) {
+      if (results[tool]) latest = { tool: tool, entry: results[tool], payload: workloadResultPayload(results[tool]) || {} };
+    });
+
+    return latest;
+  }
+
+  function branchPendingLabel(branchScope) {
+    var first = branchLedgerTools(branchScope)[0];
+    return "Pending " + (COMPUTE_LEDGER_LABELS[first] || titleCase(first)) + " check";
+  }
+
+  function workloadBranchStatusValue(workload, plan, branchScope) {
+    if (!branchScope || branchScope === "all") return workloadStatusValue(workload, plan);
+
+    var results = scopedWorkloadResultMap(workload, plan, branchScope);
+    var resultKeys = Object.keys(results);
+
+    if (!resultKeys.length) {
+      return branchScope === "core" ? workloadStatusValue(workload, plan) : "PENDING";
+    }
+
+    var branchStatus = "";
+
+    resultKeys.forEach(function (tool) {
+      var payload = workloadResultPayload(results[tool]) || {};
+      var resultStatus = normalizeLedgerStatus(payload.status || payload.summaryStatus || results[tool].status);
+      if (resultStatus === "RISK") branchStatus = "RISK";
+      else if (resultStatus === "WATCH" && branchStatus !== "RISK") branchStatus = "WATCH";
+      else if (resultStatus === "PENDING" && branchStatus !== "RISK" && branchStatus !== "WATCH") branchStatus = "PENDING";
+    });
+
+    if (branchStatus) return branchStatus;
+
+    var checks = completedComputeBranchCheckCount(workload, plan, branchScope);
+    return checks >= branchLedgerTools(branchScope).length ? "COMPLETE" : "PENDING";
+  }
+
+  function workloadBranchKeySavedResult(workload, plan, branchScope) {
+    var latest = latestWorkloadBranchResult(workload, plan, branchScope);
+
+    if (latest) {
+      var label = COMPUTE_LEDGER_LABELS[latest.tool] || titleCase(latest.tool);
+      var summary = formatLedgerSummary(latest);
+      return "Latest: " + label + (summary ? " - " + summary : "");
+    }
+
+    if (!branchScope || branchScope === "all" || branchScope === "core") {
+      return workloadKeySavedResult(workload, plan);
+    }
+
+    return branchPendingLabel(branchScope);
+  }
+
+  function workloadBranchNextAction(workload, plan, branchScope) {
+    if (!workload) return "Save a workload before continuing.";
+    if (!branchScope || branchScope === "all" || branchScope === "core") return workloadNextAction(workload, plan);
+
+    var completed = scopedCompletedMap(workload, plan, branchScope);
+    var nextTool = branchLedgerTools(branchScope).find(function (tool) { return !completed[tool]; });
+
+    if (!nextTool) return COMPUTE_BRANCH_COMPLETE_LABELS[branchScope] || "Branch checks complete.";
+    return "Run " + (COMPUTE_LEDGER_LABELS[nextTool] || titleCase(nextTool)) + ".";
+  }
+
   function renderComputeStatusLegend() {
     return [
       '<section class="access-status-legend" aria-label="Compute workload status legend">',
@@ -812,15 +935,15 @@
       }
     );
 
-    function table(title, description, list) {
+    function table(title, description, list, branchScope) {
       var countLabel = list.length + (list.length === 1 ? " WORKLOAD" : " WORKLOADS");
       var emptyLabel = "No " + String(title || "workload").toLowerCase() + " workloads have been defined yet.";
 
       var rows = list.length ? list.map(function (workload) {
         var selected = selectedWorkloadLabel(workload, active);
         var selectedClass = selected === "Active Workload" ? "access-status-active-text" : "access-status-planning";
-        var status = workloadStatusValue(workload, plan);
-        var checks = completedComputeCheckCount(workload, plan);
+        var status = workloadBranchStatusValue(workload, plan, branchScope);
+        var checks = completedComputeBranchCheckCount(workload, plan, branchScope);
 
         return [
           '<tr>',
@@ -828,8 +951,8 @@
           '<td><strong class="' + selectedClass + '">' + escapeHtml(selected) + '</strong></td>',
           '<td><strong class="' + computeStatusClass(status) + '">' + escapeHtml(status) + '</strong></td>',
           '<td>' + checks + '</td>',
-          '<td>' + escapeHtml(workloadKeySavedResult(workload, plan)) + '</td>',
-          '<td>' + escapeHtml(workloadNextAction(workload, plan)) + '</td>',
+          '<td>' + escapeHtml(workloadBranchKeySavedResult(workload, plan, branchScope)) + '</td>',
+          '<td>' + escapeHtml(workloadBranchNextAction(workload, plan, branchScope)) + '</td>',
           '</tr>'
         ].join("");
       }).join("") : '<tr><td colspan="6" class="muted">' + escapeHtml(emptyLabel) + '</td></tr>';
@@ -863,10 +986,10 @@
       '</div>',
       renderComputeStatusLegend(),
       active ? '<div class="access-scope-warn"><strong>Active workload:</strong> ' + escapeHtml(active.name) + ' continues to CPU Sizing.</div>' : '',
-      table("Core Compute Pipeline", "Every saved workload starts with CPU Sizing, then moves into RAM and storage checks as required.", groups.core),
-      table("Storage / Performance Branches", "Workloads flagged for IOPS or throughput review should not stop at CPU/RAM sizing.", groups.storage),
-      table("GPU / Acceleration Branches", "Workloads flagged for GPU review need VRAM and acceleration validation.", groups.acceleration),
-      table("Infrastructure / Recovery Branches", "Workloads flagged for power, network, RAID, or backup review need infrastructure validation before summary closeout.", groups.infrastructure.concat(groups.recovery))
+      table("Core Compute Pipeline", "Every saved workload starts with CPU Sizing, then moves into RAM and storage checks as required.", groups.core, "core"),
+      table("Storage / Performance Branches", "Workloads flagged for IOPS or throughput review should not stop at CPU/RAM sizing.", groups.storage, "storage"),
+      table("GPU / Acceleration Branches", "Workloads flagged for GPU review need VRAM and acceleration validation.", groups.acceleration, "acceleration"),
+      table("Infrastructure / Recovery Branches", "Workloads flagged for power, network, RAID, or backup review need infrastructure validation before summary closeout.", groups.infrastructure.concat(groups.recovery), "infrastructureRecovery")
     ].join("");
   }
 
