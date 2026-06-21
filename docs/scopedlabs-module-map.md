@@ -1056,3 +1056,9 @@ Example:
 
 - With zero saved workloads, `Start Guided Flow` now scrolls to and briefly highlights the Active Compute Workload Setup area.
 - This keeps the CTA visible while preventing blank/default workload auto-save behavior.
+#### Compute planner workload-aware guided start closeout
+
+- `assets/scopedlabs-compute-planner-adapter.js` keeps the planner CTA label stable as `Start Guided Flow`.
+- With zero saved workloads, the CTA does not auto-save default form state; it scrolls/focuses the Active Compute Workload Setup path.
+- With saved workloads, the CTA starts explicit Compute guided context and routes to the next incomplete applicable core or selected specialty tool.
+- `scripts/audit-compute-planner-start-cta-workload-aware-v1.js` guards the no-autosave, saved-ledger-only, no-MutationObserver, and guided-route behavior.

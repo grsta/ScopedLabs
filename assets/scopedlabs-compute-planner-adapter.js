@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-compute-planner-adapter-024-zero-workload-no-autosave";
+  var VERSION = "scopedlabs-compute-planner-adapter-025-saved-ledger-only";
   var State = window.ScopedLabsComputePlanState;
   var Shell = window.ScopedLabsCategoryPlannerShell;
 
@@ -506,21 +506,24 @@
   }
 
   function computePlannerSavedWorkloads(plan) {
+    function isSavedWorkload(item) {
+      return !!(item && typeof item === "object" && (item.id || item.workloadId));
+    }
+
     if (!plan) return [];
 
     var arrays = [plan.workloads, plan.items, plan.records, plan.savedWorkloads];
     for (var i = 0; i < arrays.length; i += 1) {
-      if (Array.isArray(arrays[i])) return arrays[i].filter(Boolean);
+      if (Array.isArray(arrays[i])) return arrays[i].filter(isSavedWorkload);
     }
 
     var maps = [plan.workloadMap, plan.workloadsById, plan.byId];
     for (var j = 0; j < maps.length; j += 1) {
       if (maps[j] && typeof maps[j] === "object") {
-        return Object.keys(maps[j]).map(function (key) { return maps[j][key]; }).filter(Boolean);
+        return Object.keys(maps[j]).map(function (key) { return maps[j][key]; }).filter(isSavedWorkload);
       }
     }
 
-    if (plan.activeWorkload && (plan.activeWorkload.id || plan.activeWorkload.workloadId || plan.activeWorkload.name)) return [plan.activeWorkload];
     return [];
   }
 

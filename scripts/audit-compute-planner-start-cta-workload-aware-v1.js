@@ -24,6 +24,23 @@ const page = read("tools/compute/workload-planner/index.html");
 const moduleMap = read("docs/scopedlabs-module-map.md");
 const batch = read("scripts/run-scopedlabs-audit-batch-v1.js");
 
+function functionBody(source, name) {
+  const marker = "function " + name + "(";
+  const start = source.indexOf(marker);
+  if (start < 0) return "";
+  const open = source.indexOf("{", start);
+  if (open < 0) return "";
+  let depth = 0;
+  for (let i = open; i < source.length; i += 1) {
+    if (source[i] === "{") depth += 1;
+    if (source[i] === "}") depth -= 1;
+    if (depth === 0) return source.slice(start, i + 1);
+  }
+  return "";
+}
+
+const savedWorkloadsBody = functionBody(adapter, "computePlannerSavedWorkloads");
+
 console.log("Compute Planner Start CTA Workload Aware Audit V1");
 console.log("");
 
@@ -80,11 +97,19 @@ check(
 );
 
 check(
+  "PLANNER_ZERO_WORKLOAD_USES_SAVED_LEDGER_ONLY",
+  savedWorkloadsBody.includes("function isSavedWorkload") &&
+    savedWorkloadsBody.includes("item.id || item.workloadId") &&
+    !savedWorkloadsBody.includes("activeWorkload"),
+  "0-workload state must not count unsaved active form state as a saved workload"
+);
+
+check(
   "PLANNER_USES_SAVED_WORKLOAD_LEDGER",
-  adapter.includes("function computePlannerSavedWorkloads") &&
-    adapter.includes("plan.workloads") &&
-    adapter.includes("plan.workloadMap") &&
-    adapter.includes("plan.activeWorkload"),
+  savedWorkloadsBody.includes("plan.workloads") &&
+    savedWorkloadsBody.includes("plan.savedWorkloads") &&
+    savedWorkloadsBody.includes("plan.workloadMap") &&
+    savedWorkloadsBody.includes("return [];"),
   "workload existence should come from the saved workload ledger"
 );
 
@@ -107,7 +132,7 @@ check(
 check(
   "PLANNER_PAGE_LOADS_WORKLOAD_AWARE_ADAPTER",
   hasVersionedScript(page, "scopedlabs-compute-planner-adapter.js", "scopedlabs-compute-planner-adapter") &&
-    page.includes("024-zero-workload-no-autosave"),
+    page.includes("025-saved-ledger-only"),
   "tools/compute/workload-planner/index.html"
 );
 
@@ -125,7 +150,7 @@ check(
 
 console.log("");
 console.log("SUMMARY");
-console.log("PASS: " + (12 - failures));
+console.log("PASS: " + (13 - failures));
 console.log("FAIL: " + failures);
 console.log("OVERALL: " + (failures ? "FAIL" : "PASS"));
 
