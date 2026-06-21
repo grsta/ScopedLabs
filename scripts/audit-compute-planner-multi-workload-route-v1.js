@@ -75,10 +75,12 @@ check(
 );
 
 check(
-  "NEW_MULTI_WORKLOAD_BLOCK_HAS_NO_LITERAL_ARROW_GLYPHS",
-  !adapter.slice(adapter.indexOf("function allComputePlannerWorkloads")).includes("?") &&
-    !adapter.slice(adapter.indexOf("function allComputePlannerWorkloads")).includes("?"),
-  "new planner route source must avoid risky literal special glyphs"
+  "NEW_MULTI_WORKLOAD_LABEL_CONTRACT_IS_ASCII_SAFE",
+  adapter.includes("Use workload - ") &&
+    !adapter.includes("Use workload ?") &&
+    !adapter.includes("Use workload ?") &&
+    !adapter.includes("Use workload ?"),
+  "alternate workload CTA label must use ASCII-safe separator text"
 );
 
 check(

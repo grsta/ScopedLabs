@@ -18,6 +18,7 @@ const defaultAudits = [
   "scripts/audit-compute-planner-route-cta-v1.js",
   "scripts/audit-compute-planner-multi-workload-route-v1.js",
   "scripts/audit-compute-tool-continue-route-v1.js",
+  "scripts/audit-compute-guided-pipeline-led-state-v1.js",
   "scripts/audit-scopedlabs-pattern-promotion-v1.js",
   "scripts/audit-scopedlabs-planner-summary-nav-contract-v1.js",
   "scripts/audit-compute-planner-summary-pipeline-nav-v1.js",

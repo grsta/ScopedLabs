@@ -1002,3 +1002,11 @@ Example:
 - The planner CTA scans saved workloads and prefers pending applicable work before showing `Review Compute Summary`.
 - Alternate workload routes are marked with `data-compute-guided-route-workload-id` and `data-compute-guided-route-alt-workload` so the click starts guided flow for the routed workload.
 - `scripts/audit-compute-planner-multi-workload-route-v1.js` guards against Summary winning while visible saved workload branches still require work.
+### Compute guided pipeline LED state
+
+- `assets/pipeline.js` owns the shared Design Pipeline LED renderer.
+- In Compute guided mode, the renderer should use the Compute route engine and workload ledger to mark completed applicable tools, current tool, future selected work, skipped/not-applicable tools, and Summary.
+- Completed Compute tools receive `is-complete`; current tool receives `is-current`; non-applicable tools receive `is-skipped` plus future/muted styling.
+- Summary should not be marked complete simply because an optional branch page is current.
+- `tools/compute/gpu-vram/index.html` loads the Compute guided route engine before `assets/pipeline.js` for the GPU branch proof.
+- `scripts/audit-compute-guided-pipeline-led-state-v1.js` guards this shared renderer contract.

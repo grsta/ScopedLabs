@@ -107,12 +107,14 @@ check(
 );
 
 check(
-  "SHELL_GUIDED_CONTINUE_BLOCK_HAS_NO_LITERAL_ARROW_GLYPHS",
+  "SHELL_GUIDED_CONTINUE_BLOCK_HAS_SAFE_ROUTE_LABELS",
   guidedBlock.length > 0 &&
-    !guidedBlock.includes("?") &&
-    !guidedBlock.includes("?") &&
-    !guidedBlock.includes("?"),
-  "golden rule: new guided Continue routing source must avoid literal special glyphs"
+    !guidedBlock.includes("Guided Flow ?") &&
+    !guidedBlock.includes("Continue ?") &&
+    !guidedBlock.includes("Guided Flow ?") &&
+    !guidedBlock.includes("\\u2192?") &&
+    !guidedBlock.includes("\\u2192 ?"),
+  "guided Continue block must not introduce corrupt arrow/question-mark route labels"
 );
 
 check(

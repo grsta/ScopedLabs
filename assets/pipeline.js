@@ -67,6 +67,120 @@
     return "core";
   }
 
+  function readScopedJsonStorage(key) {
+    if (!key || typeof window === "undefined") return null;
+    var raw = null;
+
+    try { raw = window.sessionStorage && window.sessionStorage.getItem(key); } catch (error) { raw = null; }
+    if (!raw) {
+      try { raw = window.localStorage && window.localStorage.getItem(key); } catch (error) { raw = null; }
+    }
+
+    if (!raw) return null;
+    try { return JSON.parse(raw); } catch (error) { return null; }
+  }
+
+  function readComputeGuidedPipelineContext() {
+    var State = window.ScopedLabsComputePlanState || {};
+
+    try {
+      if (typeof State.getGuidedFlowContext === "function") {
+        var fromState = State.getGuidedFlowContext();
+        if (fromState && fromState.guidedFlow === true && fromState.routeMode === "compute-guided") return fromState;
+      }
+    } catch (error) {
+      /* Fall through to storage. */
+    }
+
+    var fromStorage = readScopedJsonStorage("scopedlabs:pipeline:compute:guided-flow");
+    if (fromStorage && fromStorage.guidedFlow === true && fromStorage.routeMode === "compute-guided") return fromStorage;
+    return null;
+  }
+
+  function readComputePipelinePlan() {
+    var State = window.ScopedLabsComputePlanState || {};
+    var methodNames = ["getPlanSnapshot", "getPlan", "readPlan", "loadPlan", "getWorkloadPlan"];
+
+    for (var i = 0; i < methodNames.length; i += 1) {
+      var name = methodNames[i];
+      try {
+        if (typeof State[name] === "function") {
+          var plan = State[name]();
+          if (plan) return plan;
+        }
+      } catch (error) {
+        /* Fall through to storage. */
+      }
+    }
+
+    return readScopedJsonStorage("scopedlabs:pipeline:compute:workload-plan") || {};
+  }
+
+  function findComputePipelineWorkload(plan, context) {
+    if (!plan || !context) return null;
+    var workloadId = context.workloadId || context.activeWorkloadId || "";
+    var lists = [plan.workloads, plan.items, plan.scopes, plan.entries];
+
+    for (var i = 0; i < lists.length; i += 1) {
+      var list = Array.isArray(lists[i]) ? lists[i] : [];
+      for (var j = 0; j < list.length; j += 1) {
+        var item = list[j];
+        if (item && String(item.id || item.workloadId || "") === String(workloadId)) return item;
+      }
+    }
+
+    return null;
+  }
+
+  function computeGuidedPipelineDecision(plan, workload, context) {
+    var RouteEngine = window.ScopedLabsComputeGuidedRouteEngine;
+    if (!RouteEngine || typeof RouteEngine.resolve !== "function") return null;
+
+    try {
+      return RouteEngine.resolve({
+        category: "compute",
+        currentTool: currentStep,
+        guidedFlow: true,
+        routeMode: "compute-guided",
+        guidedContext: context,
+        context: context,
+        plan: plan,
+        workload: workload
+      });
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function computeGuidedPipelineStepState(step) {
+    if (category !== "compute" || !step || !step.id) return null;
+
+    var context = readComputeGuidedPipelineContext();
+    if (!context) return null;
+
+    var RouteEngine = window.ScopedLabsComputeGuidedRouteEngine;
+    if (!RouteEngine || typeof RouteEngine.applicableSteps !== "function" || typeof RouteEngine.completedMap !== "function") return null;
+
+    var plan = readComputePipelinePlan();
+    var workload = findComputePipelineWorkload(plan, context);
+    if (!workload) return null;
+
+    var tool = String(step.id);
+    var completed = RouteEngine.completedMap(plan, workload) || {};
+    var applicableSteps = RouteEngine.applicableSteps(workload) || [];
+    var applicable = {};
+    applicableSteps.forEach(function (item) {
+      if (item && item.tool) applicable[item.tool] = true;
+    });
+
+    if (tool === currentStep) return "current";
+    if (completed[tool]) return "complete";
+    if (step.categoryEndpoint === "planner") return "complete";
+    if (step.categoryEndpoint === "summary") return "future";
+    if (applicable[tool]) return "future";
+    return "skipped";
+  }
+
   function appendStepAnchor(parent, step) {
     const index = Number.isInteger(step && step.__slIndex) ? step.__slIndex : steps.indexOf(step);
     const currentStepData = steps[currentIndex];
@@ -74,8 +188,9 @@
     const stepGroup = hasFlowGroups ? flowGroupFor(step) : "";
     const isCategoryEndpoint = !!(step && step.categoryEndpoint);
     const isSummaryEndpoint = step && step.categoryEndpoint === "summary";
-    const isCurrent = index === currentIndex;
-    const isPast = !isSummaryEndpoint && (hasFlowGroups
+    const guidedState = computeGuidedPipelineStepState(step);
+    const isCurrent = guidedState ? guidedState === "current" : index === currentIndex;
+    const isPast = guidedState ? guidedState === "complete" : !isSummaryEndpoint && (hasFlowGroups
       ? (
           (
             stepGroup === "foundation" &&
@@ -89,7 +204,8 @@
           )
         )
       : index < currentIndex);
-    const isFuture = !isCurrent && !isPast;
+    const isSkipped = guidedState === "skipped";
+    const isFuture = guidedState ? (guidedState === "future" || isSkipped) : !isCurrent && !isPast;
 
     const a = document.createElement("a");
     a.href = step.href;
@@ -97,12 +213,14 @@
     if (isPast) a.classList.add("is-complete");
     if (isCurrent) a.classList.add("is-current");
     if (isFuture) a.classList.add("is-future");
+    if (isSkipped) a.classList.add("is-skipped");
     if (step.optional) a.classList.add("is-optional");
     if (isCategoryEndpoint) {
       a.classList.add("is-category-endpoint");
       a.setAttribute("data-category-endpoint", String(step.categoryEndpoint));
     }
     a.setAttribute("data-step", step.id);
+    if (guidedState) a.setAttribute("data-guided-pipeline-state", guidedState);
     if (step.optional) a.setAttribute("data-optional-step", "true");
     if (isCurrent) a.setAttribute("aria-current", "step");
 
