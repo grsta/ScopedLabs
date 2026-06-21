@@ -996,3 +996,9 @@ Example:
 - Direct tool visits remain standalone and keep the default shell Continue destinations.
 - Guided Continue routing must ignore stale/localStorage-only state unless the explicit guided context has `guidedFlow: true` and `routeMode: "compute-guided"`.
 - `scripts/audit-compute-tool-continue-route-v1.js` guards the CPU/RAM proof and checks versioned cache-busts without pinning one exact old token.
+### Compute planner multi-workload route
+
+- `assets/scopedlabs-compute-planner-adapter.js` must not resolve the bottom planner CTA from only the active guided workload when other saved workloads still have applicable pending checks.
+- The planner CTA scans saved workloads and prefers pending applicable work before showing `Review Compute Summary`.
+- Alternate workload routes are marked with `data-compute-guided-route-workload-id` and `data-compute-guided-route-alt-workload` so the click starts guided flow for the routed workload.
+- `scripts/audit-compute-planner-multi-workload-route-v1.js` guards against Summary winning while visible saved workload branches still require work.

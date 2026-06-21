@@ -376,6 +376,119 @@
     return null;
   }
 
+  function allComputePlannerWorkloads(plan) {
+    if (!plan) return [];
+    var lists = [plan.workloads, plan.items, plan.scopes, plan.entries];
+    var seen = {};
+    var results = [];
+
+    lists.forEach(function (list) {
+      if (!Array.isArray(list)) return;
+      list.forEach(function (item) {
+        if (!item) return;
+        var id = String(item.id || item.workloadId || "");
+        if (!id || seen[id]) return;
+        seen[id] = true;
+        results.push(item);
+      });
+    });
+
+    return results;
+  }
+
+  function createPlannerGuidedContextForWorkload(baseContext, workload) {
+    if (!workload || !workload.id) return null;
+    var nowValue = new Date().toISOString();
+    var context = Object.assign({}, baseContext || {});
+
+    context.contract = context.contract || "scopedlabs.compute.guided-flow.v1";
+    context.category = "compute";
+    context.guidedFlow = true;
+    context.routeMode = "compute-guided";
+    context.sourceTool = context.sourceTool || "workload-planner";
+    context.startedFrom = context.startedFrom || "workload-planner";
+    context.currentTool = "workload-planner";
+    context.activeWorkloadId = workload.id;
+    context.workloadId = workload.id;
+    context.workloadName = workload.name || "Compute Workload";
+    context.updatedAt = nowValue;
+    context.startedAt = context.startedAt || nowValue;
+
+    return context;
+  }
+
+  function computePlannerDecisionNeedsWork(decision) {
+    if (!decision || decision.mode !== "guided" || !decision.nextHref) return false;
+    if (decision.action === "review-summary" || decision.nextTool === "summary") return false;
+    if (Array.isArray(decision.remainingTools) && decision.remainingTools.length > 0) return true;
+    return !!decision.nextTool;
+  }
+
+  function computePlannerRunLabel(decision) {
+    if (!decision) return "Continue guided flow";
+    if (decision.nextTool === "summary" || decision.action === "review-summary") return "Review Compute Summary";
+    return "Run " + (COMPUTE_LEDGER_LABELS[decision.nextTool] || titleCase(decision.nextTool || "next check"));
+  }
+
+  function decoratePlannerMultiWorkloadDecision(decision, workload, isAlternateWorkload) {
+    if (!decision || !workload) return decision;
+    var next = Object.assign({}, decision);
+    next.workloadId = workload.id;
+    next.workloadName = workload.name || next.workloadName || "Compute Workload";
+    next.plannerWorkloadId = workload.id;
+    next.plannerAlternateWorkload = !!isAlternateWorkload;
+
+    if (isAlternateWorkload && computePlannerDecisionNeedsWork(next)) {
+      next.nextLabel = "Use workload - " + computePlannerRunLabel(next);
+      next.action = "resume-other-workload";
+    }
+
+    return next;
+  }
+
+  function resolvePendingWorkloadRouteFromPlanner(routeEngine, plan, activeContext, activeWorkload) {
+    if (!routeEngine || typeof routeEngine.resolve !== "function") return null;
+
+    var workloads = allComputePlannerWorkloads(plan);
+    var activeId = activeWorkload && activeWorkload.id || activeContext && activeContext.workloadId || "";
+    var activeDecision = null;
+
+    if (activeWorkload) {
+      activeDecision = routeEngine.resolve({
+        plan: plan,
+        workload: activeWorkload,
+        guidedContext: createPlannerGuidedContextForWorkload(activeContext, activeWorkload),
+        currentTool: "workload-planner"
+      });
+
+      if (computePlannerDecisionNeedsWork(activeDecision)) {
+        return decoratePlannerMultiWorkloadDecision(activeDecision, activeWorkload, false);
+      }
+    }
+
+    for (var i = 0; i < workloads.length; i += 1) {
+      var workload = workloads[i];
+      if (!workload || !workload.id || String(workload.id) === String(activeId)) continue;
+
+      var decision = routeEngine.resolve({
+        plan: plan,
+        workload: workload,
+        guidedContext: createPlannerGuidedContextForWorkload(activeContext, workload),
+        currentTool: "workload-planner"
+      });
+
+      if (computePlannerDecisionNeedsWork(decision)) {
+        return decoratePlannerMultiWorkloadDecision(decision, workload, true);
+      }
+    }
+
+    if (activeDecision && activeDecision.nextHref) {
+      return decoratePlannerMultiWorkloadDecision(activeDecision, activeWorkload, false);
+    }
+
+    return null;
+  }
+
   function resolveGuidedRouteFromPlanner(context, workload) {
     var routeEngine = getComputeRouteEngine();
     if (!routeEngine || typeof routeEngine.resolve !== "function") return computeGuidedRouteCtaDefault();
@@ -387,31 +500,35 @@
       findComputePlannerWorkload(plan, activeContext && activeContext.workloadId) ||
       findComputePlannerWorkload(plan, editingId);
 
-    if (!activeContext) return computeGuidedRouteCtaDefault();
-
-    var decision = routeEngine.resolve({
-      plan: plan,
-      workload: activeWorkload,
-      guidedContext: activeContext,
-      currentTool: "workload-planner"
-    });
-
+    var decision = resolvePendingWorkloadRouteFromPlanner(routeEngine, plan, activeContext, activeWorkload);
     if (!decision || !decision.nextHref) return computeGuidedRouteCtaDefault();
     return decision;
   }
 
-  function updateGuidedRouteCta() {
+  function updateGuidedRouteCta(providedDecision) {
     var link = document.getElementById("continue");
     if (!link) link = document.querySelector("[data-planner-continue], .compute-flow-actions a:last-child, .flow-actions a:last-child");
     if (!link) return;
 
-    var decision = resolveGuidedRouteFromPlanner();
+    var decision = providedDecision || resolveGuidedRouteFromPlanner();
     var nextHref = decision.nextHref || "/tools/compute/cpu-sizing/";
     var nextLabel = decision.nextLabel || "Start Guided Flow \u2192 CPU Sizing";
 
     if (link.getAttribute("href") !== nextHref) link.setAttribute("href", nextHref);
     if ((link.textContent || "").trim() !== nextLabel) link.textContent = nextLabel;
     link.setAttribute("data-compute-guided-route-cta", decision.action || "start");
+
+    if (decision.plannerWorkloadId || decision.workloadId) {
+      link.setAttribute("data-compute-guided-route-workload-id", decision.plannerWorkloadId || decision.workloadId);
+    } else {
+      link.removeAttribute("data-compute-guided-route-workload-id");
+    }
+
+    if (decision.plannerAlternateWorkload) {
+      link.setAttribute("data-compute-guided-route-alt-workload", "true");
+    } else {
+      link.removeAttribute("data-compute-guided-route-alt-workload");
+    }
   }
 
   function armGuidedRouteCtaRefresh() {
@@ -442,25 +559,33 @@
 
   function startGuidedFlowFromPlanner(event) {
     if (event && typeof event.preventDefault === "function") event.preventDefault();
-    if (!State) {
-      status("Compute plan state module is not available.");
+
+    var link = event && event.currentTarget ? event.currentTarget : document.getElementById("continue");
+    var requestedWorkloadId = link && link.getAttribute ? link.getAttribute("data-compute-guided-route-workload-id") : "";
+    var plan = readComputePlannerPlanSnapshot();
+    var workload = requestedWorkloadId ? findComputePlannerWorkload(plan, requestedWorkloadId) : null;
+
+    if (!workload) workload = save();
+    if (!workload || !workload.id) {
+      status("Save a Compute workload before starting guided flow.");
       return;
     }
 
-    var workload = save();
-    if (!workload) return;
-
-    var context = typeof State.startGuidedFlow === "function" ? State.startGuidedFlow(workload.id) : null;
-    if (!context) {
-      status("Guided flow could not start. Save a workload first.");
-      return;
+    var context = null;
+    if (State && typeof State.startGuidedFlow === "function") {
+      context = State.startGuidedFlow(workload.id);
     }
 
     var decision = resolveGuidedRouteFromPlanner(context, workload);
-    updateGuidedRouteCta();
+    updateGuidedRouteCta(decision);
 
-    status("Guided flow ready for " + (workload.name || "Compute Workload") + ": " + (decision.nextLabel || "Start Guided Flow \u2192 CPU Sizing") + ".");
-    window.location.href = decision.nextHref || context.nextHref || "/tools/compute/cpu-sizing/";
+    if (decision && decision.nextHref) {
+      status("Guided flow ready for " + (workload.name || "Compute Workload") + ": " + (decision.nextLabel || "Continue") + ".");
+      window.location.href = decision.nextHref;
+      return;
+    }
+
+    window.location.href = context && context.nextHref || "/tools/compute/cpu-sizing/";
   }
 
   function clearForm() {
