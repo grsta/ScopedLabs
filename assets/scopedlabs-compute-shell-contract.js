@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-compute-shell-contract-010-dynamic-guided-continue";
+  var VERSION = "scopedlabs-compute-shell-contract-011-single-dynamic-continue";
 
   function isComputeShellPage() {
     var body = document.body;
@@ -567,16 +567,36 @@
     button.textContent = normalizeComputeGuidedContinueLabel(decision);
   }
 
+  function suppressLegacyComputeContinueControls(ownerRow) {
+    var context = readComputeGuidedContinueContext();
+    if (!context || !ownerRow) return;
+
+    Array.from(document.querySelectorAll("#continue-wrap, #continue")).forEach(function (node) {
+      if (!node) return;
+      var inOwnerRow = node.closest && node.closest('.compute-flow-actions[data-compute-flow-owner="compute-shell-contract"]');
+      if (inOwnerRow === ownerRow) return;
+
+      node.setAttribute("data-compute-dynamic-continue-suppressed", "true");
+      node.setAttribute("aria-hidden", "true");
+      node.hidden = true;
+      node.style.display = "none";
+      node.style.visibility = "hidden";
+    });
+  }
+
   function refreshComputeGuidedContinueCta() {
-    var row = document.querySelector(".compute-flow-actions[data-compute-flow-tool]");
+    var row = document.querySelector('.compute-flow-actions[data-compute-flow-owner="compute-shell-contract"][data-compute-flow-tool]') || document.querySelector(".compute-flow-actions[data-compute-flow-tool]");
     if (!row) return;
 
     var tool = row.getAttribute("data-compute-flow-tool");
-    var button = row.querySelector("[data-compute-continue-href], #continue, a.btn, button.btn") || document.getElementById("continue");
+    var button = row.querySelector("[data-compute-continue-href], #continue, a.btn-primary, button.btn-primary") || row.querySelector("a.btn, button.btn");
     if (!tool || !button) return;
 
     var decision = resolveComputeGuidedContinueDecision(tool);
-    if (decision) applyComputeGuidedContinueDecision(button, decision);
+    if (decision) {
+      applyComputeGuidedContinueDecision(button, decision);
+      suppressLegacyComputeContinueControls(row);
+    }
   }
 
   function initComputeGuidedContinueRouting() {

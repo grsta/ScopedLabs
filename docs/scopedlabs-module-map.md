@@ -1030,3 +1030,8 @@ Example:
 - `tools/compute/gpu-vram/index.html` consumes `assets/scopedlabs-compute-shell-contract.js` for the same dynamic guided Continue CTA pattern as CPU/RAM.
 - The shared shell fallback for GPU routes to Compute Summary, while explicit guided mode can still resolve through the route engine.
 - This keeps branch completion consistent without a separate guided action strip card.
+#### Compute dynamic Continue single-owner row
+
+- `assets/scopedlabs-compute-shell-contract.js` targets the shell-owned `.compute-flow-actions[data-compute-flow-owner="compute-shell-contract"]` row first.
+- In explicit guided mode, duplicate legacy `#continue-wrap` / `#continue` controls are suppressed so users see one normal bottom Continue action.
+- The same button dynamically resolves Standard Core to Compute Summary and branch paths to their next selected tool.

@@ -55,8 +55,12 @@ check(
 
 check(
   "SHELL_UPDATES_VISIBLE_ROW_CTA_FIRST",
-  shell.includes("row.querySelector(\"[data-compute-continue-href], #continue, a.btn, button.btn\") || document.getElementById(\"continue\")"),
-  "refresh should target the shell-owned visible CTA before legacy page controls"
+  shell.includes("data-compute-flow-owner") &&
+    shell.includes("compute-shell-contract") &&
+    shell.includes("suppressLegacyComputeContinueControls(row)") &&
+    shell.includes("data-compute-dynamic-continue-suppressed") &&
+    shell.includes("normalizeComputeGuidedContinueLabel(decision)"),
+  "refresh should target the shell-owned visible CTA and suppress duplicate legacy controls"
 );
 
 check(

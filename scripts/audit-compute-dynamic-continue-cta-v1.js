@@ -75,6 +75,14 @@ check(
 );
 
 check(
+  "SHELL_TARGETS_OWNER_ROW_FIRST",
+  shell.includes('data-compute-flow-owner="compute-shell-contract"') &&
+    shell.includes("suppressLegacyComputeContinueControls(row)") &&
+    shell.includes("data-compute-dynamic-continue-suppressed"),
+  "dynamic guided Continue should update the shell-owned row and suppress duplicate legacy CTAs"
+);
+
+check(
   "SHELL_UPDATES_BUTTON_TARGET_AND_ENABLES_BUTTONS",
   shell.includes("data-compute-continue-href") &&
     shell.includes("setAttribute(\"href\", decision.nextHref)") &&
@@ -87,9 +95,9 @@ check(
   hasVersionedScript(cpu, "scopedlabs-compute-shell-contract.js", "scopedlabs-compute-shell-contract") &&
     hasVersionedScript(ram, "scopedlabs-compute-shell-contract.js", "scopedlabs-compute-shell-contract") &&
     hasVersionedScript(gpu, "scopedlabs-compute-shell-contract.js", "scopedlabs-compute-shell-contract") &&
-    cpu.includes("010-dynamic-guided-continue") &&
-    ram.includes("010-dynamic-guided-continue") &&
-    gpu.includes("010-dynamic-guided-continue"),
+    cpu.includes("011-single-dynamic-continue") &&
+    ram.includes("011-single-dynamic-continue") &&
+    gpu.includes("011-single-dynamic-continue"),
   "proof pages should load the dynamic Continue shell"
 );
 
@@ -115,7 +123,7 @@ check(
 
 console.log("");
 console.log("SUMMARY");
-console.log("PASS: " + (10 - failures));
+console.log("PASS: " + (11 - failures));
 console.log("FAIL: " + failures);
 console.log("OVERALL: " + (failures ? "FAIL" : "PASS"));
 
