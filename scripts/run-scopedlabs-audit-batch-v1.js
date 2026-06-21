@@ -12,6 +12,7 @@ const defaultAudits = [
   "scripts/audit-scopedlabs-category-module-coverage-v1.js",
   "scripts/audit-compute-workload-ledger-v1.js",
   "scripts/audit-compute-workload-planner-metadata-placement-v1.js",
+  "scripts/audit-compute-guided-flow-mode-v1.js",
   "scripts/audit-scopedlabs-pattern-promotion-v1.js",
   "scripts/audit-scopedlabs-planner-summary-nav-contract-v1.js",
   "scripts/audit-compute-planner-summary-pipeline-nav-v1.js",

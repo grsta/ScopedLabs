@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-compute-planner-adapter-014-metadata-bottom";
+  var VERSION = "scopedlabs-compute-planner-adapter-016-guided-flow-entry";
   var State = window.ScopedLabsComputePlanState;
   var Shell = window.ScopedLabsCategoryPlannerShell;
 
@@ -74,7 +74,7 @@
     backHref: "/tools/compute/",
     backLabel: "Back to Compute",
     continueHref: "/tools/compute/cpu-sizing/",
-    continueLabel: "Continue → CPU Sizing",
+    continueLabel: "Start Guided Flow ? CPU Sizing",
     flow: {
       id: "computeWorkloadDesignFlowCard",
       eyebrow: "Design Flow",
@@ -314,8 +314,25 @@
     var result = State.upsertWorkload(collect());
     editingId = result.workload.id;
     render();
-    status("Compute workload saved. Continue to CPU Sizing when ready.");
+    status("Compute workload saved. Start Guided Flow when ready.");
     return result.workload;
+  }
+
+  function startGuidedFlowFromPlanner(event) {
+    if (event && typeof event.preventDefault === "function") event.preventDefault();
+    if (!State) {
+      status("Compute plan state module is not available.");
+      return;
+    }
+    var workload = save();
+    if (!workload) return;
+    var context = typeof State.startGuidedFlow === "function" ? State.startGuidedFlow(workload.id) : null;
+    if (!context) {
+      status("Guided flow could not start. Save a workload first.");
+      return;
+    }
+    status("Guided flow started for " + (workload.name || "Compute Workload") + ".");
+    window.location.href = context.nextHref || "/tools/compute/cpu-sizing/";
   }
 
   function clearForm() {
@@ -1083,9 +1100,7 @@
     });
 
     if (els.continue) {
-      els.continue.addEventListener("click", function () {
-        save();
-      });
+      els.continue.addEventListener("click", startGuidedFlowFromPlanner);
     }
 
     if (els.copyWorkloadSummary) els.copyWorkloadSummary.addEventListener("click", copySummary);

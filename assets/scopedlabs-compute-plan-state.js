@@ -6,6 +6,7 @@
   var PLAN_KEY = "scopedlabs:pipeline:compute:workload-plan";
   var ACTIVE_KEY = "scopedlabs:pipeline:compute:active-workload";
   var CONTEXT_KEY = "scopedlabs:pipeline:compute:workload-context";
+  var GUIDED_FLOW_KEY = "scopedlabs:pipeline:compute:guided-flow";
   var PLAN_CHANGE_EVENT = "scopedlabs:compute:workload-plan-change";
 
   function now() {
@@ -167,6 +168,81 @@
     });
 
     return written;
+  }
+
+  function createGuidedFlowId() {
+    return "compute-guided-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
+  }
+
+  function selectedBranchTools(workload) {
+    var seeds = branchSeeds(workload);
+    return Object.keys(seeds).filter(function (toolSlug) { return !!seeds[toolSlug]; });
+  }
+
+  function writeGuidedFlowContext(payload) {
+    if (!payload) return null;
+    sessionStorage.setItem(GUIDED_FLOW_KEY, JSON.stringify(payload));
+    localStorage.setItem(GUIDED_FLOW_KEY, JSON.stringify(payload));
+    return payload;
+  }
+
+  function readGuidedFlowContext() {
+    var payload = safeParse(sessionStorage.getItem(GUIDED_FLOW_KEY), null) || safeParse(localStorage.getItem(GUIDED_FLOW_KEY), null);
+    if (!payload || payload.contract !== "scopedlabs.compute.guided-flow.v1" || payload.guidedFlow !== true) return null;
+    return payload;
+  }
+
+  function startGuidedFlow(workloadId) {
+    var plan = load();
+    var workload = workloadId
+      ? (plan.workloads || []).find(function (item) { return item.id === workloadId; })
+      : activeWorkload(plan);
+
+    if (!workload) return null;
+
+    plan.activeWorkloadId = workload.id;
+    plan = save(plan);
+    writeContext(workload, plan);
+    writeBranchSeeds(workload);
+
+    var payload = {
+      contract: "scopedlabs.compute.guided-flow.v1",
+      category: CATEGORY,
+      guidedFlow: true,
+      guidedFlowId: createGuidedFlowId(),
+      routeMode: "compute-guided",
+      sourceTool: "workload-planner",
+      startedFrom: "workload-planner",
+      activeWorkloadId: workload.id,
+      workloadId: workload.id,
+      workloadName: workload.name || "Compute Workload",
+      currentTool: "workload-planner",
+      nextTool: "cpu-sizing",
+      nextHref: "/tools/compute/cpu-sizing/",
+      selectedBranchTools: selectedBranchTools(workload),
+      startedAt: now(),
+      updatedAt: now()
+    };
+
+    writeGuidedFlowContext(payload);
+    emitPlanChange("guided-flow-start", plan, workload);
+    return payload;
+  }
+
+  function getGuidedFlowContext() {
+    return readGuidedFlowContext();
+  }
+
+  function isGuidedFlowActive() {
+    return !!readGuidedFlowContext();
+  }
+
+  function clearGuidedFlow() {
+    sessionStorage.removeItem(GUIDED_FLOW_KEY);
+    localStorage.removeItem(GUIDED_FLOW_KEY);
+    var plan = load();
+    emitPlanChange("guided-flow-clear", plan, activeWorkload(plan));
+    return true;
   }
 
   function upsertWorkload(workload) {
@@ -645,6 +721,10 @@
     writeContext: writeContext,
     writeBranchSeeds: writeBranchSeeds,
     recordToolResult: recordToolResult,
+    startGuidedFlow: startGuidedFlow,
+    getGuidedFlowContext: getGuidedFlowContext,
+    isGuidedFlowActive: isGuidedFlowActive,
+    clearGuidedFlow: clearGuidedFlow,
     ensureWorkloadDisplayStyles: ensureWorkloadDisplayStyles,
     buildWorkloadDisplayContext: buildWorkloadDisplayContext,
     renderWorkloadDisplay: renderWorkloadDisplay,

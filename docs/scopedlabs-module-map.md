@@ -948,3 +948,10 @@ Example:
 - `assets/scopedlabs-compute-planner-adapter.js` owns the Compute-specific placement rule that moves `computeWorkloadReportMetadataSection` after `scopeSummaryCard` after the shared category planner shell renders.
 - `tools/compute/workload-planner/index.html` cache-busts the adapter with `scopedlabs-compute-planner-adapter-014-metadata-bottom`.
 - `scripts/audit-compute-workload-planner-metadata-placement-v1.js` verifies the metadata section is moved below the workload summary/report actions instead of sitting between the workload ledger and summary.
+### Compute guided-flow mode contract
+
+- `assets/scopedlabs-compute-plan-state.js` owns the explicit guided-flow context key `scopedlabs:pipeline:compute:guided-flow`.
+- Guided mode starts only when the Workload Planner `Start Guided Flow` action calls `ScopedLabsComputePlanState.startGuidedFlow()`.
+- Direct tool visits remain standalone by default; guided routing, dynamic branch queues, return-to-core behavior, and stop logic must consume `getGuidedFlowContext()` defensively in later route-engine work.
+- `assets/scopedlabs-compute-planner-adapter.js` changes the planner Continue CTA into `Start Guided Flow ? CPU Sizing`, saves the active workload, starts guided context, and then navigates to the first routed tool.
+- `scripts/audit-compute-guided-flow-mode-v1.js` verifies the guided-flow key, API, planner entry action, cache bust, and module-map documentation.
