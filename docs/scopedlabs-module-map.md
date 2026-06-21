@@ -989,3 +989,10 @@ Example:
 - Durable cache-bust checks should verify that a scoped, versioned script is present, for example `module-name-[0-9]{3}-meaningful-token`, rather than pinning one old token forever.
 - UI text audits should guard bad outcomes such as corrupted question-mark separators, missing route-engine decisions, missing standalone guards, or missing module-map updates.
 - JS/HTML/CSS patches should avoid literal special glyphs where encoding/cache can corrupt them. Use ASCII-safe escapes or entities, such as `\\u2192` in JS and `&rarr;` in HTML.
+### Compute tool Continue route wiring
+
+- `assets/scopedlabs-compute-shell-contract.js` owns guided Continue routing for Compute tool pages.
+- CPU and RAM load `assets/scopedlabs-compute-guided-route-engine.js` before the shell contract so Continue can route through the guided engine when explicit guided context exists.
+- Direct tool visits remain standalone and keep the default shell Continue destinations.
+- Guided Continue routing must ignore stale/localStorage-only state unless the explicit guided context has `guidedFlow: true` and `routeMode: "compute-guided"`.
+- `scripts/audit-compute-tool-continue-route-v1.js` guards the CPU/RAM proof and checks versioned cache-busts without pinning one exact old token.

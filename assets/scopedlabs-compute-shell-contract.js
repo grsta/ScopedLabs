@@ -356,4 +356,213 @@
   }
   initSharedComputeWorkloadContextCard();
 
+
+  function readComputeGuidedContinueContext() {
+    var State = window.ScopedLabsComputePlanState || {};
+    var context = null;
+
+    try {
+      if (typeof State.getGuidedFlowContext === "function") {
+        context = State.getGuidedFlowContext();
+      }
+    } catch (error) {
+      context = null;
+    }
+
+    if (!context) {
+      try {
+        context = JSON.parse(window.localStorage.getItem("scopedlabs:pipeline:compute:guided-flow") || "null");
+      } catch (error) {
+        context = null;
+      }
+    }
+
+    if (!context || context.guidedFlow !== true || context.routeMode !== "compute-guided") {
+      return null;
+    }
+
+    return context;
+  }
+
+  function readComputeGuidedContinuePlan() {
+    var State = window.ScopedLabsComputePlanState || {};
+    var methods = ["getPlanSnapshot", "getPlan", "readPlan", "loadPlan", "getState"];
+
+    for (var i = 0; i < methods.length; i += 1) {
+      var name = methods[i];
+      try {
+        if (typeof State[name] === "function") {
+          var plan = State[name]();
+          if (plan) return plan;
+        }
+      } catch (error) {
+        /* ignore optional state readers */
+      }
+    }
+
+    var keys = [
+      "scopedlabs:pipeline:compute:plan",
+      "scopedlabs:compute:plan",
+      "scopedlabs:compute:workload-planner",
+      "scopedlabs:pipeline:compute:workload-planner"
+    ];
+
+    for (var j = 0; j < keys.length; j += 1) {
+      try {
+        var parsed = JSON.parse(window.localStorage.getItem(keys[j]) || "null");
+        if (parsed) return parsed;
+      } catch (error) {
+        /* ignore optional storage snapshots */
+      }
+    }
+
+    return null;
+  }
+
+  function findComputeGuidedContinueWorkload(plan, context) {
+    var State = window.ScopedLabsComputePlanState || {};
+    var workloadId = context && (context.workloadId || context.id);
+
+    if (context && context.workload && typeof context.workload === "object") {
+      return context.workload;
+    }
+
+    try {
+      if (workloadId && typeof State.getWorkload === "function") {
+        var direct = State.getWorkload(workloadId);
+        if (direct) return direct;
+      }
+    } catch (error) {
+      /* ignore optional workload reader */
+    }
+
+    try {
+      if (workloadId && typeof State.getWorkloadById === "function") {
+        var byId = State.getWorkloadById(workloadId);
+        if (byId) return byId;
+      }
+    } catch (error) {
+      /* ignore optional workload reader */
+    }
+
+    if (!plan || !workloadId) return null;
+
+    var arrays = [plan.workloads, plan.items, plan.records, plan.savedWorkloads];
+    for (var i = 0; i < arrays.length; i += 1) {
+      var list = arrays[i];
+      if (!Array.isArray(list)) continue;
+      for (var j = 0; j < list.length; j += 1) {
+        var item = list[j];
+        if (item && (item.id === workloadId || item.workloadId === workloadId)) {
+          return item;
+        }
+      }
+    }
+
+    var maps = [plan.workloadMap, plan.workloadsById, plan.byId];
+    for (var k = 0; k < maps.length; k += 1) {
+      var map = maps[k];
+      if (map && map[workloadId]) return map[workloadId];
+    }
+
+    if (plan.activeWorkload && (plan.activeWorkload.id === workloadId || plan.activeWorkload.workloadId === workloadId)) {
+      return plan.activeWorkload;
+    }
+
+    return null;
+  }
+
+  function resolveComputeGuidedContinueDecision(tool) {
+    var RouteEngine = window.ScopedLabsComputeGuidedRouteEngine;
+    if (!RouteEngine || typeof RouteEngine.resolve !== "function") return null;
+
+    var context = readComputeGuidedContinueContext();
+    if (!context) return null;
+
+    var plan = readComputeGuidedContinuePlan();
+    var workload = findComputeGuidedContinueWorkload(plan, context);
+
+    var decision = null;
+    try {
+      decision = RouteEngine.resolve({
+        category: "compute",
+        currentTool: tool,
+        guidedFlow: true,
+        routeMode: "compute-guided",
+        context: context,
+        plan: plan,
+        workload: workload
+      });
+    } catch (error) {
+      decision = null;
+    }
+
+    if (!decision || decision.mode !== "guided" || !decision.nextHref) return null;
+    if (decision.nextTool === tool) return null;
+
+    return decision;
+  }
+
+  function applyComputeGuidedContinueDecision(button, decision) {
+    if (!button || !decision || !decision.nextHref) return;
+
+    button.setAttribute("data-compute-guided-route-continue", "true");
+    button.setAttribute("data-compute-continue-href", decision.nextHref);
+
+    if (button.tagName && button.tagName.toLowerCase() === "a") {
+      button.setAttribute("href", decision.nextHref);
+    }
+
+    if (decision.nextLabel) {
+      button.textContent = decision.nextLabel;
+    }
+  }
+
+  function refreshComputeGuidedContinueCta() {
+    var row = document.querySelector(".compute-flow-actions[data-compute-flow-tool]");
+    if (!row) return;
+
+    var tool = row.getAttribute("data-compute-flow-tool");
+    var button = document.getElementById("continue") || row.querySelector("[data-compute-continue-href]");
+    if (!tool || !button) return;
+
+    var decision = resolveComputeGuidedContinueDecision(tool);
+    if (decision) applyComputeGuidedContinueDecision(button, decision);
+  }
+
+  function initComputeGuidedContinueRouting() {
+    function runRefreshLoop() {
+      refreshComputeGuidedContinueCta();
+      var attempts = 0;
+      var timer = window.setInterval(function () {
+        attempts += 1;
+        refreshComputeGuidedContinueCta();
+        if (attempts >= 20) window.clearInterval(timer);
+      }, 500);
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", runRefreshLoop, { once: true });
+    } else {
+      runRefreshLoop();
+    }
+
+    document.addEventListener("click", function (event) {
+      var target = event.target && event.target.closest ? event.target.closest("#continue, [data-compute-continue-href]") : null;
+      if (!target) return;
+
+      var row = target.closest ? target.closest(".compute-flow-actions[data-compute-flow-tool]") : null;
+      if (!row) return;
+
+      var tool = row.getAttribute("data-compute-flow-tool");
+      var decision = resolveComputeGuidedContinueDecision(tool);
+      if (!decision) return;
+
+      applyComputeGuidedContinueDecision(target, decision);
+      event.preventDefault();
+      window.location.href = decision.nextHref;
+    }, true);
+  }
+
+  initComputeGuidedContinueRouting();
 })();
