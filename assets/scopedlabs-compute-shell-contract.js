@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-compute-shell-contract-005-flow-actions-static-safe";
+  var VERSION = "scopedlabs-compute-shell-contract-010-dynamic-guided-continue";
 
   function isComputeShellPage() {
     var body = document.body;
@@ -164,6 +164,18 @@
         backLabel: "Back to Workload Planner",
         continueHref: "/tools/compute/ram-sizing/",
         continueLabel: "Continue &rarr; RAM Sizing",
+        continueElement: "a",
+        disabled: false
+      };
+    }
+
+    if (path.indexOf("/tools/compute/gpu-vram/") !== -1) {
+      return {
+        tool: "gpu-vram",
+        backHref: "/tools/compute/ram-sizing/",
+        backLabel: "Back to RAM Sizing",
+        continueHref: "/tools/compute/summary/",
+        continueLabel: "Review Compute Summary",
         continueElement: "a",
         disabled: false
       };
@@ -510,6 +522,35 @@
     return decision;
   }
 
+  function computeGuidedContinueToolLabel(tool, fallback) {
+    var labels = {
+      "cpu-sizing": "CPU Sizing",
+      "ram-sizing": "RAM Sizing",
+      "storage-iops": "Storage IOPS",
+      "storage-throughput": "Storage Throughput",
+      "vm-density": "VM Density",
+      "gpu-vram": "GPU VRAM",
+      "power-thermal": "Power and Thermal",
+      "nic-bonding": "NIC Bonding",
+      "raid-rebuild-time": "RAID Rebuild",
+      "backup-window": "Backup Window",
+      "summary": "Compute Summary"
+    };
+
+    var label = labels[tool] || fallback || "Next Step";
+    label = String(label || "").replace(String.fromCharCode(8594), "->");
+    label = label.replace(/^\s*(Start|Resume)\s+Guided\s+Flow\s*->\s*/i, "");
+    label = label.replace(/^\s*Continue\s*(to|->)?\s*/i, "");
+    label = label.replace(/\s+/g, " ").trim();
+    return label || labels[tool] || "Next Step";
+  }
+
+  function normalizeComputeGuidedContinueLabel(decision) {
+    if (!decision || !decision.nextTool) return "Continue";
+    if (decision.nextTool === "summary") return "Review Compute Summary";
+    return "Continue to " + computeGuidedContinueToolLabel(decision.nextTool, decision.nextLabel);
+  }
+
   function applyComputeGuidedContinueDecision(button, decision) {
     if (!button || !decision || !decision.nextHref) return;
 
@@ -521,9 +562,9 @@
       button.setAttribute("href", decision.nextHref);
     }
 
-    if (decision.nextLabel) {
-      button.textContent = decision.nextLabel;
-    }
+    if (button.tagName && button.tagName.toLowerCase() === "button") button.disabled = false;
+
+    button.textContent = normalizeComputeGuidedContinueLabel(decision);
   }
 
   function refreshComputeGuidedContinueCta() {

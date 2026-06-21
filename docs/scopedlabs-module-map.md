@@ -1017,15 +1017,16 @@ Example:
 - The shell reads current plan-state APIs including `load()` and current workload-plan storage keys before legacy fallbacks.
 - CPU/RAM direct visits remain standalone; guided routing only applies when `guidedFlow: true` and `routeMode: compute-guided` are present.
 - `scripts/audit-compute-guided-continue-plan-read-v1.js` guards the shared shell plan-read contract.
-### Compute guided action strip
+### Compute dynamic guided Continue CTA
 
-- `assets/scopedlabs-compute-guided-action-strip.js` owns the user-facing guided route card/action strip for Compute proof tools.
-- The strip appears only in explicit Compute guided mode and leaves direct tool visits standalone.
-- It resolves the next action through `assets/scopedlabs-compute-guided-route-engine.js`, displays plain `Continue to [next tool]` wording, and separates non-applicable optional checks from the active path.
-- CPU/RAM/GPU load this shared proof module first; future Compute tools should consume the same module as guided routing expands.
-- `scripts/audit-compute-guided-action-strip-v1.js` guards the shared guided action strip contract.
-#### Compute guided action strip UI polish
+- `assets/scopedlabs-compute-shell-contract.js` owns the Compute Back/Continue action row for CPU/RAM proof pages.
+- In explicit guided mode, the Continue button label and target are resolved from `assets/scopedlabs-compute-guided-route-engine.js` and the active planner workload.
+- Planner-selected paths dynamically update the normal Continue button, for example `Continue to RAM Sizing`, `Continue to GPU VRAM`, or `Review Compute Summary`.
+- No separate guided action strip is used; standard/core and branch workflows use the same bottom Continue CTA pattern.
+- Direct tool visits remain standalone and keep the static fallback behavior.
+- `scripts/audit-compute-dynamic-continue-cta-v1.js` guards this shared dynamic CTA contract.
+#### Compute dynamic Continue GPU proof
 
-- `assets/scopedlabs-compute-guided-action-strip.js` places the guided route card above Export Report so the next action appears after the user has reviewed the page output.
-- The guided card removes redundant route-engine language, matches standard card surface styling, uses Decision Schedule-style header/chip color, and keeps Back/Continue buttons visually balanced.
-- The shared module remains guided-mode-only and direct tool visits remain standalone.
+- `tools/compute/gpu-vram/index.html` consumes `assets/scopedlabs-compute-shell-contract.js` for the same dynamic guided Continue CTA pattern as CPU/RAM.
+- The shared shell fallback for GPU routes to Compute Summary, while explicit guided mode can still resolve through the route engine.
+- This keeps branch completion consistent without a separate guided action strip card.
