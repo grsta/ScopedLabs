@@ -314,9 +314,131 @@
     var result = State.upsertWorkload(collect());
     editingId = result.workload.id;
     render();
+    updateGuidedRouteCta();
     status("Compute workload saved. Start Guided Flow when ready.");
     return result.workload;
   }
+  function computeGuidedRouteCtaDefault() {
+    return {
+      nextHref: "/tools/compute/cpu-sizing/",
+      nextLabel: "Start Guided Flow ? CPU Sizing",
+      action: "start"
+    };
+  }
+
+  function getComputeRouteEngine() {
+    return window.ScopedLabsComputeGuidedRouteEngine || null;
+  }
+
+  function readComputePlannerPlanSnapshot() {
+    if (State) {
+      var methodNames = ["getPlan", "readPlan", "loadPlan", "getWorkloadPlan"];
+      for (var i = 0; i < methodNames.length; i += 1) {
+        var name = methodNames[i];
+        if (typeof State[name] === "function") {
+          try {
+            var plan = State[name]();
+            if (plan) return plan;
+          } catch (error) {
+            /* Fall back to localStorage. */
+          }
+        }
+      }
+    }
+
+    try {
+      return JSON.parse(localStorage.getItem("scopedlabs:pipeline:compute:workload-plan") || "{}") || {};
+    } catch (error) {
+      return {};
+    }
+  }
+
+  function readComputeGuidedRouteContext() {
+    if (!State || typeof State.getGuidedFlowContext !== "function") return null;
+    try {
+      var context = State.getGuidedFlowContext();
+      if (!context || context.guidedFlow !== true || context.routeMode !== "compute-guided") return null;
+      return context;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function findComputePlannerWorkload(plan, workloadId) {
+    if (!plan || !workloadId) return null;
+    var lists = [plan.workloads, plan.items, plan.scopes, plan.entries];
+    for (var i = 0; i < lists.length; i += 1) {
+      var list = Array.isArray(lists[i]) ? lists[i] : [];
+      for (var j = 0; j < list.length; j += 1) {
+        if (list[j] && String(list[j].id) === String(workloadId)) return list[j];
+      }
+    }
+    return null;
+  }
+
+  function resolveGuidedRouteFromPlanner(context, workload) {
+    var routeEngine = getComputeRouteEngine();
+    if (!routeEngine || typeof routeEngine.resolve !== "function") return computeGuidedRouteCtaDefault();
+
+    var plan = readComputePlannerPlanSnapshot();
+    var activeContext = context || readComputeGuidedRouteContext();
+    var activeWorkload =
+      workload ||
+      findComputePlannerWorkload(plan, activeContext && activeContext.workloadId) ||
+      findComputePlannerWorkload(plan, editingId);
+
+    if (!activeContext) return computeGuidedRouteCtaDefault();
+
+    var decision = routeEngine.resolve({
+      plan: plan,
+      workload: activeWorkload,
+      guidedContext: activeContext,
+      currentTool: "workload-planner"
+    });
+
+    if (!decision || !decision.nextHref) return computeGuidedRouteCtaDefault();
+    return decision;
+  }
+
+  function updateGuidedRouteCta() {
+    var link = document.getElementById("continue");
+    if (!link) link = document.querySelector("[data-planner-continue], .compute-flow-actions a:last-child, .flow-actions a:last-child");
+    if (!link) return;
+
+    var decision = resolveGuidedRouteFromPlanner();
+    var nextHref = decision.nextHref || "/tools/compute/cpu-sizing/";
+    var nextLabel = decision.nextLabel || "Start Guided Flow ? CPU Sizing";
+
+    if (link.getAttribute("href") !== nextHref) link.setAttribute("href", nextHref);
+    if ((link.textContent || "").trim() !== nextLabel) link.textContent = nextLabel;
+    link.setAttribute("data-compute-guided-route-cta", decision.action || "start");
+  }
+
+  function armGuidedRouteCtaRefresh() {
+    function refresh() {
+      updateGuidedRouteCta();
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", refresh);
+    } else {
+      refresh();
+    }
+
+    window.setTimeout(refresh, 0);
+    window.setTimeout(refresh, 100);
+
+    if (document.body && !window.__scopedlabsComputeGuidedRouteCtaObserver) {
+      window.__scopedlabsComputeGuidedRouteCtaObserver = new MutationObserver(function () {
+        updateGuidedRouteCta();
+      });
+      window.__scopedlabsComputeGuidedRouteCtaObserver.observe(document.body, { childList: true, subtree: true });
+    }
+  }
+
+  armGuidedRouteCtaRefresh();
+
+
 
   function startGuidedFlowFromPlanner(event) {
     if (event && typeof event.preventDefault === "function") event.preventDefault();
@@ -324,15 +446,21 @@
       status("Compute plan state module is not available.");
       return;
     }
+
     var workload = save();
     if (!workload) return;
+
     var context = typeof State.startGuidedFlow === "function" ? State.startGuidedFlow(workload.id) : null;
     if (!context) {
       status("Guided flow could not start. Save a workload first.");
       return;
     }
-    status("Guided flow started for " + (workload.name || "Compute Workload") + ".");
-    window.location.href = context.nextHref || "/tools/compute/cpu-sizing/";
+
+    var decision = resolveGuidedRouteFromPlanner(context, workload);
+    updateGuidedRouteCta();
+
+    status("Guided flow ready for " + (workload.name || "Compute Workload") + ": " + (decision.nextLabel || "Start Guided Flow ? CPU Sizing") + ".");
+    window.location.href = decision.nextHref || context.nextHref || "/tools/compute/cpu-sizing/";
   }
 
   function clearForm() {

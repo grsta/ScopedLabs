@@ -969,3 +969,9 @@ Example:
 - The planner owns broad branch intent only: VM density, storage/performance, GPU/acceleration, power/thermal, RAID, backup, and NIC bonding.
 - Detailed calculator values remain inside individual standalone tools; the planner must not duplicate exact CPU, RAM, IOPS, throughput, VRAM, wattage, RAID, backup, or NIC calculation inputs.
 - `scripts/audit-compute-planner-input-contract-v1.js` verifies the broad planner inputs, branch keys, path defaults, branch seeds, route-engine key alignment, and no detailed tool-input duplication.
+### Compute planner route CTA
+
+- `assets/scopedlabs-compute-planner-adapter.js` now consumes `assets/scopedlabs-compute-guided-route-engine.js` for the Workload Planner Continue CTA.
+- The planner CTA remains a guided-flow entry action, but its destination and label are refreshed from the route decision when guided context exists.
+- Direct tool visits remain standalone because the route engine returns standalone without explicit guided context.
+- `scripts/audit-compute-planner-route-cta-v1.js` verifies script order, cache busting, route-engine consumption, guided-flow decision navigation, standalone guard preservation, and module-map registration.
