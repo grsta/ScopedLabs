@@ -30,7 +30,7 @@ check(
 
 check(
   "PLANNER_CACHE_BUSTS_ROUTE_CTA_ADAPTER",
-  page.includes("scopedlabs-compute-planner-adapter.js?v=scopedlabs-compute-planner-adapter-017-route-cta"),
+  page.includes("scopedlabs-compute-planner-adapter.js?v=scopedlabs-compute-planner-adapter-019-route-arrow-cleanup"),
   "tools/compute/workload-planner/index.html"
 );
 
@@ -81,18 +81,29 @@ check(
 
 check(
   "GUIDED_ROUTE_CTA_HAS_NO_CORRUPT_ARROW_SEPARATOR",
-  !adapter.includes("Start Guided Flow ?") &&
-    !adapter.includes("Resume Guided Flow ?") &&
-    !route.includes("Start Guided Flow ?") &&
-    !route.includes("Resume Guided Flow ?") &&
-    adapter.includes("\\u2192") &&
-    route.includes("\\u2192"),
+  !adapter.includes("Start Guided Flow \u2192 ") &&
+    !adapter.includes("Resume Guided Flow \u2192 ") &&
+    !route.includes("Start Guided Flow \u2192 ") &&
+    !route.includes("Resume Guided Flow \u2192 ") &&
+    adapter.includes("\\u2192 ") &&
+    route.includes("\\u2192 "),
   "guided route labels must use ASCII-safe Unicode escape, not corrupted '?' text"
+);
+
+check(
+  "GUIDED_ROUTE_CTA_HAS_NO_ARROW_QUESTION_MARK",
+  !adapter.includes("\\u2192?") &&
+    !adapter.includes("\\u2192 ?") &&
+    !route.includes("\\u2192?") &&
+    !route.includes("\\u2192 ?") &&
+    !adapter.includes("Flow ?") &&
+    !route.includes("Flow ?"),
+  "guided route CTA labels must not render arrow/question-mark corruption"
 );
 
 console.log("");
 console.log("SUMMARY");
-console.log("PASS: " + (9 - failures));
+console.log("PASS: " + (10 - failures));
 console.log("FAIL: " + failures);
 console.log("OVERALL: " + (failures ? "FAIL" : "PASS"));
 

@@ -67,6 +67,7 @@ check(
   "WORKLOAD_PLANNER_CACHE_BUSTS_GUIDED_ENTRY",
   page.includes("scopedlabs-compute-planner-adapter.js?v=") &&
     (
+      page.includes("scopedlabs-compute-planner-adapter-019-route-arrow-cleanup") ||
       page.includes("scopedlabs-compute-planner-adapter-017-route-cta") ||
       page.includes("scopedlabs-compute-planner-adapter-016-guided-flow-entry")
     ),

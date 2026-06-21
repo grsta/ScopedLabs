@@ -975,3 +975,10 @@ Example:
 - The planner CTA remains a guided-flow entry action, but its destination and label are refreshed from the route decision when guided context exists.
 - Direct tool visits remain standalone because the route engine returns standalone without explicit guided context.
 - `scripts/audit-compute-planner-route-cta-v1.js` verifies script order, cache busting, route-engine consumption, guided-flow decision navigation, standalone guard preservation, and module-map registration.
+### Compute guided route CTA arrow encoding
+
+- `assets/scopedlabs-compute-guided-route-engine.js` and `assets/scopedlabs-compute-planner-adapter.js` must keep guided route CTA labels encoding-safe.
+- Guided CTA arrow labels must use ASCII-safe Unicode escape handling in source and must not render corrupted `?` separators.
+- `tools/compute/workload-planner/index.html` cache-busts both the planner adapter and route engine when guided CTA label behavior changes.
+- `scripts/audit-compute-planner-route-cta-v1.js` guards against `Start Guided Flow ?`, `Resume Guided Flow ?`, `\\u2192?`, and `\\u2192 ?` label corruption.
+- This is part of the ScopedLabs golden rule: do not introduce literal special glyphs or smart punctuation in code patches where encoding/cache can corrupt them.
