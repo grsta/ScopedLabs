@@ -169,12 +169,24 @@
     var completed = RouteEngine.completedMap(plan, workload) || {};
     var applicableSteps = RouteEngine.applicableSteps(workload) || [];
     var applicable = {};
+    var applicableTools = [];
+
     applicableSteps.forEach(function (item) {
-      if (item && item.tool) applicable[item.tool] = true;
+      if (!item || !item.tool) return;
+      applicable[item.tool] = true;
+      applicableTools.push(item.tool);
     });
+
+    var currentApplicableIndex = applicableTools.indexOf(currentStep);
+    var toolApplicableIndex = applicableTools.indexOf(tool);
 
     if (tool === currentStep) return "current";
     if (completed[tool]) return "complete";
+
+    if (toolApplicableIndex >= 0 && currentApplicableIndex >= 0 && toolApplicableIndex < currentApplicableIndex) {
+      return "complete";
+    }
+
     if (step.categoryEndpoint === "planner") return "complete";
     if (step.categoryEndpoint === "summary") return "future";
     if (applicable[tool]) return "future";

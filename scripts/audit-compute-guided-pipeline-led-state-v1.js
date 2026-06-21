@@ -56,6 +56,15 @@ check(
 );
 
 check(
+  "PIPELINE_INFERS_UPSTREAM_APPLICABLE_STEPS_COMPLETE",
+  pipeline.includes("var applicableTools = []") &&
+    pipeline.includes("currentApplicableIndex") &&
+    pipeline.includes("toolApplicableIndex < currentApplicableIndex") &&
+    pipeline.includes("return \"complete\";"),
+  "guided pipeline should mark applicable upstream steps complete when current guided tool is downstream"
+);
+
+check(
   "PIPELINE_USES_LEDGER_COMPLETION_FOR_COMPUTE",
   pipeline.includes("if (completed[tool]) return \"complete\";") &&
     pipeline.includes("if (applicable[tool]) return \"future\";") &&
@@ -109,7 +118,7 @@ check(
 
 console.log("");
 console.log("SUMMARY");
-console.log("PASS: " + (9 - failures));
+console.log("PASS: " + (8 - failures));
 console.log("FAIL: " + failures);
 console.log("OVERALL: " + (failures ? "FAIL" : "PASS"));
 

@@ -1073,3 +1073,8 @@ Example:
 - The click path now uses an explicit `if (!workloads.length)` branch for zero saved workloads, then scrolls/focuses setup and returns.
 - Saved workloads continue through the guided route engine to the next incomplete applicable tool.
 - `scripts/audit-compute-planner-start-cta-workload-aware-v1.js` guards direct owner binding and explicit zero-workload branching.
+#### Compute guided pipeline upstream completion
+
+- `assets/pipeline.js` now marks applicable upstream Compute steps as complete when the current guided tool is downstream in the active workload route.
+- This keeps GPU guided flow visuals aligned with the route: CPU and RAM show complete before GPU VRAM, while unrelated tools remain skipped or future.
+- `scripts/audit-compute-guided-pipeline-led-state-v1.js` guards the upstream-completion inference.
