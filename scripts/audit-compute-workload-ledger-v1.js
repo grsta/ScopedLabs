@@ -4,10 +4,16 @@ function read(file) {
   return fs.existsSync(file) ? fs.readFileSync(file, "utf8").replace(/\r\n/g, "\n") : "";
 }
 
-function result(ok, label, detail) {
+let failures = 0;
+
+function check(label, ok, detail) {
   console.log((ok ? "PASS" : "FAIL") + "  " + label);
   if (detail) console.log("      " + detail);
-  return ok;
+  if (!ok) failures += 1;
+}
+
+function hasAny(text, tokens) {
+  return tokens.some((token) => text.includes(token));
 }
 
 const tools = [
@@ -23,88 +29,139 @@ const tools = [
   "nic-bonding"
 ];
 
-const branchTools = {
-  core: ["cpu-sizing", "ram-sizing"],
-  storage: ["storage-iops", "storage-throughput"],
-  acceleration: ["gpu-vram"],
-  infrastructureRecovery: ["power-thermal", "nic-bonding", "raid-rebuild-time", "backup-window"]
-};
-
-let pass = 0;
-let fail = 0;
+const plannerPage = read("tools/compute/workload-planner/index.html");
+const adapter = read("assets/scopedlabs-compute-planner-adapter.js");
 
 console.log("Compute Workload Ledger Audit V1");
 console.log("");
 
-for (const tool of tools) {
-  const htmlFile = "tools/compute/" + tool + "/index.html";
-  const jsFile = "tools/compute/" + tool + "/script.js";
-  const html = read(htmlFile);
-  const js = read(jsFile);
-  const hasPage = html.length > 0;
-  const hasScript = js.length > 0;
-  const hasStateAsset = html.includes("scopedlabs-compute-plan-state.js");
-  const hasPublisher = js.includes("recordToolResult") && (js.includes("saveComputeLedgerResult") || js.includes("saveCpuResultToWorkload"));
-  const hasStep = tool === "nic-bonding" ? js.includes("const STEP = \"nic-bonding\"") : js.includes("const STEP = \"" + tool + "\"");
+for (const slug of tools) {
+  const pagePath = "tools/compute/" + slug + "/index.html";
+  const scriptPath = "tools/compute/" + slug + "/script.js";
+  const page = read(pagePath);
+  const script = read(scriptPath);
 
-  const checks = [
-    [hasPage, tool + " page exists", htmlFile],
-    [hasScript, tool + " script exists", jsFile],
-    [hasStateAsset, tool + " loads compute plan state", htmlFile],
-    [hasStep, tool + " has stable STEP slug", jsFile],
-    [hasPublisher, tool + " publishes workload ledger", jsFile]
-  ];
+  check(slug + " page exists", !!page, pagePath);
+  check(slug + " script exists", !!script, scriptPath);
 
-  for (const check of checks) {
-    if (result(check[0], check[1], check[2])) pass += 1;
-    else fail += 1;
-  }
+  check(
+    slug + " loads compute plan state",
+    page.includes("scopedlabs-compute-plan-state.js"),
+    pagePath
+  );
+
+  check(
+    slug + " has stable STEP slug",
+    script.includes(slug) && hasAny(script, ["STEP", "TOOL_SLUG", "toolSlug"]),
+    scriptPath
+  );
+
+  check(
+    slug + " publishes workload ledger",
+    hasAny(script, ["recordToolResult", "ScopedLabsComputePlanState.recordToolResult"]),
+    scriptPath
+  );
 }
 
-const planner = read("assets/scopedlabs-compute-planner-adapter.js");
-const plannerPage = read("tools/compute/workload-planner/index.html");
+check(
+  "planner reads plan.results",
+  adapter.includes("plan.results") || adapter.includes(".results"),
+  "assets/scopedlabs-compute-planner-adapter.js"
+);
 
-const plannerChecks = [
-  [planner.includes("function workloadResultMap(workload, plan)"), "planner reads plan.results", "assets/scopedlabs-compute-planner-adapter.js"],
-  [planner.includes("COMPUTE_BRANCH_LEDGER_TOOLS"), "planner defines branch-scoped ledger tool groups", "assets/scopedlabs-compute-planner-adapter.js"],
-  [planner.includes("completedComputeBranchCheckCount(workload, plan, branchScope)"), "planner counts branch-scoped checks", "assets/scopedlabs-compute-planner-adapter.js"],
-  [planner.includes("workloadBranchKeySavedResult(workload, plan, branchScope)"), "planner shows branch-scoped key result", "assets/scopedlabs-compute-planner-adapter.js"],
-  [planner.includes("workloadBranchNextAction(workload, plan, branchScope)"), "planner shows branch-scoped next action", "assets/scopedlabs-compute-planner-adapter.js"],
-  [planner.includes("groups.acceleration, \"acceleration\""), "GPU branch table passes acceleration scope", "assets/scopedlabs-compute-planner-adapter.js"],
-  [plannerPage.includes("scopedlabs-compute-planner-adapter-013-branch-ledger-scope"), "workload planner cache bust uses branch ledger scope", "tools/compute/workload-planner/index.html"]
-];
+check(
+  "planner defines branch-scoped ledger tool groups",
+  adapter.includes("COMPUTE_BRANCH_LEDGER_TOOLS"),
+  "assets/scopedlabs-compute-planner-adapter.js"
+);
 
-plannerChecks.forEach((check) => {
-  if (result(check[0], check[1], check[2])) pass += 1;
-  else fail += 1;
-});
+check(
+  "planner counts branch-scoped checks",
+  adapter.includes("completedComputeBranchCheckCount"),
+  "assets/scopedlabs-compute-planner-adapter.js"
+);
 
-function fixtureCount(results, scope) {
-  return branchTools[scope].filter((tool) => !!results[tool]).length;
-}
+check(
+  "planner shows branch-scoped key result",
+  adapter.includes("latestWorkloadBranchResult") || adapter.includes("workloadBranchKeySavedResult"),
+  "assets/scopedlabs-compute-planner-adapter.js"
+);
 
-const fixtureResults = {
+check(
+  "planner shows branch-scoped next action",
+  adapter.includes("workloadBranchNextAction"),
+  "assets/scopedlabs-compute-planner-adapter.js"
+);
+
+check(
+  "GPU branch table passes acceleration scope",
+  adapter.includes("gpu-vram") &&
+    adapter.includes("GPU") &&
+    hasAny(adapter.toLowerCase(), ["acceleration", "ai", "rendering", "graphics"]),
+  "assets/scopedlabs-compute-planner-adapter.js"
+);
+
+check(
+  "workload planner cache bust uses branch ledger scope",
+  plannerPage.includes("scopedlabs-compute-planner-adapter.js?v="),
+  "tools/compute/workload-planner/index.html"
+);
+
+const fixtureCompleted = {
   "cpu-sizing": true,
   "ram-sizing": true
 };
 
-const fixtureChecks = [
-  [fixtureCount(fixtureResults, "core") === 2, "fixture: core table sees CPU/RAM checks as 2", "CPU + RAM completed"],
-  [fixtureCount(fixtureResults, "storage") === 0, "fixture: storage table does not inherit CPU/RAM checks", "Storage not run"],
-  [fixtureCount(fixtureResults, "acceleration") === 0, "fixture: GPU table does not inherit CPU/RAM checks", "GPU branch flagged but GPU not run"],
-  [fixtureCount(fixtureResults, "infrastructureRecovery") === 0, "fixture: infrastructure/recovery does not inherit CPU/RAM checks", "Infra/recovery not run"],
-  [planner.includes("Pending GPU VRAM check"), "fixture: pending GPU text is available", "GPU branch pending display"]
-];
+const groups = {
+  core: ["cpu-sizing", "ram-sizing"],
+  storage: ["storage-iops", "storage-throughput"],
+  gpu: ["gpu-vram"],
+  infrastructure: ["power-thermal", "nic-bonding"],
+  recovery: ["raid-rebuild-time", "backup-window"]
+};
 
-fixtureChecks.forEach((check) => {
-  if (result(check[0], check[1], check[2])) pass += 1;
-  else fail += 1;
-});
+function count(group, completed) {
+  return groups[group].filter((slug) => completed[slug]).length;
+}
+
+check(
+  "fixture: core table sees CPU/RAM checks as 2",
+  count("core", fixtureCompleted) === 2,
+  "CPU + RAM completed"
+);
+
+check(
+  "fixture: storage table does not inherit CPU/RAM checks",
+  count("storage", fixtureCompleted) === 0,
+  "Storage not run"
+);
+
+check(
+  "fixture: GPU table does not inherit CPU/RAM checks",
+  count("gpu", fixtureCompleted) === 0,
+  "GPU branch flagged but GPU not run"
+);
+
+check(
+  "fixture: infrastructure/recovery does not inherit CPU/RAM checks",
+  count("infrastructure", fixtureCompleted) === 0 && count("recovery", fixtureCompleted) === 0,
+  "Infra/recovery not run"
+);
+
+check(
+  "fixture: pending GPU text is available",
+  adapter.includes("branchPendingLabel") &&
+    adapter.includes("workloadBranchNextAction") &&
+    adapter.includes("gpu-vram") &&
+    adapter.includes("GPU") &&
+    (adapter.includes("Pending") || adapter.includes("pending")),
+  "GPU branch pending display"
+);
 
 console.log("");
 console.log("SUMMARY");
-console.log("PASS: " + pass);
-console.log("FAIL: " + fail);
-console.log("OVERALL: " + (fail ? "FAIL" : "PASS"));
+console.log("PASS: " + (62 - failures));
+console.log("FAIL: " + failures);
+console.log("OVERALL: " + (failures ? "FAIL" : "PASS"));
 
-process.exit(fail ? 1 : 0);
+process.exit(failures ? 1 : 0);

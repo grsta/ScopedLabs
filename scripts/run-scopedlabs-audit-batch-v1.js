@@ -14,6 +14,7 @@ const defaultAudits = [
   "scripts/audit-compute-workload-planner-metadata-placement-v1.js",
   "scripts/audit-compute-guided-flow-mode-v1.js",
   "scripts/audit-compute-guided-route-engine-v1.js",
+  "scripts/audit-compute-planner-input-contract-v1.js",
   "scripts/audit-scopedlabs-pattern-promotion-v1.js",
   "scripts/audit-scopedlabs-planner-summary-nav-contract-v1.js",
   "scripts/audit-compute-planner-summary-pipeline-nav-v1.js",

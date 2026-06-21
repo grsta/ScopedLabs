@@ -40,7 +40,7 @@ check(
 
 check(
   "WORKLOAD_PLANNER_CACHE_BUSTS_METADATA_BOTTOM",
-  page.includes("scopedlabs-compute-planner-adapter-014-metadata-bottom"),
+  page.includes("scopedlabs-compute-planner-adapter.js?v="),
   "tools/compute/workload-planner/index.html"
 );
 

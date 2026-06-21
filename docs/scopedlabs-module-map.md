@@ -962,3 +962,10 @@ Example:
 - Base guided route is CPU Sizing then RAM Sizing. Storage, VM Density, GPU VRAM, Power & Thermal, NIC Bonding, RAID Rebuild, and Backup Window are included only when their planner branch is selected.
 - The engine returns `standalone` when no guided context exists, `start` or `resume` when work remains, and `review-summary` only after all applicable selected/required checks are complete.
 - `scripts/audit-compute-guided-route-engine-v1.js` proves standalone mode, start/resume behavior, mid-pipeline resume, branch queue order, specialty branch completion, and summary-only-after-applicable-work-complete behavior.
+### Compute planner input contract
+
+- `assets/scopedlabs-compute-planner-adapter.js` is the Compute proof for the global Planner Gate pattern.
+- The planner collects broad route-driving context: workload identity, environment, planning path, workload type, demand pattern, operating window, criticality, target utilization, growth margin, redundancy goal, primary constraint, and notes.
+- The planner owns broad branch intent only: VM density, storage/performance, GPU/acceleration, power/thermal, RAID, backup, and NIC bonding.
+- Detailed calculator values remain inside individual standalone tools; the planner must not duplicate exact CPU, RAM, IOPS, throughput, VRAM, wattage, RAID, backup, or NIC calculation inputs.
+- `scripts/audit-compute-planner-input-contract-v1.js` verifies the broad planner inputs, branch keys, path defaults, branch seeds, route-engine key alignment, and no detailed tool-input duplication.
