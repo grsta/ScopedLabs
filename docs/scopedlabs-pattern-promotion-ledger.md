@@ -130,3 +130,18 @@ Revisit trigger: Revisit when the next non-CPU/RAM Compute calculator top chrome
 
 Audit:
 - scripts/audit-compute-gpu-vram-top-chrome-parity-v1.js
+
+
+### COMPUTE-GPU-VRAM-INPUT-CARD-PARITY-LOCAL-0622
+
+Status: APPROVED_LOCAL_EXCEPTION
+
+Changed path:
+- tools/compute/gpu-vram/index.html
+
+Approved local exception: GPU VRAM is the current Compute proof target for input-card parity against the accepted CPU/RAM calculator rhythm. This local repair removes duplicate input-section labeling and levels the engineering input grid while preserving calculation input IDs and downstream planning data.
+
+Revisit trigger: Revisit when the next non-CPU/RAM Compute calculator needs an engineering factors input block, or when this pattern is promoted into a reusable Compute engineering input card contract.
+
+Audit:
+- scripts/audit-compute-gpu-vram-input-card-parity-v1.js

@@ -325,6 +325,86 @@
   }
 </style>
 
+
+  <style id="compute-gpu-input-card-parity-0622">
+    .compute-gpu-planning-inputs[data-compute-gpu-input-card-parity="0622"] {
+      margin-top: 26px;
+      padding-top: 22px;
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+
+    .compute-gpu-planning-inputs[data-compute-gpu-input-card-parity="0622"] .compute-gpu-planning-inputs__head {
+      margin: 0 0 18px;
+    }
+
+    .compute-gpu-planning-inputs[data-compute-gpu-input-card-parity="0622"] .compute-gpu-planning-inputs__title {
+      margin: 0 0 10px;
+      text-transform: none;
+      letter-spacing: -0.015em;
+    }
+
+    .compute-gpu-planning-inputs[data-compute-gpu-input-card-parity="0622"] .compute-gpu-planning-inputs__copy {
+      max-width: 78ch;
+      margin: 0;
+      line-height: 1.55;
+    }
+
+    .compute-gpu-planning-inputs[data-compute-gpu-input-card-parity="0622"] .compute-gpu-input-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      align-items: stretch;
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .compute-gpu-planning-inputs[data-compute-gpu-input-card-parity="0622"] .compute-gpu-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-height: 100%;
+      padding: 16px;
+      border: 1px solid rgba(83,255,61,.16);
+      border-radius: 14px;
+      background: rgba(0,0,0,.16);
+    }
+
+    .compute-gpu-planning-inputs[data-compute-gpu-input-card-parity="0622"] .compute-gpu-input-group h3 {
+      min-height: 18px;
+      margin: 0 0 4px;
+      line-height: 1.2;
+    }
+
+    .compute-gpu-planning-inputs[data-compute-gpu-input-card-parity="0622"] .compute-gpu-input-group label {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      min-height: 104px;
+      margin: 0;
+    }
+
+    .compute-gpu-planning-inputs[data-compute-gpu-input-card-parity="0622"] .compute-gpu-input-group input,
+    .compute-gpu-planning-inputs[data-compute-gpu-input-card-parity="0622"] .compute-gpu-input-group select {
+      width: 100%;
+    }
+
+    .compute-gpu-planning-inputs[data-compute-gpu-input-card-parity="0622"] .compute-gpu-input-help {
+      display: block;
+      min-height: 34px;
+      line-height: 1.38;
+    }
+
+    @media (max-width: 980px) {
+      .compute-gpu-planning-inputs[data-compute-gpu-input-card-parity="0622"] .compute-gpu-input-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .compute-gpu-planning-inputs[data-compute-gpu-input-card-parity="0622"] .compute-gpu-input-group label,
+      .compute-gpu-planning-inputs[data-compute-gpu-input-card-parity="0622"] .compute-gpu-input-help {
+        min-height: 0;
+      }
+    }
+  </style>
+
 </head>
 
 <body data-tier="pro" data-category="compute" data-step="gpu-vram" data-lane="v1" data-compute-tool-shell="0614" data-sl-square-ctas="true" data-sl-clean-knowledge-card="true">
@@ -425,10 +505,9 @@
         </label>
       </div>
 
-      <section class="compute-gpu-planning-inputs" data-compute-gpu-engineering-inputs="0621" data-compute-gpu-engineering-inputs-integrated-style="0621" aria-label="GPU VRAM engineering planning inputs">
+      <section class="compute-gpu-planning-inputs" data-compute-gpu-input-card-parity="0622" data-compute-gpu-engineering-inputs="0621" data-compute-gpu-engineering-inputs-integrated-style="0621" aria-label="GPU VRAM engineering planning inputs">
         <div class="compute-gpu-planning-inputs__head">
-          <div class="compute-gpu-planning-inputs__eyebrow">Planning Inputs</div>
-          <h2 class="compute-gpu-planning-inputs__title">GPU VRAM engineering factors</h2>
+<h2 class="h2 compute-gpu-planning-inputs__title">GPU VRAM engineering factors</h2>
           <p class="compute-gpu-planning-inputs__copy">
             Add capacity, reserve, precision, and sharing assumptions so the GPU estimate behaves like an engineering planning check instead of a simple memory subtotal.
           </p>

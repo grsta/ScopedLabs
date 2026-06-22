@@ -1161,3 +1161,13 @@ Promotion note:
 - Contract: Removes visible calculator-page breadcrumbs i
 - Known breadcrumb owner: tools/compute/gpu-vram/index.html <main class="container page"> > div.crumbs containing Tools / Compute / GPU VRAM. The top chrome audit must fail if this exact owner returns.ncluding legacy class=crumbs blocks, top Pro Tier chip, Part of a Design Flow explainer card, and Best for line while preserving hidden flow-note and locked/auth card behavior.
 - Promotion path: If the next Compute calculator needs the same top chrome cleanup, promote this behavior into a reusable ScopedLabs/Compute tool page chrome contract before broad rollout.
+
+
+### COMPUTE_GPU_VRAM_INPUT_CARD_PARITY_V1
+
+- Status: PROOF_GATE
+- Owner: scripts/audit-compute-gpu-vram-input-card-parity-v1.js
+- Scope: GPU VRAM Compute calculator input-card parity proof.
+- Consumer: tools/compute/gpu-vram/index.html
+- Contract: Removes the duplicate engineering-input eyebrow, promotes GPU VRAM engineering factors to the real h2 section title, preserves every GPU engineering input ID, and levels the engineering input grid against the accepted CPU/RAM Planning Inputs rhythm.
+- Promotion path: If accepted in browser verification, promote this into a reusable Compute engineering input card contract before applying to the next Compute tool.
