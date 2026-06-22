@@ -1181,3 +1181,13 @@ Promotion note:
 - Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
 - Contract: Hides the legacy visible results and analysis-copy source blocks while preserving their DOM IDs, internal ledger payload, session/carryover data, and shell proof rendering path.
 - Promotion path: If accepted in browser verification, promote this into a reusable Compute calculator hidden-results/ledger parity contract before applying to the next Compute tool.
+
+
+### COMPUTE_GPU_VRAM_CAPACITY_ENVELOPE_PARITY_V1
+
+- Status: PROOF_GATE
+- Owner: scripts/audit-compute-gpu-vram-capacity-envelope-parity-v1.js
+- Scope: GPU VRAM Compute calculator capacity-envelope visual parity proof.
+- Consumer: tools/compute/gpu-vram/script.js; tools/compute/gpu-vram/index.html
+- Contract: Replaces the local GPU VRAM blue chart grammar with a CPU/RAM-style dark CAD capacity envelope, chart-linked *1/*2/*3 references, marker-ring dots, usable/installed rails, and preserved GPU math/status inputs.
+- Promotion path: After browser acceptance, promote into assets/scopedlabs-compute-capacity-visuals.js as a GPU-specific build/render route rather than keeping the visual page-local.

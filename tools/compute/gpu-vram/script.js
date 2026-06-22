@@ -626,76 +626,137 @@
   function envelopeSvg(plan) {
     const max = Math.max(plan.input.installedVramGb, plan.usableVramGb, plan.requiredVramGb, plan.rawDemandGb, 1);
     const scaleMax = max * 1.18;
-    const chartLeft = 70;
-    const chartTop = 34;
-    const chartWidth = 610;
-    const chartHeight = 250;
-    const xDemand = chartLeft + 120;
-    const xRequired = chartLeft + 305;
-    const xUsable = chartLeft + 490;
+    const width = 760;
+    const height = 430;
+    const plot = { x: 70, y: 102, w: 610, h: 236 };
+    const xDemand = plot.x + 115;
+    const xRequired = plot.x + 305;
+    const xUsable = plot.x + 490;
+    const status = String(plan.status || "WATCH").toUpperCase();
+    const statusFill = status === "RISK" ? "rgba(239,68,68,.13)" : status === "WATCH" ? "rgba(250,204,21,.12)" : "rgba(44,255,155,.12)";
+    const statusColor = status === "RISK" ? "#ff4d5a" : status === "WATCH" ? "#facc15" : "#2cff9b";
 
     function y(value) {
-      return chartTop + chartHeight - ((value / scaleMax) * chartHeight);
+      const n = Number(value || 0);
+      return plot.y + plot.h - ((n / scaleMax) * plot.h);
     }
 
-    const demandY = y(plan.rawDemandGb);
-    const requiredY = y(plan.requiredVramGb);
-    const usableY = y(plan.usableVramGb);
-    const installedY = y(plan.input.installedVramGb);
-    const riskY = y(plan.usableVramGb * 0.9);
-    const watchY = y(plan.usableVramGb * 0.7);
+    function safeY(value) {
+      return Math.max(plot.y, Math.min(plot.y + plot.h, y(value)));
+    }
 
-    return `
-      <svg viewBox="0 0 760 360" role="img" aria-label="GPU VRAM Capacity Envelope">
-        <defs>
-          <linearGradient id="gpuVramBg0621" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#0f172a"/>
-            <stop offset="100%" stop-color="#020617"/>
-          </linearGradient>
-        </defs>
-        <rect width="760" height="360" rx="18" fill="url(#gpuVramBg0621)"/>
-        <g opacity="0.32" stroke="#334155" stroke-width="1">
-          <path d="M70 54 H680"/>
-          <path d="M70 104 H680"/>
-          <path d="M70 154 H680"/>
-          <path d="M70 204 H680"/>
-          <path d="M70 254 H680"/>
-          <path d="M70 304 H680"/>
-          <path d="M190 34 V304"/>
-          <path d="M375 34 V304"/>
-          <path d="M560 34 V304"/>
-        </g>
+    function marker(point) {
+      return [
+        '<g data-ref="' + escapeHtml(point.ref) + '" tabindex="0" role="img" aria-label="' + escapeHtml(point.ref + " - " + point.detail) + '">',
+        '<title>' + escapeHtml(point.ref + " - " + point.detail) + '</title>',
+        '<path d="M' + point.x.toFixed(1) + ' ' + point.y.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="ref-line"/>',
+        '<circle cx="' + point.x.toFixed(1) + '" cy="' + point.y.toFixed(1) + '" r="7" class="marker-ring"/>',
+        '<circle cx="' + point.x.toFixed(1) + '" cy="' + point.y.toFixed(1) + '" r="4.8" class="marker-' + point.tone + '"/>',
+        '<text x="' + point.x.toFixed(1) + '" y="' + (point.y - 13).toFixed(1) + '" text-anchor="middle" class="ref-label marker-label-' + point.tone + '">' + escapeHtml(point.ref) + '</text>',
+        '</g>'
+      ].join("");
+    }
 
-        <rect x="70" y="${riskY}" width="610" height="${Math.max(0, chartTop + chartHeight - riskY)}" fill="#ef4444" opacity="0.12"/>
-        <rect x="70" y="${watchY}" width="610" height="${Math.max(0, riskY - watchY)}" fill="#f59e0b" opacity="0.12"/>
-        <rect x="70" y="34" width="610" height="${Math.max(0, watchY - chartTop)}" fill="#22c55e" opacity="0.08"/>
+    const demandY = safeY(plan.rawDemandGb);
+    const requiredY = safeY(plan.requiredVramGb);
+    const usableY = safeY(plan.usableVramGb);
+    const installedY = safeY(plan.input.installedVramGb);
+    const riskY = safeY(plan.usableVramGb * 0.9);
+    const watchY = safeY(plan.usableVramGb * 0.7);
 
-        <line x1="70" y1="${installedY}" x2="680" y2="${installedY}" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6 6" opacity="0.82"/>
-        <line x1="70" y1="${usableY}" x2="680" y2="${usableY}" stroke="#22c55e" stroke-width="2" stroke-dasharray="10 6" opacity="0.86"/>
+    const riskZoneH = Math.max(0, plot.y + plot.h - riskY);
+    const watchZoneH = Math.max(0, riskY - watchY);
+    const goodZoneH = Math.max(0, watchY - plot.y);
 
-        <path d="M${xDemand} ${demandY} L${xRequired} ${requiredY}" fill="none" stroke="#38bdf8" stroke-width="3"/>
+    const points = [
+      {
+        ref: "*1",
+        tone: "current",
+        label: "Demand basis",
+        x: xDemand,
+        y: demandY,
+        value: gb(plan.rawDemandGb),
+        detail: "Raw model, batch, runtime cache, checkpoint, and workspace demand before reserve multipliers."
+      },
+      {
+        ref: "*2",
+        tone: "growth",
+        label: "Reserve pressure",
+        x: xRequired,
+        y: requiredY,
+        value: gb(plan.requiredVramGb),
+        detail: "Required VRAM after precision, parallelism, growth reserve, failover, and sharing assumptions."
+      },
+      {
+        ref: "*3",
+        tone: "failover",
+        label: "Validation rail",
+        x: xUsable,
+        y: usableY,
+        value: gb(plan.usableVramGb),
+        detail: "Usable planning capacity after target utilization and display reserve are applied."
+      }
+    ];
 
-        <circle cx="${xDemand}" cy="${demandY}" r="7" fill="#38bdf8"/>
-        <circle cx="${xRequired}" cy="${requiredY}" r="8" fill="#facc15"/>
-        <circle cx="${xUsable}" cy="${usableY}" r="8" fill="#22c55e"/>
-        <circle cx="${xUsable + 45}" cy="${installedY}" r="6" fill="#cbd5e1"/>
+    const yTicks = [0, 0.25, 0.5, 0.75, 1].map(function (ratio) {
+      const yy = plot.y + plot.h - (plot.h * ratio);
+      const value = scaleMax * ratio;
+      const major = ratio === 0 || ratio === 0.5 || ratio === 1;
+      return [
+        '<path d="M' + plot.x + ' ' + yy.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="' + (major ? "grid-major" : "grid") + '"/>',
+        '<text x="' + (plot.x - 12) + '" y="' + (yy + 3).toFixed(1) + '" text-anchor="end" class="tick">' + escapeHtml(gb(value)) + '</text>'
+      ].join("");
+    }).join("");
 
-        <text x="70" y="24" fill="#e5eef8" font-size="15" font-weight="700">GPU VRAM Capacity Envelope</text>
-        <text x="680" y="24" fill="#cbd5e1" font-size="11" text-anchor="end">Status: ${escapeHtml(plan.status)}</text>
+    const xTicks = points.map(function (point) {
+      return [
+        '<path d="M' + point.x.toFixed(1) + ' ' + plot.y + ' V' + (plot.y + plot.h) + '" class="grid"/>',
+        '<text x="' + point.x.toFixed(1) + '" y="' + (plot.y + plot.h + 22) + '" text-anchor="middle" class="tick">' + escapeHtml(point.label) + '</text>',
+        '<text x="' + point.x.toFixed(1) + '" y="' + (plot.y + plot.h + 38) + '" text-anchor="middle" class="value-label">' + escapeHtml(point.value) + '</text>'
+      ].join("");
+    }).join("");
 
-        <text x="${xDemand}" y="326" fill="#94a3b8" font-size="11" text-anchor="middle">Raw demand</text>
-        <text x="${xRequired}" y="326" fill="#94a3b8" font-size="11" text-anchor="middle">Required</text>
-        <text x="${xUsable}" y="326" fill="#94a3b8" font-size="11" text-anchor="middle">Usable rail</text>
+    const curvePath = "M" + xDemand.toFixed(1) + " " + demandY.toFixed(1) + " C" + (xDemand + 70).toFixed(1) + " " + demandY.toFixed(1) + ", " + (xRequired - 70).toFixed(1) + " " + requiredY.toFixed(1) + ", " + xRequired.toFixed(1) + " " + requiredY.toFixed(1) + " S" + (xUsable - 80).toFixed(1) + " " + usableY.toFixed(1) + ", " + xUsable.toFixed(1) + " " + usableY.toFixed(1);
 
-        <text x="${xDemand}" y="${demandY - 13}" fill="#e0f2fe" font-size="11" text-anchor="middle">${gb(plan.rawDemandGb)}</text>
-        <text x="${xRequired}" y="${requiredY - 13}" fill="#fef3c7" font-size="11" text-anchor="middle">${gb(plan.requiredVramGb)}</text>
-        <text x="${xUsable}" y="${usableY - 13}" fill="#bbf7d0" font-size="11" text-anchor="middle">${gb(plan.usableVramGb)}</text>
-        <text x="${xUsable + 45}" y="${installedY - 13}" fill="#e2e8f0" font-size="11" text-anchor="middle">Installed ${gb(plan.input.installedVramGb)}</text>
-
-        <text x="74" y="${installedY - 8}" fill="#94a3b8" font-size="10">installed VRAM rail</text>
-        <text x="74" y="${usableY - 8}" fill="#86efac" font-size="10">usable planning rail</text>
-      </svg>
-    `;
+    return [
+      '<svg data-export-svg="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" width="100%" role="img" aria-label="GPU VRAM Capacity Envelope analytic graph" data-compute-visual="gpu-vram-capacity-envelope" data-compute-capacity-visual="gpu-vram-envelope">',
+      '<defs>',
+      '<linearGradient id="computeGpuEnvelopeBg0622" x1="0" y1="0" x2="0" y2="1">',
+      '<stop offset="0%" stop-color="#07110f"/>',
+      '<stop offset="100%" stop-color="#040b09"/>',
+      '</linearGradient>',
+      '<style>',
+      '.plot-bg{fill:url(#computeGpuEnvelopeBg0622)}.plot-frame{fill:rgba(255,255,255,.012);stroke:rgba(44,255,155,.20);stroke-width:1}.zone-good{fill:rgba(44,255,155,.055)}.zone-watch{fill:rgba(250,204,21,.055)}.zone-risk{fill:rgba(239,68,68,.06)}.grid{fill:none;stroke:rgba(238,246,255,.08);stroke-width:1}.grid-major{fill:none;stroke:rgba(238,246,255,.14);stroke-width:1}.axis{fill:none;stroke:rgba(238,246,255,.42);stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}.tick{fill:rgba(203,213,225,.90);font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700}.value-label{fill:rgba(238,246,255,.86);font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:850}.axis-label{fill:rgba(203,213,225,.92);font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:750;letter-spacing:.5px}.header{fill:#eef6ff;font-family:Inter,Arial,Helvetica,sans-serif;font-size:18px;font-weight:900;letter-spacing:.5px}.subhead{fill:rgba(203,213,225,.86);font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:650}.zone-label{font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;letter-spacing:.8px}.zone-good-text{fill:rgba(44,255,155,.96)}.zone-watch-text{fill:rgba(250,204,21,.95)}.zone-risk-text{fill:rgba(255,77,90,.95)}.capacity-line{fill:none;stroke:#2cff9b;stroke-width:1.6;stroke-linecap:round}.installed-line{fill:none;stroke:rgba(203,213,225,.55);stroke-width:1;stroke-dasharray:6 5}.watch-line{fill:none;stroke:rgba(250,204,21,.70);stroke-width:1;stroke-dasharray:5 5}.risk-line{fill:none;stroke:rgba(255,77,90,.82);stroke-width:1;stroke-dasharray:5 5}.curve-shadow{fill:none;stroke:rgba(44,255,155,.22);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.curve{fill:none;stroke:#2cff9b;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}.marker-current{fill:#38d9ff;stroke:#04110d;stroke-width:1.2}.marker-growth{fill:#a78bfa;stroke:#04110d;stroke-width:1.2}.marker-failover{fill:#f59e0b;stroke:#04110d;stroke-width:1.2}.marker-ring{fill:none;stroke:rgba(238,246,255,.72);stroke-width:1}.ref-line{fill:none;stroke:rgba(238,246,255,.16);stroke-width:1;stroke-dasharray:4 4}.ref-label{font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:950;letter-spacing:.4px}.marker-label-current{fill:#38d9ff}.marker-label-growth{fill:#a78bfa}.marker-label-failover{fill:#f59e0b}.rail-label{fill:rgba(203,213,225,.82);font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:750}.status-chip{stroke-width:1}.status-text{font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;letter-spacing:.7px}.legend-current{fill:#38d9ff}.legend-growth{fill:#a78bfa}.legend-failover{fill:#f59e0b}.legend-text{font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:800;fill:rgba(203,213,225,.88)}',
+      '</style>',
+      '</defs>',
+      '<rect width="' + width + '" height="' + height + '" rx="18" class="plot-bg"/>',
+      '<text x="50" y="56" class="header">GPU VRAM CAPACITY ENVELOPE</text>',
+      '<text x="50" y="76" class="subhead">Demand curve vs usable GPU VRAM planning capacity</text>',
+      '<rect x="632" y="38" width="64" height="28" rx="3" fill="' + statusFill + '" stroke="' + statusColor + '" class="status-chip"/>',
+      '<text x="664" y="57" text-anchor="middle" fill="' + statusColor + '" class="status-text">' + escapeHtml(status) + '</text>',
+      '<rect x="' + plot.x + '" y="' + riskY.toFixed(1) + '" width="' + plot.w + '" height="' + riskZoneH.toFixed(1) + '" class="zone-risk"/>',
+      '<rect x="' + plot.x + '" y="' + watchY.toFixed(1) + '" width="' + plot.w + '" height="' + watchZoneH.toFixed(1) + '" class="zone-watch"/>',
+      '<rect x="' + plot.x + '" y="' + plot.y + '" width="' + plot.w + '" height="' + goodZoneH.toFixed(1) + '" class="zone-good"/>',
+      '<rect x="' + plot.x + '" y="' + plot.y + '" width="' + plot.w + '" height="' + plot.h + '" class="plot-frame"/>',
+      yTicks,
+      xTicks,
+      '<path d="M' + plot.x + ' ' + plot.y + ' V' + (plot.y + plot.h) + '" class="axis"/>',
+      '<path d="M' + plot.x + ' ' + (plot.y + plot.h) + ' H' + (plot.x + plot.w) + '" class="axis"/>',
+      '<path d="M' + plot.x + ' ' + riskY.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="risk-line"/>',
+      '<path d="M' + plot.x + ' ' + watchY.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="watch-line"/>',
+      '<path d="M' + plot.x + ' ' + usableY.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="capacity-line"/>',
+      '<path d="M' + plot.x + ' ' + installedY.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="installed-line"/>',
+      '<text x="' + (plot.x + plot.w - 4) + '" y="' + (usableY - 7).toFixed(1) + '" text-anchor="end" class="rail-label">usable planning rail</text>',
+      '<text x="' + (plot.x + plot.w - 4) + '" y="' + (installedY - 7).toFixed(1) + '" text-anchor="end" class="rail-label">installed VRAM rail</text>',
+      '<path d="' + curvePath + '" class="curve-shadow"/>',
+      '<path d="' + curvePath + '" class="curve"/>',
+      points.map(marker).join(""),
+      '<text x="84" y="374" class="legend-current">*1</text><text x="104" y="374" class="legend-text">Demand basis</text>',
+      '<text x="262" y="374" class="legend-growth">*2</text><text x="282" y="374" class="legend-text">Reserve pressure</text>',
+      '<text x="468" y="374" class="legend-failover">*3</text><text x="488" y="374" class="legend-text">Validation rail</text>',
+      '<text x="50" y="405" class="axis-label">Capacity edge: watch at 70% of usable VRAM, risk at 90%</text>',
+      '</svg>'
+    ].join("");
   }
 
   function renderGpuEngineeringPlan() {

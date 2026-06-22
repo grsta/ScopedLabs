@@ -161,3 +161,19 @@ Revisit trigger: Revisit when the next non-CPU/RAM Compute calculator still expo
 
 Audit:
 - scripts/audit-compute-gpu-vram-legacy-results-ledger-parity-v1.js
+
+
+### COMPUTE-GPU-VRAM-CAPACITY-ENVELOPE-PARITY-LOCAL-0622
+
+Status: APPROVED_LOCAL_PROOF
+
+Changed path:
+- tools/compute/gpu-vram/script.js
+- tools/compute/gpu-vram/index.html
+
+Approved local proof: GPU VRAM is the current Compute proof target for capacity-envelope visual parity. This local proof keeps GPU math/status untouched while replacing the old blue SVG chart grammar with a CPU/RAM-style dark CAD capacity envelope, marker-ring dots, chart-linked *1/*2/*3 references, and usable/installed rail labels.
+
+Revisit trigger: Promote into assets/scopedlabs-compute-capacity-visuals.js after live visual acceptance by adding buildGpuCapacityEnvelopeSvg/renderGpuCapacityEnvelope and routing GPU type explicitly instead of relying on the current CPU/RAM-only shared visual module.
+
+Audit:
+- scripts/audit-compute-gpu-vram-capacity-envelope-parity-v1.js

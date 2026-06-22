@@ -118,10 +118,11 @@ check(
 );
 
 check(
-  "GPU_LEGACY_RESULTS_LEDGER_SCRIPT_VERSION_BUMPED",
-  html.includes("compute-gpu-vram-legacy-results-ledger-parity-0622"),
-  "GPU script cache bust should identify the legacy results ledger parity lane."
-);
+  "GPU_LEGACY_RESULTS_LEDGER_SCRIPT_VERSION_PRESENT",
+  html.includes("./script.js?v=compute-gpu-vram-") &&
+    html.includes("0622"),
+  "GPU page should keep a GPU-owned script cache-bust present; later parity lanes may advance the exact version after legacy results are hidden."
+, htmlFile)
 
 check(
   "GPU_LEGACY_RESULTS_LEDGER_SCRIPT_HELPER_PRESENT",
