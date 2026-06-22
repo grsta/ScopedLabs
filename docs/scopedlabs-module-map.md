@@ -1123,3 +1123,20 @@ Audit:
 Promotion note:
 - This is an input-depth proof for GPU VRAM. The full shared Compute shell/module proof remains a follow-on lane.
 
+
+## COMPUTE_GPU_VRAM_SHELL_PROOF_V1 ? 2026-06-21
+
+Status: GPU-only shell proof lane.
+
+Scope:
+- Promotes GPU VRAM from engineering-input proof toward the shared Compute calculator shell.
+- Adds shared shell tokens, assistant/export bridge assets, local assistant renderer mount, Compute assistant contract sections, recommendation references, recommended actions, decision schedule, user tool notes, report metadata mount, internal ledger, and Compute flow-action ownership.
+- Preserves existing GPU inputs, IDs, math, auth, checkout, export, snapshot, Knowledge Base, guided route behavior, and existing GPU engineering-input proof.
+- Does not patch backup-window, nic-bonding, power-thermal, raid-rebuild-time, storage-iops, storage-throughput, or vm-density in this lane.
+
+Audit:
+- scripts/audit-compute-gpu-vram-shell-proof-v1.js
+
+Promotion note:
+- If accepted in browser, this becomes the next Compute shell/profile proof source after CPU and RAM.
+

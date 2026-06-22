@@ -8,6 +8,9 @@
   <meta name="description" content="Estimate GPU VRAM needs for models, analytics, resolution, batch size, stream count, and headroom planning." />
   <meta name="robots" content="noindex,follow" />
   <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-025" />
+  <link rel="stylesheet" href="/assets/scopedlabs-result-summary-card.css?v=scopedlabs-result-summary-card-0614-cpu-static-polish">
+  <link rel="stylesheet" href="/assets/scopedlabs-compute-result-visuals.css?v=scopedlabs-compute-result-visuals-0621-gpu-shell-proof">
+  <link rel="stylesheet" href="/assets/scopedlabs-status-legend.css?v=scopedlabs-status-legend-0614-shared">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -324,7 +327,7 @@
 
 </head>
 
-<body data-tier="pro" data-category="compute" data-step="gpu-vram" data-lane="v1">
+<body data-tier="pro" data-category="compute" data-step="gpu-vram" data-lane="v1" data-compute-tool-shell="0614" data-sl-square-ctas="true" data-sl-clean-knowledge-card="true">
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/" aria-label="ScopedLabs Home">
@@ -410,7 +413,7 @@
       </div>
     </section>
 
-    <section id="toolCard" class="card tool-card" style="margin-top: 18px;" data-compute-gpu-engineering-profile="0621">
+    <section id="toolCard" class="card tool-card scopedlabs-tool-shell" style="margin-top: 18px;" data-compute-gpu-engineering-profile="0621" data-compute-gpu-shell-proof="0621" data-compute-tool-shell-card="true">
       <h2 class="card-title" style="margin-top: 0;">Workload Mode</h2>
 
       <div class="form-grid" style="margin-top: 14px;">
@@ -461,11 +464,18 @@
         </div>
 
         <div class="btn-row" style="margin-top: 14px;">
-          <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Export Report</button>
+          <button 
+<div id="reportMetadataMount" data-report-metadata data-report-title="Report details" data-report-copy="Optional metadata can be included in the generated report. Leave blank to use the default report naming." data-report-fields="reportTitle,projectName,clientName,preparedBy,customNotes" data-collapsed="true" hidden></div>
+id="exportReport" class="btn btn-primary" type="button" disabled>Open Export Report</button>
           <button id="saveSnapshot" class="btn" type="button" disabled>Save Snapshot</button>
         </div>
 
-        <div id="exportStatus" class="export-status"></div>
+        <div 
+<div class="scopedlabs-user-tool-notes-inline" data-scopedlabs-user-tool-notes-card="true">
+  <label for="gpuVramUserToolNotes">User Tool Notes</label>
+  <textarea id="gpuVramUserToolNotes" data-scopedlabs-user-tool-notes data-tool-slug="gpu-vram" data-placeholder="Optional notes, assumptions, model/runtime context, GPU allocation caveats, or validation notes for the GPU VRAM report." placeholder="Optional notes, assumptions, model/runtime context, GPU allocation caveats, or validation notes for the GPU VRAM report."></textarea>
+</div>
+id="exportStatus" class="export-status"></div>
       </section>
 </section>
 
@@ -614,14 +624,35 @@
 
       <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
         <h3 class="h3" style="margin-top: 0;">Results</h3>
-        <div id="results" class="results-grid" aria-live="polite">
+        <div 
+<div id="computeInternalResultsLedger" class="card compute-internal-results-ledger" data-internal-results-ledger hidden></div>
+id="results" class="results-grid" aria-live="polite">
           <div class="muted">Run calculation.</div>
         </div>
         <div id="analysis-copy" style="display:none;"></div>
 
+<section id="computeAssistantCard" class="card compute-assistant-card compute-static-summary-card-shell" data-compute-assistant-card hidden>
+  <div id="computeAssistantMount" data-compute-assistant-mount data-category-slug="compute" data-tool-slug="gpu-vram"></div>
+</section>
+
 <section class="compute-gpu-engineering-output" id="computeGpuEngineeringOutput" data-compute-gpu-engineering-output="0621">
   <div class="compute-gpu-engineering-summary" id="computeGpuEngineeringSummary" data-export-section="true" data-export-title="GPU VRAM Engineering Summary" hidden></div>
-  <div class="compute-gpu-envelope" id="computeGpuEnvelope" data-export-section="true" data-export-title="GPU VRAM Capacity Envelope" hidden></div>
+  <div class="compute-gpu-envelope" id="computeGpuEnvelope" data-export-section="true" data-export-title="GPU VRAM Capacity Envelope" hidden class="compute-result-visual-card" data-compute-result-visual-card data-output-visual-owner="compute-capacity-visuals"></div>
+
+<section id="computeGpuReferencesCard" class="card compute-recommendation-references-card" data-compute-recommendation-references-card data-output-references-owner="compute-assistant-contract" data-export-section="true" data-export-title="Recommendation References" hidden>
+  <h3>Recommendation References</h3>
+  <div id="computeGpuReferences" data-compute-recommendation-references="gpu-vram"></div>
+</section>
+
+<section id="computeGpuRecommendedActionsCard" class="card compute-recommended-actions-card" data-compute-recommended-actions-card data-output-actions-owner="compute-assistant-contract" data-export-section="true" data-export-title="Recommended Actions" hidden>
+  <h3>Recommended Actions</h3>
+  <div id="computeGpuRecommendedActions" data-compute-recommended-actions="gpu-vram"></div>
+</section>
+
+<section id="computeGpuDecisionScheduleCard" class="card compute-decision-schedule-card" data-compute-decision-schedule-card data-output-decision-owner="compute-assistant-contract" data-export-section="true" data-export-title="GPU VRAM Decision Schedule" hidden>
+  <h3>GPU VRAM Decision Schedule</h3>
+  <div id="computeGpuDecisionSchedule" data-compute-decision-schedule="gpu-vram"></div>
+</section>
 </section>
 
 
@@ -631,7 +662,7 @@
       </div>
     </section>
 
-    <div id="continue-wrap" class="btn-row" style="display:none; margin-top:12px;">
+    <div id="continue-wrap" class="btn-row compute-flow-actions" style="display:none; margin-top:12px;" data-compute-flow-actions="true" data-compute-flow-owner="compute-shell-contract" data-compute-flow-tool="gpu-vram" data-compute-flow-placed="true">
       <a id="continue" class="btn btn-primary" href="/tools/compute/power-thermal/">
         Continue → Power & Thermal
       </a>
@@ -676,10 +707,17 @@
   </script>
 
   <script src="/assets/export.js?v=shared-export-025-tool-notes-column-widths"></script>
+<script src="/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-008-access-control-category-scope-key"></script>
+<script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
+<script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-002"></script>
+<script src="/assets/scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-018-ram-capacity-marker"></script>
 
   <script src="/assets/scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-007-workload-nav-links"></script>
-  <script src="./script.js?v=compute-ledger-contract-0620"></script>
+  <script src="./script.js?v=compute-gpu-vram-shell-proof-0621"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
+<script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
+<script src="/assets/scopedlabs-compute-assistant-contract.js?v=compute-assistant-gpu-vram-shell-proof-0621"></script>
+<script src="/assets/scopedlabs-user-tool-notes.js?v=scopedlabs-user-tool-notes-001-compute-proof"></script>
 </body>
 </html>
 

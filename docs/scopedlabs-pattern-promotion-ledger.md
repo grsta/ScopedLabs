@@ -76,3 +76,26 @@ Notes: Shared Tool Shell owns assistant diagnostics and the category adapters ow
 ## Approved local exceptions
 
 None.
+
+### COMPUTE-GPU-VRAM-SHELL-PROOF-LOCAL-0621
+
+Status: APPROVED_LOCAL_EXCEPTION
+
+Approved local exception: GPU VRAM shell bridge is approved as a tool-local proof because it renders VRAM-specific assistant, references, actions, decision schedule, and ledger output from GPU-specific calculation factors.
+
+Changed path:
+- tools/compute/gpu-vram/script.js
+
+Reason:
+- GPU VRAM is the current Compute proof target for shell/module consumption after CPU and RAM.
+- The GPU VRAM shell bridge is intentionally tool-local in this lane because it renders GPU-specific planning outputs from VRAM-specific calculation factors, including precision mode, parallelism mode, replica count, cache reserve, workspace reserve, sharing mode, installed VRAM, usable VRAM, and capacity pressure.
+- The shared shell/module assets remain the preferred owner for generic shell behavior; this local bridge is limited to GPU-specific assistant, references, recommended actions, decision schedule, and ledger rendering.
+
+Revisit trigger:
+- Revisit this local exception when the next non-CPU/RAM Compute calculator shell proof starts.
+- Revisit this local exception if another Compute tool needs the same assistant, recommendation references, recommended actions, decision schedule, or ledger bridge structure.
+- If the same structure is reused outside GPU VRAM, promote the generic rendering behavior into a shared Compute assistant/output adapter and leave only tool-specific calculation copy in the page script.
+
+Audit:
+- scripts/audit-compute-gpu-vram-shell-proof-v1.js
+

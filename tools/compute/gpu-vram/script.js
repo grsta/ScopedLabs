@@ -825,3 +825,284 @@
   }
 })();
 
+
+/* ScopedLabs GPU VRAM shell proof bridge 0621 */
+(function () {
+  const MARKER = "ScopedLabsComputeGpuVramShellProof0621";
+  if (window[MARKER]) return;
+  window[MARKER] = true;
+
+  const $gpuShell = (id) => document.getElementById(id);
+
+  function escapeHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function gb(value) {
+    const n = Number(value || 0);
+    return Number.isFinite(n) ? n.toFixed(1) + " GB" : "?";
+  }
+
+  function pct(value) {
+    const n = Number(value || 0);
+    return Number.isFinite(n) ? Math.round(n * 100) + "%" : "?";
+  }
+
+  function currentPlan() {
+    if (window.ScopedLabsComputeGpuVramEngineeringInputs && typeof window.ScopedLabsComputeGpuVramEngineeringInputs.buildPlan === "function") {
+      try {
+        return window.ScopedLabsComputeGpuVramEngineeringInputs.buildPlan();
+      } catch (err) {}
+    }
+
+    try {
+      const raw = sessionStorage.getItem("scopedlabs.compute.gpu-vram.engineeringPlan");
+      return raw ? JSON.parse(raw) : null;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function statusTone(status) {
+    return String(status || "WATCH").toLowerCase();
+  }
+
+  function renderLedger(plan) {
+    const mount = $gpuShell("computeInternalResultsLedger");
+    if (!mount || !plan) return;
+
+    mount.hidden = true;
+    mount.innerHTML = JSON.stringify({
+      tool: "gpu-vram",
+      status: plan.status,
+      rawDemandGb: Number(plan.rawDemandGb || 0),
+      requiredVramGb: Number(plan.requiredVramGb || 0),
+      usableVramGb: Number(plan.usableVramGb || 0),
+      installedVramGb: Number((plan.input && plan.input.installedVramGb) || plan.installedVramGb || 0),
+      capacityPressure: Number(plan.capacityPressure || 0),
+      shellProof: "0621"
+    });
+  }
+
+  function renderAssistant(plan) {
+    const card = $gpuShell("computeAssistantCard");
+    const mount = $gpuShell("computeAssistantMount");
+    if (!card || !mount || !plan) return;
+
+    card.hidden = false;
+
+    const status = escapeHtml(plan.status || "WATCH");
+    const tone = statusTone(status);
+    const required = gb(plan.requiredVramGb);
+    const usable = gb(plan.usableVramGb);
+    const pressure = pct(plan.capacityPressure);
+    const sharing = escapeHtml((plan.input && plan.input.gpuSharingMode) || "dedicated");
+    const precision = escapeHtml((plan.input && plan.input.precisionMode) || "manual");
+    const parallelism = escapeHtml((plan.input && plan.input.parallelismMode) || "shared");
+
+    mount.innerHTML = `
+      <article class="scopedlabs-result-summary-card">
+        <div class="scopedlabs-result-summary-top">
+          <div>
+            <div class="scopedlabs-result-summary-title">GPU VRAM planning assistant</div>
+            <div class="scopedlabs-result-summary-subtitle">Reviews demand, usable capacity, reserves, precision, sharing, and failover assumptions.</div>
+          </div>
+          <span class="scopedlabs-result-summary-status is-${tone}">${status}</span>
+        </div>
+        <div class="scopedlabs-result-summary-grid">
+          <div class="scopedlabs-result-summary-item">
+            <span>Required VRAM</span>
+            <strong>${required}</strong>
+          </div>
+          <div class="scopedlabs-result-summary-item">
+            <span>Usable VRAM</span>
+            <strong>${usable}</strong>
+          </div>
+          <div class="scopedlabs-result-summary-item">
+            <span>Capacity pressure</span>
+            <strong>${pressure}</strong>
+          </div>
+          <div class="scopedlabs-result-summary-item">
+            <span>GPU profile</span>
+            <strong>${precision} / ${parallelism} / ${sharing}</strong>
+          </div>
+        </div>
+        <p class="scopedlabs-result-summary-action">${escapeHtml(plan.guidance || "Validate GPU capacity assumptions before final hardware selection.")}</p>
+      </article>
+    `;
+  }
+
+  function renderReferences(plan) {
+    const card = $gpuShell("computeGpuReferencesCard");
+    const mount = $gpuShell("computeGpuReferences");
+    if (!card || !mount || !plan) return;
+
+    card.hidden = false;
+    mount.innerHTML = `
+      <table>
+        <tbody>
+          <tr>
+            <th>*1 demand basis</th>
+            <td>Required VRAM combines base model/workload memory, batch/sample activation pressure, concurrent jobs, cache/workspace reserves, overhead, growth reserve, and failover multiplier.</td>
+          </tr>
+          <tr>
+            <th>*2 capacity rail</th>
+            <td>Usable VRAM is calculated from installed/allocated VRAM minus display or OS reserve, then limited by target utilization.</td>
+          </tr>
+          <tr>
+            <th>*3 validation</th>
+            <td>Validate peak batch, context/cache behavior, replica count, precision mode, GPU sharing mode, and real framework allocation before committing GPU hardware.</td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+  }
+
+  function renderActions(plan) {
+    const card = $gpuShell("computeGpuRecommendedActionsCard");
+    const mount = $gpuShell("computeGpuRecommendedActions");
+    if (!card || !mount || !plan) return;
+
+    card.hidden = false;
+
+    const status = String(plan.status || "WATCH").toUpperCase();
+    let primary = "Proceed with the selected GPU allocation and keep the planning assumptions attached to the report.";
+    let secondary = "Run a sample workload or benchmark to confirm actual framework/runtime allocation.";
+
+    if (status === "WATCH") {
+      primary = "Validate model memory, batch size, KV/cache reserve, and concurrent job assumptions before locking hardware.";
+      secondary = "Consider reducing target utilization or increasing installed/allocated VRAM if growth is likely.";
+    }
+
+    if (status === "RISK") {
+      primary = "Increase installed/allocated VRAM, reduce batch/concurrency/cache pressure, or change precision/parallelism before proceeding.";
+      secondary = "Treat this GPU allocation as undersized until a real benchmark proves otherwise.";
+    }
+
+    mount.innerHTML = `
+      <ol>
+        <li>${escapeHtml(primary)}</li>
+        <li>${escapeHtml(secondary)}</li>
+        <li>Carry the GPU VRAM status into VM density, power/thermal, and final Compute summary review.</li>
+      </ol>
+    `;
+  }
+
+  function renderSchedule(plan) {
+    const card = $gpuShell("computeGpuDecisionScheduleCard");
+    const mount = $gpuShell("computeGpuDecisionSchedule");
+    if (!card || !mount || !plan) return;
+
+    card.hidden = false;
+    mount.innerHTML = `
+      <table>
+        <tbody>
+          <tr>
+            <th>Now</th>
+            <td>Confirm required VRAM of ${escapeHtml(gb(plan.requiredVramGb))} against usable planning capacity of ${escapeHtml(gb(plan.usableVramGb))}.</td>
+          </tr>
+          <tr>
+            <th>Before procurement</th>
+            <td>Benchmark representative batch/concurrency/cache behavior on the target GPU class.</td>
+          </tr>
+          <tr>
+            <th>Before rollout</th>
+            <td>Recheck growth, failover, sharing, and downstream power/thermal assumptions.</td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+  }
+
+  function renderShellProof() {
+    const plan = currentPlan();
+    if (!plan) return;
+
+    renderLedger(plan);
+    renderAssistant(plan);
+    renderReferences(plan);
+    renderActions(plan);
+    renderSchedule(plan);
+  }
+
+  function clearShellProof() {
+    [
+      "computeAssistantCard",
+      "computeGpuReferencesCard",
+      "computeGpuRecommendedActionsCard",
+      "computeGpuDecisionScheduleCard"
+    ].forEach(function (id) {
+      const el = $gpuShell(id);
+      if (!el) return;
+      el.hidden = true;
+    });
+
+    [
+      "computeAssistantMount",
+      "computeGpuReferences",
+      "computeGpuRecommendedActions",
+      "computeGpuDecisionSchedule",
+      "computeInternalResultsLedger"
+    ].forEach(function (id) {
+      const el = $gpuShell(id);
+      if (el) el.innerHTML = "";
+    });
+  }
+
+  function bind() {
+    const calc = $gpuShell("calc");
+    const reset = $gpuShell("reset");
+
+    if (calc) {
+      calc.addEventListener("click", function () {
+        window.setTimeout(renderShellProof, 20);
+      });
+    }
+
+    if (reset) {
+      reset.addEventListener("click", function () {
+        window.setTimeout(clearShellProof, 0);
+      });
+    }
+
+    [
+      "modelGb",
+      "batch",
+      "perSampleMb",
+      "jobs",
+      "overhead",
+      "installedVramGb",
+      "targetUtilization",
+      "displayReserveGb",
+      "precisionMode",
+      "parallelismMode",
+      "replicaCount",
+      "growthReserve",
+      "kvCacheGb",
+      "checkpointReserveGb",
+      "failoverMultiplier",
+      "gpuSharingMode"
+    ].forEach(function (id) {
+      const el = $gpuShell(id);
+      if (!el) return;
+      el.addEventListener("input", clearShellProof);
+      el.addEventListener("change", clearShellProof);
+    });
+  }
+
+  window.ScopedLabsComputeGpuVramShellProof = {
+    render: renderShellProof,
+    clear: clearShellProof
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bind);
+  } else {
+    bind();
+  }
+})();
+
