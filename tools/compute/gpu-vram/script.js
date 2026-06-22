@@ -677,10 +677,14 @@
   function renderGpuEngineeringPlan() {
     const summary = $gpuEng("computeGpuEngineeringSummary");
     const envelope = $gpuEng("computeGpuEnvelope");
+    const visualCard = $gpuEng("computeGpuVisualCard");
+    const visualShell = $gpuEng("computeGpuVisual");
     if (!summary || !envelope) return null;
 
     const plan = buildGpuEngineeringPlan();
 
+    if (visualCard) visualCard.hidden = false;
+    if (visualShell) visualShell.hidden = false;
     summary.hidden = false;
     envelope.hidden = false;
 
@@ -1032,6 +1036,9 @@
   function clearShellProof() {
     [
       "computeAssistantCard",
+      "computeGpuVisualCard",
+      "computeGpuEngineeringSummary",
+      "computeGpuEnvelope",
       "computeGpuReferencesCard",
       "computeGpuRecommendedActionsCard",
       "computeGpuDecisionScheduleCard"

@@ -99,3 +99,19 @@ Revisit trigger:
 Audit:
 - scripts/audit-compute-gpu-vram-shell-proof-v1.js
 
+
+
+### COMPUTE-GPU-VRAM-LAYOUT-PARITY-LOCAL-0622
+
+Status: APPROVED_LOCAL_EXCEPTION
+
+Changed path:
+- tools/compute/gpu-vram/index.html
+- tools/compute/gpu-vram/script.js
+
+Approved local exception: GPU VRAM is the current Compute proof target for calculator layout parity and visual wrapper show/hide parity. This repair is approved locally because it removes malformed GPU-specific export/report fragments and aligns GPU section order to the accepted CPU/RAM calculator layout before a shared Compute calculator layout contract is promoted.
+
+Revisit trigger: Revisit when the next non-CPU/RAM Compute calculator layout repair starts, or if another calculator needs the same section-order/report-metadata/user-notes/visual-wrapper repair.
+
+Audit:
+- scripts/audit-compute-gpu-vram-layout-parity-v1.js

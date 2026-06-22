@@ -1140,3 +1140,13 @@ Audit:
 Promotion note:
 - If accepted in browser, this becomes the next Compute shell/profile proof source after CPU and RAM.
 
+
+
+### COMPUTE_GPU_VRAM_LAYOUT_PARITY_V1
+
+- Status: PROOF_GATE
+- Owner: scripts/audit-compute-gpu-vram-layout-parity-v1.js
+- Scope: GPU VRAM Compute calculator layout parity proof.
+- Consumer: tools/compute/gpu-vram/index.html
+- Contract: Enforces CPU/RAM-style section order, valid report metadata placement, valid export status placement, valid user tool notes placement, and compute visual card wrapper usage for GPU VRAM.
+- Promotion path: If another Compute calculator needs the same structural repair, promote this into a reusable Compute calculator layout contract audit before broad rollout.
