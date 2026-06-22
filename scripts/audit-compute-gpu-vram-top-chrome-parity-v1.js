@@ -24,6 +24,12 @@ const chromeEnd = Math.min(lockedStart, toolStart);
 const chrome = html.slice(mainStart, chromeEnd);
 
 check(
+  "GPU_TOP_CHROME_NO_CRUMBS_CLASS_BLOCK",
+  !/<div\\s+class=["']crumbs["']>/i.test(chrome),
+  "GPU visible top chrome should not include the legacy class=crumbs breadcrumb block."
+);
+
+check(
   "GPU_TOP_CHROME_NO_PAGE_BREADCRUMBS",
   !/(page-breadcrumb|tools-breadcrumb|breadcrumbs|breadcrumb)[^\n]{0,300}(Tools|Compute|GPU VRAM)/i.test(chrome) &&
     !/Tools\s*\/\s*Compute\s*\/\s*GPU VRAM/i.test(chrome),
