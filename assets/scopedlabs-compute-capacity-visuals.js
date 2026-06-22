@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-compute-capacity-visuals-017-ram-capacity-limit-rail";
+  const VERSION = "scopedlabs-compute-capacity-visuals-018-ram-capacity-marker";
 
   function clamp(value, min, max) {
       return Math.max(min, Math.min(max, value));
@@ -100,6 +100,14 @@
     const riskY = yScale(riskThreshold);
     const capacityY = yScale(installed);
     const requiredY = yScale(required);
+    const capacityMarker = {
+      x: xScale(0.88),
+      y: capacityY,
+      value: installed,
+      tone: "failover",
+      label: "Installed",
+      detail: "Installed RAM tier: " + gb(installed, 0) + ". " + cpuCoupling + "."
+    };
 
     const riskZoneH = Math.max(0, riskY - plot.y);
     const watchZoneH = Math.max(0, watchY - riskY);
@@ -178,6 +186,9 @@
       '<path d="' + curvePath + '" class="curve-shadow"/>',
       '<path d="' + curvePath + '" class="curve"/>',
       points.map(markerSvg).join(""),
+      '<path d="M' + capacityMarker.x.toFixed(1) + ' ' + plot.y + ' V' + (plot.y + plot.h) + '" class="capacity-marker-guide"/>',
+      markerSvg(capacityMarker),
+      '<text x="' + capacityMarker.x.toFixed(1) + '" y="' + (plot.y + plot.h + 20) + '" text-anchor="middle" class="tick-label">Installed</text>',
       '</svg>'
     ].join("");
   }

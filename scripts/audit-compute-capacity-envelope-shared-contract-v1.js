@@ -47,18 +47,29 @@ const ramSvgBody = ramSvgStart !== -1 && ramSvgEnd !== -1 ? moduleSrc.slice(ramS
   check(results, moduleSrc.includes(name), "MODULE_EXPORT_" + name, moduleFile);
 });
 
-check(results, moduleSrc.includes("scopedlabs-compute-capacity-visuals-017-ram-capacity-limit-rail"), "MODULE_VERSION_003_CPU_RAM_ENVELOPE", moduleFile);
+check(results, moduleSrc.includes("scopedlabs-compute-capacity-visuals-018-ram-capacity-marker"), "MODULE_VERSION_003_CPU_RAM_ENVELOPE", moduleFile);
 check(results, moduleSrc.includes("data-compute-visual=\"cpu-capacity-envelope\""), "MODULE_OWNS_CPU_CAPACITY_SVG", moduleFile);
 check(results, moduleSrc.includes("data-compute-capacity-visual=\"ram-envelope\""), "MODULE_OWNS_RAM_CAPACITY_SVG", moduleFile);
 
 check(
   results,
   ramSvgBody &&
-    !ramSvgBody.includes('label: "Installed"') &&
-    !ramSvgBody.includes('ref: "*3 downstream validation"') &&
+    ramSvgBody.includes("const capacityMarker = {") &&
+    ramSvgBody.includes("markerSvg(capacityMarker)") &&
+    ramSvgBody.includes("capacity-marker-guide") &&
     ramSvgBody.includes("Installed capacity - ") &&
     ramSvgBody.includes("capacity-line"),
-  "RAM_SHARED_VISUAL_DOES_NOT_PLOT_INSTALLED_AS_DEMAND_POINT",
+  "RAM_SHARED_VISUAL_RESTORES_INSTALLED_CAPACITY_MARKER_AS_RAIL_DOT",
+  moduleFile
+);
+
+check(
+  results,
+  ramSvgBody &&
+    ramSvgBody.includes("const curvePath = [") &&
+    !ramSvgBody.includes('points[2]') &&
+    !ramSvgBody.includes('ref: "*3 downstream validation"'),
+  "RAM_SHARED_VISUAL_DOES_NOT_CONNECT_INSTALLED_TO_DEMAND_CURVE",
   moduleFile
 );
 
@@ -83,7 +94,7 @@ check(results, cpuIndex.includes('href="/tools/compute/ram-sizing/"'), "CPU_CONT
 
 check(
   results,
-  ramIndex.includes("/assets/scopedlabs-compute-capacity-visuals.js?v=" + "scopedlabs-compute-capacity-visuals-017-ram-capacity-limit-rail"),
+  ramIndex.includes("/assets/scopedlabs-compute-capacity-visuals.js?v=" + "scopedlabs-compute-capacity-visuals-018-ram-capacity-marker"),
   "RAM_INDEX_LOADS_VERSIONED_SHARED_CAPACITY_MODULE",
   ramIndexFile
 );

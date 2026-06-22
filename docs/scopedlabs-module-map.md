@@ -1094,3 +1094,8 @@ Example:
 - `assets/scopedlabs-compute-capacity-visuals.js` now treats installed RAM as a capacity rail/ceiling instead of plotting it as a demand-curve point.
 - RAM status remains based on required demand versus installed capacity, so a low required value against an 8 GB tier correctly renders GOOD.
 - `scripts/audit-compute-capacity-envelope-shared-contract-v1.js` guards against plotting installed RAM as a demand point again.
+#### Compute RAM Capacity Envelope installed marker correction
+
+- `assets/scopedlabs-compute-capacity-visuals.js` now shows Installed RAM as a third marker on the capacity rail without connecting it to the demand curve.
+- This preserves the visual checkpoint while keeping the demand curve aligned with RAM status logic.
+- `scripts/audit-compute-capacity-envelope-shared-contract-v1.js` guards that Installed remains a rail marker, not a demand-curve point.

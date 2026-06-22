@@ -225,12 +225,12 @@ check(
 );
 check(
   "RAM_CACHE_BUSTS_PROOF_LAYOUT_ASSETS",
-  ramHtml.includes("scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-017-ram-capacity-limit-rail") &&
+  ramHtml.includes("scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-018-ram-capacity-marker") &&
     ramHtml.includes("scopedlabs-compute-result-visuals.css?v=scopedlabs-compute-result-visuals-0621-ram-footer-cleanup") &&
     ramHtml.includes("scopedlabs-compute-assistant-contract.js?v=compute-assistant-ram-footer-cleanup-0621") &&
     ramHtml.includes("./script.js?v=compute-ram-footer-cleanup-0621"),
   "tools/compute/ram-sizing/index.html",
-  "RAM page should cache-bust the active shared visual rail fix while preserving the footer-cleanup proof-stack family for CSS, assistant contract, and local script."
+  "RAM page should cache-bust the active shared visual marker fix while preserving the footer-cleanup proof-stack family for CSS, assistant contract, and local script."
 );
 
 console.log("\nSUMMARY");
