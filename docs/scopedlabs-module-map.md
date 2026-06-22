@@ -1171,3 +1171,13 @@ Promotion note:
 - Consumer: tools/compute/gpu-vram/index.html
 - Contract: Removes the duplicate engineering-input eyebrow, promotes GPU VRAM engineering factors to the real h2 section title, preserves every GPU engineering input ID, and levels the engineering input grid against the accepted CPU/RAM Planning Inputs rhythm.
 - Promotion path: If accepted in browser verification, promote this into a reusable Compute engineering input card contract before applying to the next Compute tool.
+
+
+### COMPUTE_GPU_VRAM_LEGACY_RESULTS_LEDGER_PARITY_V1
+
+- Status: PROOF_GATE
+- Owner: scripts/audit-compute-gpu-vram-legacy-results-ledger-parity-v1.js
+- Scope: GPU VRAM Compute calculator legacy results / ledger parity proof.
+- Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
+- Contract: Hides the legacy visible results and analysis-copy source blocks while preserving their DOM IDs, internal ledger payload, session/carryover data, and shell proof rendering path.
+- Promotion path: If accepted in browser verification, promote this into a reusable Compute calculator hidden-results/ledger parity contract before applying to the next Compute tool.

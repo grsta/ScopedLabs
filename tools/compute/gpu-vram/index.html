@@ -405,6 +405,14 @@
     }
   </style>
 
+
+  <style id="compute-gpu-legacy-results-ledger-parity-0622">
+    body[data-category="compute"][data-step="gpu-vram"] #results[data-compute-legacy-results-source="true"],
+    body[data-category="compute"][data-step="gpu-vram"] #analysis-copy[data-compute-legacy-analysis-source="true"] {
+      display: none !important;
+    }
+  </style>
+
 </head>
 
 <body data-tier="pro" data-category="compute" data-step="gpu-vram" data-lane="v1" data-compute-tool-shell="0614" data-sl-square-ctas="true" data-sl-clean-knowledge-card="true">
@@ -616,13 +624,13 @@
       </div>
     </section>
 
-    <div id="computeInternalResultsLedger" class="card compute-internal-results-ledger" data-internal-results-ledger hidden></div>
+        <div id="computeInternalResultsLedger" class="card compute-internal-results-ledger" style="display:none;" hidden aria-hidden="true" data-internal-results-ledger data-compute-ledger-payload="gpu-vram"></div>
 
-    <div id="results" class="results-grid" aria-live="polite">
+        <div id="results" class="results-grid compute-legacy-results-source" aria-live="off" hidden aria-hidden="true" data-compute-legacy-results-source="true" data-compute-ledger-source="true">
       <div class="muted">Run calculation.</div>
     </div>
 
-    <div id="analysis-copy" style="display:none;"></div>
+        <div id="analysis-copy" class="compute-legacy-analysis-source" style="display:none;" hidden aria-hidden="true" data-compute-legacy-analysis-source="true"></div>
 
     <section id="computeAssistantCard" class="card compute-assistant-card compute-static-summary-card-shell" data-compute-assistant-card hidden>
       <div id="computeAssistantMount" data-compute-assistant-mount data-category-slug="compute" data-tool-slug="gpu-vram"></div>
@@ -710,7 +718,7 @@
 <script src="/assets/scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-018-ram-capacity-marker"></script>
 
   <script src="/assets/scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-007-workload-nav-links"></script>
-  <script src="./script.js?v=compute-gpu-vram-top-chrome-parity-0622"></script>
+  <script src="./script.js?v=compute-gpu-vram-legacy-results-ledger-parity-0622"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
 <script src="/assets/scopedlabs-compute-assistant-contract.js?v=compute-assistant-gpu-vram-shell-proof-0621"></script>

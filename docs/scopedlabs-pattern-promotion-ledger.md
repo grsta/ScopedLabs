@@ -145,3 +145,19 @@ Revisit trigger: Revisit when the next non-CPU/RAM Compute calculator needs an e
 
 Audit:
 - scripts/audit-compute-gpu-vram-input-card-parity-v1.js
+
+
+### COMPUTE-GPU-VRAM-LEGACY-RESULTS-LEDGER-PARITY-LOCAL-0622
+
+Status: APPROVED_LOCAL_EXCEPTION
+
+Changed path:
+- tools/compute/gpu-vram/index.html
+- tools/compute/gpu-vram/script.js
+
+Approved local exception: GPU VRAM is the current Compute proof target for legacy results and internal ledger parity. This local repair hides the old visible result/analysis source blocks while preserving calculation values, internal ledger payload, session flow data, carryover publishing, and shell proof rendering.
+
+Revisit trigger: Revisit when the next non-CPU/RAM Compute calculator still exposes legacy visible results outside the modern assistant/visual stack, or when this pattern is promoted into a reusable Compute calculator hidden-results/ledger contract.
+
+Audit:
+- scripts/audit-compute-gpu-vram-legacy-results-ledger-parity-v1.js

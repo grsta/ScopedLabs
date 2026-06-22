@@ -43,6 +43,29 @@
     toolCard: $("toolCard")
   };
 
+  function hideLegacyResultsSource() {
+    if (els.results) {
+      els.results.hidden = true;
+      els.results.setAttribute("aria-hidden", "true");
+      els.results.setAttribute("aria-live", "off");
+      els.results.setAttribute("data-compute-legacy-results-source", "true");
+      els.results.setAttribute("data-compute-ledger-source", "true");
+      if (els.results.classList && !els.results.classList.contains("compute-legacy-results-source")) {
+        els.results.classList.add("compute-legacy-results-source");
+      }
+    }
+
+    if (els.analysisCopy) {
+      els.analysisCopy.hidden = true;
+      els.analysisCopy.style.display = "none";
+      els.analysisCopy.setAttribute("aria-hidden", "true");
+      els.analysisCopy.setAttribute("data-compute-legacy-analysis-source", "true");
+      if (els.analysisCopy.classList && !els.analysisCopy.classList.contains("compute-legacy-analysis-source")) {
+        els.analysisCopy.classList.add("compute-legacy-analysis-source");
+      }
+    }
+  }
+
   function hasStoredAuth() {
     try {
       const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
@@ -153,6 +176,7 @@
     }
   }
   function invalidate() {
+    hideLegacyResultsSource();
     try {
       sessionStorage.removeItem(FLOW_KEYS[STEP]);
       sessionStorage.removeItem(FLOW_KEYS["power-thermal"]);
@@ -1023,6 +1047,7 @@
   }
 
   function renderShellProof() {
+    hideLegacyResultsSource();
     const plan = currentPlan();
     if (!plan) return;
 
@@ -1034,6 +1059,7 @@
   }
 
   function clearShellProof() {
+    hideLegacyResultsSource();
     [
       "computeAssistantCard",
       "computeGpuVisualCard",
