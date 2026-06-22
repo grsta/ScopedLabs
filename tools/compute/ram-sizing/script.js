@@ -7,6 +7,17 @@
   const State = window.ScopedLabsComputePlanState;
   const PREVIOUS_STEP = "cpu-sizing";
 
+  const DOWNSTREAM_STEPS_AFTER_RAM = [
+    "storage-iops",
+    "storage-throughput",
+    "vm-density",
+    "gpu-vram",
+    "power-thermal",
+    "nic-bonding",
+    "raid-rebuild-time",
+    "backup-window"
+  ];
+
   const FLOW_KEYS = {
     "cpu-sizing": "scopedlabs:pipeline:compute:cpu-sizing",
     "ram-sizing": "scopedlabs:pipeline:compute:ram-sizing",
@@ -280,6 +291,15 @@
     }
   }
   function invalidate() {
+    if (State && typeof State.invalidateToolAndDownstream === "function") {
+      try {
+        State.invalidateToolAndDownstream(STEP, {
+          includeSelf: true,
+          downstreamTools: DOWNSTREAM_STEPS_AFTER_RAM
+        });
+      } catch (error) {}
+    }
+
     try {
       sessionStorage.removeItem(FLOW_KEYS[STEP]);
       sessionStorage.removeItem(FLOW_KEYS["storage-iops"]);

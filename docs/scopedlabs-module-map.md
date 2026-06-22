@@ -1099,3 +1099,8 @@ Example:
 - `assets/scopedlabs-compute-capacity-visuals.js` now shows Installed RAM as a third marker on the capacity rail without connecting it to the demand curve.
 - This preserves the visual checkpoint while keeping the demand curve aligned with RAM status logic.
 - `scripts/audit-compute-capacity-envelope-shared-contract-v1.js` guards that Installed remains a rail marker, not a demand-curve point.
+#### Compute RAM downstream invalidation
+
+- `assets/scopedlabs-compute-plan-state.js` owns `invalidateToolAndDownstream`, which clears saved result/completion ledger entries for a changed tool and downstream guided steps.
+- `tools/compute/ram-sizing/script.js` calls this on RAM input invalidation so returning from GPU, changing RAM, recalculating, and continuing sends the user back through GPU with updated RAM context.
+- `scripts/audit-compute-guided-continue-plan-read-v1.js` guards the RAM downstream invalidation contract.

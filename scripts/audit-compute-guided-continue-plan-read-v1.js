@@ -20,6 +20,9 @@ function hasVersionedScript(page, scriptName, prefix) {
   return /^[0-9]{3}(?:-[a-z0-9-]+)?/.test(after);
 }
 
+const planState = read("assets/scopedlabs-compute-plan-state.js");
+const ramScript = read("tools/compute/ram-sizing/script.js");
+const ramIndex = read("tools/compute/ram-sizing/index.html");
 const shell = read("assets/scopedlabs-compute-shell-contract.js");
 const cpu = read("tools/compute/cpu-sizing/index.html");
 const ram = read("tools/compute/ram-sizing/index.html");
@@ -97,3 +100,31 @@ console.log("FAIL: " + failures);
 console.log("OVERALL: " + (failures ? "FAIL" : "PASS"));
 
 process.exit(failures ? 1 : 0);
+
+check(
+  "PLAN_STATE_INVALIDATES_TOOL_AND_DOWNSTREAM_LEDGER",
+  planState.includes("function invalidateToolAndDownstream") &&
+    planState.includes("delete active.completedTools[tool]") &&
+    planState.includes("delete active.completedChecks[tool]") &&
+    planState.includes("delete plan.results[workloadId][tool]") &&
+    planState.includes("tool-downstream-invalidated") &&
+    planState.includes("invalidateToolAndDownstream: invalidateToolAndDownstream"),
+  "plan-state should clear saved completion/results for a changed tool and downstream guided steps"
+);
+
+check(
+  "RAM_INVALIDATE_CLEARS_DOWNSTREAM_GUIDED_LEDGER",
+  ramScript.includes("const DOWNSTREAM_STEPS_AFTER_RAM") &&
+    ramScript.includes("gpu-vram") &&
+    ramScript.includes("State.invalidateToolAndDownstream(STEP") &&
+    ramScript.includes("includeSelf: true") &&
+    ramScript.includes("downstreamTools: DOWNSTREAM_STEPS_AFTER_RAM"),
+  "RAM input invalidation should clear RAM and downstream guided ledger results so Continue can route to GPU again after recalculation"
+);
+
+check(
+  "RAM_LOADS_DOWNSTREAM_INVALIDATION_PLAN_STATE",
+  ramIndex.includes("scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-008-downstream-invalidation") &&
+    ramIndex.includes("./script.js?v=compute-ram-downstream-invalidation-0621"),
+  "RAM page should load the plan-state and local script versions that own downstream invalidation"
+);

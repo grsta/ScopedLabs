@@ -283,6 +283,56 @@
     return match;
   }
 
+  function invalidateToolAndDownstream(toolSlug, options) {
+    options = options || {};
+    var plan = load();
+    var active = activeWorkload(plan);
+    var workloadId = active ? active.id : "unscoped";
+    var downstream = Array.isArray(options.downstreamTools) ? options.downstreamTools.slice() : [];
+    var tools = [];
+
+    if (options.includeSelf && toolSlug) tools.push(toolSlug);
+    downstream.forEach(function (tool) {
+      if (tool && tools.indexOf(tool) === -1) tools.push(tool);
+    });
+
+    if (!tools.length) return { plan: plan, workload: active, cleared: [] };
+
+    plan.results = plan.results && typeof plan.results === "object" ? plan.results : {};
+    plan.results[workloadId] = plan.results[workloadId] && typeof plan.results[workloadId] === "object" ? plan.results[workloadId] : {};
+
+    tools.forEach(function (tool) {
+      delete plan.results[workloadId][tool];
+      try {
+        sessionStorage.removeItem("scopedlabs:pipeline:compute:" + tool);
+        localStorage.removeItem("scopedlabs:pipeline:compute:" + tool);
+      } catch (error) {}
+    });
+
+    if (active) {
+      active.completedTools = active.completedTools && typeof active.completedTools === "object" ? active.completedTools : {};
+      active.completedChecks = active.completedChecks && typeof active.completedChecks === "object" ? active.completedChecks : {};
+      active.toolStatuses = active.toolStatuses && typeof active.toolStatuses === "object" ? active.toolStatuses : {};
+      active.keyResults = active.keyResults && typeof active.keyResults === "object" ? active.keyResults : {};
+
+      tools.forEach(function (tool) {
+        delete active.completedTools[tool];
+        delete active.completedChecks[tool];
+        delete active.toolStatuses[tool];
+        delete active.keyResults[tool];
+      });
+
+      active.updatedAt = now();
+    }
+
+    plan.updatedAt = now();
+    plan = save(plan);
+    if (active) writeContext(active, plan);
+    emitPlanChange("tool-downstream-invalidated", plan, active);
+
+    return { plan: plan, workload: active, cleared: tools };
+  }
+
   function recordToolResult(toolSlug, result) {
     var plan = load();
     var active = activeWorkload(plan);
@@ -706,7 +756,7 @@
   }
 
   window.ScopedLabsComputePlanState = Object.freeze({
-    version: "scopedlabs-compute-plan-state-007-workload-nav-links",
+    version: "scopedlabs-compute-plan-state-008-downstream-invalidation",
     contract: CONTRACT,
     keys: Object.freeze({
       plan: PLAN_KEY,
@@ -721,6 +771,7 @@
     writeContext: writeContext,
     writeBranchSeeds: writeBranchSeeds,
     recordToolResult: recordToolResult,
+    invalidateToolAndDownstream: invalidateToolAndDownstream,
     startGuidedFlow: startGuidedFlow,
     getGuidedFlowContext: getGuidedFlowContext,
     isGuidedFlowActive: isGuidedFlowActive,
