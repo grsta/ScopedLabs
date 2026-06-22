@@ -1104,3 +1104,22 @@ Example:
 - `assets/scopedlabs-compute-plan-state.js` owns `invalidateToolAndDownstream`, which clears saved result/completion ledger entries for a changed tool and downstream guided steps.
 - `tools/compute/ram-sizing/script.js` calls this on RAM input invalidation so returning from GPU, changing RAM, recalculating, and continuing sends the user back through GPU with updated RAM context.
 - `scripts/audit-compute-guided-continue-plan-read-v1.js` guards the RAM downstream invalidation contract.
+
+
+## COMPUTE_GPU_VRAM_ENGINEERING_INPUTS_V1 ? 2026-06-21
+
+Status: GPU-only proof lane.
+
+Scope:
+- Adds deeper GPU VRAM planning inputs before broader Compute shell rollout.
+- Preserves existing GPU IDs and calculation controls.
+- Adds installed VRAM, utilization target, display/OS reserve, precision mode, parallelism mode, replica count, growth reserve, KV/runtime cache reserve, checkpoint/workspace reserve, failover multiplier, and GPU sharing mode.
+- Adds engineering summary and GPU VRAM Capacity Envelope output mounts.
+- Does not upgrade backup-window, nic-bonding, power-thermal, raid-rebuild-time, storage-iops, storage-throughput, or vm-density in this lane.
+
+Audit:
+- scripts/audit-compute-gpu-vram-engineering-inputs-v1.js
+
+Promotion note:
+- This is an input-depth proof for GPU VRAM. The full shared Compute shell/module proof remains a follow-on lane.
+

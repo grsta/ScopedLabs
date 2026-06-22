@@ -80,6 +80,200 @@
       }
     }
   </style>
+
+<style data-compute-gpu-engineering-inputs-style="0621">
+  .compute-gpu-planning-inputs {
+    margin: 18px 0;
+    padding: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 14px;
+    background:
+      radial-gradient(circle at top left, rgba(34, 197, 94, 0.08), transparent 34%),
+      rgba(15, 23, 42, 0.42);
+  }
+
+  .compute-gpu-planning-inputs__head {
+    display: grid;
+    gap: 5px;
+    margin-bottom: 14px;
+  }
+
+  .compute-gpu-planning-inputs__eyebrow {
+    color: #8ee6b0;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 800;
+  }
+
+  .compute-gpu-planning-inputs__title {
+    margin: 0;
+    color: #e5eef8;
+    font-size: 1.05rem;
+  }
+
+  .compute-gpu-planning-inputs__copy {
+    margin: 0;
+    color: #9aa8ba;
+    font-size: 0.88rem;
+    line-height: 1.45;
+  }
+
+  .compute-gpu-input-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .compute-gpu-input-group {
+    display: grid;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 12px;
+    background: rgba(2, 6, 23, 0.28);
+  }
+
+  .compute-gpu-input-group h3 {
+    margin: 0;
+    color: #dbeafe;
+    font-size: 0.86rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .compute-gpu-input-group label {
+    display: grid;
+    gap: 5px;
+    color: #cbd5e1;
+    font-size: 0.82rem;
+  }
+
+  .compute-gpu-input-group input,
+  .compute-gpu-input-group select {
+    width: 100%;
+  }
+
+  .compute-gpu-input-help {
+    color: #7f8da3;
+    font-size: 0.75rem;
+    line-height: 1.35;
+  }
+
+  .compute-gpu-engineering-output {
+    margin-top: 16px;
+    display: grid;
+    gap: 14px;
+  }
+
+  .compute-gpu-engineering-summary {
+    padding: 16px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 14px;
+    background: rgba(15, 23, 42, 0.48);
+  }
+
+  .compute-gpu-engineering-summary__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .compute-gpu-engineering-summary h3 {
+    margin: 0;
+    color: #e5eef8;
+    font-size: 1rem;
+  }
+
+  .compute-gpu-engineering-summary p {
+    margin: 4px 0 0;
+    color: #9aa8ba;
+    font-size: 0.86rem;
+    line-height: 1.45;
+  }
+
+  .compute-gpu-status-chip {
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.74rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #dbeafe;
+    background: rgba(15, 23, 42, 0.82);
+  }
+
+  .compute-gpu-status-chip.is-good {
+    color: #86efac;
+    border-color: rgba(34, 197, 94, 0.38);
+  }
+
+  .compute-gpu-status-chip.is-watch {
+    color: #fcd34d;
+    border-color: rgba(245, 158, 11, 0.42);
+  }
+
+  .compute-gpu-status-chip.is-risk {
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.44);
+  }
+
+  .compute-gpu-engineering-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .compute-gpu-engineering-metric {
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    background: rgba(2, 6, 23, 0.26);
+  }
+
+  .compute-gpu-engineering-metric span {
+    display: block;
+    color: #7f8da3;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .compute-gpu-engineering-metric strong {
+    display: block;
+    margin-top: 4px;
+    color: #f8fafc;
+    font-size: 1rem;
+  }
+
+  .compute-gpu-envelope {
+    padding: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 14px;
+    background: #07111f;
+  }
+
+  .compute-gpu-envelope svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  @media (max-width: 900px) {
+    .compute-gpu-input-grid,
+    .compute-gpu-engineering-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .compute-gpu-engineering-summary__top {
+      display: grid;
+    }
+  }
+</style>
+
 </head>
 
 <body data-tier="pro" data-category="compute" data-step="gpu-vram" data-lane="v1">
@@ -168,7 +362,7 @@
       </div>
     </section>
 
-    <section id="toolCard" class="card tool-card" style="margin-top: 18px;">
+    <section id="toolCard" class="card tool-card" style="margin-top: 18px;" data-compute-gpu-engineering-profile="0621">
       <h2 class="card-title" style="margin-top: 0;">Workload Mode</h2>
 
       <div class="form-grid" style="margin-top: 14px;">
@@ -258,6 +452,114 @@
       </div>
 
       <div class="btn-row" style="margin-top: 14px;">
+
+<section class="compute-gpu-planning-inputs" data-compute-gpu-engineering-inputs="0621" aria-label="GPU VRAM engineering planning inputs">
+  <div class="compute-gpu-planning-inputs__head">
+    <div class="compute-gpu-planning-inputs__eyebrow">Planning Inputs</div>
+    <h2 class="compute-gpu-planning-inputs__title">GPU VRAM engineering factors</h2>
+    <p class="compute-gpu-planning-inputs__copy">
+      Add capacity, reserve, precision, and sharing assumptions so the GPU estimate behaves like an engineering planning check instead of a simple memory subtotal.
+    </p>
+  </div>
+
+  <div class="compute-gpu-input-grid">
+    <div class="compute-gpu-input-group">
+      <h3>GPU capacity</h3>
+
+      <label>
+        Installed GPU VRAM (GB)
+        <input id="installedVramGb" type="number" min="1" step="1" value="24" inputmode="decimal">
+        <span class="compute-gpu-input-help">Physical or allocated VRAM available to this workload.</span>
+      </label>
+
+      <label>
+        Target VRAM utilization (%)
+        <input id="targetUtilization" type="number" min="40" max="100" step="1" value="85" inputmode="decimal">
+        <span class="compute-gpu-input-help">Planning ceiling before the workload is treated as capacity-constrained.</span>
+      </label>
+
+      <label>
+        Display / OS reserve (GB)
+        <input id="displayReserveGb" type="number" min="0" step="0.5" value="1" inputmode="decimal">
+        <span class="compute-gpu-input-help">Reserve for workstation display, OS, driver, or background GPU use.</span>
+      </label>
+    </div>
+
+    <div class="compute-gpu-input-group">
+      <h3>Workload profile</h3>
+
+      <label>
+        Precision / quantization
+        <select id="precisionMode">
+          <option value="manual" selected>Manual / already estimated</option>
+          <option value="fp32">FP32 full precision</option>
+          <option value="fp16">FP16 / BF16 mixed precision</option>
+          <option value="int8">INT8 quantized</option>
+          <option value="int4">INT4 quantized</option>
+        </select>
+        <span class="compute-gpu-input-help">Adjusts base model memory when the entered value is not already final.</span>
+      </label>
+
+      <label>
+        Parallelism mode
+        <select id="parallelismMode">
+          <option value="shared" selected>Shared loaded model</option>
+          <option value="replicated">Replicated model per worker</option>
+          <option value="dataParallel">Data parallel copies</option>
+          <option value="modelSplit">Model split / sharded</option>
+        </select>
+        <span class="compute-gpu-input-help">Controls whether model memory is shared, duplicated, or reduced by splitting.</span>
+      </label>
+
+      <label>
+        Replica / model copy count
+        <input id="replicaCount" type="number" min="1" step="1" value="1" inputmode="numeric">
+        <span class="compute-gpu-input-help">Number of loaded model copies, workers, or partitions.</span>
+      </label>
+    </div>
+
+    <div class="compute-gpu-input-group">
+      <h3>Planning reserves</h3>
+
+      <label>
+        Growth reserve (%)
+        <input id="growthReserve" type="number" min="0" max="300" step="1" value="20" inputmode="decimal">
+        <span class="compute-gpu-input-help">Allowance for future model, batch, resolution, or concurrency growth.</span>
+      </label>
+
+      <label>
+        KV / runtime cache reserve (GB)
+        <input id="kvCacheGb" type="number" min="0" step="0.5" value="0" inputmode="decimal">
+        <span class="compute-gpu-input-help">Useful for inference, long-context, or cached runtime workloads.</span>
+      </label>
+
+      <label>
+        Checkpoint / workspace reserve (GB)
+        <input id="checkpointReserveGb" type="number" min="0" step="0.5" value="0" inputmode="decimal">
+        <span class="compute-gpu-input-help">Workspace, checkpoint, CUDA graph, or temporary allocation pressure.</span>
+      </label>
+
+      <label>
+        Failover multiplier
+        <input id="failoverMultiplier" type="number" min="1" max="4" step="0.05" value="1" inputmode="decimal">
+        <span class="compute-gpu-input-help">Use above 1.0 for N+1, degraded-host, or burst planning.</span>
+      </label>
+
+      <label>
+        GPU sharing mode
+        <select id="gpuSharingMode">
+          <option value="dedicated" selected>Dedicated GPU</option>
+          <option value="shared">Shared GPU</option>
+          <option value="mig">MIG / partitioned GPU</option>
+          <option value="oversubscribed">Oversubscribed / best effort</option>
+        </select>
+        <span class="compute-gpu-input-help">Changes capacity-risk guidance and recommendation language.</span>
+      </label>
+    </div>
+  </div>
+</section>
+
+
         <button id="calc" class="btn btn-primary" type="button">Calculate</button>
         <button id="reset" class="btn" type="button">Reset</button>
       </div>
@@ -268,6 +570,12 @@
           <div class="muted">Run calculation.</div>
         </div>
         <div id="analysis-copy" style="display:none;"></div>
+
+<section class="compute-gpu-engineering-output" id="computeGpuEngineeringOutput" data-compute-gpu-engineering-output="0621">
+  <div class="compute-gpu-engineering-summary" id="computeGpuEngineeringSummary" data-export-section="true" data-export-title="GPU VRAM Engineering Summary" hidden></div>
+  <div class="compute-gpu-envelope" id="computeGpuEnvelope" data-export-section="true" data-export-title="GPU VRAM Capacity Envelope" hidden></div>
+</section>
+
 
         <p class="mini-note">
           Model: GPU VRAM demand is estimated from model footprint, per-sample memory, concurrency, and reserve overhead. CPU-only mode intentionally suppresses GPU stress charting because there is no accelerator envelope to evaluate.

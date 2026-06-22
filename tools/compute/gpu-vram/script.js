@@ -444,3 +444,384 @@
     hideContinue();
   });
 })();
+
+
+/* ScopedLabs GPU VRAM engineering planning inputs 0621 */
+(function () {
+  const MARKER = "ScopedLabsComputeGpuVramEngineeringInputs0621";
+
+  if (window[MARKER]) return;
+  window[MARKER] = true;
+
+  const $gpuEng = (id) => document.getElementById(id);
+
+  function numberValue(id, fallback) {
+    const el = $gpuEng(id);
+    if (!el) return fallback;
+    const parsed = Number(el.value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  function textValue(id, fallback) {
+    const el = $gpuEng(id);
+    return el && typeof el.value === "string" ? el.value : fallback;
+  }
+
+  function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+  }
+
+  function precisionMultiplier(mode) {
+    const map = {
+      manual: 1,
+      fp32: 1,
+      fp16: 0.55,
+      int8: 0.32,
+      int4: 0.22
+    };
+    return map[mode] || 1;
+  }
+
+  function modelCopyFactor(mode, jobs, replicas) {
+    if (mode === "modelSplit") return Math.max(1 / Math.max(1, replicas), 0.2);
+    if (mode === "replicated") return Math.max(1, replicas);
+    if (mode === "dataParallel") return Math.max(1, replicas, jobs);
+    return Math.max(1, replicas);
+  }
+
+  function sharingPenalty(mode) {
+    const map = {
+      dedicated: 1,
+      shared: 1.08,
+      mig: 1.05,
+      oversubscribed: 1.18
+    };
+    return map[mode] || 1;
+  }
+
+  function statusForPressure(pressure) {
+    if (pressure <= 0.7) return "GOOD";
+    if (pressure <= 0.9) return "WATCH";
+    return "RISK";
+  }
+
+  function statusClass(status) {
+    return String(status || "").toLowerCase();
+  }
+
+  function gb(value) {
+    return `${Number(value || 0).toFixed(1)} GB`;
+  }
+
+  function pct(value) {
+    return `${Math.round(Number(value || 0) * 100)}%`;
+  }
+
+  function escapeHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function readGpuEngineeringInputs() {
+    return {
+      modelGb: numberValue("modelGb", 0),
+      batch: numberValue("batch", 1),
+      perSampleMb: numberValue("perSampleMb", 0),
+      jobs: Math.max(1, numberValue("jobs", 1)),
+      overheadPct: clamp(numberValue("overhead", 0), 0, 500),
+      installedVramGb: Math.max(1, numberValue("installedVramGb", 24)),
+      targetUtilizationPct: clamp(numberValue("targetUtilization", 85), 1, 100),
+      displayReserveGb: Math.max(0, numberValue("displayReserveGb", 0)),
+      precisionMode: textValue("precisionMode", "manual"),
+      parallelismMode: textValue("parallelismMode", "shared"),
+      replicaCount: Math.max(1, numberValue("replicaCount", 1)),
+      growthReservePct: Math.max(0, numberValue("growthReserve", 0)),
+      kvCacheGb: Math.max(0, numberValue("kvCacheGb", 0)),
+      checkpointReserveGb: Math.max(0, numberValue("checkpointReserveGb", 0)),
+      failoverMultiplier: Math.max(1, numberValue("failoverMultiplier", 1)),
+      gpuSharingMode: textValue("gpuSharingMode", "dedicated")
+    };
+  }
+
+  function buildGpuEngineeringPlan() {
+    const input = readGpuEngineeringInputs();
+
+    const precisionFactor = precisionMultiplier(input.precisionMode);
+    const copyFactor = modelCopyFactor(input.parallelismMode, input.jobs, input.replicaCount);
+    const sharingFactor = sharingPenalty(input.gpuSharingMode);
+
+    const adjustedModelGb = input.modelGb * precisionFactor;
+    const modelFootprintGb = adjustedModelGb * copyFactor;
+    const batchActivationGb = (input.batch * input.perSampleMb * input.jobs) / 1024;
+    const runtimeCacheGb = input.kvCacheGb * input.jobs;
+    const workspaceGb = input.checkpointReserveGb * Math.max(1, input.replicaCount);
+
+    const rawDemandGb = modelFootprintGb + batchActivationGb + runtimeCacheGb + workspaceGb;
+    const overheadGb = rawDemandGb * (input.overheadPct / 100);
+    const reserveAdjustedGb = (rawDemandGb + overheadGb) * (1 + input.growthReservePct / 100);
+    const requiredVramGb = reserveAdjustedGb * input.failoverMultiplier * sharingFactor;
+
+    const usableVramGb = Math.max(0, (input.installedVramGb - input.displayReserveGb) * (input.targetUtilizationPct / 100));
+    const capacityPressure = usableVramGb > 0 ? requiredVramGb / usableVramGb : 99;
+    const installedPressure = input.installedVramGb > 0 ? requiredVramGb / input.installedVramGb : 99;
+    const status = statusForPressure(capacityPressure);
+
+    let guidance = "GPU VRAM capacity has usable headroom under the current engineering assumptions.";
+    if (status === "WATCH") {
+      guidance = "GPU VRAM capacity is near the planning edge. Validate peak batch, cache, and replica assumptions before committing hardware.";
+    }
+    if (status === "RISK") {
+      guidance = "GPU VRAM demand exceeds the planning envelope. Reduce concurrency/batch/cache pressure or plan a larger GPU allocation.";
+    }
+
+    if (input.gpuSharingMode === "oversubscribed") {
+      guidance += " Oversubscribed GPU sharing adds extra allocation risk.";
+    }
+
+    return {
+      input,
+      adjustedModelGb,
+      modelFootprintGb,
+      batchActivationGb,
+      runtimeCacheGb,
+      workspaceGb,
+      rawDemandGb,
+      overheadGb,
+      requiredVramGb,
+      usableVramGb,
+      installedPressure,
+      capacityPressure,
+      status,
+      guidance
+    };
+  }
+
+  function envelopeSvg(plan) {
+    const max = Math.max(plan.input.installedVramGb, plan.usableVramGb, plan.requiredVramGb, plan.rawDemandGb, 1);
+    const scaleMax = max * 1.18;
+    const chartLeft = 70;
+    const chartTop = 34;
+    const chartWidth = 610;
+    const chartHeight = 250;
+    const xDemand = chartLeft + 120;
+    const xRequired = chartLeft + 305;
+    const xUsable = chartLeft + 490;
+
+    function y(value) {
+      return chartTop + chartHeight - ((value / scaleMax) * chartHeight);
+    }
+
+    const demandY = y(plan.rawDemandGb);
+    const requiredY = y(plan.requiredVramGb);
+    const usableY = y(plan.usableVramGb);
+    const installedY = y(plan.input.installedVramGb);
+    const riskY = y(plan.usableVramGb * 0.9);
+    const watchY = y(plan.usableVramGb * 0.7);
+
+    return `
+      <svg viewBox="0 0 760 360" role="img" aria-label="GPU VRAM Capacity Envelope">
+        <defs>
+          <linearGradient id="gpuVramBg0621" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#0f172a"/>
+            <stop offset="100%" stop-color="#020617"/>
+          </linearGradient>
+        </defs>
+        <rect width="760" height="360" rx="18" fill="url(#gpuVramBg0621)"/>
+        <g opacity="0.32" stroke="#334155" stroke-width="1">
+          <path d="M70 54 H680"/>
+          <path d="M70 104 H680"/>
+          <path d="M70 154 H680"/>
+          <path d="M70 204 H680"/>
+          <path d="M70 254 H680"/>
+          <path d="M70 304 H680"/>
+          <path d="M190 34 V304"/>
+          <path d="M375 34 V304"/>
+          <path d="M560 34 V304"/>
+        </g>
+
+        <rect x="70" y="${riskY}" width="610" height="${Math.max(0, chartTop + chartHeight - riskY)}" fill="#ef4444" opacity="0.12"/>
+        <rect x="70" y="${watchY}" width="610" height="${Math.max(0, riskY - watchY)}" fill="#f59e0b" opacity="0.12"/>
+        <rect x="70" y="34" width="610" height="${Math.max(0, watchY - chartTop)}" fill="#22c55e" opacity="0.08"/>
+
+        <line x1="70" y1="${installedY}" x2="680" y2="${installedY}" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6 6" opacity="0.82"/>
+        <line x1="70" y1="${usableY}" x2="680" y2="${usableY}" stroke="#22c55e" stroke-width="2" stroke-dasharray="10 6" opacity="0.86"/>
+
+        <path d="M${xDemand} ${demandY} L${xRequired} ${requiredY}" fill="none" stroke="#38bdf8" stroke-width="3"/>
+
+        <circle cx="${xDemand}" cy="${demandY}" r="7" fill="#38bdf8"/>
+        <circle cx="${xRequired}" cy="${requiredY}" r="8" fill="#facc15"/>
+        <circle cx="${xUsable}" cy="${usableY}" r="8" fill="#22c55e"/>
+        <circle cx="${xUsable + 45}" cy="${installedY}" r="6" fill="#cbd5e1"/>
+
+        <text x="70" y="24" fill="#e5eef8" font-size="15" font-weight="700">GPU VRAM Capacity Envelope</text>
+        <text x="680" y="24" fill="#cbd5e1" font-size="11" text-anchor="end">Status: ${escapeHtml(plan.status)}</text>
+
+        <text x="${xDemand}" y="326" fill="#94a3b8" font-size="11" text-anchor="middle">Raw demand</text>
+        <text x="${xRequired}" y="326" fill="#94a3b8" font-size="11" text-anchor="middle">Required</text>
+        <text x="${xUsable}" y="326" fill="#94a3b8" font-size="11" text-anchor="middle">Usable rail</text>
+
+        <text x="${xDemand}" y="${demandY - 13}" fill="#e0f2fe" font-size="11" text-anchor="middle">${gb(plan.rawDemandGb)}</text>
+        <text x="${xRequired}" y="${requiredY - 13}" fill="#fef3c7" font-size="11" text-anchor="middle">${gb(plan.requiredVramGb)}</text>
+        <text x="${xUsable}" y="${usableY - 13}" fill="#bbf7d0" font-size="11" text-anchor="middle">${gb(plan.usableVramGb)}</text>
+        <text x="${xUsable + 45}" y="${installedY - 13}" fill="#e2e8f0" font-size="11" text-anchor="middle">Installed ${gb(plan.input.installedVramGb)}</text>
+
+        <text x="74" y="${installedY - 8}" fill="#94a3b8" font-size="10">installed VRAM rail</text>
+        <text x="74" y="${usableY - 8}" fill="#86efac" font-size="10">usable planning rail</text>
+      </svg>
+    `;
+  }
+
+  function renderGpuEngineeringPlan() {
+    const summary = $gpuEng("computeGpuEngineeringSummary");
+    const envelope = $gpuEng("computeGpuEnvelope");
+    if (!summary || !envelope) return null;
+
+    const plan = buildGpuEngineeringPlan();
+
+    summary.hidden = false;
+    envelope.hidden = false;
+
+    summary.innerHTML = `
+      <div class="compute-gpu-engineering-summary__top">
+        <div>
+          <h3>GPU VRAM engineering result</h3>
+          <p>${escapeHtml(plan.guidance)}</p>
+        </div>
+        <span class="compute-gpu-status-chip is-${statusClass(plan.status)}">${escapeHtml(plan.status)}</span>
+      </div>
+
+      <div class="compute-gpu-engineering-grid">
+        <div class="compute-gpu-engineering-metric">
+          <span>Raw demand</span>
+          <strong>${gb(plan.rawDemandGb)}</strong>
+        </div>
+        <div class="compute-gpu-engineering-metric">
+          <span>Required VRAM</span>
+          <strong>${gb(plan.requiredVramGb)}</strong>
+        </div>
+        <div class="compute-gpu-engineering-metric">
+          <span>Usable VRAM</span>
+          <strong>${gb(plan.usableVramGb)}</strong>
+        </div>
+        <div class="compute-gpu-engineering-metric">
+          <span>Capacity pressure</span>
+          <strong>${pct(plan.capacityPressure)}</strong>
+        </div>
+      </div>
+    `;
+
+    envelope.innerHTML = envelopeSvg(plan);
+
+    const analysis = $gpuEng("analysis-copy");
+    if (analysis) {
+      const base = analysis.textContent || "";
+      const line = `Engineering GPU VRAM plan: ${plan.status} ? required ${gb(plan.requiredVramGb)} against usable ${gb(plan.usableVramGb)}.`;
+      if (!base.includes("Engineering GPU VRAM plan:")) {
+        analysis.textContent = base ? `${base} ${line}` : line;
+      } else {
+        analysis.textContent = base.replace(/Engineering GPU VRAM plan:[^.]*(?:\.|$)/, line);
+      }
+    }
+
+    try {
+      sessionStorage.setItem("scopedlabs.compute.gpu-vram.engineeringPlan", JSON.stringify({
+        tool: "gpu-vram",
+        status: plan.status,
+        rawDemandGb: Number(plan.rawDemandGb.toFixed(3)),
+        requiredVramGb: Number(plan.requiredVramGb.toFixed(3)),
+        usableVramGb: Number(plan.usableVramGb.toFixed(3)),
+        installedVramGb: Number(plan.input.installedVramGb.toFixed(3)),
+        capacityPressure: Number(plan.capacityPressure.toFixed(4)),
+        precisionMode: plan.input.precisionMode,
+        parallelismMode: plan.input.parallelismMode,
+        gpuSharingMode: plan.input.gpuSharingMode
+      }));
+    } catch (err) {}
+
+    return plan;
+  }
+
+  function clearGpuEngineeringPlan() {
+    const summary = $gpuEng("computeGpuEngineeringSummary");
+    const envelope = $gpuEng("computeGpuEnvelope");
+
+    if (summary) {
+      summary.hidden = true;
+      summary.innerHTML = "";
+    }
+
+    if (envelope) {
+      envelope.hidden = true;
+      envelope.innerHTML = "";
+    }
+
+    try {
+      sessionStorage.removeItem("scopedlabs.compute.gpu-vram.engineeringPlan");
+    } catch (err) {}
+  }
+
+  function bindGpuEngineeringInputs() {
+    const calc = $gpuEng("calc");
+    const reset = $gpuEng("reset");
+
+    if (calc) {
+      calc.addEventListener("click", function () {
+        window.setTimeout(renderGpuEngineeringPlan, 0);
+      });
+    }
+
+    if (reset) {
+      reset.addEventListener("click", function () {
+        window.setTimeout(clearGpuEngineeringPlan, 0);
+      });
+    }
+
+    [
+      "installedVramGb",
+      "targetUtilization",
+      "displayReserveGb",
+      "precisionMode",
+      "parallelismMode",
+      "replicaCount",
+      "growthReserve",
+      "kvCacheGb",
+      "checkpointReserveGb",
+      "failoverMultiplier",
+      "gpuSharingMode"
+    ].forEach(function (id) {
+      const el = $gpuEng(id);
+      if (!el) return;
+
+      el.addEventListener("input", function () {
+        clearGpuEngineeringPlan();
+        if (typeof invalidate === "function") {
+          try { invalidate(); } catch (err) {}
+        }
+      });
+
+      el.addEventListener("change", function () {
+        clearGpuEngineeringPlan();
+        if (typeof invalidate === "function") {
+          try { invalidate(); } catch (err) {}
+        }
+      });
+    });
+  }
+
+  window.ScopedLabsComputeGpuVramEngineeringInputs = {
+    readInputs: readGpuEngineeringInputs,
+    buildPlan: buildGpuEngineeringPlan,
+    render: renderGpuEngineeringPlan,
+    clear: clearGpuEngineeringPlan
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bindGpuEngineeringInputs);
+  } else {
+    bindGpuEngineeringInputs();
+  }
+})();
+
