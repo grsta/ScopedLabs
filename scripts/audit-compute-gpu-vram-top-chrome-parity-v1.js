@@ -17,16 +17,59 @@ function indexOfToken(token) {
   return idx === -1 ? 999999999 : idx;
 }
 
+function hasAnyCrumbsBlock(text) {
+  return text.includes('<div class="crumbs">') || text.includes("<div class='crumbs'>");
+}
+
+function hasKnownGpuCrumbsOwner(text) {
+  const mainIdx = text.indexOf('<main class="container page">');
+  if (mainIdx === -1) return false;
+
+  const h1Idx = text.indexOf("<h1", mainIdx);
+  const topChrome = h1Idx === -1 ? text.slice(mainIdx, mainIdx + 1200) : text.slice(mainIdx, h1Idx);
+
+  return (
+    hasAnyCrumbsBlock(topChrome) &&
+    topChrome.includes('/tools/') &&
+    topChrome.includes('/tools/compute/') &&
+    topChrome.includes('Tools') &&
+    topChrome.includes('Compute') &&
+    topChrome.includes('GPU VRAM')
+  );
+}
+
 const mainStart = indexOfToken("<main");
 const lockedStart = indexOfToken('<section id="lockedCard"');
 const toolStart = indexOfToken('<section id="toolCard"');
 const chromeEnd = Math.min(lockedStart, toolStart);
 const chrome = html.slice(mainStart, chromeEnd);
 
+// KNOWN GPU BREADCRUMB OWNER:
+// The visible GPU breadcrumb has historically lived directly under:
+//   <main class="container page">
+// as:
+//   <div class="crumbs">
+//     <a href="/tools/">Tools</a>
+//     <span class="sep">/</span>
+//     <a href="/tools/compute/">Compute</a>
+//     <span class="sep">/</span>
+//     <span>GPU VRAM</span>
+//   </div>
+//
+// This audit intentionally checks that exact legacy .crumbs owner with plain
+// string matching so future top-chrome cleanup lanes do not miss it by only
+// checking breadcrumb/page-breadcrumb/tools-breadcrumb class names.
+
 check(
-  "GPU_TOP_CHROME_NO_CRUMBS_CLASS_BLOCK",
-  !/<div\\s+class=["']crumbs["']>/i.test(chrome),
-  "GPU visible top chrome should not include the legacy class=crumbs breadcrumb block."
+  "GPU_TOP_CHROME_NO_KNOWN_MAIN_CRUMBS_OWNER",
+  !hasKnownGpuCrumbsOwner(html),
+  "GPU visible breadcrumbs are known to live as <div class=crumbs> immediately under <main class=container page>; that exact owner must not return."
+);
+
+check(
+  "GPU_TOP_CHROME_NO_ANY_TOP_CHROME_CRUMBS_BLOCK",
+  !hasAnyCrumbsBlock(chrome),
+  "GPU visible top chrome should not include any legacy .crumbs breadcrumb block before locked/tool cards."
 );
 
 check(

@@ -1158,5 +1158,6 @@ Promotion note:
 - Owner: scripts/audit-compute-gpu-vram-top-chrome-parity-v1.js
 - Scope: GPU VRAM Compute calculator top chrome parity proof.
 - Consumer: tools/compute/gpu-vram/index.html
-- Contract: Removes visible calculator-page breadcrumbs including legacy class=crumbs blocks, top Pro Tier chip, Part of a Design Flow explainer card, and Best for line while preserving hidden flow-note and locked/auth card behavior.
+- Contract: Removes visible calculator-page breadcrumbs i
+- Known breadcrumb owner: tools/compute/gpu-vram/index.html <main class="container page"> > div.crumbs containing Tools / Compute / GPU VRAM. The top chrome audit must fail if this exact owner returns.ncluding legacy class=crumbs blocks, top Pro Tier chip, Part of a Design Flow explainer card, and Best for line while preserving hidden flow-note and locked/auth card behavior.
 - Promotion path: If the next Compute calculator needs the same top chrome cleanup, promote this behavior into a reusable ScopedLabs/Compute tool page chrome contract before broad rollout.
