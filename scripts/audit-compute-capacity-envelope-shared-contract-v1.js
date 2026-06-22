@@ -32,6 +32,9 @@ const cpuIndex = read(cpuIndexFile);
 const cpuScriptSrc = read(cpuScriptFile);
 const ramIndex = read(ramIndexFile);
 const ramScriptSrc = read(ramScriptFile);
+const ramSvgStart = moduleSrc.indexOf("function buildRamCapacityEnvelopeSvg");
+const ramSvgEnd = moduleSrc.indexOf("function renderRamCapacityEnvelope");
+const ramSvgBody = ramSvgStart !== -1 && ramSvgEnd !== -1 ? moduleSrc.slice(ramSvgStart, ramSvgEnd) : "";
 
 [
   "buildCapacityEnvelopeSvg",
@@ -44,9 +47,20 @@ const ramScriptSrc = read(ramScriptFile);
   check(results, moduleSrc.includes(name), "MODULE_EXPORT_" + name, moduleFile);
 });
 
-check(results, moduleSrc.includes("scopedlabs-compute-capacity-visuals-016-ram-footer-cleanup"), "MODULE_VERSION_003_CPU_RAM_ENVELOPE", moduleFile);
+check(results, moduleSrc.includes("scopedlabs-compute-capacity-visuals-017-ram-capacity-limit-rail"), "MODULE_VERSION_003_CPU_RAM_ENVELOPE", moduleFile);
 check(results, moduleSrc.includes("data-compute-visual=\"cpu-capacity-envelope\""), "MODULE_OWNS_CPU_CAPACITY_SVG", moduleFile);
 check(results, moduleSrc.includes("data-compute-capacity-visual=\"ram-envelope\""), "MODULE_OWNS_RAM_CAPACITY_SVG", moduleFile);
+
+check(
+  results,
+  ramSvgBody &&
+    !ramSvgBody.includes('label: "Installed"') &&
+    !ramSvgBody.includes('ref: "*3 downstream validation"') &&
+    ramSvgBody.includes("Installed capacity - ") &&
+    ramSvgBody.includes("capacity-line"),
+  "RAM_SHARED_VISUAL_DOES_NOT_PLOT_INSTALLED_AS_DEMAND_POINT",
+  moduleFile
+);
 
 check(
   results,
@@ -69,7 +83,7 @@ check(results, cpuIndex.includes('href="/tools/compute/ram-sizing/"'), "CPU_CONT
 
 check(
   results,
-  ramIndex.includes("/assets/scopedlabs-compute-capacity-visuals.js?v=" + "scopedlabs-compute-capacity-visuals-016-ram-footer-cleanup"),
+  ramIndex.includes("/assets/scopedlabs-compute-capacity-visuals.js?v=" + "scopedlabs-compute-capacity-visuals-017-ram-capacity-limit-rail"),
   "RAM_INDEX_LOADS_VERSIONED_SHARED_CAPACITY_MODULE",
   ramIndexFile
 );

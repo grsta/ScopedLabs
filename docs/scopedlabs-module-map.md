@@ -1089,3 +1089,8 @@ Example:
 - RAM no longer renders the old bottom `RAM planning checkpoints` footer row or the `*1/*2/*3` labels inside the SVG.
 - Recommendation References remain below the visual where the explanatory `*1/*2/*3` details belong.
 - `scripts/audit-compute-capacity-envelope-shared-contract-v1.js` guards the shared RAM footer cleanup.
+#### Compute RAM Capacity Envelope capacity rail correction
+
+- `assets/scopedlabs-compute-capacity-visuals.js` now treats installed RAM as a capacity rail/ceiling instead of plotting it as a demand-curve point.
+- RAM status remains based on required demand versus installed capacity, so a low required value against an 8 GB tier correctly renders GOOD.
+- `scripts/audit-compute-capacity-envelope-shared-contract-v1.js` guards against plotting installed RAM as a demand point again.

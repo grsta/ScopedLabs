@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-compute-capacity-visuals-016-ram-footer-cleanup";
+  const VERSION = "scopedlabs-compute-capacity-visuals-017-ram-capacity-limit-rail";
 
   function clamp(value, min, max) {
       return Math.max(min, Math.min(max, value));
@@ -76,12 +76,11 @@
 
     const points = [
       {
-        x: xScale(0.16),
+        x: xScale(0.18),
         y: yScale(demand),
         value: demand,
         tone: "current",
         label: "Demand",
-        ref: "*1 demand basis",
         detail: "Current RAM demand basis: " + gb(demand, 1) + ". Workload: " + workloadLabel + "."
       },
       {
@@ -90,19 +89,9 @@
         value: required,
         tone: "growth",
         label: "Required",
-        ref: "*2 reserve pressure",
         detail: "Required RAM with reserve pressure: " + gb(required, 1) + ". Reserve: " + gb(reserve, 1) + " / " + pct(reserveRatio) + "."
-      },
-      {
-        x: xScale(0.88),
-        y: yScale(installed),
-        value: installed,
-        tone: "failover",
-        label: "Installed",
-        ref: "*3 downstream validation",
-        detail: "Installed RAM tier: " + gb(installed, 0) + ". " + cpuCoupling + "."
       }
-    ];
+    ]
 
     const watchThreshold = installed * 0.70;
     const riskThreshold = installed * 0.90;
@@ -118,9 +107,8 @@
 
     const curvePath = [
       "M " + points[0].x.toFixed(1) + " " + points[0].y.toFixed(1),
-      "Q " + ((points[0].x + points[1].x) / 2).toFixed(1) + " " + ((points[0].y + points[1].y) / 2 - 12).toFixed(1) + " " + points[1].x.toFixed(1) + " " + points[1].y.toFixed(1),
-      "Q " + ((points[1].x + points[2].x) / 2).toFixed(1) + " " + ((points[1].y + points[2].y) / 2 - 10).toFixed(1) + " " + points[2].x.toFixed(1) + " " + points[2].y.toFixed(1)
-    ].join(" ");
+      "Q " + ((points[0].x + points[1].x) / 2).toFixed(1) + " " + ((points[0].y + points[1].y) / 2 - 12).toFixed(1) + " " + points[1].x.toFixed(1) + " " + points[1].y.toFixed(1)
+    ].join(" ")
 
     const tickStep = yMax <= 32 ? 8 : 12;
     const yTicks = [];
