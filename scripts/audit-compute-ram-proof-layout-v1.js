@@ -180,7 +180,10 @@ check(
     assistant.includes("row.metric === \"Status\"") &&
     assistant.includes("scopedlabs-result-summary-status") &&
     assistant.includes("ramDecisionStatusClass(status)") &&
-    ramHtml.includes("compute-assistant-ram-decision-status-badge-0620"),
+    (
+      ramHtml.includes("compute-assistant-ram-decision-status-badge-0620") ||
+      ramHtml.includes("compute-assistant-ram-footer-cleanup-0621")
+    ),
   "assets/scopedlabs-compute-assistant-contract.js",
   "RAM Decision Schedule Status value must render as the colored engineering badge class, matching the CPU decision schedule visual contract."
 );
@@ -222,11 +225,12 @@ check(
 );
 check(
   "RAM_CACHE_BUSTS_PROOF_LAYOUT_ASSETS",
-  ramHtml.includes("scopedlabs-compute-result-visuals.css?v=scopedlabs-compute-result-visuals-0620-") &&
-    ramHtml.includes("scopedlabs-compute-assistant-contract.js?v=compute-assistant-ram-") &&
-    ramHtml.includes("./script.js?v=compute-ram-"),
+  ramHtml.includes("scopedlabs-compute-result-visuals.css?v=scopedlabs-compute-result-visuals-0621-ram-footer-cleanup") &&
+    ramHtml.includes("scopedlabs-compute-assistant-contract.js?v=compute-assistant-ram-footer-cleanup-0621") &&
+    ramHtml.includes("./script.js?v=compute-ram-footer-cleanup-0621") &&
+    ramHtml.includes("scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-016-ram-footer-cleanup"),
   "tools/compute/ram-sizing/index.html",
-  "RAM page should cache-bust CSS, assistant contract, and local script using the active Compute RAM proof-stack version families."
+  "RAM page should cache-bust the shared visual, CSS, assistant contract, and local script for the RAM footer-cleanup lane."
 );
 
 console.log("\nSUMMARY");

@@ -1083,3 +1083,9 @@ Example:
 - `assets/pipeline.js` now falls back to the active Compute workload context or single saved workload when the guided-flow id does not resolve directly in the plan ledger.
 - Guided specialty pages also treat the current selected branch as applicable, so upstream CPU/RAM steps can render complete before GPU VRAM even when branch metadata is recovered from active context.
 - `scripts/audit-compute-guided-pipeline-led-state-v1.js` guards the active-workload fallback and current-branch applicability behavior.
+#### Compute RAM Capacity Envelope footer cleanup
+
+- `assets/scopedlabs-compute-capacity-visuals.js` owns the shared CPU/RAM capacity envelope visuals.
+- RAM no longer renders the old bottom `RAM planning checkpoints` footer row or the `*1/*2/*3` labels inside the SVG.
+- Recommendation References remain below the visual where the explanatory `*1/*2/*3` details belong.
+- `scripts/audit-compute-capacity-envelope-shared-contract-v1.js` guards the shared RAM footer cleanup.

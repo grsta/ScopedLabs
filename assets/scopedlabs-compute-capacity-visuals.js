@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-compute-capacity-visuals-015-adaptive-cpu-scale";
+  const VERSION = "scopedlabs-compute-capacity-visuals-016-ram-footer-cleanup";
 
   function clamp(value, min, max) {
       return Math.max(min, Math.min(max, value));
@@ -178,7 +178,6 @@
       xTicks,
       '<path d="M' + plot.x + ' ' + plot.y + ' V' + (plot.y + plot.h) + '" class="axis"/>',
       '<path d="M' + plot.x + ' ' + (plot.y + plot.h) + ' H' + (plot.x + plot.w) + '" class="axis"/>',
-      '<text x="390" y="389" text-anchor="middle" class="axis-label">RAM planning checkpoints</text>',
       '<path d="M' + plot.x + ' ' + riskY.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="risk-line"/>',
       '<path d="M' + plot.x + ' ' + watchY.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="watch-line"/>',
       '<path d="M' + plot.x + ' ' + capacityY.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="capacity-line"/>',
@@ -191,9 +190,6 @@
       '<path d="' + curvePath + '" class="curve-shadow"/>',
       '<path d="' + curvePath + '" class="curve"/>',
       points.map(markerSvg).join(""),
-      '<text x="190" y="416" text-anchor="middle" class="legend-text legend-current">*1 demand basis</text>',
-      '<text x="382" y="416" text-anchor="middle" class="legend-text legend-growth">*2 reserve pressure</text>',
-      '<text x="586" y="416" text-anchor="middle" class="legend-text legend-failover">*3 downstream validation</text>',
       '</svg>'
     ].join("");
   }
@@ -628,9 +624,6 @@
       '<path d="' + curvePath + '" class="curve-shadow"/>',
       '<path d="' + curvePath + '" class="curve"/>',
       points.map(markerSvg).join(""),
-      '<text x="190" y="416" text-anchor="middle" class="legend-text legend-current">*1 demand basis</text>',
-      '<text x="382" y="416" text-anchor="middle" class="legend-text legend-growth">*2 reserve pressure</text>',
-      '<text x="586" y="416" text-anchor="middle" class="legend-text legend-failover">*3 downstream validation</text>',
       '</svg>'
     ].join("");
 }
