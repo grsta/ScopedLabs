@@ -115,3 +115,18 @@ Revisit trigger: Revisit when the next non-CPU/RAM Compute calculator layout rep
 
 Audit:
 - scripts/audit-compute-gpu-vram-layout-parity-v1.js
+
+
+### COMPUTE-GPU-VRAM-TOP-CHROME-PARITY-LOCAL-0622
+
+Status: APPROVED_LOCAL_EXCEPTION
+
+Changed path:
+- tools/compute/gpu-vram/index.html
+
+Approved local exception: GPU VRAM is the current Compute proof target for top chrome parity against the accepted CPU/RAM calculator rhythm. This local repair removes visible GPU-only top chrome clutter while preserving hidden shell anchors and auth/checkout behavior.
+
+Revisit trigger: Revisit when the next non-CPU/RAM Compute calculator top chrome cleanup starts, or if another calculator needs the same breadcrumb, tier chip, design-flow card, or best-for-line suppression.
+
+Audit:
+- scripts/audit-compute-gpu-vram-top-chrome-parity-v1.js

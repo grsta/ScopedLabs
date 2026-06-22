@@ -1150,3 +1150,13 @@ Promotion note:
 - Consumer: tools/compute/gpu-vram/index.html
 - Contract: Enforces CPU/RAM-style section order, valid report metadata placement, valid export status placement, valid user tool notes placement, and compute visual card wrapper usage for GPU VRAM.
 - Promotion path: If another Compute calculator needs the same structural repair, promote this into a reusable Compute calculator layout contract audit before broad rollout.
+
+
+### COMPUTE_GPU_VRAM_TOP_CHROME_PARITY_V1
+
+- Status: PROOF_GATE
+- Owner: scripts/audit-compute-gpu-vram-top-chrome-parity-v1.js
+- Scope: GPU VRAM Compute calculator top chrome parity proof.
+- Consumer: tools/compute/gpu-vram/index.html
+- Contract: Removes visible calculator-page breadcrumbs, top Pro Tier chip, Part of a Design Flow explainer card, and Best for line while preserving hidden flow-note and locked/auth card behavior.
+- Promotion path: If the next Compute calculator needs the same top chrome cleanup, promote this behavior into a reusable ScopedLabs/Compute tool page chrome contract before broad rollout.
