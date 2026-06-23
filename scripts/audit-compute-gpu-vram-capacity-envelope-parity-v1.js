@@ -135,8 +135,8 @@ check(
 
 check(
   "GPU_CAPACITY_ENVELOPE_PARITY_SCRIPT_VERSION_BUMPED",
-  html.includes("compute-gpu-vram-capacity-envelope-parity-0622"),
-  "GPU page should cache-bust the Lane 4 chart parity script."
+  html.includes("./script.js?v=compute-gpu-vram-") && html.includes("0622"),
+  "GPU page should keep a GPU-owned chart cache-bust present; later Lane 4 polish passes may advance the exact version."
 , htmlFile);
 
 check(
@@ -146,6 +146,25 @@ check(
     !moduleText.includes("buildGpuCapacityEnvelopeSvg"),
   "Lane 4 should remain a GPU local proof until the visual is live-accepted, then promote into the shared visual module."
 , moduleFile);
+
+
+check(
+  "GPU_CAPACITY_ENVELOPE_PARITY_GREEN_CARD_POLISH",
+  html.includes('id="compute-gpu-capacity-envelope-polish-0622"') &&
+    html.includes("#computeGpuEngineeringSummary") &&
+    html.includes("#computeGpuVisualCard") &&
+    html.includes("rgba(44,255,155,.18)"),
+  "GPU engineering result and visual wrapper should use the normal green/dark compute card treatment."
+, htmlFile);
+
+check(
+  "GPU_CAPACITY_ENVELOPE_PARITY_CENTERED_LEGEND",
+  block.includes('text x="172" y="382" text-anchor="middle" class="legend-ref legend-ref-current">*1</text>') &&
+    block.includes('text x="360" y="382" text-anchor="middle" class="legend-ref legend-ref-growth">*2</text>') &&
+    block.includes('text x="548" y="382" text-anchor="middle" class="legend-ref legend-ref-failover">*3</text>') &&
+    block.includes("font-size:9px"),
+  "GPU chart references should be smaller and centered as a separate legend row."
+);
 
 let pass = 0;
 let fail = 0;

@@ -628,10 +628,10 @@
     const scaleMax = max * 1.18;
     const width = 760;
     const height = 430;
-    const plot = { x: 70, y: 102, w: 610, h: 236 };
+    const plot = { x: 72, y: 104, w: 606, h: 220 };
     const xDemand = plot.x + 115;
     const xRequired = plot.x + 305;
-    const xUsable = plot.x + 490;
+    const xUsable = plot.x + 492;
     const status = String(plan.status || "WATCH").toUpperCase();
     const statusFill = status === "RISK" ? "rgba(239,68,68,.13)" : status === "WATCH" ? "rgba(250,204,21,.12)" : "rgba(44,255,155,.12)";
     const statusColor = status === "RISK" ? "#ff4d5a" : status === "WATCH" ? "#facc15" : "#2cff9b";
@@ -652,7 +652,7 @@
         '<path d="M' + point.x.toFixed(1) + ' ' + point.y.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="ref-line"/>',
         '<circle cx="' + point.x.toFixed(1) + '" cy="' + point.y.toFixed(1) + '" r="7" class="marker-ring"/>',
         '<circle cx="' + point.x.toFixed(1) + '" cy="' + point.y.toFixed(1) + '" r="4.8" class="marker-' + point.tone + '"/>',
-        '<text x="' + point.x.toFixed(1) + '" y="' + (point.y - 13).toFixed(1) + '" text-anchor="middle" class="ref-label marker-label-' + point.tone + '">' + escapeHtml(point.ref) + '</text>',
+        '<text x="' + point.x.toFixed(1) + '" y="' + (point.y - 14).toFixed(1) + '" text-anchor="middle" class="ref-label marker-label-' + point.tone + '">' + escapeHtml(point.ref) + '</text>',
         '</g>'
       ].join("");
     }
@@ -675,7 +675,6 @@
         label: "Demand basis",
         x: xDemand,
         y: demandY,
-        value: gb(plan.rawDemandGb),
         detail: "Raw model, batch, runtime cache, checkpoint, and workspace demand before reserve multipliers."
       },
       {
@@ -684,7 +683,6 @@
         label: "Reserve pressure",
         x: xRequired,
         y: requiredY,
-        value: gb(plan.requiredVramGb),
         detail: "Required VRAM after precision, parallelism, growth reserve, failover, and sharing assumptions."
       },
       {
@@ -693,7 +691,6 @@
         label: "Validation rail",
         x: xUsable,
         y: usableY,
-        value: gb(plan.usableVramGb),
         detail: "Usable planning capacity after target utilization and display reserve are applied."
       }
     ];
@@ -711,12 +708,16 @@
     const xTicks = points.map(function (point) {
       return [
         '<path d="M' + point.x.toFixed(1) + ' ' + plot.y + ' V' + (plot.y + plot.h) + '" class="grid"/>',
-        '<text x="' + point.x.toFixed(1) + '" y="' + (plot.y + plot.h + 22) + '" text-anchor="middle" class="tick">' + escapeHtml(point.label) + '</text>',
-        '<text x="' + point.x.toFixed(1) + '" y="' + (plot.y + plot.h + 38) + '" text-anchor="middle" class="value-label">' + escapeHtml(point.value) + '</text>'
+        '<text x="' + point.x.toFixed(1) + '" y="' + (plot.y + plot.h + 22) + '" text-anchor="middle" class="tick">' + escapeHtml(point.label) + '</text>'
       ].join("");
     }).join("");
 
-    const curvePath = "M" + xDemand.toFixed(1) + " " + demandY.toFixed(1) + " C" + (xDemand + 70).toFixed(1) + " " + demandY.toFixed(1) + ", " + (xRequired - 70).toFixed(1) + " " + requiredY.toFixed(1) + ", " + xRequired.toFixed(1) + " " + requiredY.toFixed(1) + " S" + (xUsable - 80).toFixed(1) + " " + usableY.toFixed(1) + ", " + xUsable.toFixed(1) + " " + usableY.toFixed(1);
+    const curvePath = "M" + xDemand.toFixed(1) + " " + demandY.toFixed(1) +
+      " C" + (xDemand + 70).toFixed(1) + " " + demandY.toFixed(1) + ", " +
+      (xRequired - 70).toFixed(1) + " " + requiredY.toFixed(1) + ", " +
+      xRequired.toFixed(1) + " " + requiredY.toFixed(1) +
+      " S" + (xUsable - 80).toFixed(1) + " " + usableY.toFixed(1) + ", " +
+      xUsable.toFixed(1) + " " + usableY.toFixed(1);
 
     return [
       '<svg data-export-svg="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" width="100%" role="img" aria-label="GPU VRAM Capacity Envelope analytic graph" data-compute-visual="gpu-vram-capacity-envelope" data-compute-capacity-visual="gpu-vram-envelope">',
@@ -726,7 +727,7 @@
       '<stop offset="100%" stop-color="#040b09"/>',
       '</linearGradient>',
       '<style>',
-      '.plot-bg{fill:url(#computeGpuEnvelopeBg0622)}.plot-frame{fill:rgba(255,255,255,.012);stroke:rgba(44,255,155,.20);stroke-width:1}.zone-good{fill:rgba(44,255,155,.055)}.zone-watch{fill:rgba(250,204,21,.055)}.zone-risk{fill:rgba(239,68,68,.06)}.grid{fill:none;stroke:rgba(238,246,255,.08);stroke-width:1}.grid-major{fill:none;stroke:rgba(238,246,255,.14);stroke-width:1}.axis{fill:none;stroke:rgba(238,246,255,.42);stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}.tick{fill:rgba(203,213,225,.90);font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700}.value-label{fill:rgba(238,246,255,.86);font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:850}.axis-label{fill:rgba(203,213,225,.92);font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:750;letter-spacing:.5px}.header{fill:#eef6ff;font-family:Inter,Arial,Helvetica,sans-serif;font-size:18px;font-weight:900;letter-spacing:.5px}.subhead{fill:rgba(203,213,225,.86);font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:650}.zone-label{font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;letter-spacing:.8px}.zone-good-text{fill:rgba(44,255,155,.96)}.zone-watch-text{fill:rgba(250,204,21,.95)}.zone-risk-text{fill:rgba(255,77,90,.95)}.capacity-line{fill:none;stroke:#2cff9b;stroke-width:1.6;stroke-linecap:round}.installed-line{fill:none;stroke:rgba(203,213,225,.55);stroke-width:1;stroke-dasharray:6 5}.watch-line{fill:none;stroke:rgba(250,204,21,.70);stroke-width:1;stroke-dasharray:5 5}.risk-line{fill:none;stroke:rgba(255,77,90,.82);stroke-width:1;stroke-dasharray:5 5}.curve-shadow{fill:none;stroke:rgba(44,255,155,.22);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.curve{fill:none;stroke:#2cff9b;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}.marker-current{fill:#38d9ff;stroke:#04110d;stroke-width:1.2}.marker-growth{fill:#a78bfa;stroke:#04110d;stroke-width:1.2}.marker-failover{fill:#f59e0b;stroke:#04110d;stroke-width:1.2}.marker-ring{fill:none;stroke:rgba(238,246,255,.72);stroke-width:1}.ref-line{fill:none;stroke:rgba(238,246,255,.16);stroke-width:1;stroke-dasharray:4 4}.ref-label{font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:950;letter-spacing:.4px}.marker-label-current{fill:#38d9ff}.marker-label-growth{fill:#a78bfa}.marker-label-failover{fill:#f59e0b}.rail-label{fill:rgba(203,213,225,.82);font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:750}.status-chip{stroke-width:1}.status-text{font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;letter-spacing:.7px}.legend-current{fill:#38d9ff}.legend-growth{fill:#a78bfa}.legend-failover{fill:#f59e0b}.legend-text{font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:800;fill:rgba(203,213,225,.88)}',
+      '.plot-bg{fill:url(#computeGpuEnvelopeBg0622)}.plot-frame{fill:rgba(255,255,255,.012);stroke:rgba(44,255,155,.20);stroke-width:1}.zone-good{fill:rgba(44,255,155,.055)}.zone-watch{fill:rgba(250,204,21,.055)}.zone-risk{fill:rgba(239,68,68,.06)}.grid{fill:none;stroke:rgba(238,246,255,.08);stroke-width:1}.grid-major{fill:none;stroke:rgba(238,246,255,.14);stroke-width:1}.axis{fill:none;stroke:rgba(238,246,255,.42);stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}.tick{fill:rgba(203,213,225,.90);font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700}.axis-label{fill:rgba(203,213,225,.92);font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:750;letter-spacing:.5px}.header{fill:#eef6ff;font-family:Inter,Arial,Helvetica,sans-serif;font-size:18px;font-weight:900;letter-spacing:.5px}.subhead{fill:rgba(203,213,225,.86);font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:650}.capacity-line{fill:none;stroke:#2cff9b;stroke-width:1.6;stroke-linecap:round}.installed-line{fill:none;stroke:rgba(203,213,225,.55);stroke-width:1;stroke-dasharray:6 5}.watch-line{fill:none;stroke:rgba(250,204,21,.70);stroke-width:1;stroke-dasharray:5 5}.risk-line{fill:none;stroke:rgba(255,77,90,.82);stroke-width:1;stroke-dasharray:5 5}.curve-shadow{fill:none;stroke:rgba(44,255,155,.22);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.curve{fill:none;stroke:#2cff9b;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}.marker-current{fill:#38d9ff;stroke:#04110d;stroke-width:1.2}.marker-growth{fill:#a78bfa;stroke:#04110d;stroke-width:1.2}.marker-failover{fill:#f59e0b;stroke:#04110d;stroke-width:1.2}.marker-ring{fill:none;stroke:rgba(238,246,255,.72);stroke-width:1}.ref-line{fill:none;stroke:rgba(238,246,255,.16);stroke-width:1;stroke-dasharray:4 4}.ref-label{font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:900;letter-spacing:.4px}.marker-label-current{fill:#38d9ff}.marker-label-growth{fill:#a78bfa}.marker-label-failover{fill:#f59e0b}.rail-label{fill:rgba(203,213,225,.82);font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:750}.status-chip{stroke-width:1}.status-text{font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;letter-spacing:.7px}.legend-ref-current{fill:#38d9ff}.legend-ref-growth{fill:#a78bfa}.legend-ref-failover{fill:#f59e0b}.legend-ref{font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:950}.legend-copy{font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:760;fill:rgba(203,213,225,.88)}',
       '</style>',
       '</defs>',
       '<rect width="' + width + '" height="' + height + '" rx="18" class="plot-bg"/>',
@@ -751,10 +752,13 @@
       '<path d="' + curvePath + '" class="curve-shadow"/>',
       '<path d="' + curvePath + '" class="curve"/>',
       points.map(marker).join(""),
-      '<text x="84" y="374" class="legend-current">*1</text><text x="104" y="374" class="legend-text">Demand basis</text>',
-      '<text x="262" y="374" class="legend-growth">*2</text><text x="282" y="374" class="legend-text">Reserve pressure</text>',
-      '<text x="468" y="374" class="legend-failover">*3</text><text x="488" y="374" class="legend-text">Validation rail</text>',
-      '<text x="50" y="405" class="axis-label">Capacity edge: watch at 70% of usable VRAM, risk at 90%</text>',
+      '<text x="172" y="382" text-anchor="middle" class="legend-ref legend-ref-current">*1</text>',
+      '<text x="205" y="382" text-anchor="middle" class="legend-copy">Demand basis</text>',
+      '<text x="360" y="382" text-anchor="middle" class="legend-ref legend-ref-growth">*2</text>',
+      '<text x="409" y="382" text-anchor="middle" class="legend-copy">Reserve pressure</text>',
+      '<text x="548" y="382" text-anchor="middle" class="legend-ref legend-ref-failover">*3</text>',
+      '<text x="598" y="382" text-anchor="middle" class="legend-copy">Validation rail</text>',
+      '<text x="50" y="407" class="axis-label">Capacity edge: watch at 70% of usable VRAM, risk at 90%</text>',
       '</svg>'
     ].join("");
   }

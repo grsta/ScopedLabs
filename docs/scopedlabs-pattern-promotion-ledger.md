@@ -177,3 +177,20 @@ Revisit trigger: Promote into assets/scopedlabs-compute-capacity-visuals.js afte
 
 Audit:
 - scripts/audit-compute-gpu-vram-capacity-envelope-parity-v1.js
+
+
+### COMPUTE-GPU-VRAM-CAPACITY-ENVELOPE-POLISH-0622
+
+Status: APPROVED_LOCAL_PROOF_POLISH
+
+Changed path:
+- tools/compute/gpu-vram/index.html
+- tools/compute/gpu-vram/script.js
+- scripts/audit-compute-gpu-vram-capacity-envelope-parity-v1.js
+
+Approved local proof polish: Lane 4 GPU VRAM Capacity Envelope polish removes remaining blue visual treatment, normalizes the GPU engineering result and chart wrapper to the green/dark Compute card language, and separates/centers the smaller *1/*2/*3 chart reference legend.
+
+Revisit trigger: Promote accepted GPU envelope behavior into assets/scopedlabs-compute-capacity-visuals.js after live visual acceptance.
+
+Audit:
+- scripts/audit-compute-gpu-vram-capacity-envelope-parity-v1.js

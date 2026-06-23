@@ -1191,3 +1191,13 @@ Promotion note:
 - Consumer: tools/compute/gpu-vram/script.js; tools/compute/gpu-vram/index.html
 - Contract: Replaces the local GPU VRAM blue chart grammar with a CPU/RAM-style dark CAD capacity envelope, chart-linked *1/*2/*3 references, marker-ring dots, usable/installed rails, and preserved GPU math/status inputs.
 - Promotion path: After browser acceptance, promote into assets/scopedlabs-compute-capacity-visuals.js as a GPU-specific build/render route rather than keeping the visual page-local.
+
+
+### COMPUTE_GPU_VRAM_CAPACITY_ENVELOPE_POLISH_0622
+
+- Status: PROOF_GATE_POLISH
+- Owner: scripts/audit-compute-gpu-vram-capacity-envelope-parity-v1.js
+- Scope: GPU VRAM Capacity Envelope Lane 4 visual polish.
+- Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
+- Contract: Keeps the Lane 4 GPU VRAM capacity-envelope proof under permanent audit while allowing the live polish pass to remove remaining blue card/wrapper treatment, normalize the engineering result card to the green/dark Compute visual language, and center/smaller-size the *1/*2/*3 chart reference legend.
+- Guardrail: Later GPU script cache-bust versions may advance within the GPU lane as long as the GPU-owned cache-bust remains present and the capacity envelope parity audit passes.
