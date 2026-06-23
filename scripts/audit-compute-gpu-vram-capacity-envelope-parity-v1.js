@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 
 const root = process.cwd();
+
 const scriptFile = "tools/compute/gpu-vram/script.js";
 const htmlFile = "tools/compute/gpu-vram/index.html";
 const moduleFile = "assets/scopedlabs-compute-capacity-visuals.js";
@@ -16,7 +17,12 @@ const moduleText = fs.existsSync(path.join(root, moduleFile))
 const checks = [];
 
 function check(code, pass, detail, file) {
-  checks.push({ code, pass, detail, file: file || scriptFile });
+  checks.push({
+    code,
+    pass: Boolean(pass),
+    detail,
+    file: file || scriptFile
+  });
 }
 
 function findFunctionBlock(source, functionName) {
@@ -34,6 +40,7 @@ function findFunctionBlock(source, functionName) {
     const ch = source[cursor];
 
     if (ch === "{") depth += 1;
+
     if (ch === "}") {
       depth -= 1;
       if (depth === 0) return source.slice(start, cursor + 1);
@@ -56,11 +63,12 @@ check(
 
 check(
   "GPU_CAPACITY_ENVELOPE_PARITY_VIEWBOX",
-  block.includes("viewBox=\"0 0 ' + width + ' ' + height + '\"") ||
-    block.includes("const width = 760") &&
-    block.includes("const height = 430"),
+  block.includes("const width = 760") &&
+    block.includes("const height = 430") &&
+    block.includes("viewBox=\"0 0 ") &&
+    block.includes("data-compute-visual=\"gpu-vram-capacity-envelope\""),
   "GPU envelope should use the CPU/RAM-style responsive 760 by 430 analytic canvas."
-);
+)
 
 check(
   "GPU_CAPACITY_ENVELOPE_PARITY_BLUE_PANEL_REMOVED",
@@ -101,12 +109,13 @@ check(
     block.includes("*2") &&
     block.includes("*3") &&
     block.includes('data-ref="') &&
-    block.includes("ref-label") &&
-    block.includes("marker-label-current") &&
-    block.includes("marker-label-growth") &&
-    block.includes("marker-label-failover"),
-  "GPU envelope should keep chart-linked *1/*2/*3 marker references on the plotted points while the explanation lives in the Recommendation References card."
-)
+    block.includes("<title>") &&
+    !block.includes("ref-label") &&
+    !block.includes("marker-label-current") &&
+    !block.includes("marker-label-growth") &&
+    !block.includes("marker-label-failover"),
+  "GPU envelope should preserve chart-linked *1/*2/*3 marker data without visible footnote labels inside the chart."
+);
 
 check(
   "GPU_CAPACITY_ENVELOPE_PARITY_RAILS",
@@ -136,39 +145,31 @@ check(
 );
 
 check(
-  "GPU_CAPACITY_ENVELOPE_PARITY_SCRIPT_VERSION_BUMPED",
-  html.includes("./script.js?v=compute-gpu-vram-") && html.includes("0622"),
-  "GPU page should keep a GPU-owned chart cache-bust present; later Lane 4 polish passes may advance the exact version."
-, htmlFile);
+  "GPU_CAPACITY_ENVELOPE_PARITY_SCRIPT_VERSION_PRESENT",
+  html.includes("./script.js?v=compute-gpu-vram-") &&
+    html.includes("0622"),
+  "GPU page should keep a GPU-owned chart cache-bust present; later Lane 4 polish passes may advance the exact version.",
+  htmlFile
+);
 
 check(
   "GPU_CAPACITY_ENVELOPE_PARITY_SHARED_MODULE_NOT_PROMOTED_YET",
   moduleText.includes("buildCpuCapacityEnvelopeSvg") &&
     moduleText.includes("buildRamCapacityEnvelopeSvg") &&
     !moduleText.includes("buildGpuCapacityEnvelopeSvg"),
-  "Lane 4 should remain a GPU local proof until the visual is live-accepted, then promote into the shared visual module."
-, moduleFile);
-
+  "Lane 4 should remain a GPU local proof until the visual is live-accepted, then promote into the shared visual module.",
+  moduleFile
+);
 
 check(
   "GPU_CAPACITY_ENVELOPE_PARITY_GREEN_CARD_POLISH",
-  html.includes('id="compute-gpu-capacity-envelope-polish-0622"') &&
+  html.includes("compute-gpu-capacity-envelope") &&
     html.includes("#computeGpuEngineeringSummary") &&
     html.includes("#computeGpuVisualCard") &&
-    html.includes("rgba(44,255,155,.18)"),
-  "GPU engineering result and visual wrapper should use the normal green/dark compute card treatment, with blue edge treatment removed."
-, htmlFile);
-
-check(
-  "GPU_CAPACITY_ENVELOPE_PARITY_RAM_REFERENCE_PATTERN",
-  !block.includes("legend-ref-current") &&
-    !block.includes("legend-ref-growth") &&
-    !block.includes("legend-ref-failover") &&
-    html.includes('id="computeGpuReferencesCard"') &&
-    html.includes('id="computeGpuReferences"'),
-  "GPU should follow RAM reference rhythm: no inline SVG legend row, with Recommendation References preserved below the chart."
-, htmlFile)
-
+    html.includes("rgba(44,255,155"),
+  "GPU engineering result and visual wrapper should use the normal green/dark compute card treatment, with blue edge treatment removed.",
+  htmlFile
+);
 
 check(
   "GPU_CAPACITY_ENVELOPE_PARITY_NO_INLINE_LEGEND",
@@ -185,8 +186,9 @@ check(
   "GPU_CAPACITY_ENVELOPE_PARITY_RECOMMENDATION_REFERENCES_CARD_PRESERVED",
   html.includes('id="computeGpuReferencesCard"') &&
     html.includes('id="computeGpuReferences"'),
-  "GPU should keep the Recommendation References card below the chart, matching RAM rhythm."
-, htmlFile);
+  "GPU should keep the Recommendation References card below the chart, matching RAM rhythm.",
+  htmlFile
+);
 
 check(
   "GPU_CAPACITY_ENVELOPE_PARITY_BAND_LABELS_PRESENT",
@@ -197,6 +199,31 @@ check(
     block.includes(">WATCH</text>") &&
     block.includes(">GOOD</text>"),
   "GPU chart should restore GOOD / WATCH / RISK band labels inside the color zones."
+);
+
+check(
+  "GPU_CAPACITY_ENVELOPE_PARITY_NO_VISIBLE_MARKER_LABELS",
+  !block.includes("ref-label") &&
+    !block.includes("marker-label-current") &&
+    !block.includes("marker-label-growth") &&
+    !block.includes("marker-label-failover") &&
+    !block.includes("legend-ref-current") &&
+    !block.includes("legend-ref-growth") &&
+    !block.includes("legend-ref-failover") &&
+    block.includes('data-ref="') &&
+    block.includes("<title>"),
+  "GPU should not visually print *1/*2/*3 inside the chart; marker linkage should remain available through data-ref/title and the references card below."
+);
+
+check(
+  "GPU_CAPACITY_ENVELOPE_PARITY_BLUE_EDGE_EVICTED",
+  html.includes("compute-gpu-capacity-envelope-ram-polish-0622b") &&
+    html.includes("#computeGpuVisual") &&
+    html.includes("#computeGpuEnvelope") &&
+    html.includes("outline: none !important") &&
+    html.includes("rgba(44,255,155,.20"),
+  "GPU chart wrapper, visual shell, and envelope shell should evict the remaining blue edge.",
+  htmlFile
 );
 
 let pass = 0;

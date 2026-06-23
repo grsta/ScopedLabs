@@ -463,6 +463,48 @@
       border-radius: 16px;
     }
   </style>
+
+  <style id="compute-gpu-capacity-envelope-ram-polish-0622b">
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuEngineeringSummary,
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuVisualCard,
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuVisual,
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuEnvelope,
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuReferencesCard {
+      background: linear-gradient(180deg, rgba(7,17,15,.96) 0%, rgba(4,11,9,.985) 100%) !important;
+      border-color: rgba(44,255,155,.20) !important;
+      box-shadow: inset 0 0 0 1px rgba(44,255,155,.04) !important;
+      outline: none !important;
+    }
+
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuVisualCard,
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuVisual,
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuEnvelope {
+      border: 1px solid rgba(44,255,155,.20) !important;
+    }
+
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuVisualCard * {
+      border-color: rgba(44,255,155,.20);
+    }
+
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuEngineeringSummary .compute-gpu-engineering-metric {
+      background: rgba(3,10,8,.62) !important;
+      border-color: rgba(44,255,155,.14) !important;
+    }
+
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuEngineeringSummary .compute-gpu-status-chip {
+      background: rgba(250,204,21,.10) !important;
+      border-color: rgba(250,204,21,.65) !important;
+    }
+
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuVisualCard svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 16px;
+      outline: none !important;
+      box-shadow: none !important;
+    }
+  </style>
 </head>
 
 <body data-tier="pro" data-category="compute" data-step="gpu-vram" data-lane="v1" data-compute-tool-shell="0614" data-sl-square-ctas="true" data-sl-clean-knowledge-card="true">
@@ -768,7 +810,7 @@
 <script src="/assets/scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-018-ram-capacity-marker"></script>
 
   <script src="/assets/scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-007-workload-nav-links"></script>
-  <script src="./script.js?v=compute-gpu-vram-capacity-envelope-ram-parity-0622"></script>
+  <script src="./script.js?v=compute-gpu-vram-capacity-envelope-ram-polish-0622b"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
 <script src="/assets/scopedlabs-compute-assistant-contract.js?v=compute-assistant-gpu-vram-shell-proof-0621"></script>

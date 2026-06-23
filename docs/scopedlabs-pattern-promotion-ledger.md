@@ -211,3 +211,20 @@ Revisit trigger: Promote accepted GPU envelope behavior into assets/scopedlabs-c
 
 Audit:
 - scripts/audit-compute-gpu-vram-capacity-envelope-parity-v1.js
+
+
+### COMPUTE-GPU-VRAM-CAPACITY-ENVELOPE-RAM-POLISH-0622B
+
+Status: APPROVED_LOCAL_PROOF_POLISH
+
+Changed path:
+- tools/compute/gpu-vram/index.html
+- tools/compute/gpu-vram/script.js
+- scripts/audit-compute-gpu-vram-capacity-envelope-parity-v1.js
+
+Approved local proof polish: Removes visible chart footnote labels and evicts the remaining blue chart/card edge while preserving marker linkage and the Recommendation References card below the GPU chart.
+
+Revisit trigger: Promote accepted GPU envelope behavior into assets/scopedlabs-compute-capacity-visuals.js after live acceptance.
+
+Audit:
+- scripts/audit-compute-gpu-vram-capacity-envelope-parity-v1.js

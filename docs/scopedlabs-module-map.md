@@ -1210,3 +1210,12 @@ Promotion note:
 - Scope: GPU VRAM capacity envelope RAM-parity correction.
 - Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
 - Contract: Removes the rejected inline chart legend, preserves the Recommendation References card below the chart, restores GOOD/WATCH/RISK band labels inside the color bands, and removes remaining blue edge treatment from the GPU engineering result and visual wrapper.
+
+
+### COMPUTE_GPU_VRAM_CAPACITY_ENVELOPE_RAM_POLISH_0622B
+
+- Status: PROOF_GATE_POLISH
+- Owner: scripts/audit-compute-gpu-vram-capacity-envelope-parity-v1.js
+- Scope: GPU VRAM capacity envelope RAM-rhythm polish.
+- Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
+- Contract: Evicts the remaining blue chart/card edge and removes visible *1/*2/*3 labels from the SVG while preserving chart-linked marker data through data-ref/title and preserving the Recommendation References card below the chart.
