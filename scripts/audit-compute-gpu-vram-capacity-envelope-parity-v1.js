@@ -96,15 +96,17 @@ check(
 );
 
 check(
-  "GPU_CAPACITY_ENVELOPE_PARITY_REFERENCES",
+  "GPU_CAPACITY_ENVELOPE_PARITY_MARKER_REFERENCES",
   block.includes("*1") &&
     block.includes("*2") &&
     block.includes("*3") &&
-    block.includes("Demand basis") &&
-    block.includes("Reserve pressure") &&
-    block.includes("Validation rail"),
-  "GPU envelope should include chart-linked *1/*2/*3 references."
-);
+    block.includes('data-ref="') &&
+    block.includes("ref-label") &&
+    block.includes("marker-label-current") &&
+    block.includes("marker-label-growth") &&
+    block.includes("marker-label-failover"),
+  "GPU envelope should keep chart-linked *1/*2/*3 marker references on the plotted points while the explanation lives in the Recommendation References card."
+)
 
 check(
   "GPU_CAPACITY_ENVELOPE_PARITY_RAILS",
@@ -154,16 +156,47 @@ check(
     html.includes("#computeGpuEngineeringSummary") &&
     html.includes("#computeGpuVisualCard") &&
     html.includes("rgba(44,255,155,.18)"),
-  "GPU engineering result and visual wrapper should use the normal green/dark compute card treatment."
+  "GPU engineering result and visual wrapper should use the normal green/dark compute card treatment, with blue edge treatment removed."
 , htmlFile);
 
 check(
-  "GPU_CAPACITY_ENVELOPE_PARITY_CENTERED_LEGEND",
-  block.includes('text x="172" y="382" text-anchor="middle" class="legend-ref legend-ref-current">*1</text>') &&
-    block.includes('text x="360" y="382" text-anchor="middle" class="legend-ref legend-ref-growth">*2</text>') &&
-    block.includes('text x="548" y="382" text-anchor="middle" class="legend-ref legend-ref-failover">*3</text>') &&
-    block.includes("font-size:9px"),
-  "GPU chart references should be smaller and centered as a separate legend row."
+  "GPU_CAPACITY_ENVELOPE_PARITY_RAM_REFERENCE_PATTERN",
+  !block.includes("legend-ref-current") &&
+    !block.includes("legend-ref-growth") &&
+    !block.includes("legend-ref-failover") &&
+    html.includes('id="computeGpuReferencesCard"') &&
+    html.includes('id="computeGpuReferences"'),
+  "GPU should follow RAM reference rhythm: no inline SVG legend row, with Recommendation References preserved below the chart."
+, htmlFile)
+
+
+check(
+  "GPU_CAPACITY_ENVELOPE_PARITY_NO_INLINE_LEGEND",
+  !block.includes("Demand basis</text>") &&
+    !block.includes("Reserve pressure</text>") &&
+    !block.includes("Validation rail</text>") &&
+    !block.includes("legend-ref-current") &&
+    !block.includes("legend-ref-growth") &&
+    !block.includes("legend-ref-failover"),
+  "GPU chart should not keep a RAM-rejected inline footnote legend row inside the SVG."
+);
+
+check(
+  "GPU_CAPACITY_ENVELOPE_PARITY_RECOMMENDATION_REFERENCES_CARD_PRESERVED",
+  html.includes('id="computeGpuReferencesCard"') &&
+    html.includes('id="computeGpuReferences"'),
+  "GPU should keep the Recommendation References card below the chart, matching RAM rhythm."
+, htmlFile);
+
+check(
+  "GPU_CAPACITY_ENVELOPE_PARITY_BAND_LABELS_PRESENT",
+  block.includes("band-label-risk") &&
+    block.includes("band-label-watch") &&
+    block.includes("band-label-good") &&
+    block.includes(">RISK</text>") &&
+    block.includes(">WATCH</text>") &&
+    block.includes(">GOOD</text>"),
+  "GPU chart should restore GOOD / WATCH / RISK band labels inside the color zones."
 );
 
 let pass = 0;

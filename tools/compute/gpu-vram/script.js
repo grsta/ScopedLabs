@@ -628,7 +628,7 @@
     const scaleMax = max * 1.18;
     const width = 760;
     const height = 430;
-    const plot = { x: 72, y: 104, w: 606, h: 220 };
+    const plot = { x: 72, y: 104, w: 606, h: 224 };
     const xDemand = plot.x + 115;
     const xRequired = plot.x + 305;
     const xUsable = plot.x + 492;
@@ -672,7 +672,7 @@
       {
         ref: "*1",
         tone: "current",
-        label: "Demand basis",
+        label: "Demand",
         x: xDemand,
         y: demandY,
         detail: "Raw model, batch, runtime cache, checkpoint, and workspace demand before reserve multipliers."
@@ -680,7 +680,7 @@
       {
         ref: "*2",
         tone: "growth",
-        label: "Reserve pressure",
+        label: "Required",
         x: xRequired,
         y: requiredY,
         detail: "Required VRAM after precision, parallelism, growth reserve, failover, and sharing assumptions."
@@ -688,7 +688,7 @@
       {
         ref: "*3",
         tone: "failover",
-        label: "Validation rail",
+        label: "Installed",
         x: xUsable,
         y: usableY,
         detail: "Usable planning capacity after target utilization and display reserve are applied."
@@ -727,7 +727,7 @@
       '<stop offset="100%" stop-color="#040b09"/>',
       '</linearGradient>',
       '<style>',
-      '.plot-bg{fill:url(#computeGpuEnvelopeBg0622)}.plot-frame{fill:rgba(255,255,255,.012);stroke:rgba(44,255,155,.20);stroke-width:1}.zone-good{fill:rgba(44,255,155,.055)}.zone-watch{fill:rgba(250,204,21,.055)}.zone-risk{fill:rgba(239,68,68,.06)}.grid{fill:none;stroke:rgba(238,246,255,.08);stroke-width:1}.grid-major{fill:none;stroke:rgba(238,246,255,.14);stroke-width:1}.axis{fill:none;stroke:rgba(238,246,255,.42);stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}.tick{fill:rgba(203,213,225,.90);font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700}.axis-label{fill:rgba(203,213,225,.92);font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:750;letter-spacing:.5px}.header{fill:#eef6ff;font-family:Inter,Arial,Helvetica,sans-serif;font-size:18px;font-weight:900;letter-spacing:.5px}.subhead{fill:rgba(203,213,225,.86);font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:650}.capacity-line{fill:none;stroke:#2cff9b;stroke-width:1.6;stroke-linecap:round}.installed-line{fill:none;stroke:rgba(203,213,225,.55);stroke-width:1;stroke-dasharray:6 5}.watch-line{fill:none;stroke:rgba(250,204,21,.70);stroke-width:1;stroke-dasharray:5 5}.risk-line{fill:none;stroke:rgba(255,77,90,.82);stroke-width:1;stroke-dasharray:5 5}.curve-shadow{fill:none;stroke:rgba(44,255,155,.22);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.curve{fill:none;stroke:#2cff9b;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}.marker-current{fill:#38d9ff;stroke:#04110d;stroke-width:1.2}.marker-growth{fill:#a78bfa;stroke:#04110d;stroke-width:1.2}.marker-failover{fill:#f59e0b;stroke:#04110d;stroke-width:1.2}.marker-ring{fill:none;stroke:rgba(238,246,255,.72);stroke-width:1}.ref-line{fill:none;stroke:rgba(238,246,255,.16);stroke-width:1;stroke-dasharray:4 4}.ref-label{font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:900;letter-spacing:.4px}.marker-label-current{fill:#38d9ff}.marker-label-growth{fill:#a78bfa}.marker-label-failover{fill:#f59e0b}.rail-label{fill:rgba(203,213,225,.82);font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:750}.status-chip{stroke-width:1}.status-text{font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;letter-spacing:.7px}.legend-ref-current{fill:#38d9ff}.legend-ref-growth{fill:#a78bfa}.legend-ref-failover{fill:#f59e0b}.legend-ref{font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:950}.legend-copy{font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:760;fill:rgba(203,213,225,.88)}',
+      '.plot-bg{fill:url(#computeGpuEnvelopeBg0622)}.plot-frame{fill:rgba(255,255,255,.012);stroke:rgba(44,255,155,.20);stroke-width:1}.zone-good{fill:rgba(44,255,155,.055)}.zone-watch{fill:rgba(250,204,21,.055)}.zone-risk{fill:rgba(239,68,68,.06)}.grid{fill:none;stroke:rgba(238,246,255,.08);stroke-width:1}.grid-major{fill:none;stroke:rgba(238,246,255,.14);stroke-width:1}.axis{fill:none;stroke:rgba(238,246,255,.42);stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}.tick{fill:rgba(203,213,225,.90);font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700}.axis-label{fill:rgba(203,213,225,.92);font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:750;letter-spacing:.5px}.header{fill:#eef6ff;font-family:Inter,Arial,Helvetica,sans-serif;font-size:18px;font-weight:900;letter-spacing:.5px}.subhead{fill:rgba(203,213,225,.86);font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:650}.capacity-line{fill:none;stroke:#2cff9b;stroke-width:1.6;stroke-linecap:round}.installed-line{fill:none;stroke:rgba(203,213,225,.55);stroke-width:1;stroke-dasharray:6 5}.watch-line{fill:none;stroke:rgba(250,204,21,.70);stroke-width:1;stroke-dasharray:5 5}.risk-line{fill:none;stroke:rgba(255,77,90,.82);stroke-width:1;stroke-dasharray:5 5}.curve-shadow{fill:none;stroke:rgba(44,255,155,.22);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.curve{fill:none;stroke:#2cff9b;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}.marker-current{fill:#38d9ff;stroke:#04110d;stroke-width:1.2}.marker-growth{fill:#a78bfa;stroke:#04110d;stroke-width:1.2}.marker-failover{fill:#f59e0b;stroke:#04110d;stroke-width:1.2}.marker-ring{fill:none;stroke:rgba(238,246,255,.72);stroke-width:1}.ref-line{fill:none;stroke:rgba(238,246,255,.16);stroke-width:1;stroke-dasharray:4 4}.ref-label{font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:900;letter-spacing:.4px}.marker-label-current{fill:#38d9ff}.marker-label-growth{fill:#a78bfa}.marker-label-failover{fill:#f59e0b}.rail-label{fill:rgba(203,213,225,.82);font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:750}.status-chip{stroke-width:1}.status-text{font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;letter-spacing:.7px}.band-label-good{fill:#2cff9b;font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;letter-spacing:.5px}.band-label-watch{fill:#facc15;font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;letter-spacing:.5px}.band-label-risk{fill:#ff4d5a;font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;letter-spacing:.5px}',
       '</style>',
       '</defs>',
       '<rect width="' + width + '" height="' + height + '" rx="18" class="plot-bg"/>',
@@ -747,17 +747,14 @@
       '<path d="M' + plot.x + ' ' + watchY.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="watch-line"/>',
       '<path d="M' + plot.x + ' ' + usableY.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="capacity-line"/>',
       '<path d="M' + plot.x + ' ' + installedY.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="installed-line"/>',
+      '<text x="' + (plot.x + 18) + '" y="' + (plot.y + 20) + '" class="band-label-risk">RISK</text>',
+      '<text x="' + (plot.x + 18) + '" y="' + (watchY - 8).toFixed(1) + '" class="band-label-watch">WATCH</text>',
+      '<text x="' + (plot.x + 18) + '" y="' + (plot.y + plot.h - 16) + '" class="band-label-good">GOOD</text>',
       '<text x="' + (plot.x + plot.w - 4) + '" y="' + (usableY - 7).toFixed(1) + '" text-anchor="end" class="rail-label">usable planning rail</text>',
       '<text x="' + (plot.x + plot.w - 4) + '" y="' + (installedY - 7).toFixed(1) + '" text-anchor="end" class="rail-label">installed VRAM rail</text>',
       '<path d="' + curvePath + '" class="curve-shadow"/>',
       '<path d="' + curvePath + '" class="curve"/>',
       points.map(marker).join(""),
-      '<text x="172" y="382" text-anchor="middle" class="legend-ref legend-ref-current">*1</text>',
-      '<text x="205" y="382" text-anchor="middle" class="legend-copy">Demand basis</text>',
-      '<text x="360" y="382" text-anchor="middle" class="legend-ref legend-ref-growth">*2</text>',
-      '<text x="409" y="382" text-anchor="middle" class="legend-copy">Reserve pressure</text>',
-      '<text x="548" y="382" text-anchor="middle" class="legend-ref legend-ref-failover">*3</text>',
-      '<text x="598" y="382" text-anchor="middle" class="legend-copy">Validation rail</text>',
       '<text x="50" y="407" class="axis-label">Capacity edge: watch at 70% of usable VRAM, risk at 90%</text>',
       '</svg>'
     ].join("");

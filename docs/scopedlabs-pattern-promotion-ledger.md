@@ -194,3 +194,20 @@ Revisit trigger: Promote accepted GPU envelope behavior into assets/scopedlabs-c
 
 Audit:
 - scripts/audit-compute-gpu-vram-capacity-envelope-parity-v1.js
+
+
+### COMPUTE-GPU-VRAM-CAPACITY-ENVELOPE-RAM-PARITY-0622
+
+Status: APPROVED_LOCAL_PROOF_POLISH
+
+Changed path:
+- tools/compute/gpu-vram/index.html
+- tools/compute/gpu-vram/script.js
+- scripts/audit-compute-gpu-vram-capacity-envelope-parity-v1.js
+
+Approved local proof polish: GPU VRAM chart is corrected to match accepted RAM rhythm by removing the inline chart legend row, keeping Recommendation References below the chart, restoring GOOD/WATCH/RISK band labels inside the chart, and removing remaining blue edge treatment.
+
+Revisit trigger: Promote accepted GPU envelope behavior into assets/scopedlabs-compute-capacity-visuals.js after live acceptance.
+
+Audit:
+- scripts/audit-compute-gpu-vram-capacity-envelope-parity-v1.js

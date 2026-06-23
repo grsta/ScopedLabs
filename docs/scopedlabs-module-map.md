@@ -1201,3 +1201,12 @@ Promotion note:
 - Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
 - Contract: Keeps the Lane 4 GPU VRAM capacity-envelope proof under permanent audit while allowing the live polish pass to remove remaining blue card/wrapper treatment, normalize the engineering result card to the green/dark Compute visual language, and center/smaller-size the *1/*2/*3 chart reference legend.
 - Guardrail: Later GPU script cache-bust versions may advance within the GPU lane as long as the GPU-owned cache-bust remains present and the capacity envelope parity audit passes.
+
+
+### COMPUTE_GPU_VRAM_CAPACITY_ENVELOPE_RAM_PARITY_0622
+
+- Status: PROOF_GATE_POLISH
+- Owner: scripts/audit-compute-gpu-vram-capacity-envelope-parity-v1.js
+- Scope: GPU VRAM capacity envelope RAM-parity correction.
+- Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
+- Contract: Removes the rejected inline chart legend, preserves the Recommendation References card below the chart, restores GOOD/WATCH/RISK band labels inside the color bands, and removes remaining blue edge treatment from the GPU engineering result and visual wrapper.
