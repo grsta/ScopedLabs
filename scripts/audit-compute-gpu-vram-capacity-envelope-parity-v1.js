@@ -107,15 +107,15 @@ check(
   "GPU_CAPACITY_ENVELOPE_PARITY_MARKER_REFERENCES",
   block.includes("*1") &&
     block.includes("*2") &&
-    block.includes("*3") &&
+    !block.includes('ref: "*3"') &&
     block.includes('data-ref="') &&
     block.includes("<title>") &&
     !block.includes("ref-label") &&
     !block.includes("marker-label-current") &&
     !block.includes("marker-label-growth") &&
     !block.includes("marker-label-failover"),
-  "GPU envelope should preserve chart-linked *1/*2/*3 marker data without visible footnote labels inside the chart."
-);
+  "GPU envelope should preserve chart-linked *1/*2 marker data on plotted workload/status points; *3 belongs in the Recommendation References/capacity-rail context, not as a plotted workload marker."
+)
 
 check(
   "GPU_CAPACITY_ENVELOPE_PARITY_RAILS",
@@ -229,12 +229,13 @@ check(
 
 check(
   "GPU_CAPACITY_ENVELOPE_PARITY_STATUS_CLARITY",
-  block.includes('tone: "capacity"') &&
-    block.includes('label: "Usable rail"') &&
-    block.includes("marker-capacity") &&
+  block.includes("capacity-rail-dot") &&
+    block.includes("usable planning rail") &&
+    !block.includes('label: "Usable rail"') &&
+    !block.includes('tone: "capacity"') &&
     block.includes("risk threshold</text>") &&
     block.includes("watch threshold</text>"),
-  "GPU chart should show the right rail as a capacity/usable rail marker and label the risk/watch threshold lines so WATCH status is visually clear."
+  "GPU chart should keep usable capacity as a horizontal rail only, not a plotted workload/status point, and label the risk/watch threshold lines."
 );
 
 check(
@@ -247,6 +248,17 @@ check(
     html.includes("border: 0 !important"),
   "GPU visual polish should remove the remaining blue edge around the chart wrapper and inner SVG shells."
 , htmlFile);
+
+
+check(
+  "GPU_CAPACITY_ENVELOPE_PARITY_REQUIRED_DRIVES_STATUS",
+  block.includes('label: "Required"') &&
+    block.includes("xRequired") &&
+    block.includes("requiredY") &&
+    !block.includes('label: "Usable rail"') &&
+    !block.includes('tone: "capacity"'),
+  "GPU chart should make Required the final plotted workload/status point; usable capacity should not appear as a workload point."
+);
 
 let pass = 0;
 let fail = 0;

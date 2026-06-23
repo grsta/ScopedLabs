@@ -245,3 +245,18 @@ Revisit trigger: Promote accepted GPU envelope behavior into assets/scopedlabs-c
 
 Audit:
 - scripts/audit-compute-gpu-vram-capacity-envelope-parity-v1.js
+
+
+### COMPUTE-GPU-VRAM-CAPACITY-ENVELOPE-REQUIRED-STATUS-0622D
+
+Status: APPROVED_LOCAL_PROOF_POLISH
+
+Changed path:
+- tools/compute/gpu-vram/index.html
+- tools/compute/gpu-vram/script.js
+- scripts/audit-compute-gpu-vram-capacity-envelope-parity-v1.js
+
+Approved local proof polish: Required VRAM is now the final plotted workload/status point. Usable VRAM is a horizontal capacity rail only, preserving the correct WATCH/RISK math while removing the misleading visual impression that the status point is in the risk zone.
+
+Audit:
+- scripts/audit-compute-gpu-vram-capacity-envelope-parity-v1.js

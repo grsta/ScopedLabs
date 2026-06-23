@@ -683,14 +683,6 @@
         x: xRequired,
         y: requiredY,
         detail: "Required VRAM after precision, parallelism, growth reserve, failover, and sharing assumptions."
-      },
-      {
-        ref: "*3",
-        tone: "capacity",
-        label: "Usable rail",
-        x: xUsable,
-        y: usableY,
-        detail: "Usable planning capacity after target utilization and display reserve are applied."
       }
     ];
 
@@ -712,11 +704,9 @@
     }).join("");
 
     const curvePath = "M" + xDemand.toFixed(1) + " " + demandY.toFixed(1) +
-      " C" + (xDemand + 70).toFixed(1) + " " + demandY.toFixed(1) + ", " +
-      (xRequired - 70).toFixed(1) + " " + requiredY.toFixed(1) + ", " +
-      xRequired.toFixed(1) + " " + requiredY.toFixed(1) +
-      " S" + (xUsable - 80).toFixed(1) + " " + usableY.toFixed(1) + ", " +
-      xUsable.toFixed(1) + " " + usableY.toFixed(1);
+      " C" + (xDemand + 80).toFixed(1) + " " + demandY.toFixed(1) + ", " +
+      (xRequired - 80).toFixed(1) + " " + requiredY.toFixed(1) + ", " +
+      xRequired.toFixed(1) + " " + requiredY.toFixed(1);
 
     return [
       '<svg data-export-svg="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" width="100%" role="img" aria-label="GPU VRAM Capacity Envelope analytic graph" data-compute-visual="gpu-vram-capacity-envelope" data-compute-capacity-visual="gpu-vram-envelope">',
@@ -726,7 +716,7 @@
       '<stop offset="100%" stop-color="#040b09"/>',
       '</linearGradient>',
       '<style>',
-      '.plot-bg{fill:url(#computeGpuEnvelopeBg0622)}.plot-frame{fill:rgba(255,255,255,.012);stroke:rgba(44,255,155,.20);stroke-width:1}.zone-good{fill:rgba(44,255,155,.055)}.zone-watch{fill:rgba(250,204,21,.055)}.zone-risk{fill:rgba(239,68,68,.06)}.grid{fill:none;stroke:rgba(238,246,255,.08);stroke-width:1}.grid-major{fill:none;stroke:rgba(238,246,255,.14);stroke-width:1}.axis{fill:none;stroke:rgba(238,246,255,.42);stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}.tick{fill:rgba(203,213,225,.90);font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700}.axis-label{fill:rgba(203,213,225,.92);font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:750;letter-spacing:.5px}.header{fill:#eef6ff;font-family:Inter,Arial,Helvetica,sans-serif;font-size:18px;font-weight:900;letter-spacing:.5px}.subhead{fill:rgba(203,213,225,.86);font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:650}.capacity-line{fill:none;stroke:#2cff9b;stroke-width:1.6;stroke-linecap:round}.installed-line{fill:none;stroke:rgba(203,213,225,.55);stroke-width:1;stroke-dasharray:6 5}.watch-line{fill:none;stroke:rgba(250,204,21,.70);stroke-width:1;stroke-dasharray:5 5}.risk-line{fill:none;stroke:rgba(255,77,90,.82);stroke-width:1;stroke-dasharray:5 5}.curve-shadow{fill:none;stroke:rgba(44,255,155,.22);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.curve{fill:none;stroke:#2cff9b;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}.marker-current{fill:#38d9ff;stroke:#04110d;stroke-width:1.2}.marker-growth{fill:#a78bfa;stroke:#04110d;stroke-width:1.2}.marker-capacity{fill:#2cff9b;stroke:#04110d;stroke-width:1.2}.marker-failover{fill:#f59e0b;stroke:#04110d;stroke-width:1.2}.marker-ring{fill:none;stroke:rgba(238,246,255,.72);stroke-width:1}.ref-line{fill:none;stroke:rgba(238,246,255,.16);stroke-width:1;stroke-dasharray:4 4}.rail-label{fill:rgba(203,213,225,.82);font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:750}.status-chip{stroke-width:1}.status-text{font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;letter-spacing:.7px}.band-label-good{fill:#2cff9b;font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;letter-spacing:.5px}.threshold-label-risk{fill:#ff4d5a;font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:850;letter-spacing:.35px}.threshold-label-watch{fill:#facc15;font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:850;letter-spacing:.35px}.band-label-watch{fill:#facc15;font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;letter-spacing:.5px}.band-label-risk{fill:#ff4d5a;font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;letter-spacing:.5px}',
+      '.plot-bg{fill:url(#computeGpuEnvelopeBg0622)}.plot-frame{fill:rgba(255,255,255,.012);stroke:rgba(44,255,155,.20);stroke-width:1}.zone-good{fill:rgba(44,255,155,.055)}.zone-watch{fill:rgba(250,204,21,.055)}.zone-risk{fill:rgba(239,68,68,.06)}.grid{fill:none;stroke:rgba(238,246,255,.08);stroke-width:1}.grid-major{fill:none;stroke:rgba(238,246,255,.14);stroke-width:1}.axis{fill:none;stroke:rgba(238,246,255,.42);stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}.tick{fill:rgba(203,213,225,.90);font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700}.axis-label{fill:rgba(203,213,225,.92);font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:750;letter-spacing:.5px}.header{fill:#eef6ff;font-family:Inter,Arial,Helvetica,sans-serif;font-size:18px;font-weight:900;letter-spacing:.5px}.subhead{fill:rgba(203,213,225,.86);font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:650}.capacity-line{fill:none;stroke:#2cff9b;stroke-width:1.6;stroke-linecap:round}.capacity-rail-dot{fill:#2cff9b;stroke:#04110d;stroke-width:1.1}.installed-line{fill:none;stroke:rgba(203,213,225,.55);stroke-width:1;stroke-dasharray:6 5}.watch-line{fill:none;stroke:rgba(250,204,21,.70);stroke-width:1;stroke-dasharray:5 5}.risk-line{fill:none;stroke:rgba(255,77,90,.82);stroke-width:1;stroke-dasharray:5 5}.curve-shadow{fill:none;stroke:rgba(44,255,155,.22);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.curve{fill:none;stroke:#2cff9b;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}.marker-current{fill:#38d9ff;stroke:#04110d;stroke-width:1.2}.marker-growth{fill:#a78bfa;stroke:#04110d;stroke-width:1.2}.marker-capacity{fill:#2cff9b;stroke:#04110d;stroke-width:1.2}.marker-failover{fill:#f59e0b;stroke:#04110d;stroke-width:1.2}.marker-ring{fill:none;stroke:rgba(238,246,255,.72);stroke-width:1}.ref-line{fill:none;stroke:rgba(238,246,255,.16);stroke-width:1;stroke-dasharray:4 4}.rail-label{fill:rgba(203,213,225,.82);font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:750}.status-chip{stroke-width:1}.status-text{font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;letter-spacing:.7px}.band-label-good{fill:#2cff9b;font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;letter-spacing:.5px}.threshold-label-risk{fill:#ff4d5a;font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:850;letter-spacing:.35px}.threshold-label-watch{fill:#facc15;font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:850;letter-spacing:.35px}.band-label-watch{fill:#facc15;font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;letter-spacing:.5px}.band-label-risk{fill:#ff4d5a;font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;letter-spacing:.5px}',
       '</style>',
       '</defs>',
       '<rect width="' + width + '" height="' + height + '" rx="18" class="plot-bg"/>',
@@ -747,6 +737,7 @@
       '<path d="M' + plot.x + ' ' + watchY.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="watch-line"/>',
       '<text x="' + (plot.x + plot.w - 6) + '" y="' + (watchY - 6).toFixed(1) + '" text-anchor="end" class="threshold-label-watch">watch threshold</text>',
       '<path d="M' + plot.x + ' ' + usableY.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="capacity-line"/>',
+      '<circle cx="' + (plot.x + plot.w - 8).toFixed(1) + '" cy="' + usableY.toFixed(1) + '" r="3.6" class="capacity-rail-dot"/>',
       '<path d="M' + plot.x + ' ' + installedY.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="installed-line"/>',
       '<text x="' + (plot.x + 18) + '" y="' + (plot.y + 20) + '" class="band-label-risk">RISK</text>',
       '<text x="' + (plot.x + 18) + '" y="' + (watchY - 8).toFixed(1) + '" class="band-label-watch">WATCH</text>',

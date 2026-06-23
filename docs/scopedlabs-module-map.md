@@ -1228,3 +1228,12 @@ Promotion note:
 - Scope: GPU VRAM capacity envelope status-clarity polish.
 - Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
 - Contract: Keeps GPU status math unchanged while changing the right-side point into a green usable/capacity rail marker, labeling the risk/watch threshold lines, and removing the remaining blue chart-wrapper edge.
+
+
+### COMPUTE_GPU_VRAM_CAPACITY_ENVELOPE_REQUIRED_STATUS_0622D
+
+- Status: PROOF_GATE_POLISH
+- Owner: scripts/audit-compute-gpu-vram-capacity-envelope-parity-v1.js
+- Scope: GPU VRAM capacity envelope status-point clarity.
+- Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
+- Contract: Keeps WATCH/RISK math unchanged but makes Required VRAM the final plotted workload/status point. Usable VRAM remains a horizontal capacity rail, not a plotted status marker, so the chart no longer appears to show the status point inside the risk zone.
