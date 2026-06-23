@@ -226,6 +226,28 @@ check(
   htmlFile
 );
 
+
+check(
+  "GPU_CAPACITY_ENVELOPE_PARITY_STATUS_CLARITY",
+  block.includes('tone: "capacity"') &&
+    block.includes('label: "Usable rail"') &&
+    block.includes("marker-capacity") &&
+    block.includes("risk threshold</text>") &&
+    block.includes("watch threshold</text>"),
+  "GPU chart should show the right rail as a capacity/usable rail marker and label the risk/watch threshold lines so WATCH status is visually clear."
+);
+
+check(
+  "GPU_CAPACITY_ENVELOPE_PARITY_BLUE_EDGE_CLARITY_POLISH",
+  html.includes('id="compute-gpu-capacity-envelope-clarity-0622c"') &&
+    html.includes("#computeGpuVisualCard") &&
+    html.includes("#computeGpuVisual") &&
+    html.includes("#computeGpuEnvelope") &&
+    html.includes("rgba(44,255,155,.28)") &&
+    html.includes("border: 0 !important"),
+  "GPU visual polish should remove the remaining blue edge around the chart wrapper and inner SVG shells."
+, htmlFile);
+
 let pass = 0;
 let fail = 0;
 

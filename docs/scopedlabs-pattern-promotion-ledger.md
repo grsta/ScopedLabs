@@ -228,3 +228,20 @@ Revisit trigger: Promote accepted GPU envelope behavior into assets/scopedlabs-c
 
 Audit:
 - scripts/audit-compute-gpu-vram-capacity-envelope-parity-v1.js
+
+
+### COMPUTE-GPU-VRAM-CAPACITY-ENVELOPE-CLARITY-0622C
+
+Status: APPROVED_LOCAL_PROOF_POLISH
+
+Changed path:
+- tools/compute/gpu-vram/index.html
+- tools/compute/gpu-vram/script.js
+- scripts/audit-compute-gpu-vram-capacity-envelope-parity-v1.js
+
+Approved local proof polish: Keeps WATCH/RISK math untouched while making the GPU chart clearer: the right-side rail is now a green capacity/usable rail marker, threshold lines are labeled, and the remaining blue chart edge is evicted.
+
+Revisit trigger: Promote accepted GPU envelope behavior into assets/scopedlabs-compute-capacity-visuals.js after live acceptance.
+
+Audit:
+- scripts/audit-compute-gpu-vram-capacity-envelope-parity-v1.js

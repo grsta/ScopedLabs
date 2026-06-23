@@ -1219,3 +1219,12 @@ Promotion note:
 - Scope: GPU VRAM capacity envelope RAM-rhythm polish.
 - Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
 - Contract: Evicts the remaining blue chart/card edge and removes visible *1/*2/*3 labels from the SVG while preserving chart-linked marker data through data-ref/title and preserving the Recommendation References card below the chart.
+
+
+### COMPUTE_GPU_VRAM_CAPACITY_ENVELOPE_CLARITY_0622C
+
+- Status: PROOF_GATE_POLISH
+- Owner: scripts/audit-compute-gpu-vram-capacity-envelope-parity-v1.js
+- Scope: GPU VRAM capacity envelope status-clarity polish.
+- Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
+- Contract: Keeps GPU status math unchanged while changing the right-side point into a green usable/capacity rail marker, labeling the risk/watch threshold lines, and removing the remaining blue chart-wrapper edge.
