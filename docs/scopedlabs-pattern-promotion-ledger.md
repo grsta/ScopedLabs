@@ -260,3 +260,17 @@ Approved local proof polish: Required VRAM is now the final plotted workload/sta
 
 Audit:
 - scripts/audit-compute-gpu-vram-capacity-envelope-parity-v1.js
+
+
+### COMPUTE-GPU-VRAM-CAPACITY-ENVELOPE-REQUIRED-STATUS-AUDIT-0622E
+
+Status: APPROVED_LOCAL_PROOF_AUDIT_ALIGNMENT
+
+Changed path:
+- scripts/audit-compute-gpu-vram-capacity-envelope-parity-v1.js
+- docs/scopedlabs-module-map.md
+
+Approved audit alignment: The GPU VRAM capacity-envelope audit now matches the accepted visual behavior. Demand and Required remain the plotted workload/status points. Usable VRAM is a horizontal capacity rail only. *3 is preserved through Recommendation References / capacity-rail context, not as a plotted workload marker.
+
+Audit:
+- scripts/audit-compute-gpu-vram-capacity-envelope-parity-v1.js

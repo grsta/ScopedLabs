@@ -1237,3 +1237,13 @@ Promotion note:
 - Scope: GPU VRAM capacity envelope status-point clarity.
 - Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
 - Contract: Keeps WATCH/RISK math unchanged but makes Required VRAM the final plotted workload/status point. Usable VRAM remains a horizontal capacity rail, not a plotted status marker, so the chart no longer appears to show the status point inside the risk zone.
+
+
+### COMPUTE_GPU_VRAM_CAPACITY_ENVELOPE_REQUIRED_STATUS_AUDIT_0622E
+
+- Status: PROOF_GATE_AUDIT_ALIGNMENT
+- Owner: scripts/audit-compute-gpu-vram-capacity-envelope-parity-v1.js
+- Scope: GPU VRAM capacity envelope required-status audit alignment.
+- Consumer: tools/compute/gpu-vram/script.js; tools/compute/gpu-vram/index.html
+- Contract: Updates the Lane 4 capacity-envelope audit so the accepted chart pattern is protected correctly: Demand and Required are plotted workload/status points, Usable VRAM is a horizontal capacity rail only, and *3 is handled through Recommendation References / capacity-rail context instead of a plotted workload marker.
+- Guardrail: Any future audit change for this lane must update this module map in the same commit.

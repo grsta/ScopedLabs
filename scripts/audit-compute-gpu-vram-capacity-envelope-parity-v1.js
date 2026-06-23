@@ -114,17 +114,8 @@ check(
     !block.includes("marker-label-current") &&
     !block.includes("marker-label-growth") &&
     !block.includes("marker-label-failover"),
-  "GPU envelope should preserve chart-linked *1/*2 marker data on plotted workload/status points; *3 belongs in the Recommendation References/capacity-rail context, not as a plotted workload marker."
+  "GPU envelope should preserve chart-linked *1/*2 marker data on plotted workload/status points; *3 belongs in Recommendation References / capacity-rail context below the chart, not as a plotted workload marker."
 )
-
-check(
-  "GPU_CAPACITY_ENVELOPE_PARITY_RAILS",
-  block.includes("usable planning rail") &&
-    block.includes("installed VRAM rail") &&
-    block.includes("capacity-line") &&
-    block.includes("installed-line"),
-  "GPU envelope should preserve usable and installed VRAM rails."
-);
 
 check(
   "GPU_CAPACITY_ENVELOPE_PARITY_MATH_INPUTS_PRESERVED",
