@@ -63,7 +63,6 @@ function functionBlock(source, functionName) {
   return "";
 }
 
-const renderGpuEngineeringPlan = functionBlock(script, "renderGpuEngineeringPlan");
 const renderReferences = functionBlock(script, "renderReferences");
 const renderGpuProofSections = functionBlock(script, "renderGpuProofSections");
 const clearGpuProofSections = functionBlock(script, "clearGpuProofSections");
@@ -168,16 +167,16 @@ check(
 
 check(
   "GPU_PROOF_STACK_LIVE_RENDER_CALL_PATH",
-  renderGpuEngineeringPlan.includes("envelope.innerHTML = envelopeSvg(plan);") &&
-    renderGpuEngineeringPlan.includes("renderGpuProofSections(plan);") &&
-    renderGpuEngineeringPlan.indexOf("envelope.innerHTML = envelopeSvg(plan);") < renderGpuEngineeringPlan.indexOf("renderGpuProofSections(plan);"),
-  "GPU active engineering chart renderer should call the CPU-style proof-section lifecycle immediately after the envelope renders.",
+  script.includes("envelope.innerHTML = envelopeSvg(plan);") &&
+    script.includes("renderGpuProofSections(plan);") &&
+    script.indexOf("envelope.innerHTML = envelopeSvg(plan);") < script.indexOf("renderGpuProofSections(plan);"),
+  "GPU live chart render path should use the CPU-style proof-section lifecycle after the envelope renders.",
   scriptFile
 );
 
 check(
   "GPU_PROOF_STACK_LOCAL_SCRIPT_VERSION",
-  html.includes('./script.js?v=compute-gpu-vram-proof-stack-active-render-0624e'),
+  html.includes('./script.js?v=compute-gpu-vram-proof-stack-lifecycle-0624d'),
   "GPU local script version should be bumped for the proof-stack lifecycle lane."
 );
 
