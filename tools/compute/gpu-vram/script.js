@@ -1030,24 +1030,16 @@
     if (!card || !mount || !plan) return;
 
     card.hidden = false;
-    mount.innerHTML = `
-      <table>
-        <tbody>
-          <tr>
-            <th>*1 demand basis</th>
-            <td>Raw GPU memory demand from model/workload footprint, batch/sample activation pressure, concurrent jobs, runtime cache, checkpoint, workspace, and overhead assumptions.</td>
-          </tr>
-          <tr>
-            <th>*2 required status point</th>
-            <td>Required VRAM is the plotted status-driving point after precision, parallelism, growth reserve, failover, and sharing assumptions are applied. This is the point compared against the watch/risk thresholds.</td>
-          </tr>
-          <tr>
-            <th>*3 capacity rail</th>
-            <td>Usable and installed VRAM remain horizontal capacity rails. Validate real framework allocation, KV/cache behavior, replica count, precision mode, GPU sharing mode, and display/OS reserve before committing GPU hardware.</td>
-          </tr>
-        </tbody>
-      </table>
-    `;
+    mount.innerHTML = [
+      '<table class="compute-gpu-reference-table">',
+      '<thead><tr><th>Marker</th><th>Reference</th><th>Reason</th></tr></thead>',
+      '<tbody>',
+      '<tr><td><span class="compute-gpu-ref-marker is-demand">*1</span></td><td><strong>Demand basis</strong></td><td>Raw GPU memory demand from model/workload footprint, batch/sample activation pressure, concurrent jobs, runtime cache, checkpoint, workspace, and overhead assumptions.</td></tr>',
+      '<tr><td><span class="compute-gpu-ref-marker is-required">*2</span></td><td><strong>Required status point</strong></td><td>Required VRAM is the plotted status-driving point after precision, parallelism, growth reserve, failover, and sharing assumptions are applied. This is the point compared against the watch/risk thresholds.</td></tr>',
+      '<tr><td><span class="compute-gpu-ref-marker is-capacity">*3</span></td><td><strong>Capacity rail</strong></td><td>Usable and installed VRAM remain horizontal capacity rails. Validate framework allocation, KV/cache behavior, replica count, precision mode, GPU sharing mode, and display/OS reserve before committing GPU hardware.</td></tr>',
+      '</tbody>',
+      '</table>'
+    ].join("");
   }
 
   function renderActions(plan) {

@@ -1307,3 +1307,13 @@ Promotion note:
 - Consumer: tools/compute/gpu-vram/index.html
 - Contract: Restores RAM-style desktop table semantics for the GPU VRAM Decision Schedule after earlier proof-card grid styling forced rows/cells into block layout.
 - Guardrail: Keep the mobile stacked fallback, but do not let desktop table rows render as two-column grid blocks.
+
+
+### COMPUTE_GPU_VRAM_PROOF_STACK_REFERENCE_RHYTHM_0624J
+
+- Status: PROOF_GATE_POLISH
+- Owner: scripts/audit-compute-gpu-vram-proof-stack-reference-rhythm-v1.js
+- Scope: GPU VRAM Recommendation References RAM-style table rhythm.
+- Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
+- Contract: GPU Recommendation References renders as a RAM-style Marker / Reference / Reason table with toned *1/*2/*3 markers.
+- Guardrail: Do not let earlier two-column grid proof-card styling override the desktop reference table.

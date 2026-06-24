@@ -381,3 +381,22 @@ Polish: GPU VRAM Decision Schedule now resets the earlier proof-card grid stylin
 
 Audit:
 - scripts/audit-compute-gpu-vram-proof-stack-table-reset-v1.js
+
+
+### COMPUTE-GPU-VRAM-PROOF-STACK-REFERENCE-RHYTHM-0624J
+
+Status: LOCAL_PROOF_POLISH
+
+Changed path:
+- tools/compute/gpu-vram/index.html
+- tools/compute/gpu-vram/script.js
+- scripts/audit-compute-gpu-vram-proof-stack-reference-rhythm-v1.js
+- scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js
+- scripts/audit-compute-gpu-vram-proof-stack-ram-rhythm-v1.js
+- docs/scopedlabs-module-map.md
+- docs/scopedlabs-pattern-promotion-ledger.md
+
+Polish: GPU VRAM Recommendation References now follows RAM's accepted Marker / Reference / Reason table rhythm.
+
+Audit:
+- scripts/audit-compute-gpu-vram-proof-stack-reference-rhythm-v1.js
