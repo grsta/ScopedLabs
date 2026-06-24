@@ -172,7 +172,7 @@ check(
 
 check(
   "GPU_PROOF_STACK_LOCAL_SCRIPT_VERSION",
-  html.includes('./script.js?v=compute-gpu-vram-export-parity-0624k') &&
+  html.includes('./script.js?v=compute-gpu-vram-export-dynamic-placement-0624m') &&
     script.includes('scopedlabs:compute-gpu-vram-plan-rendered') &&
     script.includes("renderProofSectionsFromPlan(plan);"),
   "GPU local script version should reflect the latest proof-stack lane while preserving the event bridge wiring."

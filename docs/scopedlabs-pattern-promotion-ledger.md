@@ -433,3 +433,20 @@ Layout parity: GPU VRAM Export Report card now sits in the Planning Inputs card 
 
 Audit:
 - scripts/audit-compute-gpu-vram-export-card-placement-v1.js
+
+
+### COMPUTE-GPU-VRAM-EXPORT-DYNAMIC-PLACEMENT-0624M
+
+Status: LOCAL_DYNAMIC_LAYOUT_PARITY
+
+Changed path:
+- tools/compute/gpu-vram/index.html
+- tools/compute/gpu-vram/script.js
+- scripts/audit-compute-gpu-vram-export-dynamic-placement-v1.js
+- docs/scopedlabs-module-map.md
+- docs/scopedlabs-pattern-promotion-ledger.md
+
+Layout parity: GPU VRAM Export Report starts under inputs before calculation and moves below the rendered proof stack after calculation, matching the accepted Compute export rhythm.
+
+Audit:
+- scripts/audit-compute-gpu-vram-export-dynamic-placement-v1.js

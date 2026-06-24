@@ -1519,3 +1519,122 @@
     }, 0);
   });
 })();
+
+
+/* ScopedLabs GPU VRAM export dynamic placement 0624M */
+(function () {
+  const MARKER = "ScopedLabsComputeGpuVramExportDynamicPlacement0624M";
+  if (window[MARKER]) return;
+  window[MARKER] = true;
+
+  const INPUT_IDS = [
+    "modelGb",
+    "batch",
+    "perSampleMb",
+    "jobs",
+    "overhead",
+    "installedVramGb",
+    "targetUtilization",
+    "displayReserveGb",
+    "precisionMode",
+    "parallelismMode",
+    "replicaCount",
+    "growthReserve",
+    "kvCacheGb",
+    "checkpointReserveGb",
+    "failoverMultiplier",
+    "gpuSharingMode"
+  ];
+
+  function exportCard() {
+    return document.querySelector(".compute-export-card");
+  }
+
+  function resetRow() {
+    const reset = document.getElementById("reset");
+    if (!reset) return null;
+    return reset.closest(".btn-row") || reset.parentElement;
+  }
+
+  function flowActions() {
+    return document.querySelector("[data-compute-flow-actions], .compute-flow-actions");
+  }
+
+  function decisionScheduleCard() {
+    return document.getElementById("computeGpuDecisionScheduleCard");
+  }
+
+  function insertAfter(node, anchor) {
+    if (!node || !anchor || !anchor.parentNode) return false;
+    anchor.parentNode.insertBefore(node, anchor.nextSibling);
+    return true;
+  }
+
+  function insertBefore(node, anchor) {
+    if (!node || !anchor || !anchor.parentNode) return false;
+    anchor.parentNode.insertBefore(node, anchor);
+    return true;
+  }
+
+  function placeExportInInputs() {
+    const card = exportCard();
+    const row = resetRow();
+    if (!card || !row) return false;
+    return insertAfter(card, row);
+  }
+
+  function placeExportAfterProofStack() {
+    const card = exportCard();
+    if (!card) return false;
+
+    const flow = flowActions();
+    if (flow && insertBefore(card, flow)) return true;
+
+    const schedule = decisionScheduleCard();
+    if (schedule && insertAfter(card, schedule)) return true;
+
+    return false;
+  }
+
+  function bindInputResetPlacement() {
+    INPUT_IDS.forEach(function (id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+
+      el.addEventListener("input", function () {
+        window.setTimeout(placeExportInInputs, 0);
+      });
+
+      el.addEventListener("change", function () {
+        window.setTimeout(placeExportInInputs, 0);
+      });
+    });
+
+    const reset = document.getElementById("reset");
+    if (reset) {
+      reset.addEventListener("click", function () {
+        window.setTimeout(placeExportInInputs, 0);
+      });
+    }
+  }
+
+  function bind() {
+    placeExportInInputs();
+    bindInputResetPlacement();
+
+    window.addEventListener("scopedlabs:compute-gpu-vram-plan-rendered", function () {
+      window.setTimeout(placeExportAfterProofStack, 0);
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bind);
+  } else {
+    bind();
+  }
+
+  window.ScopedLabsComputeGpuVramExportPlacement = {
+    placeInInputs: placeExportInInputs,
+    placeAfterProofStack: placeExportAfterProofStack
+  };
+})();

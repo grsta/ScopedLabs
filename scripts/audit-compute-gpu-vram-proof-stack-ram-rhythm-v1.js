@@ -87,7 +87,7 @@ check(
 
 check(
   "GPU_PROOF_STACK_RAM_RHYTHM_SCRIPT_VERSION",
-  html.includes('./script.js?v=compute-gpu-vram-export-parity-0624k'),
+  html.includes('./script.js?v=compute-gpu-vram-export-dynamic-placement-0624m'),
   "GPU local script version should be bumped for RAM-rhythm proof cards."
 );
 

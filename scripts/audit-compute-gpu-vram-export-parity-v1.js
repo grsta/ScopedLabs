@@ -31,7 +31,7 @@ check(
   "GPU_EXPORT_CONFIG_CUSTOM_PAYLOAD_BUILDER",
   html.includes('window.ScopedLabsExportConfig.customPayloadBuilder = "ScopedLabsComputeGpuVramExport.buildPayload";') &&
     html.includes('window.ScopedLabsExportConfig.reportPrefix = window.ScopedLabsExportConfig.reportPrefix || "SL-COMPUTE-GPU";') &&
-    html.includes('./script.js?v=compute-gpu-vram-export-parity-0624k'),
+    html.includes('./script.js?v=compute-gpu-vram-export-dynamic-placement-0624m'),
   "GPU export config should point to the custom GPU VRAM export payload builder and include a report prefix.",
   htmlFile
 );

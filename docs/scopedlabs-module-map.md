@@ -1337,3 +1337,13 @@ Promotion note:
 - Consumer: tools/compute/gpu-vram/index.html
 - Contract: GPU VRAM Export Report, export status, and User Tool Notes sit inside the Planning Inputs card after Calculate/Reset, matching RAM rhythm.
 - Guardrail: Do not let export status/User Tool Notes drift down beside the flow CTA/footer.
+
+
+### COMPUTE_GPU_VRAM_EXPORT_DYNAMIC_PLACEMENT_0624M
+
+- Status: PROOF_GATE_DYNAMIC_LAYOUT
+- Owner: scripts/audit-compute-gpu-vram-export-dynamic-placement-v1.js
+- Scope: GPU VRAM Export Report dynamic placement.
+- Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
+- Contract: Before calculation, Export Report sits under inputs after Calculate/Reset. After calculation, Export Report moves to the bottom of the rendered result/proof stack before the flow CTA, matching the accepted Compute tool rhythm.
+- Guardrail: Do not permanently pin the Export Report card above the calculated results after a calculation has rendered.
