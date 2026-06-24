@@ -317,3 +317,19 @@ Fix: GPU VRAM now uses a local proof-stack event bridge. renderGpuEngineeringPla
 
 Audit:
 - scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js
+
+
+### COMPUTE-GPU-VRAM-PROOF-STACK-POLISH-0624G
+
+Status: LOCAL_PROOF_POLISH
+
+Changed path:
+- tools/compute/gpu-vram/index.html
+- scripts/audit-compute-gpu-vram-proof-stack-polish-v1.js
+- docs/scopedlabs-module-map.md
+- docs/scopedlabs-pattern-promotion-ledger.md
+
+Polish: GPU VRAM proof stack now uses structured proof-card styling for Recommendation References, Recommended Actions, and GPU VRAM Decision Schedule.
+
+Audit:
+- scripts/audit-compute-gpu-vram-proof-stack-polish-v1.js

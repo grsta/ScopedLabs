@@ -533,6 +533,174 @@
       box-shadow: none !important;
     }
   </style>
+
+  <style id="compute-gpu-proof-stack-polish-0624g">
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuReferencesCard,
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuRecommendedActionsCard,
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuDecisionScheduleCard {
+      margin-top: 18px;
+      padding: 18px 20px;
+      border: 1px solid rgba(44,255,155,.22);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(44,255,155,.08), transparent 34%),
+        linear-gradient(180deg, rgba(7,17,15,.97), rgba(3,9,7,.99));
+      box-shadow: inset 0 0 0 1px rgba(44,255,155,.04), 0 18px 40px rgba(0,0,0,.22);
+    }
+
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuReferencesCard h3,
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuRecommendedActionsCard h3,
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuDecisionScheduleCard h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+      line-height: 1.2;
+      letter-spacing: .01em;
+      color: rgba(246,255,248,.96);
+    }
+
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuReferencesCard .muted,
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuRecommendedActionsCard .muted,
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuDecisionScheduleCard .muted {
+      margin: 0 0 12px !important;
+      max-width: 860px;
+      color: rgba(188,223,218,.82);
+      line-height: 1.5;
+    }
+
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuReferences table,
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuReferences tbody {
+      display: block;
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuReferences tr {
+      display: grid;
+      grid-template-columns: minmax(138px, 170px) 1fr;
+      gap: 16px;
+      align-items: start;
+      padding: 10px 0;
+      border-top: 1px solid rgba(148,255,195,.1);
+    }
+
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuReferences tr:first-child {
+      border-top: 0;
+      padding-top: 2px;
+    }
+
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuReferences th,
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuReferences td {
+      display: block;
+      padding: 0;
+      border: 0;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuReferences th {
+      white-space: nowrap;
+      color: #2cff9b;
+      font-size: .82rem;
+      font-weight: 900;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+    }
+
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuReferences td {
+      color: rgba(246,255,248,.94);
+      line-height: 1.46;
+    }
+
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuRecommendedActions ol {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: gpuProofAction;
+      display: grid;
+      gap: 8px;
+    }
+
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuRecommendedActions li {
+      counter-increment: gpuProofAction;
+      position: relative;
+      padding: 10px 12px 10px 42px;
+      border: 1px solid rgba(148,255,195,.12);
+      border-radius: 10px;
+      background: rgba(0,0,0,.18);
+      color: rgba(246,255,248,.94);
+      line-height: 1.45;
+    }
+
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuRecommendedActions li::before {
+      content: counter(gpuProofAction);
+      position: absolute;
+      left: 12px;
+      top: 10px;
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      display: grid;
+      place-items: center;
+      color: #03120c;
+      background: #2cff9b;
+      font-size: .76rem;
+      font-weight: 900;
+    }
+
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuDecisionSchedule table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuDecisionSchedule tr {
+      display: grid;
+      grid-template-columns: minmax(132px, 180px) 1fr;
+      gap: 16px;
+      padding: 10px 0;
+      border-top: 1px solid rgba(148,255,195,.1);
+    }
+
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuDecisionSchedule tr:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuDecisionSchedule th,
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuDecisionSchedule td {
+      display: block;
+      padding: 0;
+      border: 0;
+      text-align: left;
+      line-height: 1.45;
+    }
+
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuDecisionSchedule th {
+      color: #facc15;
+      font-size: .82rem;
+      font-weight: 900;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    body[data-category="compute"][data-step="gpu-vram"] #computeGpuDecisionSchedule td {
+      color: rgba(246,255,248,.94);
+    }
+
+    @media (max-width: 760px) {
+      body[data-category="compute"][data-step="gpu-vram"] #computeGpuReferences tr,
+      body[data-category="compute"][data-step="gpu-vram"] #computeGpuDecisionSchedule tr {
+        grid-template-columns: 1fr;
+        gap: 5px;
+      }
+
+      body[data-category="compute"][data-step="gpu-vram"] #computeGpuReferences th,
+      body[data-category="compute"][data-step="gpu-vram"] #computeGpuDecisionSchedule th {
+        white-space: normal;
+      }
+    }
+  </style>
 </head>
 
 <body data-tier="pro" data-category="compute" data-step="gpu-vram" data-lane="v1" data-compute-tool-shell="0614" data-sl-square-ctas="true" data-sl-clean-knowledge-card="true">

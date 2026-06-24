@@ -1267,3 +1267,13 @@ Promotion note:
 - Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
 - Contract: The active GPU engineering renderer dispatches a scoped plan-rendered event after writing the chart. The GPU shell proof bridge listens for that event and renders Recommendation References, Recommended Actions, and GPU VRAM Decision Schedule from the supplied plan.
 - Guardrail: Avoid timer rehydrate workarounds and avoid direct cross-IIFE private function calls.
+
+
+### COMPUTE_GPU_VRAM_PROOF_STACK_POLISH_0624G
+
+- Status: PROOF_GATE_POLISH
+- Owner: scripts/audit-compute-gpu-vram-proof-stack-polish-v1.js
+- Scope: GPU VRAM proof-stack visual polish.
+- Consumer: tools/compute/gpu-vram/index.html
+- Contract: Recommendation References, Recommended Actions, and GPU VRAM Decision Schedule render as clean ScopedLabs proof cards below the GPU VRAM Capacity Envelope instead of raw table/list output.
+- Guardrail: Keep the event bridge behavior intact; this lane is visual polish only.
