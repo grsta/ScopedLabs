@@ -1029,15 +1029,15 @@
         <tbody>
           <tr>
             <th>*1 demand basis</th>
-            <td>Required VRAM combines base model/workload memory, batch/sample activation pressure, concurrent jobs, cache/workspace reserves, overhead, growth reserve, and failover multiplier.</td>
+            <td>Raw GPU memory demand from model/workload footprint, batch/sample activation pressure, concurrent jobs, runtime cache, checkpoint, workspace, and overhead assumptions.</td>
           </tr>
           <tr>
-            <th>*2 capacity rail</th>
-            <td>Usable VRAM is calculated from installed/allocated VRAM minus display or OS reserve, then limited by target utilization.</td>
+            <th>*2 required status point</th>
+            <td>Required VRAM is the plotted status-driving point after precision, parallelism, growth reserve, failover, and sharing assumptions are applied. This is the point compared against the watch/risk thresholds.</td>
           </tr>
           <tr>
-            <th>*3 validation</th>
-            <td>Validate peak batch, context/cache behavior, replica count, precision mode, GPU sharing mode, and real framework allocation before committing GPU hardware.</td>
+            <th>*3 capacity rail</th>
+            <td>Usable and installed VRAM remain horizontal capacity rails. Validate real framework allocation, KV/cache behavior, replica count, precision mode, GPU sharing mode, and display/OS reserve before committing GPU hardware.</td>
           </tr>
         </tbody>
       </table>

@@ -764,18 +764,21 @@
     </section>
 
     <section id="computeGpuReferencesCard" class="card compute-recommendation-references-card" data-compute-recommendation-references-card data-output-references-owner="compute-assistant-contract" data-export-section="true" data-export-title="Recommendation References" hidden>
-      <h3>Recommendation References</h3>
-      <div id="computeGpuReferences" data-compute-recommendation-references="gpu-vram"></div>
+      <h3 class="h3" style="margin-top: 0;">Recommendation References</h3>
+      <p class="muted" style="margin-bottom: 0;">Reference markers for the GPU VRAM Capacity Envelope. These explain why the demand point, required status point, and capacity rails matter before continuing to Power &amp; Thermal.</p>
+      <div id="computeGpuReferences" data-compute-recommendation-references="gpu-vram" role="group" aria-label="GPU VRAM recommendation references"></div>
     </section>
 
     <section id="computeGpuRecommendedActionsCard" class="card compute-recommended-actions-card" data-compute-recommended-actions-card data-output-actions-owner="compute-assistant-contract" data-export-section="true" data-export-title="Recommended Actions" hidden>
-      <h3>Recommended Actions</h3>
-      <div id="computeGpuRecommendedActions" data-compute-recommended-actions="gpu-vram"></div>
+      <h3 class="h3" style="margin-top: 0;">Recommended Actions</h3>
+      <p class="muted" style="margin-bottom: 0;">Practical validation steps to reduce GPU memory pressure or confirm the selected allocation before downstream Compute planning.</p>
+      <div id="computeGpuRecommendedActions" data-compute-recommended-actions="gpu-vram" role="group" aria-label="GPU VRAM recommended actions"></div>
     </section>
 
     <section id="computeGpuDecisionScheduleCard" class="card compute-decision-schedule-card" data-compute-decision-schedule-card data-output-decision-owner="compute-assistant-contract" data-export-section="true" data-export-title="GPU VRAM Decision Schedule" hidden>
-      <h3>GPU VRAM Decision Schedule</h3>
-      <div id="computeGpuDecisionSchedule" data-compute-decision-schedule="gpu-vram"></div>
+      <h3 class="h3" style="margin-top: 0;">GPU VRAM Decision Schedule</h3>
+      <p class="muted" style="margin-bottom: 0;">Compact GPU VRAM status, threshold, recommendation, and engineering-note schedule for the active Compute workload.</p>
+      <div id="computeGpuDecisionSchedule" data-compute-decision-schedule="gpu-vram" role="group" aria-label="GPU VRAM decision schedule"></div>
     </section>
 
     <div id="reportMetadataMount" data-report-metadata data-report-title="Report details" data-report-copy="Optional metadata can be included in the generated report. Leave blank to use the default report naming." data-report-fields="reportTitle,projectName,clientName,preparedBy,customNotes" data-collapsed="true" hidden></div>
@@ -838,7 +841,7 @@
 <script src="/assets/scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-018-ram-capacity-marker"></script>
 
   <script src="/assets/scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-007-workload-nav-links"></script>
-  <script src="./script.js?v=compute-gpu-vram-capacity-envelope-required-status-0622d"></script>
+  <script src="./script.js?v=compute-gpu-vram-proof-stack-parity-0624a"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
 <script src="/assets/scopedlabs-compute-assistant-contract.js?v=compute-assistant-gpu-vram-shell-proof-0621"></script>

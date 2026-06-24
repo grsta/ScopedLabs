@@ -1247,3 +1247,13 @@ Promotion note:
 - Consumer: tools/compute/gpu-vram/script.js; tools/compute/gpu-vram/index.html
 - Contract: Updates the Lane 4 capacity-envelope audit so the accepted chart pattern is protected correctly: Demand and Required are plotted workload/status points, Usable VRAM is a horizontal capacity rail only, and *3 is handled through Recommendation References / capacity-rail context instead of a plotted workload marker.
 - Guardrail: Any future audit change for this lane must update this module map in the same commit.
+
+
+### COMPUTE_GPU_VRAM_PROOF_STACK_PARITY_0624A
+
+- Status: PROOF_GATE
+- Owner: scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js
+- Scope: GPU VRAM Recommendation References / Recommended Actions / Decision Schedule proof-stack parity.
+- Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
+- Contract: Keeps the accepted GPU chart order and places the proof stack below it: Recommendation References, Recommended Actions, Decision Schedule, then User Tool Notes. Reference wording is aligned to the accepted GPU VRAM Capacity Envelope grammar: *1 demand basis, *2 required/status-driving point, *3 capacity rail context.
+- Guardrail: Do not move User Tool Notes above the proof stack. Do not make usable VRAM a plotted workload/status point again.

@@ -274,3 +274,29 @@ Approved audit alignment: The GPU VRAM capacity-envelope audit now matches the a
 
 Audit:
 - scripts/audit-compute-gpu-vram-capacity-envelope-parity-v1.js
+
+
+### COMPUTE-GPU-VRAM-PROOF-STACK-PARITY-0624A
+
+Status: LOCAL_PROOF_GATE
+
+Changed path:
+- tools/compute/gpu-vram/index.html
+- tools/compute/gpu-vram/script.js
+- scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js
+- docs/scopedlabs-module-map.md
+- docs/scopedlabs-pattern-promotion-ledger.md
+
+Proof target: GPU VRAM Recommendation References / Recommended Actions / Decision Schedule parity with RAM-style proof rhythm.
+
+Contract:
+- Recommendation References sits below the GPU VRAM Capacity Envelope.
+- Recommended Actions follows Recommendation References.
+- GPU VRAM Decision Schedule follows Recommended Actions.
+- User Tool Notes remains below the proof stack.
+- *1 explains demand basis.
+- *2 explains Required as the status-driving point.
+- *3 explains usable/installed VRAM as capacity rail context, not as a plotted workload marker.
+
+Audit:
+- scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js
