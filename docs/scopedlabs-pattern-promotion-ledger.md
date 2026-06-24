@@ -300,3 +300,20 @@ Contract:
 
 Audit:
 - scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js
+
+
+### COMPUTE-GPU-VRAM-PROOF-STACK-EVENT-BRIDGE-0624F
+
+Status: LOCAL_PROOF_GATE_FIX
+
+Changed path:
+- tools/compute/gpu-vram/index.html
+- tools/compute/gpu-vram/script.js
+- scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js
+- docs/scopedlabs-module-map.md
+- docs/scopedlabs-pattern-promotion-ledger.md
+
+Fix: GPU VRAM now uses a local proof-stack event bridge. renderGpuEngineeringPlan() dispatches the active plan after chart render, and the shell proof bridge listens to populate Recommendation References, Recommended Actions, and GPU VRAM Decision Schedule.
+
+Audit:
+- scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js

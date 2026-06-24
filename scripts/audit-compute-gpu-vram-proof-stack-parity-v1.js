@@ -27,18 +27,15 @@ function check(code, condition, message, file = htmlFile) {
   }
 }
 
-function indexOfRequired(text, token) {
-  const index = text.indexOf(token);
-  return index;
-}
-
 function inOrder(text, tokens) {
   let previous = -1;
+
   for (const token of tokens) {
     const current = text.indexOf(token);
     if (current === -1 || current <= previous) return false;
     previous = current;
   }
+
   return true;
 }
 
@@ -55,17 +52,23 @@ function functionBlock(source, functionName) {
 
   while (cursor < source.length) {
     const ch = source[cursor];
+
     if (ch === "{") depth += 1;
+
     if (ch === "}") {
       depth -= 1;
       if (depth === 0) return source.slice(start, cursor + 1);
     }
+
     cursor += 1;
   }
 
   return "";
 }
 
+const renderGpuEngineeringPlan = functionBlock(script, "renderGpuEngineeringPlan");
+const renderProofSectionsFromPlan = functionBlock(script, "renderProofSectionsFromPlan");
+const renderShellProof = functionBlock(script, "renderShellProof");
 const renderReferences = functionBlock(script, "renderReferences");
 
 check(
@@ -82,9 +85,9 @@ check(
 
 check(
   "GPU_PROOF_STACK_EXPORT_SECTION_TOKENS",
-  html.includes('data-compute-recommendation-references-card') &&
-    html.includes('data-compute-recommended-actions-card') &&
-    html.includes('data-compute-decision-schedule-card') &&
+  html.includes("data-compute-recommendation-references-card") &&
+    html.includes("data-compute-recommended-actions-card") &&
+    html.includes("data-compute-decision-schedule-card") &&
     html.includes('data-output-references-owner="compute-assistant-contract"') &&
     html.includes('data-output-actions-owner="compute-assistant-contract"') &&
     html.includes('data-output-decision-owner="compute-assistant-contract"') &&
@@ -114,41 +117,75 @@ check(
     renderReferences.includes("*3 capacity rail") &&
     renderReferences.includes("horizontal capacity rails") &&
     !renderReferences.includes("*2 capacity rail"),
-  "GPU references should match accepted chart grammar: *2 is Required/status-driving point; *3 is capacity rail context."
-, scriptFile);
+  "GPU references should match accepted chart grammar: *2 is Required/status-driving point; *3 is capacity rail context.",
+  scriptFile
+);
+
+check(
+  "GPU_PROOF_STACK_ACTIVE_RENDER_DISPATCHES_PLAN_EVENT",
+  renderGpuEngineeringPlan.includes("envelope.innerHTML = envelopeSvg(plan);") &&
+    renderGpuEngineeringPlan.includes('window.dispatchEvent(new CustomEvent("scopedlabs:compute-gpu-vram-plan-rendered"') &&
+    renderGpuEngineeringPlan.includes("detail: { plan }") &&
+    renderGpuEngineeringPlan.indexOf("envelope.innerHTML = envelopeSvg(plan);") <
+      renderGpuEngineeringPlan.indexOf('window.dispatchEvent(new CustomEvent("scopedlabs:compute-gpu-vram-plan-rendered"'),
+  "GPU active engineering renderer should dispatch a local plan-rendered event immediately after writing the chart.",
+  scriptFile
+);
+
+check(
+  "GPU_PROOF_STACK_EVENT_BRIDGE_LISTENS_AND_RENDERS",
+  script.includes('window.addEventListener("scopedlabs:compute-gpu-vram-plan-rendered"') &&
+    script.includes("renderProofSectionsFromPlan(plan);") &&
+    renderProofSectionsFromPlan.includes("renderReferences(plan)") &&
+    renderProofSectionsFromPlan.includes("renderActions(plan)") &&
+    renderProofSectionsFromPlan.includes("renderSchedule(plan)"),
+  "GPU shell proof bridge should listen for the active renderer event and render proof sections from the supplied plan.",
+  scriptFile
+);
+
+check(
+  "GPU_PROOF_STACK_SHELL_PROOF_REUSES_EVENT_RENDERER",
+  renderShellProof.includes("renderLedger(plan)") &&
+    renderShellProof.includes("renderAssistant(plan)") &&
+    renderShellProof.includes("renderProofSectionsFromPlan(plan)") &&
+    !renderShellProof.includes("renderReferences(plan);\n    renderActions(plan);\n    renderSchedule(plan);"),
+  "GPU shell proof path should reuse the same proof-section renderer used by the event bridge.",
+  scriptFile
+);
 
 check(
   "GPU_PROOF_STACK_RENDERERS_PRESENT",
   script.includes("function renderReferences") &&
     script.includes("function renderActions") &&
+    script.includes("function renderSchedule") &&
     script.includes("computeGpuRecommendedActionsCard") &&
     script.includes("computeGpuDecisionScheduleCard") &&
     script.includes("computeGpuDecisionSchedule"),
-  "GPU script should render references, recommended actions, and decision schedule through the existing proof stack."
-, scriptFile);
+  "GPU script should render references, recommended actions, and decision schedule through the existing proof stack.",
+  scriptFile
+);
 
 check(
   "GPU_PROOF_STACK_LOCAL_SCRIPT_VERSION",
-  html.includes('./script.js?v=compute-gpu-vram-proof-stack-parity-0624a'),
-  "GPU local script version should be bumped for the proof-stack parity lane."
+  html.includes('./script.js?v=compute-gpu-vram-proof-event-0624f'),
+  "GPU local script version should be bumped for the proof event bridge lane."
 );
 
 check(
   "GPU_PROOF_STACK_MODULE_MAP_UPDATED",
-  moduleMap.includes("COMPUTE_GPU_VRAM_PROOF_STACK_PARITY_0624A") &&
-    moduleMap.includes("scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js") &&
-    moduleMap.includes("Recommendation References") &&
-    moduleMap.includes("Recommended Actions") &&
-    moduleMap.includes("Decision Schedule"),
-  "Module map should document the GPU proof-stack parity lane."
-, moduleMapFile);
+  moduleMap.includes("COMPUTE_GPU_VRAM_PROOF_STACK_EVENT_BRIDGE_0624F") &&
+    moduleMap.includes("scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js"),
+  "Module map should document the GPU proof-stack event bridge lane.",
+  moduleMapFile
+);
 
 check(
   "GPU_PROOF_STACK_PROMOTION_LEDGER_UPDATED",
-  ledger.includes("COMPUTE-GPU-VRAM-PROOF-STACK-PARITY-0624A") &&
+  ledger.includes("COMPUTE-GPU-VRAM-PROOF-STACK-EVENT-BRIDGE-0624F") &&
     ledger.includes("scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js"),
-  "Pattern promotion ledger should record this local proof-stack parity lane."
-, ledgerFile);
+  "Pattern promotion ledger should record the GPU proof-stack event bridge lane.",
+  ledgerFile
+);
 
 console.log("");
 console.log("SCOPEDLABS COMPUTE GPU VRAM PROOF STACK PARITY AUDIT V1");

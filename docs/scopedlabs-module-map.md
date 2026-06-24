@@ -1257,3 +1257,13 @@ Promotion note:
 - Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
 - Contract: Keeps the accepted GPU chart order and places the proof stack below it: Recommendation References, Recommended Actions, Decision Schedule, then User Tool Notes. Reference wording is aligned to the accepted GPU VRAM Capacity Envelope grammar: *1 demand basis, *2 required/status-driving point, *3 capacity rail context.
 - Guardrail: Do not move User Tool Notes above the proof stack. Do not make usable VRAM a plotted workload/status point again.
+
+
+### COMPUTE_GPU_VRAM_PROOF_STACK_EVENT_BRIDGE_0624F
+
+- Status: PROOF_GATE_FIX
+- Owner: scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js
+- Scope: GPU VRAM proof-stack local event bridge.
+- Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
+- Contract: The active GPU engineering renderer dispatches a scoped plan-rendered event after writing the chart. The GPU shell proof bridge listens for that event and renders Recommendation References, Recommended Actions, and GPU VRAM Decision Schedule from the supplied plan.
+- Guardrail: Avoid timer rehydrate workarounds and avoid direct cross-IIFE private function calls.

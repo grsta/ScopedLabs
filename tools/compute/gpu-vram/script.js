@@ -797,6 +797,12 @@
 
     envelope.innerHTML = envelopeSvg(plan);
 
+    try {
+      window.dispatchEvent(new CustomEvent("scopedlabs:compute-gpu-vram-plan-rendered", {
+        detail: { plan }
+      }));
+    } catch (err) {}
+
     const analysis = $gpuEng("analysis-copy");
     if (analysis) {
       const base = analysis.textContent || "";
@@ -1100,6 +1106,14 @@
     `;
   }
 
+  function renderProofSectionsFromPlan(plan) {
+    if (!plan) return;
+
+    renderReferences(plan);
+    renderActions(plan);
+    renderSchedule(plan);
+  }
+
   function renderShellProof() {
     hideLegacyResultsSource();
     const plan = currentPlan();
@@ -1107,9 +1121,7 @@
 
     renderLedger(plan);
     renderAssistant(plan);
-    renderReferences(plan);
-    renderActions(plan);
-    renderSchedule(plan);
+    renderProofSectionsFromPlan(plan);
   }
 
   function clearShellProof() {
@@ -1155,6 +1167,11 @@
         window.setTimeout(clearShellProof, 0);
       });
     }
+
+    window.addEventListener("scopedlabs:compute-gpu-vram-plan-rendered", function (event) {
+      const plan = event && event.detail && event.detail.plan ? event.detail.plan : currentPlan();
+      renderProofSectionsFromPlan(plan);
+    });
 
     [
       "modelGb",
