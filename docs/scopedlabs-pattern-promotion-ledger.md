@@ -365,3 +365,19 @@ Audit alignment: The GPU proof-stack parity audit now accepts the current RAM-rh
 
 Audit:
 - scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js
+
+
+### COMPUTE-GPU-VRAM-PROOF-STACK-TABLE-RESET-0624I
+
+Status: LOCAL_PROOF_POLISH
+
+Changed path:
+- tools/compute/gpu-vram/index.html
+- scripts/audit-compute-gpu-vram-proof-stack-table-reset-v1.js
+- docs/scopedlabs-module-map.md
+- docs/scopedlabs-pattern-promotion-ledger.md
+
+Polish: GPU VRAM Decision Schedule now resets the earlier proof-card grid styling and renders as a RAM-style desktop decision table with Group / Metric / Value / Engineering Note columns.
+
+Audit:
+- scripts/audit-compute-gpu-vram-proof-stack-table-reset-v1.js

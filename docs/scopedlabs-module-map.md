@@ -1297,3 +1297,13 @@ Promotion note:
 - Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
 - Contract: The parity audit should protect the event bridge behavior while allowing the current GPU script cache-bust version from the RAM-rhythm proof-card lane.
 - Guardrail: Do not pin the parity audit to an older cache-bust token when a later proof-stack lane intentionally bumps the same local script.
+
+
+### COMPUTE_GPU_VRAM_PROOF_STACK_TABLE_RESET_0624I
+
+- Status: PROOF_GATE_POLISH
+- Owner: scripts/audit-compute-gpu-vram-proof-stack-table-reset-v1.js
+- Scope: GPU VRAM Decision Schedule table reset.
+- Consumer: tools/compute/gpu-vram/index.html
+- Contract: Restores RAM-style desktop table semantics for the GPU VRAM Decision Schedule after earlier proof-card grid styling forced rows/cells into block layout.
+- Guardrail: Keep the mobile stacked fallback, but do not let desktop table rows render as two-column grid blocks.
