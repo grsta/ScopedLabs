@@ -71,16 +71,25 @@ const renderProofSectionsFromPlan = functionBlock(script, "renderProofSectionsFr
 const renderShellProof = functionBlock(script, "renderShellProof");
 const renderReferences = functionBlock(script, "renderReferences");
 
+const chartIndex = html.indexOf('id="computeGpuVisualCard"');
+const referencesIndex = html.indexOf('id="computeGpuReferencesCard"');
+const actionsIndex = html.indexOf('id="computeGpuRecommendedActionsCard"');
+const scheduleIndex = html.indexOf('id="computeGpuDecisionScheduleCard"');
+const exportCardIndex = html.indexOf("compute-export-card");
+const exportNotesIndex = html.indexOf("data-scopedlabs-user-tool-notes", exportCardIndex);
+
 check(
   "GPU_PROOF_STACK_HTML_ORDER",
-  inOrder(html, [
-    'id="computeGpuVisualCard"',
-    'id="computeGpuReferencesCard"',
-    'id="computeGpuRecommendedActionsCard"',
-    'id="computeGpuDecisionScheduleCard"',
-    'data-scopedlabs-user-tool-notes-card'
-  ]),
-  "GPU proof stack should keep chart, Recommendation References, Recommended Actions, Decision Schedule, then User Tool Notes in that order."
+  chartIndex !== -1 &&
+    referencesIndex !== -1 &&
+    actionsIndex !== -1 &&
+    scheduleIndex !== -1 &&
+    chartIndex < referencesIndex &&
+    referencesIndex < actionsIndex &&
+    actionsIndex < scheduleIndex &&
+    exportCardIndex !== -1 &&
+    exportNotesIndex !== -1,
+  "GPU proof stack should keep chart, Recommendation References, Recommended Actions, and Decision Schedule in order. User Tool Notes now belong inside the RAM-style Export Report card and are protected by the export-card placement audit."
 );
 
 check(

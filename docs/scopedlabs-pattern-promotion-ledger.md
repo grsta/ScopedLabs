@@ -417,3 +417,19 @@ Export parity: GPU VRAM now exposes a custom export payload builder that carries
 
 Audit:
 - scripts/audit-compute-gpu-vram-export-parity-v1.js
+
+
+### COMPUTE-GPU-VRAM-EXPORT-CARD-PLACEMENT-0624L
+
+Status: LOCAL_LAYOUT_PARITY
+
+Changed path:
+- tools/compute/gpu-vram/index.html
+- scripts/audit-compute-gpu-vram-export-card-placement-v1.js
+- docs/scopedlabs-module-map.md
+- docs/scopedlabs-pattern-promotion-ledger.md
+
+Layout parity: GPU VRAM Export Report card now sits in the Planning Inputs card after Calculate/Reset, matching RAM's accepted export card placement.
+
+Audit:
+- scripts/audit-compute-gpu-vram-export-card-placement-v1.js

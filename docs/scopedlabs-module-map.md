@@ -1327,3 +1327,13 @@ Promotion note:
 - Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
 - Contract: GPU VRAM exports use ScopedLabsComputeGpuVramExport.buildPayload to include the GPU VRAM Capacity Envelope SVG, Recommendation References, Recommended Actions, and GPU VRAM Decision Schedule.
 - Guardrail: Do not rely only on default DOM scraping for GPU VRAM export parity.
+
+
+### COMPUTE_GPU_VRAM_EXPORT_CARD_PLACEMENT_0624L
+
+- Status: PROOF_GATE_LAYOUT_PARITY
+- Owner: scripts/audit-compute-gpu-vram-export-card-placement-v1.js
+- Scope: GPU VRAM Export Report card placement.
+- Consumer: tools/compute/gpu-vram/index.html
+- Contract: GPU VRAM Export Report, export status, and User Tool Notes sit inside the Planning Inputs card after Calculate/Reset, matching RAM rhythm.
+- Guardrail: Do not let export status/User Tool Notes drift down beside the flow CTA/footer.
