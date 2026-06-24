@@ -128,9 +128,21 @@ check(
 , scriptFile);
 
 check(
+  "GPU_PROOF_STACK_LIVE_RENDER_CALL_PATH",
+  script.includes('envelope.innerHTML = envelopeSvg(plan);') &&
+    script.includes('renderReferences(plan);') &&
+    script.includes('renderActions(plan);') &&
+    script.includes('renderSchedule(plan);') &&
+    script.indexOf('envelope.innerHTML = envelopeSvg(plan);') < script.indexOf('renderReferences(plan);') &&
+    script.indexOf('renderReferences(plan);') < script.indexOf('renderActions(plan);') &&
+    script.indexOf('renderActions(plan);') < script.indexOf('renderSchedule(plan);'),
+  "GPU live chart render path should also render Recommendation References, Recommended Actions, and Decision Schedule before User Tool Notes."
+, scriptFile);
+
+check(
   "GPU_PROOF_STACK_LOCAL_SCRIPT_VERSION",
-  html.includes('./script.js?v=compute-gpu-vram-proof-stack-parity-0624a'),
-  "GPU local script version should be bumped for the proof-stack parity lane."
+  html.includes('./script.js?v=compute-gpu-vram-proof-stack-live-0624b'),
+  "GPU local script version should be bumped for the proof-stack live-render lane."
 );
 
 check(

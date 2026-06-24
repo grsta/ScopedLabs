@@ -300,3 +300,20 @@ Contract:
 
 Audit:
 - scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js
+
+
+### COMPUTE-GPU-VRAM-PROOF-STACK-LIVE-RENDER-0624B
+
+Status: LOCAL_PROOF_GATE_FIX
+
+Changed path:
+- tools/compute/gpu-vram/index.html
+- tools/compute/gpu-vram/script.js
+- scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js
+- docs/scopedlabs-module-map.md
+- docs/scopedlabs-pattern-promotion-ledger.md
+
+Fix: The accepted GPU VRAM chart render path now calls the proof-stack renderers directly, so Recommendation References, Recommended Actions, and GPU VRAM Decision Schedule appear below the chart before User Tool Notes.
+
+Audit:
+- scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js

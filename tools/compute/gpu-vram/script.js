@@ -797,6 +797,10 @@
 
     envelope.innerHTML = envelopeSvg(plan);
 
+    renderReferences(plan);
+    renderActions(plan);
+    renderSchedule(plan);
+
     const analysis = $gpuEng("analysis-copy");
     if (analysis) {
       const base = analysis.textContent || "";
