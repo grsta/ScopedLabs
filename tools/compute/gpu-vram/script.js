@@ -1058,26 +1058,66 @@
     card.hidden = false;
 
     const status = String(plan.status || "WATCH").toUpperCase();
-    let primary = "Proceed with the selected GPU allocation and keep the planning assumptions attached to the report.";
-    let secondary = "Run a sample workload or benchmark to confirm actual framework/runtime allocation.";
+    let actions = [
+      {
+        title: "Validate GPU memory assumptions",
+        detail: "Run a representative batch, cache, and concurrency test before locking the GPU allocation."
+      },
+      {
+        title: "Preserve the GPU VRAM assumptions",
+        detail: "Keep precision, parallelism, replica count, reserve, and sharing assumptions attached to the report."
+      },
+      {
+        title: "Carry GPU status downstream",
+        detail: "Use this GPU VRAM result when reviewing VM density, power/thermal, and final Compute summary."
+      }
+    ];
 
     if (status === "WATCH") {
-      primary = "Validate model memory, batch size, KV/cache reserve, and concurrent job assumptions before locking hardware.";
-      secondary = "Consider reducing target utilization or increasing installed/allocated VRAM if growth is likely.";
+      actions = [
+        {
+          title: "Validate model, batch, and cache pressure",
+          detail: "Required VRAM is near the usable planning rail. Confirm peak batch, KV/cache reserve, and concurrent job behavior before locking hardware."
+        },
+        {
+          title: "Protect the target utilization margin",
+          detail: "Consider lowering target utilization or increasing installed/allocated VRAM if growth, failover, or shared GPU use is likely."
+        },
+        {
+          title: "Benchmark the representative workload",
+          detail: "Run a sample workload on the target GPU class to confirm real framework allocation and runtime cache behavior."
+        },
+        {
+          title: "Carry WATCH into downstream validation",
+          detail: "VM density, power/thermal, and final Compute summary should treat this GPU result as watch-state until validated."
+        }
+      ];
     }
 
     if (status === "RISK") {
-      primary = "Increase installed/allocated VRAM, reduce batch/concurrency/cache pressure, or change precision/parallelism before proceeding.";
-      secondary = "Treat this GPU allocation as undersized until a real benchmark proves otherwise.";
+      actions = [
+        {
+          title: "Increase GPU VRAM before continuing",
+          detail: "Required VRAM exceeds the safe planning envelope. Move to a larger GPU allocation or reduce the workload pressure."
+        },
+        {
+          title: "Reduce batch, cache, or concurrency pressure",
+          detail: "Lower batch/sample activation memory, runtime cache, concurrent jobs, or replica count before accepting this result."
+        },
+        {
+          title: "Recheck precision and sharing mode",
+          detail: "Precision mode, model splitting, oversubscription, and display/OS reserve can materially change the VRAM envelope."
+        },
+        {
+          title: "Recalculate before downstream validation",
+          detail: "Do not treat VM density, power/thermal, or final Compute summary as valid until the GPU VRAM baseline is corrected."
+        }
+      ];
     }
 
-    mount.innerHTML = `
-      <ol>
-        <li>${escapeHtml(primary)}</li>
-        <li>${escapeHtml(secondary)}</li>
-        <li>Carry the GPU VRAM status into VM density, power/thermal, and final Compute summary review.</li>
-      </ol>
-    `;
+    mount.innerHTML = '<div class="compute-gpu-proof-actions-list">' + actions.map(function (item) {
+      return '<div class="compute-gpu-proof-action"><strong>' + escapeHtml(item.title) + '</strong><span>' + escapeHtml(item.detail) + '</span></div>';
+    }).join("") + '</div>';
   }
 
   function renderSchedule(plan) {
@@ -1086,24 +1126,40 @@
     if (!card || !mount || !plan) return;
 
     card.hidden = false;
-    mount.innerHTML = `
-      <table>
-        <tbody>
-          <tr>
-            <th>Now</th>
-            <td>Confirm required VRAM of ${escapeHtml(gb(plan.requiredVramGb))} against usable planning capacity of ${escapeHtml(gb(plan.usableVramGb))}.</td>
-          </tr>
-          <tr>
-            <th>Before procurement</th>
-            <td>Benchmark representative batch/concurrency/cache behavior on the target GPU class.</td>
-          </tr>
-          <tr>
-            <th>Before rollout</th>
-            <td>Recheck growth, failover, sharing, and downstream power/thermal assumptions.</td>
-          </tr>
-        </tbody>
-      </table>
-    `;
+
+    const status = String(plan.status || "WATCH").toUpperCase();
+    const tone = status.toLowerCase();
+    const pressure = pct(plan.capacityPressure);
+    const required = gb(plan.requiredVramGb);
+    const usable = gb(plan.usableVramGb);
+    const raw = gb(plan.rawDemandGb);
+    const installed = plan.input && plan.input.installedVramGb ? gb(plan.input.installedVramGb) : usable;
+
+    let summary = "GPU VRAM demand is within the current usable planning rail. Continue downstream with the attached assumptions.";
+    if (status === "WATCH") {
+      summary = "GPU VRAM demand is near the planning edge. Validate batch, cache, replica, and growth assumptions before treating downstream results as final.";
+    }
+    if (status === "RISK") {
+      summary = "GPU VRAM demand is at or beyond the planning envelope. Correct the GPU memory baseline before downstream validation.";
+    }
+
+    mount.innerHTML = [
+      '<div class="compute-gpu-decision-summary is-' + escapeHtml(tone) + '">',
+      '<div><strong>' + escapeHtml(status) + ' GPU VRAM Capacity Envelope</strong><span>' + escapeHtml(summary) + '</span></div>',
+      '<span class="compute-gpu-decision-chip is-' + escapeHtml(tone) + '">' + escapeHtml(status) + '</span>',
+      '</div>',
+      '<table class="compute-gpu-decision-table">',
+      '<thead><tr><th>Group</th><th>Metric</th><th>Value</th><th>Engineering Note</th></tr></thead>',
+      '<tbody>',
+      '<tr><td>Capacity</td><td>Status</td><td><span class="compute-gpu-decision-chip is-' + escapeHtml(tone) + '">' + escapeHtml(status) + '</span></td><td>Readiness of this GPU VRAM result before it is carried into VM density, power/thermal, and summary.</td></tr>',
+      '<tr><td>Demand</td><td>Raw demand</td><td><strong>' + escapeHtml(raw) + '</strong></td><td>Model/workload memory before reserve, failover, and sharing pressure are applied.</td></tr>',
+      '<tr><td>Required</td><td>Required VRAM</td><td><strong>' + escapeHtml(required) + '</strong></td><td>Status-driving point compared against the usable planning rail and watch/risk thresholds.</td></tr>',
+      '<tr><td>Capacity</td><td>Usable VRAM</td><td><strong>' + escapeHtml(usable) + '</strong></td><td>Planning capacity after display/OS reserve and target utilization are applied.</td></tr>',
+      '<tr><td>Hardware</td><td>Installed / allocated VRAM</td><td><strong>' + escapeHtml(installed) + '</strong></td><td>Hardware or allocation rail that should be verified against the selected GPU class.</td></tr>',
+      '<tr><td>Pressure</td><td>Capacity pressure</td><td><strong>' + escapeHtml(pressure) + '</strong></td><td>Watch begins at 70% of usable VRAM; risk begins at 90%.</td></tr>',
+      '</tbody>',
+      '</table>'
+    ].join("");
   }
 
   function renderProofSectionsFromPlan(plan) {

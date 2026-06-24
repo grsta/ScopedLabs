@@ -1277,3 +1277,23 @@ Promotion note:
 - Consumer: tools/compute/gpu-vram/index.html
 - Contract: Recommendation References, Recommended Actions, and GPU VRAM Decision Schedule render as clean ScopedLabs proof cards below the GPU VRAM Capacity Envelope instead of raw table/list output.
 - Guardrail: Keep the event bridge behavior intact; this lane is visual polish only.
+
+
+### COMPUTE_GPU_VRAM_PROOF_STACK_RAM_RHYTHM_0624H
+
+- Status: PROOF_GATE_POLISH
+- Owner: scripts/audit-compute-gpu-vram-proof-stack-ram-rhythm-v1.js
+- Scope: GPU VRAM proof-stack RAM-style card rhythm.
+- Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
+- Contract: GPU Recommended Actions uses stacked RAM-style action rows, and GPU VRAM Decision Schedule uses a RAM-style status summary plus structured Group / Metric / Value / Engineering Note table.
+- Guardrail: Keep the event bridge behavior intact; this lane only changes proof-card presentation and script-rendered card HTML.
+
+
+### COMPUTE_GPU_VRAM_PROOF_STACK_PARITY_VERSION_ALIGNMENT_0624H
+
+- Status: PROOF_GATE_AUDIT_ALIGNMENT
+- Owner: scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js
+- Scope: GPU VRAM proof-stack parity audit version alignment after RAM-rhythm polish.
+- Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
+- Contract: The parity audit should protect the event bridge behavior while allowing the current GPU script cache-bust version from the RAM-rhythm proof-card lane.
+- Guardrail: Do not pin the parity audit to an older cache-bust token when a later proof-stack lane intentionally bumps the same local script.

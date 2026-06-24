@@ -333,3 +333,35 @@ Polish: GPU VRAM proof stack now uses structured proof-card styling for Recommen
 
 Audit:
 - scripts/audit-compute-gpu-vram-proof-stack-polish-v1.js
+
+
+### COMPUTE-GPU-VRAM-PROOF-STACK-RAM-RHYTHM-0624H
+
+Status: LOCAL_PROOF_POLISH
+
+Changed path:
+- tools/compute/gpu-vram/index.html
+- tools/compute/gpu-vram/script.js
+- scripts/audit-compute-gpu-vram-proof-stack-ram-rhythm-v1.js
+- docs/scopedlabs-module-map.md
+- docs/scopedlabs-pattern-promotion-ledger.md
+
+Polish: GPU VRAM Recommended Actions and GPU VRAM Decision Schedule now follow RAM's accepted proof-card rhythm: stacked action rows and a structured decision schedule with status summary and table.
+
+Audit:
+- scripts/audit-compute-gpu-vram-proof-stack-ram-rhythm-v1.js
+
+
+### COMPUTE-GPU-VRAM-PROOF-STACK-PARITY-VERSION-ALIGNMENT-0624H
+
+Status: LOCAL_PROOF_AUDIT_ALIGNMENT
+
+Changed path:
+- scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js
+- docs/scopedlabs-module-map.md
+- docs/scopedlabs-pattern-promotion-ledger.md
+
+Audit alignment: The GPU proof-stack parity audit now accepts the current RAM-rhythm script version while still checking that the event bridge wiring remains present.
+
+Audit:
+- scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js
