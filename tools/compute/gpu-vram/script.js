@@ -1035,8 +1035,8 @@
       '<thead><tr><th>Marker</th><th>Reference</th><th>Reason</th></tr></thead>',
       '<tbody>',
       '<tr><td><span class="compute-gpu-ref-marker is-demand">*1</span></td><td><strong>Demand basis</strong></td><td>Raw GPU memory demand from model/workload footprint, batch/sample activation pressure, concurrent jobs, runtime cache, checkpoint, workspace, and overhead assumptions.</td></tr>',
-      '<tr><td><span class="compute-gpu-ref-marker is-required">*2</span></td><td><strong>Required status point</strong></td><td>Required VRAM is the plotted status-driving point after precision, parallelism, growth reserve, failover, and sharing assumptions are applied. This is the point compared against the watch/risk thresholds.</td></tr>',
-      '<tr><td><span class="compute-gpu-ref-marker is-capacity">*3</span></td><td><strong>Capacity rail</strong></td><td>Usable and installed VRAM remain horizontal capacity rails. Validate framework allocation, KV/cache behavior, replica count, precision mode, GPU sharing mode, and display/OS reserve before committing GPU hardware.</td></tr>',
+      '<tr><td><span class="compute-gpu-ref-marker is-required">*2</span></td><td><strong>Required/status-driving point</strong></td><td>Required VRAM is the plotted status-driving point after precision, parallelism, growth reserve, failover, and sharing assumptions are applied. This is the point compared against the watch/risk thresholds.</td></tr>',
+      '<tr><td><span class="compute-gpu-ref-marker is-capacity">*3</span></td><td><strong>Capacity rail context</strong></td><td>Usable and installed VRAM remain horizontal capacity rails. Validate framework allocation, KV/cache behavior, replica count, precision mode, GPU sharing mode, and display/OS reserve before committing GPU hardware.</td></tr>',
       '</tbody>',
       '</table>'
     ].join("");
@@ -1258,3 +1258,264 @@
   }
 })();
 
+
+
+/* ScopedLabs GPU VRAM export parity 0624K */
+(function () {
+  const MARKER = "ScopedLabsComputeGpuVramExport0624K";
+  if (window[MARKER]) return;
+  window[MARKER] = true;
+
+  function safeText(value) {
+    return String(value == null ? "" : value);
+  }
+
+  function compactText(value) {
+    const text = safeText(value);
+    let out = "";
+    let wasSpace = false;
+
+    for (let i = 0; i < text.length; i += 1) {
+      const code = text.charCodeAt(i);
+      const isSpace = code <= 32;
+
+      if (isSpace) {
+        if (!wasSpace && out) out += " ";
+        wasSpace = true;
+      } else {
+        out += text[i];
+        wasSpace = false;
+      }
+    }
+
+    return out.trim();
+  }
+
+  function gb(value) {
+    const n = Number(value || 0);
+    return Number.isFinite(n) ? n.toFixed(1) + " GB" : "";
+  }
+
+  function pct(value) {
+    const n = Number(value || 0);
+    if (!Number.isFinite(n)) return "";
+    return Math.round(n * 100) + "%";
+  }
+
+  function currentPlan() {
+    if (window.ScopedLabsComputeGpuVramEngineeringInputs &&
+        typeof window.ScopedLabsComputeGpuVramEngineeringInputs.buildPlan === "function") {
+      try {
+        return window.ScopedLabsComputeGpuVramEngineeringInputs.buildPlan();
+      } catch (err) {}
+    }
+
+    try {
+      const raw = sessionStorage.getItem("scopedlabs.compute.gpu-vram.engineeringPlan");
+      return raw ? JSON.parse(raw) : null;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function domTable(selector) {
+    const table = document.querySelector(selector);
+    if (!table) return null;
+
+    const headers = Array.from(table.querySelectorAll("thead th"))
+      .map(function (cell) {
+        return compactText(cell.textContent);
+      })
+      .filter(Boolean);
+
+    const rows = Array.from(table.querySelectorAll("tbody tr")).map(function (row) {
+      return Array.from(row.querySelectorAll("th,td")).map(function (cell) {
+        return compactText(cell.textContent);
+      });
+    }).filter(function (row) {
+      return row.some(Boolean);
+    });
+
+    if (!headers.length && !rows.length) return null;
+    return { headers: headers, rows: rows };
+  }
+
+  function plainCell(value) {
+    return { text: safeText(value || "") };
+  }
+
+  function valueCell(value) {
+    return { text: safeText(value || ""), style: "font-weight:700;color:#0f172a;" };
+  }
+
+  function noteCell(value) {
+    return { text: safeText(value || ""), style: "font-weight:700;color:#0f172a;" };
+  }
+
+  function chartSvg() {
+    const svg = document.querySelector("#computeGpuEnvelope svg");
+    return svg ? svg.outerHTML : "";
+  }
+
+  function inputRows(plan) {
+    const input = plan && plan.input ? plan.input : {};
+
+    return [
+      { label: "Model / workload memory", value: gb(input.modelGb || plan.rawDemandGb || 0) },
+      { label: "Installed / allocated VRAM", value: gb(input.installedVramGb || plan.installedVramGb || 0) },
+      { label: "Target VRAM utilization", value: String(Math.round(Number(input.targetUtilization || 0) * 100 || 0)) + "%" },
+      { label: "Precision / quantization", value: safeText(input.precisionMode || "manual") },
+      { label: "Parallelism mode", value: safeText(input.parallelismMode || "shared") },
+      { label: "Replica / model copy count", value: safeText(input.replicaCount || 1) },
+      { label: "Growth reserve", value: String(Math.round(Number(input.growthReserve || 0) * 100 || 0)) + "%" },
+      { label: "KV / runtime cache reserve", value: gb(input.kvCacheGb || 0) },
+      { label: "Checkpoint / workspace reserve", value: gb(input.checkpointReserveGb || 0) },
+      { label: "Failover multiplier", value: safeText(input.failoverMultiplier || 1) },
+      { label: "GPU sharing mode", value: safeText(input.gpuSharingMode || "dedicated") }
+    ];
+  }
+
+  function outputRows(plan) {
+    const status = String(plan && plan.status ? plan.status : "WATCH").toUpperCase();
+
+    return [
+      { label: "GPU VRAM Status", value: status },
+      { label: "Raw Demand", value: gb(plan.rawDemandGb) },
+      { label: "Required VRAM", value: gb(plan.requiredVramGb) },
+      { label: "Usable VRAM", value: gb(plan.usableVramGb) },
+      { label: "Installed / Allocated VRAM", value: gb((plan.input && plan.input.installedVramGb) || plan.installedVramGb || 0) },
+      { label: "Capacity Pressure", value: pct(plan.capacityPressure) },
+      { label: "Engineering Interpretation", value: safeText(plan.guidance || "Validate GPU VRAM capacity assumptions before final hardware selection.") }
+    ];
+  }
+
+  function visualExportSection(plan) {
+    const svg = chartSvg();
+
+    return {
+      title: "GPU VRAM Capacity Envelope",
+      description: "Demand curve versus usable GPU VRAM planning capacity, including demand basis, required/status-driving point, usable/installed rails, and the active GPU VRAM envelope status." + (plan.status ? " Status: " + plan.status + "." : ""),
+      compactSvg: false,
+      svgs: svg ? [svg] : []
+    };
+  }
+
+  function referenceExportSection() {
+    const table = domTable("#computeGpuReferences table.compute-gpu-reference-table");
+
+    return {
+      title: "Recommendation References",
+      description: "Reference markers shown in the GPU VRAM Capacity Envelope and recommendation proof. These explain the demand basis, required/status-driving point, and capacity rail context.",
+      tableClass: "extra-export-table--planner extra-export-table--decision",
+      tables: [
+        {
+          headers: table && table.headers.length ? table.headers : ["Marker", "Reference", "Reason"],
+          rows: table && table.rows.length ? table.rows : [
+            ["*1", "Demand basis", "Raw GPU memory demand from workload, batch, concurrency, cache, checkpoint, workspace, and overhead assumptions."],
+            ["*2", "Required/status-driving point", "Required VRAM is the status-driving point compared against watch/risk thresholds."],
+            ["*3", "Capacity rail context", "Usable and installed VRAM remain horizontal capacity rails for hardware validation."]
+          ]
+        }
+      ]
+    };
+  }
+
+  function actionRowsFromDom() {
+    return Array.from(document.querySelectorAll("#computeGpuRecommendedActions .compute-gpu-proof-action")).map(function (item) {
+      const title = item.querySelector("strong");
+      const detail = item.querySelector("span");
+      return [
+        compactText(title ? title.textContent : "Review GPU VRAM plan"),
+        compactText(detail ? detail.textContent : "Engineering review required.")
+      ];
+    }).filter(function (row) {
+      return row.some(Boolean);
+    });
+  }
+
+  function recommendedActionsExportSection() {
+    const rows = actionRowsFromDom();
+
+    return {
+      title: "Recommended Actions",
+      description: "Corrective or validation steps generated from the GPU VRAM Capacity Envelope status authority.",
+      tableClass: "extra-export-table--planner extra-export-table--decision",
+      tables: [
+        {
+          headers: ["Action", "Reason"],
+          colWidths: ["34%", "66%"],
+          rows: (rows.length ? rows : [
+            ["Validate GPU memory assumptions", "Run a representative batch, cache, and concurrency test before locking the GPU allocation."]
+          ]).map(function (row) {
+            return [plainCell(row[0]), plainCell(row[1])];
+          })
+        }
+      ]
+    };
+  }
+
+  function decisionScheduleExportSection() {
+    const table = domTable("#computeGpuDecisionSchedule table.compute-gpu-decision-table");
+
+    return {
+      title: "GPU VRAM Decision Schedule",
+      description: "Decision checkpoints generated from the GPU VRAM sizing result.",
+      tableClass: "extra-export-table--planner extra-export-table--decision",
+      tables: [
+        {
+          headers: table && table.headers.length ? table.headers : ["Group", "Metric", "Value", "Engineering Note"],
+          colWidths: ["16%", "22%", "18%", "44%"],
+          rows: (table && table.rows.length ? table.rows : []).map(function (row) {
+            const cols = Array.isArray(row) ? row : [];
+            return [
+              plainCell(cols[0] || ""),
+              plainCell(cols[1] || ""),
+              valueCell(cols[2] || ""),
+              noteCell(cols[3] || "")
+            ];
+          })
+        }
+      ]
+    };
+  }
+
+  function buildPayload(context) {
+    const plan = currentPlan();
+    if (!plan) return null;
+
+    const options = context && context.options ? context.options : {};
+    const outputs = outputRows(plan);
+
+    const extraSections = [
+      visualExportSection(plan),
+      referenceExportSection(),
+      recommendedActionsExportSection(),
+      decisionScheduleExportSection()
+    ].filter(Boolean);
+
+    return {
+      status: String(plan.status || "WATCH").toUpperCase(),
+      summary: "GPU VRAM export generated from the latest calculated GPU VRAM Capacity Envelope result.",
+      interpretation: safeText(plan.guidance || "Validate GPU VRAM capacity assumptions before final hardware selection."),
+      inputs: inputRows(plan),
+      outputs: outputs,
+      chartImage: "",
+      extraSections: extraSections,
+      exportSectionsContract: "gpu-vram-visual-references-actions-schedule",
+      assumptions: Array.isArray(options.assumptions) ? options.assumptions : [],
+      printLowInkChart: false
+    };
+  }
+
+  window.ScopedLabsComputeGpuVramExport = {
+    buildPayload: buildPayload
+  };
+
+  window.addEventListener("scopedlabs:compute-gpu-vram-plan-rendered", function () {
+    window.setTimeout(function () {
+      if (window.ScopedLabsExport && typeof window.ScopedLabsExport.refresh === "function") {
+        window.ScopedLabsExport.refresh();
+      }
+    }, 0);
+  });
+})();

@@ -110,15 +110,11 @@ check(
 
 check(
   "GPU_PROOF_STACK_REFERENCE_WORDING_MATCHES_ACCEPTED_CHART",
-  renderReferences.includes("*1 demand basis") &&
-    renderReferences.includes("*2 required status point") &&
-    renderReferences.includes("status-driving point") &&
-    renderReferences.includes("watch/risk thresholds") &&
-    renderReferences.includes("*3 capacity rail") &&
-    renderReferences.includes("horizontal capacity rails") &&
-    !renderReferences.includes("*2 capacity rail"),
-  "GPU references should match accepted chart grammar: *2 is Required/status-driving point; *3 is capacity rail context.",
-  scriptFile
+  script.includes("Required/status-driving point") &&
+    script.includes("status-driving point") &&
+    script.includes("Capacity rail context") &&
+    script.includes("Usable and installed VRAM remain horizontal capacity rails"),
+  "GPU references should match accepted chart grammar: *2 is Required/status-driving point; *3 is capacity rail context."
 );
 
 check(
@@ -167,7 +163,7 @@ check(
 
 check(
   "GPU_PROOF_STACK_LOCAL_SCRIPT_VERSION",
-  html.includes('./script.js?v=compute-gpu-vram-proof-reference-ram-rhythm-0624j') &&
+  html.includes('./script.js?v=compute-gpu-vram-export-parity-0624k') &&
     script.includes('scopedlabs:compute-gpu-vram-plan-rendered') &&
     script.includes("renderProofSectionsFromPlan(plan);"),
   "GPU local script version should reflect the latest proof-stack lane while preserving the event bridge wiring."

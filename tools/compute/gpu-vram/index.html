@@ -1365,7 +1365,10 @@
       ],
       "disclaimer": "ScopedLabs outputs are planning aids only and do not replace formal engineering review, code compliance review, site-specific validation, manufacturer documentation, or platform-specific design validation."
 };
-  </script>
+  
+    window.ScopedLabsExportConfig.reportPrefix = window.ScopedLabsExportConfig.reportPrefix || "SL-COMPUTE-GPU";
+    window.ScopedLabsExportConfig.customPayloadBuilder = "ScopedLabsComputeGpuVramExport.buildPayload";
+</script>
 
   <script src="/assets/export.js?v=shared-export-025-tool-notes-column-widths"></script>
 <script src="/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-008-access-control-category-scope-key"></script>
@@ -1374,7 +1377,7 @@
 <script src="/assets/scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-018-ram-capacity-marker"></script>
 
   <script src="/assets/scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-007-workload-nav-links"></script>
-  <script src="./script.js?v=compute-gpu-vram-proof-reference-ram-rhythm-0624j"></script>
+  <script src="./script.js?v=compute-gpu-vram-export-parity-0624k"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
 <script src="/assets/scopedlabs-compute-assistant-contract.js?v=compute-assistant-gpu-vram-shell-proof-0621"></script>

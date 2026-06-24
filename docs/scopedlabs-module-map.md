@@ -1317,3 +1317,13 @@ Promotion note:
 - Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
 - Contract: GPU Recommendation References renders as a RAM-style Marker / Reference / Reason table with toned *1/*2/*3 markers.
 - Guardrail: Do not let earlier two-column grid proof-card styling override the desktop reference table.
+
+
+### COMPUTE_GPU_VRAM_EXPORT_PARITY_0624K
+
+- Status: PROOF_GATE_EXPORT_PARITY
+- Owner: scripts/audit-compute-gpu-vram-export-parity-v1.js
+- Scope: GPU VRAM custom export/report payload parity.
+- Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
+- Contract: GPU VRAM exports use ScopedLabsComputeGpuVramExport.buildPayload to include the GPU VRAM Capacity Envelope SVG, Recommendation References, Recommended Actions, and GPU VRAM Decision Schedule.
+- Guardrail: Do not rely only on default DOM scraping for GPU VRAM export parity.

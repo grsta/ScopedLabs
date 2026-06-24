@@ -400,3 +400,20 @@ Polish: GPU VRAM Recommendation References now follows RAM's accepted Marker / R
 
 Audit:
 - scripts/audit-compute-gpu-vram-proof-stack-reference-rhythm-v1.js
+
+
+### COMPUTE-GPU-VRAM-EXPORT-PARITY-0624K
+
+Status: LOCAL_EXPORT_PARITY
+
+Changed path:
+- tools/compute/gpu-vram/index.html
+- tools/compute/gpu-vram/script.js
+- scripts/audit-compute-gpu-vram-export-parity-v1.js
+- docs/scopedlabs-module-map.md
+- docs/scopedlabs-pattern-promotion-ledger.md
+
+Export parity: GPU VRAM now exposes a custom export payload builder that carries the capacity envelope SVG, recommendation references, recommended actions, and decision schedule into the generated report.
+
+Audit:
+- scripts/audit-compute-gpu-vram-export-parity-v1.js

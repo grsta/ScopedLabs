@@ -58,7 +58,7 @@ check(
   renderReferences.includes("compute-gpu-reference-table") &&
     renderReferences.includes("<thead><tr><th>Marker</th><th>Reference</th><th>Reason</th></tr></thead>") &&
     renderReferences.includes("Demand basis") &&
-    renderReferences.includes("Required status point") &&
+    renderReferences.includes("Required/status-driving point") &&
     renderReferences.includes("Capacity rail"),
   "GPU Recommendation References should render a RAM-style Marker / Reference / Reason table.",
   scriptFile
@@ -84,7 +84,7 @@ check(
 
 check(
   "GPU_REFERENCE_RAM_RHYTHM_SCRIPT_VERSION",
-  html.includes('./script.js?v=compute-gpu-vram-proof-reference-ram-rhythm-0624j'),
+  html.includes('./script.js?v=compute-gpu-vram-export-parity-0624k'),
   "GPU local script version should be bumped for RAM-style references."
 );
 
