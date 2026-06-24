@@ -1018,9 +1018,41 @@
     `;
   }
 
+  function $gpuProof(id) {
+    return $gpuShell(id) || document.getElementById(id);
+  }
+
+  function clearGpuProofSections() {
+    [
+      "computeGpuReferencesCard",
+      "computeGpuRecommendedActionsCard",
+      "computeGpuDecisionScheduleCard"
+    ].forEach(function (id) {
+      const el = $gpuProof(id);
+      if (el) el.hidden = true;
+    });
+
+    [
+      "computeGpuReferences",
+      "computeGpuRecommendedActions",
+      "computeGpuDecisionSchedule"
+    ].forEach(function (id) {
+      const el = $gpuProof(id);
+      if (el) el.innerHTML = "";
+    });
+  }
+
+  function renderGpuProofSections(plan) {
+    if (!plan) return;
+
+    renderReferences(plan);
+    renderActions(plan);
+    renderSchedule(plan);
+  }
+
   function renderReferences(plan) {
-    const card = $gpuShell("computeGpuReferencesCard");
-    const mount = $gpuShell("computeGpuReferences");
+    const card = $gpuProof("computeGpuReferencesCard");
+    const mount = $gpuProof("computeGpuReferences");
     if (!card || !mount || !plan) return;
 
     card.hidden = false;
@@ -1045,8 +1077,8 @@
   }
 
   function renderActions(plan) {
-    const card = $gpuShell("computeGpuRecommendedActionsCard");
-    const mount = $gpuShell("computeGpuRecommendedActions");
+    const card = $gpuProof("computeGpuRecommendedActionsCard");
+    const mount = $gpuProof("computeGpuRecommendedActions");
     if (!card || !mount || !plan) return;
 
     card.hidden = false;
@@ -1075,8 +1107,8 @@
   }
 
   function renderSchedule(plan) {
-    const card = $gpuShell("computeGpuDecisionScheduleCard");
-    const mount = $gpuShell("computeGpuDecisionSchedule");
+    const card = $gpuProof("computeGpuDecisionScheduleCard");
+    const mount = $gpuProof("computeGpuDecisionSchedule");
     if (!card || !mount || !plan) return;
 
     card.hidden = false;
@@ -1107,9 +1139,7 @@
 
     renderLedger(plan);
     renderAssistant(plan);
-    renderReferences(plan);
-    renderActions(plan);
-    renderSchedule(plan);
+    renderGpuProofSections(plan);
   }
 
   function clearShellProof() {
@@ -1118,26 +1148,22 @@
       "computeAssistantCard",
       "computeGpuVisualCard",
       "computeGpuEngineeringSummary",
-      "computeGpuEnvelope",
-      "computeGpuReferencesCard",
-      "computeGpuRecommendedActionsCard",
-      "computeGpuDecisionScheduleCard"
+      "computeGpuEnvelope"
     ].forEach(function (id) {
-      const el = $gpuShell(id);
+      const el = $gpuShell(id) || document.getElementById(id);
       if (!el) return;
       el.hidden = true;
     });
 
     [
       "computeAssistantMount",
-      "computeGpuReferences",
-      "computeGpuRecommendedActions",
-      "computeGpuDecisionSchedule",
       "computeInternalResultsLedger"
     ].forEach(function (id) {
-      const el = $gpuShell(id);
+      const el = $gpuShell(id) || document.getElementById(id);
       if (el) el.innerHTML = "";
     });
+
+    clearGpuProofSections();
   }
 
   function bind() {

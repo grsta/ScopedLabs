@@ -1257,3 +1257,27 @@ Promotion note:
 - Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
 - Contract: Keeps the accepted GPU chart order and places the proof stack below it: Recommendation References, Recommended Actions, Decision Schedule, then User Tool Notes. Reference wording is aligned to the accepted GPU VRAM Capacity Envelope grammar: *1 demand basis, *2 required/status-driving point, *3 capacity rail context.
 - Guardrail: Do not move User Tool Notes above the proof stack. Do not make usable VRAM a plotted workload/status point again.
+
+
+### COMPUTE_GPU_VRAM_PROOF_STACK_LIFECYCLE_0624D
+
+- Status: PROOF_GATE_FIX
+- Owner: scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js
+- Scope: GPU VRAM CPU-style proof-section lifecycle.
+- Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
+- Contract: GPU proof cards use a local proof DOM resolver plus clear/render lifecycle functions so Recommendation References, Recommended Actions, and GPU VRAM Decision Schedule are populated after the chart and before User Tool Notes.
+- Guardrail: Do not use timer rehydrate workarounds for this path. Do not leave proof cards dependent on shell-only ID lookup.
+
+
+### COMPUTE_GPU_VRAM_PROOF_STACK_LIFECYCLE_AUDIT_ALIGNMENT_0624D
+
+- Status: PROOF_GATE_AUDIT_ALIGNMENT
+- Owner: scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js
+- Scope: GPU VRAM proof-stack parity, live-render history, and CPU-style lifecycle audit alignment.
+- Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
+- Contract: This entry preserves the exact audit lineage tokens required by the GPU proof-stack parity audit:
+  - COMPUTE_GPU_VRAM_PROOF_STACK_PARITY_0624A
+  - COMPUTE_GPU_VRAM_PROOF_STACK_LIVE_RENDER_0624B
+  - COMPUTE_GPU_VRAM_PROOF_STACK_LIFECYCLE_0624D
+  - scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js
+- Guardrail: GPU proof-stack lifecycle should use clearGpuProofSections() and renderGpuProofSections(plan), with proof-card lookup falling back to document.getElementById when shell lookup misses.
