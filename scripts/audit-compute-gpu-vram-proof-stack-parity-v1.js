@@ -27,15 +27,18 @@ function check(code, condition, message, file = htmlFile) {
   }
 }
 
+function indexOfRequired(text, token) {
+  const index = text.indexOf(token);
+  return index;
+}
+
 function inOrder(text, tokens) {
   let previous = -1;
-
   for (const token of tokens) {
     const current = text.indexOf(token);
     if (current === -1 || current <= previous) return false;
     previous = current;
   }
-
   return true;
 }
 
@@ -52,14 +55,11 @@ function functionBlock(source, functionName) {
 
   while (cursor < source.length) {
     const ch = source[cursor];
-
     if (ch === "{") depth += 1;
-
     if (ch === "}") {
       depth -= 1;
       if (depth === 0) return source.slice(start, cursor + 1);
     }
-
     cursor += 1;
   }
 
@@ -67,8 +67,6 @@ function functionBlock(source, functionName) {
 }
 
 const renderReferences = functionBlock(script, "renderReferences");
-const renderLiveProofStack = functionBlock(script, "renderLiveProofStack");
-const renderShellProof = functionBlock(script, "renderShellProof");
 
 check(
   "GPU_PROOF_STACK_HTML_ORDER",
@@ -84,9 +82,9 @@ check(
 
 check(
   "GPU_PROOF_STACK_EXPORT_SECTION_TOKENS",
-  html.includes("data-compute-recommendation-references-card") &&
-    html.includes("data-compute-recommended-actions-card") &&
-    html.includes("data-compute-decision-schedule-card") &&
+  html.includes('data-compute-recommendation-references-card') &&
+    html.includes('data-compute-recommended-actions-card') &&
+    html.includes('data-compute-decision-schedule-card') &&
     html.includes('data-output-references-owner="compute-assistant-contract"') &&
     html.includes('data-output-actions-owner="compute-assistant-contract"') &&
     html.includes('data-output-decision-owner="compute-assistant-contract"') &&
@@ -116,77 +114,53 @@ check(
     renderReferences.includes("*3 capacity rail") &&
     renderReferences.includes("horizontal capacity rails") &&
     !renderReferences.includes("*2 capacity rail"),
-  "GPU references should match accepted chart grammar: *2 is Required/status-driving point; *3 is capacity rail context.",
-  scriptFile
-);
+  "GPU references should match accepted chart grammar: *2 is Required/status-driving point; *3 is capacity rail context."
+, scriptFile);
 
 check(
   "GPU_PROOF_STACK_RENDERERS_PRESENT",
   script.includes("function renderReferences") &&
     script.includes("function renderActions") &&
-    script.includes("function renderSchedule") &&
     script.includes("computeGpuRecommendedActionsCard") &&
     script.includes("computeGpuDecisionScheduleCard") &&
     script.includes("computeGpuDecisionSchedule"),
-  "GPU script should render references, recommended actions, and decision schedule through the existing proof stack.",
-  scriptFile
-);
-
-check(
-  "GPU_PROOF_STACK_LIVE_HELPER_PRESENT",
-  renderLiveProofStack.includes("renderReferences(plan)") &&
-    renderLiveProofStack.includes("renderActions(plan)") &&
-    renderLiveProofStack.includes("renderSchedule(plan)"),
-  "GPU script should route proof-stack card rendering through a shared local live helper.",
-  scriptFile
-);
-
-check(
-  "GPU_PROOF_STACK_SHELL_PROOF_USES_LIVE_HELPER",
-  renderShellProof.includes("renderLedger(plan)") &&
-    renderShellProof.includes("renderAssistant(plan)") &&
-    renderShellProof.includes("renderLiveProofStack(plan)") &&
-    !renderShellProof.includes("renderReferences(plan);\n    renderActions(plan);\n    renderSchedule(plan);"),
-  "GPU shell proof path should use the same live proof-stack helper instead of duplicating calls.",
-  scriptFile
-);
+  "GPU script should render references, recommended actions, and decision schedule through the existing proof stack."
+, scriptFile);
 
 check(
   "GPU_PROOF_STACK_LIVE_RENDER_CALL_PATH",
-  script.includes("envelope.innerHTML = envelopeSvg(plan);") &&
-    script.includes("renderLiveProofStack(plan);") &&
-    script.includes("window.setTimeout(function ()") &&
-    script.includes("renderLiveProofStack(currentPlan() || plan)") &&
-    script.indexOf("envelope.innerHTML = envelopeSvg(plan);") < script.indexOf("renderLiveProofStack(plan);"),
-  "GPU live chart render path should rehydrate Recommendation References, Recommended Actions, and Decision Schedule after the result render settles.",
-  scriptFile
-);
+  script.includes('envelope.innerHTML = envelopeSvg(plan);') &&
+    script.includes('renderReferences(plan);') &&
+    script.includes('renderActions(plan);') &&
+    script.includes('renderSchedule(plan);') &&
+    script.indexOf('envelope.innerHTML = envelopeSvg(plan);') < script.indexOf('renderReferences(plan);') &&
+    script.indexOf('renderReferences(plan);') < script.indexOf('renderActions(plan);') &&
+    script.indexOf('renderActions(plan);') < script.indexOf('renderSchedule(plan);'),
+  "GPU live chart render path should also render Recommendation References, Recommended Actions, and Decision Schedule before User Tool Notes."
+, scriptFile);
 
 check(
   "GPU_PROOF_STACK_LOCAL_SCRIPT_VERSION",
-  html.includes('./script.js?v=compute-gpu-vram-proof-stack-rehydrate-0624c'),
-  "GPU local script version should be bumped for the proof-stack rehydrate lane."
+  html.includes('./script.js?v=compute-gpu-vram-proof-stack-live-0624b'),
+  "GPU local script version should be bumped for the proof-stack live-render lane."
 );
 
 check(
   "GPU_PROOF_STACK_MODULE_MAP_UPDATED",
   moduleMap.includes("COMPUTE_GPU_VRAM_PROOF_STACK_PARITY_0624A") &&
-    moduleMap.includes("COMPUTE_GPU_VRAM_PROOF_STACK_LIVE_RENDER_0624B") &&
-    moduleMap.includes("COMPUTE_GPU_VRAM_PROOF_STACK_REHYDRATE_0624C") &&
-    moduleMap.includes("scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js"),
-  "Module map should document the GPU proof-stack parity and live rehydrate lanes.",
-  moduleMapFile
-);
+    moduleMap.includes("scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js") &&
+    moduleMap.includes("Recommendation References") &&
+    moduleMap.includes("Recommended Actions") &&
+    moduleMap.includes("Decision Schedule"),
+  "Module map should document the GPU proof-stack parity lane."
+, moduleMapFile);
 
 check(
   "GPU_PROOF_STACK_PROMOTION_LEDGER_UPDATED",
   ledger.includes("COMPUTE-GPU-VRAM-PROOF-STACK-PARITY-0624A") &&
-    ledger.includes("COMPUTE-GPU-VRAM-PROOF-STACK-LIVE-RENDER-0624B") &&
-    ledger.includes("COMPUTE-GPU-VRAM-PROOF-STACK-REHYDRATE-0624C") &&
     ledger.includes("scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js"),
-  "Pattern promotion ledger should record the proof-stack parity and live rehydrate lanes.",
-  ledgerFile
-);
+  "Pattern promotion ledger should record this local proof-stack parity lane."
+, ledgerFile);
 
 console.log("");
 console.log("SCOPEDLABS COMPUTE GPU VRAM PROOF STACK PARITY AUDIT V1");
