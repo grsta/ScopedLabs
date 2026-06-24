@@ -1303,6 +1303,11 @@
               data-placeholder="Optional notes, assumptions, GPU workload context, or caveats for the GPU VRAM report."
             ></div>
           </details>
+        
+
+          <div data-compute-flow-inside-export-card="true" id="continue-wrap" class="btn-row compute-flow-actions" style="display:none; margin-top:12px;" data-compute-flow-actions="true" data-compute-flow-owner="compute-shell-contract" data-compute-flow-tool="gpu-vram" data-compute-flow-placed="true">
+                <a id="continue" class="btn btn-primary" href="/tools/compute/summary/">Review Compute Summary</a>
+              </div>
         </section>
 
         
@@ -1346,7 +1351,6 @@
                   <div id="computeGpuDecisionSchedule" data-compute-decision-schedule="gpu-vram" role="group" aria-label="GPU VRAM decision schedule"></div>
                 </section>
 
-
     
 
     
@@ -1360,12 +1364,6 @@
     
 
     
-
-<div id="continue-wrap" class="btn-row compute-flow-actions" style="display:none; margin-top:12px;" data-compute-flow-actions="true" data-compute-flow-owner="compute-shell-contract" data-compute-flow-tool="gpu-vram" data-compute-flow-placed="true">
-      <a id="continue" class="btn btn-primary" href="/tools/compute/power-thermal/">
-        Continue → Power & Thermal
-      </a>
-    </div>
 
     <footer class="site-footer">
       <div class="muted">© <span data-year></span> ScopedLabs</div>

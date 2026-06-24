@@ -56,6 +56,7 @@ check(
   script.includes('window.addEventListener("scopedlabs:compute-gpu-vram-plan-rendered"') &&
     script.includes("placeExportAfterProofStack") &&
     script.includes("flowActions()") &&
+    script.includes("!card.contains(flow)") &&
     script.includes("decisionScheduleCard()"),
   "GPU export should move after the proof stack once the active plan renders."
 );

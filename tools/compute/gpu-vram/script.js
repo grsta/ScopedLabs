@@ -1588,7 +1588,7 @@
     if (!card) return false;
 
     const flow = flowActions();
-    if (flow && insertBefore(card, flow)) return true;
+    if (flow && !card.contains(flow) && insertBefore(card, flow)) return true;
 
     const schedule = decisionScheduleCard();
     if (schedule && insertAfter(card, schedule)) return true;

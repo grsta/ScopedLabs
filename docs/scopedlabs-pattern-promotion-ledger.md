@@ -450,3 +450,20 @@ Layout parity: GPU VRAM Export Report starts under inputs before calculation and
 
 Audit:
 - scripts/audit-compute-gpu-vram-export-dynamic-placement-v1.js
+
+
+### COMPUTE-GPU-VRAM-EXPORT-CARD-CTA-PLACEMENT-0624N
+
+Status: LOCAL_LAYOUT_PARITY
+
+Changed path:
+- tools/compute/gpu-vram/index.html
+- tools/compute/gpu-vram/script.js
+- scripts/audit-compute-gpu-vram-export-card-cta-placement-v1.js
+- docs/scopedlabs-module-map.md
+- docs/scopedlabs-pattern-promotion-ledger.md
+
+Layout parity: GPU VRAM Review Compute Summary CTA now sits inside the Export Report card below User Tool Notes so the final action travels with the export/report block.
+
+Audit:
+- scripts/audit-compute-gpu-vram-export-card-cta-placement-v1.js

@@ -1347,3 +1347,13 @@ Promotion note:
 - Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
 - Contract: Before calculation, Export Report sits under inputs after Calculate/Reset. After calculation, Export Report moves to the bottom of the rendered result/proof stack before the flow CTA, matching the accepted Compute tool rhythm.
 - Guardrail: Do not permanently pin the Export Report card above the calculated results after a calculation has rendered.
+
+
+### COMPUTE_GPU_VRAM_EXPORT_CARD_CTA_PLACEMENT_0624N
+
+- Status: PROOF_GATE_LAYOUT_PARITY
+- Owner: scripts/audit-compute-gpu-vram-export-card-cta-placement-v1.js
+- Scope: GPU VRAM Review Compute Summary CTA placement inside Export Report card.
+- Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
+- Contract: The GPU VRAM Review Compute Summary CTA travels with the Export Report card and sits below User Tool Notes.
+- Guardrail: Do not leave the final flow CTA alone below the export/report card near the footer.
