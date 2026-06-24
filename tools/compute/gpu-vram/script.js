@@ -797,9 +797,11 @@
 
     envelope.innerHTML = envelopeSvg(plan);
 
-    renderReferences(plan);
-    renderActions(plan);
-    renderSchedule(plan);
+    renderLiveProofStack(plan);
+
+    window.setTimeout(function () {
+      renderLiveProofStack(currentPlan() || plan);
+    }, 0);
 
     const analysis = $gpuEng("analysis-copy");
     if (analysis) {
@@ -1104,6 +1106,14 @@
     `;
   }
 
+  function renderLiveProofStack(plan) {
+    if (!plan) return;
+
+    renderReferences(plan);
+    renderActions(plan);
+    renderSchedule(plan);
+  }
+
   function renderShellProof() {
     hideLegacyResultsSource();
     const plan = currentPlan();
@@ -1111,9 +1121,7 @@
 
     renderLedger(plan);
     renderAssistant(plan);
-    renderReferences(plan);
-    renderActions(plan);
-    renderSchedule(plan);
+    renderLiveProofStack(plan);
   }
 
   function clearShellProof() {

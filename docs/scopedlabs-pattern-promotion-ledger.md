@@ -317,3 +317,20 @@ Fix: The accepted GPU VRAM chart render path now calls the proof-stack renderers
 
 Audit:
 - scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js
+
+
+### COMPUTE-GPU-VRAM-PROOF-STACK-REHYDRATE-0624C
+
+Status: LOCAL_PROOF_GATE_FIX
+
+Changed path:
+- tools/compute/gpu-vram/index.html
+- tools/compute/gpu-vram/script.js
+- scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js
+- docs/scopedlabs-module-map.md
+- docs/scopedlabs-pattern-promotion-ledger.md
+
+Fix: The GPU VRAM live result path now rehydrates the proof stack after chart rendering settles, preventing hidden or empty Recommendation References, Recommended Actions, and GPU VRAM Decision Schedule cards when the chart is visible.
+
+Audit:
+- scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js
