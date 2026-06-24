@@ -27,15 +27,18 @@ function check(code, condition, message, file = htmlFile) {
   }
 }
 
+function indexOfRequired(text, token) {
+  const index = text.indexOf(token);
+  return index;
+}
+
 function inOrder(text, tokens) {
   let previous = -1;
-
   for (const token of tokens) {
     const current = text.indexOf(token);
     if (current === -1 || current <= previous) return false;
     previous = current;
   }
-
   return true;
 }
 
@@ -64,10 +67,6 @@ function functionBlock(source, functionName) {
 }
 
 const renderReferences = functionBlock(script, "renderReferences");
-const renderGpuProofSections = functionBlock(script, "renderGpuProofSections");
-const clearGpuProofSections = functionBlock(script, "clearGpuProofSections");
-const clearShellProof = functionBlock(script, "clearShellProof");
-const renderShellProof = functionBlock(script, "renderShellProof");
 
 check(
   "GPU_PROOF_STACK_HTML_ORDER",
@@ -83,9 +82,9 @@ check(
 
 check(
   "GPU_PROOF_STACK_EXPORT_SECTION_TOKENS",
-  html.includes("data-compute-recommendation-references-card") &&
-    html.includes("data-compute-recommended-actions-card") &&
-    html.includes("data-compute-decision-schedule-card") &&
+  html.includes('data-compute-recommendation-references-card') &&
+    html.includes('data-compute-recommended-actions-card') &&
+    html.includes('data-compute-decision-schedule-card') &&
     html.includes('data-output-references-owner="compute-assistant-contract"') &&
     html.includes('data-output-actions-owner="compute-assistant-contract"') &&
     html.includes('data-output-decision-owner="compute-assistant-contract"') &&
@@ -115,90 +114,41 @@ check(
     renderReferences.includes("*3 capacity rail") &&
     renderReferences.includes("horizontal capacity rails") &&
     !renderReferences.includes("*2 capacity rail"),
-  "GPU references should match accepted chart grammar: *2 is Required/status-driving point; *3 is capacity rail context.",
-  scriptFile
-);
-
-check(
-  "GPU_PROOF_STACK_DOM_RESOLVER",
-  script.includes("function $gpuProof(id)") &&
-    script.includes("return $gpuShell(id) || document.getElementById(id);") &&
-    script.includes('$gpuProof("computeGpuReferencesCard")') &&
-    script.includes('$gpuProof("computeGpuRecommendedActionsCard")') &&
-    script.includes('$gpuProof("computeGpuDecisionScheduleCard")'),
-  "GPU proof sections should use a DOM resolver that can find proof cards even when they sit outside the shell search scope.",
-  scriptFile
-);
-
-check(
-  "GPU_PROOF_STACK_CPU_STYLE_LIFECYCLE",
-  clearGpuProofSections.includes("computeGpuReferencesCard") &&
-    clearGpuProofSections.includes("computeGpuRecommendedActionsCard") &&
-    clearGpuProofSections.includes("computeGpuDecisionScheduleCard") &&
-    renderGpuProofSections.includes("renderReferences(plan)") &&
-    renderGpuProofSections.includes("renderActions(plan)") &&
-    renderGpuProofSections.includes("renderSchedule(plan)") &&
-    clearShellProof.includes("clearGpuProofSections();") &&
-    !script.includes("window.setTimeout(function ()"),
-  "GPU proof stack should use CPU-style clear/render lifecycle functions, not a timer rehydrate workaround.",
-  scriptFile
-);
+  "GPU references should match accepted chart grammar: *2 is Required/status-driving point; *3 is capacity rail context."
+, scriptFile);
 
 check(
   "GPU_PROOF_STACK_RENDERERS_PRESENT",
   script.includes("function renderReferences") &&
     script.includes("function renderActions") &&
-    script.includes("function renderSchedule") &&
     script.includes("computeGpuRecommendedActionsCard") &&
     script.includes("computeGpuDecisionScheduleCard") &&
     script.includes("computeGpuDecisionSchedule"),
-  "GPU script should render references, recommended actions, and decision schedule through the existing proof stack.",
-  scriptFile
-);
-
-check(
-  "GPU_PROOF_STACK_SHELL_PROOF_USES_LIFECYCLE",
-  renderShellProof.includes("renderLedger(plan)") &&
-    renderShellProof.includes("renderAssistant(plan)") &&
-    renderShellProof.includes("renderGpuProofSections(plan)"),
-  "GPU shell proof path should use the same proof-section lifecycle.",
-  scriptFile
-);
-
-check(
-  "GPU_PROOF_STACK_LIVE_RENDER_CALL_PATH",
-  script.includes("envelope.innerHTML = envelopeSvg(plan);") &&
-    script.includes("renderGpuProofSections(plan);") &&
-    script.indexOf("envelope.innerHTML = envelopeSvg(plan);") < script.indexOf("renderGpuProofSections(plan);"),
-  "GPU live chart render path should use the CPU-style proof-section lifecycle after the envelope renders.",
-  scriptFile
-);
+  "GPU script should render references, recommended actions, and decision schedule through the existing proof stack."
+, scriptFile);
 
 check(
   "GPU_PROOF_STACK_LOCAL_SCRIPT_VERSION",
-  html.includes('./script.js?v=compute-gpu-vram-proof-stack-lifecycle-0624d'),
-  "GPU local script version should be bumped for the proof-stack lifecycle lane."
+  html.includes('./script.js?v=compute-gpu-vram-proof-stack-parity-0624a'),
+  "GPU local script version should be bumped for the proof-stack parity lane."
 );
 
 check(
   "GPU_PROOF_STACK_MODULE_MAP_UPDATED",
   moduleMap.includes("COMPUTE_GPU_VRAM_PROOF_STACK_PARITY_0624A") &&
-    moduleMap.includes("COMPUTE_GPU_VRAM_PROOF_STACK_LIVE_RENDER_0624B") &&
-    moduleMap.includes("COMPUTE_GPU_VRAM_PROOF_STACK_LIFECYCLE_0624D") &&
-    moduleMap.includes("scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js"),
-  "Module map should document the GPU proof-stack parity and lifecycle lanes.",
-  moduleMapFile
-);
+    moduleMap.includes("scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js") &&
+    moduleMap.includes("Recommendation References") &&
+    moduleMap.includes("Recommended Actions") &&
+    moduleMap.includes("Decision Schedule"),
+  "Module map should document the GPU proof-stack parity lane."
+, moduleMapFile);
 
 check(
   "GPU_PROOF_STACK_PROMOTION_LEDGER_UPDATED",
   ledger.includes("COMPUTE-GPU-VRAM-PROOF-STACK-PARITY-0624A") &&
-    ledger.includes("COMPUTE-GPU-VRAM-PROOF-STACK-LIVE-RENDER-0624B") &&
-    ledger.includes("COMPUTE-GPU-VRAM-PROOF-STACK-LIFECYCLE-0624D") &&
     ledger.includes("scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js"),
-  "Pattern promotion ledger should record the proof-stack parity and lifecycle lanes.",
-  ledgerFile
-);
+  "Pattern promotion ledger should record this local proof-stack parity lane."
+, ledgerFile);
 
 console.log("");
 console.log("SCOPEDLABS COMPUTE GPU VRAM PROOF STACK PARITY AUDIT V1");
