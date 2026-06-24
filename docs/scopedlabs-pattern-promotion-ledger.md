@@ -335,3 +335,20 @@ Audit lineage tokens preserved:
 - scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js
 
 Purpose: Align docs with the accepted GPU proof-stack lifecycle audit after reverting the timer rehydrate attempt and moving toward a CPU-style clear/render lifecycle.
+
+
+### COMPUTE-GPU-VRAM-PROOF-STACK-ACTIVE-RENDER-0624E
+
+Status: LOCAL_PROOF_GATE_FIX
+
+Changed path:
+- tools/compute/gpu-vram/index.html
+- tools/compute/gpu-vram/script.js
+- scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js
+- docs/scopedlabs-module-map.md
+- docs/scopedlabs-pattern-promotion-ledger.md
+
+Fix: The proof-stack lifecycle is now called from the active GPU engineering renderer, renderGpuEngineeringPlan(), immediately after the chart envelope is written. The audit now checks that function block directly to prevent false positives from unrelated renderShellProof wiring.
+
+Audit:
+- scripts/audit-compute-gpu-vram-proof-stack-parity-v1.js
