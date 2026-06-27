@@ -1357,3 +1357,14 @@ Promotion note:
 - Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
 - Contract: The GPU VRAM Review Compute Summary CTA travels with the Export Report card and sits below User Tool Notes.
 - Guardrail: Do not leave the final flow CTA alone below the export/report card near the footer.
+
+
+### COMPUTE_GPU_VRAM_PROMOTION_CLOSEOUT_0627
+
+- Status: ACCEPTED_COMPUTE_PROOF_BASELINE
+- Owner: scripts/audit-compute-gpu-vram-promotion-closeout-v1.js
+- Scope: GPU VRAM local proof promotion / closeout.
+- Consumer: tools/compute/gpu-vram/index.html; tools/compute/gpu-vram/script.js
+- Contract: GPU VRAM is accepted as a Compute proof baseline with the accepted Capacity Envelope, RAM-style Recommendation References / Recommended Actions / Decision Schedule, custom export payload, dynamic export placement, User Tool Notes, and Review Compute Summary CTA inside the export/report card.
+- Guardrail: This is a closeout promotion, not a shared-module extraction. Preserve the accepted GPU page behavior until a deliberate shared Compute proof module lane is started.
+- Verification: Run scripts/audit-compute-gpu-vram-promotion-closeout-v1.js plus the existing GPU proof/export placement audits before future GPU changes.

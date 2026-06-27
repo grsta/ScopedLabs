@@ -467,3 +467,29 @@ Layout parity: GPU VRAM Review Compute Summary CTA now sits inside the Export Re
 
 Audit:
 - scripts/audit-compute-gpu-vram-export-card-cta-placement-v1.js
+
+
+### COMPUTE-GPU-VRAM-PROMOTION-CLOSEOUT-0627
+
+Status: ACCEPTED_COMPUTE_PROOF_BASELINE
+
+Changed path:
+- tools/compute/gpu-vram/index.html
+- tools/compute/gpu-vram/script.js
+- scripts/audit-compute-gpu-vram-promotion-closeout-v1.js
+- docs/scopedlabs-module-map.md
+- docs/scopedlabs-pattern-promotion-ledger.md
+
+Accepted baseline:
+- GPU VRAM Capacity Envelope is accepted with Demand basis and Required/status-driving point as the plotted markers, and usable/installed VRAM as capacity rails.
+- Recommendation References, Recommended Actions, and GPU VRAM Decision Schedule follow RAM's accepted proof-card rhythm.
+- GPU VRAM exports use a custom payload builder and carry chart, references, actions, decision schedule, metadata, and User Tool Notes.
+- Export Report uses dynamic placement: under inputs before calculation, below the rendered proof/result stack after calculation.
+- Review Compute Summary CTA sits inside the Export Report card below User Tool Notes.
+
+Promotion decision:
+- Keep this as an accepted local Compute proof baseline for now.
+- Do not extract into shared modules until another Compute tool needs the same full GPU/RAM-style proof/export/dynamic-placement behavior.
+
+Audit:
+- scripts/audit-compute-gpu-vram-promotion-closeout-v1.js
