@@ -517,3 +517,9 @@ Guardrail:
 
 Audit:
 - scripts/audit-compute-gpu-vram-export-reference-column-widths-v1.js
+
+### COMPUTE-SUMMARY-DATA-CONTRACT-AUDIT-V1
+- Date: 2026-06-27
+- Status: Accepted audit foundation
+- Scope: Compute CPU/RAM/GPU Summary readiness
+- Notes: Confirms CPU/RAM/GPU share Compute plan-state ownership. Tracks RAM custom export payload parity and Summary plan-state consumption as WATCH items instead of reopening accepted tool visuals.

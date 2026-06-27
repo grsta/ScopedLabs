@@ -1399,3 +1399,9 @@ Promotion note:
 - Scope: GPU VRAM Recommendation References export table column widths.
 - Contract: Export Recommendation References should use narrow Marker, compact Reference, and wide Reason columns using 12% / 23% / 65%, matching the Decision Schedule readability rhythm.
 - Guardrail: This is export report column polish only. Do not change accepted GPU chart/status math, reference wording, dynamic export placement, guided routing, or Summary CTA behavior.
+
+### COMPUTE_SUMMARY_DATA_CONTRACT_AUDIT_V1
+- Type: audit gate
+- File: `scripts/audit-compute-summary-data-contract-v1.js`
+- Purpose: Verifies CPU, RAM, GPU, shared Compute plan state, and Summary route readiness before Compute Summary UI/assistant work.
+- Expected baseline: PASS with WATCH items for RAM custom export payload parity and Summary plan-state consumption until those lanes are implemented.
