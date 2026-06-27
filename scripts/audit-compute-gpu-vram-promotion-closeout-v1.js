@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const childProcess = require("child_process");
 
 const root = process.cwd();
 
@@ -42,6 +43,19 @@ function check(code, condition, message, file = htmlFile) {
 
 function exists(rel) {
   return fs.existsSync(path.join(root, rel));
+}
+
+function runRequiredAudit(rel) {
+  try {
+    childProcess.execFileSync(process.execPath, [path.join(root, rel)], {
+      cwd: root,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"]
+    });
+    return true;
+  } catch (error) {
+    return false;
+  }
 }
 
 function order(tokens, text) {
@@ -93,12 +107,11 @@ check(
 
 check(
   "GPU_PROMOTION_RAM_RHYTHM_ACCEPTED",
-  html.includes("compute-gpu-reference-table") &&
-    html.includes("compute-gpu-proof-actions-list") &&
-    html.includes("compute-gpu-decision-table") &&
-    html.includes("GROUP") &&
-    html.includes("ENGINEERING NOTE"),
-  "GPU VRAM references, actions, and decision schedule should retain RAM-style card/table rhythm."
+  runRequiredAudit("scripts/audit-compute-gpu-vram-proof-stack-reference-rhythm-v1.js") &&
+    runRequiredAudit("scripts/audit-compute-gpu-vram-proof-stack-table-reset-v1.js") &&
+    runRequiredAudit("scripts/audit-compute-gpu-vram-proof-stack-ram-rhythm-v1.js"),
+  "GPU VRAM references, actions, and decision schedule should retain RAM-style card/table rhythm as proven by the dedicated rhythm audits.",
+  "scripts"
 );
 
 check(

@@ -61,5 +61,88 @@
   <script src="/assets/scopedlabs-category-planner-shell.js?v=scopedlabs-category-planner-shell-014-dynamic-workload-nav"></script>
   <script src="/assets/scopedlabs-compute-planner-adapter.js?v=scopedlabs-compute-planner-adapter-027-direct-owned-start-if"></script>
   <script src="./script.js?v=compute-workload-planner-shell-001"></script>
+
+<script>
+(function () {
+  "use strict";
+
+  var VERSION = "compute-planner-summary-cta-label-0627";
+  window.ScopedLabsComputePlannerSummaryCtaLabel0627 = {
+    version: VERSION
+  };
+
+  function textOf(el) {
+    return (el && el.textContent ? el.textContent : "").replace(/\s+/g, " ").trim();
+  }
+
+  function routeOf(el) {
+    if (!el) return "";
+    return [
+      el.getAttribute("href") || "",
+      el.getAttribute("data-href") || "",
+      el.getAttribute("data-route") || "",
+      el.getAttribute("data-next-route") || "",
+      el.getAttribute("onclick") || ""
+    ].join(" ");
+  }
+
+  function isSummaryRoute(route) {
+    return route.indexOf("/tools/compute/summary/") !== -1 ||
+      route.indexOf("../summary/") !== -1 ||
+      route.indexOf("summary/index.html") !== -1;
+  }
+
+  function relabelSummaryCtas() {
+    var candidates = document.querySelectorAll("a, button");
+
+    candidates.forEach(function (el) {
+      var label = textOf(el);
+      var route = routeOf(el);
+
+      if (!isSummaryRoute(route)) return;
+
+      if (
+        label === "Start Guided Flow" ||
+        label === "Continue Guided Flow" ||
+        label === "Continue Planning" ||
+        label === "Review Compute Summary"
+      ) {
+        el.textContent = "Continue to Summary";
+        el.setAttribute("data-compute-summary-cta-label", "continue-to-summary");
+      }
+    });
+  }
+
+  function scheduleRelabel() {
+    relabelSummaryCtas();
+    window.setTimeout(relabelSummaryCtas, 50);
+    window.setTimeout(relabelSummaryCtas, 250);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", scheduleRelabel);
+  } else {
+    scheduleRelabel();
+  }
+
+  document.addEventListener("scopedlabs:compute-guided-route-updated", scheduleRelabel);
+  document.addEventListener("scopedlabs:compute-planner-rendered", scheduleRelabel);
+  document.addEventListener("scopedlabs:compute-workload-ledger-updated", scheduleRelabel);
+
+  if (window.MutationObserver) {
+    var observer = new MutationObserver(function () {
+      relabelSummaryCtas();
+    });
+
+    observer.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["href", "data-href", "data-route", "data-next-route"]
+    });
+  }
+})();
+</script>
+
 </body>
 </html>

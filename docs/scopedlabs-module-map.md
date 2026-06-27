@@ -1378,3 +1378,13 @@ Promotion note:
 - Scope: Compute guided-flow closeout route.
 - Contract: /tools/compute/summary/ must exist so guided flow, planner complete-state routing, and GPU Review Compute Summary CTAs never land on a GitHub Pages 404.
 - Guardrail: This is a route host only. Do not treat it as the final Compute Summary master assistant/report page until a dedicated Compute Summary build lane is started.
+
+
+### COMPUTE_PLANNER_SUMMARY_CTA_LABEL_0627
+
+- Status: ROUTE_LABEL_FIX
+- Owner: tools/compute/workload-planner/index.html
+- Audit: scripts/audit-compute-planner-summary-cta-label-v1.js
+- Scope: Compute Workload Planner guided-flow CTA label.
+- Contract: When the planner's active guided-flow CTA routes to /tools/compute/summary/, the visible button label should read Continue to Summary instead of Start Guided Flow.
+- Guardrail: This is a label-state fix only. Do not rewrite guided-route ownership or pending-workload route selection.
