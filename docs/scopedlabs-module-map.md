@@ -1368,3 +1368,13 @@ Promotion note:
 - Contract: GPU VRAM is accepted as a Compute proof baseline with the accepted Capacity Envelope, RAM-style Recommendation References / Recommended Actions / Decision Schedule, custom export payload, dynamic export placement, User Tool Notes, and Review Compute Summary CTA inside the export/report card.
 - Guardrail: This is a closeout promotion, not a shared-module extraction. Preserve the accepted GPU page behavior until a deliberate shared Compute proof module lane is started.
 - Verification: Run scripts/audit-compute-gpu-vram-promotion-closeout-v1.js plus the existing GPU proof/export placement audits before future GPU changes.
+
+
+### COMPUTE_SUMMARY_ROUTE_HOST_0627
+
+- Status: ROUTE_HOST
+- Owner: tools/compute/summary/index.html
+- Audit: scripts/audit-compute-summary-route-host-v1.js
+- Scope: Compute guided-flow closeout route.
+- Contract: /tools/compute/summary/ must exist so guided flow, planner complete-state routing, and GPU Review Compute Summary CTAs never land on a GitHub Pages 404.
+- Guardrail: This is a route host only. Do not treat it as the final Compute Summary master assistant/report page until a dedicated Compute Summary build lane is started.
