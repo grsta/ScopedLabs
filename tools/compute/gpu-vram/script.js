@@ -1402,6 +1402,11 @@
 
   function referenceExportSection() {
     const table = domTable("#computeGpuReferences table.compute-gpu-reference-table");
+    const referenceColumnWidths =
+      window.ScopedLabsComputeExportProofTables &&
+      typeof window.ScopedLabsComputeExportProofTables.widthsFor === "function"
+        ? window.ScopedLabsComputeExportProofTables.widthsFor("recommendationReferences")
+        : ["12%", "23%", "65%"];
 
     return {
       title: "Recommendation References",
@@ -1410,6 +1415,7 @@
       tables: [
         {
           headers: table && table.headers.length ? table.headers : ["Marker", "Reference", "Reason"],
+          colWidths: referenceColumnWidths,
           rows: table && table.rows.length ? table.rows : [
             ["*1", "Demand basis", "Raw GPU memory demand from workload, batch, concurrency, cache, checkpoint, workspace, and overhead assumptions."],
             ["*2", "Required/status-driving point", "Required VRAM is the status-driving point compared against watch/risk thresholds."],

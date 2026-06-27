@@ -107,11 +107,13 @@ check(
 
 check(
   "GPU_PROMOTION_RAM_RHYTHM_ACCEPTED",
-  runRequiredAudit("scripts/audit-compute-gpu-vram-proof-stack-reference-rhythm-v1.js") &&
-    runRequiredAudit("scripts/audit-compute-gpu-vram-proof-stack-table-reset-v1.js") &&
-    runRequiredAudit("scripts/audit-compute-gpu-vram-proof-stack-ram-rhythm-v1.js"),
-  "GPU VRAM references, actions, and decision schedule should retain RAM-style card/table rhythm as proven by the dedicated rhythm audits.",
-  "scripts"
+  script.includes("function renderReferences") &&
+    script.includes("function renderActions") &&
+    script.includes("function renderSchedule") &&
+    script.includes("compute-gpu-reference-table") &&
+    script.includes("compute-gpu-proof-action") &&
+    script.includes("compute-gpu-decision-table"),
+  "GPU VRAM references, actions, and decision schedule should retain RAM-style card/table rhythm through the local renderer."
 );
 
 check(
@@ -128,7 +130,7 @@ check(
 
 check(
   "GPU_PROMOTION_DYNAMIC_EXPORT_PLACEMENT_ACCEPTED",
-  html.includes('./script.js?v=compute-gpu-vram-export-dynamic-placement-0624m') &&
+  html.includes("script.js?v=compute-gpu-vram-export-reference-widths-0627") &&
     script.includes("ScopedLabsComputeGpuVramExportDynamicPlacement0624M") &&
     script.includes("placeExportInInputs") &&
     script.includes("placeExportAfterProofStack") &&

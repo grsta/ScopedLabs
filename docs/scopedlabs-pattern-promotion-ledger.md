@@ -493,3 +493,27 @@ Promotion decision:
 
 Audit:
 - scripts/audit-compute-gpu-vram-promotion-closeout-v1.js
+
+
+### COMPUTE-GPU-VRAM-EXPORT-REFERENCE-WIDTHS-0627
+
+Status: ACCEPTED_EXPORT_REPORT_POLISH
+
+Changed path:
+- assets/scopedlabs-compute-export-proof-tables.js
+- tools/compute/gpu-vram/index.html
+- tools/compute/gpu-vram/script.js
+- scripts/audit-compute-gpu-vram-export-reference-column-widths-v1.js
+- docs/scopedlabs-module-map.md
+- docs/scopedlabs-pattern-promotion-ledger.md
+
+Decision:
+- GPU VRAM export Recommendation References should match the Decision Schedule readability rhythm.
+- Marker column is narrow, Reference is compact, and Reason receives the wide text column.
+- Accepted width split: 12% / 23% / 65%.
+
+Guardrail:
+- This is visual/export readability polish only. Preserve accepted GPU VRAM Capacity Envelope behavior and proof/export route contracts.
+
+Audit:
+- scripts/audit-compute-gpu-vram-export-reference-column-widths-v1.js

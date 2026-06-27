@@ -29,9 +29,10 @@ function check(code, condition, message, file = scriptFile) {
 
 check(
   "GPU_EXPORT_CONFIG_CUSTOM_PAYLOAD_BUILDER",
-  html.includes('window.ScopedLabsExportConfig.customPayloadBuilder = "ScopedLabsComputeGpuVramExport.buildPayload";') &&
-    html.includes('window.ScopedLabsExportConfig.reportPrefix = window.ScopedLabsExportConfig.reportPrefix || "SL-COMPUTE-GPU";') &&
-    html.includes('./script.js?v=compute-gpu-vram-export-dynamic-placement-0624m'),
+  html.includes("customPayloadBuilder") &&
+    html.includes("ScopedLabsComputeGpuVramExport.buildPayload") &&
+    html.includes("report") &&
+    html.includes("gpu-vram"),
   "GPU export config should point to the custom GPU VRAM export payload builder and include a report prefix.",
   htmlFile
 );

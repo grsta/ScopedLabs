@@ -1388,3 +1388,14 @@ Promotion note:
 - Scope: Compute Workload Planner guided-flow CTA label.
 - Contract: When the planner's active guided-flow CTA routes to /tools/compute/summary/, the visible button label should read Continue to Summary instead of Start Guided Flow.
 - Guardrail: This is a label-state fix only. Do not rewrite guided-route ownership or pending-workload route selection.
+
+
+### COMPUTE_GPU_VRAM_EXPORT_REFERENCE_WIDTHS_0627
+
+- Status: EXPORT_REPORT_POLISH
+- Owner: tools/compute/gpu-vram/script.js
+- Shared helper: assets/scopedlabs-compute-export-proof-tables.js
+- Audit: scripts/audit-compute-gpu-vram-export-reference-column-widths-v1.js
+- Scope: GPU VRAM Recommendation References export table column widths.
+- Contract: Export Recommendation References should use narrow Marker, compact Reference, and wide Reason columns using 12% / 23% / 65%, matching the Decision Schedule readability rhythm.
+- Guardrail: This is export report column polish only. Do not change accepted GPU chart/status math, reference wording, dynamic export placement, guided routing, or Summary CTA behavior.

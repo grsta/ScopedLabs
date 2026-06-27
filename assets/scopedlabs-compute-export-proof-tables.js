@@ -2,6 +2,7 @@
   "use strict";
 
   const WIDTHS = {
+    recommendationReferences: ["12%", "23%", "65%"],
     recommendedActions: ["34%", "66%"],
     decisionSchedule: ["16%", "22%", "18%", "44%"]
   };
@@ -48,7 +49,7 @@
   }
 
   window.ScopedLabsComputeExportProofTables = {
-    version: "scopedlabs-compute-export-proof-tables-001",
+    version: "scopedlabs-compute-export-proof-tables-002",
     widths: WIDTHS,
     widthsFor,
     statusTone,
