@@ -144,5 +144,83 @@
 })();
 </script>
 
+
+<script data-compute-planner-summary-access="0628">
+(function () {
+  "use strict";
+
+  var SUMMARY_HREF = "/tools/compute/summary/";
+  var VERSION = "compute-planner-summary-access-0628";
+
+  window.ScopedLabsComputePlannerSummaryAccess0628 = {
+    version: VERSION
+  };
+
+  function textOf(el) {
+    return (el && el.textContent ? el.textContent : "").replace(/\s+/g, " ").trim();
+  }
+
+  function isSummaryText(el) {
+    return textOf(el) === "Summary" || textOf(el) === "Compute Summary";
+  }
+
+  function ensureSummaryEscapeCta() {
+    var existing = document.querySelector('[data-compute-summary-access-cta="review-summary"]');
+    if (existing) return;
+
+    var host =
+      document.querySelector("[data-compute-planner-shell] .actions") ||
+      document.querySelector(".summary-hero-actions") ||
+      document.querySelector(".actions") ||
+      document.querySelector("main .btn-row") ||
+      document.querySelector("main");
+
+    if (!host) return;
+
+    var link = document.createElement("a");
+    link.className = "btn";
+    link.href = SUMMARY_HREF;
+    link.textContent = "Review Compute Summary";
+    link.setAttribute("data-compute-summary-access-cta", "review-summary");
+
+    host.appendChild(link);
+  }
+
+  function makeSummaryPipelineNavClickable() {
+    var candidates = document.querySelectorAll(
+      ".pipeline-preview-step, .pipeline-step, .pipeline-nav-step, .access-scope-flow-step, span, button"
+    );
+
+    candidates.forEach(function (el) {
+      if (!isSummaryText(el)) return;
+      if (el.closest("a")) return;
+
+      var link = document.createElement("a");
+      link.href = SUMMARY_HREF;
+      link.className = (el.className ? String(el.className) + " " : "") + "compute-summary-pipeline-link";
+      link.setAttribute("data-compute-summary-pipeline-link", "summary");
+      link.textContent = textOf(el);
+
+      el.replaceWith(link);
+    });
+  }
+
+  function run() {
+    ensureSummaryEscapeCta();
+    makeSummaryPipelineNavClickable();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", run, { once: true });
+  } else {
+    run();
+  }
+
+  window.setTimeout(run, 100);
+  window.setTimeout(run, 350);
+  window.addEventListener("scopedlabs:planner-rendered", run);
+})();
+</script>
+
 </body>
 </html>
