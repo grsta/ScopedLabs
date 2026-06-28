@@ -526,6 +526,49 @@
       line-height: 1.45;
     }
 
+    /* compute-summary-report-metadata-arrow-hover-0628 */
+    .compute-summary-page details.summary-report-details summary {
+      position: relative;
+      padding-left: 28px;
+      color: rgba(255, 255, 255, .94);
+      list-style: none;
+    }
+
+    .compute-summary-page details.summary-report-details summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .compute-summary-page details.summary-report-details summary::marker {
+      content: "";
+    }
+
+    .compute-summary-page details.summary-report-details summary::before {
+      content: "";
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      width: 0;
+      height: 0;
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+      border-left: 6px solid rgba(255, 255, 255, .9);
+      transform: translateY(-50%);
+      transition: transform .16s ease, border-left-color .16s ease;
+    }
+
+    .compute-summary-page details.summary-report-details[open] summary::before {
+      transform: translateY(-50%) rotate(90deg);
+    }
+
+    .compute-summary-page details.summary-report-details summary:hover {
+      color: rgba(255, 255, 255, .98);
+      background: rgba(125, 255, 158, .045);
+    }
+
+    .compute-summary-page details.summary-report-details summary:hover::before {
+      border-left-color: rgba(255, 255, 255, .98);
+    }
+
     @media (max-width: 860px) {
       .compute-master-stats,
       .compute-summary-metric-grid {
