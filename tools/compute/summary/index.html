@@ -1375,14 +1375,15 @@
           : '<table class="result-table compute-summary-table compute-summary-watch-risk-table"><tbody><tr><td colspan="5">No Watch/Risk details available yet.</td></tr></tbody></table>'
         );
 
+        // compute-summary-deduped-workload-report-sections-0628
         function getSavedWorkloadsForReport() {
           var stateApi = window.ScopedLabsComputePlanState || {};
-          var candidates = [];
+          var roots = [];
           var found = [];
 
-          function pushCandidate(value) {
+          function pushRoot(value) {
             if (value && typeof value === "object") {
-              candidates.push(value);
+              roots.push(value);
             }
           }
 
@@ -1400,15 +1401,15 @@
           ].forEach(function (method) {
             try {
               if (typeof stateApi[method] === "function") {
-                pushCandidate(stateApi[method]());
+                pushRoot(stateApi[method]());
               }
             } catch (error) {}
           });
 
-          pushCandidate(stateApi.state);
-          pushCandidate(stateApi.plan);
-          pushCandidate(stateApi.ledger);
-          pushCandidate(stateApi.workloads);
+          pushRoot(stateApi.state);
+          pushRoot(stateApi.plan);
+          pushRoot(stateApi.ledger);
+          pushRoot(stateApi.workloads);
 
           try {
             for (var i = 0; i < window.localStorage.length; i += 1) {
@@ -1416,33 +1417,45 @@
               if (!/compute|workload|planner|plan/i.test(key)) continue;
 
               var raw = window.localStorage.getItem(key);
-              if (!raw || raw.charAt(0) !== "{" && raw.charAt(0) !== "[") continue;
+              if (!raw || (raw.charAt(0) !== "{" && raw.charAt(0) !== "[")) continue;
 
               try {
-                pushCandidate(JSON.parse(raw));
+                pushRoot(JSON.parse(raw));
               } catch (error) {}
             }
           } catch (error) {}
 
-          function looksLikeWorkload(item) {
+          function hasPlannerShape(item) {
             if (!item || typeof item !== "object" || Array.isArray(item)) return false;
 
             return !!(
-              item.id ||
-              item.workloadId ||
-              item.name ||
-              item.workloadName ||
-              item.title ||
-              item.path ||
               item.branches ||
               item.environment ||
+              item.path ||
               item.workloadType ||
-              item.pattern
+              item.pattern ||
+              item.criticality ||
+              item.targetUtilization ||
+              item.growthMargin ||
+              item.results ||
+              item.toolResults ||
+              item.outputs
             );
           }
 
           function normalizeWorkload(item) {
-            if (!looksLikeWorkload(item)) return null;
+            if (!item || typeof item !== "object" || Array.isArray(item)) return null;
+
+            var name = item.name || item.workloadName || item.title || item.label || "";
+            var id = item.id || item.workloadId || item.key || "";
+
+            if (!name && !id) return null;
+            if (!hasPlannerShape(item)) return null;
+
+            var genericName = String(name || "").trim().toLowerCase() === "compute workload";
+            if (genericName && !id && !item.branches && !item.results && !item.toolResults && !item.outputs) {
+              return null;
+            }
 
             var copy = {};
             Object.keys(item).forEach(function (key) {
@@ -1461,10 +1474,6 @@
 
             if (Array.isArray(value)) {
               value.forEach(function (item) {
-                var normalized = normalizeWorkload(item);
-                if (normalized) {
-                  found.push(normalized);
-                }
                 collect(item, depth + 1);
               });
               return;
@@ -1473,32 +1482,68 @@
             if (typeof value !== "object") return;
 
             var normalized = normalizeWorkload(value);
-            if (normalized && (value.branches || value.workloadName || value.name || value.path || value.environment)) {
+            if (normalized) {
               found.push(normalized);
             }
 
             Object.keys(value).forEach(function (key) {
+              var child = value[key];
+
+              if (!child || typeof child !== "object") return;
+
               if (
-                /workload|planner|plan|saved|ledger|items|records|list|entries/i.test(key) ||
-                Array.isArray(value[key])
+                Array.isArray(child) ||
+                /workload|planner|plan|saved|ledger|items|records|list|entries/i.test(key)
               ) {
-                collect(value[key], depth + 1);
+                collect(child, depth + 1);
               }
             });
           }
 
-          candidates.forEach(function (candidate) {
-            collect(candidate, 0);
+          roots.forEach(function (root) {
+            collect(root, 0);
           });
 
           var unique = [];
-          var seen = {};
+
+          function sameWorkload(a, b) {
+            var aId = String(a.id || a.workloadId || "").trim().toLowerCase();
+            var bId = String(b.id || b.workloadId || "").trim().toLowerCase();
+            var aName = String(a.name || a.workloadName || "").trim().toLowerCase();
+            var bName = String(b.name || b.workloadName || "").trim().toLowerCase();
+
+            return !!(
+              (aId && bId && aId === bId) ||
+              (aName && bName && aName === bName)
+            );
+          }
+
+          function scoreWorkload(item) {
+            var score = 0;
+            if (item.id || item.workloadId) score += 5;
+            if (item.branches) score += 5;
+            if (item.results || item.toolResults || item.outputs) score += 5;
+            if (item.environment) score += 2;
+            if (item.path) score += 2;
+            if (item.pattern || item.workloadType) score += 1;
+            return score;
+          }
 
           found.forEach(function (item) {
-            var key = String(item.id || item.workloadId || item.name || "").toLowerCase();
-            if (!key || seen[key]) return;
-            seen[key] = true;
-            unique.push(item);
+            var existingIndex = unique.findIndex(function (candidate) {
+              return sameWorkload(candidate, item);
+            });
+
+            if (existingIndex === -1) {
+              unique.push(item);
+              return;
+            }
+
+            if (scoreWorkload(item) >= scoreWorkload(unique[existingIndex])) {
+              unique[existingIndex] = Object.assign({}, unique[existingIndex], item);
+            } else {
+              unique[existingIndex] = Object.assign({}, item, unique[existingIndex]);
+            }
           });
 
           if (!unique.length && workload) {
@@ -1572,18 +1617,22 @@
           var toolList = BASE_TOOLS.slice();
 
           BRANCH_TOOLS.forEach(function (branch) {
-            if (branches[branch.key]) {
-              toolList.push(branch.tool);
-            }
+            if (!branch || !branch.key || !branches[branch.key]) return;
+
+            (branch.tools || []).forEach(function (tool) {
+              if (!TOOL_LABELS[tool]) return;
+              if (toolList.indexOf(tool) === -1) toolList.push(tool);
+            });
           });
 
           Object.keys(savedResults || {}).forEach(function (tool) {
-            if (toolList.indexOf(tool) === -1) {
-              toolList.push(tool);
-            }
+            if (!TOOL_LABELS[tool]) return;
+            if (toolList.indexOf(tool) === -1) toolList.push(tool);
           });
 
-          return toolList;
+          return toolList.filter(function (tool, index) {
+            return !!tool && TOOL_LABELS[tool] && toolList.indexOf(tool) === index;
+          });
         }
 
         function workloadKicker(savedWorkload) {
