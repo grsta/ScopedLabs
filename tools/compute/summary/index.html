@@ -488,6 +488,44 @@
       border-bottom: 0;
     }
 
+    /* compute-summary-report-metadata-clickable-0628 */
+    .compute-summary-page details.summary-report-details {
+      border: 1px solid rgba(125, 255, 158, .16);
+      border-radius: 12px;
+      background: rgba(0, 0, 0, .18);
+      margin: 14px 0 14px;
+      overflow: hidden;
+    }
+
+    .compute-summary-page details.summary-report-details summary {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 38px;
+      padding: 9px 12px;
+      cursor: pointer;
+      color: rgba(255, 255, 255, .92);
+      font-weight: 850;
+      user-select: none;
+      list-style-position: inside;
+      pointer-events: auto;
+    }
+
+    .compute-summary-page details.summary-report-details summary:hover {
+      color: rgba(125, 255, 158, .98);
+      background: rgba(125, 255, 158, .045);
+    }
+
+    .compute-summary-page details.summary-report-details[open] summary {
+      border-bottom: 1px solid rgba(125, 255, 158, .12);
+    }
+
+    .compute-summary-report-metadata-placeholder {
+      padding: 12px;
+      color: rgba(224, 238, 229, .72);
+      line-height: 1.45;
+    }
+
     @media (max-width: 860px) {
       .compute-master-stats,
       .compute-summary-metric-grid {
@@ -736,7 +774,9 @@
         <p class="muted summary-section-copy">Add optional report context and open a report-ready summary for the current Compute planning session.</p>
         <details class="summary-report-details">
           <summary>Report metadata</summary>
-          <p class="muted">Report metadata wiring is parked until the Compute Summary rollup layout is accepted.</p>
+          <div class="compute-summary-report-metadata-placeholder">
+            Report metadata wiring is parked until the Compute Summary rollup layout is accepted. This section will use the shared report metadata module when the Summary export lane is opened.
+          </div>
         </details>
 
         <div class="result-table-wrap">
