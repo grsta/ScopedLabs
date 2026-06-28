@@ -938,6 +938,26 @@
           </table>
         </div>
 
+        <h3>Compute Workload Report Sections</h3>
+
+        <h4>Core Compute Pipeline</h4>
+        <div id="computeSummaryReportCoreSections" class="result-table-wrap">
+          <table class="result-table compute-summary-table compute-summary-watch-risk-table">
+            <tbody>
+              <tr><td>Loading core Compute pipeline report sections...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h4>Optional Compute Branches</h4>
+        <div id="computeSummaryReportBranchSections" class="result-table-wrap">
+          <table class="result-table compute-summary-table compute-summary-watch-risk-table">
+            <tbody>
+              <tr><td>Loading optional Compute branch report sections...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
         <p class="compute-summary-note">This category summary is generated from the current Compute workload plan-state ledger and is intended as a planning aid. Verify final designs against site conditions, manufacturer data, and project requirements.</p>
       </article>
 
@@ -1201,6 +1221,8 @@
         setText("computeSummaryPostureCopy", "Waiting for saved Compute evidence.");
         setHtml("computeSummaryResultsBody", '<tr><td colspan="3">Open the Workload Planner and run a guided Compute flow first.</td></tr>');
         setHtml("computeSummaryGapList", '<table class="result-table compute-summary-table"><tbody><tr><td>Shared Compute plan-state helper is unavailable or no active workload is selected.</td></tr></tbody></table>');
+        setHtml("computeSummaryReportCoreSections", '<table class="result-table compute-summary-table compute-summary-watch-risk-table"><tbody><tr><td>No active workload loaded yet.</td></tr></tbody></table>');
+        setHtml("computeSummaryReportBranchSections", '<table class="result-table compute-summary-table compute-summary-watch-risk-table"><tbody><tr><td>No optional Compute branches selected or saved yet.</td></tr></tbody></table>');
       }
 
       function renderSummary() {
@@ -1332,6 +1354,51 @@
           ? '<table class="result-table compute-summary-table compute-summary-watch-risk-table"><thead><tr><th>Scope / Workload</th><th>Tool</th><th>Status</th><th>Required Action</th><th>Detail / Next Step</th></tr></thead><tbody>' + watchRiskRows + '</tbody></table>'
           : '<table class="result-table compute-summary-table compute-summary-watch-risk-table"><tbody><tr><td colspan="5">No Watch/Risk details available yet.</td></tr></tbody></table>'
         );
+
+        function reportSectionRows(tools) {
+          return tools.map(function (tool) {
+            var hasResult = hasOwn(results, tool);
+            var record = hasResult ? results[tool] : null;
+            var state = hasResult ? statusOf(record) : "PENDING";
+            var toolLabel = TOOL_LABELS[tool] || titleCase(tool);
+            var scopeLabel = workload && workload.name ? "Workload: " + workload.name : "Compute workload";
+            var detail = hasResult
+              ? noteFor(tool, record)
+              : "No saved result for this selected Compute section yet.";
+            var evidence = hasResult ? evidenceFor(record) : "Open tool and save a result for Summary.";
+
+            return [
+              "<tr>",
+              "<td>" + escapeHtml(scopeLabel) + "</td>",
+              '<td><a href="' + escapeHtml(TOOL_HREFS[tool] || "../workload-planner/") + '">' + escapeHtml(toolLabel) + "</a></td>",
+              "<td>" + statusChipHtml(state) + "</td>",
+              '<td><span class="compute-summary-detail-primary">' + escapeHtml(detail) + '</span><span class="compute-summary-detail-secondary">' + escapeHtml(evidence) + "</span></td>",
+              "</tr>"
+            ].join("");
+          }).join("");
+        }
+
+        function reportSectionTable(tools, emptyText) {
+          if (!tools.length) {
+            return '<table class="result-table compute-summary-table compute-summary-watch-risk-table"><tbody><tr><td colspan="4">' + escapeHtml(emptyText) + '</td></tr></tbody></table>';
+          }
+
+          return '<table class="result-table compute-summary-table compute-summary-watch-risk-table"><thead><tr><th>Scope / Workload</th><th>Tool</th><th>Status</th><th>Detail / Next Step</th></tr></thead><tbody>' + reportSectionRows(tools) + '</tbody></table>';
+        }
+
+        var coreReportTools = BASE_TOOLS.slice();
+        var branchReportTools = selected.filter(function (tool) {
+          return BASE_TOOLS.indexOf(tool) === -1;
+        });
+
+        Object.keys(results || {}).forEach(function (tool) {
+          if (BASE_TOOLS.indexOf(tool) === -1 && branchReportTools.indexOf(tool) === -1) {
+            branchReportTools.push(tool);
+          }
+        });
+
+        setHtml("computeSummaryReportCoreSections", reportSectionTable(coreReportTools, "No core Compute pipeline sections available yet."));
+        setHtml("computeSummaryReportBranchSections", reportSectionTable(branchReportTools, "No optional Compute branches selected or saved yet."));
 
         var assistantItems = [
           "Summary is reading the shared Compute workload-plan contract.",
