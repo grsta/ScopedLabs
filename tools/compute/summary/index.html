@@ -569,6 +569,63 @@
       border-left-color: rgba(255, 255, 255, .98);
     }
 
+    /* compute-summary-watch-risk-detail-table-0628 */
+    .compute-summary-watch-risk-table {
+      border: 1px solid rgba(125, 255, 158, .16);
+      border-collapse: collapse;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .compute-summary-watch-risk-table th:nth-child(1) {
+      width: 15%;
+    }
+
+    .compute-summary-watch-risk-table th:nth-child(2) {
+      width: 13%;
+    }
+
+    .compute-summary-watch-risk-table th:nth-child(3) {
+      width: 9%;
+    }
+
+    .compute-summary-watch-risk-table th:nth-child(4) {
+      width: 28%;
+    }
+
+    .compute-summary-watch-risk-table th:nth-child(5) {
+      width: 35%;
+    }
+
+    .compute-summary-watch-risk-table th,
+    .compute-summary-watch-risk-table td {
+      border-bottom: 1px solid rgba(125, 255, 158, .12);
+      vertical-align: top;
+    }
+
+    .compute-summary-watch-risk-table th:not(:last-child),
+    .compute-summary-watch-risk-table td:not(:last-child) {
+      border-right: 1px solid rgba(125, 255, 158, .14);
+    }
+
+    .compute-summary-watch-risk-table tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .compute-summary-watch-risk-table a,
+    .compute-summary-watch-risk-table a:visited {
+      color: rgba(165, 255, 190, .96);
+      font-weight: 850;
+      text-decoration: underline;
+      text-decoration-color: rgba(125, 255, 158, .35);
+      text-underline-offset: 3px;
+    }
+
+    .compute-summary-watch-risk-table a:hover {
+      color: rgba(255, 255, 255, .98);
+      text-decoration-color: rgba(255, 255, 255, .7);
+    }
+
     @media (max-width: 860px) {
       .compute-master-stats,
       .compute-summary-metric-grid {
@@ -1234,12 +1291,27 @@
           return state === "WATCH" || state === "RISK" || state === "FAIL";
         }).map(function (tool) {
           var record = results[tool];
-          return '<tr><td>' + escapeHtml(TOOL_LABELS[tool] || titleCase(tool)) + '</td><td>' + statusChipHtml(statusOf(record)) + '</td><td>' + escapeHtml(noteFor(tool, record)) + '</td></tr>';
+          var state = statusOf(record);
+          var toolLabel = TOOL_LABELS[tool] || titleCase(tool);
+          var scopeLabel = workload && workload.name ? "Workload: " + workload.name : "Compute workload";
+          var requiredAction = state === "WATCH"
+            ? "Validate " + toolLabel + " assumptions before finalizing the report."
+            : "Review " + toolLabel + " before finalizing the report.";
+
+          return [
+            "<tr>",
+            "<td>" + escapeHtml(scopeLabel) + "</td>",
+            '<td><a href="' + escapeHtml(TOOL_HREFS[tool] || "../workload-planner/") + '">' + escapeHtml(toolLabel) + "</a></td>",
+            "<td>" + statusChipHtml(state) + "</td>",
+            "<td>" + escapeHtml(requiredAction) + "</td>",
+            '<td><span class="compute-summary-detail-primary">' + escapeHtml(noteFor(tool, record)) + '</span><span class="compute-summary-detail-secondary">' + escapeHtml(evidenceFor(record)) + "</span></td>",
+            "</tr>"
+          ].join("");
         }).join("");
 
         setHtml("computeSummaryWatchRiskDetail", watchRiskRows
-          ? '<table class="result-table compute-summary-table"><thead><tr><th>Tool</th><th>Status</th><th>Required action / detail</th></tr></thead><tbody>' + watchRiskRows + '</tbody></table>'
-          : '<table class="result-table compute-summary-table"><tbody><tr><td>No Watch/Risk details available yet.</td></tr></tbody></table>'
+          ? '<table class="result-table compute-summary-table compute-summary-watch-risk-table"><thead><tr><th>Scope / Workload</th><th>Tool</th><th>Status</th><th>Required Action</th><th>Detail / Next Step</th></tr></thead><tbody>' + watchRiskRows + '</tbody></table>'
+          : '<table class="result-table compute-summary-table compute-summary-watch-risk-table"><tbody><tr><td colspan="5">No Watch/Risk details available yet.</td></tr></tbody></table>'
         );
 
         var assistantItems = [
