@@ -68,7 +68,9 @@ add("FAIL", "GPU_HAS_PROOF_SECTIONS", files.gpuScript, hasAll(src.gpuScript, ["r
 add("FAIL", "GPU_HAS_CUSTOM_EXPORT_PAYLOAD", files.gpuScript, hasAll(src.gpuScript, ["ScopedLabsComputeGpuVramExport", "function buildPayload", "extraSections"]), "GPU should own a custom export payload with proof sections.");
 
 add("FAIL", "SUMMARY_ROUTE_EXISTS", files.summaryHtml, !!src.summaryHtml, "Compute Summary route host should exist.");
-add("WATCH", "SUMMARY_CONSUMES_PLAN_STATE", files.summaryHtml, has(src.summaryHtml, "scopedlabs-compute-plan-state.js") || has(src.summaryHtml, "ScopedLabsComputePlanState"), "Summary should eventually consume shared Compute plan state.");
+add("FAIL", "SUMMARY_CONSUMES_PLAN_STATE", files.summaryHtml, has(src.summaryHtml, "scopedlabs-compute-plan-state.js") && has(src.summaryHtml, "ScopedLabsComputePlanState"), "Summary should consume shared Compute plan state.");
+add("FAIL", "SUMMARY_HAS_PLAN_STATE_ROLLUP", files.summaryHtml, hasAll(src.summaryHtml, ["data-compute-summary-plan-state-rollup", "ScopedLabsComputeSummaryRollup", "computeSummaryResultsBody", "computeSummaryLedger"]), "Summary should render a plan-state-backed rollup foundation.");
+add("FAIL", "SUMMARY_HAS_ASSISTANT_FOUNDATION", files.summaryHtml, hasAll(src.summaryHtml, ["data-compute-summary-assistant-foundation", "computeSummaryAssistantList", "Summary Assistant foundation"]), "Summary should include a master assistant foundation mount.");
 
 let pass = 0;
 let watch = 0;

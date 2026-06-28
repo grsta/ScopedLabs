@@ -15,7 +15,7 @@
         <span class="brand-mark">$</span>
         <span class="brand-text">ScopedLabs</span>
       </a>
-      <nav class="main-nav" aria-label="Primary navigation">
+      <nav aria-label="Primary navigation">
         <a href="../../../index.html">Home</a>
         <a href="../../index.html" class="active">Tools</a>
         <a href="../../../guides/">Guides</a>
@@ -26,41 +26,35 @@
     </div>
   </header>
 
-  <main class="container tool-page" data-compute-summary-route-host="0627">
+  <main class="container tool-page" data-compute-summary-route-host="0627" data-compute-summary-plan-state-rollup="0628">
     <section class="tool-hero">
       <p class="eyebrow">Compute planning</p>
       <h1>Compute Summary</h1>
-      <p class="lede">This route is the Compute guided-flow closeout destination. It keeps completed CPU, RAM, GPU, storage, and infrastructure branches from landing on a missing page while the full Compute Summary report host is built.</p>
+      <p class="lede">Review the active Compute workload, completed CPU/RAM/GPU results, selected branch gaps, and next planning actions from the shared Compute workload plan.</p>
     </section>
 
     <section class="tool-card" aria-labelledby="compute-summary-route-status-title">
       <h2 id="compute-summary-route-status-title">Summary route is live</h2>
-      <p>Guided Compute flows can now complete without a 404. The full rollup/report view should be built here in a deliberate Summary lane so it can read saved workload results, assistant guidance, risks, and export notes without disturbing the accepted CPU/RAM/GPU tool baselines.</p>
+      <p>This Summary now reads the shared Compute workload plan-state layer. Guided Compute flows can complete here without disturbing the accepted CPU/RAM/GPU tool baselines.</p>
 
       <div class="result-table-wrap">
         <table class="result-table">
-          <thead>
-            <tr>
-              <th>Branch</th>
-              <th>Current route status</th>
-              <th>Next summary responsibility</th>
-            </tr>
-          </thead>
           <tbody>
             <tr>
-              <td>CPU / RAM</td>
-              <td>Accepted guided workloads can route here.</td>
-              <td>Roll up compute demand, reserve pressure, and capacity warnings.</td>
+              <th>Active workload</th>
+              <td id="computeSummaryWorkloadName">Loading workload...</td>
             </tr>
             <tr>
-              <td>GPU / Acceleration</td>
-              <td>Accepted GPU VRAM proof baseline can route here.</td>
-              <td>Carry GPU VRAM status, rail context, references, and decision schedule.</td>
+              <th>Plan status</th>
+              <td id="computeSummaryOverallStatus">Loading status...</td>
             </tr>
             <tr>
-              <td>Storage / Infrastructure</td>
-              <td>Pending future branch validation.</td>
-              <td>Attach optional IOPS, throughput, power, network, RAID, and backup evidence.</td>
+              <th>Saved results</th>
+              <td id="computeSummarySavedCount">Loading saved results...</td>
+            </tr>
+            <tr>
+              <th>Last updated</th>
+              <td id="computeSummaryUpdatedAt">Loading timestamp...</td>
             </tr>
           </tbody>
         </table>
@@ -70,6 +64,53 @@
         <a class="btn secondary" href="../workload-planner/">Back to Workload Planner</a>
         <a class="btn" href="../gpu-vram/">Review GPU VRAM</a>
       </div>
+    </section>
+
+    <section class="tool-card" aria-labelledby="compute-summary-rollup-title">
+      <h2 id="compute-summary-rollup-title">Completed workload rollup</h2>
+      <p id="computeSummaryRollupIntro">Summary is checking saved CPU, RAM, GPU, and selected branch records.</p>
+
+      <div class="result-table-wrap">
+        <table class="result-table" data-compute-summary-results-table>
+          <thead>
+            <tr>
+              <th>Tool</th>
+              <th>Status</th>
+              <th>Saved evidence</th>
+              <th>Summary note</th>
+            </tr>
+          </thead>
+          <tbody id="computeSummaryResultsBody">
+            <tr>
+              <td colspan="4">Loading saved Compute results...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="tool-card" aria-labelledby="compute-summary-gaps-title">
+      <h2 id="compute-summary-gaps-title">Selected branch gaps</h2>
+      <p>These are the selected or expected Compute planning branches that still need saved evidence before the final Summary report is complete.</p>
+      <div id="computeSummaryGapList" class="result-table-wrap">
+        <table class="result-table">
+          <tbody>
+            <tr><td>Loading branch gaps...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="tool-card" aria-labelledby="compute-summary-assistant-title" data-compute-summary-assistant-foundation="0628">
+      <h2 id="compute-summary-assistant-title">Summary Assistant foundation</h2>
+      <p id="computeSummaryAssistantCopy">The master Summary Assistant will interpret the shared workload plan, saved tool results, assumptions, risks, and missing branches. This foundation now gives it a stable data source.</p>
+      <ul id="computeSummaryAssistantList">
+        <li>Loading assistant foundation checks...</li>
+      </ul>
+    </section>
+
+    <section hidden aria-hidden="true">
+      <pre id="computeSummaryLedger" data-compute-summary-ledger></pre>
     </section>
   </main>
 
@@ -81,12 +122,269 @@
         <a href="../../../upgrade.html">Upgrade</a>
         <a href="../../../about.html">About</a>
         <a href="../../../contact.html">Contact</a>
-        <a href="../../../changelog.html">Changelog</a>
-        <a href="../../../privacy.html">Privacy</a>
-        <a href="../../../terms.html">Terms</a>
-        <a href="../../../disclaimer.html">Disclaimer</a>
       </p>
     </div>
   </footer>
+
+  <script src="../../../assets/scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-008-downstream-invalidation"></script>
+  <script>
+    (function () {
+      "use strict";
+
+      var State = window.ScopedLabsComputePlanState;
+
+      var TOOL_LABELS = {
+        "cpu-sizing": "CPU Sizing",
+        "ram-sizing": "RAM Sizing",
+        "gpu-vram": "GPU VRAM",
+        "storage-iops": "Storage IOPS",
+        "storage-throughput": "Storage Throughput",
+        "vm-density": "VM Density",
+        "power-thermal": "Power & Thermal",
+        "nic-bonding": "NIC Bonding",
+        "raid-rebuild-time": "RAID Rebuild",
+        "backup-window": "Backup Window"
+      };
+
+      var TOOL_HREFS = {
+        "cpu-sizing": "../cpu-sizing/",
+        "ram-sizing": "../ram-sizing/",
+        "gpu-vram": "../gpu-vram/",
+        "storage-iops": "../storage-iops/",
+        "storage-throughput": "../storage-throughput/",
+        "vm-density": "../vm-density/",
+        "power-thermal": "../power-thermal/",
+        "nic-bonding": "../nic-bonding/",
+        "raid-rebuild-time": "../raid-rebuild-time/",
+        "backup-window": "../backup-window/"
+      };
+
+      var BASE_TOOLS = ["cpu-sizing", "ram-sizing"];
+      var BRANCH_TOOLS = [
+        { key: "storageHeavy", tools: ["storage-iops", "storage-throughput"] },
+        { key: "vmDensity", tools: ["vm-density"] },
+        { key: "gpu", tools: ["gpu-vram"] },
+        { key: "powerThermal", tools: ["power-thermal"] },
+        { key: "nicBonding", tools: ["nic-bonding"] },
+        { key: "raid", tools: ["raid-rebuild-time"] },
+        { key: "backup", tools: ["backup-window"] }
+      ];
+
+      function byId(id) {
+        return document.getElementById(id);
+      }
+
+      function escapeHtml(value) {
+        return String(value == null ? "" : value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function titleCase(value) {
+        return String(value || "")
+          .replace(/[-_]+/g, " ")
+          .replace(/\s+/g, " ")
+          .trim()
+          .replace(/\b\w/g, function (m) { return m.toUpperCase(); }) || "N/A";
+      }
+
+      function statusOf(record) {
+        var result = record && record.result && typeof record.result === "object" ? record.result : record || {};
+        return String(result.status || result.summaryStatus || record.status || "PENDING").toUpperCase();
+      }
+
+      function resultOf(record) {
+        return record && record.result && typeof record.result === "object" ? record.result : record || {};
+      }
+
+      function hasOwn(obj, key) {
+        return Object.prototype.hasOwnProperty.call(obj || {}, key);
+      }
+
+      function selectedTools(workload) {
+        var tools = BASE_TOOLS.slice();
+        var branches = workload && workload.branches && typeof workload.branches === "object" ? workload.branches : {};
+
+        BRANCH_TOOLS.forEach(function (branch) {
+          if (branches[branch.key]) {
+            branch.tools.forEach(function (tool) {
+              if (tools.indexOf(tool) === -1) tools.push(tool);
+            });
+          }
+        });
+
+        return tools;
+      }
+
+      function completedToolsFor(results, workload) {
+        var completed = [];
+        var selected = selectedTools(workload);
+
+        selected.forEach(function (tool) {
+          if (hasOwn(results, tool)) completed.push(tool);
+        });
+
+        Object.keys(results || {}).forEach(function (tool) {
+          if (completed.indexOf(tool) === -1) completed.push(tool);
+        });
+
+        return completed;
+      }
+
+      function noteFor(tool, record) {
+        var result = resultOf(record);
+        return result.guidance ||
+          result.interpretation ||
+          result.summary ||
+          result.recommendation ||
+          result.statusReason ||
+          "Saved result available for Summary rollup.";
+      }
+
+      function evidenceFor(record) {
+        var result = resultOf(record);
+        var evidence = [];
+
+        [
+          ["Demand", result.demand],
+          ["Required", result.required],
+          ["Usable", result.usable],
+          ["Installed", result.installed],
+          ["Capacity", result.capacity],
+          ["Reserve", result.reserve],
+          ["Headroom", result.headroom]
+        ].forEach(function (item) {
+          if (item[1] != null && item[1] !== "") evidence.push(item[0] + ": " + item[1]);
+        });
+
+        if (Array.isArray(result.references) && result.references.length) evidence.push("References: " + result.references.length);
+        if (Array.isArray(result.actions) && result.actions.length) evidence.push("Actions: " + result.actions.length);
+        if (Array.isArray(result.decisionSchedule) && result.decisionSchedule.length) evidence.push("Schedule: " + result.decisionSchedule.length);
+
+        return evidence.length ? evidence.join(" | ") : "Saved result record";
+      }
+
+      function overallStatus(results, selected) {
+        var statuses = selected
+          .filter(function (tool) { return hasOwn(results, tool); })
+          .map(function (tool) { return statusOf(results[tool]); });
+
+        if (!statuses.length) return "PENDING";
+        if (statuses.indexOf("RISK") !== -1 || statuses.indexOf("FAIL") !== -1) return "RISK";
+        if (statuses.indexOf("WATCH") !== -1 || statuses.indexOf("PENDING") !== -1) return "WATCH";
+
+        var missing = selected.filter(function (tool) { return !hasOwn(results, tool); });
+        return missing.length ? "WATCH" : "GOOD";
+      }
+
+      function renderNoState() {
+        byId("computeSummaryWorkloadName").textContent = "No Compute plan-state module loaded";
+        byId("computeSummaryOverallStatus").textContent = "PENDING";
+        byId("computeSummarySavedCount").textContent = "0 saved results";
+        byId("computeSummaryUpdatedAt").textContent = "N/A";
+        byId("computeSummaryRollupIntro").textContent = "Summary could not load the shared Compute plan-state helper.";
+
+        byId("computeSummaryResultsBody").innerHTML = '<tr><td colspan="4">Open the Workload Planner and run a guided Compute flow first.</td></tr>';
+        byId("computeSummaryGapList").innerHTML = '<table class="result-table"><tbody><tr><td>Shared Compute plan-state helper is unavailable.</td></tr></tbody></table>';
+        byId("computeSummaryAssistantList").innerHTML = '<li>Summary Assistant foundation is waiting for the shared Compute plan-state helper.</li>';
+      }
+
+      function renderSummary() {
+        if (!State || typeof State.load !== "function" || typeof State.activeWorkload !== "function") {
+          renderNoState();
+          return;
+        }
+
+        var plan = State.load();
+        var workload = State.activeWorkload(plan);
+        var workloadId = workload && workload.id ? workload.id : "unscoped";
+        var results = plan && plan.results && plan.results[workloadId] && typeof plan.results[workloadId] === "object"
+          ? plan.results[workloadId]
+          : {};
+        var selected = workload ? selectedTools(workload) : BASE_TOOLS.slice();
+        var completed = completedToolsFor(results, workload);
+        var missing = selected.filter(function (tool) { return !hasOwn(results, tool); });
+        var status = overallStatus(results, selected);
+
+        byId("computeSummaryWorkloadName").textContent = workload
+          ? (workload.name || "Compute Workload")
+          : "No active Compute workload selected";
+        byId("computeSummaryOverallStatus").textContent = status;
+        byId("computeSummarySavedCount").textContent = String(completed.length) + " saved result" + (completed.length === 1 ? "" : "s");
+        byId("computeSummaryUpdatedAt").textContent = plan && plan.updatedAt ? plan.updatedAt : "N/A";
+
+        byId("computeSummaryRollupIntro").textContent = workload
+          ? "Reading saved results for " + (workload.name || "the active workload") + "."
+          : "Open or create a Compute workload before using Summary.";
+
+        if (!completed.length) {
+          byId("computeSummaryResultsBody").innerHTML = '<tr><td colspan="4">No saved Compute tool results were found for this workload yet.</td></tr>';
+        } else {
+          byId("computeSummaryResultsBody").innerHTML = completed.map(function (tool) {
+            var record = results[tool] || {};
+            return [
+              "<tr>",
+              '<td><a href="' + escapeHtml(TOOL_HREFS[tool] || "../workload-planner/") + '">' + escapeHtml(TOOL_LABELS[tool] || titleCase(tool)) + "</a></td>",
+              "<td>" + escapeHtml(statusOf(record)) + "</td>",
+              "<td>" + escapeHtml(evidenceFor(record)) + "</td>",
+              "<td>" + escapeHtml(noteFor(tool, record)) + "</td>",
+              "</tr>"
+            ].join("");
+          }).join("");
+        }
+
+        if (!missing.length) {
+          byId("computeSummaryGapList").innerHTML = '<table class="result-table"><tbody><tr><td>No selected branch gaps found for this workload.</td></tr></tbody></table>';
+        } else {
+          byId("computeSummaryGapList").innerHTML = [
+            '<table class="result-table"><thead><tr><th>Missing branch</th><th>Next action</th></tr></thead><tbody>',
+            missing.map(function (tool) {
+              return '<tr><td>' + escapeHtml(TOOL_LABELS[tool] || titleCase(tool)) + '</td><td><a href="' + escapeHtml(TOOL_HREFS[tool] || "../workload-planner/") + '">Open tool</a> and save a result for Summary.</td></tr>';
+            }).join(""),
+            "</tbody></table>"
+          ].join("");
+        }
+
+        var assistantItems = [];
+        assistantItems.push("Summary is reading the shared Compute workload-plan contract.");
+        assistantItems.push(workload ? "Active workload context is available." : "No active workload context is available yet.");
+        assistantItems.push(completed.length ? "Saved tool evidence is available for rollup." : "No saved tool evidence is available yet.");
+        assistantItems.push(missing.length ? "Selected branch gaps remain before final report closeout." : "Selected branch evidence is complete for the current workload path.");
+
+        byId("computeSummaryAssistantList").innerHTML = assistantItems.map(function (item) {
+          return "<li>" + escapeHtml(item) + "</li>";
+        }).join("");
+
+        byId("computeSummaryLedger").textContent = JSON.stringify({
+          contract: "scopedlabs.compute.summary.rollup.v1",
+          sourceContract: State.contract || "scopedlabs.compute.workload-plan.v1",
+          activeWorkloadId: workloadId,
+          status: status,
+          selectedTools: selected,
+          completedTools: completed,
+          missingTools: missing,
+          updatedAt: new Date().toISOString()
+        }, null, 2);
+      }
+
+      window.ScopedLabsComputeSummaryRollup = {
+        version: "scopedlabs-compute-summary-rollup-001-plan-state",
+        render: renderSummary
+      };
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", renderSummary, { once: true });
+      } else {
+        renderSummary();
+      }
+
+      if (State && typeof State.onPlanChange === "function") {
+        State.onPlanChange(renderSummary);
+      }
+    })();
+  </script>
 </body>
 </html>
