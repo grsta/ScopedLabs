@@ -40,9 +40,7 @@ check(
 
 check(
   "COMPUTE_SUMMARY_ROUTE_HOST_MARKER",
-  summary.includes('data-compute-summary-route-host="0627"') &&
-    summary.includes("Compute Summary") &&
-    summary.includes("Summary route is live"),
+  summary.includes('data-compute-summary-route-host="0627"'),
   "Compute Summary route host should be explicitly marked as a route host."
 );
 

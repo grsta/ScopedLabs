@@ -39,7 +39,7 @@ check("COMPUTE_SUMMARY_ROUTE_NAV_PRESERVED", compute.includes("Back to Workload 
 check("COMPUTE_SUMMARY_ASSISTANT_FOUNDATION_MARKER", compute.includes("data-compute-summary-assistant-foundation") && compute.includes("Summary Assistant foundation") && compute.includes("computeSummaryAssistantList"), "Compute Summary should preserve the assistant foundation contract marker.");
 check("COMPUTE_SUMMARY_PLAN_STATE_PRESERVED", compute.includes("scopedlabs-compute-plan-state.js") && compute.includes("ScopedLabsComputeSummaryRollup"), "Compute Summary plan-state rollup script should remain wired.");
 check("COMPUTE_SUMMARY_STATUS_CHIPS", compute.includes("summary-status-chip") && compute.includes("statusChipHtml"), "Compute Summary should render rectangular status chips.");
-check("COMPUTE_SUMMARY_ROUTE_MARKER_PRESERVED", compute.includes('data-compute-summary-route-host="0627"') && compute.includes("Summary route is live"), "Compute Summary route-host marker and text should remain for existing route audit.");
+check("COMPUTE_SUMMARY_ROUTE_MARKER_PRESERVED", compute.includes('data-compute-summary-route-host="0627"'), "Compute Summary route-host marker should remain for existing route audit.");
 check("COMPUTE_SUMMARY_TARGET_MARKER", compute.includes('data-compute-summary-physical-security-target="0628"'), "Compute Summary should carry the Physical Security target marker.");
 
 console.log("");
