@@ -665,6 +665,42 @@
       font-weight: 500;
     }
 
+    /* compute-summary-report-workload-section-separation-0628 */
+    .compute-summary-report-workload-title {
+      display: block;
+      margin: 24px 0 10px;
+      padding: 11px 13px 10px;
+      border: 1px solid rgba(125, 255, 158, .18);
+      border-left: 3px solid rgba(125, 255, 158, .58);
+      border-radius: 10px;
+      background: linear-gradient(90deg, rgba(125, 255, 158, .075), rgba(0, 0, 0, .08));
+      color: rgba(255, 255, 255, .97);
+      line-height: 1.25;
+    }
+
+    .compute-summary-report-workload-title:first-child {
+      margin-top: 10px;
+    }
+
+    .compute-summary-report-workload-kicker {
+      display: block;
+      margin-top: 5px;
+      color: rgba(224, 238, 229, .68);
+      font-size: .88rem;
+      font-weight: 500;
+      letter-spacing: 0;
+    }
+
+    .compute-summary-report-workload-title + .compute-summary-watch-risk-table {
+      margin-top: 8px;
+      margin-bottom: 20px;
+    }
+
+    #computeSummaryReportCoreSections .compute-summary-watch-risk-table,
+    #computeSummaryReportBranchSections .compute-summary-watch-risk-table {
+      box-shadow: 0 0 0 1px rgba(125, 255, 158, .04);
+    }
+
     @media (max-width: 860px) {
       .compute-master-stats,
       .compute-summary-metric-grid {
