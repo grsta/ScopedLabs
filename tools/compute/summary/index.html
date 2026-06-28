@@ -301,6 +301,46 @@
       font-weight: 900;
     }
 
+    .compute-summary-flow-kicker {
+      color: rgba(224, 238, 229, .62);
+    }
+
+    a.compute-summary-dot,
+    a.compute-summary-dot:visited {
+      color: rgba(241, 255, 246, .92);
+      text-decoration: none;
+    }
+
+    a.compute-summary-dot:hover {
+      color: rgba(125, 255, 158, .98);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .compute-summary-branch-grid {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .compute-summary-branch-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px 9px;
+      align-items: center;
+      color: rgba(241, 255, 246, .92);
+      font-size: .92rem;
+    }
+
+    .compute-summary-branch-label {
+      color: rgba(224, 238, 229, .68);
+      font-size: .72rem;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      min-width: 104px;
+    }
+
     @media (max-width: 860px) {
       .compute-master-stats,
       .compute-summary-metric-grid {
@@ -353,11 +393,11 @@
     <section class="container">
       <article class="card summary-hero summary-page-hero compute-summary-design-flow" aria-label="Compute design flow">
         <div class="compute-summary-flow-group">
-          <div class="compute-summary-flow-title">Design flow</div>
+          <div class="compute-summary-flow-title compute-summary-flow-kicker">Design flow</div>
           <div class="compute-summary-flow-title">Foundation</div>
           <p class="compute-summary-flow-copy">Create or select the workload being planned.</p>
           <div class="compute-summary-flow-row">
-            <span class="compute-summary-dot">Compute Workload Planner</span>
+            <a class="compute-summary-dot compute-summary-flow-link" href="../workload-planner/">Compute Workload Planner</a>
           </div>
         </div>
 
@@ -365,33 +405,42 @@
           <div class="compute-summary-flow-title">Core compute pipeline</div>
           <p class="compute-summary-flow-copy">Run this path for baseline CPU/RAM sizing, then attach optional branches selected by the workload.</p>
           <div class="compute-summary-flow-row">
-            <span class="compute-summary-dot">CPU Sizing</span>
+            <a class="compute-summary-dot compute-summary-flow-link" href="../cpu-sizing/">CPU Sizing</a>
             <span class="compute-summary-arrow">-></span>
-            <span class="compute-summary-dot">RAM Sizing</span>
+            <a class="compute-summary-dot compute-summary-flow-link" href="../ram-sizing/">RAM Sizing</a>
             <span class="compute-summary-arrow">-></span>
-            <span class="compute-summary-dot">Summary</span>
+            <a class="compute-summary-dot compute-summary-flow-link" href="./">Summary</a>
           </div>
         </div>
 
         <div class="compute-summary-flow-group">
           <div class="compute-summary-flow-title">Optional compute branches</div>
           <p class="compute-summary-flow-copy">Use these when the workload needs storage, VM density, GPU, power, network, RAID, or backup validation.</p>
-          <div class="compute-summary-flow-row">
-            <span class="compute-summary-dot pending">Storage IOPS</span>
-            <span class="compute-summary-arrow">-></span>
-            <span class="compute-summary-dot pending">Storage Throughput</span>
-            <span class="compute-summary-arrow">-></span>
-            <span class="compute-summary-dot pending">VM Density</span>
-            <span class="compute-summary-arrow">-></span>
-            <span class="compute-summary-dot pending">GPU VRAM</span>
-            <span class="compute-summary-arrow">-></span>
-            <span class="compute-summary-dot pending">Power & Thermal</span>
-            <span class="compute-summary-arrow">-></span>
-            <span class="compute-summary-dot pending">NIC Bonding</span>
-            <span class="compute-summary-arrow">-></span>
-            <span class="compute-summary-dot pending">RAID Rebuild</span>
-            <span class="compute-summary-arrow">-></span>
-            <span class="compute-summary-dot pending">Backup Window</span>
+          <div class="compute-summary-branch-grid" aria-label="Optional Compute branch links">
+            <div class="compute-summary-branch-row">
+              <span class="compute-summary-branch-label">Storage</span>
+              <a class="compute-summary-dot pending compute-summary-flow-link" href="../storage-iops/">Storage IOPS</a>
+              <span class="compute-summary-arrow">-></span>
+              <a class="compute-summary-dot pending compute-summary-flow-link" href="../storage-throughput/">Storage Throughput</a>
+              <span class="compute-summary-arrow">-></span>
+              <a class="compute-summary-dot pending compute-summary-flow-link" href="../raid-rebuild-time/">RAID Rebuild</a>
+              <span class="compute-summary-arrow">-></span>
+              <a class="compute-summary-dot pending compute-summary-flow-link" href="../backup-window/">Backup Window</a>
+            </div>
+            <div class="compute-summary-branch-row">
+              <span class="compute-summary-branch-label">Virtualization</span>
+              <a class="compute-summary-dot pending compute-summary-flow-link" href="../vm-density/">VM Density</a>
+            </div>
+            <div class="compute-summary-branch-row">
+              <span class="compute-summary-branch-label">Acceleration</span>
+              <a class="compute-summary-dot pending compute-summary-flow-link" href="../gpu-vram/">GPU VRAM</a>
+            </div>
+            <div class="compute-summary-branch-row">
+              <span class="compute-summary-branch-label">Infrastructure</span>
+              <a class="compute-summary-dot pending compute-summary-flow-link" href="../power-thermal/">Power &amp; Thermal</a>
+              <span class="compute-summary-arrow">-></span>
+              <a class="compute-summary-dot pending compute-summary-flow-link" href="../nic-bonding/">NIC Bonding</a>
+            </div>
           </div>
         </div>
       </article>
