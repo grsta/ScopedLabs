@@ -110,6 +110,28 @@
       margin-bottom: 10px;
     }
 
+    .compute-summary-kicker-dot {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .compute-summary-kicker-dot::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #3cff87;
+      box-shadow: 0 0 10px rgba(60, 255, 135, .72);
+      flex: 0 0 auto;
+    }
+
+    .compute-summary-kicker-arrow {
+      color: rgba(125, 255, 158, .72);
+      margin: 0 8px;
+    }
+
+
     .compute-summary-actions {
       display: flex;
       flex-wrap: wrap;
@@ -469,7 +491,7 @@
       </article>
 
       <article class="card summary-hero compute-summary-card" aria-labelledby="compute-summary-route-status-title">
-        <div class="compute-summary-rollup-kicker">Final category rollup -> Cross-category ready</div>
+        <div class="compute-summary-rollup-kicker"><span class="compute-summary-kicker-dot">Final category rollup</span><span class="compute-summary-kicker-arrow" aria-hidden="true">&rarr;</span><span class="compute-summary-kicker-dot">Cross-category ready</span></div>
         <h2 id="compute-summary-route-status-title">Master rollup for the Compute design</h2>
         <p class="muted"><strong>Summary route is live.</strong> This page is the Compute master assistant and final report host. It reads saved workload results from CPU, RAM, GPU, and optional Compute branches without forcing optional branches into the required core pipeline.</p>
         <div class="compute-summary-actions">
