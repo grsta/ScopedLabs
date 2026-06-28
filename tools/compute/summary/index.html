@@ -6,111 +6,216 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Review saved Compute workload planning results and prepare the next summary/report closeout step.">
   <link rel="stylesheet" href="../../../assets/style.css">
+  <style>
+    .compute-summary-kpi .summary-scope-card {
+      min-height: 100%;
+    }
+
+    .compute-summary-kpi-label {
+      display: block;
+      color: rgba(255,255,255,.68);
+      font-size: .76rem;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .compute-summary-kpi-value {
+      display: block;
+      font-size: 1rem;
+      font-weight: 800;
+      color: rgba(255,255,255,.94);
+      line-height: 1.35;
+    }
+
+    .summary-status-chip {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,.18);
+      padding: 4px 9px;
+      font-size: .74rem;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .summary-status-chip.good {
+      color: rgba(135,255,166,.96);
+      border-color: rgba(125,255,158,.42);
+      background: rgba(60,190,90,.12);
+    }
+
+    .summary-status-chip.watch {
+      color: rgba(255,213,125,.96);
+      border-color: rgba(255,190,80,.42);
+      background: rgba(255,170,55,.12);
+    }
+
+    .summary-status-chip.risk {
+      color: rgba(255,145,145,.96);
+      border-color: rgba(255,90,90,.42);
+      background: rgba(255,70,70,.12);
+    }
+
+    .compute-summary-table td,
+    .compute-summary-table th {
+      vertical-align: top;
+    }
+
+    .compute-summary-table td:nth-child(3),
+    .compute-summary-table td:nth-child(4) {
+      line-height: 1.45;
+    }
+
+    .compute-summary-muted-action {
+      color: rgba(255,255,255,.72);
+    }
+  </style>
 </head>
-<body>
+<body data-tool="compute-summary" data-step="compute-summary" data-category="compute">
   <header class="site-header">
-    <div class="container nav-wrap">
+    <div class="container header-inner">
       <a class="brand" href="../../../index.html" aria-label="ScopedLabs home">
         <span class="brand-dot" aria-hidden="true"></span>
         <span class="brand-mark">$</span>
         <span class="brand-text">ScopedLabs</span>
       </a>
-      <nav aria-label="Primary navigation">
-        <a href="../../../index.html">Home</a>
-        <a href="../../index.html" class="active">Tools</a>
-        <a href="../../../guides/">Guides</a>
-        <a href="../../../about.html">About</a>
-        <a href="../../../contact.html">Contact</a>
-        <a href="../../../account.html">Account</a>
+      <nav class="nav site-nav nav-tabs" aria-label="Primary navigation">
+        <a class="nav-tab" href="../../../index.html">Home</a>
+        <a class="nav-tab is-active" href="../../index.html">Tools</a>
+        <a class="nav-tab" href="../../../guides/">Guides</a>
+        <a class="nav-tab" href="../../../about.html">About</a>
+        <a class="nav-tab" href="../../../contact.html">Contact</a>
+        <a class="nav-tab" href="../../../account.html">Account</a>
       </nav>
     </div>
   </header>
 
-  <main class="container tool-page" data-compute-summary-route-host="0627" data-compute-summary-plan-state-rollup="0628">
-    <section class="tool-hero">
+  <main class="page" data-compute-summary-route-host="0627" data-compute-summary-plan-state-rollup="0628" data-compute-summary-physical-security-parity="0628">
+    <section class="container summary-page-heading">
       <p class="eyebrow">Compute planning</p>
       <h1>Compute Summary</h1>
-      <p class="lede">Review the active Compute workload, completed CPU/RAM/GPU results, selected branch gaps, and next planning actions from the shared Compute workload plan.</p>
+      <p class="muted">Review the active Compute workload, completed CPU/RAM/GPU results, selected branch gaps, and next planning actions from the shared Compute workload plan.</p>
     </section>
 
-    <section class="tool-card" aria-labelledby="compute-summary-route-status-title">
-      <h2 id="compute-summary-route-status-title">Summary route is live</h2>
-      <p>This Summary now reads the shared Compute workload plan-state layer. Guided Compute flows can complete here without disturbing the accepted CPU/RAM/GPU tool baselines.</p>
+    <section class="container">
+      <article class="card summary-hero summary-page-hero" aria-labelledby="compute-summary-route-status-title">
+        <div class="summary-hero-flow" aria-label="Compute summary flow">
+          <span class="summary-flow-step">Workload</span>
+          <span class="summary-flow-arrow" aria-hidden="true">/</span>
+          <span class="summary-flow-step">CPU</span>
+          <span class="summary-flow-arrow" aria-hidden="true">/</span>
+          <span class="summary-flow-step">RAM</span>
+          <span class="summary-flow-arrow" aria-hidden="true">/</span>
+          <span class="summary-flow-step">Branches</span>
+          <span class="summary-flow-arrow" aria-hidden="true">/</span>
+          <span class="summary-flow-step">Summary</span>
+        </div>
 
-      <div class="result-table-wrap">
-        <table class="result-table">
-          <tbody>
-            <tr>
-              <th>Active workload</th>
-              <td id="computeSummaryWorkloadName">Loading workload...</td>
-            </tr>
-            <tr>
-              <th>Plan status</th>
-              <td id="computeSummaryOverallStatus">Loading status...</td>
-            </tr>
-            <tr>
-              <th>Saved results</th>
-              <td id="computeSummarySavedCount">Loading saved results...</td>
-            </tr>
-            <tr>
-              <th>Last updated</th>
-              <td id="computeSummaryUpdatedAt">Loading timestamp...</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+        <h2 id="compute-summary-route-status-title">Master rollup for the Compute design</h2>
+        <p class="muted"><strong>Summary route is live.</strong> This Summary reads the shared Compute workload plan-state layer so guided Compute flows can close out without disturbing the accepted CPU/RAM/GPU tool baselines.</p>
 
-      <div class="compute-flow-actions" style="margin-top: 18px;">
-        <a class="btn secondary" href="../workload-planner/">Back to Workload Planner</a>
-        <a class="btn" href="../gpu-vram/">Review GPU VRAM</a>
-      </div>
-    </section>
+        <div class="summary-grid compute-summary-kpi" aria-label="Compute workload summary">
+          <div class="card summary-scope-card">
+            <span class="compute-summary-kpi-label">Active workload</span>
+            <span class="compute-summary-kpi-value" id="computeSummaryWorkloadName">Loading workload...</span>
+          </div>
+          <div class="card summary-scope-card">
+            <span class="compute-summary-kpi-label">Plan status</span>
+            <span class="compute-summary-kpi-value" id="computeSummaryOverallStatus">Loading status...</span>
+          </div>
+          <div class="card summary-scope-card">
+            <span class="compute-summary-kpi-label">Saved results</span>
+            <span class="compute-summary-kpi-value" id="computeSummarySavedCount">Loading saved results...</span>
+          </div>
+          <div class="card summary-scope-card">
+            <span class="compute-summary-kpi-label">Last updated</span>
+            <span class="compute-summary-kpi-value" id="computeSummaryUpdatedAt">Loading timestamp...</span>
+          </div>
+        </div>
 
-    <section class="tool-card" aria-labelledby="compute-summary-rollup-title">
-      <h2 id="compute-summary-rollup-title">Completed workload rollup</h2>
-      <p id="computeSummaryRollupIntro">Summary is checking saved CPU, RAM, GPU, and selected branch records.</p>
+        <div class="summary-hero-actions btn-row">
+          <a class="btn" href="../workload-planner/">Back to Workload Planner</a>
+          <a class="btn btn-primary" href="../gpu-vram/">Review GPU VRAM</a>
+        </div>
+      </article>
 
-      <div class="result-table-wrap">
-        <table class="result-table" data-compute-summary-results-table>
-          <thead>
-            <tr>
-              <th>Tool</th>
-              <th>Status</th>
-              <th>Saved evidence</th>
-              <th>Summary note</th>
-            </tr>
-          </thead>
-          <tbody id="computeSummaryResultsBody">
-            <tr>
-              <td colspan="4">Loading saved Compute results...</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+      <article class="card summary-master-card" aria-labelledby="compute-summary-assistant-title" data-compute-summary-assistant-foundation="0628">
+        <h2 id="compute-summary-assistant-title">Compute Master Assistant</h2>
+        <p id="computeSummaryAssistantCopy" class="muted summary-master-copy">The master Summary Assistant will interpret the shared workload plan, saved tool results, assumptions, risks, and missing branches. This foundation now gives it a stable data source.</p>
+        <div class="summary-master-context">
+          <ul id="computeSummaryAssistantList">
+            <li>Loading assistant foundation checks...</li>
+          </ul>
+        </div>
+      </article>
 
-    <section class="tool-card" aria-labelledby="compute-summary-gaps-title">
-      <h2 id="compute-summary-gaps-title">Selected branch gaps</h2>
-      <p>These are the selected or expected Compute planning branches that still need saved evidence before the final Summary report is complete.</p>
-      <div id="computeSummaryGapList" class="result-table-wrap">
-        <table class="result-table">
-          <tbody>
-            <tr><td>Loading branch gaps...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+      <article class="card summary-results-card" aria-labelledby="compute-summary-rollup-title">
+        <h2 id="compute-summary-rollup-title">Compute Rollup</h2>
+        <p id="computeSummaryRollupIntro" class="muted summary-section-copy">Summary is checking saved CPU, RAM, GPU, and selected branch records.</p>
 
-    <section class="tool-card" aria-labelledby="compute-summary-assistant-title" data-compute-summary-assistant-foundation="0628">
-      <h2 id="compute-summary-assistant-title">Summary Assistant foundation</h2>
-      <p id="computeSummaryAssistantCopy">The master Summary Assistant will interpret the shared workload plan, saved tool results, assumptions, risks, and missing branches. This foundation now gives it a stable data source.</p>
-      <ul id="computeSummaryAssistantList">
-        <li>Loading assistant foundation checks...</li>
-      </ul>
-    </section>
+        <div class="result-table-wrap">
+          <table class="result-table compute-summary-table" data-compute-summary-results-table>
+            <thead>
+              <tr>
+                <th>Tool</th>
+                <th>Status</th>
+                <th>Saved evidence</th>
+                <th>Summary note</th>
+              </tr>
+            </thead>
+            <tbody id="computeSummaryResultsBody">
+              <tr>
+                <td colspan="4">Loading saved Compute results...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
 
-    <section hidden aria-hidden="true">
-      <pre id="computeSummaryLedger" data-compute-summary-ledger></pre>
+      <article class="card summary-scope-card" aria-labelledby="compute-summary-gaps-title">
+        <h2 id="compute-summary-gaps-title">Selected Branch Gaps</h2>
+        <p class="muted summary-section-copy">These are the selected or expected Compute planning branches that still need saved evidence before the final Summary report is complete.</p>
+        <div id="computeSummaryGapList" class="result-table-wrap">
+          <table class="result-table">
+            <tbody>
+              <tr><td>Loading branch gaps...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="card summary-tool-notes-card" aria-labelledby="compute-summary-notes-title">
+        <h2 id="compute-summary-notes-title">Tool Notes</h2>
+        <p class="muted summary-section-copy">CPU, RAM, GPU, and optional Compute branch notes will be collected here as the Summary report host matures.</p>
+        <div class="summary-master-context">
+          <p class="compute-summary-muted-action">Current lane: live plan-state rollup foundation. Next report lane can attach user notes, assistant notes, and export-ready references.</p>
+        </div>
+      </article>
+
+      <article class="card summary-export-card" aria-labelledby="compute-summary-export-title">
+        <h2 id="compute-summary-export-title">Final Report Export</h2>
+        <p class="muted summary-section-copy">The final Compute report export will use this Summary route as the category closeout host after the rollup and assistant sections are accepted.</p>
+        <div class="summary-report-details">
+          <p class="compute-summary-muted-action">Export wiring is intentionally parked until the Summary rollup layout is accepted.</p>
+        </div>
+      </article>
+
+      <article class="card summary-next-card" aria-labelledby="compute-summary-next-title">
+        <h2 id="compute-summary-next-title">Continue Planning</h2>
+        <p class="muted summary-section-copy">Return to the workload planner, review GPU VRAM, or continue into selected Compute branches that still need saved evidence.</p>
+        <div class="btn-row summary-next-actions">
+          <a class="btn" href="../workload-planner/">Back to Workload Planner</a>
+          <a class="btn btn-primary" href="../gpu-vram/">Review GPU VRAM</a>
+        </div>
+      </article>
+
+      <section hidden aria-hidden="true">
+        <pre id="computeSummaryLedger" data-compute-summary-ledger></pre>
+      </section>
     </section>
   </main>
 
@@ -189,6 +294,24 @@
           .replace(/\s+/g, " ")
           .trim()
           .replace(/\b\w/g, function (m) { return m.toUpperCase(); }) || "N/A";
+      }
+      function statusClass(status) {
+        var value = String(status || "PENDING").toUpperCase();
+        if (value === "GOOD" || value === "HEALTHY" || value === "PASS") return "good";
+        if (value === "RISK" || value === "FAIL") return "risk";
+        if (value === "WATCH" || value === "PENDING") return "watch";
+        return "watch";
+      }
+
+      function statusChipHtml(status) {
+        var value = String(status || "PENDING").toUpperCase();
+        return '<span class="summary-status-chip ' + statusClass(value) + '">' + escapeHtml(value) + '</span>';
+      }
+
+      function renderStatusChip(id, status) {
+        var target = byId(id);
+        if (!target) return;
+        target.innerHTML = statusChipHtml(status);
       }
 
       function statusOf(record) {
@@ -282,7 +405,7 @@
 
       function renderNoState() {
         byId("computeSummaryWorkloadName").textContent = "No Compute plan-state module loaded";
-        byId("computeSummaryOverallStatus").textContent = "PENDING";
+        renderStatusChip("computeSummaryOverallStatus", "PENDING");
         byId("computeSummarySavedCount").textContent = "0 saved results";
         byId("computeSummaryUpdatedAt").textContent = "N/A";
         byId("computeSummaryRollupIntro").textContent = "Summary could not load the shared Compute plan-state helper.";
@@ -312,7 +435,7 @@
         byId("computeSummaryWorkloadName").textContent = workload
           ? (workload.name || "Compute Workload")
           : "No active Compute workload selected";
-        byId("computeSummaryOverallStatus").textContent = status;
+        renderStatusChip("computeSummaryOverallStatus", status);
         byId("computeSummarySavedCount").textContent = String(completed.length) + " saved result" + (completed.length === 1 ? "" : "s");
         byId("computeSummaryUpdatedAt").textContent = plan && plan.updatedAt ? plan.updatedAt : "N/A";
 
@@ -328,7 +451,7 @@
             return [
               "<tr>",
               '<td><a href="' + escapeHtml(TOOL_HREFS[tool] || "../workload-planner/") + '">' + escapeHtml(TOOL_LABELS[tool] || titleCase(tool)) + "</a></td>",
-              "<td>" + escapeHtml(statusOf(record)) + "</td>",
+              "<td>" + statusChipHtml(statusOf(record)) + "</td>",
               "<td>" + escapeHtml(evidenceFor(record)) + "</td>",
               "<td>" + escapeHtml(noteFor(tool, record)) + "</td>",
               "</tr>"
