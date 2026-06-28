@@ -1377,43 +1377,187 @@
 
         function getSavedWorkloadsForReport() {
           var stateApi = window.ScopedLabsComputePlanState || {};
-          var saved = [];
+          var candidates = [];
+          var found = [];
 
-          if (typeof stateApi.getWorkloads === "function") {
-            saved = stateApi.getWorkloads() || [];
-          } else if (typeof stateApi.getSavedWorkloads === "function") {
-            saved = stateApi.getSavedWorkloads() || [];
-          } else if (stateApi.state && Array.isArray(stateApi.state.workloads)) {
-            saved = stateApi.state.workloads;
+          function pushCandidate(value) {
+            if (value && typeof value === "object") {
+              candidates.push(value);
+            }
           }
 
-          if ((!saved || !saved.length) && workload) {
-            saved = [workload];
+          [
+            "getWorkloads",
+            "getSavedWorkloads",
+            "getState",
+            "readState",
+            "getPlanState",
+            "readPlanState",
+            "getPlan",
+            "readPlan",
+            "getLedger",
+            "getWorkloadLedger"
+          ].forEach(function (method) {
+            try {
+              if (typeof stateApi[method] === "function") {
+                pushCandidate(stateApi[method]());
+              }
+            } catch (error) {}
+          });
+
+          pushCandidate(stateApi.state);
+          pushCandidate(stateApi.plan);
+          pushCandidate(stateApi.ledger);
+          pushCandidate(stateApi.workloads);
+
+          try {
+            for (var i = 0; i < window.localStorage.length; i += 1) {
+              var key = window.localStorage.key(i) || "";
+              if (!/compute|workload|planner|plan/i.test(key)) continue;
+
+              var raw = window.localStorage.getItem(key);
+              if (!raw || raw.charAt(0) !== "{" && raw.charAt(0) !== "[") continue;
+
+              try {
+                pushCandidate(JSON.parse(raw));
+              } catch (error) {}
+            }
+          } catch (error) {}
+
+          function looksLikeWorkload(item) {
+            if (!item || typeof item !== "object" || Array.isArray(item)) return false;
+
+            return !!(
+              item.id ||
+              item.workloadId ||
+              item.name ||
+              item.workloadName ||
+              item.title ||
+              item.path ||
+              item.branches ||
+              item.environment ||
+              item.workloadType ||
+              item.pattern
+            );
           }
 
-          return (saved || []).filter(Boolean);
+          function normalizeWorkload(item) {
+            if (!looksLikeWorkload(item)) return null;
+
+            var copy = {};
+            Object.keys(item).forEach(function (key) {
+              copy[key] = item[key];
+            });
+
+            copy.id = copy.id || copy.workloadId || copy.key || "";
+            copy.workloadId = copy.workloadId || copy.id || "";
+            copy.name = copy.name || copy.workloadName || copy.title || copy.label || "Compute workload";
+
+            return copy;
+          }
+
+          function collect(value, depth) {
+            if (!value || depth > 6) return;
+
+            if (Array.isArray(value)) {
+              value.forEach(function (item) {
+                var normalized = normalizeWorkload(item);
+                if (normalized) {
+                  found.push(normalized);
+                }
+                collect(item, depth + 1);
+              });
+              return;
+            }
+
+            if (typeof value !== "object") return;
+
+            var normalized = normalizeWorkload(value);
+            if (normalized && (value.branches || value.workloadName || value.name || value.path || value.environment)) {
+              found.push(normalized);
+            }
+
+            Object.keys(value).forEach(function (key) {
+              if (
+                /workload|planner|plan|saved|ledger|items|records|list|entries/i.test(key) ||
+                Array.isArray(value[key])
+              ) {
+                collect(value[key], depth + 1);
+              }
+            });
+          }
+
+          candidates.forEach(function (candidate) {
+            collect(candidate, 0);
+          });
+
+          var unique = [];
+          var seen = {};
+
+          found.forEach(function (item) {
+            var key = String(item.id || item.workloadId || item.name || "").toLowerCase();
+            if (!key || seen[key]) return;
+            seen[key] = true;
+            unique.push(item);
+          });
+
+          if (!unique.length && workload) {
+            unique = [workload];
+          }
+
+          return unique;
         }
 
         function resultsForWorkload(savedWorkload) {
           var stateApi = window.ScopedLabsComputePlanState || {};
           var workloadId = savedWorkload && (savedWorkload.id || savedWorkload.workloadId);
+          var workloadName = savedWorkload && (savedWorkload.name || savedWorkload.workloadName);
           var scopedResults = null;
 
-          if (typeof stateApi.getResultsForWorkload === "function") {
-            scopedResults = stateApi.getResultsForWorkload(workloadId);
-          } else if (typeof stateApi.getToolResultsForWorkload === "function") {
-            scopedResults = stateApi.getToolResultsForWorkload(workloadId);
-          } else if (savedWorkload && savedWorkload.results && typeof savedWorkload.results === "object") {
+          [
+            "getResultsForWorkload",
+            "getToolResultsForWorkload",
+            "readResultsForWorkload",
+            "readToolResultsForWorkload"
+          ].forEach(function (method) {
+            if (scopedResults) return;
+
+            try {
+              if (typeof stateApi[method] === "function") {
+                scopedResults = stateApi[method](workloadId);
+              }
+            } catch (error) {}
+          });
+
+          if (!scopedResults && savedWorkload && savedWorkload.results && typeof savedWorkload.results === "object") {
             scopedResults = savedWorkload.results;
-          } else if (savedWorkload && savedWorkload.toolResults && typeof savedWorkload.toolResults === "object") {
+          }
+
+          if (!scopedResults && savedWorkload && savedWorkload.toolResults && typeof savedWorkload.toolResults === "object") {
             scopedResults = savedWorkload.toolResults;
+          }
+
+          if (!scopedResults && savedWorkload && savedWorkload.outputs && typeof savedWorkload.outputs === "object") {
+            scopedResults = savedWorkload.outputs;
           }
 
           if (scopedResults && typeof scopedResults === "object") {
             return scopedResults;
           }
 
-          if (workloadId && workload && (workload.id || workload.workloadId) === workloadId) {
+          if (
+            workloadId &&
+            workload &&
+            String(workload.id || workload.workloadId || "") === String(workloadId)
+          ) {
+            return results || {};
+          }
+
+          if (
+            workloadName &&
+            workload &&
+            String(workload.name || workload.workloadName || "") === String(workloadName)
+          ) {
             return results || {};
           }
 
@@ -1499,12 +1643,16 @@
             return '<table class="result-table compute-summary-table compute-summary-watch-risk-table"><tbody><tr><td colspan="4">No saved Compute workloads found yet.</td></tr></tbody></table>';
           }
 
-          return savedWorkloads.map(function (savedWorkload) {
+          var rendered = savedWorkloads.map(function (savedWorkload) {
             var savedResults = resultsForWorkload(savedWorkload);
             var toolList = selectedToolsForWorkload(savedWorkload, savedResults);
             var tools = kind === "core"
               ? toolList.filter(function (tool) { return BASE_TOOLS.indexOf(tool) !== -1; })
               : toolList.filter(function (tool) { return BASE_TOOLS.indexOf(tool) === -1; });
+
+            if (kind === "branch" && !tools.length) {
+              return "";
+            }
 
             return reportTableForWorkload(
               savedWorkload,
@@ -1514,7 +1662,9 @@
                 ? "No core Compute pipeline sections available yet."
                 : "No optional Compute branches selected or saved for this workload."
             );
-          }).join("");
+          }).filter(Boolean).join("");
+
+          return rendered || '<table class="result-table compute-summary-table compute-summary-watch-risk-table"><tbody><tr><td colspan="4">No optional Compute branches selected or saved yet.</td></tr></tbody></table>';
         }
 
         setHtml("computeSummaryReportCoreSections", reportSectionForAllWorkloads("core"));
