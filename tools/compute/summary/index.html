@@ -1015,6 +1015,12 @@
         </div>
 
         <p class="compute-summary-note">This category summary is generated from the current Compute workload plan-state ledger and is intended as a planning aid. Verify final designs against site conditions, manufacturer data, and project requirements.</p>
+        <!-- compute-summary-shared-export-buttons-0628 -->
+        <div class="btn-row" style="margin-top: 14px;">
+          <button id="exportReport" class="btn btn-primary" type="button">Open Report</button>
+          <button id="saveSnapshot" class="btn" type="button">Save Snapshot</button>
+        </div>
+        <div id="exportStatus" class="export-status"></div>
       </article>
 
       <article class="card summary-next-card compute-summary-card" aria-labelledby="compute-summary-next-title">
@@ -1824,5 +1830,33 @@
       }
     })();
   </script>
+
+  <script data-scopedlabs-export-config data-compute-summary-export-config="compute-summary-shared-export-config-0628">
+    window.ScopedLabsExportConfig = {
+      categoryLabel: "Compute",
+      categorySlug: "compute",
+      toolLabel: "Compute Summary",
+      toolSlug: "compute-summary",
+      reportPrefix: "SL-COM-SUM",
+      alwaysAllowExport: true,
+      alwaysExportReady: true,
+      suppressStandardReportSections: true,
+      suppressHeaderStatusPill: true,
+      invalidateOnInput: false,
+      readyStatusMessage: "Summary report ready. Open Report or Save Snapshot.",
+      emptyExportOutputs: [
+        { label: "Report Type", value: "Compute category summary" },
+        { label: "Report Readiness", value: "Ready without calculator step" }
+      ],
+      assumptions: [
+        "This report reflects the current Compute summary, saved workload plan-state ledger, branch selections, tool evidence, and visible report fields at the time the export was generated.",
+        "Core CPU/RAM sizing and optional Compute branches may be at different completion states.",
+        "Future cross-category coordination should verify Network, Power, Storage, Access Control, equipment profile, and site-condition dependencies before final design decisions."
+      ],
+      disclaimer: "ScopedLabs outputs are planning aids only and do not replace formal engineering review, code compliance review, site-specific validation, manufacturer documentation, or platform-specific design validation."
+    };
+  </script>
+  <script src="/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes"></script>
+  <script src="/assets/export.js?v=shared-export-025-tool-notes-column-widths"></script>
 </body>
 </html>
