@@ -1587,27 +1587,26 @@
             if (!item || typeof item !== "object") return false;
 
             var name = String(item.name || item.workloadName || item.title || item.label || "").trim().toLowerCase();
-            var id = String(item.id || item.workloadId || item.key || "").trim();
             var path = String(item.path || "").trim().toLowerCase();
             var environment = String(item.environment || "").trim().toLowerCase();
 
             return (
-              name === "compute workload" &&
-              !id &&
-              (path === "" || path === "general") &&
-              (environment === "" || environment === "general") &&
-              !item.results &&
-              !item.toolResults &&
-              !item.outputs
+              name === "compute workload" ||
+              name === "default compute workload" ||
+              (
+                !name &&
+                (path === "" || path === "general") &&
+                (environment === "" || environment === "general")
+              )
             );
           }
 
-          var namedSavedWorkloads = unique.filter(function (item) {
+          var realSavedWorkloads = unique.filter(function (item) {
             return !isDefaultDraftWorkload(item);
           });
 
-          if (namedSavedWorkloads.length) {
-            unique = namedSavedWorkloads;
+          if (realSavedWorkloads.length) {
+            unique = realSavedWorkloads;
           }
 
           if (!unique.length && workload && !isDefaultDraftWorkload(workload)) {
