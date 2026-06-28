@@ -645,6 +645,26 @@
       text-decoration-color: rgba(255, 255, 255, .48);
     }
 
+    /* compute-summary-all-workload-report-sections-0628 */
+    .compute-summary-report-workload-title {
+      margin: 18px 0 8px;
+      color: rgba(255, 255, 255, .96);
+      font-size: 1rem;
+      font-weight: 850;
+    }
+
+    .compute-summary-report-workload-title:first-child {
+      margin-top: 0;
+    }
+
+    .compute-summary-report-workload-kicker {
+      display: block;
+      margin-top: 3px;
+      color: rgba(224, 238, 229, .68);
+      font-size: .88rem;
+      font-weight: 500;
+    }
+
     @media (max-width: 860px) {
       .compute-master-stats,
       .compute-summary-metric-grid {
@@ -1355,13 +1375,91 @@
           : '<table class="result-table compute-summary-table compute-summary-watch-risk-table"><tbody><tr><td colspan="5">No Watch/Risk details available yet.</td></tr></tbody></table>'
         );
 
-        function reportSectionRows(tools) {
+        function getSavedWorkloadsForReport() {
+          var stateApi = window.ScopedLabsComputePlanState || {};
+          var saved = [];
+
+          if (typeof stateApi.getWorkloads === "function") {
+            saved = stateApi.getWorkloads() || [];
+          } else if (typeof stateApi.getSavedWorkloads === "function") {
+            saved = stateApi.getSavedWorkloads() || [];
+          } else if (stateApi.state && Array.isArray(stateApi.state.workloads)) {
+            saved = stateApi.state.workloads;
+          }
+
+          if ((!saved || !saved.length) && workload) {
+            saved = [workload];
+          }
+
+          return (saved || []).filter(Boolean);
+        }
+
+        function resultsForWorkload(savedWorkload) {
+          var stateApi = window.ScopedLabsComputePlanState || {};
+          var workloadId = savedWorkload && (savedWorkload.id || savedWorkload.workloadId);
+          var scopedResults = null;
+
+          if (typeof stateApi.getResultsForWorkload === "function") {
+            scopedResults = stateApi.getResultsForWorkload(workloadId);
+          } else if (typeof stateApi.getToolResultsForWorkload === "function") {
+            scopedResults = stateApi.getToolResultsForWorkload(workloadId);
+          } else if (savedWorkload && savedWorkload.results && typeof savedWorkload.results === "object") {
+            scopedResults = savedWorkload.results;
+          } else if (savedWorkload && savedWorkload.toolResults && typeof savedWorkload.toolResults === "object") {
+            scopedResults = savedWorkload.toolResults;
+          }
+
+          if (scopedResults && typeof scopedResults === "object") {
+            return scopedResults;
+          }
+
+          if (workloadId && workload && (workload.id || workload.workloadId) === workloadId) {
+            return results || {};
+          }
+
+          return {};
+        }
+
+        function selectedToolsForWorkload(savedWorkload, savedResults) {
+          var branches = savedWorkload && savedWorkload.branches && typeof savedWorkload.branches === "object"
+            ? savedWorkload.branches
+            : {};
+
+          var toolList = BASE_TOOLS.slice();
+
+          BRANCH_TOOLS.forEach(function (branch) {
+            if (branches[branch.key]) {
+              toolList.push(branch.tool);
+            }
+          });
+
+          Object.keys(savedResults || {}).forEach(function (tool) {
+            if (toolList.indexOf(tool) === -1) {
+              toolList.push(tool);
+            }
+          });
+
+          return toolList;
+        }
+
+        function workloadKicker(savedWorkload) {
+          var parts = [];
+
+          if (savedWorkload && savedWorkload.environment) parts.push(savedWorkload.environment);
+          if (savedWorkload && savedWorkload.path) parts.push("path " + savedWorkload.path);
+          if (savedWorkload && savedWorkload.workloadType) parts.push(savedWorkload.workloadType);
+          if (savedWorkload && savedWorkload.pattern) parts.push(savedWorkload.pattern);
+
+          return parts.length ? parts.join(" | ") : "Saved Compute workload";
+        }
+
+        function reportRowsForWorkload(savedWorkload, tools, savedResults) {
           return tools.map(function (tool) {
-            var hasResult = hasOwn(results, tool);
-            var record = hasResult ? results[tool] : null;
+            var hasResult = hasOwn(savedResults, tool);
+            var record = hasResult ? savedResults[tool] : null;
             var state = hasResult ? statusOf(record) : "PENDING";
             var toolLabel = TOOL_LABELS[tool] || titleCase(tool);
-            var scopeLabel = workload && workload.name ? "Workload: " + workload.name : "Compute workload";
+            var scopeLabel = savedWorkload && savedWorkload.name ? "Workload: " + savedWorkload.name : "Compute workload";
             var detail = hasResult
               ? noteFor(tool, record)
               : "No saved result for this selected Compute section yet.";
@@ -1378,27 +1476,49 @@
           }).join("");
         }
 
-        function reportSectionTable(tools, emptyText) {
-          if (!tools.length) {
-            return '<table class="result-table compute-summary-table compute-summary-watch-risk-table"><tbody><tr><td colspan="4">' + escapeHtml(emptyText) + '</td></tr></tbody></table>';
-          }
+        function reportTableForWorkload(savedWorkload, tools, savedResults, emptyText) {
+          var title = savedWorkload && savedWorkload.name ? savedWorkload.name : "Compute workload";
+          var rows = tools.length ? reportRowsForWorkload(savedWorkload, tools, savedResults) : "";
 
-          return '<table class="result-table compute-summary-table compute-summary-watch-risk-table"><thead><tr><th>Scope / Workload</th><th>Tool</th><th>Status</th><th>Detail / Next Step</th></tr></thead><tbody>' + reportSectionRows(tools) + '</tbody></table>';
+          return [
+            '<h5 class="compute-summary-report-workload-title">',
+            escapeHtml(title),
+            '<span class="compute-summary-report-workload-kicker">',
+            escapeHtml(workloadKicker(savedWorkload)),
+            "</span></h5>",
+            rows
+              ? '<table class="result-table compute-summary-table compute-summary-watch-risk-table"><thead><tr><th>Scope / Workload</th><th>Tool</th><th>Status</th><th>Detail / Next Step</th></tr></thead><tbody>' + rows + '</tbody></table>'
+              : '<table class="result-table compute-summary-table compute-summary-watch-risk-table"><tbody><tr><td colspan="4">' + escapeHtml(emptyText) + '</td></tr></tbody></table>'
+          ].join("");
         }
 
-        var coreReportTools = BASE_TOOLS.slice();
-        var branchReportTools = selected.filter(function (tool) {
-          return BASE_TOOLS.indexOf(tool) === -1;
-        });
+        function reportSectionForAllWorkloads(kind) {
+          var savedWorkloads = getSavedWorkloadsForReport();
 
-        Object.keys(results || {}).forEach(function (tool) {
-          if (BASE_TOOLS.indexOf(tool) === -1 && branchReportTools.indexOf(tool) === -1) {
-            branchReportTools.push(tool);
+          if (!savedWorkloads.length) {
+            return '<table class="result-table compute-summary-table compute-summary-watch-risk-table"><tbody><tr><td colspan="4">No saved Compute workloads found yet.</td></tr></tbody></table>';
           }
-        });
 
-        setHtml("computeSummaryReportCoreSections", reportSectionTable(coreReportTools, "No core Compute pipeline sections available yet."));
-        setHtml("computeSummaryReportBranchSections", reportSectionTable(branchReportTools, "No optional Compute branches selected or saved yet."));
+          return savedWorkloads.map(function (savedWorkload) {
+            var savedResults = resultsForWorkload(savedWorkload);
+            var toolList = selectedToolsForWorkload(savedWorkload, savedResults);
+            var tools = kind === "core"
+              ? toolList.filter(function (tool) { return BASE_TOOLS.indexOf(tool) !== -1; })
+              : toolList.filter(function (tool) { return BASE_TOOLS.indexOf(tool) === -1; });
+
+            return reportTableForWorkload(
+              savedWorkload,
+              tools,
+              savedResults,
+              kind === "core"
+                ? "No core Compute pipeline sections available yet."
+                : "No optional Compute branches selected or saved for this workload."
+            );
+          }).join("");
+        }
+
+        setHtml("computeSummaryReportCoreSections", reportSectionForAllWorkloads("core"));
+        setHtml("computeSummaryReportBranchSections", reportSectionForAllWorkloads("branch"));
 
         var assistantItems = [
           "Summary is reading the shared Compute workload-plan contract.",
