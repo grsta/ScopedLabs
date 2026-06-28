@@ -7,26 +7,229 @@
   <meta name="description" content="Review saved Compute workload planning results and prepare the next summary/report closeout step.">
   <link rel="stylesheet" href="../../../assets/style.css">
   <style>
-    .compute-summary-kpi .summary-scope-card {
-      min-height: 100%;
+    .compute-summary-page {
+      --compute-summary-border: rgba(83, 255, 128, .22);
+      --compute-summary-border-strong: rgba(83, 255, 128, .36);
+      --compute-summary-panel: rgba(5, 18, 14, .78);
+      --compute-summary-panel-2: rgba(11, 18, 28, .86);
     }
 
-    .compute-summary-kpi-label {
+    .compute-summary-page .summary-page-heading {
+      padding-top: 54px;
+      padding-bottom: 18px;
+    }
+
+    .compute-summary-page .summary-page-heading h1 {
+      margin-bottom: 0;
+    }
+
+    .compute-summary-design-flow,
+    .compute-summary-card {
+      border: 1px solid var(--compute-summary-border);
+      background: linear-gradient(180deg, rgba(9, 36, 20, .72), rgba(4, 10, 9, .84));
+      box-shadow: 0 18px 60px rgba(0, 0, 0, .32);
+    }
+
+    .compute-summary-design-flow {
+      padding: 18px 20px;
+      margin-bottom: 22px;
+    }
+
+    .compute-summary-flow-group {
+      padding: 12px 0;
+      border-top: 1px solid rgba(125, 255, 158, .16);
+    }
+
+    .compute-summary-flow-group:first-child {
+      padding-top: 0;
+      border-top: 0;
+    }
+
+    .compute-summary-flow-title {
+      color: rgba(125, 255, 158, .96);
+      font-size: .74rem;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 7px;
+    }
+
+    .compute-summary-flow-copy {
+      color: rgba(224, 238, 229, .84);
+      font-size: .88rem;
+      margin: 0 0 8px;
+    }
+
+    .compute-summary-flow-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px 9px;
+      align-items: center;
+      color: rgba(241, 255, 246, .92);
+      font-size: .92rem;
+    }
+
+    .compute-summary-dot {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+
+    .compute-summary-dot::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #3cff87;
+      box-shadow: 0 0 10px rgba(60, 255, 135, .72);
+      flex: 0 0 auto;
+    }
+
+    .compute-summary-dot.pending::before {
+      background: rgba(255,255,255,.35);
+      box-shadow: none;
+    }
+
+    .compute-summary-arrow {
+      color: rgba(195, 215, 200, .38);
+    }
+
+    .compute-summary-card {
+      padding: 20px;
+      margin-bottom: 24px;
+      border-radius: 18px;
+    }
+
+    .compute-summary-rollup-kicker {
+      color: rgba(125, 255, 158, .92);
+      font-size: .72rem;
+      font-weight: 900;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .compute-summary-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .compute-master-panel {
+      border: 1px solid rgba(73, 146, 255, .22);
+      background: var(--compute-summary-panel-2);
+      border-radius: 18px;
+      padding: 20px;
+      margin-top: 14px;
+    }
+
+    .compute-master-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: start;
+      margin-bottom: 16px;
+    }
+
+    .compute-master-eyebrow {
+      color: rgba(160, 220, 190, .84);
+      font-size: .72rem;
+      font-weight: 900;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    .compute-master-title {
+      font-size: 1.15rem;
+      font-weight: 900;
+      margin: 0 0 4px;
+    }
+
+    .compute-master-status {
+      border-radius: 999px;
+      border: 1px solid rgba(125, 255, 158, .24);
+      background: rgba(34, 150, 77, .12);
+      color: rgba(160, 255, 190, .94);
+      font-size: .74rem;
+      font-weight: 900;
+      padding: 6px 12px;
+      white-space: nowrap;
+    }
+
+    .compute-master-message,
+    .compute-master-block {
+      border: 1px solid rgba(255,255,255,.1);
+      background: rgba(255,255,255,.035);
+      border-radius: 14px;
+      padding: 16px;
+      margin-top: 14px;
+    }
+
+    .compute-master-message h3,
+    .compute-master-block h3 {
+      font-size: .98rem;
+      margin: 0 0 8px;
+    }
+
+    .compute-master-stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .compute-master-stat {
+      border: 1px solid rgba(255,255,255,.1);
+      background: rgba(255,255,255,.035);
+      border-radius: 12px;
+      padding: 13px 14px;
+    }
+
+    .compute-master-stat-label {
+      color: rgba(144, 229, 183, .84);
       display: block;
-      color: rgba(255,255,255,.68);
-      font-size: .76rem;
-      font-weight: 800;
-      letter-spacing: .06em;
+      font-size: .72rem;
+      font-weight: 900;
+      letter-spacing: .09em;
       text-transform: uppercase;
       margin-bottom: 6px;
     }
 
-    .compute-summary-kpi-value {
+    .compute-master-stat-value {
+      color: #fff;
       display: block;
-      font-size: 1rem;
-      font-weight: 800;
-      color: rgba(255,255,255,.94);
-      line-height: 1.35;
+      font-size: 1.15rem;
+      font-weight: 900;
+    }
+
+    .compute-summary-metric-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .compute-summary-mini-card {
+      border: 1px solid rgba(125, 255, 158, .14);
+      background: rgba(0,0,0,.22);
+      border-radius: 12px;
+      padding: 13px 14px;
+      min-height: 88px;
+    }
+
+    .compute-summary-mini-card strong {
+      display: block;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .compute-summary-mini-card span {
+      color: rgba(228, 244, 232, .8);
+      font-size: .88rem;
+      line-height: 1.45;
     }
 
     .summary-status-chip {
@@ -34,44 +237,84 @@
       align-items: center;
       border-radius: 6px;
       border: 1px solid rgba(255,255,255,.18);
-      padding: 4px 9px;
+      padding: 3px 8px;
       font-size: .74rem;
       font-weight: 900;
-      letter-spacing: .08em;
+      letter-spacing: .07em;
       text-transform: uppercase;
       white-space: nowrap;
     }
 
-    .summary-status-chip.good {
+    .summary-status-chip.good,
+    .summary-status-chip.healthy {
       color: rgba(135,255,166,.96);
       border-color: rgba(125,255,158,.42);
       background: rgba(60,190,90,.12);
     }
 
-    .summary-status-chip.watch {
+    .summary-status-chip.watch,
+    .summary-status-chip.pending {
       color: rgba(255,213,125,.96);
       border-color: rgba(255,190,80,.42);
       background: rgba(255,170,55,.12);
     }
 
-    .summary-status-chip.risk {
+    .summary-status-chip.risk,
+    .summary-status-chip.fail {
       color: rgba(255,145,145,.96);
       border-color: rgba(255,90,90,.42);
       background: rgba(255,70,70,.12);
     }
 
-    .compute-summary-table td,
-    .compute-summary-table th {
-      vertical-align: top;
+    .compute-summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 12px;
     }
 
-    .compute-summary-table td:nth-child(3),
-    .compute-summary-table td:nth-child(4) {
+    .compute-summary-table th {
+      color: rgba(125, 255, 158, .96);
+      font-size: .74rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      text-align: left;
+      background: rgba(45, 120, 70, .18);
+    }
+
+    .compute-summary-table th,
+    .compute-summary-table td {
+      border-bottom: 1px solid rgba(255,255,255,.1);
+      padding: 10px 11px;
+      vertical-align: top;
+      line-height: 1.42;
+    }
+
+    .compute-summary-note {
+      color: rgba(229, 242, 233, .78);
+      font-size: .9rem;
       line-height: 1.45;
     }
 
-    .compute-summary-muted-action {
-      color: rgba(255,255,255,.72);
+    .compute-summary-report-ready {
+      color: rgba(255, 230, 135, .96);
+      font-weight: 900;
+    }
+
+    @media (max-width: 860px) {
+      .compute-master-stats,
+      .compute-summary-metric-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .compute-master-header {
+        display: block;
+      }
+
+      .compute-master-status {
+        margin-top: 12px;
+        display: inline-flex;
+      }
     }
   </style>
 </head>
@@ -94,77 +337,180 @@
     </div>
   </header>
 
-  <main class="page" data-compute-summary-route-host="0627" data-compute-summary-plan-state-rollup="0628" data-compute-summary-physical-security-parity="0628">
+  <main class="page compute-summary-page" data-compute-summary-route-host="0627" data-compute-summary-plan-state-rollup="0628" data-compute-summary-physical-security-parity="0628" data-compute-summary-physical-security-target="0628">
     <section class="container summary-page-heading">
-      <p class="eyebrow">Compute planning</p>
       <h1>Compute Summary</h1>
-      <p class="muted">Review the active Compute workload, completed CPU/RAM/GPU results, selected branch gaps, and next planning actions from the shared Compute workload plan.</p>
     </section>
 
     <section class="container">
-      <article class="card summary-hero summary-page-hero" aria-labelledby="compute-summary-route-status-title">
-        <div class="summary-hero-flow" aria-label="Compute summary flow">
-          <span class="summary-flow-step">Workload</span>
-          <span class="summary-flow-arrow" aria-hidden="true">/</span>
-          <span class="summary-flow-step">CPU</span>
-          <span class="summary-flow-arrow" aria-hidden="true">/</span>
-          <span class="summary-flow-step">RAM</span>
-          <span class="summary-flow-arrow" aria-hidden="true">/</span>
-          <span class="summary-flow-step">Branches</span>
-          <span class="summary-flow-arrow" aria-hidden="true">/</span>
-          <span class="summary-flow-step">Summary</span>
+      <article class="card summary-hero summary-page-hero compute-summary-design-flow" aria-label="Compute design flow">
+        <div class="compute-summary-flow-group">
+          <div class="compute-summary-flow-title">Design flow</div>
+          <div class="compute-summary-flow-title">Foundation</div>
+          <p class="compute-summary-flow-copy">Create or select the workload being planned.</p>
+          <div class="compute-summary-flow-row">
+            <span class="compute-summary-dot">Compute Workload Planner</span>
+          </div>
         </div>
 
+        <div class="compute-summary-flow-group">
+          <div class="compute-summary-flow-title">Core compute pipeline</div>
+          <p class="compute-summary-flow-copy">Run this path for baseline CPU/RAM sizing, then attach optional branches selected by the workload.</p>
+          <div class="compute-summary-flow-row">
+            <span class="compute-summary-dot">CPU Sizing</span>
+            <span class="compute-summary-arrow">-></span>
+            <span class="compute-summary-dot">RAM Sizing</span>
+            <span class="compute-summary-arrow">-></span>
+            <span class="compute-summary-dot">Summary</span>
+          </div>
+        </div>
+
+        <div class="compute-summary-flow-group">
+          <div class="compute-summary-flow-title">Optional compute branches</div>
+          <p class="compute-summary-flow-copy">Use these when the workload needs storage, VM density, GPU, power, network, RAID, or backup validation.</p>
+          <div class="compute-summary-flow-row">
+            <span class="compute-summary-dot pending">Storage IOPS</span>
+            <span class="compute-summary-arrow">-></span>
+            <span class="compute-summary-dot pending">Storage Throughput</span>
+            <span class="compute-summary-arrow">-></span>
+            <span class="compute-summary-dot pending">VM Density</span>
+            <span class="compute-summary-arrow">-></span>
+            <span class="compute-summary-dot pending">GPU VRAM</span>
+            <span class="compute-summary-arrow">-></span>
+            <span class="compute-summary-dot pending">Power & Thermal</span>
+            <span class="compute-summary-arrow">-></span>
+            <span class="compute-summary-dot pending">NIC Bonding</span>
+            <span class="compute-summary-arrow">-></span>
+            <span class="compute-summary-dot pending">RAID Rebuild</span>
+            <span class="compute-summary-arrow">-></span>
+            <span class="compute-summary-dot pending">Backup Window</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="card summary-hero compute-summary-card" aria-labelledby="compute-summary-route-status-title">
+        <div class="compute-summary-rollup-kicker">Final category rollup -> Cross-category ready</div>
         <h2 id="compute-summary-route-status-title">Master rollup for the Compute design</h2>
-        <p class="muted"><strong>Summary route is live.</strong> This Summary reads the shared Compute workload plan-state layer so guided Compute flows can close out without disturbing the accepted CPU/RAM/GPU tool baselines.</p>
-
-        <div class="summary-grid compute-summary-kpi" aria-label="Compute workload summary">
-          <div class="card summary-scope-card">
-            <span class="compute-summary-kpi-label">Active workload</span>
-            <span class="compute-summary-kpi-value" id="computeSummaryWorkloadName">Loading workload...</span>
-          </div>
-          <div class="card summary-scope-card">
-            <span class="compute-summary-kpi-label">Plan status</span>
-            <span class="compute-summary-kpi-value" id="computeSummaryOverallStatus">Loading status...</span>
-          </div>
-          <div class="card summary-scope-card">
-            <span class="compute-summary-kpi-label">Saved results</span>
-            <span class="compute-summary-kpi-value" id="computeSummarySavedCount">Loading saved results...</span>
-          </div>
-          <div class="card summary-scope-card">
-            <span class="compute-summary-kpi-label">Last updated</span>
-            <span class="compute-summary-kpi-value" id="computeSummaryUpdatedAt">Loading timestamp...</span>
-          </div>
-        </div>
-
-        <div class="summary-hero-actions btn-row">
+        <p class="muted"><strong>Summary route is live.</strong> This page is the Compute master assistant and final report host. It reads saved workload results from CPU, RAM, GPU, and optional Compute branches without forcing optional branches into the required core pipeline.</p>
+        <div class="compute-summary-actions">
+          <a class="btn btn-primary" href="#compute-summary-assistant-title">Review Master Assistant</a>
+          <a class="btn" href="#compute-summary-export-title">Open Report Section</a>
           <a class="btn" href="../workload-planner/">Back to Workload Planner</a>
-          <a class="btn btn-primary" href="../gpu-vram/">Review GPU VRAM</a>
+          <a class="btn" href="../gpu-vram/">Review GPU VRAM</a>
         </div>
       </article>
 
-      <article class="card summary-master-card" aria-labelledby="compute-summary-assistant-title" data-compute-summary-assistant-foundation="0628">
+      <article class="card summary-master-card compute-summary-card" aria-labelledby="compute-summary-assistant-title" data-compute-summary-assistant-foundation="0628">
         <h2 id="compute-summary-assistant-title">Compute Master Assistant</h2>
-        <p id="computeSummaryAssistantCopy" class="muted summary-master-copy">The master Summary Assistant will interpret the shared workload plan, saved tool results, assumptions, risks, and missing branches. This foundation now gives it a stable data source.</p>
-        <div class="summary-master-context">
-          <ul id="computeSummaryAssistantList">
-            <li>Loading assistant foundation checks...</li>
-          </ul>
+        <p class="muted summary-master-copy">This master assistant reads saved Compute workload state, completed tool evidence, selected branch gaps, and report readiness before export.</p>
+
+        <div class="compute-master-panel">
+          <div class="compute-master-header">
+            <div>
+              <div class="compute-master-eyebrow">Category master</div>
+              <h3 class="compute-master-title">Compute Master Assistant</h3>
+              <p class="muted" id="computeSummaryAssistantCopy">Coordinates CPU/RAM sizing, optional branch evidence, report readiness, and future Site Assistant handoff context.</p>
+            </div>
+            <span class="compute-master-status" id="computeSummaryGeneratedStatus">Not Generated</span>
+          </div>
+
+          <div class="compute-master-message">
+            <h3 id="computeSummaryAssistantHeadline">Planning draft - Compute guidance incomplete</h3>
+            <p id="computeSummaryAssistantMessage">Open the Workload Planner and save CPU/RAM results to begin generating saved guidance for this Summary.</p>
+            <p class="compute-summary-note" id="computeSummaryExpectedResult">Expected result: loading Compute guidance state...</p>
+          </div>
+
+          <div class="compute-master-stats">
+            <div class="compute-master-stat">
+              <span class="compute-master-stat-label">Generated</span>
+              <span class="compute-master-stat-value" id="computeSummaryGeneratedCount">0 / 0</span>
+            </div>
+            <div class="compute-master-stat">
+              <span class="compute-master-stat-label">Healthy</span>
+              <span class="compute-master-stat-value" id="computeSummaryHealthyCount">0</span>
+            </div>
+            <div class="compute-master-stat">
+              <span class="compute-master-stat-label">Watch</span>
+              <span class="compute-master-stat-value" id="computeSummaryWatchCount">0</span>
+            </div>
+            <div class="compute-master-stat">
+              <span class="compute-master-stat-label">Risk</span>
+              <span class="compute-master-stat-value" id="computeSummaryRiskCount">0</span>
+            </div>
+          </div>
+
+          <div class="compute-master-block">
+            <div class="compute-master-eyebrow">Next action</div>
+            <h3 id="computeSummaryNextActionTitle">Compute Workload Planner</h3>
+            <p id="computeSummaryNextActionCopy">Start or resume the guided Compute workflow.</p>
+          </div>
+
+          <div class="compute-master-block">
+            <div class="compute-master-eyebrow">Next step</div>
+            <p id="computeSummaryNextStepCopy">Begin with the first missing Compute tool and proceed through selected branches before treating this Summary as report-ready.</p>
+          </div>
+
+          <div class="compute-master-block">
+            <div class="compute-master-eyebrow">Knowledge state</div>
+            <p>Compute workload state loaded | Local plan-state source active | Runtime fetch blocked</p>
+            <small>External sources may inform future guidance language, but cannot override ScopedLabs math, guided-flow carryover, audits, or protected tool behavior.</small>
+          </div>
         </div>
+
+        <div class="summary-grid compute-summary-metric-grid">
+          <div class="compute-summary-mini-card">
+            <strong id="computeSummaryPostureTitle">Planning draft - Compute guidance incomplete</strong>
+            <span id="computeSummaryPostureCopy">Waiting for saved Compute evidence.</span>
+          </div>
+          <div class="compute-summary-mini-card">
+            <strong>Workload rollup</strong>
+            <span id="computeSummaryWorkloadRollup">No active workload loaded yet.</span>
+          </div>
+          <div class="compute-summary-mini-card">
+            <strong>Guidance stack</strong>
+            <span id="computeSummaryGuidanceStack">0 generated | 0 healthy | 0 watch | 0 risk</span>
+          </div>
+          <div class="compute-summary-mini-card">
+            <strong>Report posture</strong>
+            <span id="computeSummaryReportPosture">Planning draft</span>
+          </div>
+          <div class="compute-summary-mini-card">
+            <strong>Owned category knowledge</strong>
+            <span>CPU/RAM/GPU capacity, branch selection, workload status, and cross-category dependencies.</span>
+          </div>
+        </div>
+
+        <div class="compute-master-block">
+          <div class="compute-master-eyebrow" id="computeSummaryActionBandTitle">Start core pipeline</div>
+          <p id="computeSummaryActionBandCopy">CPU Sizing - Start with CPU Sizing. Summary remains a planning draft until Compute guidance is generated.</p>
+        </div>
+
+        <span hidden>Summary Assistant foundation</span>
+        <ul id="computeSummaryAssistantList" hidden>
+          <li>Loading assistant foundation checks...</li>
+        </ul>
       </article>
 
-      <article class="card summary-results-card" aria-labelledby="compute-summary-rollup-title">
-        <h2 id="compute-summary-rollup-title">Compute Rollup</h2>
-        <p id="computeSummaryRollupIntro" class="muted summary-section-copy">Summary is checking saved CPU, RAM, GPU, and selected branch records.</p>
+      <article class="card summary-results-card compute-summary-card" aria-labelledby="compute-summary-rollup-title">
+        <h2 id="compute-summary-rollup-title">Compute Workload Guidance Rollup</h2>
+        <p id="computeSummaryRollupIntro" class="muted summary-section-copy">Core CPU/RAM sizing stays on the normal Compute design path. Optional branches remain separate validations, but still attach to this category summary.</p>
 
+        <h3>Workload Rollup</h3>
+        <div class="compute-master-block">
+          <h3 id="computeSummaryWorkloadName">Currently viewing: No active workload selected</h3>
+          <p class="muted" id="computeSummaryWorkloadMeta">No Compute workload context detected.</p>
+          <p id="computeSummaryOverallStatus">Pending</p>
+        </div>
+
+        <h3>Core and Branch Guidance for Selected Workload</h3>
         <div class="result-table-wrap">
           <table class="result-table compute-summary-table" data-compute-summary-results-table>
             <thead>
               <tr>
-                <th>Tool</th>
+                <th>Tool / workload step</th>
                 <th>Status</th>
                 <th>Saved evidence</th>
-                <th>Summary note</th>
+                <th>Detail / next step</th>
               </tr>
             </thead>
             <tbody id="computeSummaryResultsBody">
@@ -174,13 +520,10 @@
             </tbody>
           </table>
         </div>
-      </article>
 
-      <article class="card summary-scope-card" aria-labelledby="compute-summary-gaps-title">
-        <h2 id="compute-summary-gaps-title">Selected Branch Gaps</h2>
-        <p class="muted summary-section-copy">These are the selected or expected Compute planning branches that still need saved evidence before the final Summary report is complete.</p>
+        <h3>Optional Compute Branches</h3>
         <div id="computeSummaryGapList" class="result-table-wrap">
-          <table class="result-table">
+          <table class="result-table compute-summary-table">
             <tbody>
               <tr><td>Loading branch gaps...</td></tr>
             </tbody>
@@ -188,28 +531,70 @@
         </div>
       </article>
 
-      <article class="card summary-tool-notes-card" aria-labelledby="compute-summary-notes-title">
+      <article class="card summary-tool-notes-card compute-summary-card" aria-labelledby="compute-summary-notes-title">
         <h2 id="compute-summary-notes-title">Tool Notes</h2>
-        <p class="muted summary-section-copy">CPU, RAM, GPU, and optional Compute branch notes will be collected here as the Summary report host matures.</p>
-        <div class="summary-master-context">
-          <p class="compute-summary-muted-action">Current lane: live plan-state rollup foundation. Next report lane can attach user notes, assistant notes, and export-ready references.</p>
-        </div>
+        <p class="muted summary-section-copy">Tool-specific notes stay separated by source tool and roll up here for the final Compute report.</p>
+        <p id="computeSummaryToolNotesCopy">No tool-specific notes have been saved yet. Notes entered on individual Compute tools should stay separated by workload and source tool, then appear here when available.</p>
       </article>
 
-      <article class="card summary-export-card" aria-labelledby="compute-summary-export-title">
+      <article class="card summary-export-card compute-summary-card" aria-labelledby="compute-summary-export-title">
         <h2 id="compute-summary-export-title">Final Report Export</h2>
-        <p class="muted summary-section-copy">The final Compute report export will use this Summary route as the category closeout host after the rollup and assistant sections are accepted.</p>
-        <div class="summary-report-details">
-          <p class="compute-summary-muted-action">Export wiring is intentionally parked until the Summary rollup layout is accepted.</p>
+        <p class="muted summary-section-copy">Add optional report context and open a report-ready summary for the current Compute planning session.</p>
+        <details class="summary-report-details">
+          <summary>Report metadata</summary>
+          <p class="muted">Report metadata wiring is parked until the Compute Summary rollup layout is accepted.</p>
+        </details>
+
+        <div class="result-table-wrap">
+          <table class="result-table compute-summary-table">
+            <tbody>
+              <tr>
+                <th>Summary item</th>
+                <th>Detail</th>
+              </tr>
+              <tr>
+                <td>Status</td>
+                <td id="computeSummaryReportStatus">Pending</td>
+              </tr>
+              <tr>
+                <td>Generated</td>
+                <td id="computeSummaryReportGenerated">0 of 0</td>
+              </tr>
+              <tr>
+                <td>Healthy / Watch / Risk / Pending</td>
+                <td id="computeSummaryReportCounts">0 / 0 / 0 / 0</td>
+              </tr>
+              <tr>
+                <td>Top priority item</td>
+                <td id="computeSummaryReportPriority">No priority item yet.</td>
+              </tr>
+              <tr>
+                <td>Report next step</td>
+                <td id="computeSummaryReportNextStep">Review missing selected branches before finalizing the report.</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
+
+        <p class="compute-summary-note"><span class="compute-summary-report-ready">Watch/Risk detail only:</span> The table below lists items that need review or correction when saved Compute evidence is available. Healthy and pending tools stay in the rollup sections.</p>
+        <div id="computeSummaryWatchRiskDetail" class="result-table-wrap">
+          <table class="result-table compute-summary-table">
+            <tbody>
+              <tr><td>No Watch/Risk details available yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="compute-summary-note">This category summary is generated from the current Compute workload plan-state ledger and is intended as a planning aid. Verify final designs against site conditions, manufacturer data, and project requirements.</p>
       </article>
 
-      <article class="card summary-next-card" aria-labelledby="compute-summary-next-title">
+      <article class="card summary-next-card compute-summary-card" aria-labelledby="compute-summary-next-title">
         <h2 id="compute-summary-next-title">Continue Planning</h2>
-        <p class="muted summary-section-copy">Return to the workload planner, review GPU VRAM, or continue into selected Compute branches that still need saved evidence.</p>
+        <p class="muted summary-section-copy">Return to the workload planner, review the next missing Compute tool, or go back to the Compute category.</p>
         <div class="btn-row summary-next-actions">
-          <a class="btn" href="../workload-planner/">Back to Workload Planner</a>
-          <a class="btn btn-primary" href="../gpu-vram/">Review GPU VRAM</a>
+          <a class="btn btn-primary" href="../workload-planner/">Back to Workload Planner</a>
+          <a class="btn" href="../gpu-vram/">Review GPU VRAM</a>
+          <a class="btn" href="../">Back to Compute</a>
         </div>
       </article>
 
@@ -279,6 +664,16 @@
         return document.getElementById(id);
       }
 
+      function setText(id, value) {
+        var node = byId(id);
+        if (node) node.textContent = value;
+      }
+
+      function setHtml(id, value) {
+        var node = byId(id);
+        if (node) node.innerHTML = value;
+      }
+
       function escapeHtml(value) {
         return String(value == null ? "" : value)
           .replace(/&/g, "&amp;")
@@ -295,36 +690,31 @@
           .trim()
           .replace(/\b\w/g, function (m) { return m.toUpperCase(); }) || "N/A";
       }
-      function statusClass(status) {
-        var value = String(status || "PENDING").toUpperCase();
-        if (value === "GOOD" || value === "HEALTHY" || value === "PASS") return "good";
-        if (value === "RISK" || value === "FAIL") return "risk";
-        if (value === "WATCH" || value === "PENDING") return "watch";
-        return "watch";
-      }
 
-      function statusChipHtml(status) {
-        var value = String(status || "PENDING").toUpperCase();
-        return '<span class="summary-status-chip ' + statusClass(value) + '">' + escapeHtml(value) + '</span>';
-      }
-
-      function renderStatusChip(id, status) {
-        var target = byId(id);
-        if (!target) return;
-        target.innerHTML = statusChipHtml(status);
-      }
-
-      function statusOf(record) {
-        var result = record && record.result && typeof record.result === "object" ? record.result : record || {};
-        return String(result.status || result.summaryStatus || record.status || "PENDING").toUpperCase();
+      function hasOwn(obj, key) {
+        return Object.prototype.hasOwnProperty.call(obj || {}, key);
       }
 
       function resultOf(record) {
         return record && record.result && typeof record.result === "object" ? record.result : record || {};
       }
 
-      function hasOwn(obj, key) {
-        return Object.prototype.hasOwnProperty.call(obj || {}, key);
+      function statusOf(record) {
+        var result = resultOf(record);
+        return String(result.status || result.summaryStatus || record.status || "PENDING").toUpperCase();
+      }
+
+      function statusClass(status) {
+        var value = String(status || "PENDING").toUpperCase();
+        if (value === "GOOD" || value === "HEALTHY" || value === "PASS") return "healthy";
+        if (value === "RISK" || value === "FAIL") return "risk";
+        if (value === "WATCH" || value === "PENDING") return value.toLowerCase();
+        return "watch";
+      }
+
+      function statusChipHtml(status) {
+        var value = String(status || "PENDING").toUpperCase();
+        return '<span class="summary-status-chip ' + statusClass(value) + '">' + escapeHtml(value) + '</span>';
       }
 
       function selectedTools(workload) {
@@ -357,19 +747,9 @@
         return completed;
       }
 
-      function noteFor(tool, record) {
-        var result = resultOf(record);
-        return result.guidance ||
-          result.interpretation ||
-          result.summary ||
-          result.recommendation ||
-          result.statusReason ||
-          "Saved result available for Summary rollup.";
-      }
-
       function evidenceFor(record) {
         var result = resultOf(record);
-        var evidence = [];
+        var parts = [];
 
         [
           ["Demand", result.demand],
@@ -380,39 +760,94 @@
           ["Reserve", result.reserve],
           ["Headroom", result.headroom]
         ].forEach(function (item) {
-          if (item[1] != null && item[1] !== "") evidence.push(item[0] + ": " + item[1]);
+          if (item[1] != null && item[1] !== "") parts.push(item[0] + ": " + item[1]);
         });
 
-        if (Array.isArray(result.references) && result.references.length) evidence.push("References: " + result.references.length);
-        if (Array.isArray(result.actions) && result.actions.length) evidence.push("Actions: " + result.actions.length);
-        if (Array.isArray(result.decisionSchedule) && result.decisionSchedule.length) evidence.push("Schedule: " + result.decisionSchedule.length);
+        if (Array.isArray(result.references) && result.references.length) parts.push("References: " + result.references.length);
+        if (Array.isArray(result.actions) && result.actions.length) parts.push("Actions: " + result.actions.length);
+        if (Array.isArray(result.decisionSchedule) && result.decisionSchedule.length) parts.push("Schedule: " + result.decisionSchedule.length);
 
-        return evidence.length ? evidence.join(" | ") : "Saved result record";
+        return parts.length ? parts.join(" | ") : "Saved result record";
       }
 
-      function overallStatus(results, selected) {
-        var statuses = selected
-          .filter(function (tool) { return hasOwn(results, tool); })
-          .map(function (tool) { return statusOf(results[tool]); });
+      function noteFor(tool, record) {
+        var result = resultOf(record);
+        return result.guidance ||
+          result.interpretation ||
+          result.summary ||
+          result.recommendation ||
+          result.statusReason ||
+          "Saved result available for Summary rollup.";
+      }
 
-        if (!statuses.length) return "PENDING";
-        if (statuses.indexOf("RISK") !== -1 || statuses.indexOf("FAIL") !== -1) return "RISK";
-        if (statuses.indexOf("WATCH") !== -1 || statuses.indexOf("PENDING") !== -1) return "WATCH";
+      function countsFor(results, selected) {
+        var counts = {
+          healthy: 0,
+          watch: 0,
+          risk: 0,
+          pending: 0
+        };
 
-        var missing = selected.filter(function (tool) { return !hasOwn(results, tool); });
-        return missing.length ? "WATCH" : "GOOD";
+        selected.forEach(function (tool) {
+          if (!hasOwn(results, tool)) {
+            counts.pending += 1;
+            return;
+          }
+
+          var status = statusOf(results[tool]);
+          if (status === "GOOD" || status === "HEALTHY" || status === "PASS") counts.healthy += 1;
+          else if (status === "RISK" || status === "FAIL") counts.risk += 1;
+          else if (status === "WATCH") counts.watch += 1;
+          else counts.pending += 1;
+        });
+
+        return counts;
+      }
+
+      function overallStatus(counts) {
+        if (counts.risk > 0) return "RISK";
+        if (counts.watch > 0 || counts.pending > 0) return "WATCH";
+        return "HEALTHY";
+      }
+
+      function firstMissing(selected, results) {
+        return selected.find(function (tool) { return !hasOwn(results, tool); }) || null;
+      }
+
+      function firstWatchRisk(selected, results) {
+        return selected.find(function (tool) {
+          if (!hasOwn(results, tool)) return false;
+          var status = statusOf(results[tool]);
+          return status === "WATCH" || status === "RISK" || status === "FAIL";
+        }) || null;
       }
 
       function renderNoState() {
-        byId("computeSummaryWorkloadName").textContent = "No Compute plan-state module loaded";
-        renderStatusChip("computeSummaryOverallStatus", "PENDING");
-        byId("computeSummarySavedCount").textContent = "0 saved results";
-        byId("computeSummaryUpdatedAt").textContent = "N/A";
-        byId("computeSummaryRollupIntro").textContent = "Summary could not load the shared Compute plan-state helper.";
-
-        byId("computeSummaryResultsBody").innerHTML = '<tr><td colspan="4">Open the Workload Planner and run a guided Compute flow first.</td></tr>';
-        byId("computeSummaryGapList").innerHTML = '<table class="result-table"><tbody><tr><td>Shared Compute plan-state helper is unavailable.</td></tr></tbody></table>';
-        byId("computeSummaryAssistantList").innerHTML = '<li>Summary Assistant foundation is waiting for the shared Compute plan-state helper.</li>';
+        setText("computeSummaryWorkloadName", "Currently viewing: No active workload selected");
+        setText("computeSummaryWorkloadMeta", "No Compute workload context detected.");
+        setHtml("computeSummaryOverallStatus", statusChipHtml("PENDING"));
+        setText("computeSummaryGeneratedStatus", "Not Generated");
+        setText("computeSummaryGeneratedCount", "0 / 0");
+        setText("computeSummaryHealthyCount", "0");
+        setText("computeSummaryWatchCount", "0");
+        setText("computeSummaryRiskCount", "0");
+        setText("computeSummaryAssistantHeadline", "Planning draft - Compute guidance incomplete");
+        setText("computeSummaryAssistantMessage", "Open the Workload Planner and save CPU/RAM results to begin generating saved guidance for this Summary.");
+        setText("computeSummaryExpectedResult", "Expected result: 0 generated tool guidance result(s) | 0 risk | 0 watch | 0 workload(s) | 0 tool note(s)");
+        setText("computeSummaryNextActionTitle", "Compute Workload Planner");
+        setText("computeSummaryNextActionCopy", "Start guided Compute planning.");
+        setText("computeSummaryNextStepCopy", "Begin at the Workload Planner before treating this Summary as report-ready.");
+        setText("computeSummaryWorkloadRollup", "No active workload loaded yet.");
+        setText("computeSummaryGuidanceStack", "0 generated | 0 healthy | 0 watch | 0 risk");
+        setText("computeSummaryReportPosture", "Planning draft");
+        setText("computeSummaryReportStatus", "Pending");
+        setText("computeSummaryReportGenerated", "0 of 0");
+        setText("computeSummaryReportCounts", "0 / 0 / 0 / 0");
+        setText("computeSummaryReportPriority", "No priority item yet.");
+        setText("computeSummaryReportNextStep", "Open the Workload Planner and run the first Compute tool.");
+        setText("computeSummaryPostureCopy", "Waiting for saved Compute evidence.");
+        setHtml("computeSummaryResultsBody", '<tr><td colspan="4">Open the Workload Planner and run a guided Compute flow first.</td></tr>');
+        setHtml("computeSummaryGapList", '<table class="result-table compute-summary-table"><tbody><tr><td>Shared Compute plan-state helper is unavailable or no active workload is selected.</td></tr></tbody></table>');
       }
 
       function renderSummary() {
@@ -430,23 +865,63 @@
         var selected = workload ? selectedTools(workload) : BASE_TOOLS.slice();
         var completed = completedToolsFor(results, workload);
         var missing = selected.filter(function (tool) { return !hasOwn(results, tool); });
-        var status = overallStatus(results, selected);
+        var counts = countsFor(results, selected);
+        var status = overallStatus(counts);
+        var missingTool = firstMissing(selected, results);
+        var priorityTool = firstWatchRisk(selected, results) || missingTool;
+        var generatedText = completed.length + " / " + selected.length;
 
-        byId("computeSummaryWorkloadName").textContent = workload
-          ? (workload.name || "Compute Workload")
-          : "No active Compute workload selected";
-        renderStatusChip("computeSummaryOverallStatus", status);
-        byId("computeSummarySavedCount").textContent = String(completed.length) + " saved result" + (completed.length === 1 ? "" : "s");
-        byId("computeSummaryUpdatedAt").textContent = plan && plan.updatedAt ? plan.updatedAt : "N/A";
+        if (!workload) {
+          renderNoState();
+          return;
+        }
 
-        byId("computeSummaryRollupIntro").textContent = workload
-          ? "Reading saved results for " + (workload.name || "the active workload") + "."
-          : "Open or create a Compute workload before using Summary.";
+        setText("computeSummaryWorkloadName", "Currently viewing: " + (workload.name || "Compute Workload"));
+        setText("computeSummaryWorkloadMeta", [
+          titleCase(workload.environment || "environment pending"),
+          titleCase(workload.workloadType || "workload pending"),
+          "path " + titleCase(workload.planningPath || "guided"),
+          "target " + (workload.targetUtilization || "N/A") + "%",
+          "growth " + (workload.growthMargin || "N/A") + "%"
+        ].join(" | "));
+        setHtml("computeSummaryOverallStatus", statusChipHtml(status));
+
+        setText("computeSummaryGeneratedStatus", completed.length ? "Generated" : "Not Generated");
+        setText("computeSummaryGeneratedCount", generatedText);
+        setText("computeSummaryHealthyCount", String(counts.healthy));
+        setText("computeSummaryWatchCount", String(counts.watch));
+        setText("computeSummaryRiskCount", String(counts.risk));
+
+        if (status === "RISK") {
+          setText("computeSummaryAssistantHeadline", "Planning draft - risk items need review");
+          setText("computeSummaryAssistantMessage", "Review the Risk items in the Compute rollup before finalizing this Summary.");
+        } else if (missing.length) {
+          setText("computeSummaryAssistantHeadline", "Planning draft - selected branch guidance incomplete");
+          setText("computeSummaryAssistantMessage", "Open " + (TOOL_LABELS[missingTool] || titleCase(missingTool)) + " to continue generating saved guidance for this Summary.");
+        } else {
+          setText("computeSummaryAssistantHeadline", "Compute guidance ready for report review");
+          setText("computeSummaryAssistantMessage", "Selected Compute evidence is complete for this workload path. Review report details before export.");
+        }
+
+        setText("computeSummaryExpectedResult", "Expected result: " + completed.length + " generated tool guidance result(s) | " + counts.risk + " risk | " + counts.watch + " watch | 1 workload scope(s) | 0 tool note(s)");
+        setText("computeSummaryNextActionTitle", priorityTool ? (TOOL_LABELS[priorityTool] || titleCase(priorityTool)) : "Review Summary");
+        setText("computeSummaryNextActionCopy", priorityTool ? "Open or review this Compute step." : "Review final report posture.");
+        setText("computeSummaryNextStepCopy", missing.length ? "Begin at the first missing selected Compute tool and proceed through the selected branch path before treating this Summary as report-ready." : "Review Watch/Risk detail and final report sections before export.");
+
+        setText("computeSummaryPostureTitle", status === "HEALTHY" ? "Report posture ready" : "Planning draft - Compute guidance incomplete");
+        setText("computeSummaryPostureCopy", status === "HEALTHY" ? "Selected Compute evidence is ready for report review." : "Saved evidence exists, but missing or Watch/Risk items remain.");
+        setText("computeSummaryWorkloadRollup", "1 workload | " + completed.length + " completed | " + missing.length + " missing");
+        setText("computeSummaryGuidanceStack", completed.length + " generated | " + counts.healthy + " healthy | " + counts.watch + " watch | " + counts.risk + " risk");
+        setText("computeSummaryReportPosture", status === "HEALTHY" ? "Report review ready" : "Planning draft - review required");
+        setText("computeSummaryActionBandTitle", missing.length ? "Start selected branch" : "Review report");
+        setText("computeSummaryActionBandCopy", priorityTool ? (TOOL_LABELS[priorityTool] || titleCase(priorityTool)) + " - Open this step to continue saved guidance for this Summary. - Summary remains a planning draft until selected Compute guidance is complete." : "Summary selected evidence is complete. Review final report export details.");
+
+        setText("computeSummaryRollupIntro", "Core CPU/RAM sizing stays on the normal Compute design path. Optional branches remain separate validations, but still attach to this category summary.");
 
         if (!completed.length) {
-          byId("computeSummaryResultsBody").innerHTML = '<tr><td colspan="4">No saved Compute tool results were found for this workload yet.</td></tr>';
+          setHtml("computeSummaryResultsBody", '<tr><td colspan="4">No saved Compute tool results were found for this workload yet.</td></tr>');
         } else {
-          byId("computeSummaryResultsBody").innerHTML = completed.map(function (tool) {
+          setHtml("computeSummaryResultsBody", completed.map(function (tool) {
             var record = results[tool] || {};
             return [
               "<tr>",
@@ -456,45 +931,69 @@
               "<td>" + escapeHtml(noteFor(tool, record)) + "</td>",
               "</tr>"
             ].join("");
-          }).join("");
+          }).join(""));
         }
 
         if (!missing.length) {
-          byId("computeSummaryGapList").innerHTML = '<table class="result-table"><tbody><tr><td>No selected branch gaps found for this workload.</td></tr></tbody></table>';
+          setHtml("computeSummaryGapList", '<table class="result-table compute-summary-table"><tbody><tr><td>No selected branch gaps found for this workload.</td></tr></tbody></table>');
         } else {
-          byId("computeSummaryGapList").innerHTML = [
-            '<table class="result-table"><thead><tr><th>Missing branch</th><th>Next action</th></tr></thead><tbody>',
+          setHtml("computeSummaryGapList", [
+            '<table class="result-table compute-summary-table"><thead><tr><th>Optional / selected branch</th><th>Status</th><th>Next action</th></tr></thead><tbody>',
             missing.map(function (tool) {
-              return '<tr><td>' + escapeHtml(TOOL_LABELS[tool] || titleCase(tool)) + '</td><td><a href="' + escapeHtml(TOOL_HREFS[tool] || "../workload-planner/") + '">Open tool</a> and save a result for Summary.</td></tr>';
+              return '<tr><td>' + escapeHtml(TOOL_LABELS[tool] || titleCase(tool)) + '</td><td>' + statusChipHtml("PENDING") + '</td><td><a href="' + escapeHtml(TOOL_HREFS[tool] || "../workload-planner/") + '">Open tool</a> and save a result for Summary.</td></tr>';
             }).join(""),
             "</tbody></table>"
-          ].join("");
+          ].join(""));
         }
 
-        var assistantItems = [];
-        assistantItems.push("Summary is reading the shared Compute workload-plan contract.");
-        assistantItems.push(workload ? "Active workload context is available." : "No active workload context is available yet.");
-        assistantItems.push(completed.length ? "Saved tool evidence is available for rollup." : "No saved tool evidence is available yet.");
-        assistantItems.push(missing.length ? "Selected branch gaps remain before final report closeout." : "Selected branch evidence is complete for the current workload path.");
+        setText("computeSummaryReportStatus", status);
+        setText("computeSummaryReportGenerated", completed.length + " of " + selected.length);
+        setText("computeSummaryReportCounts", counts.healthy + " / " + counts.watch + " / " + counts.risk + " / " + counts.pending);
+        setText("computeSummaryReportPriority", priorityTool ? (TOOL_LABELS[priorityTool] || titleCase(priorityTool)) : "No priority item yet.");
+        setText("computeSummaryReportNextStep", missing.length ? "Review missing selected branches before finalizing the report." : "Review Watch/Risk detail before finalizing the report.");
 
-        byId("computeSummaryAssistantList").innerHTML = assistantItems.map(function (item) {
-          return "<li>" + escapeHtml(item) + "</li>";
+        var watchRiskRows = selected.filter(function (tool) {
+          if (!hasOwn(results, tool)) return false;
+          var state = statusOf(results[tool]);
+          return state === "WATCH" || state === "RISK" || state === "FAIL";
+        }).map(function (tool) {
+          var record = results[tool];
+          return '<tr><td>' + escapeHtml(TOOL_LABELS[tool] || titleCase(tool)) + '</td><td>' + statusChipHtml(statusOf(record)) + '</td><td>' + escapeHtml(noteFor(tool, record)) + '</td></tr>';
         }).join("");
 
-        byId("computeSummaryLedger").textContent = JSON.stringify({
-          contract: "scopedlabs.compute.summary.rollup.v1",
-          sourceContract: State.contract || "scopedlabs.compute.workload-plan.v1",
-          activeWorkloadId: workloadId,
-          status: status,
-          selectedTools: selected,
-          completedTools: completed,
-          missingTools: missing,
-          updatedAt: new Date().toISOString()
-        }, null, 2);
+        setHtml("computeSummaryWatchRiskDetail", watchRiskRows
+          ? '<table class="result-table compute-summary-table"><thead><tr><th>Tool</th><th>Status</th><th>Required action / detail</th></tr></thead><tbody>' + watchRiskRows + '</tbody></table>'
+          : '<table class="result-table compute-summary-table"><tbody><tr><td>No Watch/Risk details available yet.</td></tr></tbody></table>'
+        );
+
+        var assistantItems = [
+          "Summary is reading the shared Compute workload-plan contract.",
+          "Active workload context is available.",
+          completed.length ? "Saved tool evidence is available for rollup." : "No saved tool evidence is available yet.",
+          missing.length ? "Selected branch gaps remain before final report closeout." : "Selected branch evidence is complete for the current workload path."
+        ];
+        setHtml("computeSummaryAssistantList", assistantItems.map(function (item) {
+          return "<li>" + escapeHtml(item) + "</li>";
+        }).join(""));
+
+        var ledger = byId("computeSummaryLedger");
+        if (ledger) {
+          ledger.textContent = JSON.stringify({
+            contract: "scopedlabs.compute.summary.rollup.v1",
+            sourceContract: State.contract || "scopedlabs.compute.workload-plan.v1",
+            activeWorkloadId: workloadId,
+            status: status,
+            selectedTools: selected,
+            completedTools: completed,
+            missingTools: missing,
+            counts: counts,
+            updatedAt: new Date().toISOString()
+          }, null, 2);
+        }
       }
 
       window.ScopedLabsComputeSummaryRollup = {
-        version: "scopedlabs-compute-summary-rollup-001-plan-state",
+        version: "scopedlabs-compute-summary-rollup-002-physical-security-target",
         render: renderSummary
       };
 
