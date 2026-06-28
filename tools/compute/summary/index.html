@@ -413,6 +413,59 @@
       color: rgba(224, 238, 229, .42);
     }
 
+    /* compute-summary-rollup-table-physical-security-parity-0628 */
+    .compute-summary-guidance-table th:nth-child(1) {
+      width: 28%;
+    }
+
+    .compute-summary-guidance-table th:nth-child(2) {
+      width: 10%;
+    }
+
+    .compute-summary-guidance-table th:nth-child(3) {
+      width: 62%;
+    }
+
+    .compute-summary-guidance-table .summary-status-chip {
+      border: 0;
+      background: transparent;
+      padding: 0;
+      min-height: 0;
+      box-shadow: none;
+      font-size: .92rem;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
+    .compute-summary-guidance-table .summary-status-chip.healthy,
+    .compute-summary-guidance-table .summary-status-chip.good {
+      color: rgba(110, 255, 150, .98);
+    }
+
+    .compute-summary-guidance-table .summary-status-chip.watch,
+    .compute-summary-guidance-table .summary-status-chip.pending {
+      color: rgba(255, 218, 96, .98);
+    }
+
+    .compute-summary-guidance-table .summary-status-chip.risk,
+    .compute-summary-guidance-table .summary-status-chip.fail {
+      color: rgba(255, 126, 96, .98);
+    }
+
+    .compute-summary-detail-primary {
+      display: block;
+      color: rgba(255, 255, 255, .96);
+      line-height: 1.42;
+    }
+
+    .compute-summary-detail-secondary {
+      display: block;
+      color: rgba(215, 235, 220, .68);
+      font-size: .88rem;
+      line-height: 1.42;
+      margin-top: 4px;
+    }
+
     @media (max-width: 860px) {
       .compute-master-stats,
       .compute-summary-metric-grid {
@@ -624,18 +677,17 @@
 
         <h3>Core and Branch Guidance for Selected Workload</h3>
         <div class="result-table-wrap">
-          <table class="result-table compute-summary-table" data-compute-summary-results-table>
+          <table class="result-table compute-summary-table compute-summary-guidance-table" data-compute-summary-results-table>
             <thead>
               <tr>
-                <th>Tool / workload step</th>
+                <th>Tool / Workload Step</th>
                 <th>Status</th>
-                <th>Saved evidence</th>
-                <th>Detail / next step</th>
+                <th>Workload Detail</th>
               </tr>
             </thead>
             <tbody id="computeSummaryResultsBody">
               <tr>
-                <td colspan="4">Loading saved Compute results...</td>
+                <td colspan="3">Loading saved Compute results...</td>
               </tr>
             </tbody>
           </table>
@@ -966,7 +1018,7 @@
         setText("computeSummaryReportPriority", "No priority item yet.");
         setText("computeSummaryReportNextStep", "Open the Workload Planner and run the first Compute tool.");
         setText("computeSummaryPostureCopy", "Waiting for saved Compute evidence.");
-        setHtml("computeSummaryResultsBody", '<tr><td colspan="4">Open the Workload Planner and run a guided Compute flow first.</td></tr>');
+        setHtml("computeSummaryResultsBody", '<tr><td colspan="3">Open the Workload Planner and run a guided Compute flow first.</td></tr>');
         setHtml("computeSummaryGapList", '<table class="result-table compute-summary-table"><tbody><tr><td>Shared Compute plan-state helper is unavailable or no active workload is selected.</td></tr></tbody></table>');
       }
 
@@ -1039,7 +1091,7 @@
         setText("computeSummaryRollupIntro", "Core CPU/RAM sizing stays on the normal Compute design path. Optional branches remain separate validations, but still attach to this category summary.");
 
         if (!completed.length) {
-          setHtml("computeSummaryResultsBody", '<tr><td colspan="4">No saved Compute tool results were found for this workload yet.</td></tr>');
+          setHtml("computeSummaryResultsBody", '<tr><td colspan="3">No saved Compute tool results were found for this workload yet.</td></tr>');
         } else {
           setHtml("computeSummaryResultsBody", completed.map(function (tool) {
             var record = results[tool] || {};
@@ -1047,8 +1099,7 @@
               "<tr>",
               '<td><a href="' + escapeHtml(TOOL_HREFS[tool] || "../workload-planner/") + '">' + escapeHtml(TOOL_LABELS[tool] || titleCase(tool)) + "</a></td>",
               "<td>" + statusChipHtml(statusOf(record)) + "</td>",
-              "<td>" + escapeHtml(evidenceFor(record)) + "</td>",
-              "<td>" + escapeHtml(noteFor(tool, record)) + "</td>",
+              '<td><span class="compute-summary-detail-primary">' + escapeHtml(noteFor(tool, record)) + '</span><span class="compute-summary-detail-secondary">' + escapeHtml(evidenceFor(record)) + "</span></td>",
               "</tr>"
             ].join("");
           }).join(""));
