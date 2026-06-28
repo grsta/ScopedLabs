@@ -701,6 +701,49 @@
       box-shadow: 0 0 0 1px rgba(125, 255, 158, .04);
     }
 
+    /* compute-summary-report-metadata-fields-0628 */
+    .compute-summary-report-fields {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      padding: 12px;
+    }
+
+    .compute-summary-report-fields label {
+      display: grid;
+      gap: 6px;
+      color: rgba(224, 238, 229, .72);
+      font-size: .86rem;
+      font-weight: 800;
+    }
+
+    .compute-summary-report-fields label.compute-summary-report-notes {
+      grid-column: 1 / -1;
+    }
+
+    .compute-summary-report-fields input,
+    .compute-summary-report-fields textarea {
+      width: 100%;
+      border: 1px solid rgba(125, 255, 158, .16);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, .24);
+      color: rgba(255, 255, 255, .96);
+      padding: 9px 10px;
+      font: inherit;
+      outline: none;
+    }
+
+    .compute-summary-report-fields input:focus,
+    .compute-summary-report-fields textarea:focus {
+      border-color: rgba(125, 255, 158, .45);
+      box-shadow: 0 0 0 2px rgba(125, 255, 158, .08);
+    }
+
+    .compute-summary-report-fields textarea {
+      min-height: 96px;
+      resize: vertical;
+    }
+
     @media (max-width: 860px) {
       .compute-master-stats,
       .compute-summary-metric-grid {
@@ -950,10 +993,29 @@
           The report export includes the summary readiness table, Watch/Risk detail, all saved workload report sections, and optional Compute branch sections currently shown below.
         </p>
         <p class="muted summary-section-copy">Add optional report context and open a report-ready summary for the current Compute planning session.</p>
-        <details class="summary-report-details">
+                <details class="summary-report-details" data-compute-summary-report-metadata="compute-summary-report-metadata-fields-mounted-0628">
           <summary>Report metadata</summary>
-          <div class="compute-summary-report-metadata-placeholder">
-            Report metadata wiring is parked until the Compute Summary rollup layout is accepted. This section will use the shared report metadata module when the Summary export lane is opened.
+          <div class="compute-summary-report-fields">
+            <label>
+              Report Title
+              <input id="reportTitle" name="reportTitle" type="text" autocomplete="off" placeholder="Compute Summary Report">
+            </label>
+            <label>
+              Project Name
+              <input id="projectName" name="projectName" type="text" autocomplete="off" placeholder="Project or site name">
+            </label>
+            <label>
+              Client Name
+              <input id="clientName" name="clientName" type="text" autocomplete="off" placeholder="Client or internal stakeholder">
+            </label>
+            <label>
+              Prepared By
+              <input id="preparedBy" name="preparedBy" type="text" autocomplete="off" placeholder="Prepared by">
+            </label>
+            <label class="compute-summary-report-notes">
+              Custom Notes
+              <textarea id="customNotes" name="customNotes" placeholder="Add assumptions, exclusions, platform notes, workload context, or cross-category dependencies."></textarea>
+            </label>
           </div>
         </details>
 
