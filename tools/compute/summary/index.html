@@ -857,6 +857,7 @@
     }
 
     /* compute-summary-tool-notes-export-mirror-0629 */
+    /* compute-summary-tool-notes-export-dedupe-0629 */
     .compute-summary-tool-notes-export-mirror {
       margin-top: 14px;
       display: none;
@@ -1093,7 +1094,7 @@
         <h2 id="compute-summary-notes-title">Tool Notes</h2>
         <p class="muted summary-section-copy">Tool-specific notes stay separated by source tool and roll up here for the final Compute report.</p>
         <p id="computeSummaryToolNotesCopy">No tool-specific notes have been saved yet. Notes entered on individual Compute tools should stay separated by workload and source tool, then appear here when available.</p>
-        <div id="computeSummaryUserToolNotesRollup" class="compute-summary-user-tool-notes-rollup" data-compute-summary-user-tool-notes-rollup="compute-summary-user-tool-notes-rollup-mounted-0629">
+        <div id="computeSummaryUserToolNotesRollup" class="compute-summary-user-tool-notes-rollup" data-export-ignore="true" data-no-export="true" data-compute-summary-user-tool-notes-rollup="compute-summary-user-tool-notes-rollup-mounted-0629">
           <div class="compute-summary-tool-notes-empty">Loading saved Compute tool notes...</div>
         </div>
         <div class="compute-summary-tool-notes-editor" data-compute-summary-tool-notes-editor="compute-summary-tool-notes-editor-mounted-0629">
@@ -2375,7 +2376,7 @@
         if (!mirror) return;
 
         var rows = [];
-        document.querySelectorAll(".compute-summary-user-tool-notes-table tbody tr").forEach(function (row) {
+        document.querySelectorAll("#computeSummaryUserToolNotesRollup .compute-summary-user-tool-notes-table tbody tr").forEach(function (row) {
           var cells = row.querySelectorAll("td");
           if (cells.length < 3) return;
 
