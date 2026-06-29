@@ -868,6 +868,11 @@
         display: block;
       }
     }
+
+    /* compute-summary-tool-notes-export-only-css-0629 */
+    .compute-summary-tool-notes-export-only-section {
+      display: none;
+    }
 </style>
 </head>
 <body data-tool="compute-summary" data-step="compute-summary" data-category="compute">
@@ -1090,7 +1095,7 @@
         </div>
       </article>
 
-      <article class="card summary-tool-notes-card compute-summary-card" aria-labelledby="compute-summary-notes-title" data-export-section data-export-title="Compute Tool Notes" data-compute-summary-export-source="compute-tool-notes-export-0628">
+      <article class="card summary-tool-notes-card compute-summary-card" aria-labelledby="compute-summary-notes-title" data-compute-summary-export-source="compute-tool-notes-export-0628">
         <h2 id="compute-summary-notes-title">Tool Notes</h2>
         <p class="muted summary-section-copy">Tool-specific notes stay separated by source tool and roll up here for the final Compute report.</p>
         <p id="computeSummaryToolNotesCopy">No tool-specific notes have been saved yet. Notes entered on individual Compute tools should stay separated by workload and source tool, then appear here when available.</p>
@@ -1101,11 +1106,13 @@
           <label for="computeSummaryToolNotes">Summary Tool Notes</label>
           <textarea id="computeSummaryToolNotes" placeholder="Add tool notes, validation comments, workload caveats, branch assumptions, or follow-up items for the final Compute summary report."></textarea>
           <div id="computeSummaryToolNotesStatus" class="compute-summary-tool-notes-status">No summary tool notes saved yet.</div>
-        </div>
-      
-        <div id="computeSummaryToolNotesExportMirror" class="compute-summary-tool-notes-export-mirror" data-compute-summary-tool-notes-export-mirror="compute-summary-tool-notes-export-mirror-mounted-0629">
-          <p>No Compute tool notes have been prepared for export yet.</p>
         </div></article>
+
+      <article id="computeSummaryToolNotesExportSection" class="compute-summary-tool-notes-export-only-section" data-export-section data-export-title="Compute Tool Notes" data-compute-summary-tool-notes-export-section="compute-summary-tool-notes-export-only-section-0629">
+        <div id="computeSummaryToolNotesExportMirror" data-compute-summary-tool-notes-export-mirror="compute-summary-tool-notes-export-mirror-mounted-0629">
+          <p>No Compute tool notes have been prepared for export yet.</p>
+        </div>
+      </article>
 
       <article id="summaryExportSection" class="card summary-export-card compute-summary-card" aria-labelledby="compute-summary-export-title" data-export-section data-export-title="Compute Summary Report" data-compute-summary-export-section-filled="0628">
         <h2 id="compute-summary-export-title">Final Report Export</h2>
@@ -2360,7 +2367,7 @@
     })();
   </script>
 
-  <script data-compute-summary-tool-notes-export-sync="compute-summary-tool-notes-export-sync-0629">
+    <script data-compute-summary-tool-notes-export-sync="compute-summary-tool-notes-export-sync-0629">
     (function () {
       function escapeHtml(value) {
         return String(value || "")
@@ -2397,7 +2404,7 @@
 
         if (rows.length) {
           parts.push(
-            "<h3>Per-Tool Compute Notes</h3>" +
+            "<h3>Workload Tool Notes</h3>" +
             "<div class='result-table-wrap'>" +
               "<table class='result-table compute-summary-table compute-summary-user-tool-notes-table'>" +
                 "<thead><tr><th>Workload</th><th>Tool</th><th>Tool-Specific Notes</th></tr></thead>" +
@@ -2418,7 +2425,7 @@
         if (summaryNotes) {
           parts.push(
             "<h3>Summary Tool Notes</h3>" +
-            "<div class='body-copy'>" + escapeHtml(summaryNotes).replace(/\n/g, "<br>") + "</div>"
+            "<div class='body-copy'>" + escapeHtml(summaryNotes).replace(/\\n/g, "<br>") + "</div>"
           );
         }
 
@@ -2442,9 +2449,18 @@
             event.target.closest &&
             (
               event.target.closest("#exportReport") ||
-              event.target.closest("#saveSnapshot") ||
-              event.target.closest("[data-compute-summary-delete-user-tool-note]")
+              event.target.closest("#saveSnapshot")
             )
+          ) {
+            syncComputeToolNotesExportMirror();
+          }
+        }, true);
+
+        document.addEventListener("click", function (event) {
+          if (
+            event.target &&
+            event.target.closest &&
+            event.target.closest("[data-compute-summary-delete-user-tool-note]")
           ) {
             setTimeout(syncComputeToolNotesExportMirror, 0);
           }
