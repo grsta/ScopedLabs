@@ -835,6 +835,26 @@
       white-space: pre-wrap;
       line-height: 1.5;
     }
+
+    /* compute-summary-user-tool-notes-delete-actions-0629 */
+    .compute-summary-user-tool-notes-table th:last-child,
+    .compute-summary-user-tool-notes-table td:last-child {
+      width: 180px;
+      white-space: nowrap;
+    }
+
+    .compute-summary-user-tool-notes-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .compute-summary-user-tool-notes-actions .btn {
+      padding: 6px 9px;
+      font-size: .82rem;
+      line-height: 1.1;
+    }
 </style>
 </head>
 <body data-tool="compute-summary" data-step="compute-summary" data-category="compute">
@@ -2083,7 +2103,7 @@
     })();
   </script>
 
-  <script data-compute-summary-user-tool-notes-rollup-script="compute-summary-user-tool-notes-rollup-script-0629">
+    <script data-compute-summary-user-tool-notes-rollup-script="compute-summary-user-tool-notes-rollup-script-0629">
     (function () {
       var TOOL_LABELS = {
         "cpu-sizing": "CPU Sizing",
@@ -2107,10 +2127,8 @@
           .replace(/'/g, "&#39;");
       }
 
-      function titleFromSlug(slug) {
-        return String(slug || "")
-          .replace(/-/g, " ")
-          .replace(/\b\w/g, function (letter) { return letter.toUpperCase(); });
+      function escapeAttr(value) {
+        return escapeHtml(value);
       }
 
       function toolFromKey(key) {
@@ -2118,13 +2136,18 @@
         var slugs = Object.keys(TOOL_LABELS);
 
         for (var i = 0; i < slugs.length; i += 1) {
-          if (lowered.indexOf(slugs[i]) !== -1) return { slug: slugs[i], label: TOOL_LABELS[slugs[i]] };
+          if (lowered.indexOf(slugs[i]) !== -1) {
+            return {
+              slug: slugs[i],
+              label: TOOL_LABELS[slugs[i]],
+              href: "/tools/compute/" + slugs[i] + "/"
+            };
+          }
         }
 
         return null;
       }
 
-      // compute-summary-user-tool-notes-json-filter-0629
       function extractNote(raw) {
         var value = String(raw || "").trim();
         if (!value) return "";
@@ -2133,9 +2156,7 @@
           try {
             var parsed = JSON.parse(value);
 
-            if (Array.isArray(parsed)) {
-              return "";
-            }
+            if (Array.isArray(parsed)) return "";
 
             if (parsed && typeof parsed === "object") {
               var candidate = parsed.notes || parsed.note || parsed.value || parsed.text || "";
@@ -2223,9 +2244,10 @@
 
             rows.push({
               workload: activeWorkload,
-              tool: tool.label || titleFromSlug(tool.slug),
+              tool: tool.label,
               note: note,
-              key: key
+              key: key,
+              href: tool.href
             });
           }
         } catch (error) {}
@@ -2255,13 +2277,17 @@
         mount.innerHTML =
           "<div class='result-table-wrap'>" +
             "<table class='result-table compute-summary-table compute-summary-user-tool-notes-table'>" +
-              "<thead><tr><th>Workload</th><th>Tool</th><th>Tool-Specific Notes</th></tr></thead>" +
+              "<thead><tr><th>Workload</th><th>Tool</th><th>Tool-Specific Notes</th><th data-export-ignore='true' data-no-export='true'>Actions</th></tr></thead>" +
               "<tbody>" +
                 rows.map(function (row) {
                   return "<tr>" +
                     "<td>" + escapeHtml(row.workload) + "</td>" +
                     "<td>" + escapeHtml(row.tool) + "</td>" +
                     "<td>" + escapeHtml(row.note) + "</td>" +
+                    "<td class='compute-summary-user-tool-notes-actions' data-export-ignore='true' data-no-export='true'>" +
+                      "<a class='btn' href='" + escapeAttr(row.href) + "'>Open Tool</a>" +
+                      "<button class='btn' type='button' data-compute-summary-delete-user-tool-note data-note-key='" + escapeAttr(row.key) + "' data-tool-label='" + escapeAttr(row.tool) + "'>Delete Note</button>" +
+                    "</td>" +
                   "</tr>";
                 }).join("") +
               "</tbody>" +
@@ -2269,10 +2295,47 @@
           "</div>";
       }
 
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", renderUserToolNotesRollup);
-      } else {
+      function bindUserToolNoteActions() {
+        if (document.documentElement.dataset.computeSummaryUserToolNotesActionsBound === "true") return;
+        document.documentElement.dataset.computeSummaryUserToolNotesActionsBound = "true";
+
+        document.addEventListener("click", function (event) {
+          var target = event.target && event.target.closest
+            ? event.target.closest("[data-compute-summary-delete-user-tool-note]")
+            : null;
+
+          if (!target) return;
+
+          event.preventDefault();
+
+          var key = target.getAttribute("data-note-key") || "";
+          var tool = target.getAttribute("data-tool-label") || "this tool";
+
+          if (!key) return;
+
+          var confirmed = window.confirm("Delete this " + tool + " note from this browser and the Compute Summary?");
+          if (!confirmed) return;
+
+          try {
+            window.localStorage.removeItem(key);
+            if (window.ScopedLabsUserToolNotes && Object.prototype.hasOwnProperty.call(window.ScopedLabsUserToolNotes, key)) {
+              delete window.ScopedLabsUserToolNotes[key];
+            }
+          } catch (error) {}
+
+          renderUserToolNotesRollup();
+        });
+      }
+
+      function initUserToolNotesRollup() {
+        bindUserToolNoteActions();
         renderUserToolNotesRollup();
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initUserToolNotesRollup);
+      } else {
+        initUserToolNotesRollup();
       }
 
       window.addEventListener("storage", renderUserToolNotesRollup);
