@@ -2513,5 +2513,114 @@
       }
     })();
   </script>
+
+  <script data-compute-summary-export-table-widths="compute-summary-export-table-widths-0629">
+    (function () {
+      function headerText(table) {
+        return Array.from(table.querySelectorAll("thead th"))
+          .map(function (th) { return (th.textContent || "").trim().toLowerCase(); });
+      }
+
+      function setColgroup(table, widths) {
+        if (!table || !widths || !widths.length) return;
+
+        var existing = table.querySelector("colgroup[data-compute-summary-export-widths]");
+        if (existing) existing.remove();
+
+        var colgroup = document.createElement("colgroup");
+        colgroup.setAttribute("data-compute-summary-export-widths", "0629");
+
+        widths.forEach(function (width) {
+          var col = document.createElement("col");
+          col.setAttribute("style", "width:" + width + ";");
+          colgroup.appendChild(col);
+        });
+
+        table.insertBefore(colgroup, table.firstChild);
+        table.style.tableLayout = "fixed";
+        table.style.width = "100%";
+
+        Array.from(table.querySelectorAll("th,td")).forEach(function (cell) {
+          cell.style.whiteSpace = "normal";
+          cell.style.overflowWrap = "break-word";
+          cell.style.wordBreak = "normal";
+          cell.style.verticalAlign = "top";
+        });
+      }
+
+      function widthsFor(headers) {
+        var joined = headers.join(" | ");
+
+        if (joined.includes("tool-specific notes")) {
+          return ["24%", "16%", "60%"];
+        }
+
+        if (joined.includes("summary notes")) {
+          return ["28%", "72%"];
+        }
+
+        if (joined.includes("required action") && joined.includes("detail / next step")) {
+          return ["18%", "12%", "9%", "21%", "40%"];
+        }
+
+        if (joined.includes("detail / next step") && joined.includes("status")) {
+          return ["24%", "14%", "10%", "52%"];
+        }
+
+        if (joined.includes("workload detail")) {
+          return ["30%", "13%", "57%"];
+        }
+
+        if (joined.includes("next action")) {
+          return ["30%", "13%", "57%"];
+        }
+
+        if (headers.length === 2) {
+          return ["30%", "70%"];
+        }
+
+        return null;
+      }
+
+      function applyComputeSummaryExportTableWidths() {
+        document
+          .querySelectorAll("[data-export-section] table")
+          .forEach(function (table) {
+            var headers = headerText(table);
+            var widths = widthsFor(headers);
+
+            if (widths) {
+              setColgroup(table, widths);
+            }
+          });
+      }
+
+      function bindComputeSummaryExportTableWidths() {
+        applyComputeSummaryExportTableWidths();
+
+        document.addEventListener("click", function (event) {
+          if (
+            event.target &&
+            event.target.closest &&
+            (
+              event.target.closest("#exportReport") ||
+              event.target.closest("#saveSnapshot")
+            )
+          ) {
+            applyComputeSummaryExportTableWidths();
+          }
+        }, true);
+
+        setTimeout(applyComputeSummaryExportTableWidths, 250);
+        setTimeout(applyComputeSummaryExportTableWidths, 900);
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", bindComputeSummaryExportTableWidths);
+      } else {
+        bindComputeSummaryExportTableWidths();
+      }
+    })();
+  </script>
 </body>
 </html>
