@@ -2402,11 +2402,29 @@
           });
         });
 
-        var summaryNotes = "";
-        var summaryTextarea = document.getElementById("computeSummaryToolNotes");
-        if (summaryTextarea) {
-          summaryNotes = String(summaryTextarea.value || "").trim();
+        // compute-summary-tool-notes-export-read-saved-summary-notes-0629
+        function readSavedSummaryNotes() {
+          var textarea = document.getElementById("computeSummaryToolNotes");
+          var value = textarea ? String(textarea.value || "").trim() : "";
+
+          if (value) return value;
+
+          try {
+            var raw = window.localStorage.getItem("scopedlabs.compute.summary.toolNotes.v1");
+            if (!raw) return "";
+
+            if (raw.charAt(0) === "{") {
+              var parsed = JSON.parse(raw);
+              return String(parsed.notes || "").trim();
+            }
+
+            return String(raw || "").trim();
+          } catch (error) {
+            return "";
+          }
         }
+
+        var summaryNotes = readSavedSummaryNotes();
 
         var parts = [];
 
