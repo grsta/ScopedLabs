@@ -2142,16 +2142,32 @@
         return null;
       }
 
+      // compute-summary-user-tool-notes-json-filter-0629
       function extractNote(raw) {
         var value = String(raw || "").trim();
         if (!value) return "";
 
-        if (value.charAt(0) === "{") {
+        if (value.charAt(0) === "{" || value.charAt(0) === "[") {
           try {
             var parsed = JSON.parse(value);
-            return String(parsed.notes || parsed.note || parsed.value || parsed.text || "").trim();
-          } catch (error) {}
+
+            if (Array.isArray(parsed)) {
+              return "";
+            }
+
+            if (parsed && typeof parsed === "object") {
+              var candidate = parsed.notes || parsed.note || parsed.value || parsed.text || "";
+              return typeof candidate === "string" ? candidate.trim() : "";
+            }
+
+            return "";
+          } catch (error) {
+            return "";
+          }
         }
+
+        if (/^SL-[A-Z-]+-\d{8,}/.test(value)) return "";
+        if (/generatedAt|categorySlug|toolSlug|standalone|reportTitle|savedAt/.test(value)) return "";
 
         return value;
       }
@@ -2214,7 +2230,7 @@
             var tool = toolFromKey(key);
             if (!tool) continue;
 
-            if (!/(note|notes|user-tool|user_tool|usertool|report)/i.test(key)) continue;
+            if (!/(note|notes|user-tool|user_tool|usertool)/i.test(key)) continue;
 
             var note = extractNote(window.localStorage.getItem(key));
             if (!note) continue;
