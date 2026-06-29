@@ -779,6 +779,55 @@
       margin-top: 20px;
       padding-top: 18px;
     }
+
+    /* compute-summary-tool-notes-save-0629 */
+    .compute-summary-tool-notes-editor {
+      margin-top: 14px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .compute-summary-tool-notes-editor label {
+      color: rgba(224, 238, 229, .78);
+      font-size: .86rem;
+      font-weight: 800;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+    }
+
+    .compute-summary-tool-notes-editor textarea {
+      width: 100%;
+      min-height: 110px;
+      resize: vertical;
+      border: 1px solid rgba(125, 255, 158, .16);
+      border-radius: 10px;
+      background: rgba(0, 0, 0, .24);
+      color: rgba(255, 255, 255, .96);
+      padding: 10px 11px;
+      font: inherit;
+      outline: none;
+    }
+
+    .compute-summary-tool-notes-editor textarea:focus {
+      border-color: rgba(125, 255, 158, .45);
+      box-shadow: 0 0 0 2px rgba(125, 255, 158, .08);
+    }
+
+    .compute-summary-tool-notes-status {
+      color: rgba(224, 238, 229, .62);
+      font-size: .88rem;
+    }
+
+    .compute-summary-tool-notes-preview {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid rgba(125, 255, 158, .12);
+      border-radius: 10px;
+      background: rgba(0, 0, 0, .18);
+      color: rgba(224, 238, 229, .78);
+      line-height: 1.55;
+      white-space: pre-wrap;
+    }
 </style>
 </head>
 <body data-tool="compute-summary" data-step="compute-summary" data-category="compute">
@@ -1005,6 +1054,12 @@
         <h2 id="compute-summary-notes-title">Tool Notes</h2>
         <p class="muted summary-section-copy">Tool-specific notes stay separated by source tool and roll up here for the final Compute report.</p>
         <p id="computeSummaryToolNotesCopy">No tool-specific notes have been saved yet. Notes entered on individual Compute tools should stay separated by workload and source tool, then appear here when available.</p>
+        <div class="compute-summary-tool-notes-editor" data-compute-summary-tool-notes-editor="compute-summary-tool-notes-editor-mounted-0629">
+          <label for="computeSummaryToolNotes">Summary Tool Notes</label>
+          <textarea id="computeSummaryToolNotes" placeholder="Add tool notes, validation comments, workload caveats, branch assumptions, or follow-up items for the final Compute summary report."></textarea>
+          <div id="computeSummaryToolNotesStatus" class="compute-summary-tool-notes-status">No summary tool notes saved yet.</div>
+        </div>
+        <div id="computeSummaryToolNotesPreview" class="compute-summary-tool-notes-preview" data-compute-summary-tool-notes-preview="0629">No summary tool notes saved yet.</div>
       </article>
 
       <article id="summaryExportSection" class="card summary-export-card compute-summary-card" aria-labelledby="compute-summary-export-title" data-export-section data-export-title="Compute Summary Report" data-compute-summary-export-section-filled="0628">
@@ -1943,5 +1998,86 @@
   </script>
   <script src="/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes"></script>
   <script src="/assets/export.js?v=shared-export-025-tool-notes-column-widths"></script>
+
+  <script data-compute-summary-tool-notes-persistence="compute-summary-tool-notes-persistence-0629">
+    (function () {
+      var STORAGE_KEY = "scopedlabs.compute.summary.toolNotes.v1";
+
+      function escapeHtml(value) {
+        return String(value || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function readNotes() {
+        try {
+          var raw = window.localStorage.getItem(STORAGE_KEY);
+          if (!raw) return "";
+          if (raw.charAt(0) === "{") {
+            var parsed = JSON.parse(raw);
+            return String(parsed.notes || "");
+          }
+          return String(raw || "");
+        } catch (error) {
+          return "";
+        }
+      }
+
+      function writeNotes(value) {
+        try {
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            category: "compute",
+            source: "compute-summary",
+            notes: String(value || ""),
+            updatedAt: new Date().toISOString()
+          }));
+        } catch (error) {}
+      }
+
+      function renderNotes(value) {
+        var status = document.getElementById("computeSummaryToolNotesStatus");
+        var preview = document.getElementById("computeSummaryToolNotesPreview");
+        var text = String(value || "").trim();
+
+        if (status) {
+          status.textContent = text ? "Saved locally for this Compute Summary." : "No summary tool notes saved yet.";
+        }
+
+        if (preview) {
+          preview.innerHTML = text
+            ? "<strong>Saved Summary Tool Notes</strong>\n" + escapeHtml(text)
+            : "No summary tool notes saved yet.";
+        }
+      }
+
+      function initToolNotesPersistence() {
+        var textarea = document.getElementById("computeSummaryToolNotes");
+        if (!textarea) return;
+
+        var saved = readNotes();
+        textarea.value = saved;
+        renderNotes(saved);
+
+        textarea.addEventListener("input", function () {
+          writeNotes(textarea.value);
+          renderNotes(textarea.value);
+        });
+
+        textarea.addEventListener("blur", function () {
+          writeNotes(textarea.value);
+          renderNotes(textarea.value);
+        });
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initToolNotesPersistence);
+      } else {
+        initToolNotesPersistence();
+      }
+    })();
+  </script>
 </body>
 </html>
