@@ -1273,7 +1273,53 @@
         <button id="reset" class="btn" type="button">Reset</button>
       </div>
 
-        <section class="card compute-export-card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+        
+
+
+
+
+
+
+
+
+
+        
+
+    </section>
+
+        <div id="computeInternalResultsLedger" class="card compute-internal-results-ledger" style="display:none;" hidden aria-hidden="true" data-internal-results-ledger data-compute-ledger-payload="gpu-vram"></div>
+
+        <div id="results" class="results-grid compute-legacy-results-source" aria-live="off" hidden aria-hidden="true" data-compute-legacy-results-source="true" data-compute-ledger-source="true">
+      <div class="muted">Run calculation.</div>
+    </div>
+
+        <div id="analysis-copy" class="compute-legacy-analysis-source" style="display:none;" hidden aria-hidden="true" data-compute-legacy-analysis-source="true"></div>
+<!-- compute-gpu-proof-stack-canonical-order-0629 -->
+<section id="computeAssistantCard" class="card compute-assistant-card compute-static-summary-card-shell" data-compute-assistant-card hidden>
+      <div id="computeAssistantMount" data-compute-assistant-mount data-category-slug="compute" data-tool-slug="gpu-vram"></div>
+    </section>
+<section id="computeGpuVisualCard" class="card compute-result-visual-card" data-compute-result-visual-card data-output-visual-owner="compute-capacity-visuals" data-export-section="true" data-export-title="GPU VRAM Capacity Envelope" hidden>
+          <div id="computeGpuEngineeringSummary" class="compute-gpu-engineering-summary" data-export-section="true" data-export-title="GPU VRAM Engineering Summary" hidden></div>
+          <div id="computeGpuVisual" class="compute-result-visual-shell" data-compute-result-visual="gpu-vram-capacity-envelope">
+            <div id="computeGpuEnvelope" class="compute-gpu-envelope" hidden></div>
+          </div>
+        </section>
+<section id="computeGpuReferencesCard" class="card compute-recommendation-references-card" data-compute-recommendation-references-card data-output-references-owner="compute-assistant-contract" data-export-section="true" data-export-title="Recommendation References" hidden>
+          <h3 class="h3" style="margin-top: 0;">Recommendation References</h3>
+          <p class="muted" style="margin-bottom: 0;">Reference markers for the GPU VRAM Capacity Envelope. These explain why the demand point, required status point, and capacity rails matter before continuing to Power &amp; Thermal.</p>
+          <div id="computeGpuReferences" data-compute-recommendation-references="gpu-vram" role="group" aria-label="GPU VRAM recommendation references"></div>
+        </section>
+<section id="computeGpuRecommendedActionsCard" class="card compute-recommended-actions-card" data-compute-recommended-actions-card data-output-actions-owner="compute-assistant-contract" data-export-section="true" data-export-title="Recommended Actions" hidden>
+          <h3 class="h3" style="margin-top: 0;">Recommended Actions</h3>
+          <p class="muted" style="margin-bottom: 0;">Practical validation steps to reduce GPU memory pressure or confirm the selected allocation before downstream Compute planning.</p>
+          <div id="computeGpuRecommendedActions" data-compute-recommended-actions="gpu-vram" role="group" aria-label="GPU VRAM recommended actions"></div>
+        </section>
+<section id="computeGpuDecisionScheduleCard" class="card compute-decision-schedule-card" data-compute-decision-schedule-card data-output-decision-owner="compute-assistant-contract" data-export-section="true" data-export-title="GPU VRAM Decision Schedule" hidden>
+                  <h3 class="h3" style="margin-top: 0;">GPU VRAM Decision Schedule</h3>
+                  <p class="muted" style="margin-bottom: 0;">Compact GPU VRAM status, threshold, recommendation, and engineering-note schedule for the active Compute workload.</p>
+                  <div id="computeGpuDecisionSchedule" data-compute-decision-schedule="gpu-vram" role="group" aria-label="GPU VRAM decision schedule"></div>
+                </section>
+<section class="card compute-export-card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
           <h3 class="h3" style="margin-top: 0;">Export Report</h3>
           <p class="muted" style="margin-bottom: 0;">
             Add optional project context and generate a clean documentation view that can be printed or saved as a PDF for client or internal use.
@@ -1310,46 +1356,16 @@
               </div>
         </section>
 
-        
 
-    </section>
+    
 
-        <div id="computeInternalResultsLedger" class="card compute-internal-results-ledger" style="display:none;" hidden aria-hidden="true" data-internal-results-ledger data-compute-ledger-payload="gpu-vram"></div>
+    
 
-        <div id="results" class="results-grid compute-legacy-results-source" aria-live="off" hidden aria-hidden="true" data-compute-legacy-results-source="true" data-compute-ledger-source="true">
-      <div class="muted">Run calculation.</div>
-    </div>
+    
 
-        <div id="analysis-copy" class="compute-legacy-analysis-source" style="display:none;" hidden aria-hidden="true" data-compute-legacy-analysis-source="true"></div>
+    
 
-    <section id="computeAssistantCard" class="card compute-assistant-card compute-static-summary-card-shell" data-compute-assistant-card hidden>
-      <div id="computeAssistantMount" data-compute-assistant-mount data-category-slug="compute" data-tool-slug="gpu-vram"></div>
-    </section>
-
-    <section id="computeGpuVisualCard" class="card compute-result-visual-card" data-compute-result-visual-card data-output-visual-owner="compute-capacity-visuals" data-export-section="true" data-export-title="GPU VRAM Capacity Envelope" hidden>
-          <div id="computeGpuEngineeringSummary" class="compute-gpu-engineering-summary" data-export-section="true" data-export-title="GPU VRAM Engineering Summary" hidden></div>
-          <div id="computeGpuVisual" class="compute-result-visual-shell" data-compute-result-visual="gpu-vram-capacity-envelope">
-            <div id="computeGpuEnvelope" class="compute-gpu-envelope" hidden></div>
-          </div>
-        </section>
-
-    <section id="computeGpuReferencesCard" class="card compute-recommendation-references-card" data-compute-recommendation-references-card data-output-references-owner="compute-assistant-contract" data-export-section="true" data-export-title="Recommendation References" hidden>
-          <h3 class="h3" style="margin-top: 0;">Recommendation References</h3>
-          <p class="muted" style="margin-bottom: 0;">Reference markers for the GPU VRAM Capacity Envelope. These explain why the demand point, required status point, and capacity rails matter before continuing to Power &amp; Thermal.</p>
-          <div id="computeGpuReferences" data-compute-recommendation-references="gpu-vram" role="group" aria-label="GPU VRAM recommendation references"></div>
-        </section>
-
-    <section id="computeGpuRecommendedActionsCard" class="card compute-recommended-actions-card" data-compute-recommended-actions-card data-output-actions-owner="compute-assistant-contract" data-export-section="true" data-export-title="Recommended Actions" hidden>
-          <h3 class="h3" style="margin-top: 0;">Recommended Actions</h3>
-          <p class="muted" style="margin-bottom: 0;">Practical validation steps to reduce GPU memory pressure or confirm the selected allocation before downstream Compute planning.</p>
-          <div id="computeGpuRecommendedActions" data-compute-recommended-actions="gpu-vram" role="group" aria-label="GPU VRAM recommended actions"></div>
-        </section>
-
-    <section id="computeGpuDecisionScheduleCard" class="card compute-decision-schedule-card" data-compute-decision-schedule-card data-output-decision-owner="compute-assistant-contract" data-export-section="true" data-export-title="GPU VRAM Decision Schedule" hidden>
-                  <h3 class="h3" style="margin-top: 0;">GPU VRAM Decision Schedule</h3>
-                  <p class="muted" style="margin-bottom: 0;">Compact GPU VRAM status, threshold, recommendation, and engineering-note schedule for the active Compute workload.</p>
-                  <div id="computeGpuDecisionSchedule" data-compute-decision-schedule="gpu-vram" role="group" aria-label="GPU VRAM decision schedule"></div>
-                </section>
+    
 
     
 
