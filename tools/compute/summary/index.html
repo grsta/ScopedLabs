@@ -2448,10 +2448,19 @@
           );
         }
 
+        // compute-summary-summary-notes-export-table-0629
         if (summaryNotes) {
           parts.push(
             "<h3>Summary Tool Notes</h3>" +
-            "<div class='body-copy'>" + escapeHtml(summaryNotes).replace(/\\n/g, "<br>") + "</div>"
+            "<div class='result-table-wrap'>" +
+              "<table class='result-table compute-summary-table compute-summary-summary-tool-notes-table'>" +
+                "<thead><tr><th>Summary Area</th><th>Summary Notes</th></tr></thead>" +
+                "<tbody><tr>" +
+                  "<td>Compute Summary</td>" +
+                  "<td>" + escapeHtml(summaryNotes).replace(/\\n/g, "<br>") + "</td>" +
+                "</tr></tbody>" +
+              "</table>" +
+            "</div>"
           );
         }
 
