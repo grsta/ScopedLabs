@@ -818,17 +818,6 @@
       font-size: .88rem;
     }
 
-    .compute-summary-tool-notes-preview {
-      margin-top: 12px;
-      padding: 12px;
-      border: 1px solid rgba(125, 255, 158, .12);
-      border-radius: 10px;
-      background: rgba(0, 0, 0, .18);
-      color: rgba(224, 238, 229, .78);
-      line-height: 1.55;
-      white-space: pre-wrap;
-    }
-
     /* compute-summary-user-tool-notes-rollup-0629 */
     .compute-summary-user-tool-notes-rollup {
       margin-top: 14px;
@@ -1080,7 +1069,6 @@
           <textarea id="computeSummaryToolNotes" placeholder="Add tool notes, validation comments, workload caveats, branch assumptions, or follow-up items for the final Compute summary report."></textarea>
           <div id="computeSummaryToolNotesStatus" class="compute-summary-tool-notes-status">No summary tool notes saved yet.</div>
         </div>
-        <div id="computeSummaryToolNotesPreview" class="compute-summary-tool-notes-preview" data-compute-summary-tool-notes-preview="0629">No summary tool notes saved yet.</div>
       </article>
 
       <article id="summaryExportSection" class="card summary-export-card compute-summary-card" aria-labelledby="compute-summary-export-title" data-export-section data-export-title="Compute Summary Report" data-compute-summary-export-section-filled="0628">
@@ -2060,17 +2048,11 @@
 
       function renderNotes(value) {
         var status = document.getElementById("computeSummaryToolNotesStatus");
-        var preview = document.getElementById("computeSummaryToolNotesPreview");
+        // compute-summary-remove-duplicate-tool-notes-preview-0629
         var text = String(value || "").trim();
 
         if (status) {
           status.textContent = text ? "Saved locally for this Compute Summary." : "No summary tool notes saved yet.";
-        }
-
-        if (preview) {
-          preview.innerHTML = text
-            ? "<strong>Saved Summary Tool Notes</strong>\n" + escapeHtml(text)
-            : "No summary tool notes saved yet.";
         }
       }
 
