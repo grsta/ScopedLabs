@@ -870,8 +870,16 @@
     }
 
     /* compute-summary-tool-notes-export-only-css-0629 */
+    /* compute-summary-tool-notes-export-offscreen-0629 */
     .compute-summary-tool-notes-export-only-section {
-      display: none;
+      position: absolute;
+      left: -10000px;
+      top: auto;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
     }
 </style>
 </head>
