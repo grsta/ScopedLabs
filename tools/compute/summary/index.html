@@ -828,6 +828,24 @@
       line-height: 1.55;
       white-space: pre-wrap;
     }
+
+    /* compute-summary-user-tool-notes-rollup-0629 */
+    .compute-summary-user-tool-notes-rollup {
+      margin-top: 14px;
+    }
+
+    .compute-summary-user-tool-notes-rollup .compute-summary-tool-notes-empty {
+      padding: 12px;
+      border: 1px solid rgba(125, 255, 158, .12);
+      border-radius: 10px;
+      background: rgba(0, 0, 0, .18);
+      color: rgba(224, 238, 229, .68);
+    }
+
+    .compute-summary-user-tool-notes-table td:last-child {
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
 </style>
 </head>
 <body data-tool="compute-summary" data-step="compute-summary" data-category="compute">
@@ -1054,6 +1072,9 @@
         <h2 id="compute-summary-notes-title">Tool Notes</h2>
         <p class="muted summary-section-copy">Tool-specific notes stay separated by source tool and roll up here for the final Compute report.</p>
         <p id="computeSummaryToolNotesCopy">No tool-specific notes have been saved yet. Notes entered on individual Compute tools should stay separated by workload and source tool, then appear here when available.</p>
+        <div id="computeSummaryUserToolNotesRollup" class="compute-summary-user-tool-notes-rollup" data-compute-summary-user-tool-notes-rollup="compute-summary-user-tool-notes-rollup-mounted-0629">
+          <div class="compute-summary-tool-notes-empty">Loading saved Compute tool notes...</div>
+        </div>
         <div class="compute-summary-tool-notes-editor" data-compute-summary-tool-notes-editor="compute-summary-tool-notes-editor-mounted-0629">
           <label for="computeSummaryToolNotes">Summary Tool Notes</label>
           <textarea id="computeSummaryToolNotes" placeholder="Add tool notes, validation comments, workload caveats, branch assumptions, or follow-up items for the final Compute summary report."></textarea>
@@ -2077,6 +2098,188 @@
       } else {
         initToolNotesPersistence();
       }
+    })();
+  </script>
+
+  <script data-compute-summary-user-tool-notes-rollup-script="compute-summary-user-tool-notes-rollup-script-0629">
+    (function () {
+      var TOOL_LABELS = {
+        "cpu-sizing": "CPU Sizing",
+        "ram-sizing": "RAM Sizing",
+        "gpu-vram": "GPU VRAM",
+        "storage-iops": "Storage IOPS",
+        "storage-throughput": "Storage Throughput",
+        "vm-density": "VM Density",
+        "power-thermal": "Power & Thermal",
+        "backup-window": "Backup Window",
+        "nic-bonding": "NIC Bonding",
+        "raid-rebuild-time": "RAID Rebuild Time"
+      };
+
+      function escapeHtml(value) {
+        return String(value || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function titleFromSlug(slug) {
+        return String(slug || "")
+          .replace(/-/g, " ")
+          .replace(/\b\w/g, function (letter) { return letter.toUpperCase(); });
+      }
+
+      function toolFromKey(key) {
+        var lowered = String(key || "").toLowerCase();
+        var slugs = Object.keys(TOOL_LABELS);
+
+        for (var i = 0; i < slugs.length; i += 1) {
+          if (lowered.indexOf(slugs[i]) !== -1) return { slug: slugs[i], label: TOOL_LABELS[slugs[i]] };
+        }
+
+        return null;
+      }
+
+      function extractNote(raw) {
+        var value = String(raw || "").trim();
+        if (!value) return "";
+
+        if (value.charAt(0) === "{") {
+          try {
+            var parsed = JSON.parse(value);
+            return String(parsed.notes || parsed.note || parsed.value || parsed.text || "").trim();
+          } catch (error) {}
+        }
+
+        return value;
+      }
+
+      function readActiveWorkloadName() {
+        try {
+          var api = window.ScopedLabsComputePlanState || {};
+          var roots = [];
+
+          [
+            "getActiveWorkload",
+            "readActiveWorkload",
+            "getCurrentWorkload",
+            "getState",
+            "readState",
+            "getPlanState",
+            "readPlanState",
+            "getPlan",
+            "readPlan"
+          ].forEach(function (method) {
+            try {
+              if (typeof api[method] === "function") roots.push(api[method]());
+            } catch (error) {}
+          });
+
+          roots.push(api.state, api.plan, api.activeWorkload);
+
+          for (var i = 0; i < roots.length; i += 1) {
+            var item = roots[i];
+            if (!item || typeof item !== "object") continue;
+
+            if (item.name || item.workloadName || item.title || item.label) {
+              return String(item.name || item.workloadName || item.title || item.label);
+            }
+
+            if (item.activeWorkload && typeof item.activeWorkload === "object") {
+              var active = item.activeWorkload;
+              if (active.name || active.workloadName || active.title || active.label) {
+                return String(active.name || active.workloadName || active.title || active.label);
+              }
+            }
+          }
+        } catch (error) {}
+
+        return "Current Compute workload";
+      }
+
+      function readUserToolNotes() {
+        var rows = [];
+        var seen = {};
+        var activeWorkload = readActiveWorkloadName();
+
+        try {
+          for (var i = 0; i < window.localStorage.length; i += 1) {
+            var key = window.localStorage.key(i) || "";
+            var lowered = key.toLowerCase();
+
+            if (lowered === "scopedlabs.compute.summary.toolnotes.v1") continue;
+
+            var tool = toolFromKey(key);
+            if (!tool) continue;
+
+            if (!/(note|notes|user-tool|user_tool|usertool|report)/i.test(key)) continue;
+
+            var note = extractNote(window.localStorage.getItem(key));
+            if (!note) continue;
+
+            var dedupeKey = tool.slug + "::" + note;
+            if (seen[dedupeKey]) continue;
+            seen[dedupeKey] = true;
+
+            rows.push({
+              workload: activeWorkload,
+              tool: tool.label || titleFromSlug(tool.slug),
+              note: note,
+              key: key
+            });
+          }
+        } catch (error) {}
+
+        return rows;
+      }
+
+      function renderUserToolNotesRollup() {
+        var mount = document.getElementById("computeSummaryUserToolNotesRollup");
+        var copy = document.getElementById("computeSummaryToolNotesCopy");
+        if (!mount) return;
+
+        var rows = readUserToolNotes();
+
+        if (!rows.length) {
+          mount.innerHTML = "<div class='compute-summary-tool-notes-empty'>No saved per-tool Compute notes were found in this browser yet.</div>";
+          if (copy) {
+            copy.textContent = "No tool-specific notes have been saved yet. Notes entered on individual Compute tools should stay separated by workload and source tool, then appear here when available.";
+          }
+          return;
+        }
+
+        if (copy) {
+          copy.textContent = rows.length + " saved per-tool Compute note" + (rows.length === 1 ? "" : "s") + " found for this browser.";
+        }
+
+        mount.innerHTML =
+          "<div class='result-table-wrap'>" +
+            "<table class='result-table compute-summary-table compute-summary-user-tool-notes-table'>" +
+              "<thead><tr><th>Workload</th><th>Tool</th><th>Tool-Specific Notes</th></tr></thead>" +
+              "<tbody>" +
+                rows.map(function (row) {
+                  return "<tr>" +
+                    "<td>" + escapeHtml(row.workload) + "</td>" +
+                    "<td>" + escapeHtml(row.tool) + "</td>" +
+                    "<td>" + escapeHtml(row.note) + "</td>" +
+                  "</tr>";
+                }).join("") +
+              "</tbody>" +
+            "</table>" +
+          "</div>";
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", renderUserToolNotesRollup);
+      } else {
+        renderUserToolNotesRollup();
+      }
+
+      window.addEventListener("storage", renderUserToolNotesRollup);
+      setTimeout(renderUserToolNotesRollup, 250);
+      setTimeout(renderUserToolNotesRollup, 900);
     })();
   </script>
 </body>
