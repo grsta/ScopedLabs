@@ -759,7 +759,27 @@
         display: inline-flex;
       }
     }
-  </style>
+  
+    /* compute-summary-footer-gap-tighten-0629 */
+    main.compute-summary-page {
+      min-height: auto;
+      padding-bottom: 18px;
+    }
+
+    .compute-summary-page .container {
+      padding-bottom: 0;
+    }
+
+    .compute-summary-page .summary-next-card {
+      margin-bottom: 0;
+    }
+
+    .compute-summary-page + footer.site-footer,
+    body:has(.compute-summary-page) footer.site-footer {
+      margin-top: 20px;
+      padding-top: 18px;
+    }
+</style>
 </head>
 <body data-tool="compute-summary" data-step="compute-summary" data-category="compute">
   <header class="site-header">
