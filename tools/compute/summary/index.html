@@ -1965,10 +1965,12 @@ function reportRowsForWorkload(savedWorkload, tools, savedResults) {
 
         function reportTableForWorkload(savedWorkload, tools, savedResults, emptyText) {
           var title = savedWorkload && savedWorkload.name ? savedWorkload.name : "Compute workload";
+          // compute-summary-report-sections-hide-empty-watch-risk-only-0703
           var rows = tools.length ? reportRowsForWorkload(savedWorkload, tools, savedResults) : "";
-          var emptyMessage = tools.length && !rows
-            ? "Watch/Risk items for this workload are listed in the Watch/Risk Detail table above."
-            : emptyText;
+          if (tools.length && !rows) {
+            return "";
+          }
+          var emptyMessage = emptyText;
 
           return [
             '<h5 class="compute-summary-report-workload-title">',
