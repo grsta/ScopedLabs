@@ -96,6 +96,7 @@ check("COMPUTE_SUMMARY_TOOL_NOTES_IN_MODULE", js.includes("computeSummaryToolNot
 check("COMPUTE_SUMMARY_TABLE_WIDTHS_IN_MODULE", js.includes("applyComputeSummaryExportTableWidths"));
 check("COMPUTE_SUMMARY_STATUS_CHIPS_IN_MODULE", css.includes(".summary-status-chip") && css.includes(".summary-status-chip.risk"));
 check("COMPUTE_SUMMARY_COMPAT_MARKERS", html.includes("COMPUTE_SUMMARY_MODULE_COMPAT_MARKERS_0703"));
+check("COMPUTE_SUMMARY_CLEAR_SUMMARY_TOOL_NOTES", html.includes("clearComputeSummaryToolNotes") && css.includes("compute-summary-clear-summary-tool-notes-0703") && js.includes("compute-summary-clear-summary-tool-notes-0703"));
 
 const planStateIndex = html.indexOf("scopedlabs-compute-plan-state.js");
 const summaryJsIndex = html.indexOf("scopedlabs-compute-summary.js");

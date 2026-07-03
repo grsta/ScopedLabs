@@ -1097,3 +1097,17 @@
     #computeSummaryGapList.result-table-wrap td {
       border-bottom: 0 !important;
     }
+
+
+/* compute-summary-clear-summary-tool-notes-0703 */
+.compute-summary-tool-notes-clear-row {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 9px;
+}
+
+.compute-summary-tool-notes-clear-row .btn {
+  min-width: 150px;
+  justify-content: center;
+  text-align: center;
+}

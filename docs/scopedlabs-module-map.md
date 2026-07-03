@@ -1416,3 +1416,12 @@ Promotion note:
 - JS module: `assets/scopedlabs-compute-summary.js`
 - Audit: `scripts/audit-compute-summary-module-ownership-v1.js`
 - Preserves: plan-state rollup, report metadata, export/report/snapshot, tool notes rollup/export sync, Summary Tool Notes, report table width tuning, and Physical Security-style Summary rhythm.
+
+### COMPUTE_SUMMARY_CLEAR_SUMMARY_TOOL_NOTES_0703
+
+- Scope: Compute Summary module adds a clear control for locally saved Summary Tool Notes.
+- HTML host: `tools/compute/summary/index.html`
+- CSS owner: `assets/scopedlabs-compute-summary.css`
+- JS owner: `assets/scopedlabs-compute-summary.js`
+- Audit: `scripts/audit-compute-summary-module-ownership-v1.js`
+- Behavior: clears `scopedlabs.compute.summary.toolNotes.v1` from browser localStorage, empties the editable Summary Tool Notes textarea, updates status copy, and triggers note sync events.

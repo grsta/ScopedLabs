@@ -527,3 +527,7 @@ Audit:
 ### COMPUTE_SUMMARY_MODULE_OWNERSHIP_0703
 
 Accepted Compute Summary page-owned proof promoted to reusable module-owned baseline. The Summary page now consumes `assets/scopedlabs-compute-summary.css` and `assets/scopedlabs-compute-summary.js`, with export config intentionally kept inline before shared report/export assets. Guarded by `scripts/audit-compute-summary-module-ownership-v1.js`.
+
+### COMPUTE_SUMMARY_CLEAR_SUMMARY_TOOL_NOTES_0703
+
+Compute Summary module-owned proof now includes an explicit clear control for Summary Tool Notes. This keeps persistent local-browser notes editable and removable from the Summary page without affecting per-tool notes.

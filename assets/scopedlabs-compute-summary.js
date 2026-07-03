@@ -1379,3 +1379,57 @@ function reportRowsForWorkload(savedWorkload, tools, savedResults) {
       }
     })();
 
+
+
+/* compute-summary-clear-summary-tool-notes-0703 */
+(function () {
+  var STORAGE_KEY = "scopedlabs.compute.summary.toolNotes.v1";
+
+  function bindClearSummaryToolNotes() {
+    var button = document.getElementById("clearComputeSummaryToolNotes");
+    var textarea = document.getElementById("computeSummaryToolNotes");
+    var status = document.getElementById("computeSummaryToolNotesStatus");
+
+    if (!button || !textarea || button.dataset.computeSummaryClearBound === "true") {
+      return;
+    }
+
+    button.dataset.computeSummaryClearBound = "true";
+
+    button.addEventListener("click", function () {
+      var hasValue = String(textarea.value || "").trim();
+
+      if (hasValue && !window.confirm("Clear Summary Tool Notes for this browser?")) {
+        return;
+      }
+
+      try {
+        window.localStorage.removeItem(STORAGE_KEY);
+      } catch (error) {}
+
+      textarea.value = "";
+
+      window.ScopedLabsUserToolNotes = window.ScopedLabsUserToolNotes || {};
+      window.ScopedLabsUserToolNotes[STORAGE_KEY] = "";
+
+      textarea.dispatchEvent(new Event("input", { bubbles: true }));
+      textarea.dispatchEvent(new Event("change", { bubbles: true }));
+
+      if (status) {
+        status.textContent = "Summary Tool Notes cleared for this browser.";
+      }
+
+      setTimeout(function () {
+        document.dispatchEvent(new CustomEvent("scopedlabs:compute-summary-tool-notes-cleared", {
+          detail: { key: STORAGE_KEY }
+        }));
+      }, 0);
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bindClearSummaryToolNotes);
+  } else {
+    bindClearSummaryToolNotes();
+  }
+})();
