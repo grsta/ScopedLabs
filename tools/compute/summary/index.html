@@ -940,6 +940,35 @@
     #computeSummaryReportBranchSections .compute-summary-table tbody tr:last-child td {
       border-bottom: 1px solid rgba(125,255,158,.14);
     }
+
+    /* compute-summary-guidance-table-frame-0703 */
+    .compute-summary-guidance-table,
+    [data-compute-summary-results-table] {
+      box-shadow:
+        inset 1px 0 0 rgba(125,255,158,.14),
+        inset -1px 0 0 rgba(125,255,158,.14),
+        inset 0 -1px 0 rgba(125,255,158,.14);
+      border-radius: 12px;
+    }
+
+    .compute-summary-guidance-table th:first-child,
+    .compute-summary-guidance-table td:first-child,
+    [data-compute-summary-results-table] th:first-child,
+    [data-compute-summary-results-table] td:first-child {
+      border-left: 1px solid rgba(125,255,158,.12);
+    }
+
+    .compute-summary-guidance-table th:last-child,
+    .compute-summary-guidance-table td:last-child,
+    [data-compute-summary-results-table] th:last-child,
+    [data-compute-summary-results-table] td:last-child {
+      border-right: 1px solid rgba(125,255,158,.12);
+    }
+
+    .compute-summary-guidance-table tbody tr:last-child td,
+    [data-compute-summary-results-table] tbody tr:last-child td {
+      border-bottom: 1px solid rgba(125,255,158,.14);
+    }
 </style>
 </head>
 <body data-tool="compute-summary" data-step="compute-summary" data-category="compute">
