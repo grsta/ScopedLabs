@@ -24,7 +24,7 @@
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
   <script defer src="/assets/auth.js?v=auth-magiclink-session-restore-0527"></script>
-  <script defer src="/assets/account.js?v=account-snapshot-object-cells-0703"></script>
+  <script defer src="/assets/account.js?v=account-snapshot-wide-report-tables-0703"></script>
 
   <style data-scopedlabs-account-snapshots>
     .sl-snapshots-list {
@@ -201,6 +201,33 @@
     .sl-snapshot-table th:last-child,
     .sl-snapshot-table td:last-child {
       width: 56%;
+    }
+  </style>
+
+  <style data-account-snapshot-wide-report-table-layout="account-snapshot-wide-report-table-layout-style-0703">
+    #sl-snapshots-card,
+    #sl-snapshot-detail {
+      max-width: min(1180px, calc(100vw - 48px));
+      width: 100%;
+    }
+
+    #sl-snapshot-detail {
+      overflow-x: auto;
+    }
+
+    #sl-snapshot-detail .sl-snapshot-wide-report-table {
+      width: 100% !important;
+      min-width: 0 !important;
+      table-layout: fixed !important;
+    }
+
+    #sl-snapshot-detail .sl-snapshot-wide-report-table th,
+    #sl-snapshot-detail .sl-snapshot-wide-report-table td {
+      white-space: normal !important;
+      overflow-wrap: break-word !important;
+      word-break: normal !important;
+      vertical-align: top !important;
+      line-height: 1.36 !important;
     }
   </style>
 </head>

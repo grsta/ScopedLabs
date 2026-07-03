@@ -1433,3 +1433,11 @@ Promotion note:
 - JS owner: `assets/account.js`
 - Audit: `scripts/audit-account-snapshot-extra-table-layout-v1.js`
 - Preserves: account auth, entitlements, saved snapshot list/detail view, and existing snapshot table layout.
+
+### ACCOUNT_SNAPSHOT_WIDE_REPORT_TABLE_LAYOUT_0703
+
+- Scope: Account saved snapshot detail tables use full-card width and column presets for Compute Summary report sections.
+- HTML host: `account/index.html`
+- JS owner: `assets/account.js`
+- Audit: `scripts/audit-account-snapshot-wide-report-table-layout-v1.js`
+- Preserves: auth, entitlements, snapshot list/detail rendering, object-cell normalization, and existing saved snapshot data.

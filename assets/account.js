@@ -1310,3 +1310,121 @@
     });
   }
 })();
+
+/* account-snapshot-wide-report-table-layout-0703 */
+(function () {
+  function normalizeHeader(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, " ");
+  }
+
+  function widthsForSnapshotHeaders(headers) {
+    var joined = headers.map(normalizeHeader).join(" | ");
+
+    if (joined.includes("required action") && joined.includes("detail / next step")) {
+      return ["22%", "14%", "10%", "22%", "32%"];
+    }
+
+    if (joined.includes("scope / workload") && joined.includes("detail / next step")) {
+      return ["28%", "16%", "12%", "44%"];
+    }
+
+    if (joined.includes("tool-specific notes")) {
+      return ["26%", "16%", "58%"];
+    }
+
+    if (joined.includes("summary notes")) {
+      return ["28%", "72%"];
+    }
+
+    if (headers.length === 5) return ["22%", "14%", "10%", "22%", "32%"];
+    if (headers.length === 4) return ["28%", "16%", "12%", "44%"];
+    if (headers.length === 3) return ["30%", "20%", "50%"];
+    if (headers.length === 2) return ["32%", "68%"];
+
+    return null;
+  }
+
+  function applyColgroup(table, widths) {
+    if (!table || !widths || !widths.length) return;
+
+    Array.from(table.querySelectorAll("colgroup[data-account-snapshot-wide-widths]")).forEach(function (node) {
+      node.remove();
+    });
+
+    var colgroup = document.createElement("colgroup");
+    colgroup.setAttribute("data-account-snapshot-wide-widths", "0703");
+
+    widths.forEach(function (width) {
+      var col = document.createElement("col");
+      col.setAttribute("style", "width:" + width + ";");
+      colgroup.appendChild(col);
+    });
+
+    table.insertBefore(colgroup, table.firstChild);
+  }
+
+  function polishSnapshotDetailLayout() {
+    var detail = document.getElementById("sl-snapshot-detail");
+    if (!detail) return;
+
+    detail.classList.add("sl-snapshot-detail-wide");
+
+    Array.from(detail.querySelectorAll("table")).forEach(function (table) {
+      var headers = Array.from(table.querySelectorAll("thead th")).map(function (th) {
+        return String(th.textContent || "").trim();
+      });
+
+      if (!headers.length) {
+        var firstRow = table.querySelector("tr");
+        headers = firstRow
+          ? Array.from(firstRow.children).map(function (cell) {
+              return String(cell.textContent || "").trim();
+            })
+          : [];
+      }
+
+      table.classList.add("sl-snapshot-wide-report-table");
+      table.setAttribute("data-account-snapshot-wide-table", "true");
+      table.setAttribute("data-account-snapshot-columns", String(headers.length || 0));
+
+      applyColgroup(table, widthsForSnapshotHeaders(headers));
+
+      Array.from(table.querySelectorAll("th,td")).forEach(function (cell) {
+        cell.style.whiteSpace = "normal";
+        cell.style.overflowWrap = "break-word";
+        cell.style.wordBreak = "normal";
+        cell.style.verticalAlign = "top";
+      });
+    });
+  }
+
+  function bindSnapshotDetailLayoutPolish() {
+    polishSnapshotDetailLayout();
+
+    document.addEventListener("click", function () {
+      setTimeout(polishSnapshotDetailLayout, 0);
+      setTimeout(polishSnapshotDetailLayout, 250);
+    }, true);
+
+    var detail = document.getElementById("sl-snapshot-detail");
+    if (detail && window.MutationObserver) {
+      var observer = new MutationObserver(function () {
+        polishSnapshotDetailLayout();
+      });
+
+      observer.observe(detail, { childList: true, subtree: true });
+    }
+
+    setTimeout(polishSnapshotDetailLayout, 500);
+    setTimeout(polishSnapshotDetailLayout, 1200);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bindSnapshotDetailLayoutPolish);
+  } else {
+    bindSnapshotDetailLayoutPolish();
+  }
+})();
