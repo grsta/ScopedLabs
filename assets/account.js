@@ -1311,8 +1311,13 @@
   }
 })();
 
-/* account-snapshot-wide-report-table-layout-0703 */
+
+
+
+/* account-snapshot-wide-report-table-layout-safe-0703 */
 (function () {
+  var scheduled = false;
+
   function normalizeHeader(value) {
     return String(value || "")
       .trim()
@@ -1347,8 +1352,13 @@
     return null;
   }
 
-  function applyColgroup(table, widths) {
+  function applyColgroupOnce(table, widths) {
     if (!table || !widths || !widths.length) return;
+
+    var signature = widths.join("|");
+    if (table.getAttribute("data-account-snapshot-wide-width-signature") === signature) {
+      return;
+    }
 
     Array.from(table.querySelectorAll("colgroup[data-account-snapshot-wide-widths]")).forEach(function (node) {
       node.remove();
@@ -1364,6 +1374,7 @@
     });
 
     table.insertBefore(colgroup, table.firstChild);
+    table.setAttribute("data-account-snapshot-wide-width-signature", signature);
   }
 
   function polishSnapshotDetailLayout() {
@@ -1390,7 +1401,7 @@
       table.setAttribute("data-account-snapshot-wide-table", "true");
       table.setAttribute("data-account-snapshot-columns", String(headers.length || 0));
 
-      applyColgroup(table, widthsForSnapshotHeaders(headers));
+      applyColgroupOnce(table, widthsForSnapshotHeaders(headers));
 
       Array.from(table.querySelectorAll("th,td")).forEach(function (cell) {
         cell.style.whiteSpace = "normal";
@@ -1401,25 +1412,39 @@
     });
   }
 
+  function scheduleSnapshotDetailLayoutPolish() {
+    if (scheduled) return;
+    scheduled = true;
+
+    window.requestAnimationFrame(function () {
+      scheduled = false;
+      polishSnapshotDetailLayout();
+    });
+  }
+
   function bindSnapshotDetailLayoutPolish() {
     polishSnapshotDetailLayout();
 
-    document.addEventListener("click", function () {
-      setTimeout(polishSnapshotDetailLayout, 0);
-      setTimeout(polishSnapshotDetailLayout, 250);
+    document.addEventListener("click", function (event) {
+      var target = event.target;
+      if (
+        target &&
+        target.closest &&
+        (
+          target.closest("#sl-refresh-snapshots") ||
+          target.closest("#sl-snapshots-list button") ||
+          target.closest("[data-snapshot-id]") ||
+          target.closest(".sl-snapshot-card")
+        )
+      ) {
+        setTimeout(scheduleSnapshotDetailLayoutPolish, 0);
+        setTimeout(scheduleSnapshotDetailLayoutPolish, 250);
+        setTimeout(scheduleSnapshotDetailLayoutPolish, 900);
+      }
     }, true);
 
-    var detail = document.getElementById("sl-snapshot-detail");
-    if (detail && window.MutationObserver) {
-      var observer = new MutationObserver(function () {
-        polishSnapshotDetailLayout();
-      });
-
-      observer.observe(detail, { childList: true, subtree: true });
-    }
-
-    setTimeout(polishSnapshotDetailLayout, 500);
-    setTimeout(polishSnapshotDetailLayout, 1200);
+    setTimeout(scheduleSnapshotDetailLayoutPolish, 500);
+    setTimeout(scheduleSnapshotDetailLayoutPolish, 1200);
   }
 
   if (document.readyState === "loading") {
