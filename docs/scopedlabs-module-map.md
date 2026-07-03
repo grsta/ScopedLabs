@@ -1453,3 +1453,5 @@ Promotion note:
 - ACCOUNT_SNAPSHOT_REPORT_COLUMN_LAYOUT_0703: Account snapshot detail tables reserve wider report/detail columns and preserve text spacing when object/HTML table cells are flattened. Owners: `account/index.html`, `assets/account.js`, `scripts/audit-account-snapshot-wide-report-table-layout-v1.js`.
 
 - ACCOUNT_SNAPSHOT_AUDIT_CONTRACT_REFRESH_0703: Account snapshot audits now verify the CSS-owned report column layout and object/text normalizer contract instead of the removed JS-owned wide-table enhancer. Owners: `scripts/audit-account-snapshot-extra-table-layout-v1.js`, `scripts/audit-account-snapshot-wide-report-table-layout-v1.js`.
+
+- ACCOUNT_SNAPSHOT_STABLE_CONTROLLER_RESTORE_0703: Restores the Account page controller to the last known working snapshot/auth UI behavior while keeping the CSS-owned report column layout and fresh cache-bust token. Owners: `assets/account.js`, `account/index.html`, `scripts/audit-account-snapshot-extra-table-layout-v1.js`, `scripts/audit-account-snapshot-wide-report-table-layout-v1.js`.
