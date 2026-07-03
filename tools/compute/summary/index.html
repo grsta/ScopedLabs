@@ -1139,7 +1139,7 @@
       <article id="summaryExportSection" class="card summary-export-card compute-summary-card" aria-labelledby="compute-summary-export-title" data-export-section data-export-title="Compute Summary Report" data-compute-summary-export-section-filled="0628">
         <h2 id="compute-summary-export-title">Final Report Export</h2>
         <p class="compute-summary-note" data-compute-summary-export-fill-note="compute-summary-export-section-filled-0628">
-          The report export includes the summary readiness table, Watch/Risk detail, all saved workload report sections, and optional Compute branch sections currently shown below.
+          The report export includes the summary readiness table, Watch/Risk detail, non-Watch/Risk workload evidence, optional Compute branch sections, and tool notes currently shown below.
         </p>
         <p class="muted summary-section-copy">Add optional report context and open a report-ready summary for the current Compute planning session.</p>
                 <details class="summary-report-details" data-compute-summary-report-metadata="compute-summary-report-metadata-fields-mounted-0628">
@@ -1929,8 +1929,19 @@
           return parts.length ? parts.join(" | ") : "Saved Compute workload";
         }
 
-        function reportRowsForWorkload(savedWorkload, tools, savedResults) {
-          return tools.map(function (tool) {
+        
+        // compute-summary-report-sections-skip-watch-risk-0703
+        function shouldShowInWorkloadReportSection(tool, savedResults) {
+          if (!hasOwn(savedResults, tool)) return true;
+
+          var state = statusOf(savedResults[tool]);
+          return state !== "RISK" && state !== "WATCH" && state !== "FAIL";
+        }
+
+function reportRowsForWorkload(savedWorkload, tools, savedResults) {
+          return tools.filter(function (tool) {
+            return shouldShowInWorkloadReportSection(tool, savedResults);
+          }).map(function (tool) {
             var hasResult = hasOwn(savedResults, tool);
             var record = hasResult ? savedResults[tool] : null;
             var state = hasResult ? statusOf(record) : "PENDING";
@@ -1955,6 +1966,9 @@
         function reportTableForWorkload(savedWorkload, tools, savedResults, emptyText) {
           var title = savedWorkload && savedWorkload.name ? savedWorkload.name : "Compute workload";
           var rows = tools.length ? reportRowsForWorkload(savedWorkload, tools, savedResults) : "";
+          var emptyMessage = tools.length && !rows
+            ? "Watch/Risk items for this workload are listed in the Watch/Risk Detail table above."
+            : emptyText;
 
           return [
             '<h5 class="compute-summary-report-workload-title">',
@@ -1964,7 +1978,7 @@
             "</span></h5>",
             rows
               ? '<table class="result-table compute-summary-table compute-summary-watch-risk-table"><thead><tr><th>Scope / Workload</th><th>Tool</th><th>Status</th><th>Detail / Next Step</th></tr></thead><tbody>' + rows + '</tbody></table>'
-              : '<table class="result-table compute-summary-table compute-summary-watch-risk-table"><tbody><tr><td colspan="4">' + escapeHtml(emptyText) + '</td></tr></tbody></table>'
+              : '<table class="result-table compute-summary-table compute-summary-watch-risk-table"><tbody><tr><td colspan="4">' + escapeHtml(emptyMessage) + '</td></tr></tbody></table>'
           ].join("");
         }
 
