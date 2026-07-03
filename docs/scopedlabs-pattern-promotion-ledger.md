@@ -523,3 +523,7 @@ Audit:
 - Status: Accepted audit foundation
 - Scope: Compute CPU/RAM/GPU Summary readiness
 - Notes: Confirms CPU/RAM/GPU share Compute plan-state ownership. Tracks RAM custom export payload parity and Summary plan-state consumption as WATCH items instead of reopening accepted tool visuals.
+
+### COMPUTE_SUMMARY_MODULE_OWNERSHIP_0703
+
+Accepted Compute Summary page-owned proof promoted to reusable module-owned baseline. The Summary page now consumes `assets/scopedlabs-compute-summary.css` and `assets/scopedlabs-compute-summary.js`, with export config intentionally kept inline before shared report/export assets. Guarded by `scripts/audit-compute-summary-module-ownership-v1.js`.
