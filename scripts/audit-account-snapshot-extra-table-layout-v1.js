@@ -1,89 +1,69 @@
 const fs = require("fs");
 const path = require("path");
 
-const ROOT = process.cwd();
-const VERSION = "account-snapshot-extra-table-layout-audit-002-readable";
+const root = path.resolve(__dirname, "..");
+const accountJsPath = path.join(root, "assets", "account.js");
+const accountHtmlPath = path.join(root, "account", "index.html");
 
-function read(rel) {
-  const target = path.join(ROOT, rel);
-  if (!fs.existsSync(target)) throw new Error("Missing " + rel);
-  return fs.readFileSync(target, "utf8");
+const js = fs.readFileSync(accountJsPath, "utf8");
+const html = fs.readFileSync(accountHtmlPath, "utf8");
+
+const checks = [];
+
+function add(status, id, detail) {
+  checks.push({ status, id, detail });
 }
 
-function exists(rel) {
-  return fs.existsSync(path.join(ROOT, rel));
+function mustContain(source, token, id, fileLabel) {
+  if (source.includes(token)) {
+    add("SAFE", id, fileLabel + " contains " + token);
+  } else {
+    add("FAIL", id, fileLabel + " missing " + token);
+  }
 }
 
-const accountJs = read("assets/account.js");
-const accountIndex = exists("account/index.html") ? read("account/index.html") : "";
-
-const rows = [];
-
-function add(name, status, detail) {
-  rows.push({ name, status, detail });
+function mustNotContain(source, token, id, fileLabel) {
+  if (!source.includes(token)) {
+    add("SAFE", id, fileLabel + " no longer contains " + token);
+  } else {
+    add("FAIL", id, fileLabel + " still contains " + token);
+  }
 }
-
-[
-  "function cleanSnapshotTableText(value)",
-  "account-snapshot-object-cell-normalizer-0703",
-  "const directKeys = [",
-  "Object.entries(value)",
-  "humanizeKey(key) + \": \" + normalized",
-  "function normalizeSnapshotExtraTable(table, sectionTitle)",
-  "function snapshotExtraCellStyle(isHeader)",
-  "function renderSnapshotExtraTable(table, sectionTitle)",
-  "sl-snapshot-extra-table",
-  "sl-snapshot-tool-notes-table",
-  "table-layout:auto; width:100%; min-width:720px",
-  "<colgroup><col style=\"width:34%;\"><col style=\"width:22%;\"><col style=\"width:44%;\"></colgroup>",
-  "headers = [headers[0] || \"Area / Zone\", \"Tool\", headers[1] || \"Tool-Specific Notes\"];",
-  "return renderSnapshotExtraTable(table, section.title || \"\");",
-  "overflow-wrap:break-word",
-  "word-break:normal",
-  "data-label=\""
-].forEach((signal) => {
-  add(
-    "account-snapshot-table-" + signal.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, ""),
-    accountJs.includes(signal) ? "SAFE" : "FAIL",
-    accountJs.includes(signal) ? "account.js contains " + signal : "account.js missing " + signal
-  );
-});
-
-[
-  "overflow-wrap:anywhere",
-  "word-break:break-word",
-  "[object Object]",
-  "table-layout:fixed; width:100%"
-].forEach((signal) => {
-  add(
-    "account-snapshot-no-crush-" + signal.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, ""),
-    !accountJs.includes(signal) ? "SAFE" : "FAIL",
-    !accountJs.includes(signal) ? "account.js no longer contains " + signal : "account.js still contains " + signal
-  );
-});
-
-if (accountIndex) {
-  add(
-    "account-index-cache-bust",
-    accountIndex.includes("/assets/account.js?v=account-snapshot-extra-table-layout-002-readable") ? "SAFE" : "WATCH",
-    accountIndex.includes("/assets/account.js?v=account-snapshot-extra-table-layout-002-readable")
-      ? "account/index.html references readable snapshot table layout cache"
-      : "account/index.html did not expose an account.js cache token to update"
-  );
-} else {
-  add("account-index-present", "WATCH", "account/index.html was not available to audit");
-}
-
-const counts = rows.reduce((acc, row) => {
-  acc[row.status] = (acc[row.status] || 0) + 1;
-  return acc;
-}, {});
 
 console.log("");
 console.log("Account Snapshot Extra Table Layout Audit");
-console.log("Version:", VERSION);
-rows.forEach((row) => console.log(row.status + ": " + row.name + " - " + row.detail));
+console.log("Version: account-snapshot-extra-table-layout-audit-003-css-owned-report-columns");
+
+mustContain(js, "function cleanSnapshotTableText(value)", "account-snapshot-table-function-cleanSnapshotTableText-value", "account.js");
+mustContain(js, "account-snapshot-object-cell-normalizer-0703", "account-snapshot-table-account-snapshot-object-cell-normalizer-0703", "account.js");
+mustContain(js, "account-snapshot-text-spacing-normalizer-0703", "account-snapshot-table-text-spacing-normalizer-0703", "account.js");
+mustContain(js, "const directKeys = [", "account-snapshot-table-const-directKeys", "account.js");
+mustContain(js, "Object.entries(input)", "account-snapshot-table-Object-entries-input", "account.js");
+mustContain(js, 'humanizeKey(key) + ": " + normalized', "account-snapshot-table-humanizeKey-key-normalized", "account.js");
+mustContain(js, 'replace(/<[^>]*>/g, " ")', "account-snapshot-table-html-stripped-with-spacing", "account.js");
+mustContain(js, "replace(/([a-z0-9])([A-Z])/g", "account-snapshot-table-camelcase-spacing", "account.js");
+
+mustContain(html, "account-snapshot-detail-css-table-layout-0703", "account-snapshot-css-layout-marker", "account/index.html");
+mustContain(html, "account-snapshot-detail-report-column-layout-0703", "account-snapshot-report-column-layout-marker", "account/index.html");
+mustContain(html, "min-width: 1040px", "account-snapshot-report-table-min-width", "account/index.html");
+mustContain(html, "nth-child(5)", "account-snapshot-report-five-column-widths", "account/index.html");
+mustContain(html, "width: 36%", "account-snapshot-report-detail-column-width", "account/index.html");
+mustContain(html, "/assets/account.js?v=account-snapshot-report-column-layout-0703", "account-index-cache-bust", "account/index.html");
+
+mustNotContain(js, "[object Object]", "account-snapshot-no-crush-object-Object", "account.js");
+mustNotContain(js, "overflow-wrap:anywhere", "account-snapshot-no-js-crush-overflow-wrap-anywhere", "account.js");
+mustNotContain(js, "word-break:break-word", "account-snapshot-no-js-crush-word-break-break-word", "account.js");
+mustNotContain(js, "table-layout:fixed; width:100%", "account-snapshot-no-js-fixed-table-layout", "account.js");
+
+let counts = { SAFE: 0, FAIL: 0, WATCH: 0 };
+for (const check of checks) {
+  counts[check.status] = (counts[check.status] || 0) + 1;
+  console.log(check.status + ": " + check.id + " - " + check.detail);
+}
+
 console.log("");
 console.log("Summary:", JSON.stringify(counts));
 
-if (counts.FAIL) process.exit(1);
+if (counts.FAIL > 0) {
+  process.exit(1);
+}

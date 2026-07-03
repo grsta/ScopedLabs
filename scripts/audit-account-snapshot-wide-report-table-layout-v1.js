@@ -1,35 +1,61 @@
 const fs = require("fs");
 const path = require("path");
 
-const root = process.cwd();
-const accountJs = fs.readFileSync(path.join(root, "assets", "account.js"), "utf8");
-const accountHtml = fs.readFileSync(path.join(root, "account", "index.html"), "utf8");
+const root = path.resolve(__dirname, "..");
+const accountJsPath = path.join(root, "assets", "account.js");
+const accountHtmlPath = path.join(root, "account", "index.html");
 
-let pass = 0;
-let fail = 0;
+const js = fs.readFileSync(accountJsPath, "utf8");
+const html = fs.readFileSync(accountHtmlPath, "utf8");
 
-function check(name, condition, detail) {
-  if (condition) {
-    pass += 1;
-    console.log("[PASS] " + name);
+const checks = [];
+
+function pass(name) {
+  checks.push({ name, ok: true });
+}
+
+function fail(name) {
+  checks.push({ name, ok: false });
+}
+
+function requireToken(name, source, token) {
+  if (source.includes(token)) pass(name);
+  else fail(name);
+}
+
+function forbidToken(name, source, token) {
+  if (!source.includes(token)) pass(name);
+  else fail(name);
+}
+
+requireToken("ACCOUNT_SNAPSHOT_CSS_LAYOUT_MARKER", html, "account-snapshot-detail-css-table-layout-0703");
+requireToken("ACCOUNT_SNAPSHOT_REPORT_COLUMN_LAYOUT_MARKER", html, "account-snapshot-detail-report-column-layout-0703");
+requireToken("ACCOUNT_SNAPSHOT_CACHE_BUST_REPORT_COLUMN_LAYOUT", html, "/assets/account.js?v=account-snapshot-report-column-layout-0703");
+forbidToken("ACCOUNT_SNAPSHOT_OLD_WIDE_JS_REMOVED", js, "account-snapshot-wide-report-table-layout-0703");
+forbidToken("ACCOUNT_SNAPSHOT_SAFE_WIDE_JS_REMOVED", js, "account-snapshot-wide-report-table-layout-safe-0703");
+forbidToken("ACCOUNT_SNAPSHOT_NO_DETAIL_MUTATION_OBSERVER", js, "observer.observe(detail");
+requireToken("ACCOUNT_SNAPSHOT_OBJECT_NORMALIZER_PRESERVED", js, "account-snapshot-object-cell-normalizer-0703");
+requireToken("ACCOUNT_SNAPSHOT_TEXT_SPACING_NORMALIZER", js, "account-snapshot-text-spacing-normalizer-0703");
+requireToken("ACCOUNT_SNAPSHOT_CSS_TABLE_MIN_WIDTH", html, "min-width: 1040px");
+requireToken("ACCOUNT_SNAPSHOT_CSS_COLUMN_PRESETS", html, "nth-child(5)");
+requireToken("ACCOUNT_SNAPSHOT_DETAIL_COLUMN_WIDTH", html, "width: 36%");
+
+let passCount = 0;
+let failCount = 0;
+
+for (const check of checks) {
+  if (check.ok) {
+    passCount += 1;
+    console.log("[PASS] " + check.name);
   } else {
-    fail += 1;
-    console.log("[FAIL] " + name);
-    if (detail) console.log("  " + detail);
+    failCount += 1;
+    console.log("[FAIL] " + check.name);
   }
 }
 
-check("ACCOUNT_SNAPSHOT_CSS_LAYOUT_MARKER", accountHtml.includes("account-snapshot-detail-css-table-layout-0703"));
-check("ACCOUNT_SNAPSHOT_CACHE_BUST_CSS_LAYOUT", accountHtml.includes("/assets/account.js?v=account-snapshot-detail-css-layout-0703"));
-check("ACCOUNT_SNAPSHOT_OLD_WIDE_JS_REMOVED", !accountJs.includes("account-snapshot-wide-report-table-layout-0703"));
-check("ACCOUNT_SNAPSHOT_SAFE_WIDE_JS_REMOVED", !accountJs.includes("account-snapshot-wide-report-table-layout-safe-0703"));
-check("ACCOUNT_SNAPSHOT_NO_DETAIL_MUTATION_OBSERVER", !accountJs.includes("observer.observe(detail"));
-check("ACCOUNT_SNAPSHOT_OBJECT_NORMALIZER_PRESERVED", accountJs.includes("account-snapshot-object-cell-normalizer-0703"));
-check("ACCOUNT_SNAPSHOT_CSS_TABLE_WIDTH", accountHtml.includes("#sl-snapshot-detail table"));
-check("ACCOUNT_SNAPSHOT_CSS_COLUMN_PRESETS", accountHtml.includes("nth-child(5)"));
+console.log("\\nSCOPEDLABS ACCOUNT SNAPSHOT WIDE REPORT TABLE LAYOUT AUDIT V1");
+console.log("PASS " + passCount + " / FAIL " + failCount);
 
-console.log("");
-console.log("SCOPEDLABS ACCOUNT SNAPSHOT WIDE REPORT TABLE LAYOUT AUDIT V1");
-console.log("PASS " + pass + " / FAIL " + fail);
-
-if (fail) process.exit(1);
+if (failCount > 0) {
+  process.exit(1);
+}
