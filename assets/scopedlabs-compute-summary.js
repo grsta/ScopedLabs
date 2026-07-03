@@ -1433,3 +1433,67 @@ function reportRowsForWorkload(savedWorkload, tools, savedResults) {
     bindClearSummaryToolNotes();
   }
 })();
+
+
+/* compute-summary-clear-summary-tool-notes-handler-repair-0703 */
+(function () {
+  var STORAGE_KEY = "scopedlabs.compute.summary.toolNotes.v1";
+
+  function syncExportMirror() {
+    try {
+      if (typeof window.syncComputeSummaryToolNotesExport === "function") {
+        window.syncComputeSummaryToolNotesExport();
+      }
+    } catch (error) {}
+
+    try {
+      document.dispatchEvent(new CustomEvent("scopedlabs:compute-summary-tool-notes-cleared", {
+        detail: { key: STORAGE_KEY }
+      }));
+    } catch (error) {}
+  }
+
+  function bindClearSummaryNotesRepair() {
+    var button = document.getElementById("clearComputeSummaryToolNotes");
+    var textarea = document.getElementById("computeSummaryToolNotes");
+    var status = document.getElementById("computeSummaryToolNotesStatus");
+
+    if (!button || !textarea) return;
+
+    button.onclick = function () {
+      var currentValue = String(textarea.value || "").trim();
+
+      if (currentValue && !window.confirm("Clear Summary Tool Notes for this browser?")) {
+        return;
+      }
+
+      textarea.value = "";
+
+      try {
+        window.localStorage.removeItem(STORAGE_KEY);
+      } catch (error) {}
+
+      window.ScopedLabsUserToolNotes = window.ScopedLabsUserToolNotes || {};
+      window.ScopedLabsUserToolNotes[STORAGE_KEY] = "";
+
+      if (status) {
+        status.textContent = "Summary Tool Notes cleared for this browser.";
+      }
+
+      syncExportMirror();
+
+      setTimeout(function () {
+        try {
+          window.localStorage.removeItem(STORAGE_KEY);
+        } catch (error) {}
+        syncExportMirror();
+      }, 80);
+    };
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bindClearSummaryNotesRepair);
+  } else {
+    bindClearSummaryNotesRepair();
+  }
+})();

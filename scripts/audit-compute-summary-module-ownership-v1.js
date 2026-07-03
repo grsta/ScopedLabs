@@ -85,8 +85,8 @@ const exportConfigInline = inlineScripts.some(function (script) {
     script.body.includes("window.ScopedLabsExportConfig");
 });
 
-check("COMPUTE_SUMMARY_MODULE_CSS_LINKED", html.includes("/assets/scopedlabs-compute-summary.css?v=scopedlabs-compute-summary-001"));
-check("COMPUTE_SUMMARY_MODULE_JS_LINKED", html.includes("/assets/scopedlabs-compute-summary.js?v=scopedlabs-compute-summary-001"));
+check("COMPUTE_SUMMARY_MODULE_CSS_LINKED", html.includes("/assets/scopedlabs-compute-summary.css?v=scopedlabs-compute-summary-002-clear-summary-notes"));
+check("COMPUTE_SUMMARY_MODULE_JS_LINKED", html.includes("/assets/scopedlabs-compute-summary.js?v=scopedlabs-compute-summary-002-clear-summary-notes"));
 check("COMPUTE_SUMMARY_INLINE_STYLE_REMOVED", styleBlockCount === 0, "Inline style blocks: " + styleBlockCount);
 check("COMPUTE_SUMMARY_ONLY_EXPORT_CONFIG_INLINE", inlineScripts.length === 1 && exportConfigInline, "Inline script blocks: " + inlineScripts.length);
 check("COMPUTE_SUMMARY_CSS_MARKER", css.includes("COMPUTE_SUMMARY_MODULE_OWNERSHIP_0703"));
