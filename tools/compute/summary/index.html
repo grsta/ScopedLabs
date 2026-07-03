@@ -1053,6 +1053,55 @@
       border-color: rgba(125,255,158,.42) !important;
       background: rgba(72,255,132,.12) !important;
     }
+
+    /* compute-summary-live-rollup-frame-cleanup-0703 */
+    .summary-results-card .result-table-wrap {
+      border-left: 0 !important;
+      border-right: 0 !important;
+      border-bottom: 0 !important;
+      border-radius: 0 !important;
+      overflow: visible !important;
+    }
+
+    [data-compute-summary-results-table] {
+      border: 0 !important;
+      border-collapse: separate !important;
+      border-spacing: 0 !important;
+      border-radius: 12px !important;
+      box-shadow: 0 0 0 1px rgba(125,255,158,.16) !important;
+      overflow: hidden !important;
+    }
+
+    [data-compute-summary-results-table] th:first-child,
+    [data-compute-summary-results-table] td:first-child {
+      border-left: 0 !important;
+    }
+
+    [data-compute-summary-results-table] th:last-child,
+    [data-compute-summary-results-table] td:last-child {
+      border-right: 0 !important;
+    }
+
+    [data-compute-summary-results-table] tbody tr:last-child td {
+      border-bottom: 0 !important;
+    }
+
+    #computeSummaryGapList.result-table-wrap {
+      border: 1px solid rgba(125,255,158,.16) !important;
+      border-radius: 12px !important;
+      background: rgba(5, 22, 14, .48) !important;
+      padding: 12px 14px !important;
+      overflow: hidden !important;
+    }
+
+    #computeSummaryGapList.result-table-wrap table {
+      margin: -12px -14px !important;
+      width: calc(100% + 28px) !important;
+    }
+
+    #computeSummaryGapList.result-table-wrap td {
+      border-bottom: 0 !important;
+    }
 </style>
 </head>
 <body data-tool="compute-summary" data-step="compute-summary" data-category="compute">
