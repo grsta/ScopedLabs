@@ -1425,3 +1425,11 @@ Promotion note:
 - JS owner: `assets/scopedlabs-compute-summary.js`
 - Audit: `scripts/audit-compute-summary-module-ownership-v1.js`
 - Behavior: clears `scopedlabs.compute.summary.toolNotes.v1` from browser localStorage, empties the editable Summary Tool Notes textarea, updates status copy, and triggers note sync events.
+
+### ACCOUNT_SNAPSHOT_OBJECT_CELL_NORMALIZER_0703
+
+- Scope: Account saved snapshot renderer now flattens structured table cells into readable text instead of browser-default `[object Object]`.
+- HTML host: `account/index.html`
+- JS owner: `assets/account.js`
+- Audit: `scripts/audit-account-snapshot-extra-table-layout-v1.js`
+- Preserves: account auth, entitlements, saved snapshot list/detail view, and existing snapshot table layout.

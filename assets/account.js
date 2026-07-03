@@ -208,7 +208,111 @@
   }
 
   function cleanSnapshotTableText(value) {
-    return String(value || "").replace(/\s+/g, " ").trim();
+    // account-snapshot-object-cell-normalizer-0703
+    const seen = new WeakSet();
+
+    function humanizeKey(key) {
+      return String(key || "")
+        .replace(/[_-]+/g, " ")
+        .replace(/([a-z])([A-Z])/g, "$1 $2")
+        .replace(/\s+/g, " ")
+        .trim()
+        .replace(/^./, (ch) => ch.toUpperCase());
+    }
+
+    function stripHtml(text) {
+      return String(text || "")
+        .replace(/<br\s*\/?\s*>/gi, "\n")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function normalize(value, depth) {
+      if (value == null) return "";
+
+      if (typeof value === "string") {
+        return stripHtml(value);
+      }
+
+      if (typeof value === "number" || typeof value === "boolean") {
+        return String(value);
+      }
+
+      if (value instanceof Date) {
+        return value.toLocaleString();
+      }
+
+      if (Array.isArray(value)) {
+        return value
+          .map((item) => normalize(item, depth + 1))
+          .filter(Boolean)
+          .join(" | ");
+      }
+
+      if (typeof value === "object") {
+        if (seen.has(value)) return "";
+        seen.add(value);
+
+        const directKeys = [
+          "text",
+          "value",
+          "label",
+          "title",
+          "name",
+          "status",
+          "detail",
+          "details",
+          "summary",
+          "note",
+          "notes",
+          "message",
+          "description",
+          "primary",
+          "secondary",
+          "tool",
+          "workload",
+          "scope",
+          "section"
+        ];
+
+        for (const key of directKeys) {
+          if (Object.prototype.hasOwnProperty.call(value, key)) {
+            const normalized = normalize(value[key], depth + 1);
+            if (normalized) return normalized;
+          }
+        }
+
+        const ignoredKeys = new Set([
+          "tone",
+          "style",
+          "className",
+          "class",
+          "colSpan",
+          "rowSpan",
+          "isHeader",
+          "header",
+          "dataset",
+          "attrs",
+          "attributes"
+        ]);
+
+        const parts = Object.entries(value)
+          .filter(([key]) => !ignoredKeys.has(key))
+          .map(([key, val]) => {
+            const normalized = normalize(val, depth + 1);
+            if (!normalized) return "";
+            return depth > 1 ? normalized : humanizeKey(key) + ": " + normalized;
+          })
+          .filter(Boolean);
+
+        return parts.join(" | ");
+      }
+
+      return String(value || "");
+    }
+
+    return normalize(value, 0);
   }
 
   function normalizeSnapshotExtraTable(table, sectionTitle) {

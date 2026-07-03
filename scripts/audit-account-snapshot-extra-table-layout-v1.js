@@ -25,6 +25,10 @@ function add(name, status, detail) {
 
 [
   "function cleanSnapshotTableText(value)",
+  "account-snapshot-object-cell-normalizer-0703",
+  "const directKeys = [",
+  "Object.entries(value)",
+  "humanizeKey(key) + \": \" + normalized",
   "function normalizeSnapshotExtraTable(table, sectionTitle)",
   "function snapshotExtraCellStyle(isHeader)",
   "function renderSnapshotExtraTable(table, sectionTitle)",
@@ -48,6 +52,7 @@ function add(name, status, detail) {
 [
   "overflow-wrap:anywhere",
   "word-break:break-word",
+  "[object Object]",
   "table-layout:fixed; width:100%"
 ].forEach((signal) => {
   add(
