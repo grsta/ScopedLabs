@@ -24,7 +24,7 @@
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
   <script defer src="/assets/auth.js?v=auth-magiclink-session-restore-0527"></script>
-  <script defer src="/assets/account.js?v=account-snapshot-wide-report-tables-safe-0703"></script>
+  <script defer src="/assets/account.js?v=account-snapshot-detail-css-layout-0703"></script>
 
   <style data-scopedlabs-account-snapshots>
     .sl-snapshots-list {
@@ -204,7 +204,7 @@
     }
   </style>
 
-  <style data-account-snapshot-wide-report-table-layout="account-snapshot-wide-report-table-layout-style-0703">
+  <style data-account-snapshot-detail-css-table-layout="account-snapshot-detail-css-table-layout-0703">
     #sl-snapshots-card,
     #sl-snapshot-detail {
       max-width: min(1180px, calc(100vw - 48px));
@@ -215,19 +215,44 @@
       overflow-x: auto;
     }
 
-    #sl-snapshot-detail .sl-snapshot-wide-report-table {
+    #sl-snapshot-detail table {
       width: 100% !important;
       min-width: 0 !important;
       table-layout: fixed !important;
     }
 
-    #sl-snapshot-detail .sl-snapshot-wide-report-table th,
-    #sl-snapshot-detail .sl-snapshot-wide-report-table td {
+    #sl-snapshot-detail th,
+    #sl-snapshot-detail td {
       white-space: normal !important;
       overflow-wrap: break-word !important;
       word-break: normal !important;
       vertical-align: top !important;
       line-height: 1.36 !important;
+    }
+
+    #sl-snapshot-detail table th:nth-child(1),
+    #sl-snapshot-detail table td:nth-child(1) {
+      width: 28%;
+    }
+
+    #sl-snapshot-detail table th:nth-child(2),
+    #sl-snapshot-detail table td:nth-child(2) {
+      width: 16%;
+    }
+
+    #sl-snapshot-detail table th:nth-child(3),
+    #sl-snapshot-detail table td:nth-child(3) {
+      width: 12%;
+    }
+
+    #sl-snapshot-detail table th:nth-child(4),
+    #sl-snapshot-detail table td:nth-child(4) {
+      width: 20%;
+    }
+
+    #sl-snapshot-detail table th:nth-child(5),
+    #sl-snapshot-detail table td:nth-child(5) {
+      width: 24%;
     }
   </style>
 </head>

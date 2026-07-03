@@ -19,15 +19,14 @@ function check(name, condition, detail) {
   }
 }
 
-check("ACCOUNT_SNAPSHOT_WIDE_LAYOUT_SAFE_MARKER", accountJs.includes("account-snapshot-wide-report-table-layout-safe-0703"));
-check("ACCOUNT_SNAPSHOT_OLD_MUTATION_OBSERVER_REMOVED", !accountJs.includes("observer.observe(detail"));
-check("ACCOUNT_SNAPSHOT_CACHE_BUST_SAFE", accountHtml.includes("/assets/account.js?v=account-snapshot-wide-report-tables-safe-0703"));
-check("ACCOUNT_SNAPSHOT_WIDE_TABLE_CLASS", accountJs.includes("sl-snapshot-wide-report-table"));
-check("ACCOUNT_SNAPSHOT_WIDE_COLGROUP", accountJs.includes("data-account-snapshot-wide-widths"));
-check("ACCOUNT_SNAPSHOT_COLGROUP_SIGNATURE", accountJs.includes("data-account-snapshot-wide-width-signature"));
-check("ACCOUNT_SNAPSHOT_COLUMN_PRESETS", accountJs.includes("widthsForSnapshotHeaders"));
-check("ACCOUNT_SNAPSHOT_POLISH_BINDING", accountJs.includes("polishSnapshotDetailLayout"));
-check("ACCOUNT_SNAPSHOT_REQUEST_ANIMATION_FRAME", accountJs.includes("requestAnimationFrame"));
+check("ACCOUNT_SNAPSHOT_CSS_LAYOUT_MARKER", accountHtml.includes("account-snapshot-detail-css-table-layout-0703"));
+check("ACCOUNT_SNAPSHOT_CACHE_BUST_CSS_LAYOUT", accountHtml.includes("/assets/account.js?v=account-snapshot-detail-css-layout-0703"));
+check("ACCOUNT_SNAPSHOT_OLD_WIDE_JS_REMOVED", !accountJs.includes("account-snapshot-wide-report-table-layout-0703"));
+check("ACCOUNT_SNAPSHOT_SAFE_WIDE_JS_REMOVED", !accountJs.includes("account-snapshot-wide-report-table-layout-safe-0703"));
+check("ACCOUNT_SNAPSHOT_NO_DETAIL_MUTATION_OBSERVER", !accountJs.includes("observer.observe(detail"));
+check("ACCOUNT_SNAPSHOT_OBJECT_NORMALIZER_PRESERVED", accountJs.includes("account-snapshot-object-cell-normalizer-0703"));
+check("ACCOUNT_SNAPSHOT_CSS_TABLE_WIDTH", accountHtml.includes("#sl-snapshot-detail table"));
+check("ACCOUNT_SNAPSHOT_CSS_COLUMN_PRESETS", accountHtml.includes("nth-child(5)"));
 
 console.log("");
 console.log("SCOPEDLABS ACCOUNT SNAPSHOT WIDE REPORT TABLE LAYOUT AUDIT V1");
