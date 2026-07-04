@@ -1,0 +1,83 @@
+{
+  "version": "scopedlabs-category-branch-boundaries-0704",
+  "purpose": "Tier-aware category branch boundaries for ScopedLabs planners and tool branch recommendations.",
+  "rules": {
+    "categoryTier": {
+      "allowNow": [
+        "same-category core routes",
+        "same-category optional or specialty branch routes"
+      ],
+      "carryOnly": [
+        "cross-category dependency notes may be carried into payloads, summaries, and future Gold-tier review context"
+      ],
+      "blockedNow": [
+        "visible CTA routing into another category",
+        "planner branch routing into another category",
+        "tool-level next-step routing into another category"
+      ]
+    },
+    "goldTier": {
+      "allowedLater": [
+        "cross-category dependency coordination",
+        "Site Summary recommendations",
+        "Site Assistant routing",
+        "Gold-tier final report cross-category next steps"
+      ],
+      "approvedSurfaceRequirement": "Cross-category routing must be owned by approved Gold-tier, Site Summary, or Site Assistant surfaces."
+    }
+  },
+  "categories": {
+    "compute": {
+      "categoryPath": "/tools/compute/",
+      "coreTools": [
+        "cpu-sizing",
+        "ram-sizing",
+        "storage-iops",
+        "storage-throughput",
+        "vm-density"
+      ],
+      "optionalTools": [
+        "gpu-vram",
+        "power-thermal",
+        "backup-window",
+        "nic-bonding",
+        "raid-rebuild-time"
+      ],
+      "standardRoutePrefixesAllowed": [
+        "/tools/compute/"
+      ],
+      "standardRoutePrefixesBlocked": [
+        "/tools/access-control/",
+        "/tools/physical-security/",
+        "/tools/network/",
+        "/tools/power/",
+        "/tools/storage/"
+      ],
+      "goldCarryOnlyNotesAllowed": true,
+      "firstProofTargets": [
+        {
+          "tool": "storage-iops",
+          "files": [
+            "tools/compute/storage-iops/index.html",
+            "tools/compute/storage-iops/script.js"
+          ],
+          "allowedBranchTools": [
+            "raid-rebuild-time",
+            "backup-window"
+          ],
+          "continueNext": "storage-throughput",
+          "blockedCrossCategoryCtas": true
+        }
+      ]
+    }
+  },
+  "futureGoldSurfaces": {
+    "note": "These are placeholders for future Gold-tier/Site Summary/Site Assistant ownership. Normal category tools must not claim these routes until the Gold surface exists and is audited.",
+    "allowedOwnerTypes": [
+      "gold-tier",
+      "site-summary",
+      "site-assistant",
+      "cross-category-final-report"
+    ]
+  }
+}
