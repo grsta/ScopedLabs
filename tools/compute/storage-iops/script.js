@@ -74,7 +74,7 @@
 
       Upstream RAM context must stay available to calculations, ledger payloads,
       export, snapshot, and downstream routing. It should not render as a visible
-      generated Flow Context block on the tool page. The active workload card,
+      generated carryover/debug block on the tool page. The active workload card,
       assistant output, export payload, and ledger are the visible/report owners.
     */
     if (!els.flowNote) return;
