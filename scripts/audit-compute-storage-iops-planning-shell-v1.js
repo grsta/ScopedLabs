@@ -77,6 +77,8 @@ check("OLD_DESIGN_FLOW_INTRO_REMOVED", !html.includes("Part of a Design Flow"));
 
 check("FLOW_CONTEXT_ANCHOR_PRESENT_BUT_HIDDEN", html.includes('id="flow-note"') && html.includes('class="flow-note"') && html.includes("hidden"));
 check("FLOW_CONTEXT_HIDDEN_BY_COMPUTE_SHELL_CONTRACT", shellContract.includes("function hideGeneratedFlowContext") && shellContract.includes("data-compute-flow-context-hidden") && shellContract.includes("hideGeneratedFlowContext();"));
+check("FLOW_CONTEXT_CSS_GUARD_PRESENT", shellContract.includes("computeGeneratedFlowContextGuard") && shellContract.includes("#flow-note") && shellContract.includes("display: none !important"));
+check("FLOW_CONTEXT_OBSERVER_PRESENT", shellContract.includes("function watchGeneratedFlowContext") && shellContract.includes("MutationObserver") && shellContract.includes("watchGeneratedFlowContext();"));
 check("COMPUTE_SHELL_ACCEPTS_CUSTOM_SHELL_TOKENS", shellContract.includes("!!body.dataset.computeToolShell"));
 
 check("BACK_LINK_TO_RAM_PRESENT", html.includes('href="/tools/compute/ram-sizing/"') && html.includes("Back to RAM Sizing"));

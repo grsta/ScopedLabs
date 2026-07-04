@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-compute-shell-contract-015-hide-generated-flow-context";
+  var VERSION = "scopedlabs-compute-shell-contract-016-flow-context-observer";
 
   function isComputeShellPage() {
     var body = document.body;
@@ -145,6 +145,108 @@
       node.style.display = "none";
       node.style.visibility = "hidden";
     });
+  }
+
+
+  function installGeneratedFlowContextCssGuard() {
+    if (!isComputeShellPage()) return;
+
+    if (document.getElementById("computeGeneratedFlowContextGuard")) return;
+
+    var style = document.createElement("style");
+    style.id = "computeGeneratedFlowContextGuard";
+    style.setAttribute("data-compute-flow-context-guard", "true");
+    style.textContent = [
+      'body[data-category="compute"][data-compute-tool-shell] #flow-note,',
+      'body[data-category="compute"][data-compute-tool-shell] .flow-note,',
+      'body[data-category="compute"][data-compute-tool-shell] [data-compute-flow-context],',
+      'body[data-category="compute"][data-compute-tool-shell] [data-flow-context] {',
+      '  display: none !important;',
+      '  visibility: hidden !important;',
+      '}'
+    ].join("\n");
+
+    document.head.appendChild(style);
+  }
+
+
+  function hideGeneratedFlowContext() {
+    if (!isComputeShellPage()) return;
+
+    installGeneratedFlowContextCssGuard();
+
+    var candidates = [];
+
+    var direct = document.getElementById("flow-note");
+    if (direct) candidates.push(direct);
+
+    Array.from(document.querySelectorAll(".flow-note, [data-compute-flow-context], [data-flow-context]")).forEach(function (node) {
+      if (candidates.indexOf(node) === -1) candidates.push(node);
+    });
+
+    Array.from(document.querySelectorAll("section, div, p")).forEach(function (node) {
+      if (candidates.indexOf(node) !== -1) return;
+
+      var text = String(node.textContent || "").replace(/\s+/g, " ").trim();
+      if (!text) return;
+
+      var className = String(node.className || "").toLowerCase();
+      var id = String(node.id || "").toLowerCase();
+
+      var looksLikeGeneratedFlowContext =
+        /^flow context\b/i.test(text) ||
+        (
+          text.indexOf("Recommended RAM:") !== -1 &&
+          text.indexOf("Memory Status:") !== -1 &&
+          text.length < 1000
+        ) ||
+        (
+          text.indexOf("This step checks whether storage performance becomes the next practical bottleneck") !== -1 &&
+          text.length < 1000
+        ) ||
+        (
+          (className.indexOf("flow") !== -1 || id.indexOf("flow") !== -1) &&
+          text.indexOf("Primary Constraint:") !== -1 &&
+          text.length < 1000
+        );
+
+      if (looksLikeGeneratedFlowContext) {
+        candidates.push(node);
+      }
+    });
+
+    candidates.forEach(function (node) {
+      node.hidden = true;
+      node.setAttribute("hidden", "");
+      node.setAttribute("aria-hidden", "true");
+      node.setAttribute("data-compute-flow-context-hidden", "compute-shell-contract");
+      node.style.setProperty("display", "none", "important");
+      node.style.setProperty("visibility", "hidden", "important");
+    });
+  }
+
+  function watchGeneratedFlowContext() {
+    if (!isComputeShellPage()) return;
+    if (window.__scopedlabsComputeFlowContextObserverInstalled) return;
+
+    window.__scopedlabsComputeFlowContextObserverInstalled = true;
+
+    hideGeneratedFlowContext();
+    watchGeneratedFlowContext();
+
+    var observer = new MutationObserver(function () {
+      hideGeneratedFlowContext();
+    });
+
+    observer.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ["hidden", "style", "class"]
+    });
+
+    window.__scopedlabsComputeFlowContextObserver = observer;
   }
 
 function computeWorkloadToolLabelFromPage() {
@@ -423,6 +525,8 @@ function computeWorkloadToolLabelFromPage() {
     run: run,
     normalizeFlowActions: normalizeFlowActions,
     hideGeneratedFlowContext: hideGeneratedFlowContext,
+    installGeneratedFlowContextCssGuard: installGeneratedFlowContextCssGuard,
+    watchGeneratedFlowContext: watchGeneratedFlowContext,
     ensureFlowActionsPlacement: ensureFlowActionsPlacement
   });
 
