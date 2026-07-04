@@ -344,7 +344,144 @@
 
 
 
-  </style>
+  
+    /* storage-iops-result-ram-parity-style-0704 */
+    .storage-iops-result-summary-card {
+      padding: 14px;
+    }
+
+    .storage-iops-result-summary-card > .h3 {
+      display: none;
+    }
+
+    .storage-iops-result-summary {
+      display: block;
+    }
+
+    .storage-iops-result-panel {
+      padding: 16px;
+      border: 1px solid rgba(20, 185, 109, 0.34);
+      border-radius: 12px;
+      background:
+        radial-gradient(circle at 0% 0%, rgba(34, 197, 94, 0.08), transparent 34%),
+        rgba(1, 18, 14, 0.72);
+      box-shadow: inset 0 0 0 1px rgba(112, 255, 145, 0.035);
+    }
+
+    .storage-iops-result-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 0;
+      border-bottom: 0;
+      margin-bottom: 12px;
+    }
+
+    .storage-iops-result-title {
+      margin: 0;
+      color: rgba(241, 255, 245, 0.98);
+      font-size: 1.02rem;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .storage-iops-result-subtitle {
+      margin: 7px 0 0;
+      max-width: 780px;
+      color: rgba(210, 237, 230, 0.84);
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+
+    .storage-iops-result-chip {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 64px;
+      min-height: 30px;
+      padding: 7px 12px;
+      border-radius: 4px;
+      border: 1px solid rgba(112, 255, 145, 0.28);
+      background: rgba(112, 255, 145, 0.08);
+      color: rgba(231, 255, 236, 0.96);
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      line-height: 1.1;
+      text-transform: uppercase;
+    }
+
+    .storage-iops-result-chip.watch {
+      border-color: rgba(255, 204, 102, 0.42);
+      background: rgba(255, 204, 102, 0.10);
+      color: rgba(255, 236, 188, 0.98);
+    }
+
+    .storage-iops-result-chip.risk {
+      border-color: rgba(255, 108, 108, 0.45);
+      background: rgba(255, 108, 108, 0.11);
+      color: rgba(255, 214, 214, 0.98);
+    }
+
+    .storage-iops-result-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .storage-iops-result-cell {
+      min-height: 64px;
+      padding: 10px 12px;
+      border: 1px solid rgba(20, 185, 109, 0.22);
+      border-radius: 8px;
+      background: rgba(0, 10, 8, 0.58);
+    }
+
+    .storage-iops-result-cell-label {
+      color: rgba(160, 210, 255, 0.76);
+      font-size: 0.68rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .storage-iops-result-cell-value {
+      margin-top: 7px;
+      color: rgba(255, 255, 255, 0.97);
+      font-size: 0.94rem;
+      line-height: 1.42;
+      font-weight: 750;
+    }
+
+    .storage-iops-result-carry {
+      margin: 12px 0 0;
+      padding-left: 12px;
+      border-left: 3px solid rgba(20, 185, 109, 0.78);
+      color: rgba(210, 237, 230, 0.88);
+      font-size: 0.92rem;
+      line-height: 1.48;
+    }
+
+    @media (max-width: 760px) {
+      .storage-iops-result-head {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .storage-iops-result-chip {
+        width: fit-content;
+      }
+
+      .storage-iops-result-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+</style>
 
   <style data-scopedlabs-export-card-styles>
     .export-grid {
@@ -528,7 +665,6 @@
         </p>
       </div>
       <section id="computeStorageIopsResultCard" class="card compute-static-summary-card-shell storage-iops-result-summary-card" style="margin-top: 14px;" hidden data-storage-iops-result-card data-export-section="true" data-export-title="Storage IOPS Result Summary">
-        <h3 class="h3" style="margin-top: 0;">Storage IOPS result summary</h3>
         <div id="computeStorageIopsResultSummary" class="storage-iops-result-summary" aria-live="polite">
           <div class="muted">Run the calculator to generate the Storage IOPS recommendation.</div>
         </div>
@@ -653,7 +789,7 @@
   <script src="/assets/scopedlabs-compute-guided-route-engine.js?v=scopedlabs-compute-guided-route-engine-004-tool-continue-route"></script>
   <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-002"></script>
   <script src="/assets/scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-020-storage-iops-export"></script>
-  <script src="./script.js?v=compute-storage-iops-result-summary-card-0704"></script>
+  <script src="./script.js?v=compute-storage-iops-result-ram-parity-0704"></script>
 
   <script defer src="/assets/help.js?v=help-026"></script>
   <script src="/assets/scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-016-flow-context-observer"></script>

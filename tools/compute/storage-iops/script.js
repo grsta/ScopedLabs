@@ -187,48 +187,75 @@
   function renderStorageIopsResultSummary(result) {
     if (!els.resultCard || !els.resultSummary || !result) return;
 
-    const status = String(result.status || result.summaryStatus || "WATCH").toUpperCase();
-    const chipClass = storageIopsStatusClass(status);
+    const rawStatus = String(result.status || result.summaryStatus || "WATCH").toUpperCase();
+    const displayStatus = rawStatus === "HEALTHY" ? "GOOD" : rawStatus;
+    const chipClass = storageIopsStatusClass(rawStatus);
+
     const finalIops = Number(result.finalIops || result.requiredIops || 0);
     const availableIops = Number(result.availableIops || 0);
     const utilizationPct = Number(result.utilizationPct || 0);
     const reserveIops = Number(result.reserveIops || 0);
+
     const primaryConstraint = result.primaryConstraint || result.dominantConstraint || "Storage IOPS validation required.";
+    const statusSentence = chipClass === "risk"
+      ? "Storage IOPS is beyond the available platform edge. Validate the storage tier before treating downstream throughput, density, or platform checks as valid."
+      : chipClass === "watch"
+        ? "Storage IOPS is usable for planning, but reserve pressure should be validated before continuing."
+        : "Storage IOPS has enough planning margin to continue into Storage Throughput validation.";
+
     const recommendation = result.recommendation || (
       chipClass === "risk"
-        ? "Storage IOPS demand is too close to the edge. Reduce write pressure, increase available IOPS, or validate the storage tier before continuing."
+        ? "Increase available platform IOPS, reduce write penalty, or reduce burst pressure for the active workload."
         : chipClass === "watch"
-          ? "Storage IOPS is workable, but reserve pressure should be validated before moving into throughput planning."
-          : "Storage IOPS has enough planning margin to continue into Storage Throughput validation."
+          ? "Continue with caution and verify peak windows, reserve margin, and storage tier assumptions."
+          : "Continue to Storage Throughput with the current IOPS assumptions."
     );
+
     const confidence = result.confidence || (
       chipClass === "risk"
-        ? "Medium - measured workload traces are recommended before final sizing."
+        ? "MEDIUM"
         : chipClass === "watch"
-          ? "Medium - validate peak windows, reserve, and storage tier assumptions."
-          : "High - inputs show adequate IOPS headroom for planning."
+          ? "MEDIUM"
+          : "HIGH"
     );
-    const carryForward = result.nextStep || "Continue next to Storage Throughput. Keep RAID Rebuild and Backup Window as Compute-only specialty checks if write pressure or resiliency risk remains.";
+
+    const decisionFlags = [
+      "Required " + formatNumber(finalIops) + " IOPS",
+      "Available " + formatNumber(availableIops) + " IOPS",
+      "Utilization " + formatPct(utilizationPct),
+      "Reserve " + formatNumber(reserveIops) + " IOPS"
+    ].join(" | ");
+
+    const carryForward = result.nextStep || "Carry this Storage IOPS result into Storage Throughput. Keep RAID Rebuild and Backup Window as Compute-only specialty checks if write pressure or resiliency risk remains.";
 
     els.resultSummary.innerHTML = [
-      '<div class="storage-iops-result-head">',
-        '<div>',
-          '<p class="storage-iops-result-title">Storage IOPS recommendation</p>',
-          '<p class="storage-iops-result-subtitle">Required IOPS, reserve pressure, and next Compute planning step.</p>',
+      '<div class="storage-iops-result-panel">',
+        '<div class="storage-iops-result-head">',
+          '<div>',
+            '<p class="storage-iops-result-title">STORAGE IOPS</p>',
+            '<p class="storage-iops-result-subtitle">' + statusSentence + '</p>',
+          '</div>',
+          '<span class="storage-iops-result-chip ' + chipClass + '">' + displayStatus + '</span>',
         '</div>',
-        '<span class="storage-iops-result-chip ' + chipClass + '">' + status + '</span>',
-      '</div>',
-      '<div class="storage-iops-result-grid">',
-        '<div class="storage-iops-result-metric"><div class="storage-iops-result-metric-label">Required IOPS</div><div class="storage-iops-result-metric-value">' + formatNumber(finalIops) + '</div></div>',
-        '<div class="storage-iops-result-metric"><div class="storage-iops-result-metric-label">Available IOPS</div><div class="storage-iops-result-metric-value">' + formatNumber(availableIops) + '</div></div>',
-        '<div class="storage-iops-result-metric"><div class="storage-iops-result-metric-label">Utilization</div><div class="storage-iops-result-metric-value">' + formatPct(utilizationPct) + '</div></div>',
-        '<div class="storage-iops-result-metric"><div class="storage-iops-result-metric-label">Reserve IOPS</div><div class="storage-iops-result-metric-value">' + formatNumber(reserveIops) + '</div></div>',
-      '</div>',
-      '<div class="storage-iops-result-notes">',
-        '<p class="storage-iops-result-note"><strong>Primary constraint:</strong> ' + primaryConstraint + '</p>',
-        '<p class="storage-iops-result-note"><strong>Recommendation:</strong> ' + recommendation + '</p>',
-        '<p class="storage-iops-result-note"><strong>Confidence:</strong> ' + confidence + '</p>',
-        '<p class="storage-iops-result-note"><strong>Carry-forward:</strong> ' + carryForward + '</p>',
+        '<div class="storage-iops-result-grid">',
+          '<div class="storage-iops-result-cell">',
+            '<div class="storage-iops-result-cell-label">RECOMMENDATION</div>',
+            '<div class="storage-iops-result-cell-value">' + recommendation + '</div>',
+          '</div>',
+          '<div class="storage-iops-result-cell">',
+            '<div class="storage-iops-result-cell-label">CONFIDENCE</div>',
+            '<div class="storage-iops-result-cell-value">' + confidence + '</div>',
+          '</div>',
+          '<div class="storage-iops-result-cell">',
+            '<div class="storage-iops-result-cell-label">DECISION FLAGS</div>',
+            '<div class="storage-iops-result-cell-value">' + decisionFlags + '</div>',
+          '</div>',
+          '<div class="storage-iops-result-cell">',
+            '<div class="storage-iops-result-cell-label">PRIMARY RISK</div>',
+            '<div class="storage-iops-result-cell-value">' + primaryConstraint + '</div>',
+          '</div>',
+        '</div>',
+        '<p class="storage-iops-result-carry">' + carryForward + '</p>',
       '</div>'
     ].join("");
 
@@ -236,7 +263,7 @@
     els.resultCard.removeAttribute("hidden");
   }
 
-function clearStorageIopsCapacityVisual() {
+  function clearStorageIopsCapacityVisual() {
       
       clearStorageIopsResultSummary();
 if (els.visual) {

@@ -68,6 +68,12 @@ try {
   console.error(error.message);
 }
 
+// storage-iops-result-ram-parity-audit-0704
+check("STORAGE_IOPS_RESULT_RAM_PARITY_STYLE", html.includes("storage-iops-result-ram-parity-style-0704") && html.includes("storage-iops-result-panel"));
+check("STORAGE_IOPS_RESULT_RAM_LAYOUT_LABELS", js.includes("RECOMMENDATION") && js.includes("CONFIDENCE") && js.includes("DECISION FLAGS") && js.includes("PRIMARY RISK"));
+check("STORAGE_IOPS_RESULT_NO_SEPARATE_SUMMARY_H3", !html.includes(">Storage IOPS result summary</h3>"));
+check("STORAGE_IOPS_RESULT_CACHE_BUST_RAM_PARITY", html.includes("compute-storage-iops-result-ram-parity-0704"));
+
 let pass = 0;
 let fail = 0;
 
