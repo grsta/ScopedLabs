@@ -40,6 +40,12 @@
     mediaTier: $("mediaTier"),
     workloadPattern: $("workloadPattern"),
     proofStack: $("storageIopsProofStack"),
+    referencesCard: $("computeStorageIopsReferencesCard"),
+    references: $("computeStorageIopsReferences"),
+    actionsCard: $("computeStorageIopsRecommendedActionsCard"),
+    actions: $("computeStorageIopsRecommendedActions"),
+    decisionCard: $("computeStorageIopsDecisionScheduleCard"),
+    decision: $("computeStorageIopsDecisionSchedule"),
     results: $("results"),
     flowNote: $("flow-note"),
     analysisCopy: $("analysis-copy"),
@@ -148,6 +154,7 @@
       els.proofStack.hidden = true;
       els.proofStack.innerHTML = "";
     }
+    clearStorageIopsShellSections();
     hideContinue();
     refreshFlowNote();
   }
@@ -213,6 +220,45 @@
         refs.map(function(ref) { return '<li>' + ref + '</li>'; }).join(''),
       '</ol>'
     ].join("");
+  }
+
+
+  // storage-iops-full-shell-parity-0704
+  function clearStorageIopsShellSections() {
+    if (els.referencesCard) els.referencesCard.hidden = true;
+    if (els.references) els.references.innerHTML = "";
+    if (els.actionsCard) els.actionsCard.hidden = true;
+    if (els.actions) els.actions.innerHTML = "";
+    if (els.decisionCard) els.decisionCard.hidden = true;
+    if (els.decision) els.decision.innerHTML = "";
+  }
+
+  function renderStorageIopsShellSections(payload) {
+    const refs = payload.references || [];
+    const actions = payload.recommendedActions || [];
+    const schedule = payload.decisionSchedule || [];
+
+    if (els.references && els.referencesCard) {
+      els.references.innerHTML = '<ol class="storage-iops-reference-list">' + refs.map(function(ref) {
+        return '<li>' + ref + '</li>';
+      }).join('') + '</ol>';
+      els.referencesCard.hidden = false;
+    }
+
+    if (els.actions && els.actionsCard) {
+      els.actions.innerHTML = '<ol class="storage-iops-actions-list">' + actions.map(function(action) {
+        return '<li>' + action + '</li>';
+      }).join('') + '</ol>';
+      els.actionsCard.hidden = false;
+    }
+
+    if (els.decision && els.decisionCard) {
+      els.decision.innerHTML = schedule.map(function(item) {
+        return '<div class="storage-iops-decision-row"><div class="storage-iops-decision-k">' +
+          item.label + '</div><div class="storage-iops-decision-v">' + item.value + '</div></div>';
+      }).join('');
+      els.decisionCard.hidden = false;
+    }
   }
 
   function calc() {
@@ -373,6 +419,18 @@
       "*3 Latency-sensitive or burst-heavy workloads need more margin than raw average IOPS suggests."
     ];
 
+    const recommendedActions = [
+      analyzer.status === "RISK" ? "Increase available platform IOPS or move to a faster media tier before continuing." : "Confirm the entered available platform IOPS against the storage tier or vendor/platform specification.",
+      "Validate the RAID/write penalty assumption against the intended storage layout.",
+      "Carry the required IOPS and latency target into Storage Throughput so bandwidth is checked against the same workload."
+    ];
+
+    const decisionSchedule = [
+      { label: "Current Status", value: analyzer.status + " - " + primaryConstraint },
+      { label: "Validation Trigger", value: availableIops > 0 ? formatPct(utilizationPct) + " of entered platform IOPS consumed." : "Available platform IOPS was not provided." },
+      { label: "Next Tool", value: nextStep }
+    ];
+
     renderStorageIopsProof({
       status: analyzer.status,
       finalIops,
@@ -383,6 +441,12 @@
       recommendation,
       nextStep,
       references
+    });
+
+    renderStorageIopsShellSections({
+      references,
+      recommendedActions,
+      decisionSchedule
     });
 
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
@@ -444,7 +508,9 @@
       assistantRecommendation: {
         recommendation,
         nextStep,
-        references
+        references,
+        recommendedActions,
+        decisionSchedule
       }
     });
 
