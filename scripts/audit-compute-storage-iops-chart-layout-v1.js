@@ -18,6 +18,14 @@ function pos(token) {
   return html.indexOf(token);
 }
 
+// storage-iops-result-summary-card-audit-0704
+check("STORAGE_IOPS_RESULT_CARD_PRESENT", html.includes('id="computeStorageIopsResultCard"'));
+check("STORAGE_IOPS_RESULT_SUMMARY_MOUNT_PRESENT", html.includes('id="computeStorageIopsResultSummary"'));
+check("STORAGE_IOPS_RESULT_CARD_BEFORE_VISUAL", html.indexOf('id="computeStorageIopsResultCard"') > -1 && html.indexOf('id="computeStorageIopsResultCard"') < html.indexOf('id="computeStorageIopsVisualCard"'));
+check("STORAGE_IOPS_RESULT_RENDERER_PRESENT", js.includes("function renderStorageIopsResultSummary") && js.includes("storage-iops-result-summary-card-0704"));
+check("STORAGE_IOPS_RESULT_RENDERED_BEFORE_VISUAL", js.includes("renderStorageIopsResultSummary(result);") && js.indexOf("renderStorageIopsResultSummary(result);") < js.indexOf("renderStorageIopsCapacityEnvelope"));
+check("STORAGE_IOPS_RESULT_CLEAR_PRESENT", js.includes("function clearStorageIopsResultSummary") && js.includes("clearStorageIopsResultSummary();"));
+
 check("STORAGE_IOPS_VISUAL_CARD_PRESENT", html.includes('id="computeStorageIopsVisualCard"'));
 check("STORAGE_IOPS_VISUAL_MOUNT_PRESENT", html.includes('id="computeStorageIopsVisual"'));
 check("STORAGE_IOPS_VISUAL_USES_SHARED_OWNER", html.includes('data-output-visual-owner="compute-capacity-visuals"'));
