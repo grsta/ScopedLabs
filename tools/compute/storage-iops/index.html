@@ -204,6 +204,24 @@
       display: none !important;
       visibility: hidden !important;
     }
+    /* storage-iops-export-label-style-0704 */
+    .storage-iops-export-label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      padding: 7px 11px;
+      border: 1px solid rgba(112, 255, 145, 0.22);
+      border-radius: 4px;
+      color: rgba(231, 255, 236, 0.92);
+      background: rgba(112, 255, 145, 0.07);
+      font-size: 0.74rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      line-height: 1.1;
+      text-transform: uppercase;
+    }
+
 
 
 
@@ -238,7 +256,7 @@
   <link rel="stylesheet" href="/assets/scopedlabs-compute-result-visuals.css?v=scopedlabs-compute-result-visuals-0704-storage-iops-shell">
 </head>
 
-<body data-tier="free" data-category="compute" data-step="storage-iops" data-lane="v1" data-compute-tool-shell="storage-iops-ram-shell-template-0704">
+<body data-tier="free" data-category="compute" data-step="storage-iops" data-lane="v1" data-compute-tool-shell="storage-iops-ram-shell-template-0704" data-sl-square-ctas="true">
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/" aria-label="ScopedLabs Home">
@@ -427,7 +445,7 @@
 
       <section class="card compute-export-card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
         <div class="pill-row">
-          <span class="pill pill--pro">Documentation &amp; Export</span>
+          <span class="storage-iops-export-label">Documentation &amp; Export</span>
         </div>
 
         <h3 class="h3" style="margin-top: 10px;">Export Report</h3>
