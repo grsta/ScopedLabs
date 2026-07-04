@@ -66,6 +66,7 @@ check("RAM_SHELL_ASSISTANT_CARD_PRESENT", html.includes('id="computeAssistantCar
 check("STORAGE_IOPS_VISUAL_CARD_PRESENT", html.includes('id="computeStorageIopsVisualCard"') && html.includes('data-output-visual-owner="compute-capacity-visuals"'));
 check("STORAGE_IOPS_VISUAL_MOUNT_PRESENT", html.includes('id="computeStorageIopsVisual"') && html.includes('data-compute-capacity-visual="storage-iops"'));
 check("STORAGE_IOPS_SHARED_VISUAL_MODULE_EXTENDED", visuals.includes("buildStorageIopsCapacityEnvelopeSvg") && visuals.includes("renderStorageIopsCapacityEnvelope"));
+check("STORAGE_IOPS_SHARED_VISUAL_EXPORTED", visuals.includes("buildStorageIopsCapacityEnvelopeSvg,") && visuals.includes("renderStorageIopsCapacityEnvelope,"));
 check("STORAGE_IOPS_SCRIPT_CALLS_SHARED_VISUAL", js.includes("window.ScopedLabsComputeCapacityVisuals") && js.includes("renderStorageIopsCapacityEnvelope"));
 check("STORAGE_IOPS_VISUAL_CLEAR_PRESENT", js.includes("clearStorageIopsCapacityVisual();"));
 

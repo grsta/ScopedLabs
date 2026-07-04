@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-compute-capacity-visuals-019-storage-iops-envelope";
+  const VERSION = "scopedlabs-compute-capacity-visuals-020-storage-iops-export";
 
   function clamp(value, min, max) {
       return Math.max(min, Math.min(max, value));
@@ -794,6 +794,8 @@
     renderCpuCapacityEnvelope,
     buildRamCapacityEnvelopeSvg,
     renderRamCapacityEnvelope,
+      buildStorageIopsCapacityEnvelopeSvg,
+      renderStorageIopsCapacityEnvelope,
     clear
   });
 })();
