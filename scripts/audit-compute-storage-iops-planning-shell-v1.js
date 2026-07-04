@@ -75,6 +75,10 @@ check("OLD_BREADCRUMB_CHROME_REMOVED", !html.includes('class="crumbs"'));
 check("OLD_FREE_TIER_TOP_CHROME_REMOVED", !html.includes("Free Tier"));
 check("OLD_DESIGN_FLOW_INTRO_REMOVED", !html.includes("Part of a Design Flow"));
 
+check("FLOW_CONTEXT_ANCHOR_PRESENT_BUT_HIDDEN", html.includes('id="flow-note"') && html.includes('class="flow-note"') && html.includes("hidden"));
+check("FLOW_CONTEXT_HIDDEN_BY_COMPUTE_SHELL_CONTRACT", shellContract.includes("function hideGeneratedFlowContext") && shellContract.includes("data-compute-flow-context-hidden") && shellContract.includes("hideGeneratedFlowContext();"));
+check("COMPUTE_SHELL_ACCEPTS_CUSTOM_SHELL_TOKENS", shellContract.includes("!!body.dataset.computeToolShell"));
+
 check("BACK_LINK_TO_RAM_PRESENT", html.includes('href="/tools/compute/ram-sizing/"') && html.includes("Back to RAM Sizing"));
 check("STATIC_CONTINUE_TO_STORAGE_THROUGHPUT_PRESENT", html.includes('data-compute-continue-href="/tools/compute/storage-throughput/"') && html.includes("Continue &rarr; Storage Throughput"));
 check("SHELL_CONTRACT_STORAGE_IOPS_ROUTE_PRESENT", shellContract.includes('path.indexOf("/tools/compute/storage-iops/") !== -1') && shellContract.includes('continueHref: "/tools/compute/storage-throughput/"') && shellContract.includes('continueLabel: "Continue &rarr; Storage Throughput"'));

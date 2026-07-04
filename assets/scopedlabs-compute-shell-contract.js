@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-compute-shell-contract-013-storage-iops-route";
+  var VERSION = "scopedlabs-compute-shell-contract-015-hide-generated-flow-context";
 
   function isComputeShellPage() {
     var body = document.body;
@@ -9,7 +9,7 @@
       body &&
       body.dataset &&
       body.dataset.category === "compute" &&
-      body.dataset.computeToolShell === "0614"
+      !!body.dataset.computeToolShell
     );
   }
 
@@ -20,19 +20,19 @@
     var style = document.createElement("style");
     style.id = "scopedlabs-compute-shell-contract-styles";
     style.textContent = [
-      'body[data-category="compute"][data-compute-tool-shell="0614"] .btn,',
-      'body[data-category="compute"][data-compute-tool-shell="0614"] button.btn,',
-      'body[data-category="compute"][data-compute-tool-shell="0614"] a.btn,',
-      'body[data-category="compute"][data-compute-tool-shell="0614"] .sl-help-toggle,',
-      'body[data-category="compute"][data-compute-tool-shell="0614"] .sl-help-link,',
-      'body[data-category="compute"][data-compute-tool-shell="0614"] .sl-help-related-close,',
-      'body[data-category="compute"][data-compute-tool-shell="0614"] .sl-report-meta,',
-      'body[data-category="compute"][data-compute-tool-shell="0614"] .sl-report-meta summary,',
-      'body[data-category="compute"][data-compute-tool-shell="0614"] .scopedlabs-user-tool-notes-inline summary {',
+      'body[data-category="compute"][data-compute-tool-shell] .btn,',
+      'body[data-category="compute"][data-compute-tool-shell] button.btn,',
+      'body[data-category="compute"][data-compute-tool-shell] a.btn,',
+      'body[data-category="compute"][data-compute-tool-shell] .sl-help-toggle,',
+      'body[data-category="compute"][data-compute-tool-shell] .sl-help-link,',
+      'body[data-category="compute"][data-compute-tool-shell] .sl-help-related-close,',
+      'body[data-category="compute"][data-compute-tool-shell] .sl-report-meta,',
+      'body[data-category="compute"][data-compute-tool-shell] .sl-report-meta summary,',
+      'body[data-category="compute"][data-compute-tool-shell] .scopedlabs-user-tool-notes-inline summary {',
       '  border-radius: 10px !important;',
       '}',
-      'body[data-category="compute"][data-compute-tool-shell="0614"] #scopedlabs-help .sl-help-eyebrow,',
-      'body[data-category="compute"][data-compute-tool-shell="0614"] #scopedlabs-help [class*="eyebrow"] {',
+      'body[data-category="compute"][data-compute-tool-shell] #scopedlabs-help .sl-help-eyebrow,',
+      'body[data-category="compute"][data-compute-tool-shell] #scopedlabs-help [class*="eyebrow"] {',
       '  display: none !important;',
       '}'
     ].join("\n");
@@ -97,7 +97,57 @@
 
 
 
-  function computeWorkloadToolLabelFromPage() {
+  
+  function hideGeneratedFlowContext() {
+    if (!isComputeShellPage()) return;
+
+    var candidates = [];
+
+    var direct = document.getElementById("flow-note");
+    if (direct) candidates.push(direct);
+
+    Array.from(document.querySelectorAll(".flow-note, [data-compute-flow-context], [data-flow-context]")).forEach(function (node) {
+      if (candidates.indexOf(node) === -1) candidates.push(node);
+    });
+
+    Array.from(document.querySelectorAll("section, div, p")).forEach(function (node) {
+      if (candidates.indexOf(node) !== -1) return;
+
+      var text = String(node.textContent || "").replace(/\s+/g, " ").trim();
+      if (!text) return;
+
+      var className = String(node.className || "").toLowerCase();
+      var id = String(node.id || "").toLowerCase();
+
+      var looksLikeGeneratedFlowContext =
+        /^flow context\b/i.test(text) ||
+        (
+          text.indexOf("Recommended RAM:") !== -1 &&
+          text.indexOf("Memory Status:") !== -1 &&
+          text.length < 900
+        ) ||
+        (
+          (className.indexOf("flow") !== -1 || id.indexOf("flow") !== -1) &&
+          text.indexOf("Primary Constraint:") !== -1 &&
+          text.length < 900
+        );
+
+      if (looksLikeGeneratedFlowContext) {
+        candidates.push(node);
+      }
+    });
+
+    candidates.forEach(function (node) {
+      node.hidden = true;
+      node.setAttribute("hidden", "");
+      node.setAttribute("aria-hidden", "true");
+      node.setAttribute("data-compute-flow-context-hidden", "compute-shell-contract");
+      node.style.display = "none";
+      node.style.visibility = "hidden";
+    });
+  }
+
+function computeWorkloadToolLabelFromPage() {
     var body = document.body;
     var step = body && body.dataset ? String(body.dataset.step || "") : "";
     var map = {
@@ -274,7 +324,8 @@
 
     var existing = document.querySelector('.compute-flow-actions[data-compute-flow-owner="compute-shell-contract"][data-compute-flow-tool="' + config.tool + '"]');
     if (existing && existing.getAttribute("data-compute-flow-placed") === "true") {
-      normalizeFlowActions();
+      hideGeneratedFlowContext();
+    normalizeFlowActions();
     ensureFlowActionsPlacement();
       return;
     }
@@ -371,6 +422,7 @@
     version: VERSION,
     run: run,
     normalizeFlowActions: normalizeFlowActions,
+    hideGeneratedFlowContext: hideGeneratedFlowContext,
     ensureFlowActionsPlacement: ensureFlowActionsPlacement
   });
 
