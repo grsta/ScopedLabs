@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-compute-capacity-visuals-018-ram-capacity-marker";
+  const VERSION = "scopedlabs-compute-capacity-visuals-019-storage-iops-envelope";
 
   function clamp(value, min, max) {
       return Math.max(min, Math.min(max, value));
@@ -644,6 +644,122 @@
 
     return true;
   }
+    function iopsLabel(value) {
+      value = number(value, 0);
+      if (Math.abs(value) >= 1000000) return (value / 1000000).toFixed(1) + "M IOPS";
+      if (Math.abs(value) >= 1000) return (value / 1000).toFixed(1) + "k IOPS";
+      return Math.round(value).toLocaleString() + " IOPS";
+    }
+
+    function storageIopsStatus(result, utilizationPct) {
+      const raw = String(result.status || result.risk || "").toUpperCase();
+      if (raw === "RISK" || raw === "WATCH" || raw === "GOOD" || raw === "HEALTHY") {
+        return raw === "HEALTHY" ? "GOOD" : raw;
+      }
+
+      if (utilizationPct >= 100) return "RISK";
+      if (utilizationPct >= 75) return "WATCH";
+      return "GOOD";
+    }
+
+    function buildStorageIopsCapacityEnvelopeSvg(result) {
+      result = result || {};
+
+      const required = Math.max(0, number(result.requiredIops || result.finalIops || result.finalRequiredIops, 0));
+      const peak = Math.max(0, number(result.peakDemandIops || result.peakIops, required));
+      const reserve = Math.max(0, number(result.reserveIops, 0) + number(result.growthReserveIops, 0));
+      const available = Math.max(0, number(result.availableIops || result.platformIops, 0));
+      const utilizationPct = available > 0 ? (required / available) * 100 : number(result.utilizationPct, 0);
+      const targetLatency = Math.max(0, number(result.targetLatency, 0));
+      const blockSizeKb = Math.max(0, number(result.blockSizeKb, 0));
+      const status = storageIopsStatus(result, utilizationPct);
+      const maxY = Math.max(required, peak, available, reserve, 1) * 1.18;
+
+      const plot = { x: 76, y: 58, w: 610, h: 270 };
+
+      function xAt(t) {
+        return plot.x + clamp(t, 0, 1) * plot.w;
+      }
+
+      function yAt(v) {
+        return plot.y + plot.h - (clamp(v, 0, maxY) / maxY) * plot.h;
+      }
+
+      const base = Math.max(0, peak - reserve);
+      const p0 = { x: xAt(0.10), y: yAt(base) };
+      const p1 = { x: xAt(0.40), y: yAt(peak) };
+      const p2 = { x: xAt(0.68), y: yAt(required) };
+      const railY = yAt(available);
+
+      const chipClass = status === "RISK" ? "risk" : status === "WATCH" ? "watch" : "good";
+      const statusText = status === "GOOD" ? "GOOD" : status;
+
+      return [
+        '<svg class="compute-capacity-envelope-svg compute-storage-iops-envelope" viewBox="0 0 760 430" role="img" aria-label="Storage IOPS Capacity Envelope">',
+        '<defs>',
+        '<linearGradient id="storageIopsBg" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#07170f"/><stop offset="1" stop-color="#020807"/></linearGradient>',
+        '<style>',
+        '.compute-storage-iops-envelope{width:100%;height:auto;display:block;background:linear-gradient(135deg,rgba(7,23,15,.96),rgba(2,8,7,.98));border-radius:14px;}',
+        '.compute-storage-iops-envelope .grid{stroke:rgba(162,255,178,.12);stroke-width:1;}',
+        '.compute-storage-iops-envelope .axis{stroke:rgba(222,255,226,.34);stroke-width:1.2;}',
+        '.compute-storage-iops-envelope .zone-good{fill:rgba(82,255,126,.10);}',
+        '.compute-storage-iops-envelope .zone-watch{fill:rgba(255,194,77,.12);}',
+        '.compute-storage-iops-envelope .zone-risk{fill:rgba(255,90,90,.13);}',
+        '.compute-storage-iops-envelope .demand{fill:none;stroke:#8dff9e;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;}',
+        '.compute-storage-iops-envelope .rail{stroke:#dfeeff;stroke-width:2.2;stroke-dasharray:8 7;}',
+        '.compute-storage-iops-envelope .point{fill:#7cff8d;stroke:#03100a;stroke-width:2;}',
+        '.compute-storage-iops-envelope .label{fill:rgba(245,255,247,.86);font:600 13px system-ui,Segoe UI,sans-serif;}',
+        '.compute-storage-iops-envelope .small{fill:rgba(245,255,247,.66);font:500 11px system-ui,Segoe UI,sans-serif;letter-spacing:.04em;}',
+        '.compute-storage-iops-envelope .status.good{fill:rgba(82,255,126,.18);stroke:rgba(82,255,126,.68);}',
+        '.compute-storage-iops-envelope .status.watch{fill:rgba(255,194,77,.18);stroke:rgba(255,194,77,.72);}',
+        '.compute-storage-iops-envelope .status.risk{fill:rgba(255,90,90,.18);stroke:rgba(255,90,90,.74);}',
+        '</style>',
+        '</defs>',
+        '<rect x="0" y="0" width="760" height="430" rx="18" fill="url(#storageIopsBg)"/>',
+        '<rect x="' + plot.x + '" y="' + plot.y + '" width="' + plot.w + '" height="' + plot.h + '" class="zone-good"/>',
+        '<rect x="' + xAt(0.72) + '" y="' + plot.y + '" width="' + (plot.w * 0.18) + '" height="' + plot.h + '" class="zone-watch"/>',
+        '<rect x="' + xAt(0.90) + '" y="' + plot.y + '" width="' + (plot.w * 0.10) + '" height="' + plot.h + '" class="zone-risk"/>',
+        [0, .25, .5, .75, 1].map(function(t){ return '<line x1="' + xAt(t) + '" y1="' + plot.y + '" x2="' + xAt(t) + '" y2="' + (plot.y + plot.h) + '" class="grid"/>'; }).join(""),
+        [0, .25, .5, .75, 1].map(function(t){ return '<line x1="' + plot.x + '" y1="' + yAt(maxY * t) + '" x2="' + (plot.x + plot.w) + '" y2="' + yAt(maxY * t) + '" class="grid"/>'; }).join(""),
+        '<line x1="' + plot.x + '" y1="' + (plot.y + plot.h) + '" x2="' + (plot.x + plot.w) + '" y2="' + (plot.y + plot.h) + '" class="axis"/>',
+        '<line x1="' + plot.x + '" y1="' + plot.y + '" x2="' + plot.x + '" y2="' + (plot.y + plot.h) + '" class="axis"/>',
+        available > 0 ? '<line x1="' + plot.x + '" y1="' + railY + '" x2="' + (plot.x + plot.w) + '" y2="' + railY + '" class="rail"/>' : '',
+        available > 0 ? '<text x="' + (plot.x + plot.w - 4) + '" y="' + (railY - 8) + '" text-anchor="end" class="small">Available platform: ' + iopsLabel(available) + '</text>' : '',
+        '<path d="M ' + p0.x + ' ' + p0.y + ' C ' + xAt(.24) + ' ' + p0.y + ', ' + xAt(.30) + ' ' + p1.y + ', ' + p1.x + ' ' + p1.y + ' S ' + xAt(.56) + ' ' + p2.y + ', ' + p2.x + ' ' + p2.y + '" class="demand"/>',
+        '<circle cx="' + p0.x + '" cy="' + p0.y + '" r="5" class="point"/><text x="' + (p0.x - 14) + '" y="' + (p0.y - 13) + '" text-anchor="end" class="small">Base demand</text>',
+        '<circle cx="' + p1.x + '" cy="' + p1.y + '" r="5" class="point"/><text x="' + p1.x + '" y="' + (p1.y - 13) + '" text-anchor="middle" class="small">Burst demand *1</text>',
+        '<circle cx="' + p2.x + '" cy="' + p2.y + '" r="6" class="point"/><text x="' + (p2.x + 12) + '" y="' + (p2.y - 13) + '" class="small">Required IOPS *2</text>',
+        '<rect x="76" y="22" width="260" height="28" rx="8" class="status ' + chipClass + '"/>',
+        '<text x="90" y="41" class="label">Storage IOPS Capacity Envelope</text>',
+        '<text x="356" y="41" class="small">Status: ' + statusText + '</text>',
+        '<text x="76" y="356" class="label">Required: ' + iopsLabel(required) + '</text>',
+        '<text x="76" y="378" class="small">Utilization *2: ' + Math.round(utilizationPct) + '% of entered platform IOPS</text>',
+        '<text x="76" y="400" class="small">Latency *3: ' + (targetLatency || "n/a") + ' ms target / ' + (blockSizeKb || "n/a") + ' KB blocks</text>',
+        '<text x="686" y="356" text-anchor="end" class="small">Green / Watch / Risk bands track pressure toward platform edge</text>',
+        '<text x="686" y="378" text-anchor="end" class="small">Carry same workload to Storage Throughput</text>',
+        '</svg>'
+      ].join("");
+    }
+
+    function renderStorageIopsCapacityEnvelope(options) {
+      options = options || {};
+      const card = options.card || null;
+      const mount = options.mount || null;
+      const result = options.result || {};
+
+      if (!mount) return false;
+
+      mount.innerHTML = buildStorageIopsCapacityEnvelopeSvg(result);
+
+      if (card) {
+        card.hidden = false;
+        card.removeAttribute("hidden");
+      }
+
+      return true;
+    }
+
+
 
   function buildCapacityEnvelopeSvg(config) {
     config = config || {};

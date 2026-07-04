@@ -167,6 +167,38 @@
       color: rgba(255, 255, 255, 0.88);
       line-height: 1.45;
     }
+    /* storage-iops-flow-shell-polish-0704 */
+    .compute-flow-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .compute-flow-actions #continue-wrap {
+      margin: 0 !important;
+    }
+
+    .compute-flow-actions .btn,
+    .compute-export-card .btn {
+      border-radius: 10px !important;
+    }
+
+    @media (max-width: 760px) {
+      .compute-flow-actions {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .compute-flow-actions .btn,
+      .compute-flow-actions #continue-wrap,
+      .compute-flow-actions #continue-wrap .btn {
+        width: 100%;
+      }
+    }
+
 
   </style>
 
@@ -354,6 +386,13 @@
       <section id="computeAssistantCard" class="card compute-assistant-card compute-static-summary-card-shell" style="margin-top: 14px;" hidden data-compute-assistant-card>
         <div id="computeAssistantMount" data-compute-assistant-mount data-category-slug="compute"></div>
       </section>
+      <section id="computeStorageIopsVisualCard" class="card compute-result-visual-card" hidden data-compute-result-visual-card data-output-visual-owner="compute-capacity-visuals" data-export-section="true" data-export-title="Storage IOPS Capacity Envelope">
+        <h3 class="h3 compute-result-visual-title" style="margin-top: 0;">Storage IOPS Capacity Envelope</h3>
+        <p class="muted" style="margin-bottom: 0;">Dynamic IOPS demand curve showing required IOPS, burst pressure, available platform IOPS, and reserve margin before Storage Throughput validation.</p>
+        <div id="computeStorageIopsVisual" class="compute-capacity-visual" data-compute-capacity-visual="storage-iops"></div>
+      </section>
+
+
 
       <section id="storageIopsProofStackCard" class="card compute-result-visual-card storage-iops-proof-stack-card scopedlabs-assistant-export" hidden data-export-section="true" data-export-title="Storage IOPS Planning Proof">
         <h3 class="h3 compute-result-visual-title" style="margin-top: 0;">Storage IOPS Planning Proof</h3>
@@ -461,11 +500,11 @@
   <script src="/assets/scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-008-downstream-invalidation"></script>
   <script src="/assets/scopedlabs-compute-guided-route-engine.js?v=scopedlabs-compute-guided-route-engine-004-tool-continue-route"></script>
   <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-002"></script>
-  <script src="/assets/scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-018-ram-capacity-marker"></script>
-  <script src="./script.js?v=compute-storage-iops-ram-shell-template-0704"></script>
+  <script src="/assets/scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-019-storage-iops-envelope"></script>
+  <script src="./script.js?v=compute-storage-iops-visual-module-0704"></script>
 
   <script defer src="/assets/help.js?v=help-026"></script>
-  <script src="/assets/scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-012-dynamic-click-guard"></script>
+  <script src="/assets/scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-013-storage-iops-route"></script>
   <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
   <script src="/assets/scopedlabs-compute-assistant-contract.js?v=compute-assistant-storage-iops-shell-0704"></script>
   <script src="/assets/scopedlabs-user-tool-notes.js?v=scopedlabs-user-tool-notes-001-compute-proof"></script>

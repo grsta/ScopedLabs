@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-compute-shell-contract-012-dynamic-click-guard";
+  var VERSION = "scopedlabs-compute-shell-contract-013-storage-iops-route";
 
   function isComputeShellPage() {
     var body = document.body;
@@ -168,6 +168,19 @@
         disabled: false
       };
     }
+      if (path.indexOf("/tools/compute/storage-iops/") !== -1) {
+        return {
+          tool: "storage-iops",
+          backHref: "/tools/compute/ram-sizing/",
+          backLabel: "Back to RAM Sizing",
+          continueHref: "/tools/compute/storage-throughput/",
+          continueLabel: "Continue &rarr; Storage Throughput",
+          continueElement: "button",
+          disabled: true
+        };
+      }
+
+
 
     if (path.indexOf("/tools/compute/gpu-vram/") !== -1) {
       return {

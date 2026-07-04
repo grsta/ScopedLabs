@@ -41,6 +41,8 @@
     workloadPattern: $("workloadPattern"),
     proofStack: $("storageIopsProofStack"),
     proofStackCard: $("storageIopsProofStackCard"),
+    visualCard: $("computeStorageIopsVisualCard"),
+    visual: $("computeStorageIopsVisual"),
     referencesCard: $("computeStorageIopsReferencesCard"),
     references: $("computeStorageIopsReferences"),
     actionsCard: $("computeStorageIopsRecommendedActionsCard"),
@@ -157,6 +159,7 @@
     }
     if (els.proofStackCard) els.proofStackCard.hidden = true;
     clearStorageIopsShellSections();
+    clearStorageIopsCapacityVisual();
     hideContinue();
     refreshFlowNote();
   }
@@ -189,6 +192,31 @@
     };
     return labels[value] || "Unspecified workload pattern";
   }
+    function clearStorageIopsCapacityVisual() {
+      if (els.visual) {
+        els.visual.innerHTML = "";
+      }
+
+      if (els.visualCard) {
+        els.visualCard.hidden = true;
+        els.visualCard.setAttribute("hidden", "");
+      }
+    }
+
+    function renderStorageIopsCapacityVisual(result) {
+      if (
+        window.ScopedLabsComputeCapacityVisuals &&
+        typeof window.ScopedLabsComputeCapacityVisuals.renderStorageIopsCapacityEnvelope === "function"
+      ) {
+        window.ScopedLabsComputeCapacityVisuals.renderStorageIopsCapacityEnvelope({
+          card: els.visualCard,
+          mount: els.visual,
+          result
+        });
+      }
+    }
+
+
 
   function renderStorageIopsProof(payload) {
     if (!els.proofStack) return;
@@ -444,6 +472,21 @@
       targetLatency,
       recommendation,
       nextStep,
+      references
+    });
+
+    renderStorageIopsCapacityVisual({
+      status: analyzer.status,
+      requiredIops: finalIops,
+      peakDemandIops,
+      reserveIops,
+      growthReserveIops,
+      availableIops,
+      utilizationPct,
+      targetLatency,
+      blockSizeKb,
+      mediaTier: els.mediaTier ? els.mediaTier.value : "",
+      workloadPattern: els.workloadPattern ? els.workloadPattern.value : "",
       references
     });
 
