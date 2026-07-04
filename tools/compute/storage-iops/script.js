@@ -40,6 +40,7 @@
     mediaTier: $("mediaTier"),
     workloadPattern: $("workloadPattern"),
     proofStack: $("storageIopsProofStack"),
+    proofStackCard: $("storageIopsProofStackCard"),
     referencesCard: $("computeStorageIopsReferencesCard"),
     references: $("computeStorageIopsReferences"),
     actionsCard: $("computeStorageIopsRecommendedActionsCard"),
@@ -154,6 +155,7 @@
       els.proofStack.hidden = true;
       els.proofStack.innerHTML = "";
     }
+    if (els.proofStackCard) els.proofStackCard.hidden = true;
     clearStorageIopsShellSections();
     hideContinue();
     refreshFlowNote();
@@ -191,10 +193,12 @@
   function renderStorageIopsProof(payload) {
     if (!els.proofStack) return;
 
-    const chipClass = String(payload.status || "").toLowerCase();
+    const rawStatus = String(payload.status || "");
+    const chipClass = rawStatus === "HEALTHY" ? "good" : rawStatus.toLowerCase();
     const refs = payload.references || [];
 
     els.proofStack.hidden = false;
+    if (els.proofStackCard) els.proofStackCard.hidden = false;
     els.proofStack.innerHTML = [
       '<div class="storage-iops-proof-grid">',
         '<div class="storage-iops-proof-card">',

@@ -199,7 +199,7 @@
   <link rel="stylesheet" href="/assets/scopedlabs-compute-result-visuals.css?v=scopedlabs-compute-result-visuals-0704-storage-iops-shell">
 </head>
 
-<body data-tier="free" data-category="compute" data-step="storage-iops" data-lane="v1" data-compute-tool-shell="storage-iops-full-shell-parity-0704">
+<body data-tier="free" data-category="compute" data-step="storage-iops" data-lane="v1" data-compute-tool-shell="storage-iops-ram-shell-template-0704">
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/" aria-label="ScopedLabs Home">
@@ -228,42 +228,35 @@
   </header>
 
   <main class="container page">
-    <div class="crumbs">
-      <a href="/tools/">Tools</a>
-      <span class="sep">/</span>
-      <a href="/tools/compute/">Compute</a>
-      <span class="sep">/</span>
-      <span>Storage IOPS</span>
-    </div>
-
-    <div class="pill-row" style="margin-top: 6px;">
-      <span class="pill pill--free">Free Tier</span>
-    </div>
 
     <h1>Storage IOPS Estimator</h1>
 
     <div id="pipeline"></div>
 
-    <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-      <div class="pill pill--free" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
-      <h2 class="h3" style="margin-top: 0;">This tool continues the Compute design flow</h2>
-      <p class="muted" style="margin-bottom: 0;">
-        Use this step to validate whether storage performance becomes the next scaling limiter after CPU and RAM have already been established.
-      </p>
-      <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-        This is where transaction rate, read/write mix, RAID penalty, and reserve headroom become a real IOPS requirement instead of a generic storage assumption.
-      </p>
-    </section>
-
-    <p class="tool-best-for">
-      <strong>Best for:</strong> checking whether your workload is likely to become storage-limited after CPU and RAM sizing are established.
-    </p>
-
     <div id="flow-note" class="flow-note" hidden></div>
+
+    <section id="computeWorkloadContextCard" class="card access-scope-context-card" style="margin-top: 18px;" hidden>
+      <div class="access-scope-context-line">
+        <span>Active Workload</span>
+        <span class="arrow">&rarr;</span>
+        <span>Storage IOPS</span>
+      </div>
+
+      <h2 class="card-title" id="computeWorkloadContextTitle" style="margin-top: 0;">No active Compute workload selected</h2>
+
+      <p class="muted" id="computeWorkloadContextCopy" style="margin-bottom: 0;">
+        Continue from RAM sizing or open a Compute workload before using this tool so the Storage IOPS result can be tied to the right workload plan.
+      </p>
+
+      <div id="computeWorkloadContextMeta" class="access-scope-context-grid" aria-label="Active Compute workload context"></div>
+    </section>
 
     <section id="toolCard" class="card tool-card scopedlabs-tool-shell" style="margin-top: 18px;">
       <h2 class="card-title" style="margin-top: 0;">Planning Inputs</h2>
-      <p class="muted" style="margin-top:.45rem; margin-bottom:0;">Estimate required storage IOPS from transaction demand, read/write mix, RAID write amplification, burst behavior, growth reserve, latency target, and available platform capacity.</p>
+
+      <p class="muted" style="margin-top:.45rem; margin-bottom:0;">
+        Estimate required storage IOPS from transaction demand, read/write mix, RAID write amplification, burst behavior, growth reserve, latency target, and available platform capacity before continuing to Storage Throughput.
+      </p>
 
       <div class="form-grid" style="margin-top: 14px;">
         <label class="field">
@@ -285,9 +278,9 @@
           <span class="label">RAID Write Penalty</span>
           <select id="penalty">
             <option value="1">None / JBOD</option>
-            <option value="2">RAID 1 / 10 (×2)</option>
-            <option value="4" selected>RAID 5 (×4)</option>
-            <option value="6">RAID 6 (×6)</option>
+            <option value="2">RAID 1 / 10 (x2)</option>
+            <option value="4" selected>RAID 5 (x4)</option>
+            <option value="6">RAID 6 (x6)</option>
           </select>
         </label>
 
@@ -296,7 +289,6 @@
           <input id="headroom" type="number" min="0" step="1" value="30" />
         </label>
 
-        <!-- storage-iops-planning-grade-inputs-0704 -->
         <label class="field">
           <span class="label">Available Platform IOPS</span>
           <input id="availableIops" type="number" min="0" step="100" value="15000" />
@@ -348,19 +340,27 @@
         <button id="reset" class="btn" type="button">Reset</button>
       </div>
 
-      <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+      <div id="computeInternalResultsLedger" class="card compute-internal-results-ledger" style="display:none;" hidden aria-hidden="true" data-internal-results-ledger>
         <h3 class="h3" style="margin-top: 0;">Results</h3>
         <div id="results" class="results-grid" aria-live="polite">
           <div class="muted">Enter values and press Calculate.</div>
         </div>
         <div id="analysis-copy" style="display:none;"></div>
-
         <p class="mini-note">
           Model: IOPS demand is based on transaction rate, read/write mix, RAID write penalty, peak multiplier, growth reserve, latency target, available platform IOPS, and configured reserve margin. This is a planning tool for storage performance, not a substitute for measured workload traces.
         </p>
-
-        <div id="storageIopsProofStack" class="storage-iops-proof-stack scopedlabs-assistant-export" hidden></div>
       </div>
+
+      <section id="computeAssistantCard" class="card compute-assistant-card compute-static-summary-card-shell" style="margin-top: 14px;" hidden data-compute-assistant-card>
+        <div id="computeAssistantMount" data-compute-assistant-mount data-category-slug="compute"></div>
+      </section>
+
+      <section id="storageIopsProofStackCard" class="card compute-result-visual-card storage-iops-proof-stack-card scopedlabs-assistant-export" hidden data-export-section="true" data-export-title="Storage IOPS Planning Proof">
+        <h3 class="h3 compute-result-visual-title" style="margin-top: 0;">Storage IOPS Planning Proof</h3>
+        <p class="muted" style="margin-bottom: 0;">Assistant proof stack showing entered conditions, storage recommendation, and verification path before continuing to Storage Throughput.</p>
+        <div id="storageIopsProofStack" class="storage-iops-proof-stack scopedlabs-assistant-export" hidden></div>
+      </section>
+
       <section id="computeStorageIopsReferencesCard" class="card compute-recommendation-references-card storage-iops-shell-section scopedlabs-assistant-export" hidden data-compute-recommendation-references-card data-output-references-owner="storage-iops" data-export-section="true" data-export-title="Recommendation References">
         <h3 class="h3" style="margin-top: 0;">Recommendation References</h3>
         <p class="muted" style="margin-bottom: 0;">Reference markers shown in the Storage IOPS planning output. These explain how demand, available platform IOPS, and latency margin are being interpreted before continuing to Storage Throughput.</p>
@@ -381,10 +381,11 @@
 
       <section class="card compute-export-card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
         <div class="pill-row">
-          <span class="pill pill--pro">Documentation & Export</span>
+          <span class="pill pill--pro">Documentation &amp; Export</span>
         </div>
 
         <h3 class="h3" style="margin-top: 10px;">Export Report</h3>
+
         <p class="muted" style="margin-bottom: 0;">
           Add optional project context and generate a clean documentation view that can be printed or saved as a PDF for client or internal use.
         </p>
@@ -406,15 +407,17 @@
         <div id="exportStatus" class="export-status"></div>
       </section>
 
-</section>
+      <div class="compute-flow-actions" data-compute-flow-actions="true" data-compute-flow-owner="compute-shell-contract" data-compute-flow-tool="storage-iops" data-compute-flow-placed="true">
+        <a class="btn" href="/tools/compute/ram-sizing/">Back to RAM Sizing</a>
 
-    <div id="continue-wrap" class="btn-row compute-flow-actions" style="display:none; margin-top:12px;">
-      <button id="continue" class="btn btn-primary" disabled>
-        Continue → Storage Throughput
-      </button>
-    </div>
+        <span id="continue-wrap" style="display: none; margin-left: auto;">
+          <button id="continue" class="btn btn-primary" type="button" disabled data-compute-continue-href="/tools/compute/storage-throughput/">Continue &rarr; Storage Throughput</button>
+        </span>
+      </div>
+    </section>
+  </main>
 
-    <footer class="site-footer">
+<footer class="site-footer">
       <div class="muted">© <span data-year></span> ScopedLabs</div>
             <div class="footer-links">
       <a href="/tools/">Tools</a>
@@ -459,7 +462,7 @@
   <script src="/assets/scopedlabs-compute-guided-route-engine.js?v=scopedlabs-compute-guided-route-engine-004-tool-continue-route"></script>
   <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-002"></script>
   <script src="/assets/scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-018-ram-capacity-marker"></script>
-  <script src="./script.js?v=compute-storage-iops-full-shell-parity-0704"></script>
+  <script src="./script.js?v=compute-storage-iops-ram-shell-template-0704"></script>
 
   <script defer src="/assets/help.js?v=help-026"></script>
   <script src="/assets/scopedlabs-compute-shell-contract.js?v=scopedlabs-compute-shell-contract-012-dynamic-click-guard"></script>
