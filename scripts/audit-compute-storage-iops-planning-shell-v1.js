@@ -54,7 +54,7 @@ function ordered(name, tokens) {
   "computeStorageIopsRecommendedActionsCard",
   "computeStorageIopsDecisionScheduleCard",
   "storage-iops-ram-shell-template-0704",
-  "compute-storage-iops-visual-module-0704"
+  "compute-storage-iops-hide-flow-context-0704"
 ].forEach(function(token) {
   check("HAS_" + token.replace(/[^A-Za-z0-9]+/g, "_"), combined.includes(token));
 });
@@ -107,6 +107,10 @@ check("STORAGE_IOPS_LEDGER_PAYLOAD_PRESERVED", js.includes("planningInputs") && 
 check("STORAGE_IOPS_MATH_PRESERVED", js.includes("const finalIops = peakDemandIops + reserveIops + growthReserveIops;"));
 check("STORAGE_IOPS_PROOF_CARD_SCRIPTED", js.includes('proofStackCard: $("storageIopsProofStackCard")') && js.includes("els.proofStackCard.hidden = false"));
 check("STORAGE_IOPS_MODULE_MAP_ENTRY", moduleMap.includes("COMPUTE_STORAGE_IOPS_VISUAL_MODULE_0704"));
+
+
+check("STORAGE_IOPS_FLOW_CONTEXT_SOURCE_SUPPRESSED", js.includes("compute-storage-iops-hide-visible-flow-context-0704") && js.includes("data-compute-flow-context-hidden") && js.includes("storage-iops-source"));
+check("STORAGE_IOPS_FLOW_CONTEXT_CSS_SUPPRESSED", html.includes("storage-iops-flow-note-source-hide-0704") && html.includes("#flow-note") && html.includes("display: none !important"));
 
 try {
   new Function(js);

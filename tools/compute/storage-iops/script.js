@@ -69,53 +69,23 @@
   }
 
   function refreshFlowNote() {
-    const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
-    if (!raw) {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
-      ramContext = null;
-      return;
-    }
+    /*
+      compute-storage-iops-hide-visible-flow-context-0704
 
-    let parsed = null;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
-      ramContext = null;
-      return;
-    }
+      Upstream RAM context must stay available to calculations, ledger payloads,
+      export, snapshot, and downstream routing. It should not render as a visible
+      generated Flow Context block on the tool page. The active workload card,
+      assistant output, export payload, and ledger are the visible/report owners.
+    */
+    if (!els.flowNote) return;
 
-    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
-      ramContext = null;
-      return;
-    }
-
-    const data = parsed.data || {};
-    ramContext = data;
-
-    const rows = [];
-    if (typeof data.ram === "number") rows.push(`Recommended RAM: <strong>${data.ram} GB</strong>`);
-    if (typeof data.totalRequired === "number") rows.push(`Estimated Total: <strong>${Number(data.totalRequired).toFixed(1)} GB</strong>`);
-    if (typeof data.status === "string") rows.push(`Memory Status: <strong>${data.status}</strong>`);
-    if (typeof data.dominantConstraint === "string") rows.push(`Primary Constraint: <strong>${data.dominantConstraint}</strong>`);
-
-    if (!rows.length) {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
-      return;
-    }
-
-    els.flowNote.hidden = false;
-    els.flowNote.innerHTML = `
-      <strong>Flow Context</strong><br>
-      ${rows.join(" | ")}
-      <br><br>
-      This step checks whether storage performance becomes the next practical bottleneck after the memory profile already defined upstream.
-    `;
+    els.flowNote.hidden = true;
+    els.flowNote.setAttribute("hidden", "");
+    els.flowNote.setAttribute("aria-hidden", "true");
+    els.flowNote.setAttribute("data-compute-flow-context-hidden", "storage-iops-source");
+    els.flowNote.style.setProperty("display", "none", "important");
+    els.flowNote.style.setProperty("visibility", "hidden", "important");
+    els.flowNote.innerHTML = "";
   }
 
 
