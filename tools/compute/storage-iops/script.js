@@ -32,6 +32,14 @@
     writes: $("writes"),
     penalty: $("penalty"),
     headroom: $("headroom"),
+    availableIops: $("availableIops"),
+    peakMultiplier: $("peakMultiplier"),
+    growthPct: $("growthPct"),
+    targetLatency: $("targetLatency"),
+    blockSizeKb: $("blockSizeKb"),
+    mediaTier: $("mediaTier"),
+    workloadPattern: $("workloadPattern"),
+    proofStack: $("storageIopsProofStack"),
     results: $("results"),
     flowNote: $("flow-note"),
     analysisCopy: $("analysis-copy"),
@@ -136,8 +144,75 @@
     });
 
     hasResult = false;
+    if (els.proofStack) {
+      els.proofStack.hidden = true;
+      els.proofStack.innerHTML = "";
+    }
     hideContinue();
     refreshFlowNote();
+  }
+
+  // storage-iops-planning-shell-0704
+  function formatNumber(value) {
+    return Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
+  }
+
+  function formatPct(value) {
+    return Number(value || 0).toFixed(0) + "%";
+  }
+
+  function mediaTierLabel(value) {
+    const labels = {
+      hdd: "HDD / archive tier",
+      hybrid: "Hybrid / mixed tier",
+      ssd: "SSD / general purpose",
+      nvme: "NVMe / high-performance tier"
+    };
+    return labels[value] || "Unspecified media tier";
+  }
+
+  function workloadPatternLabel(value) {
+    const labels = {
+      steady: "Steady application workload",
+      bursty: "Burst-heavy / queue spikes",
+      "write-heavy": "Write-heavy transactional workload",
+      database: "Database / low-latency workload"
+    };
+    return labels[value] || "Unspecified workload pattern";
+  }
+
+  function renderStorageIopsProof(payload) {
+    if (!els.proofStack) return;
+
+    const chipClass = String(payload.status || "").toLowerCase();
+    const refs = payload.references || [];
+
+    els.proofStack.hidden = false;
+    els.proofStack.innerHTML = [
+      '<div class="storage-iops-proof-grid">',
+        '<div class="storage-iops-proof-card">',
+          '<div class="storage-iops-proof-label">A / Entered Conditions</div>',
+          '<div class="storage-iops-proof-value">',
+            formatNumber(payload.finalIops) + ' required IOPS against ' + formatNumber(payload.availableIops) + ' available. ',
+            'Burst x' + payload.peakMultiplier.toFixed(1) + ', growth ' + formatPct(payload.growthPct) + ', latency target ' + payload.targetLatency + ' ms.',
+          '</div>',
+        '</div>',
+        '<div class="storage-iops-proof-card">',
+          '<div class="storage-iops-proof-label">B / Assistant Recommendation</div>',
+          '<div class="storage-iops-proof-value">',
+            '<span class="storage-iops-status-chip ' + chipClass + '">' + payload.status + '</span>',
+            payload.recommendation,
+          '</div>',
+        '</div>',
+        '<div class="storage-iops-proof-card">',
+          '<div class="storage-iops-proof-label">C / Verification Path</div>',
+          '<div class="storage-iops-proof-value">' + payload.nextStep + '</div>',
+        '</div>',
+      '</div>',
+      '<ol class="storage-iops-reference-list">',
+        refs.map(function(ref) { return '<li>' + ref + '</li>'; }).join(''),
+      '</ol>'
+    ].join("");
   }
 
   function calc() {
@@ -146,61 +221,66 @@
     const writes = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.writes.value, 0));
     const penalty = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.penalty.value, 1));
     const headroomPct = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.headroom.value, 0));
+    const availableIops = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.availableIops.value, 0));
+    const peakMultiplier = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.peakMultiplier.value, 1));
+    const growthPct = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.growthPct.value, 0));
+    const targetLatency = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.targetLatency.value, 10));
+    const blockSizeKb = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.blockSizeKb.value, 8));
+    const mediaTier = String(els.mediaTier.value || "ssd");
+    const workloadPattern = String(els.workloadPattern.value || "bursty");
 
     const readIops = tps * reads;
     const baseWriteIops = tps * writes;
     const writeIops = baseWriteIops * penalty;
-    const subtotal = readIops + writeIops;
-    const reserveIops = subtotal * (headroomPct / 100);
-    const finalIops = subtotal + reserveIops;
+    const normalDemandIops = readIops + writeIops;
+    const peakDemandIops = normalDemandIops * peakMultiplier;
+    const reserveIops = peakDemandIops * (headroomPct / 100);
+    const growthReserveIops = peakDemandIops * (growthPct / 100);
+    const finalIops = peakDemandIops + reserveIops + growthReserveIops;
+    const utilizationPct = availableIops > 0 ? (finalIops / availableIops) * 100 : 0;
 
-    const writePenaltyStress = Math.min(160, ((penalty - 1) / 5) * 100);
-    const capacityPressure = Math.min(160, finalIops / 600);
-    const burstExposure = Math.min(160, (reserveIops / Math.max(finalIops, 1)) * 100 * 2.4);
+    const latencySensitivity =
+      targetLatency <= 5 ? 86 :
+      targetLatency <= 10 ? 62 :
+      targetLatency <= 20 ? 42 :
+      28;
+
+    const writePenaltyStress = Math.min(160, ((penalty - 1) / 5) * 100 + (writes > reads ? 20 : 0));
+    const capacityPressure = availableIops > 0 ? Math.min(180, utilizationPct) : Math.min(160, finalIops / 600);
+    const burstExposure = Math.min(160, ((peakMultiplier - 1) * 70) + (headroomPct < 20 ? 18 : 0));
+    const latencyPressure = Math.min(160, latencySensitivity + (utilizationPct > 80 ? 18 : 0) + (workloadPattern === "database" ? 12 : 0));
 
     const metrics = [
-      {
-        label: "Capacity Pressure",
-        value: capacityPressure,
-        displayValue: `${Math.round(capacityPressure)}%`
-      },
-      {
-        label: "Write Penalty Stress",
-        value: writePenaltyStress,
-        displayValue: `${Math.round(writePenaltyStress)}%`
-      },
-      {
-        label: "Burst Exposure",
-        value: burstExposure,
-        displayValue: `${Math.round(burstExposure)}%`
-      }
+      { label: "Capacity Pressure", value: capacityPressure, displayValue: formatPct(capacityPressure) },
+      { label: "Write Penalty Stress", value: writePenaltyStress, displayValue: formatPct(writePenaltyStress) },
+      { label: "Burst Exposure", value: burstExposure, displayValue: formatPct(burstExposure) },
+      { label: "Latency Sensitivity", value: latencyPressure, displayValue: formatPct(latencyPressure) }
     ];
 
     const compositeScore = Math.round(
-      (capacityPressure * 0.50) +
-      (writePenaltyStress * 0.30) +
-      (burstExposure * 0.20)
+      (capacityPressure * 0.45) +
+      (writePenaltyStress * 0.22) +
+      (burstExposure * 0.18) +
+      (latencyPressure * 0.15)
     );
 
     const analyzer = ScopedLabsAnalyzer.resolveStatus({
       compositeScore,
       metrics,
-      healthyMax: 65,
-      watchMax: 85
+      healthyMax: 70,
+      watchMax: 90
     });
 
     let storagePressure = "Balanced";
-    if (finalIops > 10000) storagePressure = "High IOPS Demand";
-    if (finalIops > 50000) storagePressure = "Extreme IOPS Demand";
+    if (utilizationPct >= 70) storagePressure = "Tight IOPS margin";
+    if (utilizationPct >= 90) storagePressure = "IOPS capacity edge";
+    if (!availableIops && finalIops > 50000) storagePressure = "Extreme IOPS demand";
 
     let dominantConstraint = "Balanced storage profile";
-    if (analyzer.dominant.label === "Capacity Pressure") {
-      dominantConstraint = "Storage performance ceiling";
-    } else if (analyzer.dominant.label === "Write Penalty Stress") {
-      dominantConstraint = "RAID write amplification";
-    } else if (analyzer.dominant.label === "Burst Exposure") {
-      dominantConstraint = "Peak transaction volatility";
-    }
+    if (analyzer.dominant.label === "Capacity Pressure") dominantConstraint = "Available platform IOPS";
+    else if (analyzer.dominant.label === "Write Penalty Stress") dominantConstraint = "RAID write amplification";
+    else if (analyzer.dominant.label === "Burst Exposure") dominantConstraint = "Peak transaction volatility";
+    else if (analyzer.dominant.label === "Latency Sensitivity") dominantConstraint = "Latency-sensitive workload behavior";
 
     let primaryConstraint = "Balanced";
     if (ramContext && typeof ramContext.status === "string" && ramContext.status === "RISK" && analyzer.status !== "RISK") {
@@ -213,39 +293,51 @@
 
     let interpretation = "";
     if (analyzer.status === "RISK") {
-      interpretation =
-        "The workload is crowding the storage layer too tightly. Queue depth, write amplification, or burst behavior will begin degrading responsiveness before the rest of the compute stack has room to scale cleanly.";
+      interpretation = "The storage plan is operating near or beyond its practical IOPS envelope. Write amplification, burst demand, latency sensitivity, or available platform IOPS should be corrected before the design is treated as ready.";
     } else if (analyzer.status === "WATCH") {
-      interpretation =
-        "The storage profile is workable, but reserve is narrowing. The design should run, although higher write activity, RAID penalty, or sustained spikes will reduce margin faster than the raw IOPS number suggests.";
+      interpretation = "The storage plan is workable, but the IOPS margin is narrowing. Growth, burst behavior, and latency expectations should be verified before locking the storage tier.";
     } else {
-      interpretation =
-        "The storage requirement remains inside a manageable operating envelope. Current read/write demand and reserve allowance leave room for normal burst behavior without making storage the first likely scaling wall.";
+      interpretation = "The storage requirement remains inside a manageable planning envelope. Current read/write demand, burst factor, growth reserve, and available platform IOPS leave room for normal operating variation.";
     }
 
-    let guidance = "A balanced storage design should maintain headroom above normal peaks.";
+    let guidance = "Maintain the selected media tier and verify the platform's published random IOPS behavior under the expected block size and read/write mix.";
     if (analyzer.status === "WATCH") {
-      guidance =
-        "Validate controller cache, disk tier, and future write growth before locking hardware. This is where RAID penalty and sustained transaction spikes can force an early move to faster media.";
+      guidance = "Validate controller cache, media tier, queue depth behavior, and future write growth before locking hardware. If this workload is latency-sensitive, use a faster tier or increase platform IOPS margin.";
     }
     if (analyzer.status === "RISK") {
-      guidance =
-        `Rework the storage plan before continuing. The primary limiter is ${dominantConstraint.toLowerCase()}, so performance will tighten there first. Reduce write amplification, raise media performance, or increase available IOPS headroom.`;
+      guidance = "Rework the storage plan before continuing. Reduce write amplification, select faster media, increase available IOPS, or lower the burst/growth assumptions before moving to throughput and VM density planning.";
     }
 
+    const recommendation =
+      analyzer.status === "RISK"
+        ? "Increase storage performance or reduce the IOPS demand before continuing."
+        : analyzer.status === "WATCH"
+          ? "Proceed only after validating platform IOPS, write penalty, and latency margin."
+          : "Proceed to throughput sizing with the current IOPS plan.";
+
+    const nextStep =
+      analyzer.status === "RISK"
+        ? "Revise RAID/media/platform capacity, then recalculate before Storage Throughput."
+        : "Continue to Storage Throughput and verify bandwidth does not become the next constraint.";
+
     const summaryRows = [
-      { label: "Read IOPS", value: `${readIops.toFixed(0)}` },
-      { label: "Base Write IOPS", value: `${baseWriteIops.toFixed(0)}` },
-      { label: "Write IOPS (penalized)", value: `${writeIops.toFixed(0)}` },
-      { label: "Subtotal IOPS", value: `${subtotal.toFixed(0)}` },
-      { label: "Reserve / Headroom", value: `${reserveIops.toFixed(0)} IOPS` },
-      { label: "Estimated Required IOPS", value: `${finalIops.toFixed(0)}` }
+      { label: "Read IOPS", value: formatNumber(readIops) },
+      { label: "Base Write IOPS", value: formatNumber(baseWriteIops) },
+      { label: "Write IOPS (penalized)", value: formatNumber(writeIops) },
+      { label: "Peak-Adjusted Demand", value: formatNumber(peakDemandIops) },
+      { label: "Headroom Reserve", value: formatNumber(reserveIops) + " IOPS" },
+      { label: "Growth Reserve", value: formatNumber(growthReserveIops) + " IOPS" },
+      { label: "Estimated Required IOPS", value: formatNumber(finalIops) }
     ];
 
     const derivedRows = [
+      { label: "Available Platform IOPS", value: formatNumber(availableIops) },
+      { label: "Utilization", value: availableIops > 0 ? formatPct(utilizationPct) : "Not provided" },
       { label: "Storage Pressure", value: storagePressure },
       { label: "Primary Constraint", value: primaryConstraint },
-      { label: "RAID Penalty", value: `×${penalty}` }
+      { label: "RAID Penalty", value: "x" + penalty },
+      { label: "Media Tier", value: mediaTierLabel(mediaTier) },
+      { label: "Workload Pattern", value: workloadPatternLabel(workloadPattern) }
     ];
 
     ScopedLabsAnalyzer.renderOutput({
@@ -263,19 +355,34 @@
         labels: metrics.map((m) => m.label),
         values: metrics.map((m) => m.value),
         displayValues: metrics.map((m) => m.displayValue),
-        referenceValue: 65,
-        healthyMax: 65,
-        watchMax: 85,
-        axisTitle: "Storage Stress Magnitude",
-        referenceLabel: "Healthy Margin Floor",
-        healthyLabel: "Healthy",
+        referenceValue: 70,
+        healthyMax: 70,
+        watchMax: 90,
+        axisTitle: "Storage IOPS Planning Pressure",
+        referenceLabel: "Planning Margin Target",
+        healthyLabel: "Good",
         watchLabel: "Watch",
         riskLabel: "Risk",
-        chartMax: Math.max(
-          120,
-          Math.ceil(Math.max(...metrics.map((m) => m.value), 85) * 1.08)
-        )
+        chartMax: Math.max(120, Math.ceil(Math.max(...metrics.map((m) => m.value), 90) * 1.08))
       }
+    });
+
+    const references = [
+      "*1 Required IOPS includes read demand, penalized write demand, peak multiplier, headroom reserve, and growth reserve.",
+      "*2 Utilization compares required IOPS against the entered available platform IOPS; confirm this against the selected storage tier and vendor/platform limits.",
+      "*3 Latency-sensitive or burst-heavy workloads need more margin than raw average IOPS suggests."
+    ];
+
+    renderStorageIopsProof({
+      status: analyzer.status,
+      finalIops,
+      availableIops,
+      peakMultiplier,
+      growthPct,
+      targetLatency,
+      recommendation,
+      nextStep,
+      references
     });
 
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
@@ -284,28 +391,60 @@
       data: {
         readIops,
         writeIops,
-        subtotal,
+        normalDemandIops,
+        peakDemandIops,
+        reserveIops,
+        growthReserveIops,
         finalIops,
+        availableIops,
+        utilizationPct,
+        mediaTier,
+        workloadPattern,
         storagePressure,
         primaryConstraint,
+        dominantConstraint,
         status: analyzer.status
       }
     });
 
     saveComputeLedgerResult({
       label: "Storage IOPS",
-      summary: finalIops.toFixed(0) + " required IOPS; " + primaryConstraint,
+      summary: formatNumber(finalIops) + " required IOPS; " + primaryConstraint,
       status: analyzer.status,
       summaryStatus: analyzer.status,
-      keySavedResult: finalIops.toFixed(0) + " IOPS / " + analyzer.status,
+      keySavedResult: formatNumber(finalIops) + " IOPS / " + analyzer.status,
+      planningInputs: {
+        transactionsPerSecond: tps,
+        readsPerTransaction: reads,
+        writesPerTransaction: writes,
+        raidWritePenalty: penalty,
+        headroomPct,
+        availableIops,
+        peakMultiplier,
+        growthPct,
+        targetLatency,
+        blockSizeKb,
+        mediaTier,
+        workloadPattern
+      },
       outputs: {
         readIops,
         writeIops,
-        subtotal,
+        normalDemandIops,
+        peakDemandIops,
+        reserveIops,
+        growthReserveIops,
         finalIops,
+        availableIops,
+        utilizationPct,
         storagePressure,
         primaryConstraint,
         dominantConstraint
+      },
+      assistantRecommendation: {
+        recommendation,
+        nextStep,
+        references
       }
     });
 
@@ -321,10 +460,17 @@
     els.writes.value = 1;
     els.penalty.value = "4";
     els.headroom.value = 30;
+    els.availableIops.value = 15000;
+    els.peakMultiplier.value = 1.3;
+    els.growthPct.value = 25;
+    els.targetLatency.value = 10;
+    els.blockSizeKb.value = 8;
+    els.mediaTier.value = "ssd";
+    els.workloadPattern.value = "bursty";
     invalidate();
   });
 
-  ["tps", "reads", "writes", "penalty", "headroom"].forEach((id) => {
+  ["tps", "reads", "writes", "penalty", "headroom", "availableIops", "peakMultiplier", "growthPct", "targetLatency", "blockSizeKb", "mediaTier", "workloadPattern"].forEach((id) => {
     $(id).addEventListener("input", invalidate);
     $(id).addEventListener("change", invalidate);
   });

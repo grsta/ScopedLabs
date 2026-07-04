@@ -1455,3 +1455,5 @@ Promotion note:
 - ACCOUNT_SNAPSHOT_AUDIT_CONTRACT_REFRESH_0703: Account snapshot audits now verify the CSS-owned report column layout and object/text normalizer contract instead of the removed JS-owned wide-table enhancer. Owners: `scripts/audit-account-snapshot-extra-table-layout-v1.js`, `scripts/audit-account-snapshot-wide-report-table-layout-v1.js`.
 
 - ACCOUNT_SNAPSHOT_STABLE_CONTROLLER_RESTORE_0703: Restores the Account page controller to the last known working snapshot/auth UI behavior while keeping the CSS-owned report column layout and fresh cache-bust token. Owners: `assets/account.js`, `account/index.html`, `scripts/audit-account-snapshot-extra-table-layout-v1.js`, `scripts/audit-account-snapshot-wide-report-table-layout-v1.js`.
+
+- COMPUTE_STORAGE_IOPS_PLANNING_SHELL_0704: Storage IOPS upgraded from legacy/light estimator to planning-grade Compute shell coverage with platform IOPS, burst, growth, latency, media tier, assistant proof stack, export-visible references, and summary-ready ledger payload. Owners: `tools/compute/storage-iops/index.html`, `tools/compute/storage-iops/script.js`, `scripts/audit-compute-storage-iops-planning-shell-v1.js`.
