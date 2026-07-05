@@ -23,6 +23,7 @@ check("STORAGE_THROUGHPUT_VISUAL_RENDERER_PRESENT", visual.includes("function re
 check("STORAGE_THROUGHPUT_VISUAL_EXPORTED", visual.includes("buildStorageThroughputCapacityEnvelopeSvg,") && visual.includes("renderStorageThroughputCapacityEnvelope,"));
 check("STORAGE_THROUGHPUT_ROUTE_PRESENT", visual.includes('type === "storage-throughput"') && visual.includes("return buildStorageThroughputCapacityEnvelopeSvg(result);"));
 check("STORAGE_THROUGHPUT_TITLE_CENTERED", visual.includes('x="380" y="54" text-anchor="middle" class="title"') && visual.includes('x="380" y="74" text-anchor="middle" class="sub"'));
+check("STORAGE_THROUGHPUT_ZONE_BANDS_PRESENT", visual.includes("storage-throughput-zone-bands-0705") && visual.includes(".zone-risk{fill:rgba(239,68,68,.22)}") && visual.includes(".zone-watch{fill:rgba(250,204,21,.18)}") && visual.includes(".zone-good{fill:rgba(52,211,153,.17)}") && visual.includes("zoneBands.join"));
 check("STORAGE_THROUGHPUT_VISUAL_FIELDS_PRESENT", [
   "requiredThroughputMBps",
   "availableThroughputMBps",
