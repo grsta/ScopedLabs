@@ -427,13 +427,17 @@
   <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
   <script src="/assets/scopedlabs-compute-assistant-contract.js?v=compute-assistant-storage-throughput-shell-0705"></script>
   <script src="/assets/scopedlabs-user-tool-notes.js?v=scopedlabs-user-tool-notes-001-compute-proof"></script>
-  <script data-storage-throughput-flow-cta-contract-0705>
+    <script data-storage-throughput-flow-cta-contract-0705>
     (function() {
       var expectedHref = "/tools/compute/vm-density/";
       var expectedLabel = "Continue \u2192 VM Density";
+      var applying = false;
 
       function applyStorageThroughputCta() {
+        if (applying) return;
         if (!document.body || document.body.getAttribute("data-step") !== "storage-throughput") return;
+
+        applying = true;
 
         var wrap = document.getElementById("continue-wrap");
         var button = document.getElementById("continue");
@@ -442,7 +446,9 @@
           wrap.style.alignItems = "center";
           wrap.style.gap = "12px";
           wrap.style.width = "100%";
-          if (wrap.style.display !== "none") wrap.style.display = "flex";
+          if (wrap.style.display !== "none") {
+            wrap.style.display = "flex";
+          }
         }
 
         if (button) {
@@ -451,30 +457,54 @@
           button.setAttribute("data-storage-throughput-next-tool-label", "0705");
           button.style.marginLeft = "auto";
         }
+
+        applying = false;
+      }
+
+      function scheduleApply() {
+        applyStorageThroughputCta();
+        window.requestAnimationFrame(applyStorageThroughputCta);
+        setTimeout(applyStorageThroughputCta, 50);
+        setTimeout(applyStorageThroughputCta, 150);
+        setTimeout(applyStorageThroughputCta, 400);
       }
 
       document.addEventListener("click", function(event) {
         var target = event.target && event.target.closest ? event.target.closest("#continue") : null;
 
-        setTimeout(applyStorageThroughputCta, 0);
-        setTimeout(applyStorageThroughputCta, 150);
+        scheduleApply();
 
         if (!target || target.disabled) return;
         if (!document.body || document.body.getAttribute("data-step") !== "storage-throughput") return;
 
         event.preventDefault();
+        event.stopPropagation();
         window.location.href = expectedHref;
       }, true);
 
+      document.addEventListener("input", scheduleApply, true);
+      document.addEventListener("change", scheduleApply, true);
+
       if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", applyStorageThroughputCta);
+        document.addEventListener("DOMContentLoaded", scheduleApply);
       } else {
-        applyStorageThroughputCta();
+        scheduleApply();
       }
 
-      window.addEventListener("load", applyStorageThroughputCta);
-      setTimeout(applyStorageThroughputCta, 250);
-      setTimeout(applyStorageThroughputCta, 900);
+      window.addEventListener("load", scheduleApply);
+      setTimeout(scheduleApply, 250);
+      setTimeout(scheduleApply, 900);
+      setTimeout(scheduleApply, 1500);
+
+      if (window.MutationObserver) {
+        var observer = new MutationObserver(scheduleApply);
+        observer.observe(document.documentElement, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          characterData: true
+        });
+      }
     })();
   </script>
 </body>
