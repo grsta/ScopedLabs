@@ -429,6 +429,47 @@ if (
     return "REVIEW";
   }
 
+  function renderStorageIopsExportInterpretation(payload) {
+    if (!els.analysisCopy) return;
+
+    payload = payload || {};
+
+    const rawStatus = String(payload.status || "REVIEW").toUpperCase();
+    const status = rawStatus === "HEALTHY" ? "GOOD" : rawStatus;
+    const finalIops = Math.max(0, Number(payload.finalIops || 0));
+    const availableIops = Math.max(0, Number(payload.availableIops || 0));
+    const utilizationPct = Math.max(0, Number(payload.utilizationPct || 0));
+    const targetLatency = Math.max(0, Number(payload.targetLatency || 0));
+    const blockSizeKb = Math.max(0, Number(payload.blockSizeKb || 0));
+
+    const statusLine = status === "RISK"
+      ? "RISK - required IOPS exceeds the entered available platform IOPS."
+      : status === "WATCH"
+        ? "WATCH - the storage plan is usable for planning, but IOPS margin is narrowing."
+        : "GOOD - the required IOPS remains inside the entered platform envelope.";
+
+    const whyLine = availableIops > 0
+      ? "The plan needs " + formatNumber(finalIops) + " IOPS against " + formatNumber(availableIops) + " available IOPS, creating a " + formatPct(utilizationPct) + " utilization condition."
+      : "The plan needs " + formatNumber(finalIops) + " IOPS, but available platform IOPS was not entered.";
+
+    const primaryLine = (payload.primaryConstraint || payload.dominantConstraint || "Storage IOPS validation") + ". Review write amplification, burst demand, latency target, reserve margin, and selected media tier before treating the plan as ready.";
+
+    const correctionLine = payload.guidance || payload.recommendation || "Validate platform IOPS, write penalty, media tier, and latency behavior before continuing.";
+
+    const carryLine = "Carry " + formatNumber(finalIops) + " required IOPS, " + targetLatency + " ms latency target, and " + blockSizeKb + " KB block size into Storage Throughput validation.";
+
+    els.analysisCopy.innerHTML = [
+      '<div class="analysis-card storage-iops-export-interpretation" data-storage-iops-export-interpretation-structured="0705">',
+      '<h3>Engineering Interpretation</h3>',
+      '<p><strong>Status:</strong> ' + storageIopsEscapeHtml(statusLine) + '</p>',
+      '<p><strong>Why it matters:</strong> ' + storageIopsEscapeHtml(whyLine) + '</p>',
+      '<p><strong>Primary constraint:</strong> ' + storageIopsEscapeHtml(primaryLine) + '</p>',
+      '<p><strong>Recommended correction:</strong> ' + storageIopsEscapeHtml(correctionLine) + '</p>',
+      '<p><strong>Carry forward:</strong> ' + storageIopsEscapeHtml(carryLine) + '</p>',
+      '</div>'
+    ].join("");
+  }
+
   function renderStorageIopsDecisionSchedule(payload, schedule) {
     payload = payload || {};
     const rowsForSchedule = (schedule || []).map(normalizeStorageIopsDecisionRow);
@@ -641,6 +682,20 @@ if (
         riskLabel: "Risk",
         chartMax: Math.max(120, Math.ceil(Math.max(...metrics.map((m) => m.value), 90) * 1.08))
       }
+    });
+
+    renderStorageIopsExportInterpretation({
+      status: analyzer.status,
+      finalIops,
+      availableIops,
+      utilizationPct,
+      targetLatency,
+      blockSizeKb,
+      primaryConstraint,
+      dominantConstraint,
+      guidance,
+      recommendation,
+      nextStep
     });
 
     const references = [

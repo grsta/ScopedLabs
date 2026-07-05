@@ -73,14 +73,14 @@ try {
 check("STORAGE_IOPS_RESULT_RAM_PARITY_STYLE", html.includes("storage-iops-result-ram-parity-style-0704") && html.includes("storage-iops-result-panel"));
 check("STORAGE_IOPS_RESULT_RAM_LAYOUT_LABELS", shell.includes("RECOMMENDATION") && shell.includes("CONFIDENCE") && shell.includes("DECISION FLAGS") && shell.includes("PRIMARY RISK"));
 check("STORAGE_IOPS_RESULT_NO_SEPARATE_SUMMARY_H3", !html.includes(">Storage IOPS result summary</h3>"));
-check("STORAGE_IOPS_RESULT_CACHE_BUST_RAM_PARITY", html.includes("script.js?v=compute-storage-iops-export-hooks-0705"));
+check("STORAGE_IOPS_RESULT_CACHE_BUST_RAM_PARITY", html.includes("script.js?v=compute-storage-iops-export-interpretation-0705"));
 
 // compute-result-card-contract-promotion-audit-0704
 check("COMPUTE_RESULT_CARD_CONTRACT_IN_SHARED_SHELL", shell.includes("compute-result-card-contract-0704") && shell.includes("renderComputeResultCard") && shell.includes("clearComputeResultCard"));
 check("STORAGE_IOPS_USES_SHARED_RESULT_CARD_RENDERER", js.includes("ScopedLabsComputeShellContract.renderComputeResultCard"));
 check("STORAGE_IOPS_USES_SHARED_RESULT_CARD_CLEAR", js.includes("ScopedLabsComputeShellContract.clearComputeResultCard"));
 check("STORAGE_IOPS_COMPUTE_SHELL_CACHE_BUST_RESULT_CARD", html.includes("scopedlabs-compute-shell-contract.js?v=compute-result-card-contract-0704"));
-check("STORAGE_IOPS_SCRIPT_CACHE_BUST_SHARED_RESULT_CARD", html.includes("script.js?v=compute-storage-iops-export-hooks-0705"));
+check("STORAGE_IOPS_SCRIPT_CACHE_BUST_SHARED_RESULT_CARD", html.includes("script.js?v=compute-storage-iops-export-interpretation-0705"));
 
 // storage-iops-icon-envelope-audit-0705
 check("STORAGE_IOPS_ICON_ENVELOPE_MARKER", storageIopsVisualAsset.includes("storage-iops-icon-envelope-polish-0705") || storageIopsVisualAsset.includes("storage-iops-title-risk-polish-0705"));
@@ -120,12 +120,12 @@ check("STORAGE_IOPS_PROOF_STACK_VISIBLE_SUPPRESSED", js.includes("storage-iops-v
 check("STORAGE_IOPS_REFERENCES_USE_RAM_TABLE_LAYOUT", js.includes("compute-recommendation-references-table") && js.includes("compute-recommended-actions-list") && js.includes("compute-recommended-action") && js.includes("compute-decision-schedule-status") && js.includes("compute-decision-schedule-table"));
 check("STORAGE_IOPS_REFERENCES_MATCH_CHART_MARKERS", js.includes('marker: "*1"') && js.includes('reference: "Burst demand"') && js.includes('marker: "*2"') && js.includes('reference: "Required IOPS"') && js.includes('marker: "*3"') && js.includes('reference: "Platform / latency validation"'));
 check("STORAGE_IOPS_CHART_PLATFORM_MARKER_3", storageIopsVisualAsset.includes("Available platform *3"));
-check("STORAGE_IOPS_SCRIPT_CACHE_BUST_RAM_REFERENCE_FLOW", html.includes("script.js?v=compute-storage-iops-export-hooks-0705"));
+check("STORAGE_IOPS_SCRIPT_CACHE_BUST_RAM_REFERENCE_FLOW", html.includes("script.js?v=compute-storage-iops-export-interpretation-0705"));
 check("STORAGE_IOPS_VISUAL_CACHE_BUST_REFERENCE_MARKERS", html.includes("scopedlabs-compute-capacity-visuals.js?v=storage-iops-reference-markers-0705"));
 // storage-iops-ram-section-contract-audit-0705
 check("STORAGE_IOPS_RAM_SECTION_CONTRACT_MARKER", js.includes("storage-iops-ram-section-contract-0705"));
 check("STORAGE_IOPS_NO_LOCAL_SECTION_RENDERER_CLASSES", !js.includes("storage-iops-actions-list") && !js.includes("storage-iops-decision-row") && !js.includes("storage-iops-reference-row"));
-check("STORAGE_IOPS_SCRIPT_CACHE_BUST_RAM_SECTION_CONTRACT", html.includes("script.js?v=compute-storage-iops-export-hooks-0705"));
+check("STORAGE_IOPS_SCRIPT_CACHE_BUST_RAM_SECTION_CONTRACT", html.includes("script.js?v=compute-storage-iops-export-interpretation-0705"));
 let pass = 0;
 let fail = 0;
 
