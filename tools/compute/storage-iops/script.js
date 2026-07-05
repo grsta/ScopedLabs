@@ -378,10 +378,10 @@ if (
 
   function renderStorageIopsRecommendedActions(actions) {
     const rows = (actions || []).map(normalizeStorageIopsAction).map(function(item) {
-      return '<div class="compute-recommended-action"><strong>' + storageIopsEscapeHtml(item.action) + '</strong><span>' + storageIopsEscapeHtml(item.reason) + '</span></div>';
+      return '<div class="compute-recommended-action" data-export-text="true" data-storage-iops-action-export-row="0705"><strong>' + storageIopsEscapeHtml(item.action) + '</strong> <span>' + storageIopsEscapeHtml(item.reason) + '</span></div>';
     });
 
-    return '<div class="compute-recommended-actions-list">' + (rows.length ? rows.join("") : '<div class="compute-recommended-action"><strong>No corrective actions generated</strong><span>Run the Storage IOPS calculation again to refresh recommendations.</span></div>') + '</div>';
+    return '<div class="compute-recommended-actions-list">' + (rows.length ? rows.join("") : '<div class="compute-recommended-action" data-export-text="true" data-storage-iops-action-export-row="0705"><strong>No corrective actions generated</strong> <span>Run the Storage IOPS calculation again to refresh recommendations.</span></div>') + '</div>';
   }
 
   function normalizeStorageIopsDecisionRow(item) {
@@ -456,7 +456,7 @@ if (
       '  <thead><tr><th>Group</th><th>Metric</th><th>Value</th><th>Engineering Note</th></tr></thead>',
       '  <tbody>' + rows + '</tbody>',
       '</table>',
-      '<p class="compute-decision-schedule-interpretation"><strong>Engineering Interpretation:</strong> ' + storageIopsEscapeHtml(interpretation) + '</p>'
+      '<p class="compute-decision-schedule-interpretation" data-export-text="true" data-storage-iops-decision-export-interpretation="0705"><strong>Engineering Interpretation:</strong> ' + storageIopsEscapeHtml(interpretation) + '</p>'
     ].join("");
   }
 

@@ -703,7 +703,7 @@
         </p>
       </div>
       <section id="computeStorageIopsResultCard" class="card compute-static-summary-card-shell storage-iops-result-summary-card" style="margin-top: 14px;" hidden data-storage-iops-result-card data-export-section="true" data-export-title="Storage IOPS Result Summary">
-        <div id="computeStorageIopsResultSummary" class="storage-iops-result-summary" aria-live="polite">
+        <div id="computeStorageIopsResultSummary" class="storage-iops-result-summary" aria-live="polite" data-export-text="true" data-storage-iops-summary-export-text="0705">
           <div class="muted">Run the calculator to generate the Storage IOPS recommendation.</div>
         </div>
       </section>
@@ -712,10 +712,10 @@
       <section id="computeAssistantCard" class="card compute-assistant-card compute-static-summary-card-shell" style="margin-top: 14px;" hidden data-compute-assistant-card>
         <div id="computeAssistantMount" data-compute-assistant-mount data-category-slug="compute"></div>
       </section>
-      <section id="computeStorageIopsVisualCard" class="card compute-result-visual-card" hidden data-compute-result-visual-card data-output-visual-owner="compute-capacity-visuals" data-export-section="true" data-export-title="Storage IOPS Capacity Envelope">
+      <section id="computeStorageIopsVisualCard" class="card compute-result-visual-card" hidden data-compute-result-visual-card data-output-visual-owner="compute-capacity-visuals" data-export-section="true" data-export-title="Storage IOPS Capacity Envelope" data-export-compact-svg="true" data-storage-iops-export-visual-card="0705">
         <h3 class="h3 compute-result-visual-title" style="margin-top: 0;">Storage IOPS Capacity Envelope</h3>
         <p class="muted" style="margin-bottom: 0;">Dynamic IOPS demand curve showing required IOPS, burst pressure, available platform IOPS, and reserve margin before Storage Throughput validation.</p>
-        <div id="computeStorageIopsVisual" class="compute-capacity-visual" data-compute-capacity-visual="storage-iops"></div>
+        <div id="computeStorageIopsVisual" class="compute-capacity-visual" data-compute-capacity-visual="storage-iops" data-export-svg="true" data-storage-iops-export-svg="0705"></div>
       </section>
 <section id="computeStorageIopsReferencesCard" class="card compute-recommendation-references-card" hidden data-compute-recommendation-references-card data-output-references-owner="compute-assistant-contract" data-export-section="true" data-export-title="Recommendation References">
         <h3 class="h3" style="margin-top: 0;">Recommendation References</h3>
@@ -824,7 +824,7 @@
   <script src="/assets/scopedlabs-compute-guided-route-engine.js?v=scopedlabs-compute-guided-route-engine-004-tool-continue-route"></script>
   <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-002"></script>
   <script src="/assets/scopedlabs-compute-capacity-visuals.js?v=storage-iops-reference-markers-0705"></script>
-  <script src="./script.js?v=compute-storage-iops-ram-section-contract-0705"></script>
+  <script src="./script.js?v=compute-storage-iops-export-hooks-0705"></script>
 
   <script defer src="/assets/help.js?v=help-026"></script>
   <script src="/assets/scopedlabs-compute-shell-contract.js?v=compute-result-card-contract-0704"></script>
