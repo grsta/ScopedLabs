@@ -43,6 +43,8 @@
     results: $("results"),
     flowNote: $("flow-note"),
     analysisCopy: $("analysis-copy"),
+    visualCard: $("computeStorageThroughputVisualCard"),
+    visual: $("computeStorageThroughputVisual"),
     continueWrap: $("continue-wrap"),
     continue: $("continue"),
     calc: $("calc"),
@@ -185,6 +187,7 @@
     });
 
     hasResult = false;
+    clearStorageThroughputCapacityVisual();
     hideContinue();
     refreshFlowNote();
   }
@@ -228,6 +231,32 @@
 
   function formatStorageThroughputMBps(value) {
     return Number(value || 0).toFixed(1) + " MB/s";
+  }
+
+
+  // storage-throughput-capacity-envelope-wire-0705
+  function clearStorageThroughputCapacityVisual() {
+    if (els.visual) {
+      els.visual.innerHTML = "";
+    }
+
+    if (els.visualCard) {
+      els.visualCard.hidden = true;
+      els.visualCard.setAttribute("hidden", "");
+    }
+  }
+
+  function renderStorageThroughputCapacityVisual(result) {
+    if (
+      window.ScopedLabsComputeCapacityVisuals &&
+      typeof window.ScopedLabsComputeCapacityVisuals.renderStorageThroughputCapacityEnvelope === "function"
+    ) {
+      window.ScopedLabsComputeCapacityVisuals.renderStorageThroughputCapacityEnvelope({
+        card: els.visualCard,
+        mount: els.visual,
+        result
+      });
+    }
   }
 
   function calc() {
@@ -433,6 +462,8 @@
       growthAdjustedMBps,
       upstreamRequiredIops: iopsContext && typeof iopsContext.finalIops === "number" ? iopsContext.finalIops : iops
     };
+
+    renderStorageThroughputCapacityVisual(flowPayload);
 
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
       category: CATEGORY,
