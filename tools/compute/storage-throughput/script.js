@@ -45,6 +45,12 @@
     analysisCopy: $("analysis-copy"),
     visualCard: $("computeStorageThroughputVisualCard"),
     visual: $("computeStorageThroughputVisual"),
+    referencesCard: $("computeStorageThroughputReferencesCard"),
+    references: $("computeStorageThroughputReferences"),
+    actionsCard: $("computeStorageThroughputRecommendedActionsCard"),
+    actions: $("computeStorageThroughputRecommendedActions"),
+    decisionCard: $("computeStorageThroughputDecisionScheduleCard"),
+    decision: $("computeStorageThroughputDecisionSchedule"),
     continueWrap: $("continue-wrap"),
     continue: $("continue"),
     calc: $("calc"),
@@ -188,7 +194,8 @@
 
     hasResult = false;
     clearStorageThroughputCapacityVisual();
-    hideContinue();
+        clearStorageThroughputShellSections();
+hideContinue();
     refreshFlowNote();
   }
 
@@ -256,6 +263,161 @@
         mount: els.visual,
         result
       });
+    }
+  }
+
+
+  // storage-throughput-proof-stack-0705
+  function storageThroughputEscapeHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function storageThroughputStatusClass(status) {
+    const value = String(status || "").toUpperCase();
+    if (value === "RISK" || value === "BLOCKED") return "is-risk";
+    if (value === "WATCH" || value === "REVIEW") return "is-watch";
+    if (value === "GOOD" || value === "HEALTHY") return "is-good";
+    return "is-review";
+  }
+
+  function normalizeStorageThroughputReference(ref) {
+    if (ref && typeof ref === "object") {
+      return {
+        marker: String(ref.marker || ""),
+        reference: String(ref.reference || ref.label || ""),
+        reason: String(ref.reason || ref.value || "")
+      };
+    }
+
+    const raw = String(ref || "");
+    const parts = raw.split("|");
+    return {
+      marker: parts[0] || "",
+      reference: parts[1] || "",
+      reason: parts.slice(2).join("|") || ""
+    };
+  }
+
+  function renderStorageThroughputReferenceTable(refs) {
+    const rows = (refs || []).map(normalizeStorageThroughputReference).filter(function(row) {
+      return row.marker || row.reference || row.reason;
+    });
+
+    return [
+      '<table class="compute-recommendation-references-table">',
+      '  <thead><tr><th>Marker</th><th>Reference</th><th>Reason</th></tr></thead>',
+      '  <tbody>',
+      rows.map(function(row) {
+        return '<tr><td>' + storageThroughputEscapeHtml(row.marker) + '</td><td>' + storageThroughputEscapeHtml(row.reference) + '</td><td>' + storageThroughputEscapeHtml(row.reason) + '</td></tr>';
+      }).join(""),
+      '  </tbody>',
+      '</table>'
+    ].join("");
+  }
+
+  function normalizeStorageThroughputAction(action) {
+    if (action && typeof action === "object") {
+      return {
+        action: String(action.action || action.label || "Review Storage Throughput plan"),
+        reason: String(action.reason || action.value || "Engineering review required.")
+      };
+    }
+
+    return {
+      action: String(action || "Review Storage Throughput plan"),
+      reason: "Validate this action against the selected storage path before continuing downstream."
+    };
+  }
+
+  function renderStorageThroughputRecommendedActions(actions) {
+    const rows = (actions || []).map(normalizeStorageThroughputAction).map(function(item) {
+      return '<div class="compute-recommended-action" data-export-text="true" data-storage-throughput-action-export-row="0705"><strong>' + storageThroughputEscapeHtml(item.action) + '</strong> <span>' + storageThroughputEscapeHtml(item.reason) + '</span></div>';
+    });
+
+    return '<div class="compute-recommended-actions-list">' + (rows.length ? rows.join("") : '<div class="compute-recommended-action" data-export-text="true" data-storage-throughput-action-export-row="0705"><strong>No corrective actions generated</strong> <span>Run the Storage Throughput calculation again to refresh recommendations.</span></div>') + '</div>';
+  }
+
+  function normalizeStorageThroughputDecisionRow(item) {
+    if (item && typeof item === "object") {
+      return {
+        group: String(item.group || "Storage Throughput"),
+        metric: String(item.metric || item.label || "Metric"),
+        value: String(item.value == null ? "" : item.value),
+        note: String(item.note || "Carry this value forward into downstream Compute validation.")
+      };
+    }
+
+    return {
+      group: "Storage Throughput",
+      metric: "Review",
+      value: String(item || ""),
+      note: "Carry this value forward into downstream Compute validation."
+    };
+  }
+
+  function storageThroughputDecisionValueCell(row, status) {
+    const value = row && row.value != null ? row.value : "";
+    if (row && String(row.metric || "").toLowerCase() === "status") {
+      return '<span class="scopedlabs-result-summary-status ' + storageThroughputStatusClass(status) + '">' + storageThroughputEscapeHtml(value) + '</span>';
+    }
+    return storageThroughputEscapeHtml(value);
+  }
+
+  function renderStorageThroughputDecisionSchedule(payload, schedule) {
+    payload = payload || {};
+    const rowsForSchedule = (schedule || []).map(normalizeStorageThroughputDecisionRow);
+    const status = String(payload.status || "REVIEW").toUpperCase();
+    const interpretation = String(payload.interpretation || payload.guidance || "Validate the storage throughput plan before continuing downstream.");
+
+    const rows = rowsForSchedule.map(function(row) {
+      return '<tr><td>' + storageThroughputEscapeHtml(row.group) + '</td><td>' + storageThroughputEscapeHtml(row.metric) + '</td><td>' + storageThroughputDecisionValueCell(row, status) + '</td><td>' + storageThroughputEscapeHtml(row.note) + '</td></tr>';
+    }).join("");
+
+    return [
+      '<div class="compute-decision-schedule-status">',
+      '  <div><strong>' + storageThroughputEscapeHtml(status) + ' Storage Throughput Decision Schedule</strong><span>' + storageThroughputEscapeHtml(interpretation) + '</span></div>',
+      '  <div class="scopedlabs-result-summary-status ' + storageThroughputStatusClass(status) + '">' + storageThroughputEscapeHtml(status) + '</div>',
+      '</div>',
+      '<table class="compute-decision-schedule-table">',
+      '  <thead><tr><th>Group</th><th>Metric</th><th>Value</th><th>Engineering Note</th></tr></thead>',
+      '  <tbody>' + rows + '</tbody>',
+      '</table>',
+      '<p class="compute-decision-schedule-interpretation" data-export-text="true" data-storage-throughput-decision-export-interpretation="0705"><strong>Engineering Interpretation:</strong> ' + storageThroughputEscapeHtml(interpretation) + '</p>'
+    ].join("");
+  }
+
+  function clearStorageThroughputShellSections() {
+    if (els.referencesCard) els.referencesCard.hidden = true;
+    if (els.references) els.references.innerHTML = "";
+    if (els.actionsCard) els.actionsCard.hidden = true;
+    if (els.actions) els.actions.innerHTML = "";
+    if (els.decisionCard) els.decisionCard.hidden = true;
+    if (els.decision) els.decision.innerHTML = "";
+  }
+
+  function renderStorageThroughputShellSections(payload) {
+    payload = payload || {};
+
+    if (els.references && els.referencesCard) {
+      els.references.innerHTML = renderStorageThroughputReferenceTable(payload.references || []);
+      els.referencesCard.hidden = false;
+      els.referencesCard.removeAttribute("hidden");
+    }
+
+    if (els.actions && els.actionsCard) {
+      els.actions.innerHTML = renderStorageThroughputRecommendedActions(payload.recommendedActions || []);
+      els.actionsCard.hidden = false;
+      els.actionsCard.removeAttribute("hidden");
+    }
+
+    if (els.decision && els.decisionCard) {
+      els.decision.innerHTML = renderStorageThroughputDecisionSchedule(payload, payload.decisionSchedule || []);
+      els.decisionCard.hidden = false;
+      els.decisionCard.removeAttribute("hidden");
     }
   }
 
@@ -402,6 +564,53 @@
       { label: "Cross-Check", value: crossCheck }
     ];
 
+
+    const references = [
+      {
+        marker: "*1",
+        reference: "Burst / growth demand",
+        reason: formatStorageThroughputMBps(growthAdjustedMBps) + " after peak multiplier, protocol overhead, and growth reserve are applied."
+      },
+      {
+        marker: "*2",
+        reference: "Required throughput",
+        reason: formatStorageThroughputMBps(requiredThroughputMBps) + " required after comparing burst/growth demand against the transfer-window requirement."
+      },
+      {
+        marker: "*3",
+        reference: "Available path validation",
+        reason: (availableThroughputMBps > 0 ? formatStorageThroughputMBps(availableThroughputMBps) : "No available path entered") + " | " + transportPathLabel + " | " + (availableThroughputMBps > 0 ? "headroom " + formatStorageThroughputMBps(headroomMBps) : "headroom not available") + "."
+      }
+    ];
+
+    const recommendedActions = [
+      {
+        action: status === "RISK" ? "Increase available path throughput before continuing" : "Confirm available path throughput before continuing",
+        reason: status === "RISK"
+          ? formatStorageThroughputMBps(requiredThroughputMBps) + " required throughput is above the entered " + formatStorageThroughputMBps(availableThroughputMBps) + " available path."
+          : "Confirm the entered " + formatStorageThroughputMBps(availableThroughputMBps) + " available path against the selected transport, controller, media, and shared-fabric assumptions."
+      },
+      {
+        action: "Validate transfer-window and dataset assumptions",
+        reason: "The transfer window requires " + formatStorageThroughputMBps(transferWindowRequiredMBps) + " for " + datasetTB + " TB over " + transferWindowHours + " hours."
+      },
+      {
+        action: "Carry required throughput into VM Density",
+        reason: "Use " + formatStorageThroughputMBps(requiredThroughputMBps) + " required throughput, " + transportPathLabel + ", and " + mediaTierLabel + " when validating density and shared platform pressure."
+      }
+    ];
+
+    const decisionSchedule = [
+      { group: "Capacity", metric: "Status", value: status, note: dominantConstraint || "Storage Throughput recommendation status before continuing downstream." },
+      { group: "Demand", metric: "Required Throughput", value: formatStorageThroughputMBps(requiredThroughputMBps), note: "Final required throughput after burst, growth, overhead, and transfer-window demand are included." },
+      { group: "Capacity", metric: "Available Throughput", value: availableThroughputMBps > 0 ? formatStorageThroughputMBps(availableThroughputMBps) : "Not provided", note: "Entered available storage path ceiling used for the throughput capacity check." },
+      { group: "Pressure", metric: "Utilization", value: availableThroughputMBps > 0 ? throughputUtilizationPct.toFixed(0) + "%" : "Not provided", note: "Required throughput as a share of entered available path throughput." },
+      { group: "Validation", metric: "Transfer Window", value: datasetTB + " TB / " + transferWindowHours + " hr", note: "Bulk movement window used to validate whether time-bound transfers exceed burst/growth demand." },
+      { group: "Validation", metric: "Block Size", value: kb + " KB", note: "I/O block size used for IOPS-to-throughput translation." },
+      { group: "Next Step", metric: "Next Tool", value: "VM Density", note: "Validate VM density after storage IOPS and throughput capacity are resolved." }
+    ];
+
+
     ScopedLabsAnalyzer.renderOutput({
       resultsEl: els.results,
       analysisEl: els.analysisCopy,
@@ -446,10 +655,16 @@
       baseMBps,
       burstAdjustedMBps,
       growthAdjustedMBps,
+      references,
+      recommendedActions,
+      decisionSchedule,
+      guidance,
+      interpretation,
       upstreamRequiredIops: iopsContext && typeof iopsContext.finalIops === "number" ? iopsContext.finalIops : iops
     };
 
     renderStorageThroughputCapacityVisual(flowPayload);
+    renderStorageThroughputShellSections(flowPayload);
 
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
       category: CATEGORY,

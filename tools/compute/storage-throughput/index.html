@@ -280,10 +280,29 @@
     </div>
   
 
-    <section id="computeStorageThroughputVisualCard" class="card compute-result-visual-card" hidden data-compute-result-visual-card data-output-visual-owner="compute-capacity-visuals" data-export-section="true" data-export-title="Storage Throughput Capacity Envelope" data-export-compact-svg="true" data-storage-throughput-export-visual-card="0705">
+    <section id="computeStorageThroughputVisualCard" class="card compute-result-visual-card" hidden data-compute-result-visual-card data-output-visual-owner="compute-capacity-visuals" data-export-section="true" data-export-title="Storage Throughput Capacity Envelope" data-export-compact-svg="true" data-storage-throughput-export-visual-card="0705" data-storage-throughput-proof-stack="0705">
       <h3 class="h3 compute-result-visual-title" style="margin-top: 0;">Storage Throughput Capacity Envelope</h3>
       <p class="muted" style="margin-bottom: 0;">Dynamic MB/s demand curve showing base transfer demand, burst/growth pressure, required throughput, available path ceiling, and headroom or deficit before VM Density validation.</p>
       <div id="computeStorageThroughputVisual" class="compute-capacity-visual" data-compute-capacity-visual="storage-throughput" data-export-svg="true" data-storage-throughput-export-svg="0705"></div>
+    </section>
+
+
+    <section id="computeStorageThroughputReferencesCard" class="card compute-recommendation-references-card" hidden data-compute-recommendation-references-card data-output-references-owner="compute-assistant-contract" data-export-section="true" data-export-title="Recommendation References">
+      <h3 class="h3" style="margin-top: 0;">Recommendation References</h3>
+      <p class="muted" style="margin-bottom: 0;">Reference markers shown in the Storage Throughput Capacity Envelope. These explain why each plotted point matters before continuing to VM Density.</p>
+      <div id="computeStorageThroughputReferences" data-compute-recommendation-references="storage-throughput"></div>
+    </section>
+
+    <section id="computeStorageThroughputRecommendedActionsCard" class="card compute-recommended-actions-card" hidden data-compute-recommended-actions-card data-output-actions-owner="compute-assistant-contract" data-export-section="true" data-export-title="Recommended Actions">
+      <h3 class="h3" style="margin-top: 0;">Recommended Actions</h3>
+      <p class="muted" style="margin-bottom: 0;">Practical actions to validate or reduce storage throughput pressure before continuing downstream.</p>
+      <div id="computeStorageThroughputRecommendedActions" data-compute-recommended-actions="storage-throughput" role="group" aria-label="Storage Throughput recommended actions"></div>
+    </section>
+
+    <section id="computeStorageThroughputDecisionScheduleCard" class="card compute-decision-schedule-card" hidden data-compute-decision-schedule-card data-output-decision-owner="compute-assistant-contract" data-export-section="true" data-export-title="Storage Throughput Decision Schedule">
+      <h3 class="h3" style="margin-top: 0;">Storage Throughput Decision Schedule</h3>
+      <p class="muted" style="margin-bottom: 0;">Compact storage bandwidth decision path for the active Compute workload.</p>
+      <div id="computeStorageThroughputDecisionSchedule" data-compute-decision-schedule="storage-throughput" role="group" aria-label="Storage Throughput decision schedule"></div>
     </section>
 
 <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
@@ -378,7 +397,7 @@
 
   <script src="/assets/scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-007-workload-nav-links"></script>
     <script src="/assets/scopedlabs-compute-capacity-visuals.js?v=storage-throughput-capacity-envelope-0705"></script>
-<script src="./script.js?v=compute-storage-throughput-visual-wire-0705"></script>
+<script src="./script.js?v=compute-storage-throughput-proof-stack-0705"></script>
 
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
