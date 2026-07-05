@@ -309,12 +309,21 @@ if (
 
   // storage-iops-full-shell-parity-0704
   // storage-iops-ram-reference-flow-0705
+  // storage-iops-ram-section-contract-0705
   function storageIopsEscapeHtml(value) {
     return String(value == null ? "" : value)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
+  }
+
+  function storageIopsStatusClass(status) {
+    const value = String(status || "").toUpperCase();
+    if (value === "RISK") return "is-risk";
+    if (value === "WATCH") return "is-watch";
+    if (value === "GOOD" || value === "HEALTHY") return "is-good";
+    return "is-review";
   }
 
   function normalizeStorageIopsReference(ref) {
@@ -326,7 +335,8 @@ if (
       };
     }
 
-    const parts = String(ref || "").split("|");
+    const raw = String(ref || "");
+    const parts = raw.split("|");
     return {
       marker: parts[0] || "",
       reference: parts[1] || "",
@@ -340,20 +350,84 @@ if (
     });
 
     return [
-      '<div class="storage-iops-reference-table">',
-        '<div class="storage-iops-reference-row storage-iops-reference-head">',
-          '<div>MARKER</div><div>REFERENCE</div><div>REASON</div>',
-        '</div>',
-        rows.map(function(row) {
-          return [
-            '<div class="storage-iops-reference-row">',
-              '<div class="storage-iops-reference-marker">' + storageIopsEscapeHtml(row.marker) + '</div>',
-              '<div class="storage-iops-reference-name">' + storageIopsEscapeHtml(row.reference) + '</div>',
-              '<div class="storage-iops-reference-reason">' + storageIopsEscapeHtml(row.reason) + '</div>',
-            '</div>'
-          ].join("");
-        }).join(""),
-      '</div>'
+      '<table class="compute-recommendation-references-table">',
+      '  <thead><tr><th>Marker</th><th>Reference</th><th>Reason</th></tr></thead>',
+      '  <tbody>',
+      rows.map(function(row) {
+        return '<tr><td>' + storageIopsEscapeHtml(row.marker) + '</td><td>' + storageIopsEscapeHtml(row.reference) + '</td><td>' + storageIopsEscapeHtml(row.reason) + '</td></tr>';
+      }).join(""),
+      '  </tbody>',
+      '</table>'
+    ].join("");
+  }
+
+  function normalizeStorageIopsAction(action) {
+    if (action && typeof action === "object") {
+      return {
+        action: String(action.action || action.label || "Review Storage IOPS plan"),
+        reason: String(action.reason || action.value || "Engineering review required.")
+      };
+    }
+
+    const raw = String(action || "");
+    return {
+      action: raw || "Review Storage IOPS plan",
+      reason: "Validate this action against the selected storage tier before continuing downstream."
+    };
+  }
+
+  function renderStorageIopsRecommendedActions(actions) {
+    const rows = (actions || []).map(normalizeStorageIopsAction).map(function(item) {
+      return '<div class="compute-recommended-action"><strong>' + storageIopsEscapeHtml(item.action) + '</strong><span>' + storageIopsEscapeHtml(item.reason) + '</span></div>';
+    });
+
+    return '<div class="compute-recommended-actions-list">' + (rows.length ? rows.join("") : '<div class="compute-recommended-action"><strong>No corrective actions generated</strong><span>Run the Storage IOPS calculation again to refresh recommendations.</span></div>') + '</div>';
+  }
+
+  function normalizeStorageIopsDecisionRow(item) {
+    if (item && typeof item === "object") {
+      return {
+        group: String(item.group || "Storage IOPS"),
+        metric: String(item.metric || item.label || "Metric"),
+        value: String(item.value == null ? "" : item.value),
+        note: String(item.note || "Carry this value forward into downstream Compute validation.")
+      };
+    }
+
+    return {
+      group: "Storage IOPS",
+      metric: "Review",
+      value: String(item || ""),
+      note: "Carry this value forward into downstream Compute validation."
+    };
+  }
+
+  function storageIopsDecisionValueCell(row, status) {
+    const value = row && row.value != null ? row.value : "";
+    if (row && String(row.metric || "").toLowerCase() === "status") {
+      return '<span class="scopedlabs-result-summary-status ' + storageIopsStatusClass(status) + '">' + storageIopsEscapeHtml(value) + '</span>';
+    }
+
+    return '<strong>' + storageIopsEscapeHtml(value) + '</strong>';
+  }
+
+  function renderStorageIopsDecisionSchedule(payload, schedule) {
+    const status = String(payload.status || "REVIEW").toUpperCase();
+    const interpretation = String(payload.recommendation || payload.nextStep || "Validate the storage IOPS plan before continuing downstream.");
+    const rows = (schedule || []).map(normalizeStorageIopsDecisionRow).map(function(row) {
+      return '<tr><td>' + storageIopsEscapeHtml(row.group) + '</td><td>' + storageIopsEscapeHtml(row.metric) + '</td><td>' + storageIopsDecisionValueCell(row, status) + '</td><td>' + storageIopsEscapeHtml(row.note) + '</td></tr>';
+    }).join("");
+
+    return [
+      '<div class="compute-decision-schedule-status">',
+      '  <div><strong>' + storageIopsEscapeHtml(status) + ' Storage IOPS Decision Schedule</strong><span>' + storageIopsEscapeHtml(interpretation) + '</span></div>',
+      '  <div class="scopedlabs-result-summary-status ' + storageIopsStatusClass(status) + '">' + storageIopsEscapeHtml(status) + '</div>',
+      '</div>',
+      '<table class="compute-decision-schedule-table">',
+      '  <thead><tr><th>Group</th><th>Metric</th><th>Value</th><th>Engineering Note</th></tr></thead>',
+      '  <tbody>' + rows + '</tbody>',
+      '</table>',
+      '<p class="compute-decision-schedule-interpretation"><strong>Engineering Interpretation:</strong> ' + storageIopsEscapeHtml(interpretation) + '</p>'
     ].join("");
   }
 
@@ -367,6 +441,7 @@ if (
   }
 
   function renderStorageIopsShellSections(payload) {
+    payload = payload || {};
     const refs = payload.references || [];
     const actions = payload.recommendedActions || [];
     const schedule = payload.decisionSchedule || [];
@@ -377,17 +452,12 @@ if (
     }
 
     if (els.actions && els.actionsCard) {
-      els.actions.innerHTML = '<ol class="storage-iops-actions-list">' + actions.map(function(action) {
-        return '<li>' + action + '</li>';
-      }).join('') + '</ol>';
+      els.actions.innerHTML = renderStorageIopsRecommendedActions(actions);
       els.actionsCard.hidden = false;
     }
 
     if (els.decision && els.decisionCard) {
-      els.decision.innerHTML = schedule.map(function(item) {
-        return '<div class="storage-iops-decision-row"><div class="storage-iops-decision-k">' +
-          item.label + '</div><div class="storage-iops-decision-v">' + item.value + '</div></div>';
-      }).join('');
+      els.decision.innerHTML = renderStorageIopsDecisionSchedule(payload, schedule);
       els.decisionCard.hidden = false;
     }
   }
@@ -563,9 +633,20 @@ if (
     ];
 
     const recommendedActions = [
-      analyzer.status === "RISK" ? "Increase available platform IOPS or move to a faster media tier before continuing." : "Confirm the entered available platform IOPS against the storage tier or vendor/platform specification.",
-      "Validate the RAID/write penalty assumption against the intended storage layout.",
-      "Carry the required IOPS and latency target into Storage Throughput so bandwidth is checked against the same workload."
+      {
+        action: analyzer.status === "RISK" ? "Increase available platform IOPS before continuing" : "Confirm available platform IOPS before continuing",
+        reason: analyzer.status === "RISK"
+          ? formatNumber(finalIops) + " required IOPS is above the entered " + formatNumber(availableIops) + " available platform IOPS."
+          : "Confirm the entered " + formatNumber(availableIops) + " available platform IOPS against the selected storage tier or vendor/platform specification."
+      },
+      {
+        action: "Validate RAID/write penalty assumptions",
+        reason: "The write penalty is x" + penalty + "; confirm this matches the intended storage layout before using the result downstream."
+      },
+      {
+        action: "Carry required IOPS into Storage Throughput",
+        reason: "Use " + formatNumber(finalIops) + " required IOPS, " + targetLatency + " ms latency target, and " + blockSizeKb + " KB blocks for bandwidth validation."
+      }
     ];
 
     const decisionSchedule = [

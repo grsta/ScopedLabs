@@ -103,7 +103,9 @@ ordered("RAM_SHELL_SECTION_ORDER_WITH_VISUAL", [
 
 check("STORAGE_IOPS_PLANNING_INPUTS_PRESERVED", html.includes('id="availableIops"') && html.includes('id="peakMultiplier"') && html.includes('id="targetLatency"') && html.includes('id="mediaTier"') && html.includes('id="workloadPattern"'));
 check("STORAGE_IOPS_REFERENCES_VISIBLE", html.includes('id="computeStorageIopsReferencesCard"') && js.includes("renderStorageIopsReferenceTable") && js.includes('marker: "*1"') && js.includes('reference: "Burst demand"') && js.includes('marker: "*2"') && js.includes('reference: "Required IOPS"') && js.includes('marker: "*3"') && js.includes('reference: "Platform / latency validation"'));
-check("STORAGE_IOPS_ACTIONS_RENDERED", js.includes("recommendedActions") && js.includes("decisionSchedule"));
+check("STORAGE_IOPS_ACTIONS_RENDERED", js.includes("recommendedActions") && js.includes("renderStorageIopsRecommendedActions") && js.includes("compute-recommended-actions-list") && js.includes("compute-recommended-action"));
+check("STORAGE_IOPS_RAM_SECTION_CONTRACT_RENDERERS", js.includes("storage-iops-ram-section-contract-0705") && js.includes("compute-recommendation-references-table") && js.includes("compute-recommended-actions-list") && js.includes("compute-decision-schedule-table"));
+check("STORAGE_IOPS_SECTION_CARDS_USE_COMPUTE_ASSISTANT_CONTRACT_OWNER", html.includes('data-output-references-owner="compute-assistant-contract"') && html.includes('data-output-actions-owner="compute-assistant-contract"') && html.includes('data-output-decision-owner="compute-assistant-contract"'));
 check("STORAGE_IOPS_LEDGER_PAYLOAD_PRESERVED", js.includes("planningInputs") && js.includes("assistantRecommendation") && js.includes("saveComputeLedgerResult({"));
 check("STORAGE_IOPS_MATH_PRESERVED", js.includes("const finalIops = peakDemandIops + reserveIops + growthReserveIops;"));
 check("STORAGE_IOPS_PROOF_CARD_SCRIPTED", js.includes('proofStackCard: $("storageIopsProofStackCard")') && html.includes("data-storage-iops-proof-export-only") && js.includes("storage-iops-visible-proof-suppressed-0705"));
