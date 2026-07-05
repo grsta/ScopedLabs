@@ -663,6 +663,144 @@
     }
 
     
+
+    // compute-capacity-inline-icon-library-0705
+    function computeCapacitySvgEscape(value) {
+      return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&apos;");
+    }
+
+    function computeCapacityFooterIconStyles() {
+      return ".footer-pill{fill:rgba(15,23,42,.72);stroke:rgba(112,255,145,.14);stroke-width:1}.footer-label{fill:rgba(203,213,225,.78);font-family:Inter,Arial,sans-serif;font-size:8.5px;font-weight:850;letter-spacing:.45px;text-transform:uppercase}.footer-value{fill:rgba(248,250,252,.92);font-family:Inter,Arial,sans-serif;font-size:9.5px;font-weight:850}.sl-icon-line{fill:none;stroke:rgba(226,232,240,.70);stroke-width:1.35;stroke-linecap:round;stroke-linejoin:round}.sl-icon-accent{fill:none;stroke:#2cff9b;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}.sl-icon-dot{fill:#2cff9b}";
+    }
+
+    function computeCapacityIconSvg(iconKey, x, y) {
+      const key = String(iconKey || "storage").toLowerCase();
+      const icons = {
+        storage: function storage() {
+          return [
+            '<g transform="translate(' + x + ' ' + y + ')" aria-label="storage pool icon">',
+              '<rect x="0" y="3" width="23" height="6" rx="2" class="sl-icon-line"/>',
+              '<rect x="0" y="11" width="23" height="6" rx="2" class="sl-icon-line"/>',
+              '<rect x="0" y="19" width="23" height="6" rx="2" class="sl-icon-line"/>',
+              '<circle cx="4" cy="6" r="1.1" class="sl-icon-dot"/>',
+              '<circle cx="4" cy="14" r="1.1" class="sl-icon-dot"/>',
+              '<circle cx="4" cy="22" r="1.1" class="sl-icon-dot"/>',
+              '<path d="M9 6 H19" class="sl-icon-accent"/>',
+              '<path d="M9 14 H19" class="sl-icon-accent"/>',
+              '<path d="M9 22 H19" class="sl-icon-accent"/>',
+            '</g>'
+          ].join("");
+        },
+
+        workload: function workload() {
+          return [
+            '<g transform="translate(' + x + ' ' + y + ')" aria-label="workload demand icon">',
+              '<rect x="0" y="15" width="4" height="4" rx="1" class="sl-icon-line"/>',
+              '<rect x="6" y="11" width="4" height="8" rx="1" class="sl-icon-line"/>',
+              '<rect x="12" y="7" width="4" height="12" rx="1" class="sl-icon-line"/>',
+              '<path d="M0 23 H4 L7 18 L10 23 H14 L18 11 L22 23" class="sl-icon-accent"/>',
+              '<path d="M17 6 H24" class="sl-icon-line"/>',
+              '<path d="M21 3 L24 6 L21 9" class="sl-icon-line"/>',
+            '</g>'
+          ].join("");
+        },
+
+        raid: function raid() {
+          return [
+            '<g transform="translate(' + x + ' ' + y + ')" aria-label="RAID group icon">',
+              '<rect x="0" y="4" width="6" height="18" rx="1.5" class="sl-icon-line"/>',
+              '<rect x="9" y="4" width="6" height="18" rx="1.5" class="sl-icon-line"/>',
+              '<rect x="18" y="4" width="6" height="18" rx="1.5" class="sl-icon-line"/>',
+              '<path d="M3 10 H21" class="sl-icon-accent"/>',
+              '<path d="M3 16 H21" class="sl-icon-accent" opacity="0.62"/>',
+              '<path d="M7 25 L10 28 L16 22" class="sl-icon-accent"/>',
+            '</g>'
+          ].join("");
+        },
+
+        latency: function latency() {
+          return [
+            '<g transform="translate(' + x + ' ' + y + ')" aria-label="latency icon">',
+              '<circle cx="12" cy="14" r="8" class="sl-icon-line"/>',
+              '<path d="M9 3 H15" class="sl-icon-line"/>',
+              '<path d="M12 3 V6" class="sl-icon-line"/>',
+              '<path d="M12 14 L12 9" class="sl-icon-accent"/>',
+              '<path d="M12 14 L17 16" class="sl-icon-accent"/>',
+              '<path d="M2 26 C5 23 8 29 11 26 C14 23 17 29 20 26" class="sl-icon-accent" opacity="0.75"/>',
+            '</g>'
+          ].join("");
+        },
+
+        block: function block() {
+          return [
+            '<g transform="translate(' + x + ' ' + y + ')" aria-label="block size icon">',
+              '<rect x="0" y="4" width="8" height="8" rx="1.5" class="sl-icon-line"/>',
+              '<rect x="11" y="4" width="8" height="8" rx="1.5" class="sl-icon-line"/>',
+              '<rect x="0" y="15" width="8" height="8" rx="1.5" class="sl-icon-line"/>',
+              '<rect x="11" y="15" width="8" height="8" rx="1.5" class="sl-icon-line"/>',
+              '<rect x="22" y="9" width="6" height="9" rx="1.3" class="sl-icon-accent"/>',
+              '<path d="M19 13.5 H22" class="sl-icon-accent"/>',
+            '</g>'
+          ].join("");
+        },
+
+        network: function network() {
+          return [
+            '<g transform="translate(' + x + ' ' + y + ')" aria-label="network path icon">',
+              '<circle cx="4" cy="7" r="3" class="sl-icon-line"/>',
+              '<circle cx="20" cy="7" r="3" class="sl-icon-line"/>',
+              '<circle cx="12" cy="21" r="3" class="sl-icon-line"/>',
+              '<path d="M7 8 H17" class="sl-icon-accent"/>',
+              '<path d="M6 10 L10 18" class="sl-icon-accent"/>',
+              '<path d="M18 10 L14 18" class="sl-icon-accent"/>',
+            '</g>'
+          ].join("");
+        },
+
+        utilization: function utilization() {
+          return [
+            '<g transform="translate(' + x + ' ' + y + ')" aria-label="utilization gauge icon">',
+              '<path d="M3 20 A9 9 0 0 1 21 20" class="sl-icon-line"/>',
+              '<path d="M5 20 H19" class="sl-icon-line" opacity="0.55"/>',
+              '<path d="M12 19 L18 12" class="sl-icon-accent"/>',
+              '<circle cx="12" cy="20" r="2" class="sl-icon-dot"/>',
+              '<path d="M4 24 H22" class="sl-icon-accent" opacity="0.72"/>',
+            '</g>'
+          ].join("");
+        }
+      };
+
+      if (key === "media" || key === "server") return icons.storage();
+      if (key === "gauge" || key === "util") return icons.utilization();
+      return (icons[key] || icons.storage)();
+    }
+
+    function buildCapacityFooterStat(x, iconKey, label, value, options) {
+      options = options || {};
+      const y = Number.isFinite(Number(options.y)) ? Number(options.y) : 354;
+      const width = Number.isFinite(Number(options.width)) ? Number(options.width) : 120;
+      const iconX = Number.isFinite(Number(options.iconX)) ? Number(options.iconX) : 8;
+      const iconY = Number.isFinite(Number(options.iconY)) ? Number(options.iconY) : 7;
+      const labelX = Number.isFinite(Number(options.labelX)) ? Number(options.labelX) : 34;
+      const labelY = Number.isFinite(Number(options.labelY)) ? Number(options.labelY) : 16;
+      const valueY = Number.isFinite(Number(options.valueY)) ? Number(options.valueY) : 31;
+      const escape = typeof options.escaper === "function" ? options.escaper : computeCapacitySvgEscape;
+
+      return [
+        '<g transform="translate(' + x + ' ' + y + ')">',
+          '<rect x="0" y="0" width="' + width + '" height="42" rx="10" class="footer-pill"/>',
+          computeCapacityIconSvg(iconKey, iconX, iconY),
+          '<text x="' + labelX + '" y="' + labelY + '" class="footer-label">' + escape(label) + '</text>',
+          '<text x="' + labelX + '" y="' + valueY + '" class="footer-value">' + escape(value) + '</text>',
+        '</g>'
+      ].join("");
+    }
+
     // storage-iops-icon-envelope-polish-0705
     function buildStorageIopsCapacityEnvelopeSvg(result) {
       // storage-iops-deficit-label-stack-fix-0705
@@ -1194,12 +1332,10 @@ function renderStorageIopsCapacityEnvelope(options) {
         '<text x="' + stageX.burst.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">burst</text>',
         '<text x="' + stageX.required.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">required</text>',
         available > 0 ? '<path d="M' + (plot.x + plot.w - 24).toFixed(1) + ' ' + bracketTop.toFixed(1) + ' H' + (plot.x + plot.w - 8).toFixed(1) + '" class="bracket-line"/><path d="M' + (plot.x + plot.w - 24).toFixed(1) + ' ' + bracketBottom.toFixed(1) + ' H' + (plot.x + plot.w - 8).toFixed(1) + '" class="bracket-line"/><path d="M' + (plot.x + plot.w - 10).toFixed(1) + ' ' + bracketTop.toFixed(1) + ' V' + bracketBottom.toFixed(1) + '" class="bracket-line"/><text x="' + (plot.x + plot.w - 1).toFixed(1) + '" y="' + (bracketTextY - 7).toFixed(1) + '" class="bracket-text" text-anchor="start"><tspan x="' + (plot.x + plot.w - 1).toFixed(1) + '" dy="0">' + escapeXml(bracketLabelPrimary) + '</tspan><tspan x="' + (plot.x + plot.w - 1).toFixed(1) + '" dy="14">' + escapeXml(bracketLabelValue) + '</tspan></text>' : '',
-        '<g transform="translate(58 374)">',
-        '<rect x="0" y="0" width="150" height="28" rx="8" class="chip-bg"/><text x="14" y="18" class="chip-text">path: ' + escapeXml(transport) + '</text>',
-        '<rect x="166" y="0" width="150" height="28" rx="8" class="chip-bg"/><text x="180" y="18" class="chip-text">media: ' + escapeXml(media) + '</text>',
-        '<rect x="332" y="0" width="162" height="28" rx="8" class="chip-bg"/><text x="346" y="18" class="chip-text">workload: ' + escapeXml(workload) + '</text>',
-        '<rect x="510" y="0" width="136" height="28" rx="8" class="chip-bg"/><text x="524" y="18" class="chip-text">util: ' + Math.round(utilizationPct) + '%</text>',
-        '</g>',
+        buildCapacityFooterStat(58, "network", "Path", transport, { y: 360, width: 150, iconX: 9, iconY: 7, labelX: 38, labelY: 16, valueY: 31, escaper: escapeXml }),
+        buildCapacityFooterStat(214, "media", "Media", media, { y: 360, width: 150, iconX: 9, iconY: 7, labelX: 38, labelY: 16, valueY: 31, escaper: escapeXml }),
+        buildCapacityFooterStat(370, "workload", "Workload", workload, { y: 360, width: 162, iconX: 9, iconY: 6, labelX: 38, labelY: 16, valueY: 31, escaper: escapeXml }),
+        buildCapacityFooterStat(538, "utilization", "Utilization", Math.round(utilizationPct) + "%", { y: 360, width: 166, iconX: 9, iconY: 6, labelX: 38, labelY: 16, valueY: 31, escaper: escapeXml }),
         '</svg>'
       ].join("");
     }
