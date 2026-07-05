@@ -112,7 +112,7 @@
   </div>
 </header>
 
-<main class="container page">
+<main class="container page" data-compute-tool-shell="storage-throughput-0705" data-sl-square-ctas="true">
 
   <div class="crumbs">
     <a href="/tools/">Tools</a>
@@ -267,7 +267,7 @@
       <button id="reset" class="btn" type="button">Reset</button>
     </div>
 
-    <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+    <div id="computeInternalResultsLedger" class="card compute-internal-results-ledger" style="display:none;" hidden aria-hidden="true" data-internal-results-ledger>
       <h3 class="h3" style="margin-top: 0;">Results</h3>
       <div id="results" class="results-grid" aria-live="polite">
         <div class="muted">Enter values and press Calculate.</div>
@@ -278,9 +278,18 @@
         Model: throughput is estimated from IOPS, block size, read/write ratio, transfer window, burst/growth reserve, available path ceiling, media tier, transport path, and protocol overhead. This is a planning view for transfer demand, not a replacement for traced workload captures.
       </p>
     </div>
-  
 
-    <section id="computeStorageThroughputVisualCard" class="card compute-result-visual-card" hidden data-compute-result-visual-card data-output-visual-owner="compute-capacity-visuals" data-export-section="true" data-export-title="Storage Throughput Capacity Envelope" data-export-compact-svg="true" data-storage-throughput-export-visual-card="0705" data-storage-throughput-proof-stack="0705">
+    <section id="computeStorageThroughputResultCard" class="card compute-static-summary-card-shell storage-throughput-result-summary-card" style="margin-top: 14px;" hidden data-storage-throughput-result-card data-export-section="true" data-export-title="Storage Throughput Result Summary">
+      <div id="computeStorageThroughputResultSummary" class="storage-throughput-result-summary" aria-live="polite" data-export-text="true" data-storage-throughput-summary-export-text="0705">
+        <div class="muted">Run the calculator to generate the Storage Throughput recommendation.</div>
+      </div>
+    </section>
+
+    <section id="computeAssistantCard" class="card compute-assistant-card compute-static-summary-card-shell" style="margin-top: 14px;" hidden data-compute-assistant-card>
+      <div id="computeAssistantMount" data-compute-assistant-mount data-category-slug="compute"></div>
+    </section>
+
+<section id="computeStorageThroughputVisualCard" class="card compute-result-visual-card" hidden data-compute-result-visual-card data-output-visual-owner="compute-capacity-visuals" data-export-section="true" data-export-title="Storage Throughput Capacity Envelope" data-export-compact-svg="true" data-storage-throughput-export-visual-card="0705" data-storage-throughput-proof-stack="0705">
       <h3 class="h3 compute-result-visual-title" style="margin-top: 0;">Storage Throughput Capacity Envelope</h3>
       <p class="muted" style="margin-bottom: 0;">Dynamic MB/s demand curve showing base transfer demand, burst/growth pressure, required throughput, available path ceiling, and headroom or deficit before VM Density validation.</p>
       <div id="computeStorageThroughputVisual" class="compute-capacity-visual" data-compute-capacity-visual="storage-throughput" data-export-svg="true" data-storage-throughput-export-svg="0705"></div>
@@ -305,57 +314,37 @@
       <div id="computeStorageThroughputDecisionSchedule" data-compute-decision-schedule="storage-throughput" role="group" aria-label="Storage Throughput decision schedule"></div>
     </section>
 
-<section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
-        <div class="pill-row">
-          <span class="pill pill--pro">Documentation & Export</span>
-        </div>
 
-        <h3 class="h3" style="margin-top: 10px;">Export Report</h3>
-        <p class="muted" style="margin-bottom: 0;">
-          Add optional project context and generate a clean documentation view that can be printed or saved as a PDF for client or internal use.
-        </p>
+    <section class="card compute-export-card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+      <h3 class="h3" style="margin-top: 0;">Export Report</h3>
 
-        <div class="export-grid">
-          <label class="field">
-            <span class="label">Report Title</span>
-            <input id="reportTitle" type="text" placeholder="Storage Throughput Estimator Assessment" />
-          </label>
+      <p class="muted" style="margin-bottom: 0;">
+        Add optional project context and generate a clean documentation view that can be printed or saved as a PDF for client or internal use.
+      </p>
 
-          <label class="field">
-            <span class="label">Project Name</span>
-            <input id="projectName" type="text" placeholder="Project Name" />
-          </label>
+      <div
+        id="reportMetadataMount"
+        data-report-metadata
+        data-report-title="Report details"
+        data-report-copy="Optional metadata can be included in the generated report. Leave blank to use the default report naming."
+        data-report-fields="reportTitle,projectName,clientName,preparedBy,customNotes"
+        data-collapsed="true"
+      ></div>
 
-          <label class="field">
-            <span class="label">Client Name</span>
-            <input id="clientName" type="text" placeholder="Client / Site Name" />
-          </label>
+      <div class="btn-row" style="margin-top: 14px;">
+        <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Export Report</button>
+        <button id="saveSnapshot" class="btn" type="button" disabled>Save Snapshot</button>
+      </div>
 
-          <label class="field">
-            <span class="label">Prepared By</span>
-            <input id="preparedBy" type="text" placeholder="ScopedLabs Pro User" />
-          </label>
+      <div id="exportStatus" class="export-status"></div>
+    </section>
 
-          <label class="field full">
-            <span class="label">Custom Notes</span>
-            <textarea id="customNotes" placeholder="Optional notes, assumptions, workload details, or design caveats to include in the report."></textarea>
-          </label>
-        </div>
-
-        <div class="btn-row" style="margin-top: 14px;">
-          <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Export Report</button>
-          <button id="saveSnapshot" class="btn" type="button" disabled>Save Snapshot</button>
-        </div>
-
-        <div id="exportStatus" class="export-status"></div>
-      </section>
 </section>
 
-  <div id="continue-wrap" class="btn-row" style="display:none; margin-top:12px;">
-    <button id="continue" class="btn btn-primary" disabled>
-      Continue → VM Density
-    </button>
-  </div>
+  <div id="continue-wrap" class="compute-flow-actions" style="display:none; margin-top:10px;" data-compute-flow-actions="true" data-compute-flow-owner="compute-shell-contract" data-compute-flow-tool="storage-throughput" data-compute-flow-placed="true" data-storage-throughput-flow-actions="0705">
+  <a class="btn" href="/tools/compute/storage-iops/">Back to Storage IOPS</a>
+  <button id="continue" class="btn btn-primary" type="button" disabled data-compute-continue-href="/tools/compute/vm-density/">Continue &rarr; VM Density</button>
+</div>
 
   <footer class="site-footer">
     <div class="muted">© <span data-year></span> ScopedLabs</div>
@@ -395,12 +384,20 @@
   </script>
 
   <script src="/assets/export.js?v=shared-export-025-tool-notes-column-widths"></script>
+  <script src="/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-008-access-control-category-scope-key"></script>
+  <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
 
   <script src="/assets/scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-007-workload-nav-links"></script>
+  <script src="/assets/scopedlabs-compute-guided-route-engine.js?v=scopedlabs-compute-guided-route-engine-004-tool-continue-route"></script>
+  <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-002"></script>
     <script src="/assets/scopedlabs-compute-capacity-visuals.js?v=storage-throughput-capacity-envelope-0705"></script>
-<script src="./script.js?v=compute-storage-throughput-export-payload-0705"></script>
+<script src="./script.js?v=compute-storage-throughput-shell-parity-0705"></script>
 
   <script defer src="/assets/help.js?v=help-026"></script>
+  <script src="/assets/scopedlabs-compute-shell-contract.js?v=compute-result-card-contract-0704"></script>
+  <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
+  <script src="/assets/scopedlabs-compute-assistant-contract.js?v=compute-assistant-storage-throughput-shell-0705"></script>
+  <script src="/assets/scopedlabs-user-tool-notes.js?v=scopedlabs-user-tool-notes-001-compute-proof"></script>
 </body>
 </html>
 

@@ -46,6 +46,10 @@ let iopsContext = null;
     analysisCopy: $("analysis-copy"),
     visualCard: $("computeStorageThroughputVisualCard"),
     visual: $("computeStorageThroughputVisual"),
+    resultCard: $("computeStorageThroughputResultCard"),
+    resultSummary: $("computeStorageThroughputResultSummary"),
+    assistantCard: $("computeAssistantCard"),
+    assistantMount: $("computeAssistantMount"),
     referencesCard: $("computeStorageThroughputReferencesCard"),
     references: $("computeStorageThroughputReferences"),
     actionsCard: $("computeStorageThroughputRecommendedActionsCard"),
@@ -393,6 +397,7 @@ hideContinue();
 
   function clearStorageThroughputShellSections() {
     currentStorageThroughputExportResult = null;
+    clearStorageThroughputResultSummary();
     if (els.referencesCard) els.referencesCard.hidden = true;
     if (els.references) els.references.innerHTML = "";
     if (els.actionsCard) els.actionsCard.hidden = true;
@@ -709,6 +714,47 @@ hideContinue();
     buildPayload: buildStorageThroughputExportPayload
   };
 
+
+  // storage-throughput-shell-parity-0705
+  function clearStorageThroughputResultSummary() {
+    if (els.resultSummary) {
+      els.resultSummary.innerHTML = '<div class="muted">Run the calculator to generate the Storage Throughput recommendation.</div>';
+    }
+
+    if (els.resultCard) {
+      els.resultCard.hidden = true;
+      els.resultCard.setAttribute("hidden", "");
+    }
+  }
+
+  function renderStorageThroughputResultSummary(payload) {
+    payload = payload || {};
+    if (!els.resultSummary || !els.resultCard) return;
+
+    const status = String(payload.status || "REVIEW").toUpperCase();
+    const required = Number(payload.requiredThroughputMBps || payload.finalMBps || 0);
+    const available = Number(payload.availableThroughputMBps || 0);
+    const utilization = Number(payload.throughputUtilizationPct || payload.utilizationPct || 0);
+    const headroom = Number(payload.headroomMBps || 0);
+    const constraint = payload.dominantConstraint || "Storage Throughput validation";
+    const next = status === "RISK"
+      ? "Resolve the throughput bottleneck before continuing to VM Density."
+      : "Carry this throughput result into VM Density validation.";
+
+    els.resultSummary.innerHTML = [
+      '<div class="scopedlabs-result-summary-grid" data-storage-throughput-result-summary-rendered="0705">',
+      '  <div><span class="muted">Status</span><strong class="scopedlabs-result-summary-status ' + storageThroughputStatusClass(status) + '">' + storageThroughputEscapeHtml(status) + '</strong></div>',
+      '  <div><span class="muted">Required Throughput</span><strong>' + storageThroughputEscapeHtml(formatStorageThroughputMBps(required)) + '</strong></div>',
+      '  <div><span class="muted">Available Path</span><strong>' + storageThroughputEscapeHtml(available > 0 ? formatStorageThroughputMBps(available) : "Not provided") + '</strong></div>',
+      '  <div><span class="muted">Utilization</span><strong>' + storageThroughputEscapeHtml(available > 0 ? Math.round(utilization) + "%" : "Not provided") + '</strong></div>',
+      '</div>',
+      '<p class="muted" style="margin-bottom:0;"><strong>Primary constraint:</strong> ' + storageThroughputEscapeHtml(constraint) + ' <strong>Next:</strong> ' + storageThroughputEscapeHtml(next) + ' Headroom/deficit: ' + storageThroughputEscapeHtml(formatStorageThroughputMBps(headroom)) + '.</p>'
+    ].join("");
+
+    els.resultCard.hidden = false;
+    els.resultCard.removeAttribute("hidden");
+  }
+
   function calc() {
     const iops = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.iops.value, 0));
     const kb = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.kb.value, 1));
@@ -952,6 +998,7 @@ hideContinue();
     };
 
     currentStorageThroughputExportResult = flowPayload;
+    renderStorageThroughputResultSummary(flowPayload);
     renderStorageThroughputCapacityVisual(flowPayload);
     renderStorageThroughputShellSections(flowPayload);
 
