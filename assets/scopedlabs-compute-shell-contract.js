@@ -834,3 +834,125 @@ function computeWorkloadToolLabelFromPage() {
   initComputeGuidedContinueRouting();
   initComputeGuidedContinueClickGuard();
 })();
+
+// compute-result-card-contract-0704
+(function () {
+  var namespace = window.ScopedLabsComputeShellContract = window.ScopedLabsComputeShellContract || {};
+
+  if (namespace.__computeResultCardContract0704) return;
+
+  function escapeHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function normalizeStatus(status) {
+    var value = String(status || "WATCH").toUpperCase();
+    return value === "HEALTHY" ? "GOOD" : value;
+  }
+
+  function statusClass(status) {
+    var value = normalizeStatus(status);
+    if (value === "RISK" || value === "BLOCKED") return "risk";
+    if (value === "WATCH" || value === "REVIEW") return "watch";
+    return "good";
+  }
+
+  function injectResultCardStyles() {
+    if (document.querySelector("style[data-compute-result-card-contract='0704']")) return;
+
+    var style = document.createElement("style");
+    style.setAttribute("data-compute-result-card-contract", "0704");
+    style.textContent = [
+      ".compute-result-card-contract{padding:14px;}",
+      ".compute-result-card-contract-panel{padding:16px;border:1px solid rgba(20,185,109,.34);border-radius:12px;background:radial-gradient(circle at 0% 0%,rgba(34,197,94,.08),transparent 34%),rgba(1,18,14,.72);box-shadow:inset 0 0 0 1px rgba(112,255,145,.035);}",
+      ".compute-result-card-contract-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px;}",
+      ".compute-result-card-contract-title{margin:0;color:rgba(241,255,245,.98);font-size:1.02rem;font-weight:900;letter-spacing:.04em;text-transform:uppercase;}",
+      ".compute-result-card-contract-status-text{margin:7px 0 0;max-width:780px;color:rgba(210,237,230,.84);font-size:.92rem;line-height:1.45;}",
+      ".compute-result-card-contract-chip{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;min-width:64px;min-height:30px;padding:7px 12px;border-radius:4px;border:1px solid rgba(112,255,145,.28);background:rgba(112,255,145,.08);color:rgba(231,255,236,.96);font-size:.72rem;font-weight:900;letter-spacing:.08em;line-height:1.1;text-transform:uppercase;}",
+      ".compute-result-card-contract-chip.watch{border-color:rgba(255,204,102,.42);background:rgba(255,204,102,.10);color:rgba(255,236,188,.98);}",
+      ".compute-result-card-contract-chip.risk{border-color:rgba(255,108,108,.45);background:rgba(255,108,108,.11);color:rgba(255,214,214,.98);}",
+      ".compute-result-card-contract-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px;}",
+      ".compute-result-card-contract-cell{min-height:64px;padding:10px 12px;border:1px solid rgba(20,185,109,.22);border-radius:8px;background:rgba(0,10,8,.58);}",
+      ".compute-result-card-contract-label{color:rgba(160,210,255,.76);font-size:.68rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;}",
+      ".compute-result-card-contract-value{margin-top:7px;color:rgba(255,255,255,.97);font-size:.94rem;line-height:1.42;font-weight:750;}",
+      ".compute-result-card-contract-carry{margin:12px 0 0;padding-left:12px;border-left:3px solid rgba(20,185,109,.78);color:rgba(210,237,230,.88);font-size:.92rem;line-height:1.48;}",
+      "@media(max-width:760px){.compute-result-card-contract-head{align-items:stretch;flex-direction:column}.compute-result-card-contract-chip{width:fit-content}.compute-result-card-contract-grid{grid-template-columns:1fr}}"
+    ].join("\n");
+
+    document.head.appendChild(style);
+  }
+
+  namespace.clearComputeResultCard = function clearComputeResultCard(options) {
+    var config = options || {};
+    var card = config.card || null;
+    var mount = config.mount || null;
+    var emptyText = config.emptyText || "Run the calculator to generate the recommendation.";
+
+    if (mount) {
+      mount.innerHTML = '<div class="muted">' + escapeHtml(emptyText) + '</div>';
+    }
+
+    if (card) {
+      card.hidden = true;
+      card.setAttribute("hidden", "");
+    }
+  };
+
+  namespace.renderComputeResultCard = function renderComputeResultCard(options) {
+    var config = options || {};
+    var card = config.card || null;
+    var mount = config.mount || null;
+
+    if (!card || !mount) return;
+
+    injectResultCardStyles();
+
+    var status = normalizeStatus(config.status);
+    var chipClass = config.statusClass || statusClass(status);
+    var decisionFlags = Array.isArray(config.decisionFlags)
+      ? config.decisionFlags.join(" | ")
+      : String(config.decisionFlags || "");
+
+    mount.innerHTML = [
+      '<div class="compute-result-card-contract-panel">',
+        '<div class="compute-result-card-contract-head">',
+          '<div>',
+            '<p class="compute-result-card-contract-title">' + escapeHtml(config.title || "RESULT") + '</p>',
+            '<p class="compute-result-card-contract-status-text">' + escapeHtml(config.statusText || config.statusSentence || "") + '</p>',
+          '</div>',
+          '<span class="compute-result-card-contract-chip ' + escapeHtml(chipClass) + '">' + escapeHtml(status) + '</span>',
+        '</div>',
+        '<div class="compute-result-card-contract-grid">',
+          '<div class="compute-result-card-contract-cell">',
+            '<div class="compute-result-card-contract-label">RECOMMENDATION</div>',
+            '<div class="compute-result-card-contract-value">' + escapeHtml(config.recommendation || "Review the current planning inputs.") + '</div>',
+          '</div>',
+          '<div class="compute-result-card-contract-cell">',
+            '<div class="compute-result-card-contract-label">CONFIDENCE</div>',
+            '<div class="compute-result-card-contract-value">' + escapeHtml(config.confidence || "MEDIUM") + '</div>',
+          '</div>',
+          '<div class="compute-result-card-contract-cell">',
+            '<div class="compute-result-card-contract-label">DECISION FLAGS</div>',
+            '<div class="compute-result-card-contract-value">' + escapeHtml(decisionFlags || "No decision flags generated.") + '</div>',
+          '</div>',
+          '<div class="compute-result-card-contract-cell">',
+            '<div class="compute-result-card-contract-label">PRIMARY RISK</div>',
+            '<div class="compute-result-card-contract-value">' + escapeHtml(config.primaryRisk || "No primary risk generated.") + '</div>',
+          '</div>',
+        '</div>',
+        '<p class="compute-result-card-contract-carry">' + escapeHtml(config.carryForward || "Carry this result into the next Compute planning step.") + '</p>',
+      '</div>'
+    ].join("");
+
+    card.classList.add("compute-result-card-contract");
+    card.hidden = false;
+    card.removeAttribute("hidden");
+  };
+
+  namespace.__computeResultCardContract0704 = true;
+})();
+

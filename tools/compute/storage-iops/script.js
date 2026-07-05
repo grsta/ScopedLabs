@@ -174,7 +174,16 @@
   }
 
   function clearStorageIopsResultSummary() {
-    if (els.resultSummary) {
+    
+    if (window.ScopedLabsComputeShellContract && typeof window.ScopedLabsComputeShellContract.clearComputeResultCard === "function") {
+      window.ScopedLabsComputeShellContract.clearComputeResultCard({
+        card: els.resultCard,
+        mount: els.resultSummary,
+        emptyText: "Run the calculator to generate the Storage IOPS recommendation."
+      });
+      return;
+    }
+if (els.resultSummary) {
       els.resultSummary.innerHTML = '<div class="muted">Run the calculator to generate the Storage IOPS recommendation.</div>';
     }
 
@@ -224,43 +233,28 @@
       "Available " + formatNumber(availableIops) + " IOPS",
       "Utilization " + formatPct(utilizationPct),
       "Reserve " + formatNumber(reserveIops) + " IOPS"
-    ].join(" | ");
+    ];
 
     const carryForward = result.nextStep || "Carry this Storage IOPS result into Storage Throughput. Keep RAID Rebuild and Backup Window as Compute-only specialty checks if write pressure or resiliency risk remains.";
 
-    els.resultSummary.innerHTML = [
-      '<div class="storage-iops-result-panel">',
-        '<div class="storage-iops-result-head">',
-          '<div>',
-            '<p class="storage-iops-result-title">STORAGE IOPS</p>',
-            '<p class="storage-iops-result-subtitle">' + statusSentence + '</p>',
-          '</div>',
-          '<span class="storage-iops-result-chip ' + chipClass + '">' + displayStatus + '</span>',
-        '</div>',
-        '<div class="storage-iops-result-grid">',
-          '<div class="storage-iops-result-cell">',
-            '<div class="storage-iops-result-cell-label">RECOMMENDATION</div>',
-            '<div class="storage-iops-result-cell-value">' + recommendation + '</div>',
-          '</div>',
-          '<div class="storage-iops-result-cell">',
-            '<div class="storage-iops-result-cell-label">CONFIDENCE</div>',
-            '<div class="storage-iops-result-cell-value">' + confidence + '</div>',
-          '</div>',
-          '<div class="storage-iops-result-cell">',
-            '<div class="storage-iops-result-cell-label">DECISION FLAGS</div>',
-            '<div class="storage-iops-result-cell-value">' + decisionFlags + '</div>',
-          '</div>',
-          '<div class="storage-iops-result-cell">',
-            '<div class="storage-iops-result-cell-label">PRIMARY RISK</div>',
-            '<div class="storage-iops-result-cell-value">' + primaryConstraint + '</div>',
-          '</div>',
-        '</div>',
-        '<p class="storage-iops-result-carry">' + carryForward + '</p>',
-      '</div>'
-    ].join("");
-
-    els.resultCard.hidden = false;
-    els.resultCard.removeAttribute("hidden");
+    if (
+      window.ScopedLabsComputeShellContract &&
+      typeof window.ScopedLabsComputeShellContract.renderComputeResultCard === "function"
+    ) {
+      window.ScopedLabsComputeShellContract.renderComputeResultCard({
+        card: els.resultCard,
+        mount: els.resultSummary,
+        title: "STORAGE IOPS",
+        status: displayStatus,
+        statusClass: chipClass,
+        statusSentence,
+        recommendation,
+        confidence,
+        decisionFlags,
+        primaryRisk: primaryConstraint,
+        carryForward
+      });
+    }
   }
 
   function clearStorageIopsCapacityVisual() {
