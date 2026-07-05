@@ -411,10 +411,39 @@ if (
     return '<strong>' + storageIopsEscapeHtml(value) + '</strong>';
   }
 
+  function storageIopsScheduleStatus(payload, rows) {
+    const payloadStatus = String(payload && payload.status ? payload.status : "").toUpperCase();
+    if (payloadStatus === "RISK" || payloadStatus === "WATCH" || payloadStatus === "GOOD" || payloadStatus === "HEALTHY") {
+      return payloadStatus === "HEALTHY" ? "GOOD" : payloadStatus;
+    }
+
+    const statusRow = (rows || []).find(function(row) {
+      return String(row.metric || "").toLowerCase() === "status";
+    });
+
+    const rowStatus = String(statusRow && statusRow.value ? statusRow.value : "").toUpperCase();
+    if (rowStatus === "RISK" || rowStatus === "WATCH" || rowStatus === "GOOD" || rowStatus === "HEALTHY") {
+      return rowStatus === "HEALTHY" ? "GOOD" : rowStatus;
+    }
+
+    return "REVIEW";
+  }
+
   function renderStorageIopsDecisionSchedule(payload, schedule) {
-    const status = String(payload.status || "REVIEW").toUpperCase();
-    const interpretation = String(payload.recommendation || payload.nextStep || "Validate the storage IOPS plan before continuing downstream.");
-    const rows = (schedule || []).map(normalizeStorageIopsDecisionRow).map(function(row) {
+    payload = payload || {};
+    const rowsForSchedule = (schedule || []).map(normalizeStorageIopsDecisionRow);
+    const status = storageIopsScheduleStatus(payload, rowsForSchedule);
+    const statusRow = rowsForSchedule.find(function(row) {
+      return String(row.metric || "").toLowerCase() === "status";
+    });
+    const interpretation = String(
+      (statusRow && statusRow.note) ||
+      payload.recommendation ||
+      payload.nextStep ||
+      "Validate the storage IOPS plan before continuing downstream."
+    );
+
+    const rows = rowsForSchedule.map(function(row) {
       return '<tr><td>' + storageIopsEscapeHtml(row.group) + '</td><td>' + storageIopsEscapeHtml(row.metric) + '</td><td>' + storageIopsDecisionValueCell(row, status) + '</td><td>' + storageIopsEscapeHtml(row.note) + '</td></tr>';
     }).join("");
 
@@ -650,9 +679,48 @@ if (
     ];
 
     const decisionSchedule = [
-      { label: "Current Status", value: analyzer.status + " - " + primaryConstraint },
-      { label: "Validation Trigger", value: availableIops > 0 ? formatPct(utilizationPct) + " of entered platform IOPS consumed." : "Available platform IOPS was not provided." },
-      { label: "Next Tool", value: nextStep }
+      {
+        group: "Capacity",
+        metric: "Status",
+        value: analyzer.status,
+        note: primaryConstraint || "Storage IOPS recommendation status before continuing downstream."
+      },
+      {
+        group: "Demand",
+        metric: "Required IOPS",
+        value: formatNumber(finalIops) + " IOPS",
+        note: "Total required IOPS after burst, headroom reserve, and growth reserve are included."
+      },
+      {
+        group: "Capacity",
+        metric: "Available IOPS",
+        value: availableIops > 0 ? formatNumber(availableIops) + " IOPS" : "Not provided",
+        note: "Entered platform capacity used for the IOPS capacity check."
+      },
+      {
+        group: "Pressure",
+        metric: "Utilization",
+        value: availableIops > 0 ? formatPct(utilizationPct) : "Not provided",
+        note: "Required IOPS as a share of entered platform IOPS."
+      },
+      {
+        group: "Validation",
+        metric: "Latency Target",
+        value: targetLatency + " ms",
+        note: "Latency target carried into downstream throughput validation."
+      },
+      {
+        group: "Validation",
+        metric: "Block Size",
+        value: blockSizeKb + " KB",
+        note: "I/O block size used for throughput translation."
+      },
+      {
+        group: "Next Step",
+        metric: "Next Tool",
+        value: "Storage Throughput",
+        note: "Validate bandwidth after IOPS capacity is resolved."
+      }
     ];
 
     renderStorageIopsProof({
