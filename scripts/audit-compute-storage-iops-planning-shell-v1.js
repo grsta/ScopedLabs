@@ -114,6 +114,8 @@ check("STORAGE_IOPS_PROOF_CARD_SCRIPTED", js.includes('proofStackCard: $("storag
 check("STORAGE_IOPS_MODULE_MAP_ENTRY", moduleMap.includes("COMPUTE_STORAGE_IOPS_VISUAL_MODULE_0704"));
 
 
+check("STORAGE_IOPS_EXPORT_CHROME_MATCHES_RAM", html.includes('<section class="card compute-export-card" style="margin-top: 14px; background: rgba(0,0,0,.14);">') && html.includes('<h3 class="h3" style="margin-top: 0;">Export Report</h3>') && !html.includes("Documentation &amp; Export") && !html.includes("storage-iops-export-label"));
+check("STORAGE_IOPS_FLOW_ACTIONS_TIGHTENED_TO_EXPORT_CARD", html.includes('data-storage-iops-flow-actions-tightened="0705"') && html.includes('class="compute-flow-actions" style="margin-top: 10px;"'));
 check("STORAGE_IOPS_FLOW_CONTEXT_SOURCE_SUPPRESSED", js.includes("compute-storage-iops-hide-visible-flow-context-0704") && js.includes("data-compute-flow-context-hidden") && js.includes("storage-iops-source"));
 check("STORAGE_IOPS_FLOW_CONTEXT_CSS_SUPPRESSED", html.includes("storage-iops-flow-note-source-hide-0704") && html.includes("#flow-note") && html.includes("display: none !important"));
 

@@ -204,24 +204,7 @@
       display: none !important;
       visibility: hidden !important;
     }
-    /* storage-iops-export-label-style-0704 */
-    .storage-iops-export-label {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 34px;
-      padding: 7px 11px;
-      border: 1px solid rgba(112, 255, 145, 0.22);
-      border-radius: 4px;
-      color: rgba(231, 255, 236, 0.92);
-      background: rgba(112, 255, 145, 0.07);
-      font-size: 0.74rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      line-height: 1.1;
-      text-transform: uppercase;
-    }
-    /* storage-iops-result-summary-style-0704 */
+/* storage-iops-result-summary-style-0704 */
     .storage-iops-result-summary-card {
       border-color: rgba(112, 255, 145, 0.16);
     }
@@ -764,11 +747,7 @@
       
 
       <section class="card compute-export-card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
-        <div class="pill-row">
-          <span class="storage-iops-export-label">Documentation &amp; Export</span>
-        </div>
-
-        <h3 class="h3" style="margin-top: 10px;">Export Report</h3>
+        <h3 class="h3" style="margin-top: 0;">Export Report</h3>
 
         <p class="muted" style="margin-bottom: 0;">
           Add optional project context and generate a clean documentation view that can be printed or saved as a PDF for client or internal use.
@@ -791,7 +770,7 @@
         <div id="exportStatus" class="export-status"></div>
       </section>
 
-      <div class="compute-flow-actions" data-compute-flow-actions="true" data-compute-flow-owner="compute-shell-contract" data-compute-flow-tool="storage-iops" data-compute-flow-placed="true">
+      <div class="compute-flow-actions" style="margin-top: 10px;" data-compute-flow-actions="true" data-compute-flow-owner="compute-shell-contract" data-compute-flow-tool="storage-iops" data-compute-flow-placed="true" data-storage-iops-flow-actions-tightened="0705">
         <a class="btn" href="/tools/compute/ram-sizing/">Back to RAM Sizing</a>
 
         <span id="continue-wrap" style="display: none; margin-left: auto;">
