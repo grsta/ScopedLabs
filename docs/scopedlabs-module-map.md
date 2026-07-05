@@ -1545,3 +1545,5 @@ Promotion note:
 - COMPUTE_STORAGE_THROUGHPUT_TOP_CHROME_CLEANUP_0705: Removes legacy Storage Throughput top-page chrome after shell parity. Suppresses visible breadcrumb/pro-tier/design-flow/best-for chrome while preserving the hidden pipeline mount, shell foundation, proof stack, export payload, and flow actions. Owners: `tools/compute/storage-throughput/index.html`, `scripts/audit-compute-storage-throughput-top-chrome-cleanup-v1.js`, `scripts/run-compute-storage-throughput-top-chrome-cleanup-v1.js`.
 
 - COMPUTE_STORAGE_THROUGHPUT_NEXT_OWNER_0705: Storage Throughput Continue CTA ownership is handled in `assets/scopedlabs-compute-shell-contract.js`. The shell contract honors `data-storage-throughput-continue-target="vm-density"` so Storage Throughput continues to VM Density while GPU VRAM remains a specialty-branch Summary handoff.
+
+- COMPUTE_STORAGE_IOPS_NEXT_OWNER_0705: Storage IOPS Continue CTA ownership is handled in `assets/scopedlabs-compute-shell-contract.js`. The shell contract honors `data-storage-iops-continue-target="storage-throughput"` so Storage IOPS never rewrites to Summary; GPU VRAM remains a specialty-branch Summary handoff.

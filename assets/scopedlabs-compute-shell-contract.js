@@ -723,6 +723,21 @@ function computeWorkloadToolLabelFromPage() {
   function applyComputeGuidedContinueDecision(button, decision) {
     if (!button || !decision || !decision.nextHref) return;
 
+        /* compute-storage-iops-next-owner-0705 */
+        var storageIopsFlowRow = button.closest ? button.closest("[data-compute-flow-actions]") : null;
+        var storageIopsFlowTool = storageIopsFlowRow ? String(storageIopsFlowRow.getAttribute("data-compute-flow-tool") || "") : "";
+        var storageIopsTarget = String(button.getAttribute("data-storage-iops-continue-target") || "");
+
+        if (storageIopsFlowTool === "storage-iops" && storageIopsTarget === "storage-throughput") {
+          decision = Object.assign({}, decision, {
+            action: "next-tool",
+            nextTool: "storage-throughput",
+            nextLabel: "Storage Throughput",
+            nextHref: button.getAttribute("data-compute-continue-href") || "/tools/compute/storage-throughput/",
+            buttonLabel: "Continue &rarr; Storage Throughput"
+          });
+        }
+
         /* compute-storage-throughput-next-owner-0705 */
         var flowRow = button.closest ? button.closest("[data-compute-flow-actions]") : null;
         var flowTool = flowRow ? String(flowRow.getAttribute("data-compute-flow-tool") || "") : "";
