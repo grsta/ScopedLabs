@@ -663,7 +663,7 @@
     }
 
     
-    // storage-iops-icon-envelope-0705
+    // storage-iops-icon-envelope-polish-0705
     function buildStorageIopsCapacityEnvelopeSvg(result) {
       result = result || {};
 
@@ -732,7 +732,7 @@
 
       const width = 760;
       const height = 430;
-      const plot = { x: 64, y: 92, w: 632, h: 218 };
+      const plot = { x: 58, y: 78, w: 646, h: 244 };
 
       const required = Math.max(0, localNumber(result.requiredIops || result.finalIops || result.finalRequiredIops, 0));
       const base = Math.max(0, localNumber(result.normalDemandIops || result.baseIops || result.baseDemandIops, required * 0.52));
@@ -799,10 +799,10 @@
       const bracketTop = Math.min(yCeiling, yRequired);
       const bracketBottom = Math.max(yCeiling, yRequired);
       const bracketLabel = delta >= 0
-        ? "HEADROOM +" + formatCompactIops(delta) + " IOPS"
-        : "DEFICIT " + formatCompactIops(Math.abs(delta)) + " IOPS";
+        ? "HEADROOM\n+" + formatCompactIops(delta)
+        : "DEFICIT\n" + formatCompactIops(Math.abs(delta));
       const bracketColor = delta >= 0 ? (status === "GOOD" ? "#7ef5d5" : "#facc15") : "#fb7185";
-      const bracketTextY = bracketTop + ((bracketBottom - bracketTop) / 2) - 4;
+      const bracketTextY = bracketTop + ((bracketBottom - bracketTop) / 2) - 10;
 
       const yTicks = [];
       for (let v = 0; v <= yMax; v += yStep) yTicks.push(v);
@@ -895,11 +895,11 @@
       const blockLabel = blockSizeKb > 0 ? formatDecimal(blockSizeKb, 0) + " KB" : "Block n/a";
 
       const footerMarkup = [
-        footerStat(40, StorageIopsIcons.storage(8, 7), "Storage", storageLabel),
-        footerStat(164, StorageIopsIcons.workload(8, 6), "Workload", workloadLabel),
-        footerStat(288, StorageIopsIcons.raid(8, 5), "RAID", raidLabel),
-        footerStat(412, StorageIopsIcons.latency(8, 5), "Latency", latencyLabel),
-        footerStat(536, StorageIopsIcons.block(8, 5), "Block", blockLabel)
+        footerStat(70, StorageIopsIcons.storage(8, 7), "Storage", storageLabel),
+        footerStat(194, StorageIopsIcons.workload(8, 6), "Workload", workloadLabel),
+        footerStat(318, StorageIopsIcons.raid(8, 5), "RAID", raidLabel),
+        footerStat(442, StorageIopsIcons.latency(8, 5), "Latency", latencyLabel),
+        footerStat(566, StorageIopsIcons.block(8, 5), "Block", blockLabel)
       ].join("");
 
       const svgParts = [
@@ -911,11 +911,11 @@
           '</linearGradient>',
           '<style>',
             '.outer-card{fill:url(#slIopsBg);stroke:rgba(126,245,213,0.18);stroke-width:1.2;}',
-            '.inner-frame{fill:none;stroke:rgba(126,245,213,0.20);stroke-width:1;}',
-            '.plot-frame{fill:rgba(255,255,255,0.01);stroke:rgba(126,245,213,0.20);stroke-width:1;}',
-            '.band-good{fill:rgba(34,197,94,0.06);}',
-            '.band-watch{fill:rgba(250,204,21,0.06);}',
-            '.band-risk{fill:rgba(251,113,133,0.08);}',
+            '.inner-frame{display:none;}',
+            '.plot-frame{fill:rgba(255,255,255,0.015);stroke:rgba(126,245,213,0.24);stroke-width:1;}',
+            '.band-good{fill:rgba(34,197,94,0.12);}',
+            '.band-watch{fill:rgba(250,204,21,0.14);}',
+            '.band-risk{fill:rgba(255,59,59,0.18);}',
             '.grid{fill:none;stroke:rgba(238,246,255,0.07);stroke-width:1;}',
             '.grid-major{fill:none;stroke:rgba(238,246,255,0.12);stroke-width:1;}',
             '.axis{fill:none;stroke:rgba(238,246,255,0.36);stroke-width:1.1;}',
@@ -926,7 +926,7 @@
             '.tick{fill:rgba(203,213,225,0.88);font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700;}',
             '.axis-label{fill:rgba(203,213,225,0.90);font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;letter-spacing:.4px;}',
             '.zone-text{font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:800;letter-spacing:.7px;}',
-            '.good-text{fill:rgba(74,222,128,0.90);}.watch-text{fill:rgba(250,204,21,0.92);}.risk-text{fill:rgba(248,113,113,0.94);}',
+            '.good-text{fill:rgba(74,222,128,0.90);}.watch-text{fill:rgba(250,204,21,0.92);}.risk-text{fill:rgba(255,82,82,0.98);}',
             '.ceiling-line{fill:none;stroke:#7ef5d5;stroke-width:1.5;stroke-dasharray:7 7;}',
             '.ceiling-label{fill:#7ef5d5;font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:800;}',
             '.curve-shadow{fill:none;stroke:rgba(126,245,213,0.18);stroke-width:4;stroke-linecap:round;stroke-linejoin:round;}',
@@ -939,7 +939,7 @@
             '.point-label{fill:#eef6ff;font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:800;}',
             '.point-note{fill:rgba(203,213,225,0.86);font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:600;}',
             '.bracket-line{fill:none;stroke:' + bracketColor + ';stroke-width:1.4;}',
-            '.bracket-text{fill:' + bracketColor + ';font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:900;}',
+            '.bracket-text{white-space:pre;fill:' + bracketColor + ';font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:900;}',
             '.footer-pill{fill:rgba(255,255,255,0.02);stroke:rgba(126,245,213,0.16);stroke-width:1;}',
             '.footer-label{fill:rgba(203,213,225,0.82);font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:700;}',
             '.footer-value{fill:#eef6ff;font-family:Inter,Arial,Helvetica,sans-serif;font-size:10.5px;font-weight:800;}',
@@ -949,7 +949,7 @@
           '</style>',
         '</defs>',
         '<rect x="14" y="14" width="732" height="402" rx="16" class="outer-card"/>',
-        '<rect x="26" y="26" width="708" height="378" rx="12" class="inner-frame"/>',
+        '',
         '<text x="40" y="50" class="title">Storage IOPS Capacity Envelope</text>',
         '<text x="40" y="67" class="subtitle">Demand curve vs available platform IOPS</text>',
         '<rect x="644" y="34" width="78" height="26" rx="6" class="status-badge"/>',
@@ -968,8 +968,8 @@
         }).join(""),
         '<path d="M' + plot.x + ' ' + plot.y + ' V' + (plot.y + plot.h) + '" class="axis"/>',
         '<path d="M' + plot.x + ' ' + (plot.y + plot.h) + ' H' + (plot.x + plot.w) + '" class="axis"/>',
-        '<text x="42" y="84" class="axis-label">IOPS</text>',
-        '<text x="' + (plot.x + plot.w / 2) + '" y="335" text-anchor="middle" class="axis-label">Load stage</text>',
+        '<text x="38" y="66" class="axis-label">IOPS</text>',
+        '<text x="' + (plot.x + plot.w / 2) + '" y="348" text-anchor="middle" class="axis-label">Load stage</text>',
         '<text x="' + (plot.x + plot.w - 10) + '" y="' + (plot.y + 14).toFixed(1) + '" text-anchor="end" class="zone-text risk-text">RISK</text>',
         '<text x="' + (plot.x + plot.w - 10) + '" y="' + (yWatch + 14).toFixed(1) + '" text-anchor="end" class="zone-text watch-text">WATCH</text>',
         '<text x="' + (plot.x + plot.w - 10) + '" y="' + (yGood + 14).toFixed(1) + '" text-anchor="end" class="zone-text good-text">GOOD</text>',
@@ -981,18 +981,18 @@
         '<path d="M' + stageX.burst.toFixed(1) + ' ' + yBurst.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="drop-line"/>',
         '<path d="M' + stageX.required.toFixed(1) + ' ' + yRequired.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="drop-line"/>',
         '<circle cx="' + stageX.base.toFixed(1) + '" cy="' + yBase.toFixed(1) + '" r="6.5" class="marker-ring"/><circle cx="' + stageX.base.toFixed(1) + '" cy="' + yBase.toFixed(1) + '" r="4.5" class="marker-base"/>',
-        '<text x="' + (stageX.base - 34).toFixed(1) + '" y="' + (yBase - 14).toFixed(1) + '" class="point-label">BASE</text><text x="' + (stageX.base - 34).toFixed(1) + '" y="' + (yBase - 1).toFixed(1) + '" class="point-note">' + formatCompactIops(base) + ' IOPS</text>',
+        '<text x="' + (stageX.base - 38).toFixed(1) + '" y="' + (yBase - 34).toFixed(1) + '" class="point-label">BASE</text><text x="' + (stageX.base - 38).toFixed(1) + '" y="' + (yBase - 21).toFixed(1) + '" class="point-note">' + formatCompactIops(base) + ' IOPS</text>',
         '<circle cx="' + stageX.burst.toFixed(1) + '" cy="' + yBurst.toFixed(1) + '" r="6.5" class="marker-ring"/><circle cx="' + stageX.burst.toFixed(1) + '" cy="' + yBurst.toFixed(1) + '" r="4.5" class="marker-burst"/>',
-        '<text x="' + (stageX.burst - 34).toFixed(1) + '" y="' + (yBurst - 14).toFixed(1) + '" class="point-label">BURST *1</text><text x="' + (stageX.burst - 34).toFixed(1) + '" y="' + (yBurst - 1).toFixed(1) + '" class="point-note">' + formatCompactIops(burst) + ' IOPS</text>',
+        '<text x="' + (stageX.burst - 38).toFixed(1) + '" y="' + (yBurst - 34).toFixed(1) + '" class="point-label">BURST *1</text><text x="' + (stageX.burst - 38).toFixed(1) + '" y="' + (yBurst - 21).toFixed(1) + '" class="point-note">' + formatCompactIops(burst) + ' IOPS</text>',
         '<circle cx="' + stageX.required.toFixed(1) + '" cy="' + yRequired.toFixed(1) + '" r="7" class="marker-ring"/><circle cx="' + stageX.required.toFixed(1) + '" cy="' + yRequired.toFixed(1) + '" r="5" class="marker-required"/>',
-        '<text x="' + (stageX.required - 62).toFixed(1) + '" y="' + (yRequired - 14).toFixed(1) + '" class="point-label">REQUIRED *2</text><text x="' + (stageX.required - 62).toFixed(1) + '" y="' + (yRequired - 1).toFixed(1) + '" class="point-note">' + formatCompactIops(required) + ' IOPS</text>',
+        '<text x="' + (stageX.required - 66).toFixed(1) + '" y="' + (yRequired - 36).toFixed(1) + '" class="point-label">REQUIRED *2</text><text x="' + (stageX.required - 66).toFixed(1) + '" y="' + (yRequired - 23).toFixed(1) + '" class="point-note">' + formatCompactIops(required) + ' IOPS</text>',
         '<text x="' + stageX.base.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">base</text>',
         '<text x="' + stageX.burst.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">burst</text>',
         '<text x="' + stageX.required.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">required</text>',
         '<path d="M' + (plot.x + plot.w - 20).toFixed(1) + ' ' + bracketTop.toFixed(1) + ' H' + (plot.x + plot.w - 8).toFixed(1) + '" class="bracket-line"/>',
         '<path d="M' + (plot.x + plot.w - 20).toFixed(1) + ' ' + bracketBottom.toFixed(1) + ' H' + (plot.x + plot.w - 8).toFixed(1) + '" class="bracket-line"/>',
         '<path d="M' + (plot.x + plot.w - 10).toFixed(1) + ' ' + bracketTop.toFixed(1) + ' V' + bracketBottom.toFixed(1) + '" class="bracket-line"/>',
-        '<text x="' + (plot.x + plot.w - 4).toFixed(1) + '" y="' + bracketTextY.toFixed(1) + '" class="bracket-text">' + escapeXml(bracketLabel) + '</text>',
+        '<text x="' + (plot.x + plot.w - 2).toFixed(1) + '" y="' + (bracketTextY - 4).toFixed(1) + '" class="bracket-text"><tspan x="' + (plot.x + plot.w - 2).toFixed(1) + '" dy="0">' + escapeXml(bracketLabel.split("\\n")[0]) + '</tspan><tspan x="' + (plot.x + plot.w - 2).toFixed(1) + '" dy="12">' + escapeXml(bracketLabel.split("\\n")[1]) + '</tspan></text>',
         footerMarkup,
         '</svg>'
       ];
