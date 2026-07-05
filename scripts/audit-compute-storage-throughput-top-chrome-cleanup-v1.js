@@ -21,7 +21,7 @@ function check(label, ok) {
 check("TOP_CHROME_MARKER_PRESENT", html.includes('data-storage-throughput-top-chrome-cleanup="0705"'));
 check("BREADCRUMBS_REMOVED", !html.includes('<div class="crumbs">') && !html.includes('<span class="sep">/</span>'));
 check("PRO_TIER_PILLS_REMOVED", !html.includes("Pro Tier") && !html.includes("pill--pro"));
-check("PIPELINE_SUPPRESSED", html.includes('id="pipeline"') && html.includes('hidden') && html.includes('data-storage-throughput-pipeline-suppressed="0705"'));
+check("PIPELINE_RESTORED", html.includes('id="pipeline"') && html.includes('data-storage-throughput-pipeline-restored="0705"') && !html.includes('data-storage-throughput-pipeline-suppressed="0705"'));
 check("DESIGN_FLOW_CARD_REMOVED", !html.includes("Part of a Design Flow") && !html.includes("This tool continues the Compute design flow"));
 check("BEST_FOR_REMOVED", !html.includes('class="tool-best-for"'));
 check("SHELL_PARITY_STILL_PRESENT", html.includes("computeInternalResultsLedger") && html.includes("compute-export-card") && html.includes("reportMetadataMount") && html.includes("data-compute-flow-actions"));
