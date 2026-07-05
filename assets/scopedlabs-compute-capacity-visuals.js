@@ -1025,6 +1025,184 @@ function renderStorageIopsCapacityEnvelope(options) {
 
 
 
+
+    // storage-throughput-capacity-envelope-0705
+    function buildStorageThroughputCapacityEnvelopeSvg(result) {
+      result = result || {};
+
+      function localNumber(value, fallback) {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : Number(fallback || 0);
+      }
+
+      function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+      }
+
+      function escapeXml(value) {
+        return String(value == null ? "" : value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&apos;");
+      }
+
+      function formatMbps(value) {
+        const numeric = localNumber(value, 0);
+        if (Math.abs(numeric) >= 1000) return (numeric / 1000).toFixed(1).replace(/\.0$/, "") + " GB/s";
+        return numeric.toFixed(1).replace(/\.0$/, "") + " MB/s";
+      }
+
+      function compactMbps(value) {
+        const numeric = localNumber(value, 0);
+        if (Math.abs(numeric) >= 1000) return (numeric / 1000).toFixed(1).replace(/\.0$/, "") + "G";
+        return Math.round(numeric).toLocaleString();
+      }
+
+      function chooseStep(maxValue) {
+        if (maxValue <= 250) return 50;
+        if (maxValue <= 500) return 100;
+        if (maxValue <= 1000) return 200;
+        if (maxValue <= 2500) return 500;
+        if (maxValue <= 5000) return 1000;
+        return 2000;
+      }
+
+      const width = 760;
+      const height = 430;
+      const plot = { x: 58, y: 78, w: 646, h: 244 };
+
+      const base = Math.max(0, localNumber(result.baseMBps || result.baseThroughputMBps, 0));
+      const burst = Math.max(0, localNumber(result.burstAdjustedMBps || result.burstMBps, Math.max(base, localNumber(result.requiredThroughputMBps, 0) * 0.78)));
+      const windowRequired = Math.max(0, localNumber(result.transferWindowRequiredMBps, 0));
+      const required = Math.max(0, localNumber(result.requiredThroughputMBps || result.finalMBps || result.finalThroughputMBps, Math.max(burst, windowRequired)));
+      const available = Math.max(0, localNumber(result.availableThroughputMBps || result.availableMBps || result.pathThroughputMBps, 0));
+      const utilizationPct = available > 0 ? (required / available) * 100 : localNumber(result.throughputUtilizationPct || result.utilizationPct, 0);
+      const headroom = available > 0 ? available - required : localNumber(result.headroomMBps, 0);
+      const deficit = available > 0 ? Math.max(0, required - available) : Math.max(0, localNumber(result.deficitMBps, 0));
+
+      const fallbackStatus = available > 0
+        ? (required / available <= 0.70 ? "GOOD" : required / available <= 0.90 ? "WATCH" : "RISK")
+        : "WATCH";
+
+      const status = String(result.status || fallbackStatus).toUpperCase();
+      const statusPalette = {
+        GOOD: { stroke: "#34d399", fill: "rgba(52,211,153,0.10)", text: "#7ef5d5" },
+        WATCH: { stroke: "#facc15", fill: "rgba(250,204,21,0.10)", text: "#facc15" },
+        RISK: { stroke: "#ef4444", fill: "rgba(239,68,68,0.11)", text: "#ef4444" },
+        BLOCKED: { stroke: "#ef4444", fill: "rgba(239,68,68,0.11)", text: "#ef4444" }
+      };
+      const palette = statusPalette[status] || statusPalette.WATCH;
+
+      const maxValue = Math.max(base, burst, required, available, windowRequired, 1);
+      const yStep = chooseStep(maxValue);
+      const yMax = Math.ceil((maxValue * 1.16) / yStep) * yStep;
+
+      function yScale(value) {
+        return plot.y + plot.h - (clamp(value, 0, yMax) / yMax) * plot.h;
+      }
+
+      const stageX = {
+        lead: plot.x + 24,
+        base: plot.x + 172,
+        burst: plot.x + 376,
+        required: plot.x + 560
+      };
+
+      const yBase = yScale(base);
+      const yBurst = yScale(burst);
+      const yRequired = yScale(required);
+      const yCeiling = available > 0 ? yScale(available) : plot.y + 10;
+      const yGood = available > 0 ? yScale(available * 0.70) : plot.y + plot.h * 0.62;
+      const yWatch = available > 0 ? yScale(available * 0.90) : plot.y + plot.h * 0.34;
+
+      const curvePath = [
+        "M", stageX.lead.toFixed(1), yScale(Math.max(base * 0.58, 1)).toFixed(1),
+        "C", (stageX.base - 86).toFixed(1), yBase.toFixed(1), (stageX.base - 42).toFixed(1), yBase.toFixed(1), stageX.base.toFixed(1), yBase.toFixed(1),
+        "S", (stageX.burst - 48).toFixed(1), yBurst.toFixed(1), stageX.burst.toFixed(1), yBurst.toFixed(1),
+        "S", (stageX.required - 54).toFixed(1), yRequired.toFixed(1), stageX.required.toFixed(1), yRequired.toFixed(1)
+      ].join(" ");
+
+      const bracketTop = yScale(Math.max(required, available));
+      const bracketBottom = yScale(Math.min(required, available));
+      const bracketLabelPrimary = deficit > 0 ? "deficit *3" : "headroom *3";
+      const bracketLabelValue = deficit > 0 ? formatMbps(deficit) : formatMbps(Math.max(0, headroom));
+      const bracketTextY = clamp((bracketTop + bracketBottom) / 2, plot.y + 30, plot.y + plot.h - 12);
+
+      const transport = result.transportPathLabel || result.transportPath || "Transport path";
+      const media = result.mediaTierLabel || result.mediaTier || "Media tier";
+      const workload = result.workloadTypeLabel || result.workloadType || "Workload";
+
+      const gridLines = [];
+      for (let tick = 0; tick <= yMax; tick += yStep) {
+        const y = yScale(tick);
+        gridLines.push('<path d="M' + plot.x + ' ' + y.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="' + (tick === 0 ? "grid-major" : "grid") + '"/><text x="' + (plot.x - 10) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end" class="tick">' + compactMbps(tick) + '</text>');
+      }
+
+      return [
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Storage Throughput Capacity Envelope">',
+        '<defs><style>',
+        '.bg{fill:#07100d}.panel{fill:rgba(255,255,255,.025);stroke:rgba(112,255,145,.16);stroke-width:1}.title{fill:#f8fafc;font-family:Inter,Arial,sans-serif;font-size:18px;font-weight:900}.sub{fill:rgba(203,213,225,.82);font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:700}.status-text{font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.8px}.grid{stroke:rgba(148,163,184,.12);stroke-width:1}.grid-major{stroke:rgba(148,163,184,.22);stroke-width:1}.axis{stroke:rgba(226,232,240,.32);stroke-width:1.2}.tick{fill:rgba(203,213,225,.72);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:700}.axis-label{fill:rgba(203,213,225,.76);font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:800}.zone-text{font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.7px}.risk-text{fill:#ef4444}.watch-text{fill:#facc15}.good-text{fill:#34d399}.ceiling-line{stroke:#facc15;stroke-width:2;stroke-dasharray:7 5}.ceiling-label{fill:#facc15;font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:850}.curve-shadow{fill:none;stroke:rgba(0,0,0,.4);stroke-width:6;stroke-linecap:round}.curve-line{fill:none;stroke:#2cff9b;stroke-width:2.2;stroke-linecap:round}.drop-line{stroke:rgba(226,232,240,.20);stroke-width:1;stroke-dasharray:4 5}.marker-ring{fill:none;stroke:rgba(238,246,255,.72);stroke-width:1}.marker-base{fill:#38d9ff;stroke:#04110d;stroke-width:1.2}.marker-burst{fill:#a78bfa;stroke:#04110d;stroke-width:1.2}.marker-required{fill:#2cff9b;stroke:#04110d;stroke-width:1.2}.point-label{fill:#f8fafc;font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.6px}.point-note{fill:rgba(203,213,225,.84);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:750}.bracket-line{stroke:' + palette.stroke + ';stroke-width:1.5}.bracket-text{fill:' + palette.text + ';font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900}.chip-bg{fill:rgba(15,23,42,.72);stroke:rgba(112,255,145,.12)}.chip-text{fill:rgba(226,232,240,.86);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:750}',
+        '</style></defs>',
+        '<rect width="' + width + '" height="' + height + '" class="bg"/>',
+        '<rect x="24" y="22" width="712" height="384" rx="18" class="panel"/>',
+        '<text x="50" y="54" class="title">Storage Throughput Capacity Envelope</text>',
+        '<text x="50" y="74" class="sub">MB/s demand curve vs available path throughput</text>',
+        '<rect x="632" y="36" width="64" height="28" rx="4" fill="' + palette.fill + '" stroke="' + palette.stroke + '"/>',
+        '<text x="664" y="55" text-anchor="middle" fill="' + palette.text + '" class="status-text">' + escapeXml(status) + '</text>',
+        gridLines.join(""),
+        '<path d="M' + plot.x + ' ' + plot.y + ' V' + (plot.y + plot.h) + '" class="axis"/>',
+        '<path d="M' + plot.x + ' ' + (plot.y + plot.h) + ' H' + (plot.x + plot.w) + '" class="axis"/>',
+        '<text x="38" y="66" class="axis-label">MB/s</text>',
+        '<text x="' + (plot.x + plot.w / 2) + '" y="348" text-anchor="middle" class="axis-label">Throughput planning checkpoints</text>',
+        '<text x="' + (plot.x + plot.w - 10) + '" y="' + (plot.y + 14).toFixed(1) + '" text-anchor="end" class="zone-text risk-text">RISK</text>',
+        '<text x="' + (plot.x + plot.w - 10) + '" y="' + (yWatch + 14).toFixed(1) + '" text-anchor="end" class="zone-text watch-text">WATCH</text>',
+        '<text x="' + (plot.x + plot.w - 10) + '" y="' + (yGood + 14).toFixed(1) + '" text-anchor="end" class="zone-text good-text">GOOD</text>',
+        available > 0 ? '<path d="M' + plot.x + ' ' + yCeiling.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="ceiling-line"/><text x="' + (plot.x + plot.w - 12) + '" y="' + (yCeiling - 8).toFixed(1) + '" text-anchor="end" class="ceiling-label">Available path *3: ' + formatMbps(available) + '</text>' : '',
+        '<path d="' + curvePath + '" class="curve-shadow"/>',
+        '<path d="' + curvePath + '" class="curve-line"/>',
+        '<path d="M' + stageX.base.toFixed(1) + ' ' + yBase.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="drop-line"/>',
+        '<path d="M' + stageX.burst.toFixed(1) + ' ' + yBurst.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="drop-line"/>',
+        '<path d="M' + stageX.required.toFixed(1) + ' ' + yRequired.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="drop-line"/>',
+        '<circle cx="' + stageX.base.toFixed(1) + '" cy="' + yBase.toFixed(1) + '" r="6.5" class="marker-ring"/><circle cx="' + stageX.base.toFixed(1) + '" cy="' + yBase.toFixed(1) + '" r="4.5" class="marker-base"/>',
+        '<text x="' + (stageX.base - 38).toFixed(1) + '" y="' + (yBase - 34).toFixed(1) + '" class="point-label">BASE</text><text x="' + (stageX.base - 38).toFixed(1) + '" y="' + (yBase - 21).toFixed(1) + '" class="point-note">' + formatMbps(base) + '</text>',
+        '<circle cx="' + stageX.burst.toFixed(1) + '" cy="' + yBurst.toFixed(1) + '" r="6.5" class="marker-ring"/><circle cx="' + stageX.burst.toFixed(1) + '" cy="' + yBurst.toFixed(1) + '" r="4.5" class="marker-burst"/>',
+        '<text x="' + (stageX.burst - 38).toFixed(1) + '" y="' + (yBurst - 34).toFixed(1) + '" class="point-label">BURST *1</text><text x="' + (stageX.burst - 38).toFixed(1) + '" y="' + (yBurst - 21).toFixed(1) + '" class="point-note">' + formatMbps(burst) + '</text>',
+        '<circle cx="' + stageX.required.toFixed(1) + '" cy="' + yRequired.toFixed(1) + '" r="7" class="marker-ring"/><circle cx="' + stageX.required.toFixed(1) + '" cy="' + yRequired.toFixed(1) + '" r="5" class="marker-required"/>',
+        '<text x="' + (stageX.required - 66).toFixed(1) + '" y="' + (yRequired - 36).toFixed(1) + '" class="point-label">REQUIRED *2</text><text x="' + (stageX.required - 66).toFixed(1) + '" y="' + (yRequired - 23).toFixed(1) + '" class="point-note">' + formatMbps(required) + '</text>',
+        '<text x="' + stageX.base.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">base</text>',
+        '<text x="' + stageX.burst.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">burst</text>',
+        '<text x="' + stageX.required.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">required</text>',
+        available > 0 ? '<path d="M' + (plot.x + plot.w - 24).toFixed(1) + ' ' + bracketTop.toFixed(1) + ' H' + (plot.x + plot.w - 8).toFixed(1) + '" class="bracket-line"/><path d="M' + (plot.x + plot.w - 24).toFixed(1) + ' ' + bracketBottom.toFixed(1) + ' H' + (plot.x + plot.w - 8).toFixed(1) + '" class="bracket-line"/><path d="M' + (plot.x + plot.w - 10).toFixed(1) + ' ' + bracketTop.toFixed(1) + ' V' + bracketBottom.toFixed(1) + '" class="bracket-line"/><text x="' + (plot.x + plot.w - 1).toFixed(1) + '" y="' + (bracketTextY - 7).toFixed(1) + '" class="bracket-text" text-anchor="start"><tspan x="' + (plot.x + plot.w - 1).toFixed(1) + '" dy="0">' + escapeXml(bracketLabelPrimary) + '</tspan><tspan x="' + (plot.x + plot.w - 1).toFixed(1) + '" dy="14">' + escapeXml(bracketLabelValue) + '</tspan></text>' : '',
+        '<g transform="translate(58 374)">',
+        '<rect x="0" y="0" width="150" height="28" rx="8" class="chip-bg"/><text x="14" y="18" class="chip-text">path: ' + escapeXml(transport) + '</text>',
+        '<rect x="166" y="0" width="150" height="28" rx="8" class="chip-bg"/><text x="180" y="18" class="chip-text">media: ' + escapeXml(media) + '</text>',
+        '<rect x="332" y="0" width="162" height="28" rx="8" class="chip-bg"/><text x="346" y="18" class="chip-text">workload: ' + escapeXml(workload) + '</text>',
+        '<rect x="510" y="0" width="136" height="28" rx="8" class="chip-bg"/><text x="524" y="18" class="chip-text">util: ' + Math.round(utilizationPct) + '%</text>',
+        '</g>',
+        '</svg>'
+      ].join("");
+    }
+
+    function renderStorageThroughputCapacityEnvelope(options) {
+      options = options || {};
+      const card = options.card || null;
+      const mount = options.mount || null;
+      const result = options.result || {};
+
+      if (!mount) return false;
+
+      mount.innerHTML = buildStorageThroughputCapacityEnvelopeSvg(result);
+
+      if (card) {
+        card.hidden = false;
+        card.removeAttribute("hidden");
+      }
+
+      return true;
+    }
+
   function buildCapacityEnvelopeSvg(config) {
     config = config || {};
     const type = String(config.type || config.kind || config.tool || "").toLowerCase();
@@ -1036,6 +1214,10 @@ function renderStorageIopsCapacityEnvelope(options) {
 
     if (type === "ram" || type === "ram-sizing" || type === "compute-ram") {
       return buildRamCapacityEnvelopeSvg(result);
+    }
+
+    if (type === "storage-throughput" || type === "throughput" || type === "compute-storage-throughput") {
+      return buildStorageThroughputCapacityEnvelopeSvg(result);
     }
 
     if (result && (
@@ -1060,6 +1242,8 @@ function renderStorageIopsCapacityEnvelope(options) {
     renderRamCapacityEnvelope,
       buildStorageIopsCapacityEnvelopeSvg,
       renderStorageIopsCapacityEnvelope,
+      buildStorageThroughputCapacityEnvelopeSvg,
+      renderStorageThroughputCapacityEnvelope,
     clear
   });
 })();
