@@ -531,3 +531,12 @@ Accepted Compute Summary page-owned proof promoted to reusable module-owned base
 ### COMPUTE_SUMMARY_CLEAR_SUMMARY_TOOL_NOTES_0703
 
 Compute Summary module-owned proof now includes an explicit clear control for Summary Tool Notes. This keeps persistent local-browser notes editable and removable from the Summary page without affecting per-tool notes.
+
+## COMPUTE_STORAGE_IOPS_CAPACITY_ENVELOPE_LOCKED_PROMOTED_0705
+
+- Status: Accepted and promoted.
+- Pattern type: Shared Compute capacity visual, Storage IOPS-specific renderer.
+- Owner: `assets/scopedlabs-compute-capacity-visuals.js`.
+- First consumer: `tools/compute/storage-iops/`.
+- Locked behavior: centered title/subtitle, status badge only, CPU-family risk color, horizontal capacity bands, dynamic headroom/deficit bracket, base/burst/required callouts, and inline SVG footer chips for storage tier, workload pattern, RAID penalty, latency target, and block size.
+- Guardrail: future Compute tools may reuse the shared visual contract style, but must not create a new chart layout unless explicitly approved.
