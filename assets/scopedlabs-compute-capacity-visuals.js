@@ -665,6 +665,7 @@
     
     // storage-iops-icon-envelope-polish-0705
     function buildStorageIopsCapacityEnvelopeSvg(result) {
+      // storage-iops-title-risk-polish-0705
       result = result || {};
 
       function localNumber(value, fallback) {
@@ -755,8 +756,8 @@
       const statusPalette = {
         GOOD: { stroke: "#34d399", fill: "rgba(52,211,153,0.10)", text: "#7ef5d5" },
         WATCH: { stroke: "#facc15", fill: "rgba(250,204,21,0.10)", text: "#facc15" },
-        RISK: { stroke: "#fb7185", fill: "rgba(251,113,133,0.10)", text: "#fb7185" },
-        BLOCKED: { stroke: "#fb7185", fill: "rgba(251,113,133,0.10)", text: "#fb7185" }
+        RISK: { stroke: "#ef4444", fill: "rgba(239,68,68,0.11)", text: "#ef4444" },
+        BLOCKED: { stroke: "#ef4444", fill: "rgba(239,68,68,0.11)", text: "#ef4444" }
       };
 
       const palette = statusPalette[status] || statusPalette.WATCH;
@@ -801,7 +802,7 @@
       const bracketLabel = delta >= 0
         ? "HEADROOM\n+" + formatCompactIops(delta)
         : "DEFICIT\n" + formatCompactIops(Math.abs(delta));
-      const bracketColor = delta >= 0 ? (status === "GOOD" ? "#7ef5d5" : "#facc15") : "#fb7185";
+      const bracketColor = delta >= 0 ? (status === "GOOD" ? "#7ef5d5" : "#facc15") : "#ef4444";
       const bracketTextY = bracketTop + ((bracketBottom - bracketTop) / 2) - 10;
 
       const yTicks = [];
@@ -915,7 +916,7 @@
             '.plot-frame{fill:rgba(255,255,255,0.015);stroke:rgba(126,245,213,0.24);stroke-width:1;}',
             '.band-good{fill:rgba(34,197,94,0.12);}',
             '.band-watch{fill:rgba(250,204,21,0.14);}',
-            '.band-risk{fill:rgba(255,59,59,0.18);}',
+            '.band-risk{fill:rgba(239,68,68,0.22);}',
             '.grid{fill:none;stroke:rgba(238,246,255,0.07);stroke-width:1;}',
             '.grid-major{fill:none;stroke:rgba(238,246,255,0.12);stroke-width:1;}',
             '.axis{fill:none;stroke:rgba(238,246,255,0.36);stroke-width:1.1;}',
@@ -926,7 +927,7 @@
             '.tick{fill:rgba(203,213,225,0.88);font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700;}',
             '.axis-label{fill:rgba(203,213,225,0.90);font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;letter-spacing:.4px;}',
             '.zone-text{font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:800;letter-spacing:.7px;}',
-            '.good-text{fill:rgba(74,222,128,0.90);}.watch-text{fill:rgba(250,204,21,0.92);}.risk-text{fill:rgba(255,82,82,0.98);}',
+            '.good-text{fill:rgba(74,222,128,0.90);}.watch-text{fill:rgba(250,204,21,0.92);}.risk-text{fill:#ef4444;}',
             '.ceiling-line{fill:none;stroke:#7ef5d5;stroke-width:1.5;stroke-dasharray:7 7;}',
             '.ceiling-label{fill:#7ef5d5;font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:800;}',
             '.curve-shadow{fill:none;stroke:rgba(126,245,213,0.18);stroke-width:4;stroke-linecap:round;stroke-linejoin:round;}',
@@ -935,7 +936,7 @@
             '.marker-ring{fill:none;stroke:rgba(238,246,255,0.70);stroke-width:1;}',
             '.marker-base{fill:#7ef5d5;stroke:#04110d;stroke-width:1.2;}',
             '.marker-burst{fill:#facc15;stroke:#04110d;stroke-width:1.2;}',
-            '.marker-required{fill:' + (delta >= 0 ? "#eef6ff" : "#fb7185") + ';stroke:' + (delta >= 0 ? "#12f7b6" : "#04110d") + ';stroke-width:1.4;}',
+            '.marker-required{fill:' + (delta >= 0 ? "#eef6ff" : "#ef4444") + ';stroke:' + (delta >= 0 ? "#12f7b6" : "#04110d") + ';stroke-width:1.4;}',
             '.point-label{fill:#eef6ff;font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:800;}',
             '.point-note{fill:rgba(203,213,225,0.86);font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:600;}',
             '.bracket-line{fill:none;stroke:' + bracketColor + ';stroke-width:1.4;}',
@@ -950,8 +951,8 @@
         '</defs>',
         '<rect x="14" y="14" width="732" height="402" rx="16" class="outer-card"/>',
         '',
-        '<text x="40" y="50" class="title">Storage IOPS Capacity Envelope</text>',
-        '<text x="40" y="67" class="subtitle">Demand curve vs available platform IOPS</text>',
+        '<text x="' + (width / 2) + '" y="50" text-anchor="middle" class="title">Storage IOPS Capacity Envelope</text>',
+        '<text x="' + (width / 2) + '" y="67" text-anchor="middle" class="subtitle">Demand curve vs available platform IOPS</text>',
         '<rect x="644" y="34" width="78" height="26" rx="6" class="status-badge"/>',
         '<text x="683" y="51" text-anchor="middle" class="status-text">' + escapeXml(status) + '</text>',
         '<rect x="' + plot.x + '" y="' + plot.y + '" width="' + plot.w + '" height="' + plot.h + '" rx="8" class="plot-frame"/>',
