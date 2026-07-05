@@ -453,6 +453,109 @@ if (els.resultSummary) {
     };
   }
 
+  function storageIopsExportNumberFromText(value) {
+    const raw = String(value == null ? "" : value).replace(/,/g, "");
+    const match = raw.match(/-?\d+(?:\.\d+)?/);
+    return match ? Number(match[0]) : 0;
+  }
+
+  function storageIopsExportRowValue(rows, labels) {
+    const wanted = (labels || []).map(function(label) {
+      return storageIopsExportCleanText(label).toLowerCase();
+    }).filter(Boolean);
+
+    for (const row of rows || []) {
+      const label = storageIopsExportCleanText(row && row.label).toLowerCase();
+      if (!label) continue;
+
+      const matched = wanted.some(function(target) {
+        return label === target || label.indexOf(target) >= 0;
+      });
+
+      if (matched) return storageIopsExportCleanText(row && row.value);
+    }
+
+    return "";
+  }
+
+  function storageIopsExportDecisionValue(metric) {
+    const target = storageIopsExportCleanText(metric).toLowerCase();
+    if (!target) return "";
+
+    const rows = Array.from(document.querySelectorAll("#computeStorageIopsDecisionSchedule table tbody tr"));
+
+    for (const row of rows) {
+      const cells = Array.from(row.querySelectorAll("th, td")).map(function(cell) {
+        return storageIopsExportCleanText(cell.textContent);
+      });
+
+      const metricCell = String(cells[1] || "").toLowerCase();
+      if (metricCell === target || metricCell.indexOf(target) >= 0) {
+        return cells[2] || "";
+      }
+    }
+
+    return "";
+  }
+
+  function storageIopsExportInputValue(id) {
+    const el = document.getElementById(id);
+    if (!el) return "";
+    return storageIopsExportCleanText(el.value);
+  }
+
+  function resolveStorageIopsExportResult(result, outputs) {
+    const next = Object.assign({}, result || {});
+
+    const requiredIops = storageIopsExportNumberFromText(
+      next.finalIops ||
+      next.requiredIops ||
+      storageIopsExportDecisionValue("Required IOPS") ||
+      storageIopsExportRowValue(outputs, ["Estimated Required IOPS", "Required IOPS"])
+    );
+
+    const availableIops = storageIopsExportNumberFromText(
+      next.availableIops ||
+      storageIopsExportDecisionValue("Available IOPS") ||
+      storageIopsExportRowValue(outputs, ["Available Platform IOPS", "Available IOPS"])
+    );
+
+    const utilizationPct = storageIopsExportNumberFromText(
+      next.utilizationPct ||
+      storageIopsExportDecisionValue("Utilization") ||
+      storageIopsExportRowValue(outputs, ["Utilization"])
+    );
+
+    const targetLatency = storageIopsExportNumberFromText(
+      next.targetLatency ||
+      storageIopsExportDecisionValue("Latency Target") ||
+      storageIopsExportRowValue(outputs, ["Latency Target"]) ||
+      storageIopsExportInputValue("targetLatency")
+    );
+
+    const blockSizeKb = storageIopsExportNumberFromText(
+      next.blockSizeKb ||
+      storageIopsExportDecisionValue("Block Size") ||
+      storageIopsExportRowValue(outputs, ["Block Size"]) ||
+      storageIopsExportInputValue("blockSizeKb")
+    );
+
+    if (requiredIops > 0) {
+      next.finalIops = requiredIops;
+      next.requiredIops = requiredIops;
+    }
+
+    if (availableIops > 0) next.availableIops = availableIops;
+    if (utilizationPct > 0) next.utilizationPct = utilizationPct;
+    if (targetLatency > 0) next.targetLatency = targetLatency;
+    if (blockSizeKb > 0) next.blockSizeKb = blockSizeKb;
+
+    next.primaryConstraint = next.primaryConstraint || next.dominantConstraint || storageIopsExportRowValue(outputs, ["Primary Constraint"]) || "Storage IOPS validation";
+    next.status = next.status || storageIopsExportDecisionValue("Status") || storageIopsExportRowValue(outputs, ["Status"]) || "REVIEW";
+
+    return next;
+  }
+
   function buildStorageIopsExportPayload(context) {
     context = context || {};
 
@@ -460,14 +563,15 @@ if (els.resultSummary) {
     const getResultRows = typeof context.getResultRows === "function" ? context.getResultRows : function() { return []; };
     const options = context.options || {};
 
-    const result = currentStorageIopsExportResult;
+    const rawResult = currentStorageIopsExportResult;
     const inputs = getInputRows();
     const outputs = storageIopsFilteredExportOutputs(getResultRows());
 
-    if (!result || !outputs.length) return null;
+    if (!rawResult || !outputs.length) return null;
 
+    const result = resolveStorageIopsExportResult(rawResult, outputs);
     const status = String(result.status || "REVIEW").toUpperCase();
-    const summary = "Storage IOPS requires " + formatNumber(result.finalIops || 0) + " IOPS against " + formatNumber(result.availableIops || 0) + " available platform IOPS. Overall status: " + status + ".";
+    const summary = "Storage IOPS requires " + formatNumber(result.finalIops || result.requiredIops || 0) + " IOPS against " + formatNumber(result.availableIops || 0) + " available platform IOPS. Overall status: " + status + ".";
 
     const extraSections = [
       buildStorageIopsVisualExportSection(),
