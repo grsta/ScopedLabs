@@ -5,6 +5,7 @@ const root = path.resolve(__dirname, "..");
 
 const html = fs.readFileSync(path.join(root, "tools", "compute", "storage-iops", "index.html"), "utf8");
 const js = fs.readFileSync(path.join(root, "tools", "compute", "storage-iops", "script.js"), "utf8");
+const storageIopsVisualAsset = fs.readFileSync(path.join(root, "assets", "scopedlabs-compute-capacity-visuals.js"), "utf8");
 const visuals = fs.readFileSync(path.join(root, "assets", "scopedlabs-compute-capacity-visuals.js"), "utf8");
 const shell = fs.readFileSync(path.join(root, "assets", "scopedlabs-compute-shell-contract.js"), "utf8");
 
@@ -80,6 +81,16 @@ check("STORAGE_IOPS_USES_SHARED_RESULT_CARD_RENDERER", js.includes("ScopedLabsCo
 check("STORAGE_IOPS_USES_SHARED_RESULT_CARD_CLEAR", js.includes("ScopedLabsComputeShellContract.clearComputeResultCard"));
 check("STORAGE_IOPS_COMPUTE_SHELL_CACHE_BUST_RESULT_CARD", html.includes("scopedlabs-compute-shell-contract.js?v=compute-result-card-contract-0704"));
 check("STORAGE_IOPS_SCRIPT_CACHE_BUST_SHARED_RESULT_CARD", html.includes("compute-storage-iops-shared-result-card-0704"));
+
+// storage-iops-icon-envelope-audit-0705
+check("STORAGE_IOPS_ICON_ENVELOPE_MARKER", storageIopsVisualAsset.includes("storage-iops-icon-envelope-0705"));
+check("STORAGE_IOPS_TITLE_IS_PLAIN_TEXT", storageIopsVisualAsset.includes("Storage IOPS Capacity Envelope") && storageIopsVisualAsset.includes(".status-badge"));
+check("STORAGE_IOPS_INLINE_ICON_CLASSES_PRESENT", storageIopsVisualAsset.includes(".sl-icon-line") && storageIopsVisualAsset.includes(".sl-icon-accent") && storageIopsVisualAsset.includes(".sl-icon-dot"));
+check("STORAGE_IOPS_INLINE_ICON_SET_PRESENT", storageIopsVisualAsset.includes("const StorageIopsIcons") && storageIopsVisualAsset.includes("storage: function storage") && storageIopsVisualAsset.includes("workload: function workload") && storageIopsVisualAsset.includes("raid: function raid") && storageIopsVisualAsset.includes("latency: function latency") && storageIopsVisualAsset.includes("block: function block"));
+check("STORAGE_IOPS_FOOTER_ICON_CHIPS_PRESENT", storageIopsVisualAsset.includes("StorageIopsIcons.storage") && storageIopsVisualAsset.includes("StorageIopsIcons.workload") && storageIopsVisualAsset.includes("StorageIopsIcons.raid") && storageIopsVisualAsset.includes("StorageIopsIcons.latency") && storageIopsVisualAsset.includes("StorageIopsIcons.block"));
+check("STORAGE_IOPS_HEADROOM_DEFICIT_BRACKET_PRESENT", storageIopsVisualAsset.includes("HEADROOM +") && storageIopsVisualAsset.includes("DEFICIT ") && storageIopsVisualAsset.includes("bracket-line"));
+check("STORAGE_IOPS_PLATFORM_ZONE_BANDS_PRESENT", storageIopsVisualAsset.includes("band-good") && storageIopsVisualAsset.includes("band-watch") && storageIopsVisualAsset.includes("band-risk"));
+check("STORAGE_IOPS_VISUAL_ASSET_CACHE_BUST_ICON_ENVELOPE", html.includes("scopedlabs-compute-capacity-visuals.js?v=storage-iops-icon-envelope-0705"));
 
 let pass = 0;
 let fail = 0;

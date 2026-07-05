@@ -662,86 +662,345 @@
       return "GOOD";
     }
 
+    
+    // storage-iops-icon-envelope-0705
     function buildStorageIopsCapacityEnvelopeSvg(result) {
       result = result || {};
 
-      const required = Math.max(0, number(result.requiredIops || result.finalIops || result.finalRequiredIops, 0));
-      const peak = Math.max(0, number(result.peakDemandIops || result.peakIops, required));
-      const reserve = Math.max(0, number(result.reserveIops, 0) + number(result.growthReserveIops, 0));
-      const available = Math.max(0, number(result.availableIops || result.platformIops, 0));
-      const utilizationPct = available > 0 ? (required / available) * 100 : number(result.utilizationPct, 0);
-      const targetLatency = Math.max(0, number(result.targetLatency, 0));
-      const blockSizeKb = Math.max(0, number(result.blockSizeKb, 0));
-      const status = storageIopsStatus(result, utilizationPct);
-      const maxY = Math.max(required, peak, available, reserve, 1) * 1.18;
-
-      const plot = { x: 76, y: 58, w: 610, h: 270 };
-
-      function xAt(t) {
-        return plot.x + clamp(t, 0, 1) * plot.w;
+      function localNumber(value, fallback) {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : Number(fallback || 0);
       }
 
-      function yAt(v) {
-        return plot.y + plot.h - (clamp(v, 0, maxY) / maxY) * plot.h;
+      function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
       }
 
-      const base = Math.max(0, peak - reserve);
-      const p0 = { x: xAt(0.10), y: yAt(base) };
-      const p1 = { x: xAt(0.40), y: yAt(peak) };
-      const p2 = { x: xAt(0.68), y: yAt(required) };
-      const railY = yAt(available);
+      function escapeXml(value) {
+        return String(value == null ? "" : value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&apos;");
+      }
 
-      const chipClass = status === "RISK" ? "risk" : status === "WATCH" ? "watch" : "good";
-      const statusText = status === "GOOD" ? "GOOD" : status;
+      function formatNumber(value) {
+        return Math.round(localNumber(value, 0)).toLocaleString();
+      }
 
-      return [
-        '<svg class="compute-capacity-envelope-svg compute-storage-iops-envelope" viewBox="0 0 760 430" role="img" aria-label="Storage IOPS Capacity Envelope">',
-        '<defs>',
-        '<linearGradient id="storageIopsBg" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#07170f"/><stop offset="1" stop-color="#020807"/></linearGradient>',
-        '<style>',
-        '.compute-storage-iops-envelope{width:100%;height:auto;display:block;background:linear-gradient(135deg,rgba(7,23,15,.96),rgba(2,8,7,.98));border-radius:14px;}',
-        '.compute-storage-iops-envelope .grid{stroke:rgba(162,255,178,.12);stroke-width:1;}',
-        '.compute-storage-iops-envelope .axis{stroke:rgba(222,255,226,.34);stroke-width:1.2;}',
-        '.compute-storage-iops-envelope .zone-good{fill:rgba(82,255,126,.10);}',
-        '.compute-storage-iops-envelope .zone-watch{fill:rgba(255,194,77,.12);}',
-        '.compute-storage-iops-envelope .zone-risk{fill:rgba(255,90,90,.13);}',
-        '.compute-storage-iops-envelope .demand{fill:none;stroke:#8dff9e;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;}',
-        '.compute-storage-iops-envelope .rail{stroke:#dfeeff;stroke-width:2.2;stroke-dasharray:8 7;}',
-        '.compute-storage-iops-envelope .point{fill:#7cff8d;stroke:#03100a;stroke-width:2;}',
-        '.compute-storage-iops-envelope .label{fill:rgba(245,255,247,.86);font:600 13px system-ui,Segoe UI,sans-serif;}',
-        '.compute-storage-iops-envelope .small{fill:rgba(245,255,247,.66);font:500 11px system-ui,Segoe UI,sans-serif;letter-spacing:.04em;}',
-        '.compute-storage-iops-envelope .status.good{fill:rgba(82,255,126,.18);stroke:rgba(82,255,126,.68);}',
-        '.compute-storage-iops-envelope .status.watch{fill:rgba(255,194,77,.18);stroke:rgba(255,194,77,.72);}',
-        '.compute-storage-iops-envelope .status.risk{fill:rgba(255,90,90,.18);stroke:rgba(255,90,90,.74);}',
-        '</style>',
-        '</defs>',
-        '<rect x="0" y="0" width="760" height="430" rx="18" fill="url(#storageIopsBg)"/>',
-        '<rect x="' + plot.x + '" y="' + plot.y + '" width="' + plot.w + '" height="' + plot.h + '" class="zone-good"/>',
-        '<rect x="' + xAt(0.72) + '" y="' + plot.y + '" width="' + (plot.w * 0.18) + '" height="' + plot.h + '" class="zone-watch"/>',
-        '<rect x="' + xAt(0.90) + '" y="' + plot.y + '" width="' + (plot.w * 0.10) + '" height="' + plot.h + '" class="zone-risk"/>',
-        [0, .25, .5, .75, 1].map(function(t){ return '<line x1="' + xAt(t) + '" y1="' + plot.y + '" x2="' + xAt(t) + '" y2="' + (plot.y + plot.h) + '" class="grid"/>'; }).join(""),
-        [0, .25, .5, .75, 1].map(function(t){ return '<line x1="' + plot.x + '" y1="' + yAt(maxY * t) + '" x2="' + (plot.x + plot.w) + '" y2="' + yAt(maxY * t) + '" class="grid"/>'; }).join(""),
-        '<line x1="' + plot.x + '" y1="' + (plot.y + plot.h) + '" x2="' + (plot.x + plot.w) + '" y2="' + (plot.y + plot.h) + '" class="axis"/>',
-        '<line x1="' + plot.x + '" y1="' + plot.y + '" x2="' + plot.x + '" y2="' + (plot.y + plot.h) + '" class="axis"/>',
-        available > 0 ? '<line x1="' + plot.x + '" y1="' + railY + '" x2="' + (plot.x + plot.w) + '" y2="' + railY + '" class="rail"/>' : '',
-        available > 0 ? '<text x="' + (plot.x + plot.w - 4) + '" y="' + (railY - 8) + '" text-anchor="end" class="small">Available platform: ' + iopsLabel(available) + '</text>' : '',
-        '<path d="M ' + p0.x + ' ' + p0.y + ' C ' + xAt(.24) + ' ' + p0.y + ', ' + xAt(.30) + ' ' + p1.y + ', ' + p1.x + ' ' + p1.y + ' S ' + xAt(.56) + ' ' + p2.y + ', ' + p2.x + ' ' + p2.y + '" class="demand"/>',
-        '<circle cx="' + p0.x + '" cy="' + p0.y + '" r="5" class="point"/><text x="' + (p0.x - 14) + '" y="' + (p0.y - 13) + '" text-anchor="end" class="small">Base demand</text>',
-        '<circle cx="' + p1.x + '" cy="' + p1.y + '" r="5" class="point"/><text x="' + p1.x + '" y="' + (p1.y - 13) + '" text-anchor="middle" class="small">Burst demand *1</text>',
-        '<circle cx="' + p2.x + '" cy="' + p2.y + '" r="6" class="point"/><text x="' + (p2.x + 12) + '" y="' + (p2.y - 13) + '" class="small">Required IOPS *2</text>',
-        '<rect x="76" y="22" width="260" height="28" rx="8" class="status ' + chipClass + '"/>',
-        '<text x="90" y="41" class="label">Storage IOPS Capacity Envelope</text>',
-        '<text x="356" y="41" class="small">Status: ' + statusText + '</text>',
-        '<text x="76" y="356" class="label">Required: ' + iopsLabel(required) + '</text>',
-        '<text x="76" y="378" class="small">Utilization *2: ' + Math.round(utilizationPct) + '% of entered platform IOPS</text>',
-        '<text x="76" y="400" class="small">Latency *3: ' + (targetLatency || "n/a") + ' ms target / ' + (blockSizeKb || "n/a") + ' KB blocks</text>',
-        '<text x="686" y="356" text-anchor="end" class="small">Green / Watch / Risk bands track pressure toward platform edge</text>',
-        '<text x="686" y="378" text-anchor="end" class="small">Carry same workload to Storage Throughput</text>',
-        '</svg>'
+      function formatCompactIops(value) {
+        const numeric = Math.round(localNumber(value, 0));
+        if (Math.abs(numeric) >= 1000) {
+          const compact = numeric / 1000;
+          return (Math.abs(compact) >= 10 ? compact.toFixed(1) : compact.toFixed(1)).replace(/\.0$/, "") + "k";
+        }
+        return String(numeric);
+      }
+
+      function formatDecimal(value, digits) {
+        const fixed = localNumber(value, 0).toFixed(digits == null ? 1 : digits);
+        return fixed.replace(/\.0$/, "");
+      }
+
+      function chooseStep(maxValue) {
+        if (maxValue <= 2000) return 250;
+        if (maxValue <= 5000) return 500;
+        if (maxValue <= 10000) return 1000;
+        if (maxValue <= 20000) return 2000;
+        if (maxValue <= 50000) return 5000;
+        return 10000;
+      }
+
+      function mediaTierLabel(value) {
+        const key = String(value || "").toLowerCase();
+        if (key.indexOf("nvme") >= 0) return "NVMe pool";
+        if (key.indexOf("ssd") >= 0) return "SSD / general";
+        if (key.indexOf("hdd") >= 0) return "HDD tier";
+        if (key.indexOf("hybrid") >= 0) return "Hybrid pool";
+        return value ? String(value) : "Storage tier";
+      }
+
+      function workloadPatternLabel(value) {
+        const key = String(value || "").toLowerCase();
+        if (key === "bursty" || key.indexOf("burst") >= 0) return "Burst-heavy";
+        if (key === "steady" || key.indexOf("steady") >= 0) return "Steady load";
+        if (key.indexOf("write") >= 0) return "Write-heavy";
+        if (key.indexOf("database") >= 0) return "Database";
+        return value ? String(value) : "Workload";
+      }
+
+      const width = 760;
+      const height = 430;
+      const plot = { x: 64, y: 92, w: 632, h: 218 };
+
+      const required = Math.max(0, localNumber(result.requiredIops || result.finalIops || result.finalRequiredIops, 0));
+      const base = Math.max(0, localNumber(result.normalDemandIops || result.baseIops || result.baseDemandIops, required * 0.52));
+      const burst = Math.max(0, localNumber(result.peakDemandIops || result.peakIops || result.burstIops, Math.max(required * 0.78, base)));
+      const available = Math.max(0, localNumber(result.availableIops || result.platformIops || result.platformCeilingIops, 0));
+      const reserve = Math.max(0, localNumber(result.reserveIops, 0) + localNumber(result.growthReserveIops, 0));
+      const utilizationPct = available > 0 ? (required / available) * 100 : localNumber(result.utilizationPct, 0);
+      const targetLatency = Math.max(0, localNumber(result.targetLatency || result.latencyMs, 0));
+      const blockSizeKb = Math.max(0, localNumber(result.blockSizeKb, 0));
+      const penalty = Math.max(0, localNumber(result.penalty || result.raidWritePenalty || result.writePenalty, 0));
+
+      const fallbackStatus = available > 0
+        ? (required / available <= 0.70 ? "GOOD" : required / available <= 0.90 ? "WATCH" : "RISK")
+        : "RISK";
+
+      const status = String(
+        typeof storageIopsStatus === "function" ? storageIopsStatus(result, utilizationPct) : (result.status || fallbackStatus)
+      ).toUpperCase();
+
+      const statusPalette = {
+        GOOD: { stroke: "#34d399", fill: "rgba(52,211,153,0.10)", text: "#7ef5d5" },
+        WATCH: { stroke: "#facc15", fill: "rgba(250,204,21,0.10)", text: "#facc15" },
+        RISK: { stroke: "#fb7185", fill: "rgba(251,113,133,0.10)", text: "#fb7185" },
+        BLOCKED: { stroke: "#fb7185", fill: "rgba(251,113,133,0.10)", text: "#fb7185" }
+      };
+
+      const palette = statusPalette[status] || statusPalette.WATCH;
+
+      const maxValue = Math.max(required, base, burst, available, reserve, 1);
+      const yStep = chooseStep(maxValue);
+      const yMax = Math.ceil((maxValue * 1.16) / yStep) * yStep;
+
+      function yScale(value) {
+        const clamped = clamp(value, 0, yMax);
+        return plot.y + plot.h - (clamped / yMax) * plot.h;
+      }
+
+      const stageX = {
+        lead: plot.x + 24,
+        base: plot.x + 172,
+        burst: plot.x + 376,
+        required: plot.x + 560
+      };
+
+      const bandGoodMax = available > 0 ? available * 0.70 : yMax * 0.70;
+      const bandWatchMax = available > 0 ? available * 0.90 : yMax * 0.90;
+
+      const yGood = yScale(bandGoodMax);
+      const yWatch = yScale(bandWatchMax);
+      const yCeiling = yScale(available);
+      const yBase = yScale(base);
+      const yBurst = yScale(burst);
+      const yRequired = yScale(required);
+      const startY = yScale(Math.max(base * 0.45, 1));
+
+      const curvePath = [
+        "M " + stageX.lead.toFixed(1) + " " + startY.toFixed(1),
+        "C " + (stageX.lead + 58).toFixed(1) + " " + (startY + 4).toFixed(1) + ", " + (stageX.base - 56).toFixed(1) + " " + (yBase + 12).toFixed(1) + ", " + stageX.base.toFixed(1) + " " + yBase.toFixed(1),
+        "C " + (stageX.base + 70).toFixed(1) + " " + (yBase - 8).toFixed(1) + ", " + (stageX.burst - 64).toFixed(1) + " " + (yBurst + 8).toFixed(1) + ", " + stageX.burst.toFixed(1) + " " + yBurst.toFixed(1),
+        "C " + (stageX.burst + 70).toFixed(1) + " " + (yBurst - 10).toFixed(1) + ", " + (stageX.required - 56).toFixed(1) + " " + (yRequired + 8).toFixed(1) + ", " + stageX.required.toFixed(1) + " " + yRequired.toFixed(1)
+      ].join(" ");
+
+      const delta = available - required;
+      const bracketTop = Math.min(yCeiling, yRequired);
+      const bracketBottom = Math.max(yCeiling, yRequired);
+      const bracketLabel = delta >= 0
+        ? "HEADROOM +" + formatCompactIops(delta) + " IOPS"
+        : "DEFICIT " + formatCompactIops(Math.abs(delta)) + " IOPS";
+      const bracketColor = delta >= 0 ? (status === "GOOD" ? "#7ef5d5" : "#facc15") : "#fb7185";
+      const bracketTextY = bracketTop + ((bracketBottom - bracketTop) / 2) - 4;
+
+      const yTicks = [];
+      for (let v = 0; v <= yMax; v += yStep) yTicks.push(v);
+
+      const StorageIopsIcons = {
+        storage: function storage(x, y) {
+          return [
+            '<g transform="translate(' + x + ' ' + y + ')" aria-label="storage pool icon">',
+              '<rect x="0" y="3" width="23" height="6" rx="2" class="sl-icon-line"/>',
+              '<rect x="0" y="11" width="23" height="6" rx="2" class="sl-icon-line"/>',
+              '<rect x="0" y="19" width="23" height="6" rx="2" class="sl-icon-line"/>',
+              '<circle cx="4" cy="6" r="1.1" class="sl-icon-dot"/>',
+              '<circle cx="4" cy="14" r="1.1" class="sl-icon-dot"/>',
+              '<circle cx="4" cy="22" r="1.1" class="sl-icon-dot"/>',
+              '<path d="M9 6 H19" class="sl-icon-accent"/>',
+              '<path d="M9 14 H19" class="sl-icon-accent"/>',
+              '<path d="M9 22 H19" class="sl-icon-accent"/>',
+            '</g>'
+          ].join("");
+        },
+
+        workload: function workload(x, y) {
+          return [
+            '<g transform="translate(' + x + ' ' + y + ')" aria-label="workload demand icon">',
+              '<rect x="0" y="15" width="4" height="4" rx="1" class="sl-icon-line"/>',
+              '<rect x="6" y="11" width="4" height="8" rx="1" class="sl-icon-line"/>',
+              '<rect x="12" y="7" width="4" height="12" rx="1" class="sl-icon-line"/>',
+              '<path d="M0 23 H4 L7 18 L10 23 H14 L18 11 L22 23" class="sl-icon-accent"/>',
+              '<path d="M17 6 H24" class="sl-icon-line"/>',
+              '<path d="M21 3 L24 6 L21 9" class="sl-icon-line"/>',
+            '</g>'
+          ].join("");
+        },
+
+        raid: function raid(x, y) {
+          return [
+            '<g transform="translate(' + x + ' ' + y + ')" aria-label="RAID group icon">',
+              '<rect x="0" y="4" width="6" height="18" rx="1.5" class="sl-icon-line"/>',
+              '<rect x="9" y="4" width="6" height="18" rx="1.5" class="sl-icon-line"/>',
+              '<rect x="18" y="4" width="6" height="18" rx="1.5" class="sl-icon-line"/>',
+              '<path d="M3 10 H21" class="sl-icon-accent"/>',
+              '<path d="M3 16 H21" class="sl-icon-accent" opacity="0.62"/>',
+              '<path d="M7 25 L10 28 L16 22" class="sl-icon-accent"/>',
+            '</g>'
+          ].join("");
+        },
+
+        latency: function latency(x, y) {
+          return [
+            '<g transform="translate(' + x + ' ' + y + ')" aria-label="latency icon">',
+              '<circle cx="12" cy="14" r="8" class="sl-icon-line"/>',
+              '<path d="M9 3 H15" class="sl-icon-line"/>',
+              '<path d="M12 3 V6" class="sl-icon-line"/>',
+              '<path d="M12 14 L12 9" class="sl-icon-accent"/>',
+              '<path d="M12 14 L17 16" class="sl-icon-accent"/>',
+              '<path d="M2 26 C5 23 8 29 11 26 C14 23 17 29 20 26" class="sl-icon-accent" opacity="0.75"/>',
+            '</g>'
+          ].join("");
+        },
+
+        block: function block(x, y) {
+          return [
+            '<g transform="translate(' + x + ' ' + y + ')" aria-label="block size icon">',
+              '<rect x="0" y="4" width="8" height="8" rx="1.5" class="sl-icon-line"/>',
+              '<rect x="11" y="4" width="8" height="8" rx="1.5" class="sl-icon-line"/>',
+              '<rect x="0" y="15" width="8" height="8" rx="1.5" class="sl-icon-line"/>',
+              '<rect x="11" y="15" width="8" height="8" rx="1.5" class="sl-icon-line"/>',
+              '<rect x="22" y="9" width="6" height="9" rx="1.3" class="sl-icon-accent"/>',
+              '<path d="M19 13.5 H22" class="sl-icon-accent"/>',
+            '</g>'
+          ].join("");
+        }
+      };
+
+      function footerStat(x, iconMarkup, label, value) {
+        return [
+          '<g transform="translate(' + x + ' 354)">',
+            '<rect x="0" y="0" width="120" height="42" rx="10" class="footer-pill"/>',
+            iconMarkup,
+            '<text x="34" y="16" class="footer-label">' + escapeXml(label) + '</text>',
+            '<text x="34" y="31" class="footer-value">' + escapeXml(value) + '</text>',
+          '</g>'
+        ].join("");
+      }
+
+      const storageLabel = mediaTierLabel(result.mediaTier || result.storageLabel);
+      const workloadLabel = workloadPatternLabel(result.workloadPattern || result.workloadLabel);
+      const raidLabel = result.raidLabel || (penalty > 0 ? "Penalty x" + formatDecimal(penalty, 1) : "Penalty n/a");
+      const latencyLabel = targetLatency > 0 ? formatDecimal(targetLatency, 1) + " ms" : "Target n/a";
+      const blockLabel = blockSizeKb > 0 ? formatDecimal(blockSizeKb, 0) + " KB" : "Block n/a";
+
+      const footerMarkup = [
+        footerStat(40, StorageIopsIcons.storage(8, 7), "Storage", storageLabel),
+        footerStat(164, StorageIopsIcons.workload(8, 6), "Workload", workloadLabel),
+        footerStat(288, StorageIopsIcons.raid(8, 5), "RAID", raidLabel),
+        footerStat(412, StorageIopsIcons.latency(8, 5), "Latency", latencyLabel),
+        footerStat(536, StorageIopsIcons.block(8, 5), "Block", blockLabel)
       ].join("");
+
+      const svgParts = [
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" width="100%" role="img" aria-label="Storage IOPS Capacity Envelope">',
+        '<defs>',
+          '<linearGradient id="slIopsBg" x1="0" y1="0" x2="0" y2="1">',
+            '<stop offset="0%" stop-color="#07110f"/>',
+            '<stop offset="100%" stop-color="#040b09"/>',
+          '</linearGradient>',
+          '<style>',
+            '.outer-card{fill:url(#slIopsBg);stroke:rgba(126,245,213,0.18);stroke-width:1.2;}',
+            '.inner-frame{fill:none;stroke:rgba(126,245,213,0.20);stroke-width:1;}',
+            '.plot-frame{fill:rgba(255,255,255,0.01);stroke:rgba(126,245,213,0.20);stroke-width:1;}',
+            '.band-good{fill:rgba(34,197,94,0.06);}',
+            '.band-watch{fill:rgba(250,204,21,0.06);}',
+            '.band-risk{fill:rgba(251,113,133,0.08);}',
+            '.grid{fill:none;stroke:rgba(238,246,255,0.07);stroke-width:1;}',
+            '.grid-major{fill:none;stroke:rgba(238,246,255,0.12);stroke-width:1;}',
+            '.axis{fill:none;stroke:rgba(238,246,255,0.36);stroke-width:1.1;}',
+            '.title{fill:#eef6ff;font-family:Inter,Arial,Helvetica,sans-serif;font-size:18px;font-weight:900;letter-spacing:.5px;}',
+            '.subtitle{fill:rgba(203,213,225,0.82);font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700;letter-spacing:.35px;}',
+            '.status-badge{fill:' + palette.fill + ';stroke:' + palette.stroke + ';stroke-width:1;}',
+            '.status-text{fill:' + palette.text + ';font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;letter-spacing:.7px;}',
+            '.tick{fill:rgba(203,213,225,0.88);font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:700;}',
+            '.axis-label{fill:rgba(203,213,225,0.90);font-family:Inter,Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;letter-spacing:.4px;}',
+            '.zone-text{font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:800;letter-spacing:.7px;}',
+            '.good-text{fill:rgba(74,222,128,0.90);}.watch-text{fill:rgba(250,204,21,0.92);}.risk-text{fill:rgba(248,113,113,0.94);}',
+            '.ceiling-line{fill:none;stroke:#7ef5d5;stroke-width:1.5;stroke-dasharray:7 7;}',
+            '.ceiling-label{fill:#7ef5d5;font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:800;}',
+            '.curve-shadow{fill:none;stroke:rgba(126,245,213,0.18);stroke-width:4;stroke-linecap:round;stroke-linejoin:round;}',
+            '.curve-line{fill:none;stroke:#12f7b6;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}',
+            '.drop-line{fill:none;stroke:rgba(238,246,255,0.16);stroke-width:1;stroke-dasharray:4 4;}',
+            '.marker-ring{fill:none;stroke:rgba(238,246,255,0.70);stroke-width:1;}',
+            '.marker-base{fill:#7ef5d5;stroke:#04110d;stroke-width:1.2;}',
+            '.marker-burst{fill:#facc15;stroke:#04110d;stroke-width:1.2;}',
+            '.marker-required{fill:' + (delta >= 0 ? "#eef6ff" : "#fb7185") + ';stroke:' + (delta >= 0 ? "#12f7b6" : "#04110d") + ';stroke-width:1.4;}',
+            '.point-label{fill:#eef6ff;font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:800;}',
+            '.point-note{fill:rgba(203,213,225,0.86);font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:600;}',
+            '.bracket-line{fill:none;stroke:' + bracketColor + ';stroke-width:1.4;}',
+            '.bracket-text{fill:' + bracketColor + ';font-family:Inter,Arial,Helvetica,sans-serif;font-size:10px;font-weight:900;}',
+            '.footer-pill{fill:rgba(255,255,255,0.02);stroke:rgba(126,245,213,0.16);stroke-width:1;}',
+            '.footer-label{fill:rgba(203,213,225,0.82);font-family:Inter,Arial,Helvetica,sans-serif;font-size:9px;font-weight:700;}',
+            '.footer-value{fill:#eef6ff;font-family:Inter,Arial,Helvetica,sans-serif;font-size:10.5px;font-weight:800;}',
+            '.sl-icon-line{fill:none;stroke:rgba(238,246,255,0.84);stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round;}',
+            '.sl-icon-accent{fill:none;stroke:#7ef5d5;stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round;}',
+            '.sl-icon-dot{fill:#7ef5d5;}',
+          '</style>',
+        '</defs>',
+        '<rect x="14" y="14" width="732" height="402" rx="16" class="outer-card"/>',
+        '<rect x="26" y="26" width="708" height="378" rx="12" class="inner-frame"/>',
+        '<text x="40" y="50" class="title">Storage IOPS Capacity Envelope</text>',
+        '<text x="40" y="67" class="subtitle">Demand curve vs available platform IOPS</text>',
+        '<rect x="644" y="34" width="78" height="26" rx="6" class="status-badge"/>',
+        '<text x="683" y="51" text-anchor="middle" class="status-text">' + escapeXml(status) + '</text>',
+        '<rect x="' + plot.x + '" y="' + plot.y + '" width="' + plot.w + '" height="' + plot.h + '" rx="8" class="plot-frame"/>',
+        '<rect x="' + plot.x + '" y="' + plot.y + '" width="' + plot.w + '" height="' + Math.max(0, yWatch - plot.y).toFixed(1) + '" class="band-risk"/>',
+        '<rect x="' + plot.x + '" y="' + yWatch.toFixed(1) + '" width="' + plot.w + '" height="' + Math.max(0, yGood - yWatch).toFixed(1) + '" class="band-watch"/>',
+        '<rect x="' + plot.x + '" y="' + yGood.toFixed(1) + '" width="' + plot.w + '" height="' + Math.max(0, plot.y + plot.h - yGood).toFixed(1) + '" class="band-good"/>',
+        yTicks.map(function(tick) {
+          const y = yScale(tick);
+          const cls = tick === 0 || tick === yMax ? "grid-major" : "grid";
+          return '<path d="M' + plot.x + ' ' + y.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="' + cls + '"/><text x="' + (plot.x - 10) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end" class="tick">' + formatNumber(tick) + '</text>';
+        }).join(""),
+        [stageX.lead, stageX.base, stageX.burst, stageX.required].map(function(x, index) {
+          return '<path d="M' + x.toFixed(1) + ' ' + plot.y + ' V' + (plot.y + plot.h) + '" class="' + (index === 0 ? "grid-major" : "grid") + '"/>';
+        }).join(""),
+        '<path d="M' + plot.x + ' ' + plot.y + ' V' + (plot.y + plot.h) + '" class="axis"/>',
+        '<path d="M' + plot.x + ' ' + (plot.y + plot.h) + ' H' + (plot.x + plot.w) + '" class="axis"/>',
+        '<text x="42" y="84" class="axis-label">IOPS</text>',
+        '<text x="' + (plot.x + plot.w / 2) + '" y="335" text-anchor="middle" class="axis-label">Load stage</text>',
+        '<text x="' + (plot.x + plot.w - 10) + '" y="' + (plot.y + 14).toFixed(1) + '" text-anchor="end" class="zone-text risk-text">RISK</text>',
+        '<text x="' + (plot.x + plot.w - 10) + '" y="' + (yWatch + 14).toFixed(1) + '" text-anchor="end" class="zone-text watch-text">WATCH</text>',
+        '<text x="' + (plot.x + plot.w - 10) + '" y="' + (yGood + 14).toFixed(1) + '" text-anchor="end" class="zone-text good-text">GOOD</text>',
+        '<path d="M' + plot.x + ' ' + yCeiling.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="ceiling-line"/>',
+        '<text x="' + (plot.x + plot.w - 12) + '" y="' + (yCeiling - 8).toFixed(1) + '" text-anchor="end" class="ceiling-label">Available platform: ' + formatCompactIops(available) + ' IOPS</text>',
+        '<path d="' + curvePath + '" class="curve-shadow"/>',
+        '<path d="' + curvePath + '" class="curve-line"/>',
+        '<path d="M' + stageX.base.toFixed(1) + ' ' + yBase.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="drop-line"/>',
+        '<path d="M' + stageX.burst.toFixed(1) + ' ' + yBurst.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="drop-line"/>',
+        '<path d="M' + stageX.required.toFixed(1) + ' ' + yRequired.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="drop-line"/>',
+        '<circle cx="' + stageX.base.toFixed(1) + '" cy="' + yBase.toFixed(1) + '" r="6.5" class="marker-ring"/><circle cx="' + stageX.base.toFixed(1) + '" cy="' + yBase.toFixed(1) + '" r="4.5" class="marker-base"/>',
+        '<text x="' + (stageX.base - 34).toFixed(1) + '" y="' + (yBase - 14).toFixed(1) + '" class="point-label">BASE</text><text x="' + (stageX.base - 34).toFixed(1) + '" y="' + (yBase - 1).toFixed(1) + '" class="point-note">' + formatCompactIops(base) + ' IOPS</text>',
+        '<circle cx="' + stageX.burst.toFixed(1) + '" cy="' + yBurst.toFixed(1) + '" r="6.5" class="marker-ring"/><circle cx="' + stageX.burst.toFixed(1) + '" cy="' + yBurst.toFixed(1) + '" r="4.5" class="marker-burst"/>',
+        '<text x="' + (stageX.burst - 34).toFixed(1) + '" y="' + (yBurst - 14).toFixed(1) + '" class="point-label">BURST *1</text><text x="' + (stageX.burst - 34).toFixed(1) + '" y="' + (yBurst - 1).toFixed(1) + '" class="point-note">' + formatCompactIops(burst) + ' IOPS</text>',
+        '<circle cx="' + stageX.required.toFixed(1) + '" cy="' + yRequired.toFixed(1) + '" r="7" class="marker-ring"/><circle cx="' + stageX.required.toFixed(1) + '" cy="' + yRequired.toFixed(1) + '" r="5" class="marker-required"/>',
+        '<text x="' + (stageX.required - 62).toFixed(1) + '" y="' + (yRequired - 14).toFixed(1) + '" class="point-label">REQUIRED *2</text><text x="' + (stageX.required - 62).toFixed(1) + '" y="' + (yRequired - 1).toFixed(1) + '" class="point-note">' + formatCompactIops(required) + ' IOPS</text>',
+        '<text x="' + stageX.base.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">base</text>',
+        '<text x="' + stageX.burst.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">burst</text>',
+        '<text x="' + stageX.required.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">required</text>',
+        '<path d="M' + (plot.x + plot.w - 20).toFixed(1) + ' ' + bracketTop.toFixed(1) + ' H' + (plot.x + plot.w - 8).toFixed(1) + '" class="bracket-line"/>',
+        '<path d="M' + (plot.x + plot.w - 20).toFixed(1) + ' ' + bracketBottom.toFixed(1) + ' H' + (plot.x + plot.w - 8).toFixed(1) + '" class="bracket-line"/>',
+        '<path d="M' + (plot.x + plot.w - 10).toFixed(1) + ' ' + bracketTop.toFixed(1) + ' V' + bracketBottom.toFixed(1) + '" class="bracket-line"/>',
+        '<text x="' + (plot.x + plot.w - 4).toFixed(1) + '" y="' + bracketTextY.toFixed(1) + '" class="bracket-text">' + escapeXml(bracketLabel) + '</text>',
+        footerMarkup,
+        '</svg>'
+      ];
+
+      return svgParts.join("");
     }
 
-    function renderStorageIopsCapacityEnvelope(options) {
+function renderStorageIopsCapacityEnvelope(options) {
       options = options || {};
       const card = options.card || null;
       const mount = options.mount || null;
