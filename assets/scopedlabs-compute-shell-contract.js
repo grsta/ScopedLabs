@@ -729,7 +729,7 @@ function computeWorkloadToolLabelFromPage() {
         var storageIopsTarget = String(button.getAttribute("data-storage-iops-continue-target") || "");
 
         if (storageIopsFlowTool === "storage-iops" && storageIopsTarget === "storage-throughput") {
-          decision = Object.assign({}, decision, {
+          Object.assign(decision, {
             action: "next-tool",
             nextTool: "storage-throughput",
             nextLabel: "Storage Throughput",
@@ -744,7 +744,7 @@ function computeWorkloadToolLabelFromPage() {
         var storageThroughputTarget = String(button.getAttribute("data-storage-throughput-continue-target") || "");
 
         if (flowTool === "storage-throughput" && storageThroughputTarget === "vm-density") {
-          decision = Object.assign({}, decision, {
+          Object.assign(decision, {
             action: "next-tool",
             nextTool: "vm-density",
             nextLabel: "VM Density",
