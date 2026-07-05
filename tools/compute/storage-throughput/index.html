@@ -107,6 +107,56 @@
       margin-left: auto;
     }
   </style>
+  <style data-storage-throughput-layout-parity-0705>
+    body[data-step="storage-throughput"] #flow-note,
+    body[data-step="storage-throughput"] [data-storage-throughput-flow-context],
+    body[data-step="storage-throughput"] .storage-throughput-flow-context {
+      display: none !important;
+    }
+
+    body[data-step="storage-throughput"] #computeStorageThroughputResultCard.storage-throughput-result-summary-card {
+      display: none !important;
+    }
+
+    body[data-step="storage-throughput"] .storage-throughput-active-workflow-card {
+      margin-top: 16px;
+    }
+
+    body[data-step="storage-throughput"] .storage-throughput-active-workflow-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    body[data-step="storage-throughput"] .storage-throughput-active-workflow-chip {
+      border: 1px solid rgba(63, 255, 128, 0.14);
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: rgba(1, 18, 12, 0.55);
+      min-height: 48px;
+    }
+
+    body[data-step="storage-throughput"] .storage-throughput-active-workflow-chip .mini-label {
+      display: block;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--sl-muted, #9fb4ad);
+      margin-bottom: 4px;
+    }
+
+    body[data-step="storage-throughput"] .storage-throughput-active-workflow-chip strong {
+      display: block;
+      font-size: 0.86rem;
+    }
+
+    @media (max-width: 760px) {
+      body[data-step="storage-throughput"] .storage-throughput-active-workflow-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+  </style>
 </head>
 
 <body data-tier="pro" data-category="compute" data-step="storage-throughput" data-lane="v1" data-storage-throughput-visual-wire="0705">
@@ -164,7 +214,46 @@
     </div>
   </section>
 
-  <section id="toolCard" class="card tool-card" style="margin-top: 18px;">
+      <section class="card storage-throughput-active-workflow-card" data-storage-throughput-active-workflow-card="0705">
+      <div class="eyebrow">ACTIVE WORKLOAD &rarr; STORAGE THROUGHPUT</div>
+      <h2 class="h2" style="margin-top: 8px;">Improving the tools</h2>
+      <p class="muted" style="margin-top: 4px;">Production | General | Standard Server</p>
+      <div class="storage-throughput-active-workflow-grid" aria-label="Active workload context">
+        <div class="storage-throughput-active-workflow-chip">
+          <span class="mini-label">Environment</span>
+          <strong>Production</strong>
+        </div>
+        <div class="storage-throughput-active-workflow-chip">
+          <span class="mini-label">Workload Type</span>
+          <strong>VM datastore</strong>
+        </div>
+        <div class="storage-throughput-active-workflow-chip">
+          <span class="mini-label">Demand Source</span>
+          <strong>Storage IOPS</strong>
+        </div>
+        <div class="storage-throughput-active-workflow-chip">
+          <span class="mini-label">Next Tool</span>
+          <strong>VM Density</strong>
+        </div>
+        <div class="storage-throughput-active-workflow-chip">
+          <span class="mini-label">Transport Path</span>
+          <strong>10 GbE / shared path</strong>
+        </div>
+        <div class="storage-throughput-active-workflow-chip">
+          <span class="mini-label">Media Tier</span>
+          <strong>SATA / SAS SSD</strong>
+        </div>
+        <div class="storage-throughput-active-workflow-chip">
+          <span class="mini-label">Growth Reserve</span>
+          <strong>20%</strong>
+        </div>
+        <div class="storage-throughput-active-workflow-chip">
+          <span class="mini-label">Status</span>
+          <strong>Pending Calculation</strong>
+        </div>
+      </div>
+    </section>
+<section id="toolCard" class="card tool-card" style="margin-top: 18px;">
     <h2 class="card-title" style="margin-top: 0;">Inputs</h2>
 
     <div class="form-grid" style="margin-top: 14px;" data-storage-throughput-engineering-inputs="0705">
