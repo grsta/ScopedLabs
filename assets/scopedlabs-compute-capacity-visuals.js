@@ -1178,6 +1178,21 @@ function renderStorageIopsCapacityEnvelope(options) {
       ];
     }
 
+
+    // compute-capacity-guide-line-contract-0705
+    function computeCapacityGuideLineStyles() {
+      return ".checkpoint-line{fill:none;stroke:rgba(248,250,252,.24);stroke-width:1;stroke-dasharray:4 5}.ceiling-line{stroke:rgba(248,250,252,.88);stroke-width:2;stroke-dasharray:7 5}.ceiling-label{fill:rgba(248,250,252,.94);font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:850}";
+    }
+
+    function buildCapacityCheckpointGuides(plot, checkpoints) {
+      const points = Array.isArray(checkpoints) ? checkpoints : [];
+      return points.map(function(x) {
+        const numericX = Number(x);
+        if (!Number.isFinite(numericX)) return "";
+        return '<path d="M' + numericX.toFixed(1) + ' ' + plot.y + ' V' + (plot.y + plot.h) + '" class="checkpoint-line"/>';
+      }).join("");
+    }
+
     // storage-throughput-capacity-envelope-0705
     function buildStorageThroughputCapacityEnvelopeSvg(result) {
       result = result || {};
@@ -1262,6 +1277,7 @@ function renderStorageIopsCapacityEnvelope(options) {
         required: plot.x + 560
       };
 
+      const checkpointGuides = buildCapacityCheckpointGuides(plot, [stageX.base, stageX.burst, stageX.required]);
       const yBase = yScale(base);
       const yBurst = yScale(burst);
       const yRequired = yScale(required);
@@ -1299,7 +1315,7 @@ function renderStorageIopsCapacityEnvelope(options) {
       return [
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Storage Throughput Capacity Envelope">',
         '<defs><style>',
-        '.bg{fill:#07100d}.panel{fill:rgba(255,255,255,.025);stroke:rgba(112,255,145,.16);stroke-width:1}.title{fill:#f8fafc;font-family:Inter,Arial,sans-serif;font-size:18px;font-weight:900}.sub{fill:rgba(203,213,225,.82);font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:700}.status-text{font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.8px}.zone-risk{fill:rgba(239,68,68,.22)}.zone-watch{fill:rgba(250,204,21,.18)}.zone-good{fill:rgba(52,211,153,.17)}.grid{stroke:rgba(148,163,184,.14);stroke-width:1}.grid-major{stroke:rgba(148,163,184,.24);stroke-width:1}.axis{stroke:rgba(226,232,240,.34);stroke-width:1.2}.tick{fill:rgba(203,213,225,.72);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:700}.axis-label{fill:rgba(203,213,225,.76);font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:800}.zone-text{font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.7px}.risk-text{fill:#ef4444}.watch-text{fill:#facc15}.good-text{fill:#34d399}.ceiling-line{stroke:#facc15;stroke-width:2;stroke-dasharray:7 5}.ceiling-label{fill:#facc15;font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:850}.curve-shadow{fill:none;stroke:rgba(0,0,0,.4);stroke-width:6;stroke-linecap:round}.curve-line{fill:none;stroke:#2cff9b;stroke-width:2.2;stroke-linecap:round}.drop-line{stroke:rgba(226,232,240,.20);stroke-width:1;stroke-dasharray:4 5}.marker-ring{fill:none;stroke:rgba(238,246,255,.72);stroke-width:1}.marker-base{fill:#38d9ff;stroke:#04110d;stroke-width:1.2}.marker-burst{fill:#a78bfa;stroke:#04110d;stroke-width:1.2}.marker-required{fill:#2cff9b;stroke:#04110d;stroke-width:1.2}.point-label{fill:#f8fafc;font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.6px}.point-note{fill:rgba(203,213,225,.84);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:750}.bracket-line{stroke:' + palette.stroke + ';stroke-width:1.5}.bracket-text{fill:' + palette.text + ';font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900}.chip-bg{fill:rgba(15,23,42,.72);stroke:rgba(112,255,145,.12)}.chip-text{fill:rgba(226,232,240,.86);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:750}' + computeCapacityFooterIconStyles() /* storage-throughput-footer-icon-style-injection-0705 */,
+        '.bg{fill:#07100d}.panel{fill:rgba(255,255,255,.025);stroke:rgba(112,255,145,.16);stroke-width:1}.title{fill:#f8fafc;font-family:Inter,Arial,sans-serif;font-size:18px;font-weight:900}.sub{fill:rgba(203,213,225,.82);font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:700}.status-text{font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.8px}.zone-risk{fill:rgba(239,68,68,.22)}.zone-watch{fill:rgba(250,204,21,.18)}.zone-good{fill:rgba(52,211,153,.17)}.grid{stroke:rgba(148,163,184,.14);stroke-width:1}.grid-major{stroke:rgba(148,163,184,.24);stroke-width:1}.axis{stroke:rgba(226,232,240,.34);stroke-width:1.2}.tick{fill:rgba(203,213,225,.72);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:700}.axis-label{fill:rgba(203,213,225,.76);font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:800}.zone-text{font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.7px}.risk-text{fill:#ef4444}.watch-text{fill:#facc15}.good-text{fill:#34d399}.ceiling-line{stroke:#facc15;stroke-width:2;stroke-dasharray:7 5}.ceiling-label{fill:#facc15;font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:850}.curve-shadow{fill:none;stroke:rgba(0,0,0,.4);stroke-width:6;stroke-linecap:round}.curve-line{fill:none;stroke:#2cff9b;stroke-width:2.2;stroke-linecap:round}.drop-line{stroke:rgba(226,232,240,.20);stroke-width:1;stroke-dasharray:4 5}.marker-ring{fill:none;stroke:rgba(238,246,255,.72);stroke-width:1}.marker-base{fill:#38d9ff;stroke:#04110d;stroke-width:1.2}.marker-burst{fill:#a78bfa;stroke:#04110d;stroke-width:1.2}.marker-required{fill:#2cff9b;stroke:#04110d;stroke-width:1.2}.point-label{fill:#f8fafc;font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.6px}.point-note{fill:rgba(203,213,225,.84);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:750}.bracket-line{stroke:' + palette.stroke + ';stroke-width:1.5}.bracket-text{fill:' + palette.text + ';font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900}.chip-bg{fill:rgba(15,23,42,.72);stroke:rgba(112,255,145,.12)}.chip-text{fill:rgba(226,232,240,.86);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:750}' + computeCapacityGuideLineStyles() + computeCapacityFooterIconStyles() /* storage-throughput-footer-icon-style-injection-0705 */,
         '</style></defs>',
         '<rect width="' + width + '" height="' + height + '" class="bg"/>',
         '<rect x="24" y="22" width="712" height="384" rx="18" class="panel"/>',
@@ -1308,6 +1324,7 @@ function renderStorageIopsCapacityEnvelope(options) {
         '<rect x="632" y="36" width="64" height="28" rx="4" fill="' + palette.fill + '" stroke="' + palette.stroke + '"/>',
         '<text x="664" y="55" text-anchor="middle" fill="' + palette.text + '" class="status-text">' + escapeXml(status) + '</text>',
         zoneBands.join(""),
+        checkpointGuides,
         gridLines.join(""),
         '<path d="M' + plot.x + ' ' + plot.y + ' V' + (plot.y + plot.h) + '" class="axis"/>',
         '<path d="M' + plot.x + ' ' + (plot.y + plot.h) + ' H' + (plot.x + plot.w) + '" class="axis"/>',

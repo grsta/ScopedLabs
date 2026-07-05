@@ -29,6 +29,9 @@ check("COMPUTE_CAPACITY_INLINE_ICON_LIBRARY_PRESENT", visual.includes("compute-c
 check("STORAGE_THROUGHPUT_ICON_STYLE_INJECTED", visual.includes("storage-throughput-footer-icon-style-injection-0705") && visual.includes("computeCapacityFooterIconStyles()"));
 check("STORAGE_THROUGHPUT_ICON_CHIPS_SHARED", visual.includes('buildCapacityFooterStat(58, "network"') && visual.includes('buildCapacityFooterStat(214, "media"') && visual.includes('buildCapacityFooterStat(370, "workload"') && visual.includes('buildCapacityFooterStat(538, "utilization"'));
 check("STORAGE_THROUGHPUT_ICON_KEYS_PRESENT", ["storage", "workload", "raid", "latency", "block", "network", "media", "utilization"].every((token) => visual.includes(token)));
+check("COMPUTE_CAPACITY_GUIDE_LINE_CONTRACT_PRESENT", visual.includes("compute-capacity-guide-line-contract-0705") && visual.includes("function computeCapacityGuideLineStyles") && visual.includes("function buildCapacityCheckpointGuides"));
+check("STORAGE_THROUGHPUT_VERTICAL_GUIDES_PRESENT", visual.includes("const checkpointGuides = buildCapacityCheckpointGuides(plot, [stageX.base, stageX.burst, stageX.required]);") && visual.includes("checkpointGuides,"));
+check("STORAGE_THROUGHPUT_WHITE_CEILING_LINE_PRESENT", visual.includes("computeCapacityGuideLineStyles()") && visual.includes(".ceiling-line{stroke:rgba(248,250,252,.88)") && visual.includes(".ceiling-label{fill:rgba(248,250,252,.94)"));
 check("STORAGE_THROUGHPUT_VISUAL_FIELDS_PRESENT", [
   "requiredThroughputMBps",
   "availableThroughputMBps",
