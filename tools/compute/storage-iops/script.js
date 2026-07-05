@@ -372,6 +372,21 @@ if (els.resultSummary) {
     ];
   }
 
+  function buildStorageIopsInterpretationExportSection(result) {
+    const sections = buildStorageIopsExportAnalysisSections(result);
+    const text = sections.map(function(section) {
+      return storageIopsExportCleanText(section.title) + ": " + storageIopsExportCleanText(section.body);
+    }).join("\n\n");
+
+    if (!text) return null;
+
+    return {
+      title: "Engineering Interpretation",
+      description: "Concise Storage IOPS interpretation for report review.",
+      text
+    };
+  }
+
   function buildStorageIopsVisualExportSection() {
     const svg = document.querySelector("#computeStorageIopsVisual svg");
     if (!svg) return null;
@@ -577,14 +592,15 @@ if (els.resultSummary) {
       buildStorageIopsVisualExportSection(),
       buildStorageIopsReferenceExportSection(),
       buildStorageIopsRecommendedActionsExportSection(result),
-      buildStorageIopsDecisionScheduleExportSection()
+      buildStorageIopsDecisionScheduleExportSection(),
+      buildStorageIopsInterpretationExportSection(result)
     ].filter(Boolean);
 
     return {
       status,
       summary,
-      interpretation: buildStorageIopsExportInterpretation(result),
-      analysisSections: buildStorageIopsExportAnalysisSections(result),
+      interpretation: "",
+      analysisSections: [],
       inputs,
       outputs,
       chartImage: "",
