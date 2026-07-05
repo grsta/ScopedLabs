@@ -32,6 +32,14 @@
     readPct: $("readPct"),
     writePct: $("writePct"),
     overhead: $("overhead"),
+        availableMBps: $("availableMBps"),
+    peakMultiplier: $("peakMultiplier"),
+    growthPct: $("growthPct"),
+    datasetTB: $("datasetTB"),
+    transferWindowHours: $("transferWindowHours"),
+    transportPath: $("transportPath"),
+    mediaTier: $("mediaTier"),
+    workloadType: $("workloadType"),
     results: $("results"),
     flowNote: $("flow-note"),
     analysisCopy: $("analysis-copy"),
@@ -181,12 +189,65 @@
     refreshFlowNote();
   }
 
+  function storageThroughputLabel(map, value, fallback) {
+    return map[value] || fallback || "Unspecified";
+  }
+
+  function storageThroughputTransportLabel(value) {
+    return storageThroughputLabel({
+      "10g": "10 GbE / shared path",
+      "25g": "25 GbE / faster shared path",
+      "40g": "40 GbE / storage fabric",
+      "100g": "100 GbE / high-speed fabric",
+      local: "Local storage bus",
+      "san-nas": "SAN / NAS array path",
+      "cloud-object": "Cloud / object storage path"
+    }, value, "Unspecified transport path");
+  }
+
+  function storageThroughputMediaLabel(value) {
+    return storageThroughputLabel({
+      hdd: "HDD / spinning disk",
+      "sata-ssd": "SATA / SAS SSD",
+      nvme: "NVMe / high-performance tier",
+      "shared-array": "Shared storage array",
+      "object-cloud": "Object / cloud-backed storage"
+    }, value, "Unspecified media tier");
+  }
+
+  function storageThroughputWorkloadLabel(value) {
+    return storageThroughputLabel({
+      backup: "Backup",
+      restore: "Restore",
+      "file-transfer": "File transfer",
+      "analytics-read": "Analytics read",
+      "vm-datastore": "VM datastore",
+      archive: "Archive / retention"
+    }, value, "Unspecified workload type");
+  }
+
+  function formatStorageThroughputMBps(value) {
+    return Number(value || 0).toFixed(1) + " MB/s";
+  }
+
   function calc() {
     const iops = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.iops.value, 0));
     const kb = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.kb.value, 1));
     const readPct = ScopedLabsAnalyzer.clamp(ScopedLabsAnalyzer.safeNumber(els.readPct.value, 0), 0, 100);
     const writePct = ScopedLabsAnalyzer.clamp(ScopedLabsAnalyzer.safeNumber(els.writePct.value, 0), 0, 100);
     const overhead = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.overhead.value, 0));
+    const availableThroughputMBps = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.availableMBps.value, 0));
+    const peakMultiplier = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.peakMultiplier.value, 1));
+    const growthPct = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.growthPct.value, 0));
+    const datasetTB = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.datasetTB.value, 0));
+    const transferWindowHours = Math.max(0.1, ScopedLabsAnalyzer.safeNumber(els.transferWindowHours.value, 0.1));
+    const transportPath = String(els.transportPath.value || "10g");
+    const mediaTier = String(els.mediaTier.value || "sata-ssd");
+    const workloadType = String(els.workloadType.value || "vm-datastore");
+
+    const transportPathLabel = storageThroughputTransportLabel(transportPath);
+    const mediaTierLabel = storageThroughputMediaLabel(mediaTier);
+    const workloadTypeLabel = storageThroughputWorkloadLabel(workloadType);
 
     const pctTotal = Math.max(readPct + writePct, 1);
     const normalizedReadPct = (readPct / pctTotal) * 100;
@@ -198,110 +259,117 @@
     const readMBps = (readIops * kb) / 1024;
     const writeMBps = (writeIops * kb) / 1024;
     const baseMBps = readMBps + writeMBps;
-    const finalMBps = baseMBps * (1 + overhead / 100);
+    const overheadAdjustedMBps = baseMBps * (1 + overhead / 100);
+    const burstAdjustedMBps = overheadAdjustedMBps * peakMultiplier;
+    const growthAdjustedMBps = burstAdjustedMBps * (1 + growthPct / 100);
+
+    const transferWindowRequiredMBps = datasetTB > 0
+      ? (datasetTB * 1024 * 1024) / (transferWindowHours * 3600)
+      : 0;
+
+    const requiredThroughputMBps = Math.max(growthAdjustedMBps, transferWindowRequiredMBps);
+    const throughputUtilizationPct = availableThroughputMBps > 0
+      ? (requiredThroughputMBps / availableThroughputMBps) * 100
+      : 0;
+
+    const headroomMBps = availableThroughputMBps > 0 ? availableThroughputMBps - requiredThroughputMBps : 0;
+    const deficitMBps = availableThroughputMBps > 0 ? Math.max(0, requiredThroughputMBps - availableThroughputMBps) : 0;
 
     const seqBias = Math.min(160, (kb / 128) * 100);
-    const throughputPressure = Math.min(160, finalMBps / 20);
+    const utilizationPressure = availableThroughputMBps > 0 ? Math.min(160, throughputUtilizationPct) : Math.min(160, requiredThroughputMBps / 20);
+    const windowPressure = requiredThroughputMBps > 0 ? Math.min(160, (transferWindowRequiredMBps / requiredThroughputMBps) * 100) : 0;
     const overheadStress = Math.min(160, overhead * 2.2);
 
-    const metrics = [
-      {
-        label: "Throughput Pressure",
-        value: throughputPressure,
-        displayValue: `${Math.round(throughputPressure)}%`
-      },
-      {
-        label: "Sequential Bias",
-        value: seqBias,
-        displayValue: `${Math.round(seqBias)}%`
-      },
-      {
-        label: "Overhead Stress",
-        value: overheadStress,
-        displayValue: `${Math.round(overheadStress)}%`
-      }
-    ];
+    let status = "GOOD";
+    if (availableThroughputMBps <= 0) {
+      status = "WATCH";
+    } else if (requiredThroughputMBps > availableThroughputMBps) {
+      status = "RISK";
+    } else if (
+      throughputUtilizationPct >= 75 ||
+      headroomMBps < Math.max(100, requiredThroughputMBps * 0.25) ||
+      transferWindowRequiredMBps >= growthAdjustedMBps * 0.90
+    ) {
+      status = "WATCH";
+    }
 
-    const compositeScore = Math.round(
-      (throughputPressure * 0.50) +
-      (seqBias * 0.30) +
-      (overheadStress * 0.20)
-    );
+    let throughputClass = "Balanced throughput demand";
+    if (requiredThroughputMBps > 500) throughputClass = "High throughput demand";
+    if (requiredThroughputMBps > 1500) throughputClass = "Extreme throughput demand";
 
-    const analyzer = ScopedLabsAnalyzer.resolveStatus({
-      compositeScore,
-      metrics,
-      healthyMax: 65,
-      watchMax: 85
-    });
-
-    let throughputClass = "Balanced";
-    if (finalMBps > 500) throughputClass = "High Throughput Demand";
-    if (finalMBps > 1500) throughputClass = "Extreme Throughput Demand";
-
-    let workloadPattern = "Mixed / General";
-    if (kb >= 128 && finalMBps > 300) {
+    let workloadPattern = "Mixed / general throughput";
+    if (transferWindowRequiredMBps >= growthAdjustedMBps && datasetTB > 0) {
+      workloadPattern = "Window-bound bulk transfer";
+    } else if (kb >= 128 && requiredThroughputMBps > 300) {
       workloadPattern = "Sequential throughput-heavy";
-    } else if (iopsContext && typeof iopsContext.finalIops === "number" && iopsContext.finalIops > 20000 && finalMBps < 300) {
-      workloadPattern = "Random IOPS-heavy";
-    } else if (kb <= 16 && iops > 10000) {
-      workloadPattern = "Small-block random";
+    } else if (iops > 10000 && kb <= 16) {
+      workloadPattern = "Small-block random throughput";
+    } else if (transportPath === "cloud-object") {
+      workloadPattern = "Cloud/object path sensitive";
     }
 
     let dominantConstraint = "Balanced storage flow";
-    if (analyzer.dominant.label === "Throughput Pressure") {
-      dominantConstraint = "Media throughput ceiling";
-    } else if (analyzer.dominant.label === "Sequential Bias") {
-      dominantConstraint = "Large-block transfer profile";
-    } else if (analyzer.dominant.label === "Overhead Stress") {
+    if (availableThroughputMBps > 0 && requiredThroughputMBps > availableThroughputMBps) {
+      dominantConstraint = transportPathLabel + " ceiling";
+    } else if (transferWindowRequiredMBps >= growthAdjustedMBps && transferWindowRequiredMBps > 0) {
+      dominantConstraint = "Transfer window requirement";
+    } else if (mediaTier === "hdd" && requiredThroughputMBps > 300) {
+      dominantConstraint = "Media tier throughput ceiling";
+    } else if (overhead >= 25) {
       dominantConstraint = "Protocol / filesystem overhead";
+    } else if (kb >= 128) {
+      dominantConstraint = "Large-block transfer profile";
     }
 
     let crossCheck = "IOPS and throughput appear reasonably aligned";
     if (iopsContext && typeof iopsContext.finalIops === "number") {
-      if (iopsContext.finalIops > 20000 && finalMBps < 300) {
-        crossCheck = "High IOPS with modest MB/s suggests a random workload where latency still matters more than raw throughput";
-      } else if (finalMBps > 1000 && iopsContext.finalIops < 5000) {
-        crossCheck = "Throughput demand is outrunning IOPS density, which points toward a sequential or large-block transfer profile";
-      } else if (iopsContext.status === "RISK" && analyzer.status !== "RISK") {
-        crossCheck = "IOPS pressure may still dominate before throughput becomes the true first bottleneck";
+      if (iopsContext.finalIops > 20000 && requiredThroughputMBps < 300) {
+        crossCheck = "High upstream IOPS with modest MB/s suggests random workload pressure where latency may still matter more than raw throughput.";
+      } else if (requiredThroughputMBps > 1000 && iopsContext.finalIops < 5000) {
+        crossCheck = "Throughput demand is outrunning IOPS density, which points toward sequential or large-block transfer behavior.";
+      } else if (iopsContext.status === "RISK" && status !== "RISK") {
+        crossCheck = "Upstream IOPS pressure may still dominate before throughput becomes the first bottleneck.";
       }
     }
 
-    let interpretation = "";
-    if (analyzer.status === "RISK") {
-      interpretation =
-        "The storage path is crowding its usable throughput envelope. Large-block transfer demand, protocol overhead, or sustained movement of data will begin reducing margin before the rest of the compute stack can scale cleanly.";
-    } else if (analyzer.status === "WATCH") {
-      interpretation =
-        "The throughput profile is workable, but reserve is tightening. The design should operate, although larger block sizes, sequential bursts, or transport overhead will consume available margin faster than the base MB/s figure implies.";
-    } else {
-      interpretation =
-        "The throughput requirement remains inside a manageable operating envelope. Current transfer demand and overhead leave room for normal burst behavior without making throughput the first likely scaling wall.";
-    }
+    const interpretation = status === "RISK"
+      ? "Required throughput exceeds the entered available storage path ceiling. Rework the media tier, transport path, transfer window, burst/growth assumptions, or dataset movement plan before carrying this result forward."
+      : status === "WATCH"
+        ? "The throughput plan is usable for planning, but reserve is tightening. Validate the available path, transfer window, media tier, and protocol overhead before locking hardware."
+        : "Required throughput fits inside the entered available path with usable planning margin. Carry this throughput target forward with the selected transport path and media tier assumptions.";
 
-    let guidance = "A balanced storage design should maintain throughput reserve above sustained transfer demand.";
-    if (analyzer.status === "WATCH") {
-      guidance =
-        "Validate controller path, transport layer, and future block-size growth before locking hardware. This is where sequential load can force a move to faster media or a wider storage path sooner than expected.";
-    }
-    if (analyzer.status === "RISK") {
-      guidance =
-        `Rework the throughput plan before continuing. The primary limiter is ${dominantConstraint.toLowerCase()}, so scaling headroom will collapse there first. Reduce transfer size, raise available bandwidth, or move to faster media and transport.`;
-    }
+    const guidance = status === "RISK"
+      ? "Increase available path throughput, widen the transfer window, reduce dataset movement, lower overhead, or move to a faster media/transport tier before continuing."
+      : status === "WATCH"
+        ? "Validate controller path, transport layer, future block-size growth, and transfer-window assumptions before locking hardware."
+        : "Maintain throughput reserve above sustained transfer demand and verify the selected path under the expected block size and workload type.";
+
+    const metrics = [
+      { label: "Utilization Pressure", value: utilizationPressure, displayValue: Math.round(utilizationPressure) + "%" },
+      { label: "Transfer Window Pressure", value: windowPressure, displayValue: Math.round(windowPressure) + "%" },
+      { label: "Sequential Bias", value: seqBias, displayValue: Math.round(seqBias) + "%" },
+      { label: "Overhead Stress", value: overheadStress, displayValue: Math.round(overheadStress) + "%" }
+    ];
 
     const summaryRows = [
-      { label: "Read Throughput", value: `${readMBps.toFixed(1)} MB/s` },
-      { label: "Write Throughput", value: `${writeMBps.toFixed(1)} MB/s` },
-      { label: "Base Throughput", value: `${baseMBps.toFixed(1)} MB/s` },
-      { label: "Estimated Required Throughput", value: `${finalMBps.toFixed(1)} MB/s` },
-      { label: "Read / Write Mix", value: `${normalizedReadPct.toFixed(0)}% / ${normalizedWritePct.toFixed(0)}%` },
-      { label: "Avg I/O Size", value: `${kb.toFixed(0)} KB` }
+      { label: "Read Throughput", value: formatStorageThroughputMBps(readMBps) },
+      { label: "Write Throughput", value: formatStorageThroughputMBps(writeMBps) },
+      { label: "Base Throughput", value: formatStorageThroughputMBps(baseMBps) },
+      { label: "Burst / Growth Required", value: formatStorageThroughputMBps(growthAdjustedMBps) },
+      { label: "Transfer Window Required", value: formatStorageThroughputMBps(transferWindowRequiredMBps) },
+      { label: "Estimated Required Throughput", value: formatStorageThroughputMBps(requiredThroughputMBps) },
+      { label: "Available Path Throughput", value: availableThroughputMBps > 0 ? formatStorageThroughputMBps(availableThroughputMBps) : "Not provided" },
+      { label: "Headroom / Deficit", value: availableThroughputMBps > 0 ? formatStorageThroughputMBps(headroomMBps) : "Not provided" },
+      { label: "Utilization", value: availableThroughputMBps > 0 ? throughputUtilizationPct.toFixed(0) + "%" : "Not provided" }
     ];
 
     const derivedRows = [
       { label: "Throughput Class", value: throughputClass },
       { label: "Workload Pattern", value: workloadPattern },
+      { label: "Transport Path", value: transportPathLabel },
+      { label: "Media Tier", value: mediaTierLabel },
+      { label: "Workload Type", value: workloadTypeLabel },
+      { label: "Dominant Constraint", value: dominantConstraint },
       { label: "Cross-Check", value: crossCheck }
     ];
 
@@ -312,7 +380,7 @@
       existingWrapRef: chartWrapRef,
       summaryRows,
       derivedRows,
-      status: analyzer.status,
+      status,
       interpretation,
       dominantConstraint,
       guidance,
@@ -320,46 +388,65 @@
         labels: metrics.map((m) => m.label),
         values: metrics.map((m) => m.value),
         displayValues: metrics.map((m) => m.displayValue),
-        referenceValue: 65,
-        healthyMax: 65,
-        watchMax: 85,
-        axisTitle: "Storage Throughput Magnitude",
-        referenceLabel: "Healthy Margin Floor",
-        healthyLabel: "Healthy",
+        referenceValue: 70,
+        healthyMax: 70,
+        watchMax: 90,
+        axisTitle: "Storage Throughput Planning Pressure",
+        referenceLabel: "Planning Margin Target",
+        healthyLabel: "Good",
         watchLabel: "Watch",
         riskLabel: "Risk",
-        chartMax: Math.max(
-          120,
-          Math.ceil(Math.max(...metrics.map((m) => m.value), 85) * 1.08)
-        )
+        chartMax: Math.max(120, Math.ceil(Math.max(...metrics.map((m) => m.value), 90) * 1.08))
       }
     });
+
+    const flowPayload = {
+      finalMBps: requiredThroughputMBps,
+      requiredThroughputMBps,
+      availableThroughputMBps,
+      throughputUtilizationPct,
+      utilizationPct: throughputUtilizationPct,
+      headroomMBps,
+      deficitMBps,
+      transferWindowRequiredMBps,
+      transferWindowHours,
+      datasetTB,
+      transportPath,
+      transportPathLabel,
+      mediaTier,
+      mediaTierLabel,
+      workloadType,
+      workloadTypeLabel,
+      throughputClass,
+      workloadPattern,
+      crossCheck,
+      dominantConstraint,
+      status,
+      blockSizeKb: kb,
+      overheadPct: overhead,
+      peakMultiplier,
+      growthPct,
+      readMBps,
+      writeMBps,
+      baseMBps,
+      burstAdjustedMBps,
+      growthAdjustedMBps,
+      upstreamRequiredIops: iopsContext && typeof iopsContext.finalIops === "number" ? iopsContext.finalIops : iops
+    };
 
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
       category: CATEGORY,
       step: STEP,
-      data: {
-        finalMBps,
-        throughputClass,
-        workloadPattern,
-        crossCheck,
-        status: analyzer.status
-      }
+      data: flowPayload
     });
 
     saveComputeLedgerResult({
       label: "Storage Throughput",
-      summary: finalMBps.toFixed(1) + " MB/s required; " + workloadPattern,
-      status: analyzer.status,
-      summaryStatus: analyzer.status,
-      keySavedResult: finalMBps.toFixed(1) + " MB/s / " + analyzer.status,
-      outputs: {
-        finalMBps,
-        throughputClass,
-        workloadPattern,
-        crossCheck,
-        dominantConstraint
-      }
+      summary: formatStorageThroughputMBps(requiredThroughputMBps) + " required; " + workloadPattern,
+      status,
+      summaryStatus: status,
+      keySavedResult: formatStorageThroughputMBps(requiredThroughputMBps) + " / " + status,
+      outputs: flowPayload
     });
 
     hasResult = true;
@@ -374,12 +461,22 @@
     els.readPct.value = 70;
     els.writePct.value = 30;
     els.overhead.value = 15;
+    els.availableMBps.value = 1000;
+    els.peakMultiplier.value = 1.25;
+    els.growthPct.value = 20;
+    els.datasetTB.value = 2;
+    els.transferWindowHours.value = 4;
+    els.transportPath.value = "10g";
+    els.mediaTier.value = "sata-ssd";
+    els.workloadType.value = "vm-datastore";
     invalidate();
   });
 
-  ["iops", "kb", "readPct", "writePct", "overhead"].forEach((id) => {
-    $(id).addEventListener("input", invalidate);
-    $(id).addEventListener("change", invalidate);
+  ["iops", "kb", "readPct", "writePct", "overhead", "availableMBps", "peakMultiplier", "growthPct", "datasetTB", "transferWindowHours", "transportPath", "mediaTier", "workloadType"].forEach((id) => {
+    const input = $(id);
+    if (!input) return;
+    input.addEventListener("input", invalidate);
+    input.addEventListener("change", invalidate);
   });
 
   els.continue.addEventListener("click", () => {
