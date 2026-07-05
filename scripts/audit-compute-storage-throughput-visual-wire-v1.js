@@ -29,6 +29,10 @@ check("JS_ELS_PRESENT", js.includes('visualCard: $("computeStorageThroughputVisu
 check("JS_RENDER_FUNCTION_PRESENT", js.includes("function renderStorageThroughputCapacityVisual"));
 check("JS_CLEAR_FUNCTION_PRESENT", js.includes("function clearStorageThroughputCapacityVisual"));
 check("JS_RENDER_CALLED_WITH_FLOW_PAYLOAD", js.includes("renderStorageThroughputCapacityVisual(flowPayload);"));
+const renderAt = js.indexOf("ScopedLabsAnalyzer.renderOutput({");
+const renderEnd = renderAt >= 0 ? js.indexOf("});", renderAt) : -1;
+const renderBlock = renderAt >= 0 && renderEnd > renderAt ? js.slice(renderAt, renderEnd) : "";
+check("JS_LEGACY_ANALYZER_CHART_SUPPRESSED", renderBlock && !renderBlock.includes("chart:"));
 check("JS_INVALIDATE_CLEARS_VISUAL", js.includes("clearStorageThroughputCapacityVisual();"));
 check("MODULE_MAP_UPDATED", map.includes("COMPUTE_STORAGE_THROUGHPUT_VISUAL_WIRE_0705"));
 

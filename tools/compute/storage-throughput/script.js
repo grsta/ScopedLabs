@@ -412,21 +412,7 @@
       status,
       interpretation,
       dominantConstraint,
-      guidance,
-      chart: {
-        labels: metrics.map((m) => m.label),
-        values: metrics.map((m) => m.value),
-        displayValues: metrics.map((m) => m.displayValue),
-        referenceValue: 70,
-        healthyMax: 70,
-        watchMax: 90,
-        axisTitle: "Storage Throughput Planning Pressure",
-        referenceLabel: "Planning Margin Target",
-        healthyLabel: "Good",
-        watchLabel: "Watch",
-        riskLabel: "Risk",
-        chartMax: Math.max(120, Math.ceil(Math.max(...metrics.map((m) => m.value), 90) * 1.08))
-      }
+      guidance
     });
 
     const flowPayload = {
