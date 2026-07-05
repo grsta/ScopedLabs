@@ -20,7 +20,7 @@ function check(label, ok) {
 }
 
 check("HTML_CUSTOM_PAYLOAD_BUILDER", html.includes('"customPayloadBuilder": "ScopedLabsComputeStorageThroughputExport.buildPayload"'));
-check("HTML_SCRIPT_CACHE_BUSTED", html.includes("compute-storage-throughput-export-payload-0705") || html.includes("compute-storage-throughput-shell-parity-0705"));
+check("HTML_SCRIPT_CACHE_BUSTED", (html.includes("compute-storage-throughput-export-payload-0705") || html.includes("compute-shell-contract-storage-throughput-next-0705")) || (html.includes("compute-storage-throughput-shell-parity-0705") || html.includes("compute-shell-contract-storage-throughput-next-0705")));
 check("JS_EXPORT_NAMESPACE_PRESENT", js.includes("window.ScopedLabsComputeStorageThroughputExport") && js.includes("buildPayload: buildStorageThroughputExportPayload"));
 check("JS_EXPORT_RESULT_STATE_PRESENT", js.includes("let currentStorageThroughputExportResult = null;") && js.includes("currentStorageThroughputExportResult = flowPayload;"));
 check("JS_EXPORT_RESULT_CLEARS", js.includes("function clearStorageThroughputShellSections()") && js.includes("currentStorageThroughputExportResult = null;"));

@@ -423,60 +423,11 @@
     })();
   </script>
 
-  <script src="/assets/scopedlabs-compute-shell-contract.js?v=compute-result-card-contract-0704"></script>
+  <script src="/assets/scopedlabs-compute-shell-contract.js?v=compute-shell-contract-storage-throughput-next-0705"></script>
   <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
   <script src="/assets/scopedlabs-compute-assistant-contract.js?v=compute-assistant-storage-throughput-shell-0705"></script>
   <script src="/assets/scopedlabs-user-tool-notes.js?v=scopedlabs-user-tool-notes-001-compute-proof"></script>
-  <script data-storage-throughput-flow-cta-contract-0705>
-    (function() {
-      var expectedHref = "/tools/compute/vm-density/";
-      var expectedLabel = "Continue \u2192 VM Density";
-
-      function applyStorageThroughputCta() {
-        if (!document.body || document.body.getAttribute("data-step") !== "storage-throughput") return;
-
-        var wrap = document.getElementById("continue-wrap");
-        var button = document.getElementById("continue");
-
-        if (wrap && wrap.classList && wrap.classList.contains("compute-flow-actions")) {
-          wrap.style.alignItems = "center";
-          wrap.style.gap = "12px";
-          wrap.style.width = "100%";
-          if (wrap.style.display !== "none") wrap.style.display = "flex";
-        }
-
-        if (button) {
-          button.textContent = expectedLabel;
-          button.setAttribute("data-compute-continue-href", expectedHref);
-          button.setAttribute("data-storage-throughput-next-tool-label", "0705");
-          button.style.marginLeft = "auto";
-        }
-      }
-
-      document.addEventListener("click", function(event) {
-        var target = event.target && event.target.closest ? event.target.closest("#continue") : null;
-
-        setTimeout(applyStorageThroughputCta, 0);
-        setTimeout(applyStorageThroughputCta, 150);
-
-        if (!target || target.disabled) return;
-        if (!document.body || document.body.getAttribute("data-step") !== "storage-throughput") return;
-
-        event.preventDefault();
-        window.location.href = expectedHref;
-      }, true);
-
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", applyStorageThroughputCta);
-      } else {
-        applyStorageThroughputCta();
-      }
-
-      window.addEventListener("load", applyStorageThroughputCta);
-      setTimeout(applyStorageThroughputCta, 250);
-      setTimeout(applyStorageThroughputCta, 900);
-    })();
-  </script>
+  
 </body>
 </html>
 

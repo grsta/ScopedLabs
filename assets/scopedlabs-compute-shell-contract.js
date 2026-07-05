@@ -723,6 +723,21 @@ function computeWorkloadToolLabelFromPage() {
   function applyComputeGuidedContinueDecision(button, decision) {
     if (!button || !decision || !decision.nextHref) return;
 
+        /* compute-storage-throughput-next-owner-0705 */
+        var flowRow = button.closest ? button.closest("[data-compute-flow-actions]") : null;
+        var flowTool = flowRow ? String(flowRow.getAttribute("data-compute-flow-tool") || "") : "";
+        var storageThroughputTarget = String(button.getAttribute("data-storage-throughput-continue-target") || "");
+
+        if (flowTool === "storage-throughput" && storageThroughputTarget === "vm-density") {
+          decision = Object.assign({}, decision, {
+            action: "next-tool",
+            nextTool: "vm-density",
+            nextLabel: "VM Density",
+            nextHref: button.getAttribute("data-compute-continue-href") || "/tools/compute/vm-density/",
+            buttonLabel: "Continue &rarr; VM Density"
+          });
+        }
+
     button.setAttribute("data-compute-guided-route-continue", "true");
     button.setAttribute("data-compute-continue-href", decision.nextHref);
     button.setAttribute("data-compute-guided-next-tool", decision.nextTool || "");
@@ -734,7 +749,7 @@ function computeWorkloadToolLabelFromPage() {
 
     if (button.tagName && button.tagName.toLowerCase() === "button") button.disabled = false;
 
-    button.textContent = normalizeComputeGuidedContinueLabel(decision);
+    button.innerHTML = decision && decision.buttonLabel ? decision.buttonLabel : normalizeComputeGuidedContinueLabel(decision);
   }
 
   function suppressLegacyComputeContinueControls(ownerRow) {
