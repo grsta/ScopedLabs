@@ -540,3 +540,25 @@ Compute Summary module-owned proof now includes an explicit clear control for Su
 - First consumer: `tools/compute/storage-iops/`.
 - Locked behavior: centered title/subtitle, status badge only, CPU-family risk color, horizontal capacity bands, dynamic headroom/deficit bracket, base/burst/required callouts, and inline SVG footer chips for storage tier, workload pattern, RAID penalty, latency target, and block size.
 - Guardrail: future Compute tools may reuse the shared visual contract style, but must not create a new chart layout unless explicitly approved.
+
+## Compute Quiet Closeout Runner Pattern ? Promoted 2026-07-05
+
+Source proof: Storage IOPS closeout runner.
+
+Accepted behavior:
+- Use a single quiet runner command for each modernized Compute tool lane.
+- Runner output should show overall PASS/FAIL, pass/fail counts, failed sections, passed sections, and git status.
+- Keep full audit detail available in the underlying audit scripts, but make the closeout runner paste-friendly for long chats.
+- Include syntax checks, visual/layout audit, planning shell audit, module map audit when applicable, and git status.
+- Treat the runner as the final checkpoint before commit/push.
+- Prefer creating the runner early in a tool lane so every later patch has the same verification command.
+
+Current proof command:
+
+```powershell
+node .\scripts\run-compute-storage-iops-closeout-v1.js
+```
+
+Promotion rule:
+- Future Compute tool modernization lanes should get a tool-specific closeout runner once the first accepted shell/visual/export structure is in place.
+- The runner should not replace detailed audits; it should wrap them in a concise pass/fail summary.
