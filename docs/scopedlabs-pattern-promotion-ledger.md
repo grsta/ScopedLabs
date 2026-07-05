@@ -562,3 +562,5 @@ node .\scripts\run-compute-storage-iops-closeout-v1.js
 Promotion rule:
 - Future Compute tool modernization lanes should get a tool-specific closeout runner once the first accepted shell/visual/export structure is in place.
 - The runner should not replace detailed audits; it should wrap them in a concise pass/fail summary.
+
+- COMPUTE_CAPACITY_ZONE_BAND_CONTRACT_0705: Promoted visible GOOD/WATCH/RISK plot bands into the shared Compute Capacity Visuals module. Future capacity-envelope charts should reuse `buildCapacityZoneBands(plot, yGood, yWatch)` plus `computeCapacityZoneBandStyles()` before drawing grid/curve/markers, preserving readable background bands without per-tool duplication.

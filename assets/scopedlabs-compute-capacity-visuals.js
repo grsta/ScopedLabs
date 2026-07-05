@@ -1026,6 +1026,20 @@ function renderStorageIopsCapacityEnvelope(options) {
 
 
 
+
+    // compute-capacity-zone-band-contract-0705
+    function computeCapacityZoneBandStyles() {
+      return ".zone-risk{fill:rgba(239,68,68,.22)}.zone-watch{fill:rgba(250,204,21,.18)}.zone-good{fill:rgba(52,211,153,.17)}";
+    }
+
+    function buildCapacityZoneBands(plot, yGood, yWatch) {
+      return [
+        '<rect x="' + plot.x + '" y="' + plot.y + '" width="' + plot.w + '" height="' + Math.max(0, yWatch - plot.y).toFixed(1) + '" class="zone-risk"/>',
+        '<rect x="' + plot.x + '" y="' + yWatch.toFixed(1) + '" width="' + plot.w + '" height="' + Math.max(0, yGood - yWatch).toFixed(1) + '" class="zone-watch"/>',
+        '<rect x="' + plot.x + '" y="' + yGood.toFixed(1) + '" width="' + plot.w + '" height="' + Math.max(0, plot.y + plot.h - yGood).toFixed(1) + '" class="zone-good"/>'
+      ];
+    }
+
     // storage-throughput-capacity-envelope-0705
     function buildStorageThroughputCapacityEnvelopeSvg(result) {
       result = result || {};
@@ -1118,11 +1132,8 @@ function renderStorageIopsCapacityEnvelope(options) {
       const yWatch = available > 0 ? yScale(available * 0.90) : plot.y + plot.h * 0.34;
 
       // storage-throughput-zone-bands-0705
-      const zoneBands = [
-        '<rect x="' + plot.x + '" y="' + plot.y + '" width="' + plot.w + '" height="' + Math.max(0, yWatch - plot.y).toFixed(1) + '" class="zone-risk"/>',
-        '<rect x="' + plot.x + '" y="' + yWatch.toFixed(1) + '" width="' + plot.w + '" height="' + Math.max(0, yGood - yWatch).toFixed(1) + '" class="zone-watch"/>',
-        '<rect x="' + plot.x + '" y="' + yGood.toFixed(1) + '" width="' + plot.w + '" height="' + Math.max(0, plot.y + plot.h - yGood).toFixed(1) + '" class="zone-good"/>'
-      ];
+      const zoneBands = buildCapacityZoneBands(plot, yGood, yWatch);
+
 
       const curvePath = [
         "M", stageX.lead.toFixed(1), yScale(Math.max(base * 0.58, 1)).toFixed(1),
