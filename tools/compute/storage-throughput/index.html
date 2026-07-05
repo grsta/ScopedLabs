@@ -98,6 +98,15 @@
     }
   </style>
 
+  <style data-storage-throughput-flow-cta-style-0705>
+    body[data-step="storage-throughput"] #continue-wrap.compute-flow-actions[data-storage-throughput-flow-actions-inside-card="0705"] {
+      justify-content: space-between;
+    }
+
+    body[data-step="storage-throughput"] #continue-wrap.compute-flow-actions[data-storage-throughput-flow-actions-inside-card="0705"] #continue {
+      margin-left: auto;
+    }
+  </style>
 </head>
 
 <body data-tier="pro" data-category="compute" data-step="storage-throughput" data-lane="v1" data-storage-throughput-visual-wire="0705">
@@ -321,14 +330,15 @@
       </div>
 
       <div id="exportStatus" class="export-status"></div>
-    </section>
+      <div id="continue-wrap" class="compute-flow-actions" style="display:none; margin-top:10px; align-items:center; gap:12px; width:100%;" data-compute-flow-actions="true" data-compute-flow-owner="compute-shell-contract" data-compute-flow-tool="storage-throughput" data-compute-flow-placed="true" data-storage-throughput-flow-actions="0705" data-storage-throughput-flow-actions-inside-card="0705">
+    <a class="btn" href="/tools/compute/storage-iops/">Back to Storage IOPS</a>
+    <button id="continue" class="btn btn-primary" type="button" disabled style="margin-left:auto;" data-compute-continue-href="/tools/compute/vm-density/" data-storage-throughput-continue-target="vm-density">Continue &rarr; VM Density</button>
+  </div>
+</section>
 
 
 
-  <div id="continue-wrap" data-storage-throughput-flow-actions-inside-card="0705" class="compute-flow-actions" style="display:none; margin-top:10px;" data-compute-flow-actions="true" data-compute-flow-owner="compute-shell-contract" data-compute-flow-tool="storage-throughput" data-compute-flow-placed="true" data-storage-throughput-flow-actions="0705">
-  <a class="btn" href="/tools/compute/storage-iops/">Back to Storage IOPS</a>
-  <button id="continue" class="btn btn-primary" type="button" disabled data-compute-continue-href="/tools/compute/vm-density/">Continue &rarr; VM Density</button>
-</div>
+  
 </section>
 
   
@@ -417,6 +427,56 @@
   <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
   <script src="/assets/scopedlabs-compute-assistant-contract.js?v=compute-assistant-storage-throughput-shell-0705"></script>
   <script src="/assets/scopedlabs-user-tool-notes.js?v=scopedlabs-user-tool-notes-001-compute-proof"></script>
+  <script data-storage-throughput-flow-cta-contract-0705>
+    (function() {
+      var expectedHref = "/tools/compute/vm-density/";
+      var expectedLabel = "Continue \u2192 VM Density";
+
+      function applyStorageThroughputCta() {
+        if (!document.body || document.body.getAttribute("data-step") !== "storage-throughput") return;
+
+        var wrap = document.getElementById("continue-wrap");
+        var button = document.getElementById("continue");
+
+        if (wrap && wrap.classList && wrap.classList.contains("compute-flow-actions")) {
+          wrap.style.alignItems = "center";
+          wrap.style.gap = "12px";
+          wrap.style.width = "100%";
+          if (wrap.style.display !== "none") wrap.style.display = "flex";
+        }
+
+        if (button) {
+          button.textContent = expectedLabel;
+          button.setAttribute("data-compute-continue-href", expectedHref);
+          button.setAttribute("data-storage-throughput-next-tool-label", "0705");
+          button.style.marginLeft = "auto";
+        }
+      }
+
+      document.addEventListener("click", function(event) {
+        var target = event.target && event.target.closest ? event.target.closest("#continue") : null;
+
+        setTimeout(applyStorageThroughputCta, 0);
+        setTimeout(applyStorageThroughputCta, 150);
+
+        if (!target || target.disabled) return;
+        if (!document.body || document.body.getAttribute("data-step") !== "storage-throughput") return;
+
+        event.preventDefault();
+        window.location.href = expectedHref;
+      }, true);
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", applyStorageThroughputCta);
+      } else {
+        applyStorageThroughputCta();
+      }
+
+      window.addEventListener("load", applyStorageThroughputCta);
+      setTimeout(applyStorageThroughputCta, 250);
+      setTimeout(applyStorageThroughputCta, 900);
+    })();
+  </script>
 </body>
 </html>
 
