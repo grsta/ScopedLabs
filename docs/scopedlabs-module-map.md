@@ -1549,3 +1549,5 @@ Promotion note:
 - COMPUTE_STORAGE_IOPS_NEXT_OWNER_0705: Storage IOPS Continue CTA ownership is handled in `assets/scopedlabs-compute-shell-contract.js`. The shell contract honors `data-storage-iops-continue-target="storage-throughput"` so Storage IOPS never rewrites to Summary; GPU VRAM remains a specialty-branch Summary handoff.
 
 - COMPUTE_STORAGE_NEXT_CLICK_OWNER_0705: Fixes Compute shell click ownership for Storage IOPS and Storage Throughput. The shell owner now mutates the guided decision object for explicit storage next-tool CTAs, so `window.location.href = decision.nextHref` routes IOPS to Storage Throughput and Throughput to VM Density while GPU VRAM remains Summary.
+
+- COMPUTE_STORAGE_EXPLICIT_CLICK_OWNER_0705: Registers a storage-only capture click owner before the guided Summary router. Storage IOPS routes to Storage Throughput and Storage Throughput routes to VM Density using explicit target markers; GPU VRAM remains Summary.

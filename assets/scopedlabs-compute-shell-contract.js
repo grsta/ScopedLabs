@@ -798,6 +798,42 @@ function computeWorkloadToolLabelFromPage() {
       suppressLegacyComputeContinueControls(row);
     }
   }
+      function initComputeStorageExplicitClickOwner0705() {
+        if (window.__ScopedLabsComputeStorageExplicitClickOwner0705) return;
+        window.__ScopedLabsComputeStorageExplicitClickOwner0705 = true;
+
+        document.addEventListener("click", function (event) {
+          var target = event.target && event.target.closest ? event.target.closest("#continue, [data-compute-continue-href]") : null;
+          if (!target || target.disabled) return;
+
+          var row = target.closest ? target.closest(".compute-flow-actions[data-compute-flow-tool]") : null;
+          if (!row) return;
+
+          var tool = String(row.getAttribute("data-compute-flow-tool") || "");
+          var href = "";
+
+          if (tool === "storage-iops" && target.getAttribute("data-storage-iops-continue-target") === "storage-throughput") {
+            href = target.getAttribute("data-compute-continue-href") || "/tools/compute/storage-throughput/";
+            target.innerHTML = "Continue &rarr; Storage Throughput";
+          }
+
+          if (tool === "storage-throughput" && target.getAttribute("data-storage-throughput-continue-target") === "vm-density") {
+            href = target.getAttribute("data-compute-continue-href") || "/tools/compute/vm-density/";
+            target.innerHTML = "Continue &rarr; VM Density";
+          }
+
+          if (!href) return;
+
+          /* compute-storage-explicit-click-owner-0705 */
+          target.setAttribute("data-compute-continue-href", href);
+          target.setAttribute("data-compute-guided-route-continue-href", href);
+          event.preventDefault();
+          event.stopPropagation();
+          if (typeof event.stopImmediatePropagation === "function") event.stopImmediatePropagation();
+          window.location.href = href;
+        }, true);
+      }
+
 
   function initComputeGuidedContinueClickGuard() {
     if (window.__ScopedLabsComputeGuidedContinueClickGuard) return;
@@ -861,8 +897,9 @@ function computeWorkloadToolLabelFromPage() {
     }, true);
   }
 
-  initComputeGuidedContinueRouting();
-  initComputeGuidedContinueClickGuard();
+  initComputeStorageExplicitClickOwner0705();
+      initComputeGuidedContinueRouting();
+      initComputeGuidedContinueClickGuard();
 })();
 
 // compute-result-card-contract-0704
