@@ -665,6 +665,8 @@
     
     // storage-iops-icon-envelope-polish-0705
     function buildStorageIopsCapacityEnvelopeSvg(result) {
+      // storage-iops-deficit-label-stack-fix-0705
+      // storage-iops-capacity-envelope-locked-promoted-0705
       // storage-iops-title-risk-polish-0705
       result = result || {};
 
@@ -802,7 +804,9 @@
       const bracketLabel = delta >= 0
         ? "HEADROOM\n+" + formatCompactIops(delta)
         : "DEFICIT\n" + formatCompactIops(Math.abs(delta));
-      const bracketColor = delta >= 0 ? (status === "GOOD" ? "#7ef5d5" : "#facc15") : "#ef4444";
+            const bracketLabelPrimary = delta >= 0 ? "HEADROOM" : "DEFICIT";
+      const bracketLabelValue = delta >= 0 ? "+" + formatCompactIops(delta) : formatCompactIops(Math.abs(delta));
+const bracketColor = delta >= 0 ? (status === "GOOD" ? "#7ef5d5" : "#facc15") : "#ef4444";
       const bracketTextY = bracketTop + ((bracketBottom - bracketTop) / 2) - 10;
 
       const yTicks = [];
@@ -990,10 +994,10 @@
         '<text x="' + stageX.base.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">base</text>',
         '<text x="' + stageX.burst.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">burst</text>',
         '<text x="' + stageX.required.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">required</text>',
-        '<path d="M' + (plot.x + plot.w - 20).toFixed(1) + ' ' + bracketTop.toFixed(1) + ' H' + (plot.x + plot.w - 8).toFixed(1) + '" class="bracket-line"/>',
-        '<path d="M' + (plot.x + plot.w - 20).toFixed(1) + ' ' + bracketBottom.toFixed(1) + ' H' + (plot.x + plot.w - 8).toFixed(1) + '" class="bracket-line"/>',
+                '<path d="M' + (plot.x + plot.w - 24).toFixed(1) + ' ' + bracketTop.toFixed(1) + ' H' + (plot.x + plot.w - 8).toFixed(1) + '" class="bracket-line"/>',
+        '<path d="M' + (plot.x + plot.w - 24).toFixed(1) + ' ' + bracketBottom.toFixed(1) + ' H' + (plot.x + plot.w - 8).toFixed(1) + '" class="bracket-line"/>',
         '<path d="M' + (plot.x + plot.w - 10).toFixed(1) + ' ' + bracketTop.toFixed(1) + ' V' + bracketBottom.toFixed(1) + '" class="bracket-line"/>',
-        '<text x="' + (plot.x + plot.w - 2).toFixed(1) + '" y="' + (bracketTextY - 4).toFixed(1) + '" class="bracket-text"><tspan x="' + (plot.x + plot.w - 2).toFixed(1) + '" dy="0">' + escapeXml(bracketLabel.split("\\n")[0]) + '</tspan><tspan x="' + (plot.x + plot.w - 2).toFixed(1) + '" dy="12">' + escapeXml(bracketLabel.split("\\n")[1]) + '</tspan></text>',
+        '<text x="' + (plot.x + plot.w - 1).toFixed(1) + '" y="' + (bracketTextY - 7).toFixed(1) + '" class="bracket-text" text-anchor="start"><tspan x="' + (plot.x + plot.w - 1).toFixed(1) + '" dy="0">' + escapeXml(bracketLabelPrimary) + '</tspan><tspan x="' + (plot.x + plot.w - 1).toFixed(1) + '" dy="14">' + escapeXml(bracketLabelValue) + '</tspan></text>',
         footerMarkup,
         '</svg>'
       ];

@@ -90,20 +90,30 @@ check("STORAGE_IOPS_INLINE_ICON_SET_PRESENT", storageIopsVisualAsset.includes("c
 check("STORAGE_IOPS_FOOTER_ICON_CHIPS_PRESENT", storageIopsVisualAsset.includes("StorageIopsIcons.storage") && storageIopsVisualAsset.includes("StorageIopsIcons.workload") && storageIopsVisualAsset.includes("StorageIopsIcons.raid") && storageIopsVisualAsset.includes("StorageIopsIcons.latency") && storageIopsVisualAsset.includes("StorageIopsIcons.block"));
 check("STORAGE_IOPS_HEADROOM_DEFICIT_BRACKET_PRESENT", storageIopsVisualAsset.includes("HEADROOM") && storageIopsVisualAsset.includes("DEFICIT") && storageIopsVisualAsset.includes("bracket-line"));
 check("STORAGE_IOPS_PLATFORM_ZONE_BANDS_PRESENT", storageIopsVisualAsset.includes("band-good") && storageIopsVisualAsset.includes("band-watch") && storageIopsVisualAsset.includes("band-risk"));
-check("STORAGE_IOPS_VISUAL_ASSET_CACHE_BUST_ICON_ENVELOPE", html.includes("scopedlabs-compute-capacity-visuals.js?v=storage-iops-title-risk-polish-0705"));
+check("STORAGE_IOPS_VISUAL_ASSET_CACHE_BUST_ICON_ENVELOPE", html.includes("scopedlabs-compute-capacity-visuals.js?v=storage-iops-capacity-envelope-locked-promoted-0705"));
 check("STORAGE_IOPS_ICON_ENVELOPE_POLISH_MARKER", storageIopsVisualAsset.includes("storage-iops-icon-envelope-polish-0705"));
 check("STORAGE_IOPS_ICON_ENVELOPE_LARGER_PLOT", storageIopsVisualAsset.includes('const plot = { x: 58, y: 78, w: 646, h: 244 };'));
 check("STORAGE_IOPS_ICON_ENVELOPE_INNER_FRAME_REMOVED", storageIopsVisualAsset.includes('.inner-frame{display:none;}'));
 check("STORAGE_IOPS_ICON_ENVELOPE_STRONGER_ZONE_BANDS", storageIopsVisualAsset.includes(".band-watch{fill:rgba(250,204,21,0.14);}") && storageIopsVisualAsset.includes(".band-risk{fill:rgba(") && storageIopsVisualAsset.includes("0.22);}"));
 check("STORAGE_IOPS_ICON_ENVELOPE_CENTERED_FOOTER_CHIPS", storageIopsVisualAsset.includes('footerStat(70, StorageIopsIcons.storage') && storageIopsVisualAsset.includes('footerStat(566, StorageIopsIcons.block'));
 check("STORAGE_IOPS_ICON_ENVELOPE_RAISED_POINT_LABELS", storageIopsVisualAsset.includes('yBase - 34') && storageIopsVisualAsset.includes('yBurst - 34') && storageIopsVisualAsset.includes('yRequired - 36'));
-check("STORAGE_IOPS_ICON_ENVELOPE_STACKED_DEFICIT_LABEL", storageIopsVisualAsset.includes('DEFICIT\\n') && storageIopsVisualAsset.includes('<tspan'));
+check("STORAGE_IOPS_ICON_ENVELOPE_STACKED_DEFICIT_LABEL", storageIopsVisualAsset.includes("bracketLabelPrimary") && storageIopsVisualAsset.includes("bracketLabelValue") && storageIopsVisualAsset.includes("<tspan"));
 
 // storage-iops-title-risk-polish-audit-0705
 check("STORAGE_IOPS_TITLE_SUBTITLE_CENTERED", storageIopsVisualAsset.includes('text-anchor="middle" class="title"') && storageIopsVisualAsset.includes('text-anchor="middle" class="subtitle"'));
 check("STORAGE_IOPS_IOPS_AXIS_LABEL_RETAINED", storageIopsVisualAsset.includes('class="axis-label">IOPS</text>'));
 check("STORAGE_IOPS_TITLE_RISK_POLISH_MARKER", storageIopsVisualAsset.includes("storage-iops-title-risk-polish-0705"));
-check("STORAGE_IOPS_VISUAL_ASSET_CACHE_BUST_TITLE_RISK_POLISH", html.includes("scopedlabs-compute-capacity-visuals.js?v=storage-iops-title-risk-polish-0705"));
+check("STORAGE_IOPS_VISUAL_ASSET_CACHE_BUST_TITLE_RISK_POLISH", html.includes("scopedlabs-compute-capacity-visuals.js?v=storage-iops-capacity-envelope-locked-promoted-0705"));
+// storage-iops-capacity-envelope-lock-audit-0705
+check("STORAGE_IOPS_CAPACITY_ENVELOPE_LOCKED_PROMOTED", storageIopsVisualAsset.includes("storage-iops-capacity-envelope-locked-promoted-0705"));
+check("STORAGE_IOPS_ACCEPTED_CHART_TITLE_CENTERED", storageIopsVisualAsset.includes('text-anchor="middle" class="title"') && storageIopsVisualAsset.includes('text-anchor="middle" class="subtitle"'));
+check("STORAGE_IOPS_ACCEPTED_INLINE_ICON_CHIPS_LOCKED", storageIopsVisualAsset.includes("StorageIopsIcons.storage") && storageIopsVisualAsset.includes("StorageIopsIcons.workload") && storageIopsVisualAsset.includes("StorageIopsIcons.raid") && storageIopsVisualAsset.includes("StorageIopsIcons.latency") && storageIopsVisualAsset.includes("StorageIopsIcons.block"));
+check("STORAGE_IOPS_ACCEPTED_CAPACITY_BANDS_LOCKED", storageIopsVisualAsset.includes("band-good") && storageIopsVisualAsset.includes("band-watch") && storageIopsVisualAsset.includes("band-risk"));
+check("STORAGE_IOPS_ACCEPTED_HEADROOM_DEFICIT_LOCKED", storageIopsVisualAsset.includes("HEADROOM") && storageIopsVisualAsset.includes("DEFICIT") && storageIopsVisualAsset.includes("bracket-line"));
+check("STORAGE_IOPS_ACCEPTED_SHARED_VISUAL_CACHE_BUST", html.includes("scopedlabs-compute-capacity-visuals.js?v=storage-iops-capacity-envelope-locked-promoted-0705"));
+// storage-iops-deficit-label-stack-fix-audit-0705
+check("STORAGE_IOPS_DEFICIT_LABEL_STACK_FIX_MARKER", storageIopsVisualAsset.includes("storage-iops-deficit-label-stack-fix-0705"));
+check("STORAGE_IOPS_DEFICIT_LABEL_STACKED_WITH_TSPANS", storageIopsVisualAsset.includes("bracketLabelPrimary") && storageIopsVisualAsset.includes("bracketLabelValue") && storageIopsVisualAsset.includes("text-anchor=\"start\"") && storageIopsVisualAsset.includes("<tspan"));
 let pass = 0;
 let fail = 0;
 
