@@ -429,6 +429,39 @@ if (
     return "REVIEW";
   }
 
+  function suppressStorageIopsAnalyzerInterpretationSource() {
+    if (!els.results) return;
+
+    const blockedTitles = [
+      "Engineering Interpretation",
+      "Dominant Constraint",
+      "Actionable Guidance",
+      "Recommended Action",
+      "Recommended Actions",
+      "Design Guidance",
+      "Best Practices"
+    ];
+
+    const candidates = Array.from(
+      els.results.querySelectorAll("h2, h3, h4, strong, b, .h2, .h3, .analysis-title, .result-label, .result-row-label, .label, dt, th")
+    );
+
+    candidates.forEach(function(node) {
+      const clean = String(node.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+      if (!clean) return;
+
+      const matched = blockedTitles.some(function(title) {
+        const t = title.toLowerCase();
+        return clean === t || clean.startsWith(t + " ");
+      });
+
+      if (!matched) return;
+
+      node.textContent = "Storage IOPS Analyzer Source";
+      node.setAttribute("data-storage-iops-export-analysis-source-suppressed", "0705");
+    });
+  }
+
   function renderStorageIopsExportInterpretation(payload) {
     if (!els.analysisCopy) return;
 
@@ -467,7 +500,7 @@ if (
       '<p><strong>Recommended correction:</strong> ' + storageIopsEscapeHtml(correctionLine) + '</p>',
       '<p><strong>Carry forward:</strong> ' + storageIopsEscapeHtml(carryLine) + '</p>',
       '</div>'
-    ].join("");
+    ].join("\n");
   }
 
   function renderStorageIopsDecisionSchedule(payload, schedule) {
@@ -683,6 +716,8 @@ if (
         chartMax: Math.max(120, Math.ceil(Math.max(...metrics.map((m) => m.value), 90) * 1.08))
       }
     });
+
+    suppressStorageIopsAnalyzerInterpretationSource();
 
     renderStorageIopsExportInterpretation({
       status: analyzer.status,
