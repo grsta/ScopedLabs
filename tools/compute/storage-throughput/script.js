@@ -22,7 +22,8 @@
   const $ = (id) => document.getElementById(id);
 
   let hasResult = false;
-  let iopsContext = null;
+    let currentStorageThroughputExportResult = null;
+let iopsContext = null;
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
 
@@ -391,6 +392,7 @@ hideContinue();
   }
 
   function clearStorageThroughputShellSections() {
+    currentStorageThroughputExportResult = null;
     if (els.referencesCard) els.referencesCard.hidden = true;
     if (els.references) els.references.innerHTML = "";
     if (els.actionsCard) els.actionsCard.hidden = true;
@@ -420,6 +422,292 @@ hideContinue();
       els.decisionCard.removeAttribute("hidden");
     }
   }
+
+
+  // storage-throughput-export-payload-0705
+  function storageThroughputExportCleanText(value) {
+    return String(value == null ? "" : value)
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function storageThroughputExportFormatMBps(value) {
+    const numeric = Number(value || 0);
+    if (typeof formatStorageThroughputMBps === "function") {
+      return formatStorageThroughputMBps(numeric);
+    }
+    return Math.round(numeric).toLocaleString() + " MB/s";
+  }
+
+  function storageThroughputExportTableFromDom(selector) {
+    const table = document.querySelector(selector);
+    if (!table) return null;
+
+    const headers = Array.from(table.querySelectorAll("thead th")).map(function(cell) {
+      return storageThroughputExportCleanText(cell.textContent);
+    });
+
+    const rows = Array.from(table.querySelectorAll("tbody tr")).map(function(row) {
+      return Array.from(row.querySelectorAll("th, td")).map(function(cell) {
+        return storageThroughputExportCleanText(cell.textContent);
+      });
+    }).filter(function(row) {
+      return row.some(Boolean);
+    });
+
+    if (!headers.length && !rows.length) return null;
+    return { headers, rows };
+  }
+
+  function buildStorageThroughputVisualExportSection() {
+    const svg = document.querySelector("#computeStorageThroughputVisual svg");
+    if (!svg) return null;
+
+    return {
+      title: "Storage Throughput Capacity Envelope",
+      description: "Accepted Storage Throughput capacity envelope from the calculated result.",
+      compactSvg: true,
+      svgs: [svg.outerHTML]
+    };
+  }
+
+  function buildStorageThroughputReferenceExportSection() {
+    const table = storageThroughputExportTableFromDom("#computeStorageThroughputReferences table");
+    if (!table) return null;
+
+    return {
+      title: "Recommendation References",
+      description: "Reference markers used by the Storage Throughput Capacity Envelope.",
+      tableClass: "extra-export-table--planner",
+      tables: [
+        {
+          headers: table.headers.length ? table.headers : ["Marker", "Reference", "Reason"],
+          rows: table.rows
+        }
+      ]
+    };
+  }
+
+  function buildStorageThroughputRecommendedActionsExportSection(result) {
+    const actions = Array.isArray(result && result.recommendedActions) ? result.recommendedActions : [];
+    let rows = actions.map(function(item) {
+      return [
+        storageThroughputExportCleanText(item.action || item.label || "Review Storage Throughput plan"),
+        storageThroughputExportCleanText(item.reason || item.value || "Validate this action before continuing downstream.")
+      ];
+    });
+
+    if (!rows.length) {
+      rows = Array.from(document.querySelectorAll("#computeStorageThroughputRecommendedActions .compute-recommended-action")).map(function(node) {
+        const strong = node.querySelector("strong");
+        const span = node.querySelector("span");
+        return [
+          storageThroughputExportCleanText(strong ? strong.textContent : "Review Storage Throughput plan"),
+          storageThroughputExportCleanText(span ? span.textContent : node.textContent)
+        ];
+      }).filter(function(row) {
+        return row.some(Boolean);
+      });
+    }
+
+    if (!rows.length) return null;
+
+    return {
+      title: "Recommended Actions",
+      description: "Assistant recommended actions for the current Storage Throughput result.",
+      tableClass: "extra-export-table--planner",
+      tables: [
+        {
+          headers: ["Action", "Reason"],
+          rows
+        }
+      ]
+    };
+  }
+
+  function buildStorageThroughputDecisionScheduleExportSection() {
+    const table = storageThroughputExportTableFromDom("#computeStorageThroughputDecisionSchedule table");
+    if (!table) return null;
+
+    return {
+      title: "Storage Throughput Decision Schedule",
+      description: "Decision checkpoints generated from the Storage Throughput result.",
+      tableClass: "extra-export-table--planner extra-export-table--decision",
+      tables: [
+        {
+          headers: table.headers.length ? table.headers : ["Group", "Metric", "Value", "Engineering Note"],
+          rows: table.rows
+        }
+      ]
+    };
+  }
+
+  function buildStorageThroughputExportAnalysisSections(result) {
+    result = result || {};
+
+    const required = Math.max(0, Number(result.requiredThroughputMBps || result.finalMBps || 0));
+    const available = Math.max(0, Number(result.availableThroughputMBps || 0));
+    const utilization = Math.max(0, Number(result.throughputUtilizationPct || result.utilizationPct || 0));
+    const headroom = Number(result.headroomMBps || 0);
+    const status = String(result.status || "REVIEW").toUpperCase();
+
+    return [
+      {
+        title: "Status",
+        body: status + " - " + (status === "RISK" ? "Required throughput exceeds the entered available storage path ceiling." : "Review the entered storage throughput margin before continuing.")
+      },
+      {
+        title: "Why it matters",
+        body: available > 0
+          ? "The plan needs " + storageThroughputExportFormatMBps(required) + " against " + storageThroughputExportFormatMBps(available) + " available path throughput, creating a " + Math.round(utilization) + "% utilization condition."
+          : "The plan needs " + storageThroughputExportFormatMBps(required) + ", but available path throughput was not entered."
+      },
+      {
+        title: "Primary constraint",
+        body: result.dominantConstraint || "Storage Throughput validation."
+      },
+      {
+        title: "Recommended correction",
+        body: result.guidance || "Validate transport path, media tier, protocol overhead, transfer window, and available throughput before continuing."
+      },
+      {
+        title: "Carry forward",
+        body: "Use " + storageThroughputExportFormatMBps(required) + " required throughput, " + (result.transportPathLabel || "selected transport path") + ", and " + (result.mediaTierLabel || "selected media tier") + " in VM Density validation. Headroom/deficit: " + storageThroughputExportFormatMBps(headroom) + "."
+      }
+    ];
+  }
+
+  function buildStorageThroughputInterpretationExportSection(result) {
+    const sections = buildStorageThroughputExportAnalysisSections(result);
+    const text = sections.map(function(section) {
+      return storageThroughputExportCleanText(section.title) + ": " + storageThroughputExportCleanText(section.body);
+    }).join("\n\n");
+
+    if (!text) return null;
+
+    return {
+      title: "Engineering Interpretation",
+      description: "Concise Storage Throughput interpretation for report review.",
+      text
+    };
+  }
+
+  function storageThroughputFilteredExportOutputs(rows) {
+    return (rows || []).filter(function(row) {
+      const label = storageThroughputExportCleanText(row && row.label);
+      return label && label !== "Chart";
+    });
+  }
+
+  function resolveStorageThroughputExportResult(result, outputs) {
+    const next = Object.assign({}, result || {});
+    outputs = outputs || [];
+
+    function outputValue(labels) {
+      const wanted = (labels || []).map(function(label) {
+        return storageThroughputExportCleanText(label).toLowerCase();
+      }).filter(Boolean);
+
+      for (const row of outputs) {
+        const label = storageThroughputExportCleanText(row && row.label).toLowerCase();
+        if (!label) continue;
+
+        const matched = wanted.some(function(target) {
+          return label === target || label.indexOf(target) >= 0;
+        });
+
+        if (matched) return storageThroughputExportCleanText(row && row.value);
+      }
+
+      return "";
+    }
+
+    function numberFromText(value) {
+      const raw = String(value == null ? "" : value).replace(/,/g, "");
+      const match = raw.match(/-?\d+(?:\.\d+)?/);
+      return match ? Number(match[0]) : 0;
+    }
+
+    const required = numberFromText(
+      next.requiredThroughputMBps ||
+      next.finalMBps ||
+      outputValue(["Estimated Required Throughput", "Required Throughput"])
+    );
+
+    const available = numberFromText(
+      next.availableThroughputMBps ||
+      outputValue(["Available Path Throughput", "Available Throughput"])
+    );
+
+    const utilization = numberFromText(
+      next.throughputUtilizationPct ||
+      next.utilizationPct ||
+      outputValue(["Utilization"])
+    );
+
+    if (required > 0) {
+      next.requiredThroughputMBps = required;
+      next.finalMBps = required;
+    }
+
+    if (available > 0) next.availableThroughputMBps = available;
+    if (utilization > 0) {
+      next.throughputUtilizationPct = utilization;
+      next.utilizationPct = utilization;
+    }
+
+    next.status = next.status || outputValue(["Status"]) || "REVIEW";
+    next.dominantConstraint = next.dominantConstraint || outputValue(["Dominant Constraint"]) || "Storage Throughput validation";
+
+    return next;
+  }
+
+  function buildStorageThroughputExportPayload(context) {
+    context = context || {};
+
+    const getInputRows = typeof context.getInputRows === "function" ? context.getInputRows : function() { return []; };
+    const getResultRows = typeof context.getResultRows === "function" ? context.getResultRows : function() { return []; };
+    const options = context.options || {};
+
+    const rawResult = currentStorageThroughputExportResult;
+    const inputs = getInputRows();
+    const outputs = storageThroughputFilteredExportOutputs(getResultRows());
+
+    if (!rawResult || !outputs.length) return null;
+
+    const result = resolveStorageThroughputExportResult(rawResult, outputs);
+    const status = String(result.status || "REVIEW").toUpperCase();
+    const required = Number(result.requiredThroughputMBps || result.finalMBps || 0);
+    const available = Number(result.availableThroughputMBps || 0);
+
+    const summary = "Storage Throughput requires " + storageThroughputExportFormatMBps(required) + " against " + (available > 0 ? storageThroughputExportFormatMBps(available) : "no entered available path") + ". Overall status: " + status + ".";
+
+    const extraSections = [
+      buildStorageThroughputVisualExportSection(),
+      buildStorageThroughputReferenceExportSection(),
+      buildStorageThroughputRecommendedActionsExportSection(result),
+      buildStorageThroughputDecisionScheduleExportSection(),
+      buildStorageThroughputInterpretationExportSection(result)
+    ].filter(Boolean);
+
+    return {
+      status,
+      summary,
+      interpretation: "",
+      analysisSections: [],
+      inputs,
+      outputs,
+      chartImage: "",
+      extraSections,
+      exportSectionsContract: "storage-throughput-visual-references-actions-schedule",
+      assumptions: Array.isArray(options.assumptions) ? options.assumptions : [],
+      printLowInkChart: false
+    };
+  }
+
+  window.ScopedLabsComputeStorageThroughputExport = {
+    buildPayload: buildStorageThroughputExportPayload
+  };
 
   function calc() {
     const iops = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.iops.value, 0));
@@ -663,6 +951,7 @@ hideContinue();
       upstreamRequiredIops: iopsContext && typeof iopsContext.finalIops === "number" ? iopsContext.finalIops : iops
     };
 
+    currentStorageThroughputExportResult = flowPayload;
     renderStorageThroughputCapacityVisual(flowPayload);
     renderStorageThroughputShellSections(flowPayload);
 
