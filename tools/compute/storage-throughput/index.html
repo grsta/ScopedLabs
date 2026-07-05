@@ -107,55 +107,16 @@
       margin-left: auto;
     }
   </style>
-  <style data-storage-throughput-layout-parity-0705>
-    body[data-step="storage-throughput"] #flow-note,
-    body[data-step="storage-throughput"] [data-storage-throughput-flow-context],
-    body[data-step="storage-throughput"] .storage-throughput-flow-context {
-      display: none !important;
-    }
-
-    body[data-step="storage-throughput"] #computeStorageThroughputResultCard.storage-throughput-result-summary-card {
-      display: none !important;
-    }
-
-    body[data-step="storage-throughput"] .storage-throughput-active-workflow-card {
-      margin-top: 16px;
-    }
-
-    body[data-step="storage-throughput"] .storage-throughput-active-workflow-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 8px;
-      margin-top: 12px;
-    }
-
-    body[data-step="storage-throughput"] .storage-throughput-active-workflow-chip {
-      border: 1px solid rgba(63, 255, 128, 0.14);
-      border-radius: 10px;
-      padding: 10px 12px;
-      background: rgba(1, 18, 12, 0.55);
-      min-height: 48px;
-    }
-
-    body[data-step="storage-throughput"] .storage-throughput-active-workflow-chip .mini-label {
-      display: block;
-      font-size: 0.72rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--sl-muted, #9fb4ad);
-      margin-bottom: 4px;
-    }
-
-    body[data-step="storage-throughput"] .storage-throughput-active-workflow-chip strong {
-      display: block;
-      font-size: 0.86rem;
-    }
-
-    @media (max-width: 760px) {
-      body[data-step="storage-throughput"] .storage-throughput-active-workflow-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-    }
+  
+  <style data-storage-throughput-workflow-after-kb-style-0705>
+    body[data-step="storage-throughput"] #flow-note { display: none !important; }
+    body[data-step="storage-throughput"] #computeStorageThroughputResultCard.storage-throughput-result-summary-card { display: none !important; }
+    body[data-step="storage-throughput"] .storage-throughput-active-workflow-card { margin-top: 16px; }
+    body[data-step="storage-throughput"] .storage-throughput-active-workflow-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+    body[data-step="storage-throughput"] .storage-throughput-active-workflow-chip { border: 1px solid rgba(63, 255, 128, 0.14); border-radius: 10px; padding: 10px 12px; background: rgba(1, 18, 12, 0.55); min-height: 48px; }
+    body[data-step="storage-throughput"] .storage-throughput-active-workflow-chip .mini-label { display: block; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sl-muted, #9fb4ad); margin-bottom: 4px; }
+    body[data-step="storage-throughput"] .storage-throughput-active-workflow-chip strong { display: block; font-size: 0.86rem; }
+    @media (max-width: 760px) { body[data-step="storage-throughput"] .storage-throughput-active-workflow-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   </style>
 </head>
 
@@ -214,45 +175,7 @@
     </div>
   </section>
 
-      <section class="card storage-throughput-active-workflow-card" data-storage-throughput-active-workflow-card="0705">
-      <div class="eyebrow">ACTIVE WORKLOAD &rarr; STORAGE THROUGHPUT</div>
-      <h2 class="h2" style="margin-top: 8px;">Improving the tools</h2>
-      <p class="muted" style="margin-top: 4px;">Production | General | Standard Server</p>
-      <div class="storage-throughput-active-workflow-grid" aria-label="Active workload context">
-        <div class="storage-throughput-active-workflow-chip">
-          <span class="mini-label">Environment</span>
-          <strong>Production</strong>
-        </div>
-        <div class="storage-throughput-active-workflow-chip">
-          <span class="mini-label">Workload Type</span>
-          <strong>VM datastore</strong>
-        </div>
-        <div class="storage-throughput-active-workflow-chip">
-          <span class="mini-label">Demand Source</span>
-          <strong>Storage IOPS</strong>
-        </div>
-        <div class="storage-throughput-active-workflow-chip">
-          <span class="mini-label">Next Tool</span>
-          <strong>VM Density</strong>
-        </div>
-        <div class="storage-throughput-active-workflow-chip">
-          <span class="mini-label">Transport Path</span>
-          <strong>10 GbE / shared path</strong>
-        </div>
-        <div class="storage-throughput-active-workflow-chip">
-          <span class="mini-label">Media Tier</span>
-          <strong>SATA / SAS SSD</strong>
-        </div>
-        <div class="storage-throughput-active-workflow-chip">
-          <span class="mini-label">Growth Reserve</span>
-          <strong>20%</strong>
-        </div>
-        <div class="storage-throughput-active-workflow-chip">
-          <span class="mini-label">Status</span>
-          <strong>Pending Calculation</strong>
-        </div>
-      </div>
-    </section>
+      
 <section id="toolCard" class="card tool-card" style="margin-top: 18px;">
     <h2 class="card-title" style="margin-top: 0;">Inputs</h2>
 
@@ -481,42 +404,48 @@
 
   <script defer src="/assets/help.js?v=help-026"></script>
 
-  <script data-storage-throughput-kb-card-suppressor-0705>
-    (function() {
-      function suppressStorageThroughputKbCard() {
-        if (!document.body || document.body.getAttribute("data-step") !== "storage-throughput") return;
-
-        Array.from(document.querySelectorAll("section.card, div.card")).forEach(function(card) {
-          var text = (card.textContent || "").replace(/\s+/g, " ").trim();
-          if (
-            text.indexOf("Storage Throughput Guide") >= 0 &&
-            text.indexOf("Open KB Guide") >= 0
-          ) {
-            card.setAttribute("data-storage-throughput-kb-card-suppressed", "true");
-            card.setAttribute("hidden", "");
-            card.setAttribute("aria-hidden", "true");
-            card.style.display = "none";
-          }
-        });
-      }
-
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", suppressStorageThroughputKbCard);
-      } else {
-        suppressStorageThroughputKbCard();
-      }
-
-      window.addEventListener("load", suppressStorageThroughputKbCard);
-      setTimeout(suppressStorageThroughputKbCard, 250);
-      setTimeout(suppressStorageThroughputKbCard, 900);
-    })();
-  </script>
+  
 
   <script src="/assets/scopedlabs-compute-shell-contract.js?v=compute-shell-contract-storage-explicit-click-0705"></script>
   <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
   <script src="/assets/scopedlabs-compute-assistant-contract.js?v=compute-assistant-storage-throughput-shell-0705"></script>
   <script src="/assets/scopedlabs-user-tool-notes.js?v=scopedlabs-user-tool-notes-001-compute-proof"></script>
   
+  <script data-storage-throughput-active-workflow-after-kb-0705>
+    (function () {
+      var cardHtml = "<section class=\"card storage-throughput-active-workflow-card\" data-storage-throughput-active-workflow-card=\"0705\">  <div class=\"eyebrow\">ACTIVE WORKLOAD &rarr; STORAGE THROUGHPUT</div>  <h2 class=\"h2\" style=\"margin-top: 8px;\">Improving the tools</h2>  <p class=\"muted\" style=\"margin-top: 4px;\">Production | General | Standard Server</p>  <div class=\"storage-throughput-active-workflow-grid\" aria-label=\"Active workload context\">    <div class=\"storage-throughput-active-workflow-chip\"><span class=\"mini-label\">Environment</span><strong>Production</strong></div>    <div class=\"storage-throughput-active-workflow-chip\"><span class=\"mini-label\">Workload Type</span><strong>VM datastore</strong></div>    <div class=\"storage-throughput-active-workflow-chip\"><span class=\"mini-label\">Demand Source</span><strong>Storage IOPS</strong></div>    <div class=\"storage-throughput-active-workflow-chip\"><span class=\"mini-label\">Next Tool</span><strong>VM Density</strong></div>    <div class=\"storage-throughput-active-workflow-chip\"><span class=\"mini-label\">Transport Path</span><strong>10 GbE / shared path</strong></div>    <div class=\"storage-throughput-active-workflow-chip\"><span class=\"mini-label\">Media Tier</span><strong>SATA / SAS SSD</strong></div>    <div class=\"storage-throughput-active-workflow-chip\"><span class=\"mini-label\">Growth Reserve</span><strong>20%</strong></div>    <div class=\"storage-throughput-active-workflow-chip\"><span class=\"mini-label\">Status</span><strong>Pending Calculation</strong></div>  </div></section>";
+      var tries = 0;
+
+      function findKbCard() {
+        var cards = Array.from(document.querySelectorAll("section.card, div.card"));
+        return cards.find(function (card) {
+          var text = (card.textContent || "").replace(/\s+/g, " ").trim();
+          return text.indexOf("Storage Throughput Guide") >= 0 && text.indexOf("Open KB Guide") >= 0;
+        }) || null;
+      }
+
+      function placeWorkflowCard() {
+        if (!document.body || document.body.getAttribute("data-step") !== "storage-throughput") return;
+        if (document.querySelector("[data-storage-throughput-active-workflow-card=\"0705\"]")) return;
+
+        var kbCard = findKbCard();
+        if (!kbCard) {
+          tries += 1;
+          if (tries < 24) window.setTimeout(placeWorkflowCard, 150);
+          return;
+        }
+
+        kbCard.insertAdjacentHTML("afterend", cardHtml);
+      }
+
+      if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", placeWorkflowCard);
+      else placeWorkflowCard();
+
+      window.addEventListener("load", placeWorkflowCard);
+      window.setTimeout(placeWorkflowCard, 250);
+      window.setTimeout(placeWorkflowCard, 900);
+    })();
+  </script>
 </body>
 </html>
 
