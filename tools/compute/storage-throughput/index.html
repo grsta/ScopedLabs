@@ -81,6 +81,23 @@
     }
   </style>
   <link rel="stylesheet" href="/assets/scopedlabs-compute-result-visuals.css?v=scopedlabs-compute-result-visuals-0705-storage-throughput">
+
+  <style data-storage-throughput-pill-cleanup-0705>
+    body[data-step="storage-throughput"] .btn,
+    body[data-step="storage-throughput"] button.btn,
+    body[data-step="storage-throughput"] a.btn {
+      border-radius: 8px !important;
+    }
+
+    body[data-step="storage-throughput"] .compute-export-card .btn {
+      border-radius: 8px !important;
+    }
+
+    body[data-step="storage-throughput"] [data-storage-throughput-kb-card-suppressed="true"] {
+      display: none !important;
+    }
+  </style>
+
 </head>
 
 <body data-tier="pro" data-category="compute" data-step="storage-throughput" data-lane="v1" data-storage-throughput-visual-wire="0705">
@@ -361,6 +378,38 @@
 <script src="./script.js?v=compute-storage-throughput-shell-parity-0705"></script>
 
   <script defer src="/assets/help.js?v=help-026"></script>
+
+  <script data-storage-throughput-kb-card-suppressor-0705>
+    (function() {
+      function suppressStorageThroughputKbCard() {
+        if (!document.body || document.body.getAttribute("data-step") !== "storage-throughput") return;
+
+        Array.from(document.querySelectorAll("section.card, div.card")).forEach(function(card) {
+          var text = (card.textContent || "").replace(/\s+/g, " ").trim();
+          if (
+            text.indexOf("Storage Throughput Guide") >= 0 &&
+            text.indexOf("Open KB Guide") >= 0
+          ) {
+            card.setAttribute("data-storage-throughput-kb-card-suppressed", "true");
+            card.setAttribute("hidden", "");
+            card.setAttribute("aria-hidden", "true");
+            card.style.display = "none";
+          }
+        });
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", suppressStorageThroughputKbCard);
+      } else {
+        suppressStorageThroughputKbCard();
+      }
+
+      window.addEventListener("load", suppressStorageThroughputKbCard);
+      setTimeout(suppressStorageThroughputKbCard, 250);
+      setTimeout(suppressStorageThroughputKbCard, 900);
+    })();
+  </script>
+
   <script src="/assets/scopedlabs-compute-shell-contract.js?v=compute-result-card-contract-0704"></script>
   <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
   <script src="/assets/scopedlabs-compute-assistant-contract.js?v=compute-assistant-storage-throughput-shell-0705"></script>
