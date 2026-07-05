@@ -25,6 +25,7 @@
   let ramContext = null;
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
+  let currentStorageIopsExportResult = null;
 
   const els = {
     tps: $("tps"),
@@ -257,8 +258,246 @@ if (els.resultSummary) {
     }
   }
 
+  function storageIopsExportCleanText(value) {
+    return String(value == null ? "" : value).replace(/\s+/g, " ").trim();
+  }
+
+  function storageIopsExportTableFromDom(selector) {
+    const table = document.querySelector(selector);
+    if (!table) return null;
+
+    const headers = Array.from(table.querySelectorAll("thead th"))
+      .map(function(cell) {
+        return storageIopsExportCleanText(cell.textContent);
+      })
+      .filter(Boolean);
+
+    const rows = Array.from(table.querySelectorAll("tbody tr"))
+      .map(function(row) {
+        return Array.from(row.querySelectorAll("th, td")).map(function(cell) {
+          return storageIopsExportCleanText(cell.textContent);
+        });
+      })
+      .filter(function(row) {
+        return row.some(Boolean);
+      });
+
+    if (!rows.length) return null;
+
+    return { headers, rows };
+  }
+
+  function storageIopsFilteredExportOutputs(outputs) {
+    const blocked = [
+      "engineering interpretation",
+      "dominant constraint",
+      "actionable guidance",
+      "recommended action",
+      "recommended actions",
+      "design guidance",
+      "best practices"
+    ];
+
+    return (outputs || []).filter(function(row) {
+      const label = storageIopsExportCleanText(row && row.label).toLowerCase();
+      return !blocked.some(function(token) {
+        return label === token || label.indexOf(token) >= 0;
+      });
+    });
+  }
+
+  function buildStorageIopsExportInterpretation(result) {
+    result = result || {};
+
+    const rawStatus = String(result.status || "REVIEW").toUpperCase();
+    const status = rawStatus === "HEALTHY" ? "GOOD" : rawStatus;
+    const finalIops = Math.max(0, Number(result.finalIops || 0));
+    const availableIops = Math.max(0, Number(result.availableIops || 0));
+    const utilizationPct = Math.max(0, Number(result.utilizationPct || 0));
+    const targetLatency = Math.max(0, Number(result.targetLatency || 0));
+    const blockSizeKb = Math.max(0, Number(result.blockSizeKb || 0));
+
+    const statusLine = status === "RISK"
+      ? "RISK - required IOPS exceeds the entered available platform IOPS."
+      : status === "WATCH"
+        ? "WATCH - the storage plan is usable for planning, but IOPS margin is narrowing."
+        : "GOOD - required IOPS remains inside the entered platform envelope.";
+
+    const whyLine = availableIops > 0
+      ? "The plan needs " + formatNumber(finalIops) + " IOPS against " + formatNumber(availableIops) + " available IOPS, creating a " + formatPct(utilizationPct) + " utilization condition."
+      : "The plan needs " + formatNumber(finalIops) + " IOPS, but available platform IOPS was not entered.";
+
+    const constraintLine = "Primary constraint: " + (result.primaryConstraint || result.dominantConstraint || "Storage IOPS validation") + ".";
+
+    const correctionLine = "Recommended correction: " + (result.guidance || result.recommendation || "Validate platform IOPS, write penalty, media tier, and latency behavior before continuing.");
+
+    const carryLine = "Carry forward: use " + formatNumber(finalIops) + " required IOPS, " + targetLatency + " ms latency target, and " + blockSizeKb + " KB block size in Storage Throughput validation.";
+
+    return [statusLine, whyLine, constraintLine, correctionLine, carryLine].join(" ");
+  }
+
+  function buildStorageIopsExportAnalysisSections(result) {
+    result = result || {};
+
+    const finalIops = Math.max(0, Number(result.finalIops || 0));
+    const availableIops = Math.max(0, Number(result.availableIops || 0));
+    const utilizationPct = Math.max(0, Number(result.utilizationPct || 0));
+    const targetLatency = Math.max(0, Number(result.targetLatency || 0));
+    const blockSizeKb = Math.max(0, Number(result.blockSizeKb || 0));
+    const status = String(result.status || "REVIEW").toUpperCase();
+
+    return [
+      {
+        title: "Status",
+        body: status + " - " + (status === "RISK" ? "Required IOPS exceeds the entered available platform IOPS." : "Review the entered storage IOPS margin before continuing.")
+      },
+      {
+        title: "Why it matters",
+        body: availableIops > 0
+          ? "The plan needs " + formatNumber(finalIops) + " IOPS against " + formatNumber(availableIops) + " available IOPS, creating a " + formatPct(utilizationPct) + " utilization condition."
+          : "The plan needs " + formatNumber(finalIops) + " IOPS, but available platform IOPS was not entered."
+      },
+      {
+        title: "Primary constraint",
+        body: result.primaryConstraint || result.dominantConstraint || "Storage IOPS validation."
+      },
+      {
+        title: "Recommended correction",
+        body: result.guidance || result.recommendation || "Validate platform IOPS, write penalty, media tier, and latency behavior before continuing."
+      },
+      {
+        title: "Carry forward",
+        body: "Use " + formatNumber(finalIops) + " required IOPS, " + targetLatency + " ms latency target, and " + blockSizeKb + " KB block size in Storage Throughput validation."
+      }
+    ];
+  }
+
+  function buildStorageIopsVisualExportSection() {
+    const svg = document.querySelector("#computeStorageIopsVisual svg");
+    if (!svg) return null;
+
+    return {
+      title: "Storage IOPS Capacity Envelope",
+      description: "Accepted Storage IOPS capacity envelope from the calculated result.",
+      compactSvg: true,
+      svgs: [svg.outerHTML]
+    };
+  }
+
+  function buildStorageIopsReferenceExportSection() {
+    const table = storageIopsExportTableFromDom("#computeStorageIopsReferences table");
+    if (!table) return null;
+
+    return {
+      title: "Recommendation References",
+      description: "Reference markers used by the Storage IOPS Capacity Envelope.",
+      tableClass: "extra-export-table--planner",
+      tables: [
+        {
+          headers: table.headers.length ? table.headers : ["Marker", "Reference", "Reason"],
+          rows: table.rows
+        }
+      ]
+    };
+  }
+
+  function buildStorageIopsRecommendedActionsExportSection(result) {
+    const actions = Array.isArray(result && result.recommendedActions) ? result.recommendedActions : [];
+    let rows = actions.map(function(item) {
+      return [
+        storageIopsExportCleanText(item.action || item.label || "Review Storage IOPS plan"),
+        storageIopsExportCleanText(item.reason || item.value || "Validate this action before continuing downstream.")
+      ];
+    });
+
+    if (!rows.length) {
+      rows = Array.from(document.querySelectorAll("#computeStorageIopsRecommendedActions .compute-recommended-action")).map(function(node) {
+        return [
+          storageIopsExportCleanText(node.querySelector("strong")?.textContent || "Review Storage IOPS plan"),
+          storageIopsExportCleanText(node.querySelector("span")?.textContent || node.textContent || "")
+        ];
+      }).filter(function(row) {
+        return row.some(Boolean);
+      });
+    }
+
+    if (!rows.length) return null;
+
+    return {
+      title: "Recommended Actions",
+      description: "Assistant recommended actions for the current Storage IOPS result.",
+      tableClass: "extra-export-table--planner",
+      tables: [
+        {
+          headers: ["Action", "Reason"],
+          rows
+        }
+      ]
+    };
+  }
+
+  function buildStorageIopsDecisionScheduleExportSection() {
+    const table = storageIopsExportTableFromDom("#computeStorageIopsDecisionSchedule table");
+    if (!table) return null;
+
+    return {
+      title: "Storage IOPS Decision Schedule",
+      description: "Decision checkpoints generated from the Storage IOPS result.",
+      tableClass: "extra-export-table--planner extra-export-table--decision",
+      tables: [
+        {
+          headers: table.headers.length ? table.headers : ["Group", "Metric", "Value", "Engineering Note"],
+          rows: table.rows
+        }
+      ]
+    };
+  }
+
+  function buildStorageIopsExportPayload(context) {
+    context = context || {};
+
+    const getInputRows = typeof context.getInputRows === "function" ? context.getInputRows : function() { return []; };
+    const getResultRows = typeof context.getResultRows === "function" ? context.getResultRows : function() { return []; };
+    const options = context.options || {};
+
+    const result = currentStorageIopsExportResult;
+    const inputs = getInputRows();
+    const outputs = storageIopsFilteredExportOutputs(getResultRows());
+
+    if (!result || !outputs.length) return null;
+
+    const status = String(result.status || "REVIEW").toUpperCase();
+    const summary = "Storage IOPS requires " + formatNumber(result.finalIops || 0) + " IOPS against " + formatNumber(result.availableIops || 0) + " available platform IOPS. Overall status: " + status + ".";
+
+    const extraSections = [
+      buildStorageIopsVisualExportSection(),
+      buildStorageIopsReferenceExportSection(),
+      buildStorageIopsRecommendedActionsExportSection(result),
+      buildStorageIopsDecisionScheduleExportSection()
+    ].filter(Boolean);
+
+    return {
+      status,
+      summary,
+      interpretation: buildStorageIopsExportInterpretation(result),
+      analysisSections: buildStorageIopsExportAnalysisSections(result),
+      inputs,
+      outputs,
+      chartImage: "",
+      extraSections,
+      exportSectionsContract: "storage-iops-visual-references-actions-schedule",
+      assumptions: Array.isArray(options.assumptions) ? options.assumptions : [],
+      printLowInkChart: false
+    };
+  }
+
+  window.ScopedLabsComputeStorageIopsExport = {
+    buildPayload: buildStorageIopsExportPayload
+  };
+
   function clearStorageIopsCapacityVisual() {
-      
+
+      currentStorageIopsExportResult = null;
       clearStorageIopsResultSummary();
 if (els.visual) {
         els.visual.innerHTML = "";
@@ -271,7 +510,8 @@ if (els.visual) {
     }
 
     function renderStorageIopsCapacityVisual(result) {
-      
+
+      currentStorageIopsExportResult = result || null;
       renderStorageIopsResultSummary(result);
 if (
         window.ScopedLabsComputeCapacityVisuals &&

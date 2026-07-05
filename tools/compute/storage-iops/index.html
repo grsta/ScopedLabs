@@ -806,6 +806,7 @@
       "toolLabel": "Storage IOPS Estimator",
       "toolSlug": "storage-iops",
       "reportPrefix": "SL-C-SI",
+      "customPayloadBuilder": "ScopedLabsComputeStorageIopsExport.buildPayload",
       "assumptions": [
             "This report reflects the visible Storage IOPS Estimator inputs and outputs at the time the export was generated.",
             "Storage IOPS planning includes available platform IOPS, burst multiplier, growth reserve, latency target, block size, and media tier assumptions.",
@@ -824,7 +825,7 @@
   <script src="/assets/scopedlabs-compute-guided-route-engine.js?v=scopedlabs-compute-guided-route-engine-004-tool-continue-route"></script>
   <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-002"></script>
   <script src="/assets/scopedlabs-compute-capacity-visuals.js?v=storage-iops-reference-markers-0705"></script>
-  <script src="./script.js?v=compute-storage-iops-export-interpretation-source-clean-0705"></script>
+  <script src="./script.js?v=compute-storage-iops-custom-export-payload-0705"></script>
 
   <script defer src="/assets/help.js?v=help-026"></script>
   <script src="/assets/scopedlabs-compute-shell-contract.js?v=compute-result-card-contract-0704"></script>
