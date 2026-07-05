@@ -568,5 +568,3 @@ Promotion rule:
 - COMPUTE_CAPACITY_INLINE_ICON_LIBRARY_0705: Promoted accepted Storage IOPS inline footer icon shapes into the shared Compute Capacity Visuals module. Future capacity-envelope footers should call `buildCapacityFooterStat(...)` with an icon key instead of embedding one-off SVG chip markup in each tool.
 
 - COMPUTE_CAPACITY_GUIDE_LINE_CONTRACT_0705: Promoted full-height checkpoint guide lines and white dashed ceiling/threshold styling into the shared Compute Capacity Visuals module. Future capacity-envelope charts should call `buildCapacityCheckpointGuides(plot, checkpoints)` and `computeCapacityGuideLineStyles()` instead of one-off per-tool guide-line styling.
-
-- COMPUTE_STORAGE_FLOW_NEXT_TOOL_CTA_CONTRACT_0705: Storage flow CTAs use inside-card ownership and next-tool labels rather than Summary labels. Applies first to Storage IOPS and Storage Throughput; future Compute flow tools should keep Back on the left and Continue on the right inside the tool card.

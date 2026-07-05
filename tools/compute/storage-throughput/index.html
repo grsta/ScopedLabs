@@ -325,15 +325,9 @@
 
 
 
-  
-
-
-  <div class="compute-flow-actions" style="margin-top:10px;" data-compute-flow-actions="true" data-compute-flow-owner="compute-shell-contract" data-compute-flow-tool="storage-throughput" data-compute-flow-placed="true" data-storage-flow-next-tool-contract="0705" data-storage-throughput-flow-actions-inside-card="0705">
+  <div id="continue-wrap" data-storage-throughput-flow-actions-inside-card="0705" class="compute-flow-actions" style="display:none; margin-top:10px;" data-compute-flow-actions="true" data-compute-flow-owner="compute-shell-contract" data-compute-flow-tool="storage-throughput" data-compute-flow-placed="true" data-storage-throughput-flow-actions="0705">
   <a class="btn" href="/tools/compute/storage-iops/">Back to Storage IOPS</a>
-
-  <span id="continue-wrap" style="display: none; margin-left: auto;">
-    <button id="continue" class="btn btn-primary" type="button" disabled data-compute-continue-href="/tools/compute/vm-density/">Continue &rarr; VM Density</button>
-  </span>
+  <button id="continue" class="btn btn-primary" type="button" disabled data-compute-continue-href="/tools/compute/vm-density/">Continue &rarr; VM Density</button>
 </div>
 </section>
 
@@ -384,7 +378,7 @@
   <script src="/assets/scopedlabs-compute-guided-route-engine.js?v=scopedlabs-compute-guided-route-engine-004-tool-continue-route"></script>
   <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-002"></script>
     <script src="/assets/scopedlabs-compute-capacity-visuals.js?v=storage-throughput-capacity-envelope-0705"></script>
-<script src="./script.js?v=compute-storage-throughput-next-tool-cta-0705"></script>
+<script src="./script.js?v=compute-storage-throughput-shell-parity-0705"></script>
 
   <script defer src="/assets/help.js?v=help-026"></script>
 
@@ -423,68 +417,6 @@
   <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
   <script src="/assets/scopedlabs-compute-assistant-contract.js?v=compute-assistant-storage-throughput-shell-0705"></script>
   <script src="/assets/scopedlabs-user-tool-notes.js?v=scopedlabs-user-tool-notes-001-compute-proof"></script>
-  <script data-storage-flow-next-tool-enforcer-0705>
-    (function() {
-      var expected = {
-        step: "storage-throughput",
-        label: "Continue \u2192 VM Density",
-        href: "/tools/compute/vm-density/"
-      };
-
-      var applying = false;
-
-      function applyStorageNextToolCta() {
-        if (applying) return;
-        if (!document.body || document.body.getAttribute("data-step") !== expected.step) return;
-
-        var flow = document.querySelector("[data-compute-flow-actions=true]");
-        var wrap = document.getElementById("continue-wrap");
-        var button = document.getElementById("continue");
-
-        applying = true;
-
-        if (flow) {
-          flow.style.display = "";
-          flow.style.alignItems = "center";
-          flow.style.gap = "10px";
-        }
-
-        if (wrap) {
-          wrap.style.marginLeft = "auto";
-        }
-
-        if (button) {
-          button.textContent = expected.label;
-          button.setAttribute("data-compute-continue-href", expected.href);
-          button.setAttribute("data-storage-flow-next-tool-label", "0705");
-        }
-
-        applying = false;
-      }
-
-      document.addEventListener("click", function(event) {
-        var button = event.target && event.target.closest ? event.target.closest("#continue") : null;
-        if (!button || button.disabled) return;
-        if (!document.body || document.body.getAttribute("data-step") !== expected.step) return;
-
-        event.preventDefault();
-        window.location.href = expected.href;
-      }, true);
-
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", applyStorageNextToolCta);
-      } else {
-        applyStorageNextToolCta();
-      }
-
-      window.addEventListener("load", applyStorageNextToolCta);
-      setTimeout(applyStorageNextToolCta, 250);
-      setTimeout(applyStorageNextToolCta, 900);
-
-      var observer = new MutationObserver(applyStorageNextToolCta);
-      observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true, characterData: true });
-    })();
-  </script>
 </body>
 </html>
 
