@@ -288,43 +288,75 @@ if (
 
 
   function renderStorageIopsProof(payload) {
-    if (!els.proofStack) return;
+    // storage-iops-visible-proof-suppressed-0705
+    if (els.proofStack) {
+      els.proofStack.innerHTML = "";
+      els.proofStack.hidden = true;
+      els.proofStack.setAttribute("hidden", "");
+      els.proofStack.setAttribute("aria-hidden", "true");
+    }
 
-    const rawStatus = String(payload.status || "");
-    const chipClass = rawStatus === "HEALTHY" ? "good" : rawStatus.toLowerCase();
-    const refs = payload.references || [];
+    if (els.proofStackCard) {
+      els.proofStackCard.hidden = true;
+      els.proofStackCard.setAttribute("hidden", "");
+      els.proofStackCard.setAttribute("aria-hidden", "true");
+      els.proofStackCard.style.display = "none";
+    }
 
-    els.proofStack.hidden = false;
-    if (els.proofStackCard) els.proofStackCard.hidden = false;
-    els.proofStack.innerHTML = [
-      '<div class="storage-iops-proof-grid">',
-        '<div class="storage-iops-proof-card">',
-          '<div class="storage-iops-proof-label">A / Entered Conditions</div>',
-          '<div class="storage-iops-proof-value">',
-            formatNumber(payload.finalIops) + ' required IOPS against ' + formatNumber(payload.availableIops) + ' available. ',
-            'Burst x' + payload.peakMultiplier.toFixed(1) + ', growth ' + formatPct(payload.growthPct) + ', latency target ' + payload.targetLatency + ' ms.',
-          '</div>',
-        '</div>',
-        '<div class="storage-iops-proof-card">',
-          '<div class="storage-iops-proof-label">B / Assistant Recommendation</div>',
-          '<div class="storage-iops-proof-value">',
-            '<span class="storage-iops-status-chip ' + chipClass + '">' + payload.status + '</span>',
-            payload.recommendation,
-          '</div>',
-        '</div>',
-        '<div class="storage-iops-proof-card">',
-          '<div class="storage-iops-proof-label">C / Verification Path</div>',
-          '<div class="storage-iops-proof-value">' + payload.nextStep + '</div>',
-        '</div>',
-      '</div>',
-      '<ol class="storage-iops-reference-list">',
-        refs.map(function(ref) { return '<li>' + ref + '</li>'; }).join(''),
-      '</ol>'
-    ].join("");
+    return false;
   }
 
 
   // storage-iops-full-shell-parity-0704
+  // storage-iops-ram-reference-flow-0705
+  function storageIopsEscapeHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function normalizeStorageIopsReference(ref) {
+    if (ref && typeof ref === "object") {
+      return {
+        marker: String(ref.marker || ""),
+        reference: String(ref.reference || ref.label || ""),
+        reason: String(ref.reason || ref.value || "")
+      };
+    }
+
+    const parts = String(ref || "").split("|");
+    return {
+      marker: parts[0] || "",
+      reference: parts[1] || "",
+      reason: parts.slice(2).join("|") || ""
+    };
+  }
+
+  function renderStorageIopsReferenceTable(refs) {
+    const rows = (refs || []).map(normalizeStorageIopsReference).filter(function(row) {
+      return row.marker || row.reference || row.reason;
+    });
+
+    return [
+      '<div class="storage-iops-reference-table">',
+        '<div class="storage-iops-reference-row storage-iops-reference-head">',
+          '<div>MARKER</div><div>REFERENCE</div><div>REASON</div>',
+        '</div>',
+        rows.map(function(row) {
+          return [
+            '<div class="storage-iops-reference-row">',
+              '<div class="storage-iops-reference-marker">' + storageIopsEscapeHtml(row.marker) + '</div>',
+              '<div class="storage-iops-reference-name">' + storageIopsEscapeHtml(row.reference) + '</div>',
+              '<div class="storage-iops-reference-reason">' + storageIopsEscapeHtml(row.reason) + '</div>',
+            '</div>'
+          ].join("");
+        }).join(""),
+      '</div>'
+    ].join("");
+  }
+
   function clearStorageIopsShellSections() {
     if (els.referencesCard) els.referencesCard.hidden = true;
     if (els.references) els.references.innerHTML = "";
@@ -340,9 +372,7 @@ if (
     const schedule = payload.decisionSchedule || [];
 
     if (els.references && els.referencesCard) {
-      els.references.innerHTML = '<ol class="storage-iops-reference-list">' + refs.map(function(ref) {
-        return '<li>' + ref + '</li>';
-      }).join('') + '</ol>';
+      els.references.innerHTML = renderStorageIopsReferenceTable(refs);
       els.referencesCard.hidden = false;
     }
 
@@ -515,9 +545,21 @@ if (
     });
 
     const references = [
-      "*1 Required IOPS includes read demand, penalized write demand, peak multiplier, headroom reserve, and growth reserve.",
-      "*2 Utilization compares required IOPS against the entered available platform IOPS; confirm this against the selected storage tier and vendor/platform limits.",
-      "*3 Latency-sensitive or burst-heavy workloads need more margin than raw average IOPS suggests."
+      {
+        marker: "*1",
+        reference: "Burst demand",
+        reason: formatNumber(peakDemandIops) + " IOPS after read/write demand, RAID penalty, and peak multiplier are applied."
+      },
+      {
+        marker: "*2",
+        reference: "Required IOPS",
+        reason: formatNumber(finalIops) + " IOPS after headroom reserve and growth reserve are included."
+      },
+      {
+        marker: "*3",
+        reference: "Platform / latency validation",
+        reason: "Available platform " + formatNumber(availableIops) + " IOPS | " + targetLatency + " ms target | " + blockSizeKb + " KB blocks."
+      }
     ];
 
     const recommendedActions = [

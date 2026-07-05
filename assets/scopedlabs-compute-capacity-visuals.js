@@ -979,7 +979,7 @@ const bracketColor = delta >= 0 ? (status === "GOOD" ? "#7ef5d5" : "#facc15") : 
         '<text x="' + (plot.x + plot.w - 10) + '" y="' + (yWatch + 14).toFixed(1) + '" text-anchor="end" class="zone-text watch-text">WATCH</text>',
         '<text x="' + (plot.x + plot.w - 10) + '" y="' + (yGood + 14).toFixed(1) + '" text-anchor="end" class="zone-text good-text">GOOD</text>',
         '<path d="M' + plot.x + ' ' + yCeiling.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="ceiling-line"/>',
-        '<text x="' + (plot.x + plot.w - 12) + '" y="' + (yCeiling - 8).toFixed(1) + '" text-anchor="end" class="ceiling-label">Available platform: ' + formatCompactIops(available) + ' IOPS</text>',
+        '<text x="' + (plot.x + plot.w - 12) + '" y="' + (yCeiling - 8).toFixed(1) + '" text-anchor="end" class="ceiling-label">Available platform *3: ' + formatCompactIops(available) + ' IOPS</text>',
         '<path d="' + curvePath + '" class="curve-shadow"/>',
         '<path d="' + curvePath + '" class="curve-line"/>',
         '<path d="M' + stageX.base.toFixed(1) + ' ' + yBase.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="drop-line"/>',

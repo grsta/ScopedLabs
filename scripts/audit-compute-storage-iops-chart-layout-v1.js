@@ -43,8 +43,8 @@ check("RAM_SHELL_CONTEXT_BEFORE_INPUTS", pos('id="computeWorkloadContextCard"') 
 check("INPUTS_BEFORE_LEDGER", pos('id="toolCard"') > -1 && pos('id="toolCard"') < pos('id="computeInternalResultsLedger"'));
 check("LEDGER_BEFORE_ASSISTANT", pos('id="computeInternalResultsLedger"') > -1 && pos('id="computeInternalResultsLedger"') < pos('id="computeAssistantCard"'));
 check("ASSISTANT_BEFORE_VISUAL", pos('id="computeAssistantCard"') > -1 && pos('id="computeAssistantCard"') < pos('id="computeStorageIopsVisualCard"'));
-check("VISUAL_BEFORE_PROOF_STACK", pos('id="computeStorageIopsVisualCard"') > -1 && pos('id="computeStorageIopsVisualCard"') < pos('id="storageIopsProofStackCard"'));
-check("PROOF_STACK_BEFORE_REFERENCES", pos('id="storageIopsProofStackCard"') > -1 && pos('id="storageIopsProofStackCard"') < pos('id="computeStorageIopsReferencesCard"'));
+check("VISUAL_BEFORE_REFERENCES", pos('id="computeStorageIopsVisualCard"') > -1 && pos('id="computeStorageIopsVisualCard"') < pos('id="computeStorageIopsReferencesCard"'));
+check("SCHEDULE_BEFORE_HIDDEN_PROOF_STACK", pos('id="computeStorageIopsDecisionScheduleCard"') > -1 && pos('id="computeStorageIopsDecisionScheduleCard"') < pos('id="storageIopsProofStackCard"'));
 check("REFERENCES_BEFORE_ACTIONS", pos('id="computeStorageIopsReferencesCard"') > -1 && pos('id="computeStorageIopsReferencesCard"') < pos('id="computeStorageIopsRecommendedActionsCard"'));
 check("ACTIONS_BEFORE_SCHEDULE", pos('id="computeStorageIopsRecommendedActionsCard"') > -1 && pos('id="computeStorageIopsRecommendedActionsCard"') < pos('id="computeStorageIopsDecisionScheduleCard"'));
 
@@ -73,14 +73,14 @@ try {
 check("STORAGE_IOPS_RESULT_RAM_PARITY_STYLE", html.includes("storage-iops-result-ram-parity-style-0704") && html.includes("storage-iops-result-panel"));
 check("STORAGE_IOPS_RESULT_RAM_LAYOUT_LABELS", shell.includes("RECOMMENDATION") && shell.includes("CONFIDENCE") && shell.includes("DECISION FLAGS") && shell.includes("PRIMARY RISK"));
 check("STORAGE_IOPS_RESULT_NO_SEPARATE_SUMMARY_H3", !html.includes(">Storage IOPS result summary</h3>"));
-check("STORAGE_IOPS_RESULT_CACHE_BUST_RAM_PARITY", html.includes("compute-storage-iops-shared-result-card-0704") && html.includes("scopedlabs-compute-shell-contract.js?v=compute-result-card-contract-0704"));
+check("STORAGE_IOPS_RESULT_CACHE_BUST_RAM_PARITY", html.includes("script.js?v=compute-storage-iops-ram-reference-flow-0705"));
 
 // compute-result-card-contract-promotion-audit-0704
 check("COMPUTE_RESULT_CARD_CONTRACT_IN_SHARED_SHELL", shell.includes("compute-result-card-contract-0704") && shell.includes("renderComputeResultCard") && shell.includes("clearComputeResultCard"));
 check("STORAGE_IOPS_USES_SHARED_RESULT_CARD_RENDERER", js.includes("ScopedLabsComputeShellContract.renderComputeResultCard"));
 check("STORAGE_IOPS_USES_SHARED_RESULT_CARD_CLEAR", js.includes("ScopedLabsComputeShellContract.clearComputeResultCard"));
 check("STORAGE_IOPS_COMPUTE_SHELL_CACHE_BUST_RESULT_CARD", html.includes("scopedlabs-compute-shell-contract.js?v=compute-result-card-contract-0704"));
-check("STORAGE_IOPS_SCRIPT_CACHE_BUST_SHARED_RESULT_CARD", html.includes("compute-storage-iops-shared-result-card-0704"));
+check("STORAGE_IOPS_SCRIPT_CACHE_BUST_SHARED_RESULT_CARD", html.includes("script.js?v=compute-storage-iops-ram-reference-flow-0705"));
 
 // storage-iops-icon-envelope-audit-0705
 check("STORAGE_IOPS_ICON_ENVELOPE_MARKER", storageIopsVisualAsset.includes("storage-iops-icon-envelope-polish-0705") || storageIopsVisualAsset.includes("storage-iops-title-risk-polish-0705"));
@@ -90,7 +90,7 @@ check("STORAGE_IOPS_INLINE_ICON_SET_PRESENT", storageIopsVisualAsset.includes("c
 check("STORAGE_IOPS_FOOTER_ICON_CHIPS_PRESENT", storageIopsVisualAsset.includes("StorageIopsIcons.storage") && storageIopsVisualAsset.includes("StorageIopsIcons.workload") && storageIopsVisualAsset.includes("StorageIopsIcons.raid") && storageIopsVisualAsset.includes("StorageIopsIcons.latency") && storageIopsVisualAsset.includes("StorageIopsIcons.block"));
 check("STORAGE_IOPS_HEADROOM_DEFICIT_BRACKET_PRESENT", storageIopsVisualAsset.includes("HEADROOM") && storageIopsVisualAsset.includes("DEFICIT") && storageIopsVisualAsset.includes("bracket-line"));
 check("STORAGE_IOPS_PLATFORM_ZONE_BANDS_PRESENT", storageIopsVisualAsset.includes("band-good") && storageIopsVisualAsset.includes("band-watch") && storageIopsVisualAsset.includes("band-risk"));
-check("STORAGE_IOPS_VISUAL_ASSET_CACHE_BUST_ICON_ENVELOPE", html.includes("scopedlabs-compute-capacity-visuals.js?v=storage-iops-capacity-envelope-locked-promoted-0705"));
+check("STORAGE_IOPS_VISUAL_ASSET_CACHE_BUST_ICON_ENVELOPE", html.includes("scopedlabs-compute-capacity-visuals.js?v=storage-iops-reference-markers-0705"));
 check("STORAGE_IOPS_ICON_ENVELOPE_POLISH_MARKER", storageIopsVisualAsset.includes("storage-iops-icon-envelope-polish-0705"));
 check("STORAGE_IOPS_ICON_ENVELOPE_LARGER_PLOT", storageIopsVisualAsset.includes('const plot = { x: 58, y: 78, w: 646, h: 244 };'));
 check("STORAGE_IOPS_ICON_ENVELOPE_INNER_FRAME_REMOVED", storageIopsVisualAsset.includes('.inner-frame{display:none;}'));
@@ -103,17 +103,25 @@ check("STORAGE_IOPS_ICON_ENVELOPE_STACKED_DEFICIT_LABEL", storageIopsVisualAsset
 check("STORAGE_IOPS_TITLE_SUBTITLE_CENTERED", storageIopsVisualAsset.includes('text-anchor="middle" class="title"') && storageIopsVisualAsset.includes('text-anchor="middle" class="subtitle"'));
 check("STORAGE_IOPS_IOPS_AXIS_LABEL_RETAINED", storageIopsVisualAsset.includes('class="axis-label">IOPS</text>'));
 check("STORAGE_IOPS_TITLE_RISK_POLISH_MARKER", storageIopsVisualAsset.includes("storage-iops-title-risk-polish-0705"));
-check("STORAGE_IOPS_VISUAL_ASSET_CACHE_BUST_TITLE_RISK_POLISH", html.includes("scopedlabs-compute-capacity-visuals.js?v=storage-iops-capacity-envelope-locked-promoted-0705"));
+check("STORAGE_IOPS_VISUAL_ASSET_CACHE_BUST_TITLE_RISK_POLISH", html.includes("scopedlabs-compute-capacity-visuals.js?v=storage-iops-reference-markers-0705"));
 // storage-iops-capacity-envelope-lock-audit-0705
 check("STORAGE_IOPS_CAPACITY_ENVELOPE_LOCKED_PROMOTED", storageIopsVisualAsset.includes("storage-iops-capacity-envelope-locked-promoted-0705"));
 check("STORAGE_IOPS_ACCEPTED_CHART_TITLE_CENTERED", storageIopsVisualAsset.includes('text-anchor="middle" class="title"') && storageIopsVisualAsset.includes('text-anchor="middle" class="subtitle"'));
 check("STORAGE_IOPS_ACCEPTED_INLINE_ICON_CHIPS_LOCKED", storageIopsVisualAsset.includes("StorageIopsIcons.storage") && storageIopsVisualAsset.includes("StorageIopsIcons.workload") && storageIopsVisualAsset.includes("StorageIopsIcons.raid") && storageIopsVisualAsset.includes("StorageIopsIcons.latency") && storageIopsVisualAsset.includes("StorageIopsIcons.block"));
 check("STORAGE_IOPS_ACCEPTED_CAPACITY_BANDS_LOCKED", storageIopsVisualAsset.includes("band-good") && storageIopsVisualAsset.includes("band-watch") && storageIopsVisualAsset.includes("band-risk"));
 check("STORAGE_IOPS_ACCEPTED_HEADROOM_DEFICIT_LOCKED", storageIopsVisualAsset.includes("HEADROOM") && storageIopsVisualAsset.includes("DEFICIT") && storageIopsVisualAsset.includes("bracket-line"));
-check("STORAGE_IOPS_ACCEPTED_SHARED_VISUAL_CACHE_BUST", html.includes("scopedlabs-compute-capacity-visuals.js?v=storage-iops-capacity-envelope-locked-promoted-0705"));
+check("STORAGE_IOPS_ACCEPTED_SHARED_VISUAL_CACHE_BUST", html.includes("scopedlabs-compute-capacity-visuals.js?v=storage-iops-reference-markers-0705"));
 // storage-iops-deficit-label-stack-fix-audit-0705
 check("STORAGE_IOPS_DEFICIT_LABEL_STACK_FIX_MARKER", storageIopsVisualAsset.includes("storage-iops-deficit-label-stack-fix-0705"));
 check("STORAGE_IOPS_DEFICIT_LABEL_STACKED_WITH_TSPANS", storageIopsVisualAsset.includes("bracketLabelPrimary") && storageIopsVisualAsset.includes("bracketLabelValue") && storageIopsVisualAsset.includes("text-anchor=\"start\"") && storageIopsVisualAsset.includes("<tspan"));
+// storage-iops-ram-reference-flow-audit-0705
+check("STORAGE_IOPS_RAM_REFERENCE_FLOW_MARKER", js.includes("storage-iops-ram-reference-flow-0705"));
+check("STORAGE_IOPS_PROOF_STACK_VISIBLE_SUPPRESSED", js.includes("storage-iops-visible-proof-suppressed-0705") && html.includes("data-storage-iops-proof-export-only"));
+check("STORAGE_IOPS_REFERENCES_USE_RAM_TABLE_LAYOUT", html.includes("storage-iops-reference-table-style-0705") && js.includes("renderStorageIopsReferenceTable"));
+check("STORAGE_IOPS_REFERENCES_MATCH_CHART_MARKERS", js.includes('marker: "*1"') && js.includes('reference: "Burst demand"') && js.includes('marker: "*2"') && js.includes('reference: "Required IOPS"') && js.includes('marker: "*3"') && js.includes('reference: "Platform / latency validation"'));
+check("STORAGE_IOPS_CHART_PLATFORM_MARKER_3", storageIopsVisualAsset.includes("Available platform *3"));
+check("STORAGE_IOPS_SCRIPT_CACHE_BUST_RAM_REFERENCE_FLOW", html.includes("script.js?v=compute-storage-iops-ram-reference-flow-0705"));
+check("STORAGE_IOPS_VISUAL_CACHE_BUST_REFERENCE_MARKERS", html.includes("scopedlabs-compute-capacity-visuals.js?v=storage-iops-reference-markers-0705"));
 let pass = 0;
 let fail = 0;
 

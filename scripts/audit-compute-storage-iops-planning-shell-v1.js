@@ -86,26 +86,27 @@ check("STATIC_CONTINUE_TO_STORAGE_THROUGHPUT_PRESENT", html.includes('data-compu
 check("SHELL_CONTRACT_STORAGE_IOPS_ROUTE_PRESENT", shellContract.includes('path.indexOf("/tools/compute/storage-iops/") !== -1') && shellContract.includes('continueHref: "/tools/compute/storage-throughput/"') && shellContract.includes('continueLabel: "Continue &rarr; Storage Throughput"'));
 check("STORAGE_IOPS_NO_CPU_CONTINUE_IN_PAGE", !html.includes("Continue to CPU Sizing"));
 
+// storage-iops-ram-reference-flow-planning-audit-0705
 ordered("RAM_SHELL_SECTION_ORDER_WITH_VISUAL", [
   'id="computeWorkloadContextCard"',
   'id="toolCard"',
   'id="computeInternalResultsLedger"',
   'id="computeAssistantCard"',
   'id="computeStorageIopsVisualCard"',
-  'id="storageIopsProofStackCard"',
   'id="computeStorageIopsReferencesCard"',
   'id="computeStorageIopsRecommendedActionsCard"',
   'id="computeStorageIopsDecisionScheduleCard"',
+  'id="storageIopsProofStackCard"',
   'id="reportMetadataMount"',
   'data-compute-flow-actions="true"'
 ]);
 
 check("STORAGE_IOPS_PLANNING_INPUTS_PRESERVED", html.includes('id="availableIops"') && html.includes('id="peakMultiplier"') && html.includes('id="targetLatency"') && html.includes('id="mediaTier"') && html.includes('id="workloadPattern"'));
-check("STORAGE_IOPS_REFERENCES_VISIBLE", js.includes("*1 Required IOPS") && js.includes("*2 Utilization") && js.includes("*3 Latency"));
+check("STORAGE_IOPS_REFERENCES_VISIBLE", html.includes('id="computeStorageIopsReferencesCard"') && js.includes("renderStorageIopsReferenceTable") && js.includes('marker: "*1"') && js.includes('reference: "Burst demand"') && js.includes('marker: "*2"') && js.includes('reference: "Required IOPS"') && js.includes('marker: "*3"') && js.includes('reference: "Platform / latency validation"'));
 check("STORAGE_IOPS_ACTIONS_RENDERED", js.includes("recommendedActions") && js.includes("decisionSchedule"));
 check("STORAGE_IOPS_LEDGER_PAYLOAD_PRESERVED", js.includes("planningInputs") && js.includes("assistantRecommendation") && js.includes("saveComputeLedgerResult({"));
 check("STORAGE_IOPS_MATH_PRESERVED", js.includes("const finalIops = peakDemandIops + reserveIops + growthReserveIops;"));
-check("STORAGE_IOPS_PROOF_CARD_SCRIPTED", js.includes('proofStackCard: $("storageIopsProofStackCard")') && js.includes("els.proofStackCard.hidden = false"));
+check("STORAGE_IOPS_PROOF_CARD_SCRIPTED", js.includes('proofStackCard: $("storageIopsProofStackCard")') && html.includes("data-storage-iops-proof-export-only") && js.includes("storage-iops-visible-proof-suppressed-0705"));
 check("STORAGE_IOPS_MODULE_MAP_ENTRY", moduleMap.includes("COMPUTE_STORAGE_IOPS_VISUAL_MODULE_0704"));
 
 
