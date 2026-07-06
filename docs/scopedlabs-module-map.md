@@ -1553,3 +1553,5 @@ Promotion note:
 - COMPUTE_STORAGE_EXPLICIT_CLICK_OWNER_0705: Registers a storage-only capture click owner before the guided Summary router. Storage IOPS routes to Storage Throughput and Storage Throughput routes to VM Density using explicit target markers; GPU VRAM remains Summary.
 
 - COMPUTE_STORAGE_THROUGHPUT_SHARED_ASSISTANT_0705: Storage Throughput uses the shared Compute assistant contract for its RAM-style assistant status card through `renderStorageThroughputAssistantStatusCard`, removing page-level assistant card imitation.
+
+- COMPUTE_STORAGE_THROUGHPUT_UI_CONTRACT_0706: Storage Throughput KB pill cleanup, Active Workflow placement below the KB guide, Active Workflow styling, Planning Inputs title normalization, and legacy Flow Context/result-summary hiding are owned by `assets/scopedlabs-compute-shell-contract.js` instead of page-local workaround scripts.

@@ -1023,3 +1023,121 @@ function computeWorkloadToolLabelFromPage() {
   namespace.__computeResultCardContract0704 = true;
 })();
 
+
+// compute-shell-storage-throughput-ui-contract-0706
+(function () {
+  if (window.__ScopedLabsComputeStorageThroughputUiContract0706) return;
+  window.__ScopedLabsComputeStorageThroughputUiContract0706 = true;
+
+  var STYLE_ID = 'scopedlabs-compute-storage-throughput-ui-contract-0706';
+
+  function injectStyle() {
+    if (document.getElementById(STYLE_ID)) return;
+
+    var style = document.createElement('style');
+    style.id = STYLE_ID;
+    style.textContent = [
+      'body[data-step="storage-throughput"] #flow-note { display: none !important; }',
+      'body[data-step="storage-throughput"] #computeStorageThroughputResultCard.storage-throughput-result-summary-card { display: none !important; }',
+      'body[data-step="storage-throughput"] .storage-throughput-active-workflow-card { margin-top: 16px; }',
+      'body[data-step="storage-throughput"] .storage-throughput-active-workflow-card .eyebrow { color: #3fff80; font-weight: 500; letter-spacing: 0.04em; }',
+      'body[data-step="storage-throughput"] .storage-throughput-active-workflow-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }',
+      'body[data-step="storage-throughput"] .storage-throughput-active-workflow-chip { border: 1px solid rgba(63, 255, 128, 0.14); border-radius: 10px; padding: 10px 12px; background: rgba(1, 18, 12, 0.55); min-height: 48px; }',
+      'body[data-step="storage-throughput"] .storage-throughput-active-workflow-chip .mini-label { display: block; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sl-muted, #9fb4ad); margin-bottom: 4px; }',
+      'body[data-step="storage-throughput"] .storage-throughput-active-workflow-chip strong { display: block; font-size: 0.86rem; }',
+      '@media (max-width: 760px) { body[data-step="storage-throughput"] .storage-throughput-active-workflow-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }'
+    ].join('\n');
+
+    document.head.appendChild(style);
+  }
+
+  function normalizeCardText(el) {
+    return (el && el.textContent ? el.textContent : '').replace(/\s+/g, ' ').trim();
+  }
+
+  function findStorageThroughputKbCard() {
+    var cards = Array.from(document.querySelectorAll('section.card, div.card'));
+    return cards.find(function (card) {
+      var text = normalizeCardText(card);
+      return text.indexOf('Storage Throughput Guide') >= 0 && text.indexOf('Open KB Guide') >= 0;
+    }) || null;
+  }
+
+  function hideKbPill(kbCard) {
+    if (!kbCard) return;
+
+    Array.from(kbCard.querySelectorAll('*')).forEach(function (node) {
+      var text = normalizeCardText(node);
+      if (text === 'Knowledge Base' && node.children.length === 0) {
+        node.hidden = true;
+        node.setAttribute('aria-hidden', 'true');
+        node.style.display = 'none';
+      }
+    });
+  }
+
+  function buildStorageThroughputWorkflowCard() {
+    var card = document.createElement('section');
+    card.className = 'card storage-throughput-active-workflow-card';
+    card.setAttribute('data-storage-throughput-active-workflow-card', '0705');
+    card.setAttribute('data-compute-shell-owned-active-workflow', '0706');
+    card.innerHTML = [
+      '<div class="eyebrow">ACTIVE WORKLOAD &rarr; STORAGE THROUGHPUT</div>',
+      '<h2 class="h2" style="margin-top: 8px;">Improving the tools</h2>',
+      '<p class="muted" style="margin-top: 4px;">Production | General | Standard Server</p>',
+      '<div class="storage-throughput-active-workflow-grid" aria-label="Active workload context">',
+      '<div class="storage-throughput-active-workflow-chip"><span class="mini-label">Environment</span><strong>Production</strong></div>',
+      '<div class="storage-throughput-active-workflow-chip"><span class="mini-label">Workload Type</span><strong>VM datastore</strong></div>',
+      '<div class="storage-throughput-active-workflow-chip"><span class="mini-label">Demand Source</span><strong>Storage IOPS</strong></div>',
+      '<div class="storage-throughput-active-workflow-chip"><span class="mini-label">Next Tool</span><strong>VM Density</strong></div>',
+      '<div class="storage-throughput-active-workflow-chip"><span class="mini-label">Transport Path</span><strong>10 GbE / shared path</strong></div>',
+      '<div class="storage-throughput-active-workflow-chip"><span class="mini-label">Media Tier</span><strong>SATA / SAS SSD</strong></div>',
+      '<div class="storage-throughput-active-workflow-chip"><span class="mini-label">Growth Reserve</span><strong>20%</strong></div>',
+      '<div class="storage-throughput-active-workflow-chip"><span class="mini-label">Status</span><strong>Pending Calculation</strong></div>',
+      '</div>'
+    ].join('');
+    return card;
+  }
+
+  function placeStorageThroughputWorkflowCard() {
+    if (!document.body || document.body.getAttribute('data-step') !== 'storage-throughput') return;
+    if (document.querySelector('[data-storage-throughput-active-workflow-card="0705"]')) return;
+
+    var kbCard = findStorageThroughputKbCard();
+    if (!kbCard) return;
+
+    kbCard.insertAdjacentElement('afterend', buildStorageThroughputWorkflowCard());
+  }
+
+  function normalizePlanningInputsTitle() {
+    if (!document.body || document.body.getAttribute('data-step') !== 'storage-throughput') return;
+
+    var toolCard = document.getElementById('toolCard');
+    if (!toolCard) return;
+
+    Array.from(toolCard.querySelectorAll('h1,h2,h3')).forEach(function (heading) {
+      if (normalizeCardText(heading) === 'Inputs') {
+        heading.textContent = 'Planning Inputs';
+      }
+    });
+  }
+
+  function applyContract() {
+    if (!document.body || document.body.getAttribute('data-step') !== 'storage-throughput') return;
+    injectStyle();
+    hideKbPill(findStorageThroughputKbCard());
+    placeStorageThroughputWorkflowCard();
+    normalizePlanningInputsTitle();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyContract);
+  } else {
+    applyContract();
+  }
+
+  window.addEventListener('load', applyContract);
+  window.setTimeout(applyContract, 250);
+  window.setTimeout(applyContract, 900);
+  window.setTimeout(applyContract, 1800);
+})();
