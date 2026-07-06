@@ -177,7 +177,29 @@
   }
 
   // vm-density-tool-upgrade-0706
-  function ensureVmDensityOutputCards() {
+  
+function vmDensityEsc(value) {
+  return String(value == null ? "" : value).replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[char]));
+}
+
+function vmDensityResultRow(label, value) {
+  return '<div class="result-row"><span class="k">' + vmDensityEsc(label) + '</span><span class="v">' + vmDensityEsc(value == null || value === "" ? "Not set" : value) + '</span></div>';
+}
+
+function vmDensityShowCard(card, mount, html) {
+  if (!card || !mount) return false;
+  mount.innerHTML = html || "";
+  card.hidden = false;
+  return true;
+}
+
+function ensureVmDensityOutputCards() {
     return {
       visualCard: els.vmDensityVisualCard,
       visual: els.vmDensityVisual,
@@ -199,17 +221,31 @@
   }
 
   function renderVmDensityCapacityVisual(result) {
-    const cards = ensureVmDensityOutputCards();
-    if (!cards.visual || !cards.visualCard) return false;
+  const cards = ensureVmDensityOutputCards();
+  const visuals = window.ScopedLabsComputeCapacityVisuals || {};
+  let html = "";
 
-    const api = window.ScopedLabsComputeCapacityVisuals;
-    const rendered = api && typeof api.renderVmDensityCapacityEnvelope === "function"
-      ? api.renderVmDensityCapacityEnvelope(cards.visual, result)
-      : false;
-
-    cards.visualCard.hidden = !rendered;
-    return rendered;
+  try {
+    if (typeof visuals.renderVmDensityCapacityEnvelope === "function") {
+      html = visuals.renderVmDensityCapacityEnvelope(result) || "";
+    }
+  } catch (error) {
+    html = "";
   }
+
+  if (!html) {
+    const outputs = result.outputs || {};
+    html = '<div class="results-grid">' +
+      vmDensityResultRow("Status", outputs.status || result.status || "Calculated") +
+      vmDensityResultRow("Modeled VM Capacity", (outputs.vms ?? outputs.modeledVmCapacity ?? "Not set") + " VMs") +
+      vmDensityResultRow("Growth Demand", (outputs.growthAdjustedVmDemand ?? "Not set") + " VMs") +
+      vmDensityResultRow("Primary Constraint", outputs.limiting || outputs.primaryConstraint || "Balanced") +
+      vmDensityResultRow("Capacity Gap", (outputs.capacityGap ?? "Not set") + " VMs") +
+      '</div>';
+  }
+
+  vmDensityShowCard(cards.visualCard, cards.visual, html);
+}
 
   function clearVmDensityCapacityVisual() {
     const cards = ensureVmDensityOutputCards();
@@ -224,31 +260,81 @@
   }
 
   function renderVmDensityReferences(result) {
-    const cards = ensureVmDensityOutputCards();
-    const api = window.ScopedLabsComputeAssistant;
-    if (!cards.references || !cards.referencesCard || !api || typeof api.renderVmDensityRecommendationReferences !== "function") return false;
-    cards.references.innerHTML = api.renderVmDensityRecommendationReferences(result);
-    cards.referencesCard.hidden = false;
-    return true;
+  const cards = ensureVmDensityOutputCards();
+  const assistant = window.ScopedLabsComputeAssistantContract || {};
+  let html = "";
+
+  try {
+    if (typeof assistant.renderVmDensityRecommendationReferences === "function") {
+      html = assistant.renderVmDensityRecommendationReferences(result) || "";
+    }
+  } catch (error) {
+    html = "";
   }
+
+  if (!html) {
+    const outputs = result.outputs || {};
+    const inputs = result.inputs || {};
+    html = '<div class="results-grid">' +
+      vmDensityResultRow("*1 Modeled density", (outputs.vms ?? "Not set") + " VMs modeled from CPU, RAM, reserve, and oversubscription policy") +
+      vmDensityResultRow("*2 Demand basis", (outputs.growthAdjustedVmDemand ?? "Not set") + " growth-adjusted VMs; target " + (inputs.targetVmCount || "not set")) +
+      vmDensityResultRow("*3 Validation limiter", outputs.limiting || outputs.primaryConstraint || "Balanced") +
+      '</div>';
+  }
+
+  vmDensityShowCard(cards.referencesCard, cards.references, html);
+}
 
   function renderVmDensityRecommendedActions(result) {
-    const cards = ensureVmDensityOutputCards();
-    const api = window.ScopedLabsComputeAssistant;
-    if (!cards.recommendedActions || !cards.recommendedActionsCard || !api || typeof api.renderVmDensityRecommendedActions !== "function") return false;
-    cards.recommendedActions.innerHTML = api.renderVmDensityRecommendedActions(result);
-    cards.recommendedActionsCard.hidden = false;
-    return true;
+  const cards = ensureVmDensityOutputCards();
+  const assistant = window.ScopedLabsComputeAssistantContract || {};
+  let html = "";
+
+  try {
+    if (typeof assistant.renderVmDensityRecommendedActions === "function") {
+      html = assistant.renderVmDensityRecommendedActions(result) || "";
+    }
+  } catch (error) {
+    html = "";
   }
 
-  function renderVmDensityDecisionSchedule(result) {
-    const cards = ensureVmDensityOutputCards();
-    const api = window.ScopedLabsComputeAssistant;
-    if (!cards.decisionSchedule || !cards.decisionScheduleCard || !api || typeof api.renderVmDensityDecisionSchedule !== "function") return false;
-    cards.decisionSchedule.innerHTML = api.renderVmDensityDecisionSchedule(result);
-    cards.decisionScheduleCard.hidden = false;
-    return true;
+  if (!html) {
+    const outputs = result.outputs || {};
+    html = '<div class="results-grid">' +
+      vmDensityResultRow("Action 1", "Review the primary constraint before accepting the modeled VM density.") +
+      vmDensityResultRow("Action 2", "Validate host count, HA reserve, maintenance reserve, and growth margin against the planning target.") +
+      vmDensityResultRow("Action 3", "Continue to Power / Thermal after the density model is accepted.") +
+      vmDensityResultRow("Current limiter", outputs.limiting || outputs.primaryConstraint || "Balanced") +
+      '</div>';
   }
+
+  vmDensityShowCard(cards.recommendedActionsCard, cards.recommendedActions, html);
+}
+
+  function renderVmDensityDecisionSchedule(result) {
+  const cards = ensureVmDensityOutputCards();
+  const assistant = window.ScopedLabsComputeAssistantContract || {};
+  let html = "";
+
+  try {
+    if (typeof assistant.renderVmDensityDecisionSchedule === "function") {
+      html = assistant.renderVmDensityDecisionSchedule(result) || "";
+    }
+  } catch (error) {
+    html = "";
+  }
+
+  if (!html) {
+    const routing = result.plannerRouting || {};
+    html = '<div class="results-grid">' +
+      vmDensityResultRow("Planner decision", routing.routeIntent || "continue-to-power-thermal") +
+      vmDensityResultRow("Next tool", routing.nextTool || "power-thermal") +
+      vmDensityResultRow("Next route", routing.nextHref || "/tools/compute/power-thermal/") +
+      '</div>';
+  }
+
+  vmDensityShowCard(cards.decisionScheduleCard, cards.decisionSchedule, html);
+}
 
   function renderVmDensityAssistant(result) {
     const references = renderVmDensityReferences(result);
