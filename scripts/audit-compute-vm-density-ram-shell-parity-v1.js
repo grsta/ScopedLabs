@@ -13,6 +13,11 @@ function before(source, a, b) { const ia = source.indexOf(a); const ib = source.
 
 check("VM_DENSITY_RAM_STATIC_SECTIONS", ["computeVmDensityVisualCard","computeVmDensityReferencesCard","computeVmDensityRecommendedActionsCard","computeVmDensityDecisionScheduleCard","Recommendation References","Assistant Recommended Actions","Decision Schedule"].every((t) => src.html.includes(t)), "VM Density should have RAM-style static output sections.");
 check("VM_DENSITY_RAM_SECTION_ORDER", before(src.html, "computeVmDensityVisualCard", "computeVmDensityReferencesCard") && before(src.html, "computeVmDensityReferencesCard", "computeVmDensityRecommendedActionsCard") && before(src.html, "computeVmDensityRecommendedActionsCard", "computeVmDensityDecisionScheduleCard") && before(src.html, "computeVmDensityDecisionScheduleCard", "exportReport"), "VM Density visible order should be visual, references, actions, schedule, export.");
+check("VM_DENSITY_ASSISTANT_CACHE_BUST",
+  src.html.includes("compute-assistant-vm-density-ram-shell-0706"),
+  "VM Density should load the RAM-shell assistant contract cache-bust."
+);
+
 check("VM_DENSITY_SHARED_ASSISTANT_RENDERERS", ["renderVmDensityRecommendationReferences","renderVmDensityRecommendedActions","renderVmDensityDecisionSchedule","compute-assistant-vm-density-ram-shell-renderers-0706"].every((t) => src.assistant.includes(t)), "Shared Compute assistant contract should own VM Density references/actions/schedule renderers.");
 check("VM_DENSITY_SCRIPT_RENDER_CALLS", ["renderVmDensityCapacityVisual(vmDensityResult)","renderVmDensityReferences(vmDensityResult)","renderVmDensityRecommendedActions(vmDensityResult)","renderVmDensityDecisionSchedule(vmDensityResult)"].every((t) => src.script.includes(t)), "VM Density calculation should render each RAM-style section.");
 check("VM_DENSITY_LEGACY_FLOW_HIDDEN", src.script.includes("prefillStoragePressureFromUpstream();") && !src.script.includes("<strong>Flow Context</strong>") && !src.script.includes("els.flowNote.hidden = false"), "Visible Flow Context should be suppressed while preserving upstream prefill.");
