@@ -371,10 +371,6 @@
       });
     }
 
-    if (!rendered) {
-      rendered = renderVmDensityAssistantFallback(cards.assistant, result);
-    }
-
     if (!rendered || !String(cards.assistant.innerHTML || "").trim()) {
       rendered = renderVmDensityFullShellResult(cards.assistant, result);
     }
@@ -382,9 +378,6 @@
     cards.assistantCard.hidden = !rendered;
     return rendered;
   }
-
-
-
 
   function saveComputeLedgerResult(payload) {
     if (!State || typeof State.recordToolResult !== "function") return null;
