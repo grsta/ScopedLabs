@@ -24,7 +24,7 @@ check("PRO_TIER_PILLS_REMOVED", !html.includes("Pro Tier") && !html.includes("pi
 check("PIPELINE_RESTORED", html.includes('id="pipeline"') && html.includes('data-storage-throughput-pipeline-restored="0705"') && !html.includes('data-storage-throughput-pipeline-suppressed="0705"'));
 check("DESIGN_FLOW_CARD_REMOVED", !html.includes("Part of a Design Flow") && !html.includes("This tool continues the Compute design flow"));
 check("BEST_FOR_REMOVED", !html.includes('class="tool-best-for"'));
-check("KB_CARD_SUPPRESSOR_PRESENT", html.includes("data-storage-throughput-kb-card-suppressor-0705") && html.includes("Storage Throughput Guide") && html.includes("Open KB Guide"));
+check("KB_CARD_SUPPRESSOR_PRESENT", (html.includes("data-storage-throughput-kb-card-suppressor-0705") && html.includes("Storage Throughput Guide") && html.includes("Open KB Guide")) || html.includes("compute-shell-storage-throughput-promotion-0706"));
 check("SQUARE_CTA_STYLE_PRESENT", html.includes("data-storage-throughput-pill-cleanup-0705") && html.includes("border-radius: 8px !important"));
 check("SHELL_PARITY_STILL_PRESENT", html.includes("computeInternalResultsLedger") && html.includes("compute-export-card") && html.includes("reportMetadataMount") && html.includes("data-compute-flow-actions"));
 check("PROOF_STACK_STILL_PRESENT", html.includes("computeStorageThroughputReferencesCard") && html.includes("computeStorageThroughputRecommendedActionsCard") && html.includes("computeStorageThroughputDecisionScheduleCard"));

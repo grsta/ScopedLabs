@@ -966,6 +966,30 @@ hideContinue();
     ];
 
 
+    // storage-throughput-planner-routing-0706
+    const plannerRouting = {
+      branch: "storage",
+      toolRole: "storage-throughput",
+      routeIntent: status === "RISK" ? "planner-review-before-vm-density" : "continue-to-vm-density",
+      nextTool: "vm-density",
+      nextHref: "/tools/compute/vm-density/",
+      plannerAssistantDecisionNeeded: status === "RISK" || status === "WATCH" || dominantConstraint === "Transfer window requirement",
+      decisionBasis: [
+        "Status: " + status,
+        "Dominant constraint: " + dominantConstraint,
+        "Required throughput: " + formatStorageThroughputMBps(requiredThroughputMBps),
+        availableThroughputMBps > 0 ? "Available throughput: " + formatStorageThroughputMBps(availableThroughputMBps) : "Available throughput: not provided",
+        "Transfer window required: " + formatStorageThroughputMBps(transferWindowRequiredMBps)
+      ],
+      specialtyBranchCandidates: [
+        { tool: "nic-bonding", reason: "Use when the storage path is limited by Ethernet/fabric throughput, shared 10/25/40/100 GbE paths, or network-carried storage traffic." },
+        { tool: "backup-window", reason: "Use when dataset size and transfer window dominate required throughput or recovery/backup movement needs proof." },
+        { tool: "storage-iops", reason: "Return when upstream random IOPS pressure, block-size assumptions, or latency-sensitive storage behavior need revalidation." },
+        { tool: "summary", reason: "Use when storage path is complete and no selected downstream branch requires VM Density or specialty validation." }
+      ]
+    };
+
+
     ScopedLabsAnalyzer.renderOutput({
       resultsEl: els.results,
       analysisEl: els.analysisCopy,
@@ -1013,6 +1037,10 @@ hideContinue();
       references,
       recommendedActions,
       decisionSchedule,
+      plannerRouting,
+      plannerAssistantDecisionNeeded: plannerRouting.plannerAssistantDecisionNeeded,
+      plannerRouteHint: plannerRouting.routeIntent,
+      specialtyBranchCandidates: plannerRouting.specialtyBranchCandidates,
       guidance,
       interpretation,
       upstreamRequiredIops: iopsContext && typeof iopsContext.finalIops === "number" ? iopsContext.finalIops : iops

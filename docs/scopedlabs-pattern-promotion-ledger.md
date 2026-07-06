@@ -568,3 +568,27 @@ Promotion rule:
 - COMPUTE_CAPACITY_INLINE_ICON_LIBRARY_0705: Promoted accepted Storage IOPS inline footer icon shapes into the shared Compute Capacity Visuals module. Future capacity-envelope footers should call `buildCapacityFooterStat(...)` with an icon key instead of embedding one-off SVG chip markup in each tool.
 
 - COMPUTE_CAPACITY_GUIDE_LINE_CONTRACT_0705: Promoted full-height checkpoint guide lines and white dashed ceiling/threshold styling into the shared Compute Capacity Visuals module. Future capacity-envelope charts should call `buildCapacityCheckpointGuides(plot, checkpoints)` and `computeCapacityGuideLineStyles()` instead of one-off per-tool guide-line styling.
+
+### COMPUTE-STORAGE-THROUGHPUT-PLANNER-ROUTING-0706
+
+Status: PROMOTED_SHARED_CONTRACT
+
+Changed path:
+- assets/scopedlabs-compute-shell-contract.js
+- tools/compute/storage-throughput/index.html
+- tools/compute/storage-throughput/script.js
+- scripts/audit-compute-storage-throughput-export-payload-v1.js
+- scripts/audit-compute-storage-throughput-shell-parity-v1.js
+- scripts/audit-compute-storage-throughput-top-chrome-cleanup-v1.js
+- scripts/audit-compute-storage-throughput-promotion-closeout-v1.js
+- scripts/run-compute-storage-throughput-promotion-closeout-v1.js
+- docs/scopedlabs-module-map.md
+- docs/scopedlabs-pattern-promotion-ledger.md
+
+Decision:
+- Storage Throughput is promoted as a planner-routing-aware Compute tool, not just a visual shell page.
+- The shell owns KB pill cleanup, Active Workflow placement below the KB guide, generated Flow Context suppression, hidden result-summary behavior, and explicit Storage Throughput -> VM Density flow routing.
+- The local calculator payload now exposes planner-assistant hints for future decisions: continue to VM Density, revisit Storage IOPS, branch to NIC Bonding, branch to Backup Window, or stop at Summary when storage work is complete.
+
+Guardrail:
+- Preserve the accepted Storage Throughput capacity visual, shared assistant status card, KB guide content, export/report/snapshot behavior, auth/checkout, and existing script order.

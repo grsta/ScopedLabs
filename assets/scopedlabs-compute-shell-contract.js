@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "scopedlabs-compute-shell-contract-016-flow-context-observer";
+  var VERSION = "scopedlabs-compute-shell-contract-017-storage-throughput-promotion";
 
   function isComputeShellPage() {
     var body = document.body;
@@ -98,56 +98,6 @@
 
 
   
-  function hideGeneratedFlowContext() {
-    if (!isComputeShellPage()) return;
-
-    var candidates = [];
-
-    var direct = document.getElementById("flow-note");
-    if (direct) candidates.push(direct);
-
-    Array.from(document.querySelectorAll(".flow-note, [data-compute-flow-context], [data-flow-context]")).forEach(function (node) {
-      if (candidates.indexOf(node) === -1) candidates.push(node);
-    });
-
-    Array.from(document.querySelectorAll("section, div, p")).forEach(function (node) {
-      if (candidates.indexOf(node) !== -1) return;
-
-      var text = String(node.textContent || "").replace(/\s+/g, " ").trim();
-      if (!text) return;
-
-      var className = String(node.className || "").toLowerCase();
-      var id = String(node.id || "").toLowerCase();
-
-      var looksLikeGeneratedFlowContext =
-        /^flow context\b/i.test(text) ||
-        (
-          text.indexOf("Recommended RAM:") !== -1 &&
-          text.indexOf("Memory Status:") !== -1 &&
-          text.length < 900
-        ) ||
-        (
-          (className.indexOf("flow") !== -1 || id.indexOf("flow") !== -1) &&
-          text.indexOf("Primary Constraint:") !== -1 &&
-          text.length < 900
-        );
-
-      if (looksLikeGeneratedFlowContext) {
-        candidates.push(node);
-      }
-    });
-
-    candidates.forEach(function (node) {
-      node.hidden = true;
-      node.setAttribute("hidden", "");
-      node.setAttribute("aria-hidden", "true");
-      node.setAttribute("data-compute-flow-context-hidden", "compute-shell-contract");
-      node.style.display = "none";
-      node.style.visibility = "hidden";
-    });
-  }
-
-
   function installGeneratedFlowContextCssGuard() {
     if (!isComputeShellPage()) return;
 
@@ -232,7 +182,6 @@
     window.__scopedlabsComputeFlowContextObserverInstalled = true;
 
     hideGeneratedFlowContext();
-    watchGeneratedFlowContext();
 
     var observer = new MutationObserver(function () {
       hideGeneratedFlowContext();
@@ -334,6 +283,19 @@ function computeWorkloadToolLabelFromPage() {
 
 
 
+
+
+    if (path.indexOf("/tools/compute/storage-throughput/") !== -1) {
+      return {
+        tool: "storage-throughput",
+        backHref: "/tools/compute/storage-iops/",
+        backLabel: "Back to Storage IOPS",
+        continueHref: "/tools/compute/vm-density/",
+        continueLabel: "Continue &rarr; VM Density",
+        continueElement: "button",
+        disabled: true
+      };
+    }
     if (path.indexOf("/tools/compute/gpu-vram/") !== -1) {
       return {
         tool: "gpu-vram",
@@ -427,8 +389,7 @@ function computeWorkloadToolLabelFromPage() {
     var existing = document.querySelector('.compute-flow-actions[data-compute-flow-owner="compute-shell-contract"][data-compute-flow-tool="' + config.tool + '"]');
     if (existing && existing.getAttribute("data-compute-flow-placed") === "true") {
       hideGeneratedFlowContext();
-    normalizeFlowActions();
-    ensureFlowActionsPlacement();
+      normalizeFlowActions();
       return;
     }
 
@@ -449,6 +410,7 @@ function computeWorkloadToolLabelFromPage() {
 
     if (/storage\s+iops/i.test(text)) return "Continue &rarr; Storage IOPS";
     if (/storage\s+throughput/i.test(text)) return "Continue &rarr; Storage Throughput";
+    if (/vm\s+density/i.test(text)) return "Continue &rarr; VM Density";
     if (/ram\s+sizing/i.test(text)) return "Continue &rarr; RAM Sizing";
 
     return text ? text.replace(/\s+\?\s+/g, " &rarr; ") : "Continue &rarr; Next Step";
@@ -1140,4 +1102,202 @@ function computeWorkloadToolLabelFromPage() {
   window.setTimeout(applyContract, 250);
   window.setTimeout(applyContract, 900);
   window.setTimeout(applyContract, 1800);
+})();
+
+// compute-shell-storage-throughput-planner-ui-overlay-0706
+(function () {
+  if (window.__ScopedLabsComputeStorageThroughputPlannerUiOverlay0706) return;
+  window.__ScopedLabsComputeStorageThroughputPlannerUiOverlay0706 = true;
+
+  var STYLE_ID = "scopedlabs-compute-storage-throughput-planner-ui-overlay-0706";
+
+  function isStorageThroughputPage() {
+    return !!(document.body && document.body.getAttribute("data-step") === "storage-throughput");
+  }
+
+  function injectStyle() {
+    if (!isStorageThroughputPage() || document.getElementById(STYLE_ID)) return;
+    var style = document.createElement("style");
+    style.id = STYLE_ID;
+    style.textContent = [
+      'body[data-step="storage-throughput"] #flow-note { display: none !important; visibility: hidden !important; }',
+      'body[data-step="storage-throughput"] #computeStorageThroughputResultCard.storage-throughput-result-summary-card { display: none !important; visibility: hidden !important; }',
+      'body[data-step="storage-throughput"] .storage-throughput-active-workflow-card { margin-top: 16px; }',
+      'body[data-step="storage-throughput"] .storage-throughput-active-workflow-card .eyebrow { color: #3fff80; font-weight: 500; letter-spacing: 0.04em; }',
+      'body[data-step="storage-throughput"] .storage-throughput-active-workflow-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }',
+      'body[data-step="storage-throughput"] .storage-throughput-active-workflow-chip { border: 1px solid rgba(63, 255, 128, 0.14); border-radius: 10px; padding: 10px 12px; background: rgba(1, 18, 12, 0.55); min-height: 48px; }',
+      'body[data-step="storage-throughput"] .storage-throughput-active-workflow-chip .mini-label { display: block; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sl-muted, #9fb4ad); margin-bottom: 4px; }',
+      'body[data-step="storage-throughput"] .storage-throughput-active-workflow-chip strong { display: block; font-size: 0.86rem; }',
+      '@media (max-width: 760px) { body[data-step="storage-throughput"] .storage-throughput-active-workflow-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }'
+    ].join("\n");
+    document.head.appendChild(style);
+  }
+
+  function textOf(el) {
+    return (el && el.textContent ? el.textContent : "").replace(/\s+/g, " ").trim();
+  }
+
+  function selectedText(id, fallback) {
+    var el = document.getElementById(id);
+    if (!el) return fallback || "Not set";
+    if (el.options && el.selectedIndex >= 0) return textOf(el.options[el.selectedIndex]) || fallback || "Not set";
+    return String(el.value || "").trim() || fallback || "Not set";
+  }
+
+  function inputValue(id, suffix, fallback) {
+    var el = document.getElementById(id);
+    var value = el ? String(el.value || "").trim() : "";
+    return value ? value + (suffix || "") : fallback || "Not set";
+  }
+
+  function readActiveWorkload() {
+    var State = window.ScopedLabsComputePlanState || {};
+    var context = null;
+    var workload = null;
+
+    try { if (typeof State.getGuidedFlowContext === "function") context = State.getGuidedFlowContext(); } catch (error) { context = null; }
+    if (context && context.workload && typeof context.workload === "object") workload = context.workload;
+    try { if (!workload && typeof State.getActiveWorkload === "function") workload = State.getActiveWorkload(); } catch (error) { workload = workload || null; }
+    try { if (!workload && typeof State.getCurrentWorkload === "function") workload = State.getCurrentWorkload(); } catch (error) { workload = workload || null; }
+
+    return workload && typeof workload === "object" ? workload : {};
+  }
+
+  function workloadValue(workload, keys, fallback) {
+    for (var i = 0; i < keys.length; i += 1) {
+      var key = keys[i];
+      if (workload[key] != null && String(workload[key]).trim()) return String(workload[key]).trim();
+    }
+    return fallback;
+  }
+
+  function workflowData() {
+    var workload = readActiveWorkload();
+    var environment = workloadValue(workload, ["environmentLabel", "environment", "criticality"], "Active workload");
+    var workloadType = selectedText("workloadType", workloadValue(workload, ["workloadTypeLabel", "workloadType"], "VM datastore"));
+
+    return {
+      title: workloadValue(workload, ["name", "title", "workloadName", "label"], "Active Workflow"),
+      summary: environment + " | " + workloadType + " | Storage Throughput",
+      environment: environment,
+      workloadType: workloadType,
+      demandSource: workloadValue(workload, ["primaryConstraint", "constraint", "demandSource"], "Storage IOPS"),
+      nextTool: "VM Density",
+      transportPath: selectedText("transportPath", "10 GbE / shared path"),
+      mediaTier: selectedText("mediaTier", "SATA / SAS SSD"),
+      growthReserve: inputValue("growthPct", "%", "20%"),
+      status: "Pending Calculation"
+    };
+  }
+
+  function findKbCard() {
+    var cards = Array.from(document.querySelectorAll("section.card, div.card"));
+    return cards.find(function (card) {
+      var text = textOf(card);
+      return text.indexOf("Storage Throughput Guide") >= 0 && text.indexOf("Open KB Guide") >= 0;
+    }) || document.getElementById("scopedlabs-help") || null;
+  }
+
+  function hideKbPill(card) {
+    if (!card) return;
+    Array.from(card.querySelectorAll("*")).forEach(function (node) {
+      if (node.children.length === 0 && textOf(node) === "Knowledge Base") {
+        node.hidden = true;
+        node.setAttribute("aria-hidden", "true");
+        node.style.display = "none";
+      }
+    });
+  }
+
+  function buildCard() {
+    var card = document.createElement("section");
+    card.className = "card storage-throughput-active-workflow-card";
+    card.setAttribute("data-storage-throughput-active-workflow-card", "0706");
+    card.setAttribute("data-compute-shell-owned-active-workflow", "0706");
+    card.setAttribute("data-compute-planner-routing-context", "storage-throughput-0706");
+    card.innerHTML = [
+      '<div class="eyebrow">ACTIVE WORKFLOW &rarr; STORAGE THROUGHPUT</div>',
+      '<h2 class="h2" style="margin-top: 8px;" data-storage-throughput-workflow-title>Active Workflow</h2>',
+      '<p class="muted" style="margin-top: 4px;" data-storage-throughput-workflow-summary>Storage Throughput uses the active workload context and carries storage-path decisions into the next Compute step.</p>',
+      '<div class="storage-throughput-active-workflow-grid" aria-label="Active workload context">',
+      '<div class="storage-throughput-active-workflow-chip"><span class="mini-label">Environment</span><strong data-storage-throughput-workflow-value="environment">Active workload</strong></div>',
+      '<div class="storage-throughput-active-workflow-chip"><span class="mini-label">Workload Type</span><strong data-storage-throughput-workflow-value="workloadType">VM datastore</strong></div>',
+      '<div class="storage-throughput-active-workflow-chip"><span class="mini-label">Demand Source</span><strong data-storage-throughput-workflow-value="demandSource">Storage IOPS</strong></div>',
+      '<div class="storage-throughput-active-workflow-chip"><span class="mini-label">Next Tool</span><strong data-storage-throughput-workflow-value="nextTool">VM Density</strong></div>',
+      '<div class="storage-throughput-active-workflow-chip"><span class="mini-label">Transport Path</span><strong data-storage-throughput-workflow-value="transportPath">10 GbE / shared path</strong></div>',
+      '<div class="storage-throughput-active-workflow-chip"><span class="mini-label">Media Tier</span><strong data-storage-throughput-workflow-value="mediaTier">SATA / SAS SSD</strong></div>',
+      '<div class="storage-throughput-active-workflow-chip"><span class="mini-label">Growth Reserve</span><strong data-storage-throughput-workflow-value="growthReserve">20%</strong></div>',
+      '<div class="storage-throughput-active-workflow-chip"><span class="mini-label">Status</span><strong data-storage-throughput-workflow-value="status">Pending Calculation</strong></div>',
+      '</div>'
+    ].join("");
+    return card;
+  }
+
+  function setValue(card, key, value) {
+    var node = card.querySelector('[data-storage-throughput-workflow-value="' + key + '"]');
+    if (node) node.textContent = value;
+  }
+
+  function updateCard() {
+    if (!isStorageThroughputPage()) return;
+    var card = document.querySelector('[data-storage-throughput-active-workflow-card="0706"]');
+    if (!card) return;
+
+    var data = workflowData();
+    var title = card.querySelector("[data-storage-throughput-workflow-title]");
+    var summary = card.querySelector("[data-storage-throughput-workflow-summary]");
+    if (title) title.textContent = data.title;
+    if (summary) summary.textContent = data.summary;
+    setValue(card, "environment", data.environment);
+    setValue(card, "workloadType", data.workloadType);
+    setValue(card, "demandSource", data.demandSource);
+    setValue(card, "nextTool", data.nextTool);
+    setValue(card, "transportPath", data.transportPath);
+    setValue(card, "mediaTier", data.mediaTier);
+    setValue(card, "growthReserve", data.growthReserve);
+    setValue(card, "status", data.status);
+  }
+
+  function ensureCard() {
+    if (!isStorageThroughputPage()) return;
+    injectStyle();
+
+    var kbCard = findKbCard();
+    hideKbPill(kbCard);
+
+    var current = document.querySelector('[data-storage-throughput-active-workflow-card]');
+    if (current && current.getAttribute("data-storage-throughput-active-workflow-card") !== "0706") {
+      var replacement = buildCard();
+      current.parentNode.replaceChild(replacement, current);
+      current = replacement;
+    }
+
+    if (!current && kbCard) {
+      current = buildCard();
+      kbCard.insertAdjacentElement("afterend", current);
+    }
+
+    updateCard();
+  }
+
+  function bind() {
+    if (window.__ScopedLabsComputeStorageThroughputPlannerUiRefresh0706) return;
+    window.__ScopedLabsComputeStorageThroughputPlannerUiRefresh0706 = true;
+    document.addEventListener("input", updateCard, true);
+    document.addEventListener("change", updateCard, true);
+    window.addEventListener("scopedlabs:compute:workload-plan-change", updateCard);
+  }
+
+  function run() {
+    ensureCard();
+    bind();
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", run, { once: true });
+  else run();
+
+  window.addEventListener("load", run);
+  window.setTimeout(run, 250);
+  window.setTimeout(run, 900);
+  window.setTimeout(run, 1800);
 })();

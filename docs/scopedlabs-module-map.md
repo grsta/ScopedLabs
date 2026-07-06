@@ -1555,3 +1555,15 @@ Promotion note:
 - COMPUTE_STORAGE_THROUGHPUT_SHARED_ASSISTANT_0705: Storage Throughput uses the shared Compute assistant contract for its RAM-style assistant status card through `renderStorageThroughputAssistantStatusCard`, removing page-level assistant card imitation.
 
 - COMPUTE_STORAGE_THROUGHPUT_UI_CONTRACT_0706: Storage Throughput KB pill cleanup, Active Workflow placement below the KB guide, Active Workflow styling, Planning Inputs title normalization, and legacy Flow Context/result-summary hiding are owned by `assets/scopedlabs-compute-shell-contract.js` instead of page-local workaround scripts.
+
+### COMPUTE_STORAGE_THROUGHPUT_PLANNER_ROUTING_0706
+
+- Scope: Storage Throughput promotion closeout and future planner-assistant routing readiness.
+- Owners:
+  - `assets/scopedlabs-compute-shell-contract.js` owns Storage Throughput KB pill cleanup, Active Workflow placement, generated Flow Context suppression, result-summary hiding, and the Storage Throughput -> VM Density flow action.
+  - `tools/compute/storage-throughput/script.js` publishes `plannerRouting`, `plannerAssistantDecisionNeeded`, and `specialtyBranchCandidates` in the Storage Throughput payload so the Workload Planner can later choose direct continuation, storage revalidation, specialty branches, or Summary stop logic.
+  - `assets/scopedlabs-compute-capacity-visuals.js` remains the Storage Throughput Capacity Envelope visual owner.
+  - `assets/scopedlabs-compute-assistant-contract.js` remains the Storage Throughput assistant card owner.
+- Audit: `scripts/audit-compute-storage-throughput-promotion-closeout-v1.js`.
+- Closeout runner: `scripts/run-compute-storage-throughput-promotion-closeout-v1.js`.
+- Guardrail: This is a promotion/contract lane. Do not reopen the accepted Storage Throughput chart math, KB guide content, export/snapshot flow, auth, checkout, or Compute Summary behavior without a specific bug.
