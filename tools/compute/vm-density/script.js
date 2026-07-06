@@ -23,6 +23,7 @@
 
   let hasResult = false;
   let upstreamContext = null;
+  let storagePressurePrefilled = false;
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
 
@@ -35,6 +36,16 @@
     cpuOver: $("cpuOver"),
     ramOver: $("ramOver"),
     spare: $("spare"),
+    hostCount: $("hostCount"),
+    haPolicy: $("haPolicy"),
+    maintenanceReservePct: $("maintenanceReservePct"),
+    targetVmCount: $("targetVmCount"),
+    growthPct: $("growthPct"),
+    workloadMix: $("workloadMix"),
+    burstRisk: $("burstRisk"),
+    storagePressure: $("storagePressure"),
+    gpuWorkload: $("gpuWorkload"),
+    backupPressure: $("backupPressure"),
     results: $("results"),
     flowNote: $("flow-note"),
     analysisCopy: $("analysis-copy"),
@@ -98,6 +109,30 @@
     if (els.continue) els.continue.disabled = true;
   }
 
+  function boolSelectValue(node) {
+    return String(node?.value || "no").toLowerCase() === "yes";
+  }
+
+  function getHaReservedHosts(hostCount, haPolicy) {
+    if (haPolicy === "n2") return Math.min(2, Math.max(0, hostCount - 1));
+    if (haPolicy === "n1") return Math.min(1, Math.max(0, hostCount - 1));
+    return 0;
+  }
+
+  function prefillStoragePressureFromUpstream() {
+    if (!els.storagePressure || !upstreamContext) return;
+    if (storagePressurePrefilled || els.storagePressure.value !== "normal") return;
+
+    const status = String(upstreamContext.status || upstreamContext.summaryStatus || "").toLowerCase();
+    if (status.includes("risk")) {
+      els.storagePressure.value = "risk";
+      storagePressurePrefilled = true;
+    } else if (status.includes("watch") || status.includes("review")) {
+      els.storagePressure.value = "watch";
+      storagePressurePrefilled = true;
+    }
+  }
+
   function refreshFlowNote() {
     const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
     if (!raw) {
@@ -125,6 +160,7 @@
     }
 
     upstreamContext = parsed.data || {};
+    prefillStoragePressureFromUpstream();
 
     const rows = [];
     if (typeof upstreamContext.finalMBps === "number") rows.push(`Required Throughput: <strong>${Number(upstreamContext.finalMBps).toFixed(1)} MB/s</strong>`);
@@ -284,16 +320,37 @@
     const ramOver = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.ramOver.value, 1));
     const spare = ScopedLabsAnalyzer.clamp(ScopedLabsAnalyzer.safeNumber(els.spare.value, 0), 0, 80);
 
-    const cpuPool = hostCores * (1 - spare / 100) * cpuOver;
-    const ramPool = Math.max(0, (hostRam - reserve)) * (1 - spare / 100) * ramOver;
+    const hostCount = Math.max(1, Math.round(ScopedLabsAnalyzer.safeNumber(els.hostCount.value, 1)));
+    const haPolicy = String(els.haPolicy.value || "none");
+    const maintenanceReservePct = ScopedLabsAnalyzer.clamp(ScopedLabsAnalyzer.safeNumber(els.maintenanceReservePct.value, 0), 0, 50);
+    const targetVmCount = Math.max(0, Math.round(ScopedLabsAnalyzer.safeNumber(els.targetVmCount.value, 0)));
+    const growthPct = ScopedLabsAnalyzer.clamp(ScopedLabsAnalyzer.safeNumber(els.growthPct.value, 20), 0, 300);
+    const workloadMix = String(els.workloadMix.value || "mixed");
+    const burstRisk = String(els.burstRisk.value || "normal");
+    const storagePressure = String(els.storagePressure.value || "normal");
+    const gpuWorkload = boolSelectValue(els.gpuWorkload);
+    const backupPressure = boolSelectValue(els.backupPressure);
+
+    const haReservedHosts = getHaReservedHosts(hostCount, haPolicy);
+    const usableHostCount = Math.max(1, hostCount - haReservedHosts);
+    const maintenanceFactor = 1 - (maintenanceReservePct / 100);
+    const baseCpuPoolPerHost = hostCores * (1 - spare / 100) * cpuOver;
+    const baseRamPoolPerHost = Math.max(0, hostRam - reserve) * (1 - spare / 100) * ramOver;
+    const cpuPool = baseCpuPoolPerHost * usableHostCount * maintenanceFactor;
+    const ramPool = baseRamPoolPerHost * usableHostCount * maintenanceFactor;
 
     const cpuVMs = Math.floor(cpuPool / vmCpu);
     const ramVMs = Math.floor(ramPool / vmRam);
 
     const vms = Math.max(0, Math.min(cpuVMs, ramVMs));
+    const plannedVmDemand = targetVmCount > 0 ? targetVmCount : vms;
+    const growthAdjustedVmDemand = targetVmCount > 0
+      ? Math.ceil(plannedVmDemand * (1 + growthPct / 100))
+      : plannedVmDemand;
+    const capacityGapVms = vms - growthAdjustedVmDemand;
 
-    const cpuConsumption = vms * vmCpu;
-    const ramConsumption = vms * vmRam;
+    const cpuConsumption = growthAdjustedVmDemand * vmCpu;
+    const ramConsumption = growthAdjustedVmDemand * vmRam;
 
     const effectiveCpuHeadroom = Math.max(0, cpuPool - cpuConsumption);
     const effectiveRamHeadroom = Math.max(0, ramPool - ramConsumption);
@@ -303,7 +360,7 @@
 
     let storageDensityPressure = 22;
     if (upstreamContext && typeof upstreamContext.finalMBps === "number") {
-      storageDensityPressure = Math.min(160, upstreamContext.finalMBps / Math.max(vms, 1));
+      storageDensityPressure = Math.min(160, upstreamContext.finalMBps / Math.max(growthAdjustedVmDemand, 1));
     }
 
     const metrics = [
@@ -336,6 +393,44 @@
       healthyMax: 65,
       watchMax: 85
     });
+
+    const planningPressureFlags = [];
+    if (targetVmCount > 0 && capacityGapVms < 0) {
+      planningPressureFlags.push("target-demand-exceeds-modeled-density");
+    } else if (targetVmCount > 0 && capacityGapVms <= Math.max(1, Math.ceil(growthAdjustedVmDemand * 0.1))) {
+      planningPressureFlags.push("target-demand-near-density-ceiling");
+    }
+    if (burstRisk === "high") {
+      planningPressureFlags.push("high-burst-or-noisy-neighbor-risk");
+    } else if (burstRisk === "elevated") {
+      planningPressureFlags.push("elevated-burst-or-noisy-neighbor-risk");
+    }
+    if (storagePressure === "risk") {
+      planningPressureFlags.push("storage-pressure-risk-from-prior-compute-tools");
+    } else if (storagePressure === "watch") {
+      planningPressureFlags.push("storage-pressure-watch-from-prior-compute-tools");
+    }
+    if (gpuWorkload) planningPressureFlags.push("gpu-vgpu-specialty-branch-possible");
+    if (backupPressure) planningPressureFlags.push("backup-replication-pressure-possible");
+
+    if (
+      (targetVmCount > 0 && capacityGapVms < 0) ||
+      burstRisk === "high" ||
+      storagePressure === "risk"
+    ) {
+      analyzer.status = "RISK";
+    } else if (
+      analyzer.status !== "RISK" &&
+      (
+        planningPressureFlags.length > 0 ||
+        burstRisk === "elevated" ||
+        storagePressure === "watch" ||
+        gpuWorkload ||
+        backupPressure
+      )
+    ) {
+      analyzer.status = "WATCH";
+    }
 
     let limiting = "Balanced";
     if (cpuVMs < ramVMs) limiting = "CPU";
@@ -385,8 +480,15 @@
         `Rework the density target before continuing. The primary limiter is ${dominantConstraint.toLowerCase()}, so consolidation headroom will collapse there first. Lower per-VM allocation, add host capacity, or reduce oversubscription pressure.`;
     }
 
+    if (planningPressureFlags.length) {
+      guidance += " Planning flags: " + planningPressureFlags.join(", ") + ".";
+    }
+
     const summaryRows = [
       { label: "VM Capacity", value: `${vms}` },
+      { label: "Target Demand", value: targetVmCount > 0 ? `${targetVmCount}` : "Not set" },
+      { label: "Growth Demand", value: `${growthAdjustedVmDemand}` },
+      { label: "Usable Hosts", value: `${usableHostCount}` },
       { label: "CPU Limit", value: `${cpuVMs}` },
       { label: "RAM Limit", value: `${ramVMs}` },
       { label: "CPU Pool", value: `${cpuPool.toFixed(1)} vCPU-eq` },
@@ -397,6 +499,10 @@
     const derivedRows = [
       { label: "Density Class", value: densityClass },
       { label: "Primary Constraint", value: limiting },
+      { label: "HA Policy", value: haPolicy.toUpperCase() },
+      { label: "Capacity Gap", value: `${capacityGapVms} VMs` },
+      { label: "Workload Mix", value: workloadMix },
+      { label: "Risk Factors", value: planningPressureFlags.length ? String(planningPressureFlags.length) : "None" },
       { label: "Cross-Check", value: crossCheck },
       { label: "CPU Headroom", value: `${effectiveCpuHeadroom.toFixed(1)} vCPU-eq` },
       { label: "RAM Headroom", value: `${effectiveRamHeadroom.toFixed(1)} GB` }
@@ -431,9 +537,12 @@
         )
       }
     });
-
-        const vmDensityStatus = String(analyzer.status || "").toUpperCase();
-    const vmDensityPlannerReviewNeeded = ["RISK", "WATCH", "REVIEW"].includes(vmDensityStatus) || limiting !== "Balanced";
+    const vmDensityStatus = String(analyzer.status || "").toUpperCase();
+    const vmDensityPlannerReviewNeeded =
+      ["RISK", "WATCH", "REVIEW"].includes(vmDensityStatus) ||
+      limiting !== "Balanced" ||
+      planningPressureFlags.length > 0 ||
+      (targetVmCount > 0 && capacityGapVms < 0);
     const plannerRouting = {
       branch: "compute-density",
       toolRole: "vm-density",
@@ -446,6 +555,16 @@
         "Modeled VM density: " + vms + " VMs",
         "Limiting factor: " + limiting,
         "Density class: " + densityClass,
+        "Planned hosts: " + hostCount,
+        "Usable hosts after HA: " + usableHostCount,
+        "HA policy: " + haPolicy.toUpperCase(),
+        "Maintenance reserve: " + maintenanceReservePct.toFixed(0) + "%",
+        "Target VM demand: " + (targetVmCount > 0 ? targetVmCount : "not set"),
+        "Growth-adjusted demand: " + growthAdjustedVmDemand,
+        "Capacity gap: " + capacityGapVms + " VMs",
+        "Workload mix: " + workloadMix,
+        "Burst risk: " + burstRisk,
+        "Storage pressure: " + storagePressure,
         "CPU limit: " + cpuVMs + " VMs",
         "RAM limit: " + ramVMs + " VMs",
         "Spare policy: " + spare.toFixed(0) + "%"
@@ -479,10 +598,27 @@
         vmRamGb: vmRam,
         cpuOvercommitRatio: cpuOver,
         ramOvercommitRatio: ramOver,
-        sparePolicyPercent: spare
+        sparePolicyPercent: spare,
+        hostCount,
+        haPolicy,
+        haReservedHosts,
+        maintenanceReservePct,
+        targetVmCount,
+        growthPct,
+        workloadMix,
+        burstRisk,
+        storagePressure,
+        gpuWorkload,
+        backupPressure
       },
       outputs: {
         vms,
+        plannedVmDemand,
+        growthAdjustedVmDemand,
+        capacityGapVms,
+        usableHostCount,
+        baseCpuPoolPerHost: Number(baseCpuPoolPerHost.toFixed(1)),
+        baseRamPoolPerHost: Number(baseRamPoolPerHost.toFixed(1)),
         cpuLimitVms: cpuVMs,
         ramLimitVms: ramVMs,
         cpuPoolVcpu: Number(cpuPool.toFixed(1)),
@@ -504,6 +640,7 @@
       plannerRouteHint: plannerRouting.routeIntent,
       specialtyBranchCandidates: plannerRouting.specialtyBranchCandidates,
       futureGoldTierDependencies: plannerRouting.futureGoldTierDependencies,
+      planningPressureFlags,
       assistantRecommendation: {
         recommendation: guidance,
         interpretation,
@@ -512,7 +649,8 @@
         plannerAssistantDecisionNeeded: plannerRouting.plannerAssistantDecisionNeeded,
         plannerRouteHint: plannerRouting.routeIntent,
         specialtyBranchCandidates: plannerRouting.specialtyBranchCandidates,
-        futureGoldTierDependencies: plannerRouting.futureGoldTierDependencies
+        futureGoldTierDependencies: plannerRouting.futureGoldTierDependencies,
+        planningPressureFlags
       },
       updatedAt: new Date().toISOString()
     };
@@ -547,10 +685,41 @@ ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
     els.cpuOver.value = 3;
     els.ramOver.value = 1.1;
     els.spare.value = 15;
+    els.hostCount.value = 1;
+    els.haPolicy.value = "none";
+    els.maintenanceReservePct.value = 0;
+    els.targetVmCount.value = 0;
+    els.growthPct.value = 20;
+    els.workloadMix.value = "mixed";
+    els.burstRisk.value = "normal";
+    els.storagePressure.value = "normal";
+    storagePressurePrefilled = false;
+    els.gpuWorkload.value = "no";
+    els.backupPressure.value = "no";
+    prefillStoragePressureFromUpstream();
     invalidate();
   });
 
-  ["hostCores","hostRam","reserve","vmCpu","vmRam","cpuOver","ramOver","spare"].forEach((id) => {
+  [
+    "hostCores",
+    "hostRam",
+    "reserve",
+    "vmCpu",
+    "vmRam",
+    "cpuOver",
+    "ramOver",
+    "spare",
+    "hostCount",
+    "haPolicy",
+    "maintenanceReservePct",
+    "targetVmCount",
+    "growthPct",
+    "workloadMix",
+    "burstRisk",
+    "storagePressure",
+    "gpuWorkload",
+    "backupPressure"
+  ].forEach((id) => {
     $(id).addEventListener("input", invalidate);
     $(id).addEventListener("change", invalidate);
   });
@@ -562,7 +731,10 @@ ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
 
   window.addEventListener("DOMContentLoaded", () => {
     
-    normalizeVmDensityPlanningInputsHeading();const year = document.querySelector("[data-year]");
+    normalizeVmDensityPlanningInputsHeading();
+    prefillStoragePressureFromUpstream();
+
+    const year = document.querySelector("[data-year]");
     if (year) year.textContent = new Date().getFullYear();
 
     unlockCategoryPage();

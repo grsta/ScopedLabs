@@ -673,3 +673,28 @@ Decision:
 
 Guardrail:
 - This is the tool upgrade foundation. A later shell-promotion lane may align the page more closely to the Storage Throughput visual shell after this payload/assistant/visual contract is proven.
+
+### COMPUTE-VM-DENSITY-PLANNING-INPUTS-0706
+
+Status: TOOL_VISIBLE_INPUTS_PROMOTED
+
+Changed path:
+- tools/compute/vm-density/index.html
+- tools/compute/vm-density/script.js
+- scripts/audit-compute-vm-density-planning-inputs-v1.js
+- scripts/run-compute-vm-density-planning-inputs-v1.js
+- scripts/audit-compute-vm-density-tool-upgrade-v1.js
+- docs/scopedlabs-module-map.md
+- docs/scopedlabs-pattern-promotion-ledger.md
+
+Decision:
+- VM Density now exposes planning-grade visible inputs for host count, HA reserve, maintenance reserve, target demand, growth, workload mix, burst/noisy-neighbor risk, upstream storage pressure, GPU/vGPU branch likelihood, and backup/replication pressure.
+- Host count, HA reserve, and maintenance reserve affect modeled CPU/RAM pool.
+- Target demand and growth produce a capacity gap and can trigger planner review.
+- Storage Throughput status can prefill the VM Density storage pressure field.
+- Existing help.js KB ownership remains intact and no duplicate static KB card is added.
+
+Guardrail:
+- Active VM Density branches remain inside Compute.
+- Electrical, cooling, rack, and switching concerns remain future Gold-tier handoff notes.
+- This lane adds planning inputs and payload evidence; full Storage Throughput-style shell promotion remains a separate follow-up lane.

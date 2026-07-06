@@ -1635,3 +1635,20 @@ Promotion note:
   - Electrical/power design, cooling/rack environment, and network switching design are preserved only as future Gold-tier handoff notes, not active VM Density branches.
 - Audit: `scripts/audit-compute-vm-density-tool-upgrade-v1.js`.
 - Runner: `scripts/run-compute-vm-density-tool-upgrade-v1.js`.
+
+### COMPUTE_VM_DENSITY_PLANNING_INPUTS_0706
+
+- Scope: VM Density visible Planning Inputs upgrade before full shell promotion.
+- Inputs added: Planned Host Count, HA Policy, Maintenance Reserve %, Target VM Count, Growth Margin %, Workload Mix, Burst / Noisy-Neighbor Risk, Storage Pressure From Prior Tools, GPU / vGPU Workload, and Backup / Replication Pressure.
+- Calculation ownership:
+  - `tools/compute/vm-density/script.js` scales usable CPU/RAM pool by host count, HA reserve, and maintenance reserve.
+  - Target VM demand and growth margin produce `plannedVmDemand`, `growthAdjustedVmDemand`, and `capacityGapVms`.
+  - Burst risk, storage pressure, GPU workload, backup pressure, and target demand gap produce `planningPressureFlags` and may raise the status to WATCH or RISK.
+  - Upstream Storage Throughput status prefills the Storage Pressure field when present.
+- Payload ownership:
+  - `vmDensityResult.inputs` carries the new visible planning inputs.
+  - `vmDensityResult.outputs` carries usable host count, per-host pools, growth-adjusted demand, and capacity gap.
+  - `plannerRouting.decisionBasis` carries the new planning evidence for future planner assistant branch selection.
+- Boundary: Active VM Density branches remain Compute-only; electrical, cooling, rack, and switching concerns remain future Gold-tier handoff notes.
+- Audit: `scripts/audit-compute-vm-density-planning-inputs-v1.js`.
+- Runner: `scripts/run-compute-vm-density-planning-inputs-v1.js`.
