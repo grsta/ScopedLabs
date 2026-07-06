@@ -117,6 +117,13 @@
     @media (max-width: 760px) { body[data-step="storage-throughput"] .storage-throughput-active-workflow-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   </style>
   
+  <style data-storage-throughput-final-ui-polish-0705>
+    body[data-step="storage-throughput"] .storage-throughput-active-workflow-card .eyebrow {
+      color: #3fff80;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+    }
+  </style>
 </head>
 
 <body data-tier="pro" data-category="compute" data-step="storage-throughput" data-lane="v1" data-storage-throughput-visual-wire="0705">
@@ -176,7 +183,7 @@
 
       
 <section id="toolCard" class="card tool-card" style="margin-top: 18px;">
-    <h2 class="card-title" style="margin-top: 0;">Inputs</h2>
+    <h2 class="card-title" style="margin-top: 0;">Planning Inputs</h2>
 
     <div class="form-grid" style="margin-top: 14px;" data-storage-throughput-engineering-inputs="0705">
       <label class="field">
@@ -446,6 +453,43 @@
     })();
   </script>
   
+  <script data-storage-throughput-kb-pill-cleanup-0705>
+    (function () {
+      var tries = 0;
+
+      function cleanKbPill() {
+        if (!document.body || document.body.getAttribute("data-step") !== "storage-throughput") return;
+
+        var cards = Array.from(document.querySelectorAll("section.card, div.card"));
+        var kbCard = cards.find(function (card) {
+          var text = (card.textContent || "").replace(/\s+/g, " ").trim();
+          return text.indexOf("Storage Throughput Guide") >= 0 && text.indexOf("Open KB Guide") >= 0;
+        });
+
+        if (!kbCard) {
+          tries += 1;
+          if (tries < 24) window.setTimeout(cleanKbPill, 150);
+          return;
+        }
+
+        Array.from(kbCard.querySelectorAll("*")).forEach(function (node) {
+          var text = (node.textContent || "").replace(/\s+/g, " ").trim();
+          if (text === "Knowledge Base" && node.children.length === 0) {
+            node.hidden = true;
+            node.setAttribute("aria-hidden", "true");
+            node.style.display = "none";
+          }
+        });
+      }
+
+      if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", cleanKbPill);
+      else cleanKbPill();
+
+      window.addEventListener("load", cleanKbPill);
+      window.setTimeout(cleanKbPill, 250);
+      window.setTimeout(cleanKbPill, 900);
+    })();
+  </script>
 </body>
 </html>
 
