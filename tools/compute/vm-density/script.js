@@ -136,8 +136,10 @@
   function refreshFlowNote() {
     const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
     if (!raw) {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
+      if (els.flowNote) {
+        els.flowNote.hidden = true;
+        els.flowNote.innerHTML = "";
+      }
       upstreamContext = null;
       return;
     }
@@ -146,15 +148,19 @@
     try {
       parsed = JSON.parse(raw);
     } catch {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
+      if (els.flowNote) {
+        els.flowNote.hidden = true;
+        els.flowNote.innerHTML = "";
+      }
       upstreamContext = null;
       return;
     }
 
     if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
+      if (els.flowNote) {
+        els.flowNote.hidden = true;
+        els.flowNote.innerHTML = "";
+      }
       upstreamContext = null;
       return;
     }
@@ -162,26 +168,10 @@
     upstreamContext = parsed.data || {};
     prefillStoragePressureFromUpstream();
 
-    const rows = [];
-    if (typeof upstreamContext.finalMBps === "number") rows.push(`Required Throughput: <strong>${Number(upstreamContext.finalMBps).toFixed(1)} MB/s</strong>`);
-    if (typeof upstreamContext.throughputClass === "string") rows.push(`Throughput Class: <strong>${upstreamContext.throughputClass}</strong>`);
-    if (typeof upstreamContext.workloadPattern === "string") rows.push(`Workload Pattern: <strong>${upstreamContext.workloadPattern}</strong>`);
-    if (typeof upstreamContext.crossCheck === "string") rows.push(`Cross-Check: <strong>${upstreamContext.crossCheck}</strong>`);
-    if (typeof upstreamContext.status === "string") rows.push(`Upstream Status: <strong>${upstreamContext.status}</strong>`);
-
-    if (!rows.length) {
+    if (els.flowNote) {
       els.flowNote.hidden = true;
       els.flowNote.innerHTML = "";
-      return;
     }
-
-    els.flowNote.hidden = false;
-    els.flowNote.innerHTML = `
-      <strong>Flow Context</strong><br>
-      ${rows.join(" | ")}
-      <br><br>
-      This step checks whether the host can really consolidate workloads once CPU, memory, and storage pressure are evaluated together.
-    `;
   }
 
   // vm-density-tool-upgrade-0706
@@ -190,16 +180,6 @@
 
     const anchor = els.results && els.results.parentElement ? els.results.parentElement : els.toolCard;
 
-    let visualCard = document.getElementById("computeVmDensityVisualCard");
-    if (!visualCard) {
-      visualCard = document.createElement("section");
-      visualCard.className = "card";
-      visualCard.id = "computeVmDensityVisualCard";
-      visualCard.hidden = true;
-      visualCard.innerHTML = '<div class="eyebrow">Capacity Envelope</div><div id="computeVmDensityVisual"></div>';
-      anchor.insertAdjacentElement("afterend", visualCard);
-    }
-
     let assistantCard = document.getElementById("computeVmDensityAssistantCard");
     if (!assistantCard) {
       assistantCard = document.createElement("section");
@@ -207,7 +187,21 @@
       assistantCard.id = "computeVmDensityAssistantCard";
       assistantCard.hidden = true;
       assistantCard.innerHTML = '<div id="computeVmDensityAssistant"></div>';
-      visualCard.insertAdjacentElement("afterend", assistantCard);
+      anchor.insertAdjacentElement("afterend", assistantCard);
+    }
+
+    let visualCard = document.getElementById("computeVmDensityVisualCard");
+    if (!visualCard) {
+      visualCard = document.createElement("section");
+      visualCard.className = "card";
+      visualCard.id = "computeVmDensityVisualCard";
+      visualCard.hidden = true;
+      visualCard.innerHTML = '<div class="eyebrow">Capacity Envelope</div><div id="computeVmDensityVisual"></div>';
+      assistantCard.insertAdjacentElement("afterend", visualCard);
+    }
+
+    if (visualCard.previousElementSibling !== assistantCard) {
+      assistantCard.insertAdjacentElement("afterend", visualCard);
     }
 
     return {
@@ -282,7 +276,8 @@
   }
   function invalidate() {
     
-    clearVmDensityCapacityVisual();try {
+    clearVmDensityCapacityVisual();
+    try {
       sessionStorage.removeItem(FLOW_KEYS[STEP]);
       sessionStorage.removeItem(FLOW_KEYS["gpu-vram"]);
       sessionStorage.removeItem(FLOW_KEYS["power-thermal"]);
@@ -655,8 +650,8 @@
       updatedAt: new Date().toISOString()
     };
 
-    renderVmDensityCapacityVisual(vmDensityResult);
     renderVmDensityAssistant(vmDensityResult);
+    renderVmDensityCapacityVisual(vmDensityResult);
 
 ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
       category: CATEGORY,
@@ -726,7 +721,7 @@ ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
 
   els.continue.addEventListener("click", () => {
     if (!hasResult) return;
-    window.location.href = "/tools/compute/gpu-vram/";
+    window.location.href = "/tools/compute/power-thermal/";
   });
 
   window.addEventListener("DOMContentLoaded", () => {

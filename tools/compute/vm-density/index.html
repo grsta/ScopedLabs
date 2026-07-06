@@ -52,6 +52,10 @@
       font-size: 0.92rem;
       line-height: 1.5;
     }
+
+    .vm-density-internal-ledger {
+      display: none !important;
+    }
   </style>
 
   <style data-scopedlabs-export-card-styles>
@@ -82,7 +86,7 @@
   </style>
 </head>
 
-<body data-tier="pro" data-category="compute" data-step="vm-density" data-lane="v1">
+<body data-tier="pro" data-category="compute" data-step="vm-density" data-lane="v1" data-compute-tool-shell="vm-density-shell-promotion-0706" data-vm-density-continue-target="power-thermal">
 
 <header class="site-header">
   <div class="container header-inner">
@@ -129,9 +133,9 @@
 
   <div id="pipeline"></div>
 
-  <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-    <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
-    <h2 class="h3" style="margin-top: 0;">This tool continues the Compute design flow</h2>
+  <section id="computeActiveWorkflowCard" class="card" data-compute-active-workflow style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+    <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Active Workflow</div>
+    <h2 class="h3" style="margin-top: 0;">Compute density validation</h2>
     <p class="muted" style="margin-bottom: 0;">
       Use this step to estimate how many workloads a host can realistically consolidate once CPU, RAM, and storage pressure are considered together instead of in isolation.
     </p>
@@ -293,8 +297,8 @@
       <button id="reset" class="btn" type="button">Reset</button>
     </div>
 
-    <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
-      <h3 class="h3" style="margin-top: 0;">Results</h3>
+    <div id="vmDensityLegacyResultLedger" class="card vm-density-internal-ledger" style="margin-top: 14px; background: rgba(0,0,0,.14);" aria-hidden="true">
+      <h3 class="h3" style="margin-top: 0;">Internal Results Ledger</h3>
       <div id="results" class="results-grid" aria-live="polite">
         <div class="muted">Run calculation.</div>
       </div>
@@ -353,7 +357,7 @@
 
   <div id="continue-wrap" class="btn-row" style="display:none; margin-top:12px;">
     <button id="continue" class="btn btn-primary" disabled>
-      Continue → GPU / Power
+      Continue → Power / Thermal
     </button>
   </div>
 

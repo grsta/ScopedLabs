@@ -1652,3 +1652,15 @@ Promotion note:
 - Boundary: Active VM Density branches remain Compute-only; electrical, cooling, rack, and switching concerns remain future Gold-tier handoff notes.
 - Audit: `scripts/audit-compute-vm-density-planning-inputs-v1.js`.
 - Runner: `scripts/run-compute-vm-density-planning-inputs-v1.js`.
+
+
+### COMPUTE_VM_DENSITY_SHELL_PROMOTION_0706
+
+- Scope: VM Density shell-promotion alignment with the accepted Storage Throughput forward template.
+- Owners:
+  - `tools/compute/vm-density/index.html` opts into the shared Compute shell, exposes the shell-addressable Active Workflow card, hides the legacy analyzer result block as an internal ledger, preserves the help.js-owned KB guide, and publishes the VM Density -> Power / Thermal route marker.
+  - `tools/compute/vm-density/script.js` preserves upstream Storage Throughput context for prefill/payload use while suppressing visible Flow Context output, renders the shared assistant card before the capacity visual after calculation, keeps the enriched VM Density payload, and routes Continue to Power / Thermal.
+  - `assets/scopedlabs-compute-shell-contract.js` remains the shared shell owner for Compute UI cleanup and route behavior when the full repo asset is present.
+- Audit: `scripts/audit-compute-vm-density-shell-promotion-v1.js`.
+- Closeout runner: `scripts/run-compute-vm-density-shell-promotion-closeout-v1.js`.
+- Guardrail: Preserve VM Density math, planning inputs, export/report, snapshot, auth, checkout, help.js KB ownership, and Compute-only branch boundaries.
