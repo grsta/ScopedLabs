@@ -722,3 +722,22 @@ Decision:
 
 Guardrail:
 - Preserve VM Density math, planning inputs, export/report metadata, snapshot, auth, checkout, help.js KB ownership, and Compute-only active branch boundaries.
+
+
+### COMPUTE-VM-DENSITY-SHARED-ASSISTANT-RESULT-0706
+
+Status: PROMOTED_SHARED_CONTRACT
+
+Changed path:
+- assets/scopedlabs-compute-assistant-contract.js
+- tools/compute/vm-density/index.html
+- scripts/audit-compute-vm-density-shell-promotion-v1.js
+- docs/scopedlabs-module-map.md
+- docs/scopedlabs-pattern-promotion-ledger.md
+
+Decision:
+- VM Density no longer relies on a shallow shared assistant card after Calculate.
+- The shared Compute assistant contract renders the full upgraded VM Density planning result, including Planning Evidence, Capacity Evidence, and Planner Decision sections.
+
+Guardrail:
+- Preserve VM Density math, upgraded inputs, export/snapshot/auth/checkout, help.js KB ownership, and Power / Thermal route behavior.
