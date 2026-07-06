@@ -1584,3 +1584,19 @@ Promotion note:
 - Audit: `scripts/audit-compute-storage-iops-planner-routing-closeout-v1.js`.
 - Closeout runner: `scripts/run-compute-storage-iops-planner-routing-closeout-v1.js`.
 - Guardrail: This is a planner-routing promotion only. Do not reopen accepted Storage IOPS chart math, shell layout, KB content, export/snapshot flow, auth, checkout, or downstream Storage Throughput behavior without a specific bug.
+
+### COMPUTE_RAM_PLANNER_ROUTING_0706
+
+- Scope: RAM Sizing planner-routing readiness and future planner-assistant branch support.
+- Owners:
+  - `assets/scopedlabs-compute-shell-contract.js` owns RAM guided/downstream route behavior.
+  - `tools/compute/ram-sizing/script.js` publishes `plannerRouting`, `plannerAssistantDecisionNeeded`, `plannerRouteHint`, and `specialtyBranchCandidates` through the RAM capacity envelope and writeFlow data.
+  - `assets/scopedlabs-compute-capacity-visuals.js` remains the shared RAM capacity visual owner.
+  - `assets/scopedlabs-compute-assistant-contract.js` remains the shared RAM assistant owner.
+- Branch hints:
+  - Continue to Storage IOPS for the normal Compute path after CPU/RAM sizing.
+  - Branch to GPU VRAM for GPU, AI/ML, rendering, CUDA, inference, training, or VRAM-sensitive workloads.
+  - Stop at Summary for CPU/RAM-only workflows when no downstream storage, GPU, density, power, network, rebuild, or backup branch is selected.
+- Audit: `scripts/audit-compute-ram-planner-routing-closeout-v1.js`.
+- Closeout runner: `scripts/run-compute-ram-planner-routing-closeout-v1.js`.
+- Guardrail: This is a planner-routing promotion only. Do not reopen accepted RAM chart math, shell layout, KB content, export/snapshot flow, auth, checkout, or downstream guided behavior without a specific bug.

@@ -612,3 +612,22 @@ Decision:
 
 Guardrail:
 - Preserve accepted Storage IOPS capacity visual, shared assistant card, KB guide content, export/report/snapshot behavior, auth/checkout, and existing shell route ownership.
+
+### COMPUTE-RAM-PLANNER-ROUTING-0706
+
+Status: PROMOTED_SHARED_CONTRACT
+
+Changed path:
+- tools/compute/ram-sizing/index.html
+- tools/compute/ram-sizing/script.js
+- scripts/audit-compute-ram-planner-routing-closeout-v1.js
+- scripts/run-compute-ram-planner-routing-closeout-v1.js
+- docs/scopedlabs-module-map.md
+- docs/scopedlabs-pattern-promotion-ledger.md
+
+Decision:
+- RAM Sizing now publishes planner-routing fields so the Compute Planner assistant can choose direct Storage IOPS continuation, GPU VRAM specialty branch, planner review, or Summary stop logic.
+- RAM keeps existing shared shell/guided route behavior and shared visual/assistant ownership.
+
+Guardrail:
+- Preserve accepted RAM capacity visual, shared assistant card, KB guide content, export/report/snapshot behavior, auth/checkout, and existing shell route ownership.

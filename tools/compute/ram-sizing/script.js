@@ -485,6 +485,42 @@
     const plannerContext = cpuContext ? ramPlannerContextFromCpu(cpuContext) : plannerContextFallback;
     const upstreamCpuContext = cpuContext ? ramUpstreamCpuContext(cpuContext) : null;
 
+    // ram-sizing-planner-routing-0706
+    const ramPlannerStatus = String(analyzer.status || "").toUpperCase();
+    const ramPlannerWorkloadText = [
+      workload,
+      plannerContext && plannerContext.workloadType,
+      plannerContext && plannerContext.workloadPattern,
+      plannerContext && plannerContext.name,
+      plannerContext && plannerContext.label
+    ].filter(Boolean).join(" ");
+    const ramPlannerGpuCandidate = /gpu|vram|ai|ml|render|cuda|inference|training/i.test(ramPlannerWorkloadText);
+    const plannerRouting = {
+      branch: "memory",
+      toolRole: "ram-sizing",
+      routeIntent: ramPlannerStatus === "RISK"
+        ? "planner-review-before-downstream"
+        : ramPlannerGpuCandidate
+          ? "specialty-branch-gpu-vram"
+          : "continue-to-storage-iops",
+      nextTool: ramPlannerGpuCandidate ? "gpu-vram" : "storage-iops",
+      nextHref: ramPlannerGpuCandidate ? "/tools/compute/gpu-vram/" : "/tools/compute/storage-iops/",
+      plannerAssistantDecisionNeeded: ["RISK", "WATCH", "REVIEW"].includes(ramPlannerStatus) || ramPlannerGpuCandidate || /cpu|reserve|headroom|density|constraint|memory/i.test(String(dominantConstraint || "")),
+      decisionBasis: [
+        "Status: " + analyzer.status,
+        "Dominant constraint: " + (dominantConstraint || "RAM capacity"),
+        "Recommended installed RAM: " + recommended + " GB",
+        "Total required RAM: " + totalRequired.toFixed(1) + " GB",
+        "Reserve ratio: " + reserveRatio.toFixed(1) + "%",
+        "CPU coupling: " + cpuCoupling
+      ],
+      specialtyBranchCandidates: [
+        { tool: "storage-iops", reason: "Continue when the memory plan is accepted and the workload should proceed through the core Compute storage path." },
+        { tool: "gpu-vram", reason: "Use when the workload includes GPU, AI/ML, rendering, CUDA, inference, training, or VRAM-sensitive acceleration requirements." },
+        { tool: "summary", reason: "Use for CPU/RAM-only workflows when no storage, GPU, density, power, network, rebuild, or backup branch is selected." }
+      ]
+    };
+
     const ramCapacityEnvelope = {
       workload,
       workloadLabel: els.workload.options[els.workload.selectedIndex] ? els.workload.options[els.workload.selectedIndex].text : workload,
@@ -502,7 +538,11 @@
       dominantConstraint,
       cpuCoupling,
       plannerContext,
-      upstreamCpuContext
+      upstreamCpuContext,
+      plannerRouting,
+      plannerAssistantDecisionNeeded: plannerRouting.plannerAssistantDecisionNeeded,
+      plannerRouteHint: plannerRouting.routeIntent,
+      specialtyBranchCandidates: plannerRouting.specialtyBranchCandidates
     };
 
     renderRamCapacityVisual(ramCapacityEnvelope);
@@ -522,6 +562,10 @@
         workload,
         plannerContext,
         upstreamCpuContext,
+        plannerRouting,
+        plannerAssistantDecisionNeeded: plannerRouting.plannerAssistantDecisionNeeded,
+        plannerRouteHint: plannerRouting.routeIntent,
+        specialtyBranchCandidates: plannerRouting.specialtyBranchCandidates,
         status: analyzer.status,
         capacityEnvelope: ramCapacityEnvelope}
     });
