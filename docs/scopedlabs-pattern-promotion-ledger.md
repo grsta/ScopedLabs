@@ -669,7 +669,7 @@ Decision:
 - VM Density now publishes an enriched `vmDensityResult` instead of a minimal result object.
 - VM Density exposes planner-routing fields and Compute-only specialty branches.
 - Cross-category concerns are held as future Gold-tier handoff notes.
-- Shared Compute visual and assistant contracts now own VM Density rendering hooks.
+- Shared Compute visual and assistant contracts now own VM Density rendering hooks; the existing help.js-owned KB guide card remains the KB owner.
 
 Guardrail:
 - This is the tool upgrade foundation. A later shell-promotion lane may align the page more closely to the Storage Throughput visual shell after this payload/assistant/visual contract is proven.

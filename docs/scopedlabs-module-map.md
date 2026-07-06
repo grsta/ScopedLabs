@@ -1624,7 +1624,7 @@ Promotion note:
   - `tools/compute/vm-density/script.js` publishes the enriched `vmDensityResult`, planner-routing fields, Compute-only specialty branch candidates, and future Gold-tier handoff notes.
   - `assets/scopedlabs-compute-capacity-visuals.js` owns `renderVmDensityCapacityEnvelope`.
   - `assets/scopedlabs-compute-assistant-contract.js` owns `renderVmDensityAssistantStatusCard`.
-  - `tools/compute/vm-density/index.html` loads shared Compute visual/assistant/shell contracts and restores the VM Density KB guide card.
+  - `tools/compute/vm-density/index.html` loads shared Compute visual/assistant/shell contracts while preserving the existing help.js-owned VM Density KB guide card.
 - Compute-only active branches:
   - Power / Thermal
   - GPU VRAM
