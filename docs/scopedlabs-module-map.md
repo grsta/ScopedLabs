@@ -1616,3 +1616,22 @@ Promotion note:
 - Audit: `scripts/audit-compute-cpu-planner-routing-closeout-v1.js`.
 - Closeout runner: `scripts/run-compute-cpu-planner-routing-closeout-v1.js`.
 - Guardrail: This is a planner-routing promotion only. Do not reopen accepted CPU chart math, shell layout, KB content, export/snapshot flow, auth, checkout, or downstream guided behavior without a specific bug.
+
+### COMPUTE_VM_DENSITY_TOOL_UPGRADE_0706
+
+- Scope: VM Density tool intelligence upgrade before full Storage Throughput-style shell promotion.
+- Owners:
+  - `tools/compute/vm-density/script.js` publishes the enriched `vmDensityResult`, planner-routing fields, Compute-only specialty branch candidates, and future Gold-tier handoff notes.
+  - `assets/scopedlabs-compute-capacity-visuals.js` owns `renderVmDensityCapacityEnvelope`.
+  - `assets/scopedlabs-compute-assistant-contract.js` owns `renderVmDensityAssistantStatusCard`.
+  - `tools/compute/vm-density/index.html` loads shared Compute visual/assistant/shell contracts and restores the VM Density KB guide card.
+- Compute-only active branches:
+  - Power / Thermal
+  - GPU VRAM
+  - NIC Bonding
+  - Backup Window
+  - Summary
+- Gold-tier boundary:
+  - Electrical/power design, cooling/rack environment, and network switching design are preserved only as future Gold-tier handoff notes, not active VM Density branches.
+- Audit: `scripts/audit-compute-vm-density-tool-upgrade-v1.js`.
+- Runner: `scripts/run-compute-vm-density-tool-upgrade-v1.js`.

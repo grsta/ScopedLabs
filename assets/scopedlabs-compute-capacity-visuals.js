@@ -1419,3 +1419,89 @@ function renderStorageIopsCapacityEnvelope(options) {
     clear
   });
 })();
+
+// compute-vm-density-capacity-envelope-0706
+(function () {
+  var api = window.ScopedLabsComputeCapacityVisuals || {};
+  if (api.renderVmDensityCapacityEnvelope) {
+    window.ScopedLabsComputeCapacityVisuals = api;
+    return;
+  }
+
+  function esc(value) {
+    return String(value == null ? "" : value).replace(/[&<>"']/g, function (ch) {
+      return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch];
+    });
+  }
+
+  function num(value, fallback) {
+    var parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  function pct(value, max) {
+    var n = num(value, 0);
+    var m = Math.max(1, num(max, 1));
+    return Math.max(0, Math.min(100, (n / m) * 100));
+  }
+
+  function statusClass(status) {
+    var value = String(status || "").toUpperCase();
+    if (value === "RISK" || value === "BLOCKED") return "risk";
+    if (value === "WATCH" || value === "REVIEW") return "watch";
+    return "good";
+  }
+
+  function renderVmDensityCapacityEnvelope(target, result) {
+    var mount = typeof target === "string" ? document.getElementById(target) : target;
+    if (!mount) return false;
+
+    var outputs = (result && result.outputs) || result || {};
+    var inputs = (result && result.inputs) || {};
+    var status = result.status || result.summaryStatus || outputs.status || "GOOD";
+    var vms = num(outputs.vms || result.vms, 0);
+    var cpuLimit = num(outputs.cpuLimitVms || outputs.cpuVMs || result.cpuVMs, vms);
+    var ramLimit = num(outputs.ramLimitVms || outputs.ramVMs || result.ramVMs, vms);
+    var cpuPool = num(outputs.cpuPoolVcpu || outputs.cpuPool || result.cpuPool, 0);
+    var ramPool = num(outputs.ramPoolGb || outputs.ramPool || result.ramPool, 0);
+    var cpuHeadroom = num(outputs.cpuHeadroomVcpu || result.effectiveCpuHeadroom, 0);
+    var ramHeadroom = num(outputs.ramHeadroomGb || result.effectiveRamHeadroom, 0);
+    var maxLimit = Math.max(1, cpuLimit, ramLimit, vms);
+    var limiting = outputs.limiting || result.limiting || "Balanced";
+    var densityClass = outputs.densityClass || result.densityClass || "Modeled";
+    var statusTone = statusClass(status);
+
+    mount.innerHTML = [
+      '<div class="compute-capacity-envelope compute-vm-density-envelope" data-compute-vm-density-envelope-0706>',
+      '<div class="compute-capacity-envelope__head">',
+      '<div><h3>VM Density Capacity Envelope</h3><p>Host consolidation limit from CPU pool, RAM pool, spare policy, and overcommit assumptions.</p></div>',
+      '<span class="scopedlabs-result-summary-status ' + esc(statusTone) + '">' + esc(status) + '</span>',
+      '</div>',
+      '<svg viewBox="0 0 720 260" role="img" aria-label="VM Density capacity envelope">',
+      '<rect x="44" y="34" width="632" height="150" rx="14" fill="rgba(255,255,255,0.035)" stroke="rgba(255,255,255,0.12)"/>',
+      '<line x1="82" y1="78" x2="638" y2="78" stroke="rgba(140,255,180,0.45)" stroke-width="8" stroke-linecap="round"/>',
+      '<line x1="82" y1="126" x2="638" y2="126" stroke="rgba(120,190,255,0.38)" stroke-width="8" stroke-linecap="round"/>',
+      '<line x1="82" y1="162" x2="' + (82 + pct(vms, maxLimit) * 5.56).toFixed(1) + '" y2="162" stroke="rgba(255,255,255,0.72)" stroke-width="6" stroke-linecap="round"/>',
+      '<circle cx="' + (82 + pct(cpuLimit, maxLimit) * 5.56).toFixed(1) + '" cy="78" r="9" fill="rgba(140,255,180,0.95)"/>',
+      '<circle cx="' + (82 + pct(ramLimit, maxLimit) * 5.56).toFixed(1) + '" cy="126" r="9" fill="rgba(120,190,255,0.95)"/>',
+      '<circle cx="' + (82 + pct(vms, maxLimit) * 5.56).toFixed(1) + '" cy="162" r="10" fill="rgba(255,255,255,0.95)"/>',
+      '<text x="82" y="58" fill="rgba(255,255,255,0.72)" font-size="13">CPU limit: ' + esc(cpuLimit) + ' VMs</text>',
+      '<text x="82" y="112" fill="rgba(255,255,255,0.72)" font-size="13">RAM limit: ' + esc(ramLimit) + ' VMs</text>',
+      '<text x="82" y="202" fill="rgba(255,255,255,0.72)" font-size="13">Modeled density: ' + esc(vms) + ' VMs | Limiting: ' + esc(limiting) + '</text>',
+      '</svg>',
+      '<div class="compute-capacity-envelope__stats">',
+      '<span><strong>' + esc(vms) + '</strong><small>Modeled VMs</small></span>',
+      '<span><strong>' + esc(limiting) + '</strong><small>Limiting Factor</small></span>',
+      '<span><strong>' + esc(cpuHeadroom.toFixed ? cpuHeadroom.toFixed(1) : cpuHeadroom) + '</strong><small>vCPU Headroom</small></span>',
+      '<span><strong>' + esc(ramHeadroom.toFixed ? ramHeadroom.toFixed(1) : ramHeadroom) + '</strong><small>GB RAM Headroom</small></span>',
+      '</div>',
+      '<p class="muted mini-note">Density class: ' + esc(densityClass) + '. CPU pool ' + esc(cpuPool.toFixed ? cpuPool.toFixed(1) : cpuPool) + ' vCPU-eq; RAM pool ' + esc(ramPool.toFixed ? ramPool.toFixed(1) : ramPool) + ' GB.</p>',
+      '</div>'
+    ].join("");
+
+    return true;
+  }
+
+  api.renderVmDensityCapacityEnvelope = renderVmDensityCapacityEnvelope;
+  window.ScopedLabsComputeCapacityVisuals = api;
+})();

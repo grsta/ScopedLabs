@@ -1091,3 +1091,58 @@ function renderComputeRamRecommendationReferences(data) {
     wire();
   }
 })();
+
+// compute-assistant-vm-density-status-card-0706
+(function () {
+  var api = window.ScopedLabsComputeAssistant || {};
+  if (api.renderVmDensityAssistantStatusCard) {
+    window.ScopedLabsComputeAssistant = api;
+    return;
+  }
+
+  function esc(value) {
+    return String(value == null ? "" : value).replace(/[&<>"']/g, function (ch) {
+      return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch];
+    });
+  }
+
+  function statusClass(status) {
+    var value = String(status || "").toUpperCase();
+    if (value === "RISK" || value === "BLOCKED") return "risk";
+    if (value === "WATCH" || value === "REVIEW") return "watch";
+    return "good";
+  }
+
+  function renderVmDensityAssistantStatusCard(target, result) {
+    var mount = typeof target === "string" ? document.getElementById(target) : target;
+    if (!mount) return false;
+
+    var status = result.status || result.summaryStatus || "GOOD";
+    var outputs = result.outputs || result || {};
+    var routing = result.plannerRouting || {};
+    var branches = result.specialtyBranchCandidates || routing.specialtyBranchCandidates || [];
+    var gold = result.futureGoldTierDependencies || [];
+    var recommendation = result.guidance || (result.assistantRecommendation && result.assistantRecommendation.recommendation) || "Validate host density before continuing downstream.";
+
+    mount.innerHTML = [
+      '<div class="compute-assistant-card compute-vm-density-assistant-card" data-compute-vm-density-assistant-0706>',
+      '<div class="compute-assistant-card__head">',
+      '<div><h3>Assistant Recommended Actions</h3><p>VM Density routing is based on host density, limiting resource, spare policy, and downstream Compute branches.</p></div>',
+      '<span class="scopedlabs-result-summary-status ' + esc(statusClass(status)) + '">' + esc(status) + '</span>',
+      '</div>',
+      '<p>' + esc(recommendation) + '</p>',
+      '<div class="compute-recommended-actions-list">',
+      '<div><strong>Validate density limiter</strong><span>Current limiter: ' + esc(outputs.limiting || result.limiting || "Balanced") + '.</span></div>',
+      '<div><strong>Confirm next Compute step</strong><span>Route hint: ' + esc(result.plannerRouteHint || routing.routeIntent || "continue-to-power-thermal") + '.</span></div>',
+      '<div><strong>Preserve branch choices</strong><span>' + esc(branches.map(function (item) { return item.tool; }).join(", ") || "No specialty branches flagged") + '.</span></div>',
+      '</div>',
+      gold.length ? '<p class="muted mini-note">Future Gold-tier handoff notes: ' + esc(gold.map(function (item) { return item.area || item.tool || item; }).join(", ")) + '.</p>' : '',
+      '</div>'
+    ].join("");
+
+    return true;
+  }
+
+  api.renderVmDensityAssistantStatusCard = renderVmDensityAssistantStatusCard;
+  window.ScopedLabsComputeAssistant = api;
+})();

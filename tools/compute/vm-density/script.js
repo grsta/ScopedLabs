@@ -148,6 +148,92 @@
     `;
   }
 
+  // vm-density-tool-upgrade-0706
+  function ensureVmDensityOutputCards() {
+    if (!els.toolCard) return {};
+
+    const anchor = els.results && els.results.parentElement ? els.results.parentElement : els.toolCard;
+
+    let visualCard = document.getElementById("computeVmDensityVisualCard");
+    if (!visualCard) {
+      visualCard = document.createElement("section");
+      visualCard.className = "card";
+      visualCard.id = "computeVmDensityVisualCard";
+      visualCard.hidden = true;
+      visualCard.innerHTML = '<div class="eyebrow">Capacity Envelope</div><div id="computeVmDensityVisual"></div>';
+      anchor.insertAdjacentElement("afterend", visualCard);
+    }
+
+    let assistantCard = document.getElementById("computeVmDensityAssistantCard");
+    if (!assistantCard) {
+      assistantCard = document.createElement("section");
+      assistantCard.className = "card";
+      assistantCard.id = "computeVmDensityAssistantCard";
+      assistantCard.hidden = true;
+      assistantCard.innerHTML = '<div id="computeVmDensityAssistant"></div>';
+      visualCard.insertAdjacentElement("afterend", assistantCard);
+    }
+
+    return {
+      visualCard,
+      visual: document.getElementById("computeVmDensityVisual"),
+      assistantCard,
+      assistant: document.getElementById("computeVmDensityAssistant")
+    };
+  }
+
+  function normalizeVmDensityPlanningInputsHeading() {
+    if (!els.toolCard) return;
+    if (els.toolCard.getAttribute("data-vm-density-planning-inputs-0706") === "true") return;
+    const heading = els.toolCard.querySelector("h2, h3");
+    if (heading) heading.textContent = "Planning Inputs";
+    els.toolCard.setAttribute("data-vm-density-planning-inputs-0706", "true");
+  }
+
+  function renderVmDensityCapacityVisual(result) {
+    const cards = ensureVmDensityOutputCards();
+    if (!cards.visual || !cards.visualCard) return false;
+
+    const api = window.ScopedLabsComputeCapacityVisuals;
+    const rendered = api && typeof api.renderVmDensityCapacityEnvelope === "function"
+      ? api.renderVmDensityCapacityEnvelope(cards.visual, result)
+      : false;
+
+    cards.visualCard.hidden = !rendered;
+    return rendered;
+  }
+
+  function clearVmDensityCapacityVisual() {
+    const cards = ensureVmDensityOutputCards();
+    if (cards.visual) cards.visual.innerHTML = "";
+    if (cards.visualCard) cards.visualCard.hidden = true;
+    if (cards.assistant) cards.assistant.innerHTML = "";
+    if (cards.assistantCard) cards.assistantCard.hidden = true;
+  }
+
+  function renderVmDensityAssistant(result) {
+    const cards = ensureVmDensityOutputCards();
+    if (!cards.assistant || !cards.assistantCard) return false;
+
+    const api = window.ScopedLabsComputeAssistant;
+    let rendered = false;
+
+    if (api && typeof api.renderVmDensityAssistantStatusCard === "function") {
+      rendered = api.renderVmDensityAssistantStatusCard(cards.assistant, result);
+    } else if (api && typeof api.renderToolAssistant === "function") {
+      rendered = api.renderToolAssistant({
+        toolSlug: "vm-density",
+        toolLabel: "VM Density",
+        result
+      });
+    }
+
+    cards.assistantCard.hidden = !rendered;
+    return rendered;
+  }
+
+
+
 
   function saveComputeLedgerResult(payload) {
     if (!State || typeof State.recordToolResult !== "function") return null;
@@ -159,7 +245,8 @@
     }
   }
   function invalidate() {
-    try {
+    
+    clearVmDensityCapacityVisual();try {
       sessionStorage.removeItem(FLOW_KEYS[STEP]);
       sessionStorage.removeItem(FLOW_KEYS["gpu-vram"]);
       sessionStorage.removeItem(FLOW_KEYS["power-thermal"]);
@@ -345,36 +432,109 @@
       }
     });
 
-    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
-      category: CATEGORY,
-      step: STEP,
-      data: {
-        vms,
-        limiting,
-        densityClass,
-        crossCheck,
-        status: analyzer.status
-      }
-    });
+        const vmDensityStatus = String(analyzer.status || "").toUpperCase();
+    const vmDensityPlannerReviewNeeded = ["RISK", "WATCH", "REVIEW"].includes(vmDensityStatus) || limiting !== "Balanced";
+    const plannerRouting = {
+      branch: "compute-density",
+      toolRole: "vm-density",
+      routeIntent: vmDensityStatus === "RISK" ? "planner-review-before-power-thermal" : "continue-to-power-thermal",
+      nextTool: "power-thermal",
+      nextHref: "/tools/compute/power-thermal/",
+      plannerAssistantDecisionNeeded: vmDensityPlannerReviewNeeded,
+      decisionBasis: [
+        "Status: " + analyzer.status,
+        "Modeled VM density: " + vms + " VMs",
+        "Limiting factor: " + limiting,
+        "Density class: " + densityClass,
+        "CPU limit: " + cpuVMs + " VMs",
+        "RAM limit: " + ramVMs + " VMs",
+        "Spare policy: " + spare.toFixed(0) + "%"
+      ],
+      specialtyBranchCandidates: [
+        { tool: "power-thermal", reason: "Continue when modeled density is accepted and host count, CPU pool, and RAM pool should be translated into power and thermal load." },
+        { tool: "gpu-vram", reason: "Use when density assumptions include GPU passthrough, vGPU, AI/ML, rendering, CUDA, inference, training, or VRAM-sensitive acceleration." },
+        { tool: "nic-bonding", reason: "Use when consolidation increases east-west traffic, storage traffic, backup traffic, or host uplink pressure within the Compute pipeline." },
+        { tool: "backup-window", reason: "Use when the modeled VM count changes backup, restore, replication, or recovery-window assumptions." },
+        { tool: "summary", reason: "Use only when VM density is accepted and no downstream power, GPU, network, backup, rebuild, or other Compute branch is selected." }
+      ],
+      futureGoldTierDependencies: [
+        { area: "Power / electrical design", reason: "Gold-tier site coordination can validate circuits, panels, UPS, and rack power once Compute power load is known." },
+        { area: "Cooling / rack environment", reason: "Gold-tier site coordination can validate cooling, rack placement, and room-level thermal assumptions after Compute thermal load is known." },
+        { area: "Network switching design", reason: "Gold-tier site coordination can validate switch capacity and uplink design after Compute NIC bonding or network pressure is known." }
+      ]
+    };
 
-    saveComputeLedgerResult({
+    const vmDensityResult = {
       label: "VM Density",
+      title: "VM Density",
       summary: String(vms) + " modeled VMs; limiting factor " + limiting,
       status: analyzer.status,
       summaryStatus: analyzer.status,
       keySavedResult: String(vms) + " VMs / " + analyzer.status,
+      inputs: {
+        hostCores,
+        hostRamGb: hostRam,
+        reserveGb: reserve,
+        vmCpu,
+        vmRamGb: vmRam,
+        cpuOvercommitRatio: cpuOver,
+        ramOvercommitRatio: ramOver,
+        sparePolicyPercent: spare
+      },
       outputs: {
         vms,
+        cpuLimitVms: cpuVMs,
+        ramLimitVms: ramVMs,
+        cpuPoolVcpu: Number(cpuPool.toFixed(1)),
+        ramPoolGb: Number(ramPool.toFixed(1)),
+        cpuHeadroomVcpu: Number(effectiveCpuHeadroom.toFixed(1)),
+        ramHeadroomGb: Number(effectiveRamHeadroom.toFixed(1)),
         limiting,
         densityClass,
         crossCheck,
-        dominantConstraint
-      }
+        dominantConstraint,
+        status: analyzer.status
+      },
+      interpretation,
+      guidance,
+      summaryRows,
+      derivedRows,
+      plannerRouting,
+      plannerAssistantDecisionNeeded: plannerRouting.plannerAssistantDecisionNeeded,
+      plannerRouteHint: plannerRouting.routeIntent,
+      specialtyBranchCandidates: plannerRouting.specialtyBranchCandidates,
+      futureGoldTierDependencies: plannerRouting.futureGoldTierDependencies,
+      assistantRecommendation: {
+        recommendation: guidance,
+        interpretation,
+        nextStep: plannerRouting.nextTool,
+        plannerRouting,
+        plannerAssistantDecisionNeeded: plannerRouting.plannerAssistantDecisionNeeded,
+        plannerRouteHint: plannerRouting.routeIntent,
+        specialtyBranchCandidates: plannerRouting.specialtyBranchCandidates,
+        futureGoldTierDependencies: plannerRouting.futureGoldTierDependencies
+      },
+      updatedAt: new Date().toISOString()
+    };
+
+    renderVmDensityCapacityVisual(vmDensityResult);
+    renderVmDensityAssistant(vmDensityResult);
+
+ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+      category: CATEGORY,
+      step: STEP,
+      data: vmDensityResult
     });
+
+    saveComputeLedgerResult(vmDensityResult);
 
     hasResult = true;
     showContinue();
-  }
+  
+    if (window.ScopedLabsExport && typeof window.ScopedLabsExport.refresh === "function") {
+      window.ScopedLabsExport.refresh();
+    }
+}
 
   els.calc.addEventListener("click", calc);
 
@@ -401,7 +561,8 @@
   });
 
   window.addEventListener("DOMContentLoaded", () => {
-    const year = document.querySelector("[data-year]");
+    
+    normalizeVmDensityPlanningInputsHeading();const year = document.querySelector("[data-year]");
     if (year) year.textContent = new Date().getFullYear();
 
     unlockCategoryPage();

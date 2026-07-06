@@ -650,3 +650,26 @@ Decision:
 
 Guardrail:
 - Preserve accepted CPU capacity visual, shared assistant card, KB guide content, export/report/snapshot behavior, auth/checkout, and existing shell route ownership.
+
+### COMPUTE-VM-DENSITY-TOOL-UPGRADE-0706
+
+Status: TOOL_INTELLIGENCE_PROMOTED_BEFORE_FULL_SHELL
+
+Changed path:
+- tools/compute/vm-density/index.html
+- tools/compute/vm-density/script.js
+- assets/scopedlabs-compute-capacity-visuals.js
+- assets/scopedlabs-compute-assistant-contract.js
+- scripts/audit-compute-vm-density-tool-upgrade-v1.js
+- scripts/run-compute-vm-density-tool-upgrade-v1.js
+- docs/scopedlabs-module-map.md
+- docs/scopedlabs-pattern-promotion-ledger.md
+
+Decision:
+- VM Density now publishes an enriched `vmDensityResult` instead of a minimal result object.
+- VM Density exposes planner-routing fields and Compute-only specialty branches.
+- Cross-category concerns are held as future Gold-tier handoff notes.
+- Shared Compute visual and assistant contracts now own VM Density rendering hooks.
+
+Guardrail:
+- This is the tool upgrade foundation. A later shell-promotion lane may align the page more closely to the Storage Throughput visual shell after this payload/assistant/visual contract is proven.
