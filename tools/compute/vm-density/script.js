@@ -277,6 +277,83 @@
     return true;
   }
 
+
+  function escapeVmDensityHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    }[char]));
+  }
+
+  function renderVmDensityRows(rows) {
+    return rows.map(([label, value]) => (
+      '<div class="result-row"><span class="k">' + escapeVmDensityHtml(label) +
+      '</span><span class="v">' + escapeVmDensityHtml(value ?? "Not set") + '</span></div>'
+    )).join("");
+  }
+
+  function renderVmDensityFullShellResult(target, result) {
+    if (!target || !result) return false;
+    const inputs = result.inputs || {};
+    const outputs = result.outputs || {};
+    const routing = result.plannerRouting || result.assistantRecommendation?.plannerRouting || {};
+    const flags = Array.isArray(result.planningPressureFlags) ? result.planningPressureFlags : [];
+    const status = String(result.status || result.summaryStatus || outputs.status || "WATCH").toUpperCase();
+
+    const summaryRows = [
+      ["Status", status],
+      ["Modeled VM Capacity", outputs.vms !== undefined ? outputs.vms + " VMs" : result.keySavedResult],
+      ["Target Demand", inputs.targetVmCount > 0 ? inputs.targetVmCount + " VMs" : "Not set"],
+      ["Growth Demand", outputs.growthAdjustedVmDemand !== undefined ? outputs.growthAdjustedVmDemand + " VMs" : "Not set"],
+      ["Capacity Gap", typeof outputs.capacityGapVms === "number" ? outputs.capacityGapVms + " VMs" : "Not set"],
+      ["Primary Constraint", outputs.limiting || "Balanced"],
+      ["Density Class", outputs.densityClass || "Not classified"],
+      ["Usable Hosts", outputs.usableHostCount ?? "Not set"]
+    ];
+
+    const planningRows = [
+      ["Planned Hosts", inputs.hostCount],
+      ["HA Policy", String(inputs.haPolicy || "none").toUpperCase()],
+      ["HA Reserved Hosts", inputs.haReservedHosts],
+      ["Maintenance Reserve", inputs.maintenanceReservePct !== undefined ? inputs.maintenanceReservePct + "%" : "Not set"],
+      ["Growth Margin", inputs.growthPct !== undefined ? inputs.growthPct + "%" : "Not set"],
+      ["Workload Mix", inputs.workloadMix],
+      ["Burst / Noisy-Neighbor Risk", inputs.burstRisk],
+      ["Storage Pressure", inputs.storagePressure],
+      ["GPU / vGPU Workload", inputs.gpuWorkload ? "Yes" : "No"],
+      ["Backup / Replication Pressure", inputs.backupPressure ? "Yes" : "No"]
+    ];
+
+    const capacityRows = [
+      ["CPU Limit", outputs.cpuLimitVms !== undefined ? outputs.cpuLimitVms + " VMs" : "Not set"],
+      ["RAM Limit", outputs.ramLimitVms !== undefined ? outputs.ramLimitVms + " VMs" : "Not set"],
+      ["CPU Pool", outputs.cpuPoolVcpu !== undefined ? outputs.cpuPoolVcpu + " vCPU-eq" : "Not set"],
+      ["RAM Pool", outputs.ramPoolGb !== undefined ? outputs.ramPoolGb + " GB" : "Not set"],
+      ["CPU Headroom", outputs.cpuHeadroomVcpu !== undefined ? outputs.cpuHeadroomVcpu + " vCPU-eq" : "Not set"],
+      ["RAM Headroom", outputs.ramHeadroomGb !== undefined ? outputs.ramHeadroomGb + " GB" : "Not set"]
+    ];
+
+    const decisionRows = [
+      ["Planner Review", result.plannerAssistantDecisionNeeded ? "Yes" : "No"],
+      ["Route Hint", result.plannerRouteHint || routing.routeIntent || "continue-to-power-thermal"],
+      ["Next Step", routing.nextTool || "power-thermal"],
+      ["Cross-Check", outputs.crossCheck || "CPU, RAM, and storage appear reasonably aligned"],
+      ["Planning Flags", flags.length ? flags.join(", ") : "None"]
+    ];
+
+    target.innerHTML =
+      '<div class="eyebrow">Assistant Recommended Actions</div>' +
+      '<h3 class="h3" style="margin-top: 8px;">VM Density planning result</h3>' +
+      '<p class="muted">' + escapeVmDensityHtml(result.guidance || result.interpretation || result.summary || "") + '</p>' +
+      '<div class="results-grid" style="margin-top: 14px;">' + renderVmDensityRows(summaryRows) + '</div>' +
+      '<h4 class="h3" style="margin-top: 18px;">Planning Evidence</h4>' +
+      '<div class="results-grid" style="margin-top: 10px;">' + renderVmDensityRows(planningRows) + '</div>' +
+      '<h4 class="h3" style="margin-top: 18px;">Capacity Evidence</h4>' +
+      '<div class="results-grid" style="margin-top: 10px;">' + renderVmDensityRows(capacityRows) + '</div>' +
+      '<h4 class="h3" style="margin-top: 18px;">Planner Decision</h4>' +
+      '<div class="results-grid" style="margin-top: 10px;">' + renderVmDensityRows(decisionRows) + '</div>';
+    return true;
+  }
+
   function renderVmDensityAssistant(result) {
     const cards = ensureVmDensityOutputCards();
     if (!cards.assistant || !cards.assistantCard) return false;
@@ -296,6 +373,10 @@
 
     if (!rendered) {
       rendered = renderVmDensityAssistantFallback(cards.assistant, result);
+    }
+
+    if (!rendered || !String(cards.assistant.innerHTML || "").trim()) {
+      rendered = renderVmDensityFullShellResult(cards.assistant, result);
     }
 
     cards.assistantCard.hidden = !rendered;
