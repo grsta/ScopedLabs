@@ -281,6 +281,134 @@ git status --short
 
 Do not commit temporary patch scripts. Remove any `scripts/tmp-*.js` before commit.
 
+## Category closeout after all tools are modernized
+
+After every tool in a category has been modernized, do not move to a new category until the category-level closeout pass is complete.
+
+### 1. Update the category planner
+
+Circle back to the category planner page and verify it knows the final state of every tool:
+
+- Correct core tool order
+- Correct optional/specialty branch order
+- Correct Continue behavior for guided flow
+- Correct Summary routing only when the applicable path is complete
+- Correct specialty branch behavior, such as GPU VRAM going to Summary when it is the selected branch
+- Correct labels, LEDs, branch status, and workload context
+- Correct planner copy for what each tool validates
+
+For Compute, the planner must reflect:
+
+```text
+CPU -> RAM -> Storage IOPS -> Storage Throughput -> VM Density -> Summary
+Optional/specialty branches remain separate:
+GPU VRAM -> Summary when selected after RAM
+Power / Thermal
+RAID Rebuild
+Backup Window
+NIC Bonding
+```
+
+### 2. Update the category summary
+
+Circle back to the category Summary page after tool modernization. The Summary must read each completed tool contribution and render the final category-level proof stack.
+
+Verify the Summary consumes:
+
+- Tool result status
+- Tool recommendation
+- Decision flags
+- Primary risk
+- References
+- Recommended actions
+- Decision schedule
+- Export payload
+- Snapshot/ledger payload
+- Carry-forward assumptions
+- Branch/specialty status
+- Missing or skipped tools
+
+### 3. Build or update the tool ledger
+
+Every tool in the category must be mapped in a category ledger. The ledger is the proof that each tool has a known role, owner, shared module pattern, CTA route, export behavior, and summary contribution.
+
+Each ledger row should include:
+
+| Field | Meaning |
+| --- | --- |
+| Tool slug | URL/tool identifier |
+| Tool label | User-facing name |
+| Path role | Core, optional, specialty branch, or summary |
+| Previous tool | Back/previous step |
+| Next tool | Normal Continue target |
+| Summary behavior | When the tool should route to Summary |
+| Shared visual owner | Capacity/chart/SVG module owner |
+| Shared assistant owner | Assistant card/guidance module owner |
+| Shared CTA owner | Flow/route module owner |
+| Export owner | Export payload/report owner |
+| Snapshot/ledger owner | Saved-result payload owner |
+| KB status | KB visible, guide linked, no suppressed KB |
+| Planner status | Represented in category planner |
+| Summary status | Contributes to category summary |
+| Audit status | Pass/fail/watch and audit script |
+| Notes | Known exceptions or intentional special paths |
+
+### 4. Ledger rule
+
+No category is done until every tool is either:
+
+```text
+PASS_SHARED_OWNER
+PASS_SPECIAL_PATH_DOCUMENTED
+SKIP_INTENTIONAL_WITH_REASON
+FAIL_NEEDS_REWORK
+```
+
+Do not leave tools in an undocumented gray state.
+
+### 5. Required closeout commands
+
+At category closeout, run the category planner/summary audits plus the module map audit.
+
+For Compute, use or create audits that prove:
+
+```text
+- each Compute tool is listed in the tool ledger
+- each core tool has the correct previous/next route
+- each specialty branch has the correct Summary behavior
+- the planner reflects the same route map as the ledger
+- the Summary consumes every completed tool payload
+- no page-local workaround remains where a shared owner exists
+```
+
+Always finish with:
+
+```powershell
+node .\scripts\audit-scopedlabs-module-map-v1.js
+git status --short
+```
+
+### 6. Commit closeout
+
+Category closeout commits should mention the category-level owner, not just a single page.
+
+Example:
+
+```powershell
+git add .\docs\compute-tool-modernization-playbook-0706.md
+git add .\docs\scopedlabs-module-map.md
+git add .\docs\scopedlabs-pattern-promotion-ledger.md
+git add .\tools\compute\index.html
+git add .\tools\compute\summary\index.html
+git add .\scripts\audit-compute-category-ledger-v1.js
+
+git commit -m "Close Compute planner and ledger modernization"
+git push
+
+git status --short
+```
+
+
 ## Current Storage Throughput closeout checklist
 
 Before moving to the next Compute tool, verify these exact items:
