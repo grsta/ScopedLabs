@@ -241,6 +241,42 @@
     if (cards.assistantCard) cards.assistantCard.hidden = true;
   }
 
+  function escapeVmDensityHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      "\"": "&quot;",
+      "'": "&#39;"
+    }[char]));
+  }
+
+  function renderVmDensityAssistantFallback(target, result) {
+    if (!target || !result) return false;
+    const status = String(result.status || result.summaryStatus || "WATCH").toUpperCase();
+    const outputs = result.outputs || {};
+    const inputs = result.inputs || {};
+    const rows = [
+      ["Status", status],
+      ["Modeled VM Capacity", outputs.vms ?? "Not calculated"],
+      ["Growth Demand", outputs.growthAdjustedVmDemand ?? "Not set"],
+      ["Primary Constraint", outputs.limiting || "Balanced"],
+      ["Usable Hosts", outputs.usableHostCount ?? inputs.hostCount ?? "Not set"],
+      ["Capacity Gap", typeof outputs.capacityGapVms === "number" ? outputs.capacityGapVms + " VMs" : "Not set"]
+    ];
+
+    target.innerHTML =
+      '<div class="eyebrow">Assistant Recommended Actions</div>' +
+      '<h3 class="h3" style="margin-top: 8px;">VM Density planning result</h3>' +
+      '<p class="muted">' + escapeVmDensityHtml(result.guidance || result.interpretation || result.summary || "Review the VM density result before continuing.") + '</p>' +
+      '<div class="results-grid">' +
+      rows.map(([label, value]) =>
+        '<div class="result-row"><span class="k">' + escapeVmDensityHtml(label) + '</span><span class="v">' + escapeVmDensityHtml(value) + '</span></div>'
+      ).join("") +
+      '</div>';
+    return true;
+  }
+
   function renderVmDensityAssistant(result) {
     const cards = ensureVmDensityOutputCards();
     if (!cards.assistant || !cards.assistantCard) return false;
@@ -256,6 +292,10 @@
         toolLabel: "VM Density",
         result
       });
+    }
+
+    if (!rendered) {
+      rendered = renderVmDensityAssistantFallback(cards.assistant, result);
     }
 
     cards.assistantCard.hidden = !rendered;
