@@ -631,3 +631,22 @@ Decision:
 
 Guardrail:
 - Preserve accepted RAM capacity visual, shared assistant card, KB guide content, export/report/snapshot behavior, auth/checkout, and existing shell route ownership.
+
+### COMPUTE-CPU-PLANNER-ROUTING-0706
+
+Status: PROMOTED_SHARED_CONTRACT
+
+Changed path:
+- tools/compute/cpu-sizing/index.html
+- tools/compute/cpu-sizing/script.js
+- scripts/audit-compute-cpu-planner-routing-closeout-v1.js
+- scripts/run-compute-cpu-planner-routing-closeout-v1.js
+- docs/scopedlabs-module-map.md
+- docs/scopedlabs-pattern-promotion-ledger.md
+
+Decision:
+- CPU Sizing now publishes planner-routing fields through `cpuPipelineResult` so the Compute Planner assistant can choose direct RAM continuation, planner review, CPU-only Summary stop logic, and downstream branch awareness for storage, GPU, and VM density.
+- CPU keeps existing shared shell route behavior and shared visual/assistant ownership.
+
+Guardrail:
+- Preserve accepted CPU capacity visual, shared assistant card, KB guide content, export/report/snapshot behavior, auth/checkout, and existing shell route ownership.

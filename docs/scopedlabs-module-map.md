@@ -1600,3 +1600,19 @@ Promotion note:
 - Audit: `scripts/audit-compute-ram-planner-routing-closeout-v1.js`.
 - Closeout runner: `scripts/run-compute-ram-planner-routing-closeout-v1.js`.
 - Guardrail: This is a planner-routing promotion only. Do not reopen accepted RAM chart math, shell layout, KB content, export/snapshot flow, auth, checkout, or downstream guided behavior without a specific bug.
+
+### COMPUTE_CPU_PLANNER_ROUTING_0706
+
+- Scope: CPU Sizing planner-routing readiness and root Compute planner-assistant branch support.
+- Owners:
+  - `assets/scopedlabs-compute-shell-contract.js` owns CPU -> RAM downstream route behavior.
+  - `tools/compute/cpu-sizing/script.js` publishes `plannerRouting`, `plannerAssistantDecisionNeeded`, `plannerRouteHint`, and `specialtyBranchCandidates` through `cpuPipelineResult`.
+  - `assets/scopedlabs-compute-capacity-visuals.js` remains the shared CPU capacity visual owner.
+  - `assets/scopedlabs-compute-assistant-contract.js` remains the shared CPU assistant owner.
+- Branch hints:
+  - Continue to RAM Sizing for the normal Compute path.
+  - Preserve downstream awareness for Storage IOPS, GPU VRAM, and VM Density after RAM.
+  - Stop at Summary only for CPU-only workflows when no RAM, storage, GPU, density, power, network, rebuild, or backup branch is selected.
+- Audit: `scripts/audit-compute-cpu-planner-routing-closeout-v1.js`.
+- Closeout runner: `scripts/run-compute-cpu-planner-routing-closeout-v1.js`.
+- Guardrail: This is a planner-routing promotion only. Do not reopen accepted CPU chart math, shell layout, KB content, export/snapshot flow, auth, checkout, or downstream guided behavior without a specific bug.

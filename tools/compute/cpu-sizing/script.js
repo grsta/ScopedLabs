@@ -1409,6 +1409,52 @@
     cpuWorkloadResult.recommendationReferences = buildComputeCpuRecommendationReferences(cpuWorkloadResult);
 
     const activeWorkloadForResult = activeComputeWorkload();
+    // cpu-sizing-planner-routing-0706
+    const cpuPlannerStatus = String(finalCpuStatus || analyzer.status || "").toUpperCase();
+    const cpuPlannerContextText = [
+      activeWorkloadForResult && activeWorkloadForResult.name,
+      activeWorkloadForResult && activeWorkloadForResult.environmentType,
+      activeWorkloadForResult && activeWorkloadForResult.workloadType,
+      activeWorkloadForResult && activeWorkloadForResult.demandPattern,
+      activeWorkloadForResult && activeWorkloadForResult.demandProfile,
+      activeWorkloadForResult && activeWorkloadForResult.planningPath,
+      workload,
+      workloadPattern
+    ].filter(Boolean).join(" ");
+    const cpuPlannerBranches = activeWorkloadForResult && activeWorkloadForResult.branches ? activeWorkloadForResult.branches : {};
+    const cpuPlannerGpuCandidate = /gpu|vram|ai|ml|render|cuda|inference|training/i.test(cpuPlannerContextText) || !!cpuPlannerBranches["gpu-vram"];
+    const cpuPlannerStorageCandidate = /storage|database|db|iops|throughput|backup|replication/i.test(cpuPlannerContextText) || !!cpuPlannerBranches["storage-iops"] || !!cpuPlannerBranches["storage-throughput"];
+    const cpuPlannerDensityCandidate = /vm|virtual|density|host|cluster|hypervisor/i.test(cpuPlannerContextText) || !!cpuPlannerBranches["vm-density"];
+    const cpuPlannerCpuOnlyCandidate = /cpu-only|cpu only|processor only|compute only/i.test(cpuPlannerContextText) && !cpuPlannerGpuCandidate && !cpuPlannerStorageCandidate && !cpuPlannerDensityCandidate;
+    const plannerRouting = {
+      branch: "compute-core",
+      toolRole: "cpu-sizing",
+      routeIntent: cpuPlannerStatus === "RISK"
+        ? "planner-review-before-ram-sizing"
+        : cpuPlannerCpuOnlyCandidate
+          ? "summary-cpu-only-review"
+          : "continue-to-ram-sizing",
+      nextTool: cpuPlannerCpuOnlyCandidate ? "summary" : "ram-sizing",
+      nextHref: cpuPlannerCpuOnlyCandidate ? "/tools/compute/summary/" : "/tools/compute/ram-sizing/",
+      plannerAssistantDecisionNeeded: ["RISK", "WATCH", "REVIEW"].includes(cpuPlannerStatus) || cpuPlannerCpuOnlyCandidate || cpuPlannerGpuCandidate || cpuPlannerStorageCandidate || cpuPlannerDensityCandidate || Number(failoverMultiplier || 1) > 1 || Number(planningReservePressure || 0) >= 70,
+      decisionBasis: [
+        "Status: " + finalCpuStatus,
+        "Primary constraint: " + (dominantConstraint || "CPU capacity"),
+        "Recommended logical cores: " + rec,
+        "Recommended physical cores: " + physicalRec,
+        "Effective demand: " + eff.toFixed(2) + " cores",
+        "Target utilization: " + target.toFixed(1) + "%",
+        "Failover multiplier: " + cpuFactorDisplay(failoverMultiplier, 2) + "x"
+      ],
+      specialtyBranchCandidates: [
+        { tool: "ram-sizing", reason: "Continue when the CPU plan is accepted and memory sizing is required for the normal Compute path." },
+        { tool: "storage-iops", reason: "Downstream branch after RAM when the workload includes database, storage, transaction, or I/O pressure." },
+        { tool: "gpu-vram", reason: "Downstream specialty branch after RAM when the workload includes GPU, AI/ML, rendering, CUDA, inference, training, or VRAM-sensitive acceleration." },
+        { tool: "vm-density", reason: "Downstream branch after CPU/RAM/storage checks when host consolidation, virtualization density, or cluster sizing must be validated." },
+        { tool: "summary", reason: "Use only for CPU-only workflows when no RAM, storage, GPU, density, power, network, rebuild, or backup branch is selected." }
+      ]
+    };
+
     const cpuPipelineResult = {
       ...cpuWorkloadResult,
       cores: rec,
@@ -1438,6 +1484,10 @@
       coreEfficiencyPercent: coreEfficiency,
       sustainedDeratePercent: sustainedDerate,
       failoverMultiplier,
+      plannerRouting,
+      plannerAssistantDecisionNeeded: plannerRouting.plannerAssistantDecisionNeeded,
+      plannerRouteHint: plannerRouting.routeIntent,
+      specialtyBranchCandidates: plannerRouting.specialtyBranchCandidates,
       plannerContext: activeWorkloadForResult ? {
         id: activeWorkloadForResult.id || "",
         name: activeWorkloadForResult.name || "",
