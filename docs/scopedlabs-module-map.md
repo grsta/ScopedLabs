@@ -1551,3 +1551,5 @@ Promotion note:
 - COMPUTE_STORAGE_NEXT_CLICK_OWNER_0705: Fixes Compute shell click ownership for Storage IOPS and Storage Throughput. The shell owner now mutates the guided decision object for explicit storage next-tool CTAs, so `window.location.href = decision.nextHref` routes IOPS to Storage Throughput and Throughput to VM Density while GPU VRAM remains Summary.
 
 - COMPUTE_STORAGE_EXPLICIT_CLICK_OWNER_0705: Registers a storage-only capture click owner before the guided Summary router. Storage IOPS routes to Storage Throughput and Storage Throughput routes to VM Density using explicit target markers; GPU VRAM remains Summary.
+
+- COMPUTE_STORAGE_THROUGHPUT_SHARED_ASSISTANT_0705: Storage Throughput uses the shared Compute assistant contract for its RAM-style assistant status card through `renderStorageThroughputAssistantStatusCard`, removing page-level assistant card imitation.

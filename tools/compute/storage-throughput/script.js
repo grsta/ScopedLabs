@@ -22,6 +22,27 @@
   const $ = (id) => document.getElementById(id);
 
   let hasResult = false;
+
+      // storage-throughput-shared-assistant-contract-0705
+      function renderStorageThroughputSharedAssistant(flowPayload) {
+        if (!els.assistantCard || !els.assistantMount) return;
+        if (!window.ScopedLabsComputeAssistant || typeof window.ScopedLabsComputeAssistant.renderStorageThroughputAssistantStatusCard !== "function") return;
+
+        els.assistantMount.innerHTML = window.ScopedLabsComputeAssistant.renderStorageThroughputAssistantStatusCard({
+          outputs: flowPayload || {},
+          workloadType: els.workloadType ? els.workloadType.value : "active workload"
+        });
+
+        els.assistantCard.hidden = false;
+        els.assistantCard.removeAttribute("hidden");
+        els.assistantCard.style.display = "";
+
+        if (els.resultCard) {
+          els.resultCard.hidden = true;
+          els.resultCard.setAttribute("hidden", "");
+          els.resultCard.style.display = "none";
+        }
+      }
     let currentStorageThroughputExportResult = null;
 let iopsContext = null;
   let chartRef = { current: null };
@@ -1016,6 +1037,9 @@ hideContinue();
       keySavedResult: formatStorageThroughputMBps(requiredThroughputMBps) + " / " + status,
       outputs: flowPayload
     });
+
+    renderStorageThroughputSharedAssistant(flowPayload);
+
 
     hasResult = true;
     showContinue();

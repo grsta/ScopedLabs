@@ -764,7 +764,77 @@
     ].join("");
   }
 
-  function renderComputeRamRecommendationReferences(data) {
+    // compute-storage-throughput-assistant-contract-0705
+  function storageThroughputAssistantNumber(value, fallback) {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : (Number.isFinite(Number(fallback)) ? Number(fallback) : 0);
+  }
+
+  function storageThroughputAssistantEscapeHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function storageThroughputAssistantFormatMBps(value) {
+    const num = storageThroughputAssistantNumber(value, 0);
+    return num.toFixed(num >= 100 ? 1 : 2).replace(/\.0$/, "") + " MB/s";
+  }
+
+  function renderComputeStorageThroughputAssistantStatusCard(data) {
+    const source = data && data.outputs ? data.outputs : (data || {});
+    const status = String(source.status || data.status || "WATCH").toUpperCase();
+    const required = storageThroughputAssistantNumber(source.requiredThroughputMBps || source.requiredMBps || source.required, 0);
+    const available = storageThroughputAssistantNumber(source.availablePathMBps || source.availableMBps || source.availableThroughputMBps, 0);
+    const utilization = storageThroughputAssistantNumber(source.utilizationPct || source.utilization, available > 0 ? required / available * 100 : 0);
+    const headroom = storageThroughputAssistantNumber(source.headroomMBps, available - required);
+    const workload = String(source.workloadType || data.workloadType || "active workload");
+
+    let recommendation = "Carry this throughput result into VM Density validation.";
+    let confidence = "MEDIUM";
+    let primaryRisk = "Throughput is within the entered path capacity, but downstream VM density should still validate shared-path contention.";
+
+    if (status === "GOOD") {
+      confidence = "HIGH";
+      primaryRisk = "No immediate throughput bottleneck is indicated from the entered path ceiling.";
+    } else if (status === "WATCH") {
+      recommendation = "Validate shared-path reserve before increasing VM density.";
+      primaryRisk = "Throughput reserve is tightening and could become a limiter under burst or growth conditions.";
+    } else if (status === "RISK") {
+      recommendation = "Increase available path throughput or reduce transfer demand before VM Density planning.";
+      confidence = "LOW";
+      primaryRisk = "Required throughput exceeds the available path or leaves insufficient operating headroom.";
+    }
+
+    const flags = [
+      "Required " + storageThroughputAssistantFormatMBps(required),
+      "Available " + storageThroughputAssistantFormatMBps(available),
+      "Utilization " + Math.round(utilization) + "%",
+      "Headroom " + storageThroughputAssistantFormatMBps(headroom)
+    ].join(" | ");
+
+    return [
+      '<div class="scopedlabs-result-summary-card" data-compute-storage-throughput-assistant-status-card="0705">',
+      '  <div class="scopedlabs-result-summary-header">',
+      '    <h3 id="computeStorageThroughputStatusTitle" class="scopedlabs-result-summary-title">STORAGE THROUGHPUT</h3>',
+      '    <span class="status-badge status-' + storageThroughputAssistantEscapeHtml(status.toLowerCase()) + '">' + storageThroughputAssistantEscapeHtml(status) + '</span>',
+      '  </div>',
+      '  <p class="muted">' + storageThroughputAssistantEscapeHtml(primaryRisk) + '</p>',
+      '  <div class="scopedlabs-result-summary-grid">',
+      '    <div class="scopedlabs-result-summary-item"><strong>RECOMMENDATION</strong><span>' + storageThroughputAssistantEscapeHtml(recommendation) + '</span></div>',
+      '    <div class="scopedlabs-result-summary-item"><strong>CONFIDENCE</strong><span>' + storageThroughputAssistantEscapeHtml(confidence) + '</span></div>',
+      '    <div class="scopedlabs-result-summary-item"><strong>DECISION FLAGS</strong><span>' + storageThroughputAssistantEscapeHtml(flags) + '</span></div>',
+      '    <div class="scopedlabs-result-summary-item"><strong>PRIMARY RISK</strong><span>' + storageThroughputAssistantEscapeHtml(primaryRisk) + '</span></div>',
+      '  </div>',
+      '  <p class="scopedlabs-result-summary-note">Carry this Storage Throughput result into VM Density. Do not treat the Compute plan as complete until density checks validate the same ' + storageThroughputAssistantEscapeHtml(workload) + ' assumptions.</p>',
+      '</div>'
+    ].join("");
+  }
+
+function renderComputeRamRecommendationReferences(data) {
     data = data || {};
     const values = ramAssistantCompactLine(data);
     const reserve = ramAssistantValue(data, ["reserveRamGb", "reserveGb"], Math.max(values.required - values.demand, 0));
@@ -1007,6 +1077,7 @@
     version: VERSION,
     buildToolAssistantModel,
     renderToolAssistant,
+    renderStorageThroughputAssistantStatusCard: renderComputeStorageThroughputAssistantStatusCard,
     renderRamRecommendationReferences: renderComputeRamRecommendationReferences,
     renderRamRecommendedActions: renderComputeRamRecommendedActions,
     renderRamDecisionSchedule: renderComputeRamDecisionSchedule,

@@ -118,92 +118,7 @@
     body[data-step="storage-throughput"] .storage-throughput-active-workflow-chip strong { display: block; font-size: 0.86rem; }
     @media (max-width: 760px) { body[data-step="storage-throughput"] .storage-throughput-active-workflow-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   </style>
-  <style data-storage-throughput-assistant-ram-parity-0705>
-    body[data-step="storage-throughput"] #computeAssistantCard {
-      margin-top: 14px;
-    }
-
-    body[data-step="storage-throughput"] #computeAssistantMount .storage-throughput-assistant-proof-card {
-      border: 1px solid rgba(63, 255, 128, 0.16);
-      border-radius: 14px;
-      padding: 16px;
-      background: rgba(0, 14, 10, 0.62);
-      box-shadow: inset 0 0 0 1px rgba(63, 255, 128, 0.04);
-    }
-
-    body[data-step="storage-throughput"] #computeAssistantMount .compute-assistant-proof-head {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 8px;
-    }
-
-    body[data-step="storage-throughput"] #computeAssistantMount .compute-assistant-proof-head .h3 {
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
-      line-height: 1.2;
-    }
-
-    body[data-step="storage-throughput"] #computeAssistantMount .compute-assistant-proof-head .status-badge {
-      flex: 0 0 auto;
-      border-radius: 6px;
-      padding: 7px 18px;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-
-    body[data-step="storage-throughput"] #computeAssistantMount .compute-assistant-proof-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-      margin-top: 14px;
-    }
-
-    body[data-step="storage-throughput"] #computeAssistantMount .compute-assistant-proof-cell {
-      border: 1px solid rgba(63, 255, 128, 0.12);
-      border-radius: 10px;
-      padding: 12px;
-      background: rgba(0, 12, 9, 0.54);
-      min-height: 64px;
-    }
-
-    body[data-step="storage-throughput"] #computeAssistantMount .compute-assistant-proof-cell .mini-label {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 0.72rem;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--sl-muted, #9fb4ad);
-    }
-
-    body[data-step="storage-throughput"] #computeAssistantMount .compute-assistant-proof-cell strong {
-      display: block;
-      line-height: 1.35;
-      font-weight: 800;
-      color: #f4fff8;
-    }
-
-    body[data-step="storage-throughput"] #computeAssistantMount .compute-assistant-proof-note {
-      margin: 14px 0 0;
-      padding-left: 12px;
-      border-left: 3px solid rgba(63, 255, 128, 0.58);
-      color: var(--sl-text, #d8eee4);
-      line-height: 1.45;
-    }
-
-    @media (max-width: 760px) {
-      body[data-step="storage-throughput"] #computeAssistantMount .compute-assistant-proof-grid {
-        grid-template-columns: 1fr;
-      }
-
-      body[data-step="storage-throughput"] #computeAssistantMount .compute-assistant-proof-head {
-        flex-direction: column;
-      }
-    }
-  </style>
+  
 </head>
 
 <body data-tier="pro" data-category="compute" data-step="storage-throughput" data-lane="v1" data-storage-throughput-visual-wire="0705">
@@ -486,7 +401,7 @@
   <script src="/assets/scopedlabs-compute-guided-route-engine.js?v=scopedlabs-compute-guided-route-engine-004-tool-continue-route"></script>
   <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-002"></script>
     <script src="/assets/scopedlabs-compute-capacity-visuals.js?v=storage-throughput-capacity-envelope-0705"></script>
-<script src="./script.js?v=compute-storage-throughput-shell-parity-0705"></script>
+<script src="./script.js?v=compute-storage-throughput-shared-assistant-0705"></script>
 
   <script defer src="/assets/help.js?v=help-026"></script>
 
@@ -494,7 +409,7 @@
 
   <script src="/assets/scopedlabs-compute-shell-contract.js?v=compute-shell-contract-storage-explicit-click-0705"></script>
   <script src="/assets/scopedlabs-local-assistant.js?v=scopedlabs-local-assistant-009-rich-card-shell"></script>
-  <script src="/assets/scopedlabs-compute-assistant-contract.js?v=compute-assistant-storage-throughput-shell-0705"></script>
+  <script src="/assets/scopedlabs-compute-assistant-contract.js?v=compute-assistant-contract-storage-throughput-0705"></script>
   <script src="/assets/scopedlabs-user-tool-notes.js?v=scopedlabs-user-tool-notes-001-compute-proof"></script>
   
   <script data-storage-throughput-active-workflow-after-kb-0705>
@@ -532,118 +447,7 @@
       window.setTimeout(placeWorkflowCard, 900);
     })();
   </script>
-  <script data-storage-throughput-assistant-renderer-0705>
-    (function () {
-      function esc(value) {
-        return String(value == null ? "" : value)
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, '&#39;');
-      }
-
-      function numberValue(id) {
-        var el = document.getElementById(id);
-        var n = el ? Number(el.value) : 0;
-        return Number.isFinite(n) ? n : 0;
-      }
-
-      function formatMbps(value) {
-        if (!Number.isFinite(value)) return "0 MB/s";
-        return value.toFixed(value >= 100 ? 1 : 2).replace(/\.0$/, "") + " MB/s";
-      }
-
-      function renderAssistant() {
-        if (!document.body || document.body.getAttribute("data-step") !== "storage-throughput") return;
-
-        var assistantCard = document.getElementById("computeAssistantCard");
-        var assistantMount = document.getElementById("computeAssistantMount");
-        if (!assistantCard || !assistantMount) return;
-
-        var iops = numberValue("iops");
-        var kb = numberValue("kb");
-        var overhead = numberValue("overhead");
-        var peak = numberValue("peakMultiplier") || 1;
-        var growth = numberValue("growthPct");
-        var available = numberValue("availableMBps");
-
-        var base = iops * kb / 1024;
-        var required = base * peak * (1 + growth / 100) * (1 + overhead / 100);
-        var utilization = available > 0 ? required / available * 100 : 0;
-        var headroom = available - required;
-
-        var status = "WATCH";
-        if (available > 0 && utilization < 70) status = "GOOD";
-        else if (available > 0 && utilization >= 90) status = "RISK";
-
-        var recommendation = "Carry this throughput result into VM Density validation.";
-        var confidence = status === "GOOD" ? "HIGH" : "MEDIUM";
-        var primaryRisk = "Throughput is within the entered path capacity, but downstream VM density should still validate shared-path contention.";
-
-        if (status === "WATCH") {
-          recommendation = "Validate shared-path reserve before increasing VM density.";
-          primaryRisk = "Throughput reserve is tightening and could become a limiter under burst or growth conditions.";
-        }
-
-        if (status === "RISK") {
-          recommendation = "Increase available path throughput or reduce transfer demand before VM Density planning.";
-          confidence = "LOW";
-          primaryRisk = "Required throughput exceeds the available path or leaves insufficient operating headroom.";
-        }
-
-        var flags = [
-          "Required " + formatMbps(required),
-          "Available " + formatMbps(available),
-          "Utilization " + Math.round(utilization) + "%",
-          "Headroom " + formatMbps(headroom)
-        ].join(" | ");
-
-        assistantMount.innerHTML = [
-          '<div class="compute-assistant-proof-card storage-throughput-assistant-proof-card" data-storage-throughput-assistant-proof="0705">',
-          '<div class="compute-assistant-proof-head">',
-          '<h3 class="h3" style="margin:0;">STORAGE THROUGHPUT</h3>',
-          '<span class="status-badge status-' + status.toLowerCase() + '">' + esc(status) + '</span>',
-          '</div>',
-          '<p class="muted" style="margin-top:8px;">' + esc(primaryRisk) + '</p>',
-          '<div class="compute-assistant-proof-grid">',
-          '<div class="compute-assistant-proof-cell"><span class="mini-label">Recommendation</span><strong>' + esc(recommendation) + '</strong></div>',
-          '<div class="compute-assistant-proof-cell"><span class="mini-label">Confidence</span><strong>' + esc(confidence) + '</strong></div>',
-          '<div class="compute-assistant-proof-cell"><span class="mini-label">Decision Flags</span><strong>' + esc(flags) + '</strong></div>',
-          '<div class="compute-assistant-proof-cell"><span class="mini-label">Primary Risk</span><strong>' + esc(primaryRisk) + '</strong></div>',
-          '</div>',
-          '<p class="compute-assistant-proof-note">Carry this Storage Throughput result into VM Density. Do not treat the Compute plan as complete until density checks validate the same workload assumptions.</p>',
-          '</div>'
-        ].join("");
-
-        assistantCard.hidden = false;
-        assistantCard.removeAttribute("hidden");
-        assistantCard.style.display = "";
-
-        var resultCard = document.getElementById("computeStorageThroughputResultCard");
-        if (resultCard) {
-          resultCard.hidden = true;
-          resultCard.setAttribute("hidden", "");
-          resultCard.style.display = "none";
-        }
-      }
-
-      function bind() {
-        var calc = document.getElementById("calc");
-        if (!calc || calc.getAttribute("data-storage-throughput-assistant-bound") === "0705") return;
-        calc.setAttribute("data-storage-throughput-assistant-bound", "0705");
-        calc.addEventListener("click", function () {
-          window.setTimeout(renderAssistant, 0);
-          window.setTimeout(renderAssistant, 80);
-          window.setTimeout(renderAssistant, 200);
-        });
-      }
-
-      if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
-      else bind();
-      window.addEventListener("load", bind);
-    })();
-  </script>
+  
 </body>
 </html>
 
