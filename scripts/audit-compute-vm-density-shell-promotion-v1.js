@@ -7,14 +7,12 @@ const files = {
   script: path.join(root, "tools", "compute", "vm-density", "script.js"),
   moduleMap: path.join(root, "docs", "scopedlabs-module-map.md"),
   ledger: path.join(root, "docs", "scopedlabs-pattern-promotion-ledger.md"),
-  shell: path.join(root, "assets", "scopedlabs-compute-shell-contract.js"),
-  assistant: path.join(root, "assets", "scopedlabs-compute-assistant-contract.js")
+  shell: path.join(root, "assets", "scopedlabs-compute-shell-contract.js")
 };
 
 function read(file) { return fs.readFileSync(file, "utf8"); }
 function readOptional(file) { return fs.existsSync(file) ? read(file) : ""; }
-const src = { html: read(files.html), script: read(files.script), moduleMap: read(files.moduleMap), ledger: read(files.ledger), shell: readOptional(files.shell),
-  assistant: readOptional(files.assistant) };
+const src = { html: read(files.html), script: read(files.script), moduleMap: read(files.moduleMap), ledger: read(files.ledger), shell: readOptional(files.shell) };
 const results = [];
 function check(name, pass, detail) { results.push({ name, pass: !!pass, detail }); console.log((pass ? "[PASS] " : "[FAIL] ") + name + " - " + detail); }
 function before(source, first, second) { const a = source.indexOf(first); const b = source.indexOf(second); return a >= 0 && b >= 0 && a < b; }
