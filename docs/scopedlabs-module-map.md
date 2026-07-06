@@ -1567,3 +1567,20 @@ Promotion note:
 - Audit: `scripts/audit-compute-storage-throughput-promotion-closeout-v1.js`.
 - Closeout runner: `scripts/run-compute-storage-throughput-promotion-closeout-v1.js`.
 - Guardrail: This is a promotion/contract lane. Do not reopen the accepted Storage Throughput chart math, KB guide content, export/snapshot flow, auth, checkout, or Compute Summary behavior without a specific bug.
+
+### COMPUTE_STORAGE_IOPS_PLANNER_ROUTING_0706
+
+- Scope: Storage IOPS planner-routing readiness and future planner-assistant branch support.
+- Owners:
+  - `assets/scopedlabs-compute-shell-contract.js` owns the Storage IOPS -> Storage Throughput flow route.
+  - `tools/compute/storage-iops/script.js` publishes `plannerRouting`, `plannerAssistantDecisionNeeded`, `plannerRouteHint`, and `specialtyBranchCandidates` in the Storage IOPS shell sections, flow data, and saved ledger payload.
+  - `assets/scopedlabs-compute-capacity-visuals.js` remains the shared Storage IOPS visual owner.
+  - `assets/scopedlabs-compute-assistant-contract.js` remains the shared Storage IOPS assistant owner.
+- Branch hints:
+  - Continue to Storage Throughput for bandwidth validation.
+  - Branch to RAID Rebuild Time for degraded-array/rebuild risk.
+  - Branch to Backup Window for backup/restore/replication movement validation.
+  - Stop at Summary only when storage-path validation is complete and no downstream branch is selected.
+- Audit: `scripts/audit-compute-storage-iops-planner-routing-closeout-v1.js`.
+- Closeout runner: `scripts/run-compute-storage-iops-planner-routing-closeout-v1.js`.
+- Guardrail: This is a planner-routing promotion only. Do not reopen accepted Storage IOPS chart math, shell layout, KB content, export/snapshot flow, auth, checkout, or downstream Storage Throughput behavior without a specific bug.

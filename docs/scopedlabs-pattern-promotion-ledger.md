@@ -592,3 +592,23 @@ Decision:
 
 Guardrail:
 - Preserve the accepted Storage Throughput capacity visual, shared assistant status card, KB guide content, export/report/snapshot behavior, auth/checkout, and existing script order.
+
+### COMPUTE-STORAGE-IOPS-PLANNER-ROUTING-0706
+
+Status: PROMOTED_SHARED_CONTRACT
+
+Changed path:
+- tools/compute/storage-iops/index.html
+- tools/compute/storage-iops/script.js
+- scripts/audit-compute-storage-iops-planner-routing-closeout-v1.js
+- scripts/run-compute-storage-iops-planner-routing-closeout-v1.js
+- docs/scopedlabs-module-map.md
+- docs/scopedlabs-pattern-promotion-ledger.md
+
+Decision:
+- Storage IOPS now publishes planner-routing fields so the Compute Planner assistant can choose direct continuation, revalidation, specialty branches, or Summary stop logic.
+- Storage IOPS keeps the existing shared shell route into Storage Throughput.
+- Storage IOPS branch hints now explicitly cover Storage Throughput, RAID Rebuild Time, Backup Window, and Summary.
+
+Guardrail:
+- Preserve accepted Storage IOPS capacity visual, shared assistant card, KB guide content, export/report/snapshot behavior, auth/checkout, and existing shell route ownership.

@@ -1173,6 +1173,32 @@ if (
       }
     ];
 
+
+    // storage-iops-planner-routing-0706
+    const plannerRouting = {
+      branch: "storage",
+      toolRole: "storage-iops",
+      routeIntent: String(analyzer.status || "").toUpperCase() === "RISK" ? "planner-review-before-storage-throughput" : "continue-to-storage-throughput",
+      nextTool: "storage-throughput",
+      nextHref: "/tools/compute/storage-throughput/",
+      plannerAssistantDecisionNeeded: ["RISK", "WATCH", "REVIEW"].includes(String(analyzer.status || "").toUpperCase()) || /latency|write|penalty|capacity|platform/i.test(String(primaryConstraint || "")),
+      decisionBasis: [
+        "Status: " + analyzer.status,
+        "Primary constraint: " + (primaryConstraint || "Storage IOPS capacity"),
+        "Required IOPS: " + formatNumber(finalIops) + " IOPS",
+        availableIops > 0 ? "Available platform IOPS: " + formatNumber(availableIops) + " IOPS" : "Available platform IOPS: not provided",
+        "Latency target: " + targetLatency + " ms",
+        "Block size: " + blockSizeKb + " KB",
+        "RAID/write penalty: x" + penalty
+      ],
+      specialtyBranchCandidates: [
+        { tool: "storage-throughput", reason: "Continue when required IOPS, latency target, block size, and write penalty are ready for bandwidth validation." },
+        { tool: "raid-rebuild-time", reason: "Use when RAID/write penalty, degraded-array behavior, rebuild exposure, or drive-group recovery risk needs proof before storage capacity is accepted." },
+        { tool: "backup-window", reason: "Use when the Storage IOPS result feeds backup, restore, replication, or data-movement windows that may dominate the design." },
+        { tool: "summary", reason: "Use only when the storage path is complete and no downstream throughput, rebuild, backup, or VM-density validation is selected." }
+      ]
+    };
+
     renderStorageIopsProof({
       status: analyzer.status,
       finalIops,
@@ -1203,7 +1229,11 @@ if (
     renderStorageIopsShellSections({
       references,
       recommendedActions,
-      decisionSchedule
+      decisionSchedule,
+      plannerRouting,
+      plannerAssistantDecisionNeeded: plannerRouting.plannerAssistantDecisionNeeded,
+      plannerRouteHint: plannerRouting.routeIntent,
+      specialtyBranchCandidates: plannerRouting.specialtyBranchCandidates
     });
 
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
@@ -1224,6 +1254,10 @@ if (
         storagePressure,
         primaryConstraint,
         dominantConstraint,
+        plannerRouting,
+        plannerAssistantDecisionNeeded: plannerRouting.plannerAssistantDecisionNeeded,
+        plannerRouteHint: plannerRouting.routeIntent,
+        specialtyBranchCandidates: plannerRouting.specialtyBranchCandidates,
         status: analyzer.status
       }
     });
@@ -1267,7 +1301,11 @@ if (
         nextStep,
         references,
         recommendedActions,
-        decisionSchedule
+        decisionSchedule,
+        plannerRouting,
+        plannerAssistantDecisionNeeded: plannerRouting.plannerAssistantDecisionNeeded,
+        plannerRouteHint: plannerRouting.routeIntent,
+        specialtyBranchCandidates: plannerRouting.specialtyBranchCandidates
       }
     });
 
