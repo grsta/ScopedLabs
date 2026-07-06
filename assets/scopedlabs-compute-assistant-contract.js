@@ -1146,3 +1146,52 @@ function renderComputeRamRecommendationReferences(data) {
   api.renderVmDensityAssistantStatusCard = renderVmDensityAssistantStatusCard;
   window.ScopedLabsComputeAssistant = api;
 })();
+
+
+/* compute-assistant-vm-density-ram-shell-renderers-0706 */
+(() => {
+  "use strict";
+  const api = window.ScopedLabsComputeAssistant = window.ScopedLabsComputeAssistant || {};
+  const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+  const row = (label, value) => '<div class="result-row"><span class="k">' + esc(label) + '</span><span class="v">' + esc(value ?? "Not set") + '</span></div>';
+
+  api.renderVmDensityRecommendationReferences = function renderVmDensityRecommendationReferences(result) {
+    const outputs = result.outputs || {};
+    const inputs = result.inputs || {};
+    return '<div class="results-grid">' +
+      row("*1 Modeled density", (outputs.vms ?? "Not set") + " VMs modeled from CPU/RAM pool and reserve policy") +
+      row("*2 Demand basis", (outputs.growthAdjustedVmDemand ?? "Not set") + " growth-adjusted VMs; target " + (inputs.targetVmCount || "not set")) +
+      row("*3 Validation limiter", (outputs.limiting || "Balanced") + " limiter; " + (outputs.crossCheck || "cross-check pending")) +
+      '</div>';
+  };
+
+  api.renderVmDensityRecommendedActions = function renderVmDensityRecommendedActions(result) {
+    const status = String(result.status || result.summaryStatus || "WATCH").toUpperCase();
+    const outputs = result.outputs || {};
+    const flags = Array.isArray(result.planningPressureFlags) ? result.planningPressureFlags : [];
+    const primary = status === "RISK"
+      ? "Rework density before continuing to power and thermal planning."
+      : status === "WATCH"
+        ? "Validate reserve policy, noisy-neighbor behavior, and storage pressure before locking density."
+        : "Density assumptions are acceptable for the next Compute planning step.";
+    return '<p class="muted">' + esc(result.guidance || primary) + '</p>' +
+      '<div class="results-grid">' +
+      row("Recommendation", primary) +
+      row("Primary Constraint", outputs.limiting || "Balanced") +
+      row("Capacity Gap", typeof outputs.capacityGapVms === "number" ? outputs.capacityGapVms + " VMs" : "Not set") +
+      row("Planning Flags", flags.length ? flags.join(", ") : "None") +
+      '</div>';
+  };
+
+  api.renderVmDensityDecisionSchedule = function renderVmDensityDecisionSchedule(result) {
+    const outputs = result.outputs || {};
+    const routing = result.plannerRouting || {};
+    return '<div class="results-grid">' +
+      row("Status", String(result.status || result.summaryStatus || "WATCH").toUpperCase()) +
+      row("Modeled VM Capacity", outputs.vms !== undefined ? outputs.vms + " VMs" : "Not set") +
+      row("Growth Demand", outputs.growthAdjustedVmDemand !== undefined ? outputs.growthAdjustedVmDemand + " VMs" : "Not set") +
+      row("Next Step", routing.nextTool || "power-thermal") +
+      row("Route Hint", result.plannerRouteHint || routing.routeIntent || "continue-to-power-thermal") +
+      '</div>';
+  };
+})();

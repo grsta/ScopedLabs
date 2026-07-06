@@ -52,6 +52,10 @@
       font-size: 0.92rem;
       line-height: 1.5;
     }
+
+    .vm-density-internal-ledger {
+      display: none !important;
+    }
   </style>
 
   <style data-scopedlabs-export-card-styles>
@@ -82,7 +86,7 @@
   </style>
 </head>
 
-<body data-tier="pro" data-category="compute" data-step="vm-density" data-lane="v1">
+<body data-tier="pro" data-category="compute" data-step="vm-density" data-lane="v1" data-compute-tool-shell="vm-density-ram-shell-0706" data-vm-density-continue-target="power-thermal">
 
 <header class="site-header">
   <div class="container header-inner">
@@ -130,8 +134,8 @@
   <div id="pipeline"></div>
 
   <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-    <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
-    <h2 class="h3" style="margin-top: 0;">This tool continues the Compute design flow</h2>
+    <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Active Workflow</div>
+    <h2 class="h3" style="margin-top: 0;">Compute density validation</h2>
     <p class="muted" style="margin-bottom: 0;">
       Use this step to estimate how many workloads a host can realistically consolidate once CPU, RAM, and storage pressure are considered together instead of in isolation.
     </p>
@@ -293,8 +297,8 @@
       <button id="reset" class="btn" type="button">Reset</button>
     </div>
 
-    <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
-      <h3 class="h3" style="margin-top: 0;">Results</h3>
+    <div id="vmDensityLegacyResultLedger" class="card vm-density-internal-ledger" style="margin-top: 14px; background: rgba(0,0,0,.14);" aria-hidden="true">
+      <h3 class="h3" style="margin-top: 0;">Internal Results Ledger</h3>
       <div id="results" class="results-grid" aria-live="polite">
         <div class="muted">Run calculation.</div>
       </div>
@@ -304,8 +308,30 @@
         Model: VM capacity is estimated from CPU oversubscription, RAM overcommit, reserved host memory, and spare policy. This is a planning estimator, not a substitute for live cluster telemetry.
       </p>
     </div>
-  
-<section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+
+    <section id="computeVmDensityVisualCard" class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);" hidden>
+      <div class="eyebrow">Capacity Envelope</div>
+      <div id="computeVmDensityVisual"></div>
+    </section>
+
+    <section id="computeVmDensityReferencesCard" class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);" hidden>
+      <h3 class="h3" style="margin-top: 0;">Recommendation References</h3>
+      <p class="muted" style="margin-bottom: 0;">The recommendation below is based on modeled density, reserve pressure, and the active Compute workload path.</p>
+      <div id="computeVmDensityReferences" data-compute-recommendation-references="vm-density"></div>
+    </section>
+
+    <section id="computeVmDensityRecommendedActionsCard" class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);" hidden>
+      <h3 class="h3" style="margin-top: 0;">Assistant Recommended Actions</h3>
+      <div id="computeVmDensityRecommendedActions" data-compute-recommended-actions="vm-density"></div>
+    </section>
+
+    <section id="computeVmDensityDecisionScheduleCard" class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);" hidden>
+      <h3 class="h3" style="margin-top: 0;">Decision Schedule</h3>
+      <p class="muted" style="margin-bottom: 0;">Compact VM Density status, limiter, route, and engineering-note schedule for the active Compute workload.</p>
+      <div id="computeVmDensityDecisionSchedule" data-compute-decision-schedule="vm-density" role="group" aria-label="VM Density decision schedule"></div>
+    </section>
+
+<section class="card compute-export-card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
         <div class="pill-row">
           <span class="pill pill--pro">Documentation & Export</span>
         </div>
@@ -353,7 +379,7 @@
 
   <div id="continue-wrap" class="btn-row" style="display:none; margin-top:12px;">
     <button id="continue" class="btn btn-primary" disabled>
-      Continue → GPU / Power
+      Continue ? Power / Thermal
     </button>
   </div>
 
@@ -400,7 +426,7 @@
   <script src="/assets/scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-020-vm-density"></script>
   <script src="/assets/scopedlabs-compute-assistant-contract.js?v=compute-assistant-vm-density-0706"></script>
   <script src="/assets/scopedlabs-compute-shell-contract.js?v=compute-shell-vm-density-tool-upgrade-0706"></script>
-<script src="./script.js?v=compute-vm-density-planning-inputs-0706"></script>
+<script src="./script.js?v=compute-vm-density-ram-shell-0706"></script>
 
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>

@@ -48,6 +48,14 @@
     backupPressure: $("backupPressure"),
     results: $("results"),
     flowNote: $("flow-note"),
+    vmDensityVisualCard: $("computeVmDensityVisualCard"),
+    vmDensityVisual: $("computeVmDensityVisual"),
+    vmDensityReferencesCard: $("computeVmDensityReferencesCard"),
+    vmDensityReferences: $("computeVmDensityReferences"),
+    vmDensityRecommendedActionsCard: $("computeVmDensityRecommendedActionsCard"),
+    vmDensityRecommendedActions: $("computeVmDensityRecommendedActions"),
+    vmDensityDecisionScheduleCard: $("computeVmDensityDecisionScheduleCard"),
+    vmDensityDecisionSchedule: $("computeVmDensityDecisionSchedule"),
     analysisCopy: $("analysis-copy"),
     continueWrap: $("continue-wrap"),
     continue: $("continue"),
@@ -162,59 +170,23 @@
     upstreamContext = parsed.data || {};
     prefillStoragePressureFromUpstream();
 
-    const rows = [];
-    if (typeof upstreamContext.finalMBps === "number") rows.push(`Required Throughput: <strong>${Number(upstreamContext.finalMBps).toFixed(1)} MB/s</strong>`);
-    if (typeof upstreamContext.throughputClass === "string") rows.push(`Throughput Class: <strong>${upstreamContext.throughputClass}</strong>`);
-    if (typeof upstreamContext.workloadPattern === "string") rows.push(`Workload Pattern: <strong>${upstreamContext.workloadPattern}</strong>`);
-    if (typeof upstreamContext.crossCheck === "string") rows.push(`Cross-Check: <strong>${upstreamContext.crossCheck}</strong>`);
-    if (typeof upstreamContext.status === "string") rows.push(`Upstream Status: <strong>${upstreamContext.status}</strong>`);
-
-    if (!rows.length) {
+    if (els.flowNote) {
       els.flowNote.hidden = true;
       els.flowNote.innerHTML = "";
-      return;
     }
-
-    els.flowNote.hidden = false;
-    els.flowNote.innerHTML = `
-      <strong>Flow Context</strong><br>
-      ${rows.join(" | ")}
-      <br><br>
-      This step checks whether the host can really consolidate workloads once CPU, memory, and storage pressure are evaluated together.
-    `;
   }
 
   // vm-density-tool-upgrade-0706
   function ensureVmDensityOutputCards() {
-    if (!els.toolCard) return {};
-
-    const anchor = els.results && els.results.parentElement ? els.results.parentElement : els.toolCard;
-
-    let visualCard = document.getElementById("computeVmDensityVisualCard");
-    if (!visualCard) {
-      visualCard = document.createElement("section");
-      visualCard.className = "card";
-      visualCard.id = "computeVmDensityVisualCard";
-      visualCard.hidden = true;
-      visualCard.innerHTML = '<div class="eyebrow">Capacity Envelope</div><div id="computeVmDensityVisual"></div>';
-      anchor.insertAdjacentElement("afterend", visualCard);
-    }
-
-    let assistantCard = document.getElementById("computeVmDensityAssistantCard");
-    if (!assistantCard) {
-      assistantCard = document.createElement("section");
-      assistantCard.className = "card";
-      assistantCard.id = "computeVmDensityAssistantCard";
-      assistantCard.hidden = true;
-      assistantCard.innerHTML = '<div id="computeVmDensityAssistant"></div>';
-      visualCard.insertAdjacentElement("afterend", assistantCard);
-    }
-
     return {
-      visualCard,
-      visual: document.getElementById("computeVmDensityVisual"),
-      assistantCard,
-      assistant: document.getElementById("computeVmDensityAssistant")
+      visualCard: els.vmDensityVisualCard,
+      visual: els.vmDensityVisual,
+      referencesCard: els.vmDensityReferencesCard,
+      references: els.vmDensityReferences,
+      recommendedActionsCard: els.vmDensityRecommendedActionsCard,
+      recommendedActions: els.vmDensityRecommendedActions,
+      decisionScheduleCard: els.vmDensityDecisionScheduleCard,
+      decisionSchedule: els.vmDensityDecisionSchedule
     };
   }
 
@@ -243,33 +215,47 @@
     const cards = ensureVmDensityOutputCards();
     if (cards.visual) cards.visual.innerHTML = "";
     if (cards.visualCard) cards.visualCard.hidden = true;
-    if (cards.assistant) cards.assistant.innerHTML = "";
-    if (cards.assistantCard) cards.assistantCard.hidden = true;
+    if (cards.references) cards.references.innerHTML = "";
+    if (cards.referencesCard) cards.referencesCard.hidden = true;
+    if (cards.recommendedActions) cards.recommendedActions.innerHTML = "";
+    if (cards.recommendedActionsCard) cards.recommendedActionsCard.hidden = true;
+    if (cards.decisionSchedule) cards.decisionSchedule.innerHTML = "";
+    if (cards.decisionScheduleCard) cards.decisionScheduleCard.hidden = true;
+  }
+
+  function renderVmDensityReferences(result) {
+    const cards = ensureVmDensityOutputCards();
+    const api = window.ScopedLabsComputeAssistant;
+    if (!cards.references || !cards.referencesCard || !api || typeof api.renderVmDensityRecommendationReferences !== "function") return false;
+    cards.references.innerHTML = api.renderVmDensityRecommendationReferences(result);
+    cards.referencesCard.hidden = false;
+    return true;
+  }
+
+  function renderVmDensityRecommendedActions(result) {
+    const cards = ensureVmDensityOutputCards();
+    const api = window.ScopedLabsComputeAssistant;
+    if (!cards.recommendedActions || !cards.recommendedActionsCard || !api || typeof api.renderVmDensityRecommendedActions !== "function") return false;
+    cards.recommendedActions.innerHTML = api.renderVmDensityRecommendedActions(result);
+    cards.recommendedActionsCard.hidden = false;
+    return true;
+  }
+
+  function renderVmDensityDecisionSchedule(result) {
+    const cards = ensureVmDensityOutputCards();
+    const api = window.ScopedLabsComputeAssistant;
+    if (!cards.decisionSchedule || !cards.decisionScheduleCard || !api || typeof api.renderVmDensityDecisionSchedule !== "function") return false;
+    cards.decisionSchedule.innerHTML = api.renderVmDensityDecisionSchedule(result);
+    cards.decisionScheduleCard.hidden = false;
+    return true;
   }
 
   function renderVmDensityAssistant(result) {
-    const cards = ensureVmDensityOutputCards();
-    if (!cards.assistant || !cards.assistantCard) return false;
-
-    const api = window.ScopedLabsComputeAssistant;
-    let rendered = false;
-
-    if (api && typeof api.renderVmDensityAssistantStatusCard === "function") {
-      rendered = api.renderVmDensityAssistantStatusCard(cards.assistant, result);
-    } else if (api && typeof api.renderToolAssistant === "function") {
-      rendered = api.renderToolAssistant({
-        toolSlug: "vm-density",
-        toolLabel: "VM Density",
-        result
-      });
-    }
-
-    cards.assistantCard.hidden = !rendered;
-    return rendered;
+    const references = renderVmDensityReferences(result);
+    const actions = renderVmDensityRecommendedActions(result);
+    const schedule = renderVmDensityDecisionSchedule(result);
+    return references || actions || schedule;
   }
-
-
-
 
   function saveComputeLedgerResult(payload) {
     if (!State || typeof State.recordToolResult !== "function") return null;
@@ -656,7 +642,9 @@
     };
 
     renderVmDensityCapacityVisual(vmDensityResult);
-    renderVmDensityAssistant(vmDensityResult);
+    renderVmDensityReferences(vmDensityResult);
+    renderVmDensityRecommendedActions(vmDensityResult);
+    renderVmDensityDecisionSchedule(vmDensityResult);
 
 ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
       category: CATEGORY,
@@ -726,7 +714,7 @@ ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
 
   els.continue.addEventListener("click", () => {
     if (!hasResult) return;
-    window.location.href = "/tools/compute/gpu-vram/";
+    window.location.href = "/tools/compute/power-thermal/";
   });
 
   window.addEventListener("DOMContentLoaded", () => {
