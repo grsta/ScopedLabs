@@ -29,7 +29,7 @@ check("VM_DENSITY_RAM_STATIC_SECTIONS", ["computeVmDensitySummaryCard","computeV
 check("VM_DENSITY_RAM_SECTION_ORDER", before(src.html, "computeVmDensitySummaryCard", "computeVmDensityVisualCard") && before(src.html, "computeVmDensityVisualCard", "computeVmDensityReferencesCard") && before(src.html, "computeVmDensityReferencesCard", "computeVmDensityRecommendedActionsCard") && before(src.html, "computeVmDensityRecommendedActionsCard", "computeVmDensityDecisionScheduleCard") && before(src.html, "computeVmDensityDecisionScheduleCard", "exportReport") && before(src.html, "exportReport", "continue-wrap"), "VM Density visible order should be summary, visual, references, actions, schedule, export, continue.");
 
 check("VM_DENSITY_ASSISTANT_CACHE_BUST",
-  src.html.includes("compute-assistant-vm-density-renderer-parity-076"),
+  src.html.includes("compute-assistant-vm-density-decision-schedule-077"),
   "VM Density should load the RAM-shell assistant contract cache-bust."
 );
 
@@ -84,6 +84,18 @@ check("VM_DENSITY_STORAGE_STYLE_RENDERER_RHYTHM",
     src.visuals.includes("zone-risk") &&
     src.visuals.includes("Density planning checkpoints"),
   "VM Density shared renderers should follow the Storage-style summary, references, actions, schedule, and visual rhythm."
+);
+
+check("VM_DENSITY_THROUGHPUT_DECISION_SCHEDULE_LAYOUT",
+  src.html.includes("VM Density Decision Schedule") &&
+    src.html.includes('data-output-decision-owner="compute-assistant-contract"') &&
+    src.assistant.includes('compute-decision-schedule-status') &&
+    src.assistant.includes('compute-decision-schedule-table') &&
+    src.assistant.includes('<thead><tr><th>Group</th><th>Metric</th><th>Value</th><th>Engineering Note</th></tr></thead>') &&
+    src.assistant.includes('data-vm-density-decision-export-interpretation="0706"') &&
+    !src.assistant.includes('compute-decision-schedule-row') &&
+    !src.assistant.includes('compute-decision-schedule-head'),
+  "VM Density decision schedule should use the exact Storage Throughput status header, table, and interpretation layout."
 );
 
 check("VM_DENSITY_STORAGE_STYLE_CARD_CONTRACT",

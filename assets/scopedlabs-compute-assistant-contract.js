@@ -1162,6 +1162,12 @@ function renderComputeRamRecommendationReferences(data) {
   const gb = (value) => num(value, 0).toFixed(num(value, 0) >= 100 ? 0 : 1).replace(/\.0$/, "") + " GB";
   const vcpu = (value) => num(value, 0).toFixed(num(value, 0) >= 100 ? 0 : 1).replace(/\.0$/, "") + " vCPU";
   const row = (label, value) => '<div class="scopedlabs-result-summary-item"><strong>' + esc(label) + '</strong><span>' + esc(value ?? "Not set") + '</span></div>';
+  const statusClass = (status) => {
+    const value = String(status || "").toUpperCase();
+    if (value === "RISK" || value === "BLOCKED") return "risk";
+    if (value === "WATCH" || value === "REVIEW") return "watch";
+    return "good";
+  };
 
   function vmDensityModel(result) {
     result = result || {};
@@ -1278,18 +1284,30 @@ function renderComputeRamRecommendationReferences(data) {
 
   api.renderVmDensityDecisionSchedule = function renderVmDensityDecisionSchedule(result) {
     const model = vmDensityModel(result);
-    const checkpoints = [
-      { group: "Density", status: model.status, item: "Accept modeled density only after " + model.limiting + " pressure is reviewed." },
-      { group: "Reserve", status: model.gap < 0 ? "RISK" : "WATCH", item: "Confirm HA " + model.haPolicy + ", maintenance " + model.maintenance + ", and growth " + model.growth + " before procurement." },
-      { group: "Next Step", status: model.nextTool === "power-thermal" ? "READY" : "REVIEW", item: "Route intent: " + model.routeIntent + ". Continue to " + model.nextTool + "." }
+    const rows = [
+      { group: "Capacity", metric: "Status", value: model.status, note: model.primaryRisk },
+      { group: "Capacity", metric: "Modeled Density", value: vms(model.modeled), note: "Growth-adjusted demand is " + vms(model.demand) + " with " + vms(model.gap) + " headroom or deficit." },
+      { group: "Constraint", metric: "Limiter", value: model.limiting, note: "CPU limit " + vms(model.cpuLimit) + " and RAM limit " + vms(model.ramLimit) + " must support the same workload plan." },
+      { group: "Reserve", metric: "Policy", value: "HA " + model.haPolicy, note: "Maintenance " + model.maintenance + " and growth " + model.growth + " stay attached for downstream power and thermal planning." },
+      { group: "Next Step", metric: "Route", value: model.nextTool, note: "Route intent: " + model.routeIntent + "." }
     ];
+    const rowsHtml = rows.map((row) => {
+      const value = row.metric === "Status"
+        ? '<span class="scopedlabs-result-summary-status ' + esc(statusClass(model.status)) + '">' + esc(row.value) + '</span>'
+        : esc(row.value);
+      return '<tr><td>' + esc(row.group) + '</td><td>' + esc(row.metric) + '</td><td>' + value + '</td><td>' + esc(row.note) + '</td></tr>';
+    }).join("");
 
     return [
-      '<div class="compute-decision-schedule" data-compute-vm-density-decision-schedule="0706">',
-      '  <div class="compute-decision-schedule-head"><strong>' + esc(model.status) + ' VM Density Decision Schedule</strong><span>' + esc(model.primaryRisk) + '</span></div>',
-      checkpoints.map((item) => '<div class="compute-decision-schedule-row"><strong>' + esc(item.group) + '</strong><span>' + esc(item.status) + '</span><em>' + esc(item.item) + '</em></div>').join(""),
-      '  <p class="compute-decision-schedule-interpretation"><strong>Engineering Interpretation:</strong> ' + esc(model.recommendation) + '</p>',
-      '</div>'
+      '<div class="compute-decision-schedule-status" data-compute-vm-density-decision-schedule="0706">',
+      '  <div><strong>' + esc(model.status) + ' VM Density Decision Schedule</strong><span>' + esc(model.primaryRisk) + '</span></div>',
+      '  <div class="scopedlabs-result-summary-status ' + esc(statusClass(model.status)) + '">' + esc(model.status) + '</div>',
+      '</div>',
+      '<table class="compute-decision-schedule-table">',
+      '  <thead><tr><th>Group</th><th>Metric</th><th>Value</th><th>Engineering Note</th></tr></thead>',
+      '  <tbody>' + rowsHtml + '</tbody>',
+      '</table>',
+      '<p class="compute-decision-schedule-interpretation" data-export-text="true" data-vm-density-decision-export-interpretation="0706"><strong>Engineering Interpretation:</strong> ' + esc(model.recommendation) + '</p>'
     ].join("");
   };
   window.ScopedLabsComputeAssistant = api;
