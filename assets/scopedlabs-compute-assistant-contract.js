@@ -1110,8 +1110,7 @@ function renderComputeRamRecommendationReferences(data) {
     var value = String(status || "").toUpperCase();
     if (value === "RISK" || value === "BLOCKED") return "is-risk";
     if (value === "WATCH" || value === "REVIEW") return "is-watch";
-    if (value === "GOOD" || value === "HEALTHY") return "is-good";
-    return "is-review";
+    return "is-good";
   }
 
   function renderVmDensityAssistantStatusCard(target, result) {
@@ -1167,8 +1166,7 @@ function renderComputeRamRecommendationReferences(data) {
     const value = String(status || "").toUpperCase();
     if (value === "RISK" || value === "BLOCKED") return "is-risk";
     if (value === "WATCH" || value === "REVIEW") return "is-watch";
-    if (value === "GOOD" || value === "HEALTHY") return "is-good";
-    return "is-review";
+    return "is-good";
   };
 
   function vmDensityModel(result) {
@@ -1246,13 +1244,40 @@ function renderComputeRamRecommendationReferences(data) {
 
   api.renderVmDensityRecommendationReferences = function renderVmDensityRecommendationReferences(result) {
     const model = vmDensityModel(result);
+    const refs = [
+      {
+        marker: "*1",
+        markerClass: "vm-density-ref-marker--hosts",
+        reference: "Host envelope",
+        reason: "Planned hosts " + model.plannedHosts + " produce " + model.usableHosts + " usable hosts after HA " + model.haPolicy + " and maintenance " + model.maintenance + "."
+      },
+      {
+        marker: "*2",
+        markerClass: "vm-density-ref-marker--cpu",
+        reference: "CPU limit",
+        reason: "CPU supports " + vms(model.cpuLimit) + " against " + vms(model.demand) + " growth-adjusted demand."
+      },
+      {
+        marker: "*3",
+        markerClass: "vm-density-ref-marker--ram",
+        reference: "RAM limit",
+        reason: "RAM supports " + vms(model.ramLimit) + " against " + vms(model.demand) + " growth-adjusted demand."
+      },
+      {
+        marker: "*4",
+        markerClass: "vm-density-ref-marker--modeled",
+        reference: "Modeled density",
+        reason: "Modeled ceiling is " + vms(model.modeled) + " with " + (model.gap >= 0 ? vms(model.gap) + " headroom" : vms(Math.abs(model.gap)) + " deficit") + "; active limiter: " + model.limiting + "."
+      }
+    ];
     return [
-      '<table class="compute-recommendation-references-table" data-compute-vm-density-references="0706">',
+      '<style data-vm-density-reference-marker-colors="0706">.vm-density-ref-marker{font-weight:900}.vm-density-ref-marker--hosts{color:#38d9ff}.vm-density-ref-marker--cpu{color:#a78bfa}.vm-density-ref-marker--ram{color:#60a5fa}.vm-density-ref-marker--modeled{color:#2cff9b}</style>',
+      '<table class="compute-recommendation-references-table" data-compute-vm-density-references="0706" data-compute-vm-density-reference-marker-contract="plotted-checkpoints-0706">',
       '  <thead><tr><th>Marker</th><th>Reference</th><th>Reason</th></tr></thead>',
       '  <tbody>',
-      '    <tr><td>*1</td><td>Demand basis</td><td>' + esc(vms(model.demand) + " growth-adjusted demand is compared against the modeled consolidation ceiling.") + '</td></tr>',
-      '    <tr><td>*2</td><td>Capacity limiter</td><td>' + esc(model.limiting + " is the active limiter. CPU limit " + vms(model.cpuLimit) + " | RAM limit " + vms(model.ramLimit) + ".") + '</td></tr>',
-      '    <tr><td>*3</td><td>Reserve policy</td><td>' + esc("Planned hosts " + model.plannedHosts + " | HA " + model.haPolicy + " | Maintenance " + model.maintenance + " | Growth " + model.growth + ".") + '</td></tr>',
+      refs.map(function (item) {
+        return '    <tr><td><span class="vm-density-ref-marker ' + esc(item.markerClass) + '">' + esc(item.marker) + '</span></td><td>' + esc(item.reference) + '</td><td>' + esc(item.reason) + '</td></tr>';
+      }).join(""),
       '  </tbody>',
       '</table>'
     ].join("");

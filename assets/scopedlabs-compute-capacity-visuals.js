@@ -1549,7 +1549,7 @@ function renderStorageIopsCapacityEnvelope(options) {
       '<rect x="' + plot.x + '" y="' + yWatch.toFixed(1) + '" width="' + plot.w + '" height="' + Math.max(0, yGood - yWatch).toFixed(1) + '" class="zone-watch"/>',
       '<rect x="' + plot.x + '" y="' + yGood.toFixed(1) + '" width="' + plot.w + '" height="' + Math.max(0, plot.y + plot.h - yGood).toFixed(1) + '" class="zone-good"/>'
     ];
-    var checkpointGuides = [stageX.cpu, stageX.ram, stageX.modeled].map(function (x) {
+    var checkpointGuides = [stageX.hosts, stageX.cpu, stageX.ram, stageX.modeled].map(function (x) {
       return '<path d="M' + x.toFixed(1) + ' ' + plot.y + ' V' + (plot.y + plot.h) + '" class="drop-line"/>';
     }).join("");
     var curvePath = [
@@ -1569,7 +1569,7 @@ function renderStorageIopsCapacityEnvelope(options) {
     var gapTop = yScale(Math.max(modeled, demand));
     var gapBottom = yScale(Math.min(modeled, demand));
     var gapTextY = clamp((gapTop + gapBottom) / 2, plot.y + 30, plot.y + plot.h - 12);
-    var gapLabel = gap < 0 ? "deficit *3" : "headroom *3";
+    var gapLabel = gap < 0 ? "deficit *4" : "headroom *4";
 
     mount.innerHTML = [
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="VM Density Capacity Envelope" data-compute-vm-density-envelope-0706>',
@@ -1590,20 +1590,20 @@ function renderStorageIopsCapacityEnvelope(options) {
       '<text x="' + (plot.x + plot.w - 10) + '" y="' + (plot.y + 14).toFixed(1) + '" text-anchor="end" class="zone-text risk-text">RISK</text>',
       '<text x="' + (plot.x + plot.w - 10) + '" y="' + (yWatch + 14).toFixed(1) + '" text-anchor="end" class="zone-text watch-text">WATCH</text>',
       '<text x="' + (plot.x + plot.w - 10) + '" y="' + (yGood + 14).toFixed(1) + '" text-anchor="end" class="zone-text good-text">GOOD</text>',
-      '<path d="M' + plot.x + ' ' + yDemand.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="demand-line"/><text x="' + (plot.x + plot.w - 12) + '" y="' + (yDemand - 8).toFixed(1) + '" text-anchor="end" class="demand-label">Demand *1: ' + formatVm(demand) + '</text>',
+      '<path d="M' + plot.x + ' ' + yDemand.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="demand-line"/><text x="' + (plot.x + plot.w - 12) + '" y="' + (yDemand - 8).toFixed(1) + '" text-anchor="end" class="demand-label">Demand: ' + formatVm(demand) + '</text>',
       '<path d="' + curvePath + '" class="curve-shadow"/>',
       '<path d="' + curvePath + '" class="curve-line"/>',
       '<path d="M' + stageX.cpu.toFixed(1) + ' ' + yCpu.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="drop-line"/>',
       '<path d="M' + stageX.ram.toFixed(1) + ' ' + yRam.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="drop-line"/>',
       '<path d="M' + stageX.modeled.toFixed(1) + ' ' + yModeled.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="drop-line"/>',
       '<circle cx="' + stageX.hosts.toFixed(1) + '" cy="' + yHosts.toFixed(1) + '" r="6.5" class="marker-ring"/><circle cx="' + stageX.hosts.toFixed(1) + '" cy="' + yHosts.toFixed(1) + '" r="4.5" class="marker-hosts"/>',
-      '<text x="' + (stageX.hosts - 36).toFixed(1) + '" y="' + (yHosts - 34).toFixed(1) + '" class="point-label">HOSTS</text><text x="' + (stageX.hosts - 36).toFixed(1) + '" y="' + (yHosts - 21).toFixed(1) + '" class="point-note">' + usableHosts + ' usable</text>',
+      '<text x="' + (stageX.hosts - 36).toFixed(1) + '" y="' + (yHosts - 34).toFixed(1) + '" class="point-label">HOSTS *1</text><text x="' + (stageX.hosts - 36).toFixed(1) + '" y="' + (yHosts - 21).toFixed(1) + '" class="point-note">' + usableHosts + ' usable</text>',
       '<circle cx="' + stageX.cpu.toFixed(1) + '" cy="' + yCpu.toFixed(1) + '" r="6.5" class="marker-ring"/><circle cx="' + stageX.cpu.toFixed(1) + '" cy="' + yCpu.toFixed(1) + '" r="4.5" class="marker-cpu"/>',
       '<text x="' + (stageX.cpu - 38).toFixed(1) + '" y="' + (yCpu - 34).toFixed(1) + '" class="point-label">CPU *2</text><text x="' + (stageX.cpu - 38).toFixed(1) + '" y="' + (yCpu - 21).toFixed(1) + '" class="point-note">' + formatVm(cpuLimit) + '</text>',
       '<circle cx="' + stageX.ram.toFixed(1) + '" cy="' + yRam.toFixed(1) + '" r="6.5" class="marker-ring"/><circle cx="' + stageX.ram.toFixed(1) + '" cy="' + yRam.toFixed(1) + '" r="4.5" class="marker-ram"/>',
-      '<text x="' + (stageX.ram - 38).toFixed(1) + '" y="' + (yRam - 34).toFixed(1) + '" class="point-label">RAM *2</text><text x="' + (stageX.ram - 38).toFixed(1) + '" y="' + (yRam - 21).toFixed(1) + '" class="point-note">' + formatVm(ramLimit) + '</text>',
+      '<text x="' + (stageX.ram - 38).toFixed(1) + '" y="' + (yRam - 34).toFixed(1) + '" class="point-label">RAM *3</text><text x="' + (stageX.ram - 38).toFixed(1) + '" y="' + (yRam - 21).toFixed(1) + '" class="point-note">' + formatVm(ramLimit) + '</text>',
       '<circle cx="' + stageX.modeled.toFixed(1) + '" cy="' + yModeled.toFixed(1) + '" r="7" class="marker-ring"/><circle cx="' + stageX.modeled.toFixed(1) + '" cy="' + yModeled.toFixed(1) + '" r="5" class="marker-modeled"/>',
-      '<text x="' + (stageX.modeled - 62).toFixed(1) + '" y="' + (yModeled - 36).toFixed(1) + '" class="point-label">MODELED *3</text><text x="' + (stageX.modeled - 62).toFixed(1) + '" y="' + (yModeled - 23).toFixed(1) + '" class="point-note">' + formatVm(modeled) + '</text>',
+      '<text x="' + (stageX.modeled - 62).toFixed(1) + '" y="' + (yModeled - 36).toFixed(1) + '" class="point-label">MODELED *4</text><text x="' + (stageX.modeled - 62).toFixed(1) + '" y="' + (yModeled - 23).toFixed(1) + '" class="point-note">' + formatVm(modeled) + '</text>',
       '<text x="' + stageX.hosts.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">hosts</text>',
       '<text x="' + stageX.cpu.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">cpu</text>',
       '<text x="' + stageX.ram.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">ram</text>',

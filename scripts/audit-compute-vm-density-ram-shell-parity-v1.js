@@ -30,8 +30,8 @@ check("VM_DENSITY_RAM_STATIC_SECTIONS", ["computeVmDensitySummaryCard","computeV
 check("VM_DENSITY_RAM_SECTION_ORDER", before(src.html, "computeVmDensitySummaryCard", "computeVmDensityVisualCard") && before(src.html, "computeVmDensityVisualCard", "computeVmDensityReferencesCard") && before(src.html, "computeVmDensityReferencesCard", "computeVmDensityRecommendedActionsCard") && before(src.html, "computeVmDensityRecommendedActionsCard", "computeVmDensityDecisionScheduleCard") && before(src.html, "computeVmDensityDecisionScheduleCard", "exportReport") && before(src.html, "exportReport", "id=\"continue-wrap\""), "VM Density visible order should be summary, visual, references, actions, schedule, export, continue.");
 
 check("VM_DENSITY_ASSISTANT_CACHE_BUST",
-  src.html.includes("compute-assistant-vm-density-status-class-078"),
-  "VM Density should load the RAM-shell assistant contract cache-bust."
+  src.html.includes("compute-assistant-vm-density-reference-markers-079"),
+  "VM Density should load the current VM Density assistant contract cache-bust."
 );
 
 check("VM_DENSITY_SHARED_ASSISTANT_RENDERERS", ["renderVmDensityRecommendationReferences","renderVmDensityRecommendedActions","renderVmDensityDecisionSchedule","compute-assistant-vm-density-ram-shell-renderers-0706"].every((t) => src.assistant.includes(t)), "Shared Compute assistant contract should own VM Density references/actions/schedule renderers.");
@@ -154,7 +154,7 @@ check("VM_DENSITY_VISUAL_SELF_CONTAINED",
 );
 
 check("VM_DENSITY_FOOTER_CHIP_ICONS",
-  src.html.includes("scopedlabs-compute-capacity-visuals-030-vm-density-footer-fit") &&
+  src.html.includes("scopedlabs-compute-capacity-visuals-031-vm-density-reference-markers") &&
     src.visuals.includes("function footerIcon(type)") &&
     src.visuals.includes('data-vm-density-footer-icon-chip="0706"') &&
     src.visuals.includes("sl-icon-line") &&
@@ -179,18 +179,17 @@ check("VM_DENSITY_FOOTER_CHIP_STYLE",
 );
 
 check("VM_DENSITY_FOOTER_VALUE_FIT",
-  src.html.includes("scopedlabs-compute-capacity-visuals-030-vm-density-footer-fit") &&
+  src.html.includes("scopedlabs-compute-capacity-visuals-031-vm-density-reference-markers") &&
     src.visuals.includes("function compactDensityClass(value)") &&
     src.visuals.includes('footerStat(58, "density", "Density", compactDensityClass(densityClass), 150)'),
   "VM Density first footer chip should compact long density labels so text stays inside the Throughput-style chip."
 );
 
 check("VM_DENSITY_STATUS_BADGE_CLASS",
-  src.html.includes("compute-assistant-vm-density-status-class-078") &&
-    src.assistant.includes('return "is-risk"') &&
-    src.assistant.includes('return "is-watch"') &&
-    src.assistant.includes('return "is-good"') &&
-    src.assistant.includes('return "is-review"') &&
+  src.assistant.includes('return "is-risk";') &&
+    src.assistant.includes('return "is-watch";') &&
+    src.assistant.includes('return "is-good";') &&
+    src.assistant.includes('class="scopedlabs-result-summary-status \' + esc(statusClass(model.status)) + \'"') &&
     !src.assistant.includes('return "risk";') &&
     !src.assistant.includes('return "watch";') &&
     !src.assistant.includes('return "good";'),
@@ -255,6 +254,40 @@ check("VM_DENSITY_EXPORT_REPORT_SECTION_PARITY",
     src.script.includes('interpretation: ""') &&
     src.script.includes("analysisSections: []"),
   "VM Density custom export should preserve visual, references, actions, and schedule while replacing only the generic interpretation narrative."
+);
+
+
+check("VM_DENSITY_PLOTTED_REFERENCE_MARKER_PARITY",
+  src.html.includes("scopedlabs-compute-capacity-visuals-031-vm-density-reference-markers") &&
+    src.html.includes("compute-assistant-vm-density-reference-markers-079") &&
+    src.visuals.includes("[stageX.hosts, stageX.cpu, stageX.ram, stageX.modeled]") &&
+    src.visuals.includes('class="point-label">HOSTS *1</text>') &&
+    src.visuals.includes('class="point-label">CPU *2</text>') &&
+    src.visuals.includes('class="point-label">RAM *3</text>') &&
+    src.visuals.includes('class="point-label">MODELED *4</text>') &&
+    src.visuals.includes('class="demand-label">Demand: ') &&
+    !src.visuals.includes("Demand *1:") &&
+    src.assistant.includes('data-compute-vm-density-reference-marker-contract="plotted-checkpoints-0706"') &&
+    src.assistant.includes('reference: "Host envelope"') &&
+    src.assistant.includes('reference: "CPU limit"') &&
+    src.assistant.includes('reference: "RAM limit"') &&
+    src.assistant.includes('reference: "Modeled density"') &&
+    src.assistant.includes('marker: "*4"'),
+  "VM Density chart markers and Recommendation References should match the four plotted checkpoints."
+);
+
+check("VM_DENSITY_REFERENCE_MARKER_COLOR_PARITY",
+  src.visuals.includes(".marker-hosts{fill:#38d9ff") &&
+    src.visuals.includes(".marker-cpu{fill:#a78bfa") &&
+    src.visuals.includes(".marker-ram{fill:#60a5fa") &&
+    src.visuals.includes(".marker-modeled{fill:#2cff9b") &&
+    src.assistant.includes('data-vm-density-reference-marker-colors="0706"') &&
+    src.assistant.includes(".vm-density-ref-marker--hosts{color:#38d9ff}") &&
+    src.assistant.includes(".vm-density-ref-marker--cpu{color:#a78bfa}") &&
+    src.assistant.includes(".vm-density-ref-marker--ram{color:#60a5fa}") &&
+    src.assistant.includes(".vm-density-ref-marker--modeled{color:#2cff9b}") &&
+    src.assistant.includes('class="vm-density-ref-marker '),
+  "VM Density Recommendation Reference marker numbers should use the same colors as the SVG checkpoint markers."
 );
 
 const failed = results.filter((r) => !r.pass);
