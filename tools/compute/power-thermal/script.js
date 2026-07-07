@@ -30,6 +30,14 @@
     watts: $("watts"),
     peak: $("peak"),
     overhead: $("overhead"),
+    rackKw: $("rackKw"),
+    circuitVoltage: $("circuitVoltage"),
+    circuitAmps: $("circuitAmps"),
+    coolingTons: $("coolingTons"),
+    rackKw: $("rackKw"),
+    circuitVoltage: $("circuitVoltage"),
+    circuitAmps: $("circuitAmps"),
+    coolingTons: $("coolingTons"),
     results: $("results"),
     flowNote: $("flow-note"),
     analysisCopy: $("analysis-copy"),
@@ -179,6 +187,10 @@
     const watts = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.watts.value, 0));
     const peak = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.peak.value, 1));
     const overhead = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.overhead.value, 0));
+    const rackKw = Math.max(0.1, ScopedLabsAnalyzer.safeNumber(els.rackKw.value, 5));
+    const circuitVoltage = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.circuitVoltage.value, 208));
+    const circuitAmps = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.circuitAmps.value, 24));
+    const coolingTonsAvailable = Math.max(0.1, ScopedLabsAnalyzer.safeNumber(els.coolingTons.value, 3));
 
     const baseWatts = nodes * watts;
     const peakWatts = baseWatts * peak;
@@ -187,6 +199,8 @@
     const tons = btu / 12000;
     const amps120 = totalW / 120;
     const amps208 = totalW / 208;
+    const circuitAmpsUsed = totalW / circuitVoltage;
+    const rackPowerLimitW = rackKw * 1000;
 
     let gpuNote = "GPU not included in this step.";
     if (upstream) {
@@ -197,9 +211,9 @@
       }
     }
 
-    const rackPowerPressure = ScopedLabsAnalyzer.clamp((totalW / 5000) * 100, 0, 180);
-    const coolingPressure = ScopedLabsAnalyzer.clamp((tons / 3) * 100, 0, 180);
-    const circuitPressure = ScopedLabsAnalyzer.clamp((amps208 / 24) * 100, 0, 180);
+    const rackPowerPressure = ScopedLabsAnalyzer.clamp((totalW / rackPowerLimitW) * 100, 0, 180);
+    const coolingPressure = ScopedLabsAnalyzer.clamp((tons / coolingTonsAvailable) * 100, 0, 180);
+    const circuitPressure = ScopedLabsAnalyzer.clamp((circuitAmpsUsed / circuitAmps) * 100, 0, 180);
 
     const metrics = [
       {
@@ -284,6 +298,9 @@
       { label: "Total Power", value: `${totalW.toFixed(0)} W` },
       { label: "Heat Load", value: `${btu.toFixed(0)} BTU/hr` },
       { label: "Cooling", value: `${tons.toFixed(2)} tons` },
+      { label: "Rack Limit", value: `${rackKw.toFixed(1)} kW` },
+      { label: "Circuit Load", value: `${circuitAmpsUsed.toFixed(1)} A @ ${circuitVoltage.toFixed(0)} V` },
+      { label: "Cooling Capacity", value: `${coolingTonsAvailable.toFixed(1)} tons` },
       { label: "208V Current", value: `${amps208.toFixed(1)} A` },
       { label: "120V Current", value: `${amps120.toFixed(1)} A` },
       { label: "Thermal Pressure", value: pressure }
@@ -366,10 +383,18 @@
     els.watts.value = 450;
     els.peak.value = "1.15";
     els.overhead.value = 8;
+    if (els.rackKw) els.rackKw.value = 5;
+    if (els.circuitVoltage) els.circuitVoltage.value = "208";
+    if (els.circuitAmps) els.circuitAmps.value = 24;
+    if (els.coolingTons) els.coolingTons.value = 3;
+    if (els.rackKw) els.rackKw.value = 5;
+    if (els.circuitVoltage) els.circuitVoltage.value = "208";
+    if (els.circuitAmps) els.circuitAmps.value = 24;
+    if (els.coolingTons) els.coolingTons.value = 3;
     invalidate();
   });
 
-  ["nodes", "watts", "peak", "overhead"].forEach((id) => {
+  ["nodes", "watts", "peak", "overhead", "rackKw", "circuitVoltage", "circuitAmps", "coolingTons"].forEach((id) => {
     const el = $(id);
     if (!el) return;
     el.addEventListener("input", invalidate);
