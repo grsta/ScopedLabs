@@ -45,6 +45,41 @@ The tool result should expose:
 
 The planner page is the command center. Each tool is a pipeline station. The Summary page is the master assistant.
 
+
+## Planner-Owned Routing Matrix
+
+The Compute Workload Planner is the command center. Its Planning Path dropdown and Branch Starters define the intended route before the user enters downstream tools.
+
+The planner should own the route decision. Individual tools should ask the shared planner/shell state for the next required step instead of hardcoding a local Continue target.
+
+Current Planning Path values:
+
+| Planning Path Value | Planner Label | Default Branches | Route Intent |
+| --- | --- | --- | --- |
+| `standard-server` | Standard Server - start at CPU Sizing | none by default | Core sizing path, then Summary |
+| `vm-host` | VM Host / Consolidation - flag VM Density | VM Density | CPU/RAM context, VM Density, then Summary |
+| `database` | Database / Transactional - flag storage IOPS | Storage IOPS / Throughput | CPU/RAM context, storage IOPS/Throughput, then Summary |
+| `storage-heavy` | Storage-heavy workload - flag IOPS and throughput | Storage IOPS / Throughput | Storage path, then Summary, with CPU/RAM context only when required |
+| `gpu-ai` | GPU / AI / acceleration - open GPU branch | GPU VRAM | GPU branch, then Summary, with prerequisites only when required |
+| `backup-recovery` | Backup / Recovery validation - flag backup and RAID | RAID Rebuild, Backup Window | Protection branch, then Summary |
+| `power-constrained` | Power / thermal constrained - flag infrastructure review | Power / Thermal | Infrastructure branch, then Summary |
+| `network-constrained` | Network constrained - flag NIC bonding review | NIC Bonding | Network branch, then Summary |
+
+Branch Starters can add supporting checks on top of the selected Planning Path. The selected path and branch flags together form the route matrix.
+
+Modernized tools must preserve and honor this planner route. Do not force every workload through the full core chain when the planner selected a specialty destination.
+
+Before changing routing, inspect:
+
+- `tools/compute/workload-planner/index.html`
+- `tools/compute/workload-planner/script.js`
+- `assets/scopedlabs-compute-plan-state.js`
+- `assets/scopedlabs-compute-planner-adapter.js`
+- `assets/scopedlabs-compute-shell-contract.js`
+- the target tool script and audit
+
+Future improvement target: promote the route matrix into one shared resolver so each Compute tool can ask for the next required tool from active workload state and completed checkpoints.
+
 ## 3. Identify The Correct Completed Reference
 
 Use the module map, then inspect the actual source.

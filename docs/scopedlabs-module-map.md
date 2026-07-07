@@ -1657,3 +1657,5 @@ Promotion note:
 
 - COMPUTE_TOOL_MODERNIZATION_PROCEDURE_0707: Future Compute tool modernization lanes must start with `docs/compute-tool-modernization-procedure.md`. This guide defines the required order: read module map/guardrails, upgrade planning-pipeline inputs first, verify the accepted completed reference source, promote through shared Compute owners, add audits, update this module map, then close out with targeted checks. Owner: `docs/compute-tool-modernization-procedure.md`.
 
+- COMPUTE_PLANNER_ROUTE_MATRIX_0707: Compute Workload Planner Planning Path values and Branch Starters form the preplanned route matrix for core vs specialty tool paths. Modernized tools must honor the planner-owned route instead of hardcoding a local linear Continue target. Documented in `docs/compute-tool-modernization-procedure.md`; future shared resolver owner should be `assets/scopedlabs-compute-plan-state.js` / `assets/scopedlabs-compute-shell-contract.js`.
+
