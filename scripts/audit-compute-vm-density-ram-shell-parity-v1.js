@@ -29,7 +29,7 @@ check("VM_DENSITY_RAM_STATIC_SECTIONS", ["computeVmDensityVisualCard","computeVm
 check("VM_DENSITY_RAM_SECTION_ORDER", before(src.html, "computeVmDensityVisualCard", "computeVmDensityReferencesCard") && before(src.html, "computeVmDensityReferencesCard", "computeVmDensityRecommendedActionsCard") && before(src.html, "computeVmDensityRecommendedActionsCard", "computeVmDensityDecisionScheduleCard") && before(src.html, "computeVmDensityDecisionScheduleCard", "exportReport"), "VM Density visible order should be visual, references, actions, schedule, export.");
 
 check("VM_DENSITY_ASSISTANT_CACHE_BUST",
-  src.html.includes("compute-assistant-vm-density-ram-shell-071"),
+  src.html.includes("compute-assistant-vm-density-shared-072"),
   "VM Density should load the RAM-shell assistant contract cache-bust."
 );
 
