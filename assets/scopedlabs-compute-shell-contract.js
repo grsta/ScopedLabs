@@ -1404,17 +1404,37 @@ function computeWorkloadToolLabelFromPage() {
     return status ? "Storage Throughput / " + status : "Storage Throughput";
   }
 
+  function sharedWorkloadDisplayContext() {
+    var State = window.ScopedLabsComputePlanState || {};
+    try {
+      if (typeof State.buildWorkloadDisplayContext === "function") {
+        return State.buildWorkloadDisplayContext("VM Density");
+      }
+    } catch (error) {}
+    return null;
+  }
+
+  function contextRowValue(context, label, fallback) {
+    var rows = context && Array.isArray(context.rows) ? context.rows : [];
+    var wanted = String(label || "").toLowerCase();
+    for (var i = 0; i < rows.length; i += 1) {
+      if (String(rows[i][0] || "").toLowerCase() === wanted) return String(rows[i][1] || fallback || "");
+    }
+    return fallback;
+  }
+
   function workflowData(result) {
-    var workload = readActiveWorkload();
-    var environment = workloadValue(workload, ["environmentLabel", "environment", "criticality"], "Active workload");
-    var workflowTitle = workloadValue(workload, ["name", "title", "workloadName", "label"], "Active Workflow");
-    var workloadMix = selectedText("workloadMix", workloadValue(workload, ["workloadMixLabel", "workloadTypeLabel", "workloadType"], "Mixed / general"));
+    var context = sharedWorkloadDisplayContext();
+    var workload = context && context.raw && typeof context.raw === "object" ? context.raw : readActiveWorkload();
+    var environment = contextRowValue(context, "Environment", workloadValue(workload, ["environmentLabel", "environment", "criticality"], "Active workload"));
+    var workflowTitle = context && context.hasActiveWorkload ? context.title : workloadValue(workload, ["name", "title", "workloadName", "label"], "Active Workflow");
+    var workloadMix = selectedText("workloadMix", contextRowValue(context, "Workload Type", workloadValue(workload, ["workloadMixLabel", "workloadTypeLabel", "workloadType"], "Mixed / general")));
     var ha = selectedText("haPolicy", "No HA reserve");
     var spare = inputValue("spare", "%", "15%");
 
     return {
       title: workflowTitle,
-      summary: environment + " | " + workloadMix + " | VM Density",
+      summary: context && context.hasActiveWorkload ? context.description : environment + " | " + workloadMix + " | VM Density",
       environment: environment,
       workloadMix: workloadMix,
       demandSource: storageDemandSource(),
