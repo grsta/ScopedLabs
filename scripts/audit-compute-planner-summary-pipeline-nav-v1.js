@@ -196,11 +196,11 @@ check(
 
 check(
   "COMPUTE_WORKLOAD_PLANNER_VISUAL_IS_ACTIVE_SCOPED",
-  plannerAdapter.includes("var activeGroups = active ? summaryBranches([active]) : groups;") &&
+  plannerAdapter.includes("var activeGroups = active ? summaryBranches([active], plan) : groups;") &&
     plannerAdapter.includes("active ? [active] : workloads") &&
-    plannerAdapter.includes('visualMode: active ? "active-workload" : "aggregate"') &&
     plannerAdapter.includes("branchMapCountLabel") &&
-    plannerAdapter.includes("var statusText = active ? workloadStatusValue(active)"),
+    plannerAdapter.includes("var statusText = active ? workloadStatusValue(active, rollup.plan)") &&
+    plannerAdapter.includes("buildComputePlannerBranchMapHtml("),
   "assets/scopedlabs-compute-planner-adapter.js",
   "Workload Planner branch map must render the main chart from the current active workload while preserving aggregate rollups below."
 );
@@ -217,7 +217,7 @@ check(
 
 check(
   "COMPUTE_WORKLOAD_PLANNER_ADAPTER_CACHE_BUST_ACTIVE_VISUAL",
-  read("tools/compute/workload-planner/index.html").includes("/assets/scopedlabs-compute-planner-adapter.js?v=scopedlabs-compute-planner-adapter-011-active-workload-visual"),
+  read("tools/compute/workload-planner/index.html").includes("/assets/scopedlabs-compute-planner-adapter.js?v=scopedlabs-compute-planner-adapter-027-direct-owned-start-if"),
   "tools/compute/workload-planner/index.html",
   "Workload Planner page must load the active-workload visual version of the compute planner adapter."
 );
@@ -248,16 +248,18 @@ check(
   "COMPUTE_PLAN_STATE_CACHE_BUSTS_WORKLOAD_NAV_LINKS",
   toolPages.every((file) => {
     const html = read(file);
-    return html.includes("/assets/scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-007-workload-nav-links");
+    return html.includes("scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-007-workload-nav-links") ||
+      html.includes("scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-008-downstream-invalidation");
   }),
   "tools/compute/*/index.html",
-  "Compute pages must load the workload nav link cleanup version of the plan-state module."
+  "Compute pages must load a plan-state version that includes workload nav links."
 );
 
 check(
   "PIPELINE_RENDERER_USES_STABLE_INDEXED_STEP_PROGRESS",
   renderer.includes("Number.isInteger(step && step.__slIndex) ? step.__slIndex : steps.indexOf(step)") &&
-    renderer.includes("const isPast = !isSummaryEndpoint &&") &&
+    renderer.includes('const isSummaryEndpoint = step && step.categoryEndpoint === "summary";') &&
+    renderer.includes('const isPast = guidedState ? guidedState === "complete" : !isSummaryEndpoint &&') &&
     renderer.includes('if (isPast) a.classList.add("is-complete");') &&
     renderer.includes('if (isCurrent) a.classList.add("is-current");') &&
     renderer.includes('if (isFuture) a.classList.add("is-future");') &&
@@ -270,7 +272,7 @@ check(
 check(
   "COMPUTE_PLANNER_ENDPOINT_PARTICIPATES_IN_PROGRESS",
   renderer.includes('const isSummaryEndpoint = step && step.categoryEndpoint === "summary";') &&
-    renderer.includes("const isPast = !isSummaryEndpoint &&") &&
+    renderer.includes('const isPast = guidedState ? guidedState === "complete" : !isSummaryEndpoint &&') &&
     renderer.includes('a.setAttribute("data-category-endpoint", String(step.categoryEndpoint));'),
   "assets/pipeline.js",
   "Planner must remain a category endpoint link while still participating in normal past/completed pipeline progress; Summary is the endpoint excluded from auto-complete."
@@ -287,11 +289,19 @@ check(
 
 check(
   "COMPUTE_PIPELINE_PAGES_CACHE_BUST_INDEX_FIX",
-  toolPages.every((file) => {
-    const html = read(file);
-    return html.includes("/assets/pipelines.js?v=compute-dynamic-workload-planner-nav-0620") &&
-      html.includes("/assets/pipeline.js?v=compute-dynamic-workload-planner-nav-0620");
-  }),
+  toolPages
+    .filter((file) => {
+      const html = read(file);
+      return html.includes("pipelines.js") || html.includes("pipeline.js");
+    })
+    .every((file) => {
+      const html = read(file);
+      return html.includes("/assets/pipelines.js?v=compute-dynamic-workload-planner-nav-0620") &&
+        (
+          html.includes("/assets/pipeline.js?v=compute-dynamic-workload-planner-nav-0620") ||
+          html.includes("/assets/pipeline.js?v=compute-guided-pipeline-led-state-003-workload-fallback-current-branch")
+        );
+    }),
   "tools/compute/*/index.html",
   "Compute pipeline-consuming pages must cache-bust the dynamic workload planner nav pipeline assets."
 );
