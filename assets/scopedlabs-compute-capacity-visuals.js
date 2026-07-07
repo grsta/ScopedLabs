@@ -1456,47 +1456,134 @@ function renderStorageIopsCapacityEnvelope(options) {
     var mount = typeof target === "string" ? document.getElementById(target) : target;
     if (!mount) return false;
 
-    var outputs = (result && result.outputs) || result || {};
-    var inputs = (result && result.inputs) || {};
-    var status = result.status || result.summaryStatus || outputs.status || "GOOD";
-    var vms = num(outputs.vms || result.vms, 0);
-    var cpuLimit = num(outputs.cpuLimitVms || outputs.cpuVMs || result.cpuVMs, vms);
-    var ramLimit = num(outputs.ramLimitVms || outputs.ramVMs || result.ramVMs, vms);
-    var cpuPool = num(outputs.cpuPoolVcpu || outputs.cpuPool || result.cpuPool, 0);
-    var ramPool = num(outputs.ramPoolGb || outputs.ramPool || result.ramPool, 0);
+    result = result || {};
+    var outputs = result.outputs || result || {};
+    var inputs = result.inputs || {};
+    var status = String(outputs.status || result.status || result.summaryStatus || "WATCH").toUpperCase();
+    var modeled = Math.max(0, num(outputs.vms || outputs.modeledVmCapacity || result.vms, 0));
+    var demand = Math.max(0, num(outputs.growthAdjustedVmDemand || inputs.targetVmCount || result.growthAdjustedVmDemand, modeled));
+    var cpuLimit = Math.max(0, num(outputs.cpuLimitVms || outputs.cpuVMs || result.cpuVMs, modeled));
+    var ramLimit = Math.max(0, num(outputs.ramLimitVms || outputs.ramVMs || result.ramVMs, modeled));
+    var usableHosts = Math.max(0, num(outputs.usableHosts || result.usableHosts, 0));
+    var plannedHosts = Math.max(1, num(inputs.plannedHosts || result.plannedHosts, usableHosts || 1));
+    var cpuPool = Math.max(0, num(outputs.cpuPoolVcpu || outputs.cpuPool || result.cpuPool, 0));
+    var ramPool = Math.max(0, num(outputs.ramPoolGb || outputs.ramPool || result.ramPool, 0));
     var cpuHeadroom = num(outputs.cpuHeadroomVcpu || result.effectiveCpuHeadroom, 0);
     var ramHeadroom = num(outputs.ramHeadroomGb || result.effectiveRamHeadroom, 0);
-    var maxLimit = Math.max(1, cpuLimit, ramLimit, vms);
-    var limiting = outputs.limiting || result.limiting || "Balanced";
-    var densityClass = outputs.densityClass || result.densityClass || "Modeled";
-    var statusTone = statusClass(status);
+    var gap = num(outputs.capacityGapVms || outputs.capacityGap, modeled - demand);
+    var limiting = outputs.limiting || outputs.primaryConstraint || result.limiting || "Balanced";
+    var densityClass = outputs.densityClass || result.densityClass || "Modeled consolidation";
+    var haPolicy = String(inputs.haPolicy || result.haPolicy || "none").toUpperCase();
+    var maintenance = num(inputs.maintenanceReservePct || result.maintenanceReservePct, 0);
+    var growth = num(inputs.growthMarginPct || result.growthMarginPct, 0);
+
+    var width = 760;
+    var height = 430;
+    var plot = { x: 58, y: 78, w: 646, h: 244 };
+    var maxValue = Math.max(1, modeled, demand, cpuLimit, ramLimit);
+    var yMax = Math.ceil((maxValue * 1.18) / 10) * 10;
+    if (yMax < 50) yMax = 50;
+
+    function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+    function yScale(value) { return plot.y + plot.h - (clamp(value, 0, yMax) / yMax) * plot.h; }
+    function formatVm(value) { return Math.round(num(value, 0)).toLocaleString() + " VMs"; }
+    function formatPool(value, unit) { var numeric = num(value, 0); return numeric.toFixed(numeric >= 100 ? 0 : 1).replace(/\.0$/, "") + " " + unit; }
+    function escapeXml(value) {
+      return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&apos;");
+    }
+
+    var paletteMap = {
+      GOOD: { stroke: "#34d399", fill: "rgba(52,211,153,0.10)", text: "#7ef5d5" },
+      WATCH: { stroke: "#facc15", fill: "rgba(250,204,21,0.10)", text: "#facc15" },
+      RISK: { stroke: "#ef4444", fill: "rgba(239,68,68,0.11)", text: "#ef4444" },
+      BLOCKED: { stroke: "#ef4444", fill: "rgba(239,68,68,0.11)", text: "#ef4444" }
+    };
+    var palette = paletteMap[status] || paletteMap.WATCH;
+
+    var stageX = {
+      hosts: plot.x + 130,
+      cpu: plot.x + 286,
+      ram: plot.x + 442,
+      modeled: plot.x + 586
+    };
+    var hostCapacity = Math.max(modeled, demand, cpuLimit, ramLimit);
+    var yHosts = yScale(hostCapacity);
+    var yCpu = yScale(cpuLimit);
+    var yRam = yScale(ramLimit);
+    var yModeled = yScale(modeled);
+    var yDemand = yScale(demand);
+    var yGood = yScale(Math.max(0, demand * 0.70));
+    var yWatch = yScale(Math.max(0, demand * 0.90));
+    var zoneBands = buildCapacityZoneBands(plot, yGood, yWatch);
+    var checkpointGuides = buildCapacityCheckpointGuides(plot, [stageX.cpu, stageX.ram, stageX.modeled]);
+    var curvePath = [
+      "M", stageX.hosts.toFixed(1), yHosts.toFixed(1),
+      "C", (stageX.cpu - 80).toFixed(1), yCpu.toFixed(1), (stageX.cpu - 38).toFixed(1), yCpu.toFixed(1), stageX.cpu.toFixed(1), yCpu.toFixed(1),
+      "S", (stageX.ram - 40).toFixed(1), yRam.toFixed(1), stageX.ram.toFixed(1), yRam.toFixed(1),
+      "S", (stageX.modeled - 46).toFixed(1), yModeled.toFixed(1), stageX.modeled.toFixed(1), yModeled.toFixed(1)
+    ].join(" ");
+
+    var tickStep = yMax <= 60 ? 10 : yMax <= 120 ? 20 : 50;
+    var gridLines = [];
+    for (var tick = 0; tick <= yMax; tick += tickStep) {
+      var y = yScale(tick);
+      gridLines.push('<path d="M' + plot.x + ' ' + y.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="' + (tick === 0 ? "grid-major" : "grid") + '"/><text x="' + (plot.x - 10) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end" class="tick">' + tick + '</text>');
+    }
+
+    var gapTop = yScale(Math.max(modeled, demand));
+    var gapBottom = yScale(Math.min(modeled, demand));
+    var gapTextY = clamp((gapTop + gapBottom) / 2, plot.y + 30, plot.y + plot.h - 12);
+    var gapLabel = gap < 0 ? "deficit *3" : "headroom *3";
 
     mount.innerHTML = [
-      '<div class="compute-capacity-envelope compute-vm-density-envelope" data-compute-vm-density-envelope-0706>',
-      '<div class="compute-capacity-envelope__head">',
-      '<div><h3>VM Density Capacity Envelope</h3><p>Host consolidation limit from CPU pool, RAM pool, spare policy, and overcommit assumptions.</p></div>',
-      '<span class="scopedlabs-result-summary-status ' + esc(statusTone) + '">' + esc(status) + '</span>',
-      '</div>',
-      '<svg viewBox="0 0 720 260" role="img" aria-label="VM Density capacity envelope">',
-      '<rect x="44" y="34" width="632" height="150" rx="14" fill="rgba(255,255,255,0.035)" stroke="rgba(255,255,255,0.12)"/>',
-      '<line x1="82" y1="78" x2="638" y2="78" stroke="rgba(140,255,180,0.45)" stroke-width="8" stroke-linecap="round"/>',
-      '<line x1="82" y1="126" x2="638" y2="126" stroke="rgba(120,190,255,0.38)" stroke-width="8" stroke-linecap="round"/>',
-      '<line x1="82" y1="162" x2="' + (82 + pct(vms, maxLimit) * 5.56).toFixed(1) + '" y2="162" stroke="rgba(255,255,255,0.72)" stroke-width="6" stroke-linecap="round"/>',
-      '<circle cx="' + (82 + pct(cpuLimit, maxLimit) * 5.56).toFixed(1) + '" cy="78" r="9" fill="rgba(140,255,180,0.95)"/>',
-      '<circle cx="' + (82 + pct(ramLimit, maxLimit) * 5.56).toFixed(1) + '" cy="126" r="9" fill="rgba(120,190,255,0.95)"/>',
-      '<circle cx="' + (82 + pct(vms, maxLimit) * 5.56).toFixed(1) + '" cy="162" r="10" fill="rgba(255,255,255,0.95)"/>',
-      '<text x="82" y="58" fill="rgba(255,255,255,0.72)" font-size="13">CPU limit: ' + esc(cpuLimit) + ' VMs</text>',
-      '<text x="82" y="112" fill="rgba(255,255,255,0.72)" font-size="13">RAM limit: ' + esc(ramLimit) + ' VMs</text>',
-      '<text x="82" y="202" fill="rgba(255,255,255,0.72)" font-size="13">Modeled density: ' + esc(vms) + ' VMs | Limiting: ' + esc(limiting) + '</text>',
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="VM Density Capacity Envelope" data-compute-vm-density-envelope-0706>',
+      '<defs><style>',
+      '.bg{fill:#07100d}.panel{fill:rgba(255,255,255,.025);stroke:rgba(112,255,145,.16);stroke-width:1}.title{fill:#f8fafc;font-family:Inter,Arial,sans-serif;font-size:18px;font-weight:900}.sub{fill:rgba(203,213,225,.82);font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:700}.status-text{font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.8px}.zone-risk{fill:rgba(239,68,68,.22)}.zone-watch{fill:rgba(250,204,21,.18)}.zone-good{fill:rgba(52,211,153,.17)}.grid{stroke:rgba(148,163,184,.14);stroke-width:1}.grid-major{stroke:rgba(148,163,184,.24);stroke-width:1}.axis{stroke:rgba(226,232,240,.34);stroke-width:1.2}.tick{fill:rgba(203,213,225,.72);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:700}.axis-label{fill:rgba(203,213,225,.76);font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:800}.zone-text{font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.7px}.risk-text{fill:#ef4444}.watch-text{fill:#facc15}.good-text{fill:#34d399}.demand-line{stroke:#facc15;stroke-width:2;stroke-dasharray:7 5}.demand-label{fill:#facc15;font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:850}.curve-shadow{fill:none;stroke:rgba(0,0,0,.4);stroke-width:6;stroke-linecap:round}.curve-line{fill:none;stroke:#2cff9b;stroke-width:2.2;stroke-linecap:round}.drop-line{stroke:rgba(226,232,240,.20);stroke-width:1;stroke-dasharray:4 5}.marker-ring{fill:none;stroke:rgba(238,246,255,.72);stroke-width:1}.marker-hosts{fill:#38d9ff;stroke:#04110d;stroke-width:1.2}.marker-cpu{fill:#a78bfa;stroke:#04110d;stroke-width:1.2}.marker-ram{fill:#60a5fa;stroke:#04110d;stroke-width:1.2}.marker-modeled{fill:#2cff9b;stroke:#04110d;stroke-width:1.2}.point-label{fill:#f8fafc;font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.6px}.point-note{fill:rgba(203,213,225,.84);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:750}.bracket-line{stroke:' + palette.stroke + ';stroke-width:1.5}.bracket-text{fill:' + palette.text + ';font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900}.chip-bg{fill:rgba(15,23,42,.72);stroke:rgba(112,255,145,.12)}.chip-text{fill:rgba(226,232,240,.86);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:750}' + computeCapacityGuideLineStyles() + computeCapacityFooterIconStyles(),
+      '</style></defs>',
+      '<rect width="' + width + '" height="' + height + '" class="bg"/>',
+      '<rect x="24" y="22" width="712" height="384" rx="18" class="panel"/>',
+      '<text x="380" y="54" text-anchor="middle" class="title">VM Density Capacity Envelope</text>',
+      '<text x="380" y="74" text-anchor="middle" class="sub">Host consolidation ceiling vs growth-adjusted VM demand</text>',
+      '<rect x="632" y="36" width="64" height="28" rx="4" fill="' + palette.fill + '" stroke="' + palette.stroke + '"/>',
+      '<text x="664" y="55" text-anchor="middle" fill="' + palette.text + '" class="status-text">' + escapeXml(status) + '</text>',
+      zoneBands.join(""), checkpointGuides, gridLines.join(""),
+      '<path d="M' + plot.x + ' ' + plot.y + ' V' + (plot.y + plot.h) + '" class="axis"/>',
+      '<path d="M' + plot.x + ' ' + (plot.y + plot.h) + ' H' + (plot.x + plot.w) + '" class="axis"/>',
+      '<text x="38" y="66" class="axis-label">VMs</text>',
+      '<text x="' + (plot.x + plot.w / 2) + '" y="348" text-anchor="middle" class="axis-label">Density planning checkpoints</text>',
+      '<text x="' + (plot.x + plot.w - 10) + '" y="' + (plot.y + 14).toFixed(1) + '" text-anchor="end" class="zone-text risk-text">RISK</text>',
+      '<text x="' + (plot.x + plot.w - 10) + '" y="' + (yWatch + 14).toFixed(1) + '" text-anchor="end" class="zone-text watch-text">WATCH</text>',
+      '<text x="' + (plot.x + plot.w - 10) + '" y="' + (yGood + 14).toFixed(1) + '" text-anchor="end" class="zone-text good-text">GOOD</text>',
+      '<path d="M' + plot.x + ' ' + yDemand.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="demand-line"/><text x="' + (plot.x + plot.w - 12) + '" y="' + (yDemand - 8).toFixed(1) + '" text-anchor="end" class="demand-label">Demand *1: ' + formatVm(demand) + '</text>',
+      '<path d="' + curvePath + '" class="curve-shadow"/>',
+      '<path d="' + curvePath + '" class="curve-line"/>',
+      '<path d="M' + stageX.cpu.toFixed(1) + ' ' + yCpu.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="drop-line"/>',
+      '<path d="M' + stageX.ram.toFixed(1) + ' ' + yRam.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="drop-line"/>',
+      '<path d="M' + stageX.modeled.toFixed(1) + ' ' + yModeled.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="drop-line"/>',
+      '<circle cx="' + stageX.hosts.toFixed(1) + '" cy="' + yHosts.toFixed(1) + '" r="6.5" class="marker-ring"/><circle cx="' + stageX.hosts.toFixed(1) + '" cy="' + yHosts.toFixed(1) + '" r="4.5" class="marker-hosts"/>',
+      '<text x="' + (stageX.hosts - 36).toFixed(1) + '" y="' + (yHosts - 34).toFixed(1) + '" class="point-label">HOSTS</text><text x="' + (stageX.hosts - 36).toFixed(1) + '" y="' + (yHosts - 21).toFixed(1) + '" class="point-note">' + usableHosts + ' usable</text>',
+      '<circle cx="' + stageX.cpu.toFixed(1) + '" cy="' + yCpu.toFixed(1) + '" r="6.5" class="marker-ring"/><circle cx="' + stageX.cpu.toFixed(1) + '" cy="' + yCpu.toFixed(1) + '" r="4.5" class="marker-cpu"/>',
+      '<text x="' + (stageX.cpu - 38).toFixed(1) + '" y="' + (yCpu - 34).toFixed(1) + '" class="point-label">CPU *2</text><text x="' + (stageX.cpu - 38).toFixed(1) + '" y="' + (yCpu - 21).toFixed(1) + '" class="point-note">' + formatVm(cpuLimit) + '</text>',
+      '<circle cx="' + stageX.ram.toFixed(1) + '" cy="' + yRam.toFixed(1) + '" r="6.5" class="marker-ring"/><circle cx="' + stageX.ram.toFixed(1) + '" cy="' + yRam.toFixed(1) + '" r="4.5" class="marker-ram"/>',
+      '<text x="' + (stageX.ram - 38).toFixed(1) + '" y="' + (yRam - 34).toFixed(1) + '" class="point-label">RAM *2</text><text x="' + (stageX.ram - 38).toFixed(1) + '" y="' + (yRam - 21).toFixed(1) + '" class="point-note">' + formatVm(ramLimit) + '</text>',
+      '<circle cx="' + stageX.modeled.toFixed(1) + '" cy="' + yModeled.toFixed(1) + '" r="7" class="marker-ring"/><circle cx="' + stageX.modeled.toFixed(1) + '" cy="' + yModeled.toFixed(1) + '" r="5" class="marker-modeled"/>',
+      '<text x="' + (stageX.modeled - 62).toFixed(1) + '" y="' + (yModeled - 36).toFixed(1) + '" class="point-label">MODELED *3</text><text x="' + (stageX.modeled - 62).toFixed(1) + '" y="' + (yModeled - 23).toFixed(1) + '" class="point-note">' + formatVm(modeled) + '</text>',
+      '<text x="' + stageX.hosts.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">hosts</text>',
+      '<text x="' + stageX.cpu.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">cpu</text>',
+      '<text x="' + stageX.ram.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">ram</text>',
+      '<text x="' + stageX.modeled.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">modeled</text>',
+      '<path d="M' + (plot.x + plot.w - 24).toFixed(1) + ' ' + gapTop.toFixed(1) + ' H' + (plot.x + plot.w - 8).toFixed(1) + '" class="bracket-line"/><path d="M' + (plot.x + plot.w - 24).toFixed(1) + ' ' + gapBottom.toFixed(1) + ' H' + (plot.x + plot.w - 8).toFixed(1) + '" class="bracket-line"/><path d="M' + (plot.x + plot.w - 10).toFixed(1) + ' ' + gapTop.toFixed(1) + ' V' + gapBottom.toFixed(1) + '" class="bracket-line"/><text x="' + (plot.x + plot.w - 1).toFixed(1) + '" y="' + (gapTextY - 7).toFixed(1) + '" class="bracket-text" text-anchor="start"><tspan x="' + (plot.x + plot.w - 1).toFixed(1) + '" dy="0">' + escapeXml(gapLabel) + '</tspan><tspan x="' + (plot.x + plot.w - 1).toFixed(1) + '" dy="14">' + escapeXml(formatVm(Math.abs(gap))) + '</tspan></text>',
+      buildCapacityFooterStat(58, "workload", "Density", densityClass, { y: 360, width: 150, iconX: 9, iconY: 6, labelX: 38, labelY: 16, valueY: 31, escaper: escapeXml }),
+      buildCapacityFooterStat(214, "utilization", "Limiter", limiting, { y: 360, width: 150, iconX: 9, iconY: 6, labelX: 38, labelY: 16, valueY: 31, escaper: escapeXml }),
+      buildCapacityFooterStat(370, "cpu", "CPU Pool", formatPool(cpuPool, "vCPU"), { y: 360, width: 162, iconX: 9, iconY: 6, labelX: 38, labelY: 16, valueY: 31, escaper: escapeXml }),
+      buildCapacityFooterStat(538, "ram", "RAM Pool", formatPool(ramPool, "GB"), { y: 360, width: 166, iconX: 9, iconY: 6, labelX: 38, labelY: 16, valueY: 31, escaper: escapeXml }),
       '</svg>',
-      '<div class="compute-capacity-envelope__stats">',
-      '<span><strong>' + esc(vms) + '</strong><small>Modeled VMs</small></span>',
-      '<span><strong>' + esc(limiting) + '</strong><small>Limiting Factor</small></span>',
-      '<span><strong>' + esc(cpuHeadroom.toFixed ? cpuHeadroom.toFixed(1) : cpuHeadroom) + '</strong><small>vCPU Headroom</small></span>',
-      '<span><strong>' + esc(ramHeadroom.toFixed ? ramHeadroom.toFixed(1) : ramHeadroom) + '</strong><small>GB RAM Headroom</small></span>',
-      '</div>',
-      '<p class="muted mini-note">Density class: ' + esc(densityClass) + '. CPU pool ' + esc(cpuPool.toFixed ? cpuPool.toFixed(1) : cpuPool) + ' vCPU-eq; RAM pool ' + esc(ramPool.toFixed ? ramPool.toFixed(1) : ramPool) + ' GB.</p>',
-      '</div>'
+      '<p class="muted mini-note">Reserve policy: HA ' + esc(haPolicy) + ' | maintenance ' + Math.round(maintenance) + '% | growth ' + Math.round(growth) + '%. Headroom: ' + esc(formatPool(cpuHeadroom, "vCPU")) + ' and ' + esc(formatPool(ramHeadroom, "GB")) + ' RAM.</p>'
     ].join("");
 
     return true;

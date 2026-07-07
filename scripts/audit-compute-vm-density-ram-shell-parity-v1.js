@@ -29,7 +29,7 @@ check("VM_DENSITY_RAM_STATIC_SECTIONS", ["computeVmDensityVisualCard","computeVm
 check("VM_DENSITY_RAM_SECTION_ORDER", before(src.html, "computeVmDensityVisualCard", "computeVmDensityReferencesCard") && before(src.html, "computeVmDensityReferencesCard", "computeVmDensityRecommendedActionsCard") && before(src.html, "computeVmDensityRecommendedActionsCard", "computeVmDensityDecisionScheduleCard") && before(src.html, "computeVmDensityDecisionScheduleCard", "exportReport"), "VM Density visible order should be visual, references, actions, schedule, export.");
 
 check("VM_DENSITY_ASSISTANT_CACHE_BUST",
-  src.html.includes("compute-assistant-vm-density-shared-073"),
+  src.html.includes("compute-assistant-vm-density-renderer-parity-074"),
   "VM Density should load the RAM-shell assistant contract cache-bust."
 );
 
@@ -73,6 +73,17 @@ check("VM_DENSITY_SHARED_VISUAL_TARGET_SIGNATURE",
   src.visuals.includes("function renderVmDensityCapacityEnvelope(target, result)") &&
     src.script.includes("visuals.renderVmDensityCapacityEnvelope(cards.visual, result)"),
   "VM Density should call the shared capacity visual renderer with the target element and result payload."
+);
+
+check("VM_DENSITY_STORAGE_STYLE_RENDERER_RHYTHM",
+  src.assistant.includes("scopedlabs-result-summary-card") &&
+    src.assistant.includes("compute-recommendation-references-table") &&
+    src.assistant.includes("compute-recommended-actions-list") &&
+    src.assistant.includes("compute-decision-schedule") &&
+    src.visuals.includes("data-compute-vm-density-envelope-0706") &&
+    src.visuals.includes("zone-risk") &&
+    src.visuals.includes("Density planning checkpoints"),
+  "VM Density shared renderers should follow the Storage-style summary, references, actions, schedule, and visual rhythm."
 );
 
 const failed = results.filter((r) => !r.pass);

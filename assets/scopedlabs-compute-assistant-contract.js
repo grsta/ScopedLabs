@@ -1153,74 +1153,144 @@ function renderComputeRamRecommendationReferences(data) {
   "use strict";
   const api = Object.assign({}, window.ScopedLabsComputeAssistant || {});
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
-  const row = (label, value) => '<div class="result-row"><span class="k">' + esc(label) + '</span><span class="v">' + esc(value ?? "Not set") + '</span></div>';
+  const num = (value, fallback) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : (Number.isFinite(Number(fallback)) ? Number(fallback) : 0);
+  };
+  const pct = (value) => Math.round(num(value, 0)) + "%";
+  const vms = (value) => num(value, 0).toLocaleString() + " VMs";
+  const gb = (value) => num(value, 0).toFixed(num(value, 0) >= 100 ? 0 : 1).replace(/\.0$/, "") + " GB";
+  const vcpu = (value) => num(value, 0).toFixed(num(value, 0) >= 100 ? 0 : 1).replace(/\.0$/, "") + " vCPU";
+  const row = (label, value) => '<div class="scopedlabs-result-summary-item"><strong>' + esc(label) + '</strong><span>' + esc(value ?? "Not set") + '</span></div>';
 
-  
+  function vmDensityModel(result) {
+    result = result || {};
+    const outputs = result.outputs || {};
+    const inputs = result.inputs || {};
+    const routing = result.plannerRouting || {};
+    const status = String(outputs.status || result.status || result.summaryStatus || "WATCH").toUpperCase();
+    const modeled = num(outputs.vms ?? outputs.modeledVmCapacity ?? result.vms, 0);
+    const demand = num(outputs.growthAdjustedVmDemand ?? inputs.targetVmCount ?? result.growthAdjustedVmDemand, modeled);
+    const gap = num(outputs.capacityGapVms ?? outputs.capacityGap, modeled - demand);
+    const limiting = outputs.limiting || outputs.primaryConstraint || result.limiting || "Balanced";
+    const usableHosts = num(outputs.usableHosts ?? result.usableHosts, 0);
+    const plannedHosts = num(inputs.plannedHosts ?? result.plannedHosts, usableHosts || 1);
+    const haPolicy = String(inputs.haPolicy || result.haPolicy || "none").toUpperCase();
+    const maintenance = pct(inputs.maintenanceReservePct ?? result.maintenanceReservePct ?? 0);
+    const growth = pct(inputs.growthMarginPct ?? result.growthMarginPct ?? 0);
+    const densityClass = outputs.densityClass || result.densityClass || "Modeled consolidation";
+    const cpuLimit = num(outputs.cpuLimitVms ?? outputs.cpuVMs ?? result.cpuVMs, modeled);
+    const ramLimit = num(outputs.ramLimitVms ?? outputs.ramVMs ?? result.ramVMs, modeled);
+    const cpuPool = num(outputs.cpuPoolVcpu ?? outputs.cpuPool ?? result.cpuPool, 0);
+    const ramPool = num(outputs.ramPoolGb ?? outputs.ramPool ?? result.ramPool, 0);
+    const cpuHeadroom = num(outputs.cpuHeadroomVcpu ?? result.effectiveCpuHeadroom, 0);
+    const ramHeadroom = num(outputs.ramHeadroomGb ?? result.effectiveRamHeadroom, 0);
+    const storagePressure = inputs.storagePressure || result.storagePressure || "normal";
+    const burstRisk = inputs.burstRisk || result.burstRisk || "normal";
+    const workloadMix = inputs.workloadMix || result.workloadMix || "mixed";
+    const nextTool = routing.nextTool || "power-thermal";
+    const routeIntent = routing.routeIntent || result.plannerRouteHint || "continue-to-power-thermal";
+
+    let recommendation = "Carry this VM Density result into Power / Thermal validation.";
+    let confidence = "HIGH";
+    let primaryRisk = "No immediate density blocker is indicated, but power and thermal load still need validation.";
+
+    if (status === "RISK" || gap < 0) {
+      recommendation = "Rework the density target before continuing to Power / Thermal validation.";
+      confidence = "MEDIUM";
+      primaryRisk = limiting + " is constraining consolidation headroom before downstream power and thermal checks.";
+    } else if (status === "WATCH") {
+      recommendation = "Validate reserve policy and noisy-neighbor assumptions before locking density.";
+      confidence = "MEDIUM";
+      primaryRisk = "Density is usable, but reserve or workload-mix pressure should stay visible in the Compute plan.";
+    }
+
+    const flags = [
+      "Modeled " + vms(modeled),
+      "Demand " + vms(demand),
+      "Gap " + vms(gap),
+      "Limiter " + limiting
+    ].join(" | ");
+
+    return { status, modeled, demand, gap, limiting, usableHosts, plannedHosts, haPolicy, maintenance, growth, densityClass, cpuLimit, ramLimit, cpuPool, ramPool, cpuHeadroom, ramHeadroom, storagePressure, burstRisk, workloadMix, nextTool, routeIntent, recommendation, confidence, primaryRisk, flags };
+  }
+
   /* compute-assistant-vm-density-summary-card-0706 */
   api.renderVmDensitySummaryCard = function renderVmDensitySummaryCard(result) {
-    const outputs = result.outputs || {};
-    const inputs = result.inputs || {};
-    const status = String(outputs.status || result.status || "REVIEW").toUpperCase();
-    const modeled = Number.isFinite(Number(outputs.vms ?? outputs.modeledVmCapacity)) ? Number(outputs.vms ?? outputs.modeledVmCapacity) : 0;
-    const demand = Number.isFinite(Number(outputs.growthAdjustedVmDemand ?? inputs.targetVmCount)) ? Number(outputs.growthAdjustedVmDemand ?? inputs.targetVmCount) : modeled;
-    const limiter = outputs.limiting || outputs.primaryConstraint || "Balanced";
-    const gap = modeled - demand;
-    const recommendation = status === "RISK"
-      ? "Rework the density target before continuing to Power / Thermal validation."
-      : "Carry this VM Density result into Power / Thermal validation.";
-
-    return '<div class="compute-result-shell">' +
-      '<h3 class="h3" style="margin-top:0; text-transform:uppercase; letter-spacing:.05em;">VM Density</h3>' +
-      '<div style="font-weight:800; margin-bottom:14px;">' + esc(status) + '</div>' +
-      '<p class="muted">' + esc(recommendation) + '</p>' +
-      '<div class="results-grid">' +
-        row("Recommendation", recommendation) +
-        row("Confidence", status === "RISK" ? "MEDIUM" : "HIGH") +
-        row("Decision Flags", "Modeled " + modeled + " VMs | Demand " + demand + " VMs | Gap " + gap + " VMs") +
-        row("Primary Risk", limiter + " is the active density limiter.") +
-      '</div>' +
-      '<p class="muted" style="border-left:3px solid rgba(47,255,128,.75); padding-left:12px; margin-top:14px;">Carry this VM Density result into Power / Thermal. Do not treat the Compute plan as complete until power and thermal load are validated.</p>' +
-    '</div>';
+    const model = vmDensityModel(result);
+    return [
+      '<div class="scopedlabs-result-summary-card" data-compute-vm-density-summary-card="0706">',
+      '  <div class="scopedlabs-result-summary-header">',
+      '    <h3 class="scopedlabs-result-summary-title">VM DENSITY</h3>',
+      '    <span class="status-badge status-' + esc(model.status.toLowerCase()) + '">' + esc(model.status) + '</span>',
+      '  </div>',
+      '  <p class="muted">' + esc(model.primaryRisk) + '</p>',
+      '  <div class="scopedlabs-result-summary-grid">',
+      row("RECOMMENDATION", model.recommendation),
+      row("CONFIDENCE", model.confidence),
+      row("DECISION FLAGS", model.flags),
+      row("PRIMARY RISK", model.primaryRisk),
+      '  </div>',
+      '  <p class="scopedlabs-result-summary-note">Carry this VM Density result into Power / Thermal. Do not treat the Compute plan as complete until the modeled host count, CPU pool, RAM pool, and reserve policy are translated into load.</p>',
+      '</div>'
+    ].join("");
   };
 
-api.renderVmDensityRecommendationReferences = function renderVmDensityRecommendationReferences(result) {
-    const outputs = result.outputs || {};
-    const inputs = result.inputs || {};
-    return '<div class="results-grid">' +
-      row("*1 Modeled density", (outputs.vms ?? "Not set") + " VMs modeled from CPU/RAM pool and reserve policy") +
-      row("*2 Demand basis", (outputs.growthAdjustedVmDemand ?? "Not set") + " growth-adjusted VMs; target " + (inputs.targetVmCount || "not set")) +
-      row("*3 Validation limiter", (outputs.limiting || "Balanced") + " limiter; " + (outputs.crossCheck || "cross-check pending")) +
-      '</div>';
+  api.renderVmDensityRecommendationReferences = function renderVmDensityRecommendationReferences(result) {
+    const model = vmDensityModel(result);
+    return [
+      '<table class="compute-recommendation-references-table" data-compute-vm-density-references="0706">',
+      '  <thead><tr><th>Marker</th><th>Reference</th><th>Reason</th></tr></thead>',
+      '  <tbody>',
+      '    <tr><td>*1</td><td>Demand basis</td><td>' + esc(vms(model.demand) + " growth-adjusted demand is compared against the modeled consolidation ceiling.") + '</td></tr>',
+      '    <tr><td>*2</td><td>Capacity limiter</td><td>' + esc(model.limiting + " is the active limiter. CPU limit " + vms(model.cpuLimit) + " | RAM limit " + vms(model.ramLimit) + ".") + '</td></tr>',
+      '    <tr><td>*3</td><td>Reserve policy</td><td>' + esc("Planned hosts " + model.plannedHosts + " | HA " + model.haPolicy + " | Maintenance " + model.maintenance + " | Growth " + model.growth + ".") + '</td></tr>',
+      '  </tbody>',
+      '</table>'
+    ].join("");
   };
 
   api.renderVmDensityRecommendedActions = function renderVmDensityRecommendedActions(result) {
-    const status = String(result.status || result.summaryStatus || "WATCH").toUpperCase();
-    const outputs = result.outputs || {};
-    const flags = Array.isArray(result.planningPressureFlags) ? result.planningPressureFlags : [];
-    const primary = status === "RISK"
-      ? "Rework density before continuing to power and thermal planning."
-      : status === "WATCH"
-        ? "Validate reserve policy, noisy-neighbor behavior, and storage pressure before locking density."
-        : "Density assumptions are acceptable for the next Compute planning step.";
-    return '<p class="muted">' + esc(result.guidance || primary) + '</p>' +
-      '<div class="results-grid">' +
-      row("Recommendation", primary) +
-      row("Primary Constraint", outputs.limiting || "Balanced") +
-      row("Capacity Gap", typeof outputs.capacityGapVms === "number" ? outputs.capacityGapVms + " VMs" : "Not set") +
-      row("Planning Flags", flags.length ? flags.join(", ") : "None") +
-      '</div>';
+    const model = vmDensityModel(result);
+    let actions;
+    if (model.status === "RISK" || model.gap < 0) {
+      actions = [
+        { action: "Rework the density target before continuing", reason: model.limiting + " is constraining the modeled envelope. Reduce per-VM allocation, add host capacity, or change oversubscription policy before Power / Thermal." },
+        { action: "Validate CPU and RAM pools together", reason: "CPU limit " + vms(model.cpuLimit) + " and RAM limit " + vms(model.ramLimit) + " must support the same workload plan, not separate best-case limits." },
+        { action: "Preserve reserve pressure in downstream tools", reason: "HA " + model.haPolicy + ", maintenance " + model.maintenance + ", and growth " + model.growth + " should carry into power and thermal planning." }
+      ];
+    } else if (model.status === "WATCH") {
+      actions = [
+        { action: "Carry density forward as a watch item", reason: "The envelope is usable, but " + model.primaryRisk.toLowerCase() },
+        { action: "Review workload mix and noisy-neighbor behavior", reason: "Workload mix " + model.workloadMix + " and burst risk " + model.burstRisk + " can shift consolidation limits after deployment." },
+        { action: "Continue to Power / Thermal", reason: "Translate " + vms(model.modeled) + " modeled VMs across " + model.usableHosts + " usable hosts into power and cooling load." }
+      ];
+    } else {
+      actions = [
+        { action: "Continue to Power / Thermal", reason: vms(model.modeled) + " modeled capacity covers " + vms(model.demand) + " demand with " + vms(model.gap) + " headroom." },
+        { action: "Keep reserve assumptions attached", reason: "Downstream planning should retain HA " + model.haPolicy + ", maintenance " + model.maintenance + ", and growth " + model.growth + "." },
+        { action: "Use specialty branches only when flagged", reason: "GPU, RAID, and backup checks remain branch candidates, not the default next step." }
+      ];
+    }
+
+    return '<div class="compute-recommended-actions-list" data-compute-vm-density-actions="0706">' + actions.map((item) => '<div class="compute-recommended-action"><strong>' + esc(item.action) + '</strong><span>' + esc(item.reason) + '</span></div>').join("") + '</div>';
   };
 
   api.renderVmDensityDecisionSchedule = function renderVmDensityDecisionSchedule(result) {
-    const outputs = result.outputs || {};
-    const routing = result.plannerRouting || {};
-    return '<div class="results-grid">' +
-      row("Status", String(result.status || result.summaryStatus || "WATCH").toUpperCase()) +
-      row("Modeled VM Capacity", outputs.vms !== undefined ? outputs.vms + " VMs" : "Not set") +
-      row("Growth Demand", outputs.growthAdjustedVmDemand !== undefined ? outputs.growthAdjustedVmDemand + " VMs" : "Not set") +
-      row("Next Step", routing.nextTool || "power-thermal") +
-      row("Route Hint", result.plannerRouteHint || routing.routeIntent || "continue-to-power-thermal") +
-      '</div>';
+    const model = vmDensityModel(result);
+    const checkpoints = [
+      { group: "Density", status: model.status, item: "Accept modeled density only after " + model.limiting + " pressure is reviewed." },
+      { group: "Reserve", status: model.gap < 0 ? "RISK" : "WATCH", item: "Confirm HA " + model.haPolicy + ", maintenance " + model.maintenance + ", and growth " + model.growth + " before procurement." },
+      { group: "Next Step", status: model.nextTool === "power-thermal" ? "READY" : "REVIEW", item: "Route intent: " + model.routeIntent + ". Continue to " + model.nextTool + "." }
+    ];
+
+    return [
+      '<div class="compute-decision-schedule" data-compute-vm-density-decision-schedule="0706">',
+      '  <div class="compute-decision-schedule-head"><strong>' + esc(model.status) + ' VM Density Decision Schedule</strong><span>' + esc(model.primaryRisk) + '</span></div>',
+      checkpoints.map((item) => '<div class="compute-decision-schedule-row"><strong>' + esc(item.group) + '</strong><span>' + esc(item.status) + '</span><em>' + esc(item.item) + '</em></div>').join(""),
+      '  <p class="compute-decision-schedule-interpretation"><strong>Engineering Interpretation:</strong> ' + esc(model.recommendation) + '</p>',
+      '</div>'
+    ].join("");
   };
   window.ScopedLabsComputeAssistant = api;
 })();
