@@ -85,6 +85,16 @@
     }
   </style>
   <link rel="stylesheet" href="/assets/scopedlabs-compute-result-visuals.css?v=scopedlabs-compute-result-visuals-0705-storage-throughput">
+
+  <style data-vm-density-flow-cta-style-0706>
+    body[data-step="vm-density"] #continue-wrap.compute-flow-actions[data-vm-density-flow-actions-inside-card="0706"] {
+      justify-content: space-between;
+    }
+
+    body[data-step="vm-density"] #continue-wrap.compute-flow-actions[data-vm-density-flow-actions-inside-card="0706"] #continue {
+      margin-left: auto;
+    }
+  </style>
 </head>
 
 <body data-tier="pro" data-category="compute" data-step="vm-density" data-lane="v1" data-compute-tool-shell="vm-density-ram-shell-0706" data-vm-density-continue-target="power-thermal">
@@ -338,59 +348,40 @@
       <div id="computeVmDensityDecisionSchedule" data-compute-decision-schedule="vm-density" role="group" aria-label="VM Density decision schedule"></div>
     </section>
 
-<section class="card compute-export-card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
-        <div class="pill-row">
-          <span class="pill pill--pro">Documentation & Export</span>
-        </div>
+    <section class="card compute-export-card" style="margin-top: 14px; background: rgba(0,0,0,.14);" data-vm-density-export-card="0706">
+      <h3 class="h3" style="margin-top: 0;">Export Report</h3>
 
-        <h3 class="h3" style="margin-top: 10px;">Export Report</h3>
-        <p class="muted" style="margin-bottom: 0;">
-          Add optional project context and generate a clean documentation view that can be printed or saved as a PDF for client or internal use.
-        </p>
+      <p class="muted" style="margin-bottom: 0;">
+        Add optional project context and generate a clean documentation view that can be printed or saved as a PDF for client or internal use.
+      </p>
 
-        <div class="export-grid">
-          <label class="field">
-            <span class="label">Report Title</span>
-            <input id="reportTitle" type="text" placeholder="VM Density Estimator Assessment" />
-          </label>
+      <div
+        id="reportMetadataMount"
+        data-report-metadata
+        data-report-title="Report details"
+        data-report-copy="Optional metadata can be included in the generated report. Leave blank to use the default report naming."
+        data-report-fields="reportTitle,projectName,clientName,preparedBy,customNotes"
+        data-collapsed="true"
+      ></div>
 
-          <label class="field">
-            <span class="label">Project Name</span>
-            <input id="projectName" type="text" placeholder="Project Name" />
-          </label>
+      <div class="btn-row" style="margin-top: 14px;">
+        <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Export Report</button>
+        <button id="saveSnapshot" class="btn" type="button" disabled>Save Snapshot</button>
+      </div>
 
-          <label class="field">
-            <span class="label">Client Name</span>
-            <input id="clientName" type="text" placeholder="Client / Site Name" />
-          </label>
-
-          <label class="field">
-            <span class="label">Prepared By</span>
-            <input id="preparedBy" type="text" placeholder="ScopedLabs Pro User" />
-          </label>
-
-          <label class="field full">
-            <span class="label">Custom Notes</span>
-            <textarea id="customNotes" placeholder="Optional notes, assumptions, workload details, or design caveats to include in the report."></textarea>
-          </label>
-        </div>
-
-        <div class="btn-row" style="margin-top: 14px;">
-          <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Export Report</button>
-          <button id="saveSnapshot" class="btn" type="button" disabled>Save Snapshot</button>
-        </div>
-
-        <div id="exportStatus" class="export-status"></div>
-      </section>
+      <div id="exportStatus" class="export-status"></div>
+      <div id="continue-wrap" class="compute-flow-actions" style="display:none; margin-top:10px; align-items:center; gap:12px; width:100%;" data-compute-flow-actions="true" data-compute-flow-owner="compute-shell-contract" data-compute-flow-tool="vm-density" data-compute-flow-placed="true" data-vm-density-flow-actions="0706" data-vm-density-flow-actions-inside-card="0706">
+    <a class="btn" href="/tools/compute/storage-throughput/">Back to Storage Throughput</a>
+    <button id="continue" class="btn btn-primary" type="button" disabled style="margin-left:auto;" data-compute-continue-href="/tools/compute/power-thermal/" data-vm-density-continue-target="power-thermal">Continue &rarr; Power / Thermal</button>
+  </div>
 </section>
 
-  <div id="continue-wrap" class="compute-flow-actions" style="display:none; margin-top:12px; align-items:center; gap:12px; width:100%;" data-compute-flow-actions="true" data-compute-flow-owner="compute-shell-contract" data-compute-flow-tool="vm-density" data-compute-flow-placed="true" data-vm-density-flow-actions="0706">
-    <button id="continue" class="btn btn-primary" disabled style="margin-left:auto;" data-compute-continue-href="/tools/compute/power-thermal/" data-vm-density-continue-target="power-thermal">
-      Continue &rarr; Power / Thermal
-    </button>
-  </div>
 
-  <footer class="site-footer">
+
+  
+</section>
+
+    <footer class="site-footer">
     <div class="muted">© <span data-year></span> ScopedLabs</div>
           <div class="footer-links">
       <a href="/tools/">Tools</a>
@@ -427,6 +418,7 @@
   </script>
 
   <script src="/assets/export.js?v=shared-export-025-tool-notes-column-widths"></script>
+  <script src="/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-008-access-control-category-scope-key"></script>
 
   <script src="/assets/scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-007-workload-nav-links"></script>
   

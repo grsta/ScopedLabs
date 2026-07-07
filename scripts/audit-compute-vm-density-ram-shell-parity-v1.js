@@ -26,7 +26,7 @@ function before(source, a, b) {
 
 check("VM_DENSITY_RAM_STATIC_SECTIONS", ["computeVmDensitySummaryCard","computeVmDensityVisualCard","computeVmDensityReferencesCard","computeVmDensityRecommendedActionsCard","computeVmDensityDecisionScheduleCard","Recommendation References","Recommended Actions","Decision Schedule"].every((t) => src.html.includes(t)), "VM Density should have RAM-style static output sections.");
 
-check("VM_DENSITY_RAM_SECTION_ORDER", before(src.html, "computeVmDensitySummaryCard", "computeVmDensityVisualCard") && before(src.html, "computeVmDensityVisualCard", "computeVmDensityReferencesCard") && before(src.html, "computeVmDensityReferencesCard", "computeVmDensityRecommendedActionsCard") && before(src.html, "computeVmDensityRecommendedActionsCard", "computeVmDensityDecisionScheduleCard") && before(src.html, "computeVmDensityDecisionScheduleCard", "exportReport") && before(src.html, "exportReport", "continue-wrap"), "VM Density visible order should be summary, visual, references, actions, schedule, export, continue.");
+check("VM_DENSITY_RAM_SECTION_ORDER", before(src.html, "computeVmDensitySummaryCard", "computeVmDensityVisualCard") && before(src.html, "computeVmDensityVisualCard", "computeVmDensityReferencesCard") && before(src.html, "computeVmDensityReferencesCard", "computeVmDensityRecommendedActionsCard") && before(src.html, "computeVmDensityRecommendedActionsCard", "computeVmDensityDecisionScheduleCard") && before(src.html, "computeVmDensityDecisionScheduleCard", "exportReport") && before(src.html, "exportReport", "id=\"continue-wrap\""), "VM Density visible order should be summary, visual, references, actions, schedule, export, continue.");
 
 check("VM_DENSITY_ASSISTANT_CACHE_BUST",
   src.html.includes("compute-assistant-vm-density-status-class-078"),
@@ -104,6 +104,26 @@ check("VM_DENSITY_THROUGHPUT_RECOMMENDED_ACTIONS_LAYOUT",
     src.assistant.includes('class="compute-recommended-action" data-export-text="true" data-vm-density-action-export-row="0706"') &&
     !src.html.includes(">Assistant Recommended Actions</h3>"),
   "VM Density recommended actions should use the same Storage Throughput title, helper text, action row, and export marker layout."
+);
+
+check("VM_DENSITY_THROUGHPUT_EXPORT_CARD_LAYOUT",
+  src.html.includes('data-vm-density-export-card="0706"') &&
+    src.html.includes('<h3 class="h3" style="margin-top: 0;">Export Report</h3>') &&
+    src.html.includes('id="reportMetadataMount"') &&
+    src.html.includes('data-report-metadata') &&
+    src.html.includes('data-report-title="Report details"') &&
+    src.html.includes('data-report-copy="Optional metadata can be included in the generated report. Leave blank to use the default report naming."') &&
+    src.html.includes('data-report-fields="reportTitle,projectName,clientName,preparedBy,customNotes"') &&
+    src.html.includes('data-collapsed="true"') &&
+    src.html.includes('/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-008-access-control-category-scope-key') &&
+    src.html.includes('data-vm-density-flow-actions-inside-card="0706"') &&
+    src.html.includes('href="/tools/compute/storage-throughput/"') &&
+    src.html.includes('Back to Storage Throughput') &&
+    before(src.html, 'exportStatus', 'id="continue-wrap"') &&
+    before(src.html, 'id="continue-wrap"', 'site-footer') &&
+    !src.html.includes('Documentation & Export') &&
+    !src.html.includes('<div class="export-grid">'),
+  "VM Density export should use the exact Storage Throughput report metadata mount and in-card flow action layout."
 );
 
 check("VM_DENSITY_STORAGE_STYLE_CARD_CONTRACT",
