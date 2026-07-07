@@ -1367,6 +1367,27 @@ function computeWorkloadToolLabelFromPage() {
     return "Pending Calculation";
   }
 
+  function readActiveWorkload() {
+    var State = window.ScopedLabsComputePlanState || {};
+    var context = null;
+    var workload = null;
+
+    try { if (typeof State.getGuidedFlowContext === "function") context = State.getGuidedFlowContext(); } catch (error) { context = null; }
+    if (context && context.workload && typeof context.workload === "object") workload = context.workload;
+    try { if (!workload && typeof State.getActiveWorkload === "function") workload = State.getActiveWorkload(); } catch (error) { workload = workload || null; }
+    try { if (!workload && typeof State.getCurrentWorkload === "function") workload = State.getCurrentWorkload(); } catch (error) { workload = workload || null; }
+
+    return workload && typeof workload === "object" ? workload : {};
+  }
+
+  function workloadValue(workload, keys, fallback) {
+    for (var i = 0; i < keys.length; i += 1) {
+      var key = keys[i];
+      if (workload[key] != null && String(workload[key]).trim()) return String(workload[key]).trim();
+    }
+    return fallback;
+  }
+
   function storageDemandSource() {
     var stored = readJsonStorage(STORAGE_RESULT_KEY);
     var data = stored && stored.data ? stored.data : null;
@@ -1375,14 +1396,17 @@ function computeWorkloadToolLabelFromPage() {
   }
 
   function workflowData(result) {
-    var workloadMix = selectedText("workloadMix", "Mixed / general");
+    var workload = readActiveWorkload();
+    var environment = workloadValue(workload, ["environmentLabel", "environment", "criticality"], "Active workload");
+    var workflowTitle = workloadValue(workload, ["name", "title", "workloadName", "label"], "Active Workflow");
+    var workloadMix = selectedText("workloadMix", workloadValue(workload, ["workloadMixLabel", "workloadTypeLabel", "workloadType"], "Mixed / general"));
     var ha = selectedText("haPolicy", "No HA reserve");
     var spare = inputValue("spare", "%", "15%");
 
     return {
-      title: "Active Workflow",
-      summary: "Active workload | " + workloadMix + " | VM Density",
-      environment: "Active workload",
+      title: workflowTitle,
+      summary: environment + " | " + workloadMix + " | VM Density",
+      environment: environment,
       workloadMix: workloadMix,
       demandSource: storageDemandSource(),
       nextTool: "Power / Thermal",

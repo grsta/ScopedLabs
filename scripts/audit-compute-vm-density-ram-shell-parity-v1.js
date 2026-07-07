@@ -306,6 +306,17 @@ check("VM_DENSITY_TOP_CHROME_THROUGHPUT_PARITY",
   "VM Density top chrome should match Storage Throughput by removing breadcrumbs and the top Pro Tier pill."
 );
 
+
+check("VM_DENSITY_ACTIVE_WORKFLOW_TITLE_FROM_PLAN",
+  src.shell &&
+    src.shell.includes("function readActiveWorkload()") &&
+    src.shell.includes('workloadValue(workload, ["name", "title", "workloadName", "label"], "Active Workflow")') &&
+    src.shell.includes("title: workflowTitle") &&
+    src.shell.includes("[data-vm-density-workflow-title]") &&
+    src.shell.includes("if (title) title.textContent = data.title"),
+  "VM Density Active Workflow title should use the active workload/workflow name like Storage IOPS instead of staying generic."
+);
+
 const failed = results.filter((r) => !r.pass);
 console.log("\nVM Density RAM shell parity audit: " + (results.length - failed.length) + " passed / " + failed.length + " failed");
 if (failed.length) process.exit(1);
