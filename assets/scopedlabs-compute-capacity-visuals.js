@@ -1473,6 +1473,9 @@ function renderStorageIopsCapacityEnvelope(options) {
     var gap = num(outputs.capacityGapVms || outputs.capacityGap, modeled - demand);
     var limiting = outputs.limiting || outputs.primaryConstraint || result.limiting || "Balanced";
     var densityClass = outputs.densityClass || result.densityClass || "Modeled consolidation";
+    function footerStat(x, label, value, w) {
+      return '<g transform="translate(' + x + ' 360)"><rect width="' + w + '" height="40" rx="8" class="chip-bg"/><text x="14" y="16" class="chip-text">' + escapeXml(label) + '</text><text x="14" y="31" class="chip-text">' + escapeXml(value) + '</text></g>';
+    }
     var haPolicy = String(inputs.haPolicy || result.haPolicy || "none").toUpperCase();
     var maintenance = num(inputs.maintenanceReservePct || result.maintenanceReservePct, 0);
     var growth = num(inputs.growthMarginPct || result.growthMarginPct, 0);
@@ -1519,8 +1522,14 @@ function renderStorageIopsCapacityEnvelope(options) {
     var yDemand = yScale(demand);
     var yGood = yScale(Math.max(0, demand * 0.70));
     var yWatch = yScale(Math.max(0, demand * 0.90));
-    var zoneBands = buildCapacityZoneBands(plot, yGood, yWatch);
-    var checkpointGuides = buildCapacityCheckpointGuides(plot, [stageX.cpu, stageX.ram, stageX.modeled]);
+    var zoneBands = [
+      '<rect x="' + plot.x + '" y="' + plot.y + '" width="' + plot.w + '" height="' + Math.max(0, yWatch - plot.y).toFixed(1) + '" class="zone-risk"/>',
+      '<rect x="' + plot.x + '" y="' + yWatch.toFixed(1) + '" width="' + plot.w + '" height="' + Math.max(0, yGood - yWatch).toFixed(1) + '" class="zone-watch"/>',
+      '<rect x="' + plot.x + '" y="' + yGood.toFixed(1) + '" width="' + plot.w + '" height="' + Math.max(0, plot.y + plot.h - yGood).toFixed(1) + '" class="zone-good"/>'
+    ];
+    var checkpointGuides = [stageX.cpu, stageX.ram, stageX.modeled].map(function (x) {
+      return '<path d="M' + x.toFixed(1) + ' ' + plot.y + ' V' + (plot.y + plot.h) + '" class="drop-line"/>';
+    }).join("");
     var curvePath = [
       "M", stageX.hosts.toFixed(1), yHosts.toFixed(1),
       "C", (stageX.cpu - 80).toFixed(1), yCpu.toFixed(1), (stageX.cpu - 38).toFixed(1), yCpu.toFixed(1), stageX.cpu.toFixed(1), yCpu.toFixed(1),
@@ -1543,7 +1552,7 @@ function renderStorageIopsCapacityEnvelope(options) {
     mount.innerHTML = [
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="VM Density Capacity Envelope" data-compute-vm-density-envelope-0706>',
       '<defs><style>',
-      '.bg{fill:#07100d}.panel{fill:rgba(255,255,255,.025);stroke:rgba(112,255,145,.16);stroke-width:1}.title{fill:#f8fafc;font-family:Inter,Arial,sans-serif;font-size:18px;font-weight:900}.sub{fill:rgba(203,213,225,.82);font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:700}.status-text{font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.8px}.zone-risk{fill:rgba(239,68,68,.22)}.zone-watch{fill:rgba(250,204,21,.18)}.zone-good{fill:rgba(52,211,153,.17)}.grid{stroke:rgba(148,163,184,.14);stroke-width:1}.grid-major{stroke:rgba(148,163,184,.24);stroke-width:1}.axis{stroke:rgba(226,232,240,.34);stroke-width:1.2}.tick{fill:rgba(203,213,225,.72);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:700}.axis-label{fill:rgba(203,213,225,.76);font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:800}.zone-text{font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.7px}.risk-text{fill:#ef4444}.watch-text{fill:#facc15}.good-text{fill:#34d399}.demand-line{stroke:#facc15;stroke-width:2;stroke-dasharray:7 5}.demand-label{fill:#facc15;font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:850}.curve-shadow{fill:none;stroke:rgba(0,0,0,.4);stroke-width:6;stroke-linecap:round}.curve-line{fill:none;stroke:#2cff9b;stroke-width:2.2;stroke-linecap:round}.drop-line{stroke:rgba(226,232,240,.20);stroke-width:1;stroke-dasharray:4 5}.marker-ring{fill:none;stroke:rgba(238,246,255,.72);stroke-width:1}.marker-hosts{fill:#38d9ff;stroke:#04110d;stroke-width:1.2}.marker-cpu{fill:#a78bfa;stroke:#04110d;stroke-width:1.2}.marker-ram{fill:#60a5fa;stroke:#04110d;stroke-width:1.2}.marker-modeled{fill:#2cff9b;stroke:#04110d;stroke-width:1.2}.point-label{fill:#f8fafc;font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.6px}.point-note{fill:rgba(203,213,225,.84);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:750}.bracket-line{stroke:' + palette.stroke + ';stroke-width:1.5}.bracket-text{fill:' + palette.text + ';font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900}.chip-bg{fill:rgba(15,23,42,.72);stroke:rgba(112,255,145,.12)}.chip-text{fill:rgba(226,232,240,.86);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:750}' + computeCapacityGuideLineStyles() + computeCapacityFooterIconStyles(),
+      '.bg{fill:#07100d}.panel{fill:rgba(255,255,255,.025);stroke:rgba(112,255,145,.16);stroke-width:1}.title{fill:#f8fafc;font-family:Inter,Arial,sans-serif;font-size:18px;font-weight:900}.sub{fill:rgba(203,213,225,.82);font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:700}.status-text{font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.8px}.zone-risk{fill:rgba(239,68,68,.22)}.zone-watch{fill:rgba(250,204,21,.18)}.zone-good{fill:rgba(52,211,153,.17)}.grid{stroke:rgba(148,163,184,.14);stroke-width:1}.grid-major{stroke:rgba(148,163,184,.24);stroke-width:1}.axis{stroke:rgba(226,232,240,.34);stroke-width:1.2}.tick{fill:rgba(203,213,225,.72);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:700}.axis-label{fill:rgba(203,213,225,.76);font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:800}.zone-text{font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.7px}.risk-text{fill:#ef4444}.watch-text{fill:#facc15}.good-text{fill:#34d399}.demand-line{stroke:#facc15;stroke-width:2;stroke-dasharray:7 5}.demand-label{fill:#facc15;font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:850}.curve-shadow{fill:none;stroke:rgba(0,0,0,.4);stroke-width:6;stroke-linecap:round}.curve-line{fill:none;stroke:#2cff9b;stroke-width:2.2;stroke-linecap:round}.drop-line{stroke:rgba(226,232,240,.20);stroke-width:1;stroke-dasharray:4 5}.marker-ring{fill:none;stroke:rgba(238,246,255,.72);stroke-width:1}.marker-hosts{fill:#38d9ff;stroke:#04110d;stroke-width:1.2}.marker-cpu{fill:#a78bfa;stroke:#04110d;stroke-width:1.2}.marker-ram{fill:#60a5fa;stroke:#04110d;stroke-width:1.2}.marker-modeled{fill:#2cff9b;stroke:#04110d;stroke-width:1.2}.point-label{fill:#f8fafc;font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.6px}.point-note{fill:rgba(203,213,225,.84);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:750}.bracket-line{stroke:' + palette.stroke + ';stroke-width:1.5}.bracket-text{fill:' + palette.text + ';font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900}.chip-bg{fill:rgba(15,23,42,.72);stroke:rgba(112,255,145,.12)}.chip-text{fill:rgba(226,232,240,.86);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:750}',
       '</style></defs>',
       '<rect width="' + width + '" height="' + height + '" class="bg"/>',
       '<rect x="24" y="22" width="712" height="384" rx="18" class="panel"/>',
@@ -1578,10 +1587,10 @@ function renderStorageIopsCapacityEnvelope(options) {
       '<text x="' + stageX.ram.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">ram</text>',
       '<text x="' + stageX.modeled.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">modeled</text>',
       '<path d="M' + (plot.x + plot.w - 24).toFixed(1) + ' ' + gapTop.toFixed(1) + ' H' + (plot.x + plot.w - 8).toFixed(1) + '" class="bracket-line"/><path d="M' + (plot.x + plot.w - 24).toFixed(1) + ' ' + gapBottom.toFixed(1) + ' H' + (plot.x + plot.w - 8).toFixed(1) + '" class="bracket-line"/><path d="M' + (plot.x + plot.w - 10).toFixed(1) + ' ' + gapTop.toFixed(1) + ' V' + gapBottom.toFixed(1) + '" class="bracket-line"/><text x="' + (plot.x + plot.w - 1).toFixed(1) + '" y="' + (gapTextY - 7).toFixed(1) + '" class="bracket-text" text-anchor="start"><tspan x="' + (plot.x + plot.w - 1).toFixed(1) + '" dy="0">' + escapeXml(gapLabel) + '</tspan><tspan x="' + (plot.x + plot.w - 1).toFixed(1) + '" dy="14">' + escapeXml(formatVm(Math.abs(gap))) + '</tspan></text>',
-      buildCapacityFooterStat(58, "workload", "Density", densityClass, { y: 360, width: 150, iconX: 9, iconY: 6, labelX: 38, labelY: 16, valueY: 31, escaper: escapeXml }),
-      buildCapacityFooterStat(214, "utilization", "Limiter", limiting, { y: 360, width: 150, iconX: 9, iconY: 6, labelX: 38, labelY: 16, valueY: 31, escaper: escapeXml }),
-      buildCapacityFooterStat(370, "cpu", "CPU Pool", formatPool(cpuPool, "vCPU"), { y: 360, width: 162, iconX: 9, iconY: 6, labelX: 38, labelY: 16, valueY: 31, escaper: escapeXml }),
-      buildCapacityFooterStat(538, "ram", "RAM Pool", formatPool(ramPool, "GB"), { y: 360, width: 166, iconX: 9, iconY: 6, labelX: 38, labelY: 16, valueY: 31, escaper: escapeXml }),
+      footerStat(58, "Density", densityClass, 150),
+      footerStat(214, "Limiter", limiting, 150),
+      footerStat(370, "CPU Pool", formatPool(cpuPool, "vCPU"), 162),
+      footerStat(538, "RAM Pool", formatPool(ramPool, "GB"), 166),
       '</svg>',
       '<p class="muted mini-note">Reserve policy: HA ' + esc(haPolicy) + ' | maintenance ' + Math.round(maintenance) + '% | growth ' + Math.round(growth) + '%. Headroom: ' + esc(formatPool(cpuHeadroom, "vCPU")) + ' and ' + esc(formatPool(ramHeadroom, "GB")) + ' RAM.</p>'
     ].join("");
