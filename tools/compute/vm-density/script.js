@@ -233,7 +233,7 @@ function renderVmDensitySummaryCard(result) {
   const mount = document.getElementById("computeVmDensitySummary");
   if (!card || !mount) return;
 
-  const assistant = window.ScopedLabsComputeAssistantContract || {};
+  const assistant = window.ScopedLabsComputeAssistant || window.ScopedLabsComputeAssistantContract || {};
   let html = "";
 
   try {
@@ -263,21 +263,21 @@ function renderVmDensitySummaryCard(result) {
 function renderVmDensityCapacityVisual(result) {
   const cards = ensureVmDensityOutputCards();
   const visuals = window.ScopedLabsComputeCapacityVisuals || {};
-  let html = "";
+  let rendered = false;
 
   try {
     if (typeof visuals.renderVmDensityCapacityEnvelope === "function") {
-      html = visuals.renderVmDensityCapacityEnvelope(result) || "";
+      rendered = visuals.renderVmDensityCapacityEnvelope(cards.visual, result) === true;
     }
   } catch (error) {
-    html = "";
+    rendered = false;
   }
 
-  if (!html) {
-    html = '<p class="muted">Shared VM Density capacity envelope renderer unavailable.</p>';
+  if (!rendered) {
+    vmDensityShowCard(cards.visualCard, cards.visual, '<p class="muted">Shared VM Density capacity envelope renderer unavailable.</p>');
+  } else if (cards.visualCard) {
+    cards.visualCard.hidden = false;
   }
-
-  vmDensityShowCard(cards.visualCard, cards.visual, html);
 }
 
   function clearVmDensityCapacityVisual() {
@@ -294,7 +294,7 @@ function renderVmDensityCapacityVisual(result) {
 
   function renderVmDensityReferences(result) {
   const cards = ensureVmDensityOutputCards();
-  const assistant = window.ScopedLabsComputeAssistantContract || {};
+  const assistant = window.ScopedLabsComputeAssistant || window.ScopedLabsComputeAssistantContract || {};
   let html = "";
 
   try {
@@ -320,7 +320,7 @@ function renderVmDensityCapacityVisual(result) {
 
   function renderVmDensityRecommendedActions(result) {
   const cards = ensureVmDensityOutputCards();
-  const assistant = window.ScopedLabsComputeAssistantContract || {};
+  const assistant = window.ScopedLabsComputeAssistant || window.ScopedLabsComputeAssistantContract || {};
   let html = "";
 
   try {
@@ -346,7 +346,7 @@ function renderVmDensityCapacityVisual(result) {
 
   function renderVmDensityDecisionSchedule(result) {
   const cards = ensureVmDensityOutputCards();
-  const assistant = window.ScopedLabsComputeAssistantContract || {};
+  const assistant = window.ScopedLabsComputeAssistant || window.ScopedLabsComputeAssistantContract || {};
   let html = "";
 
   try {
