@@ -1474,16 +1474,17 @@ function renderStorageIopsCapacityEnvelope(options) {
     var limiting = outputs.limiting || outputs.primaryConstraint || result.limiting || "Balanced";
     var densityClass = outputs.densityClass || result.densityClass || "Modeled consolidation";
     function footerIcon(type) {
+      var iconStyle = ' fill="none" stroke="rgba(126,245,213,.9)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"';
       if (type === "density") {
-        return '<g class="chip-icon" transform="translate(10 8)"><rect x="1" y="2" width="8" height="6" rx="1"/><rect x="13" y="2" width="8" height="6" rx="1"/><rect x="7" y="15" width="8" height="6" rx="1"/><path d="M5 8v4h6M17 8v4h-6v3"/></g>';
+        return '<g class="chip-icon" transform="translate(10 8)"' + iconStyle + '><rect x="1" y="2" width="8" height="6" rx="1"/><rect x="13" y="2" width="8" height="6" rx="1"/><rect x="7" y="15" width="8" height="6" rx="1"/><path d="M5 8v4h6M17 8v4h-6v3"/></g>';
       }
       if (type === "limiter") {
-        return '<g class="chip-icon" transform="translate(10 7)"><path d="M3 3h18l-7 8v7l-4 2v-9z"/><path d="M7 3l5 8 5-8"/></g>';
+        return '<g class="chip-icon" transform="translate(10 7)"' + iconStyle + '><path d="M3 3h18l-7 8v7l-4 2v-9z"/><path d="M7 3l5 8 5-8"/></g>';
       }
       if (type === "cpu") {
-        return '<g class="chip-icon" transform="translate(10 7)"><rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M1 8h4M1 12h4M1 16h4M19 8h4M19 12h4M19 16h4M8 1v4M12 1v4M16 1v4M8 19v4M12 19v4M16 19v4"/></g>';
+        return '<g class="chip-icon" transform="translate(10 7)"' + iconStyle + '><rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M1 8h4M1 12h4M1 16h4M19 8h4M19 12h4M19 16h4M8 1v4M12 1v4M16 1v4M8 19v4M12 19v4M16 19v4"/></g>';
       }
-      return '<g class="chip-icon" transform="translate(10 8)"><rect x="2" y="5" width="20" height="12" rx="2"/><path d="M5 17v4M9 17v4M13 17v4M17 17v4M6 9h12M6 13h12"/></g>';
+      return '<g class="chip-icon" transform="translate(10 8)"' + iconStyle + '><rect x="2" y="5" width="20" height="12" rx="2"/><path d="M5 17v4M9 17v4M13 17v4M17 17v4M6 9h12M6 13h12"/></g>';
     }
     function footerStat(x, icon, label, value, w) {
       return '<g transform="translate(' + x + ' 360)" data-vm-density-footer-icon-chip="0706"><rect width="' + w + '" height="40" rx="8" class="chip-bg"/>' + footerIcon(icon) + '<text x="38" y="16" class="chip-text">' + escapeXml(label) + '</text><text x="38" y="31" class="chip-text">' + escapeXml(value) + '</text></g>';
