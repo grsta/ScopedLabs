@@ -233,72 +233,32 @@ function renderVmDensitySummaryCard(result) {
   const mount = document.getElementById("computeVmDensitySummary");
   if (!card || !mount) return;
 
-  const outputs = result.outputs || {};
-  const inputs = result.inputs || {};
-  const status = String(outputs.status || result.status || "REVIEW").toUpperCase();
-  const modeled = vmDensityNumber(outputs.vms ?? outputs.modeledVmCapacity, 0);
-  const demand = vmDensityNumber(outputs.growthAdjustedVmDemand ?? inputs.targetVmCount, modeled);
-  const limiter = outputs.limiting || outputs.primaryConstraint || "Balanced";
-  const gap = Number.isFinite(modeled - demand) ? modeled - demand : 0;
-  const recommendation = status === "RISK"
-    ? "Rework the density target before continuing to Power / Thermal validation."
-    : "Carry this VM Density result into Power / Thermal validation.";
+  const assistant = window.ScopedLabsComputeAssistantContract || {};
+  let html = "";
 
-  mount.innerHTML =
-    '<div class="compute-result-shell">' +
-      '<h3 class="h3" style="margin-top:0; text-transform:uppercase; letter-spacing:.05em;">VM Density</h3>' +
-      '<div style="font-weight:800; margin-bottom:14px;">' + vmDensityEsc(status) + '</div>' +
-      '<p class="muted">' + vmDensityEsc(recommendation) + '</p>' +
-      '<div class="results-grid">' +
-        vmDensityResultRow("Recommendation", recommendation) +
-        vmDensityResultRow("Confidence", status === "RISK" ? "MEDIUM" : "HIGH") +
-        vmDensityResultRow("Decision Flags", "Modeled " + modeled + " VMs | Demand " + demand + " VMs | Gap " + gap + " VMs") +
-        vmDensityResultRow("Primary Risk", limiter + " is the active density limiter.") +
-      '</div>' +
-      '<p class="muted" style="border-left:3px solid rgba(47,255,128,.75); padding-left:12px; margin-top:14px;">Carry this VM Density result into Power / Thermal. Do not treat the Compute plan as complete until power and thermal load are validated.</p>' +
+  try {
+    if (typeof assistant.renderVmDensitySummaryCard === "function") {
+      html = assistant.renderVmDensitySummaryCard(result) || "";
+    }
+  } catch (error) {
+    html = "";
+  }
+
+  if (!html) {
+    const outputs = result.outputs || {};
+    const status = String(outputs.status || result.status || "REVIEW").toUpperCase();
+    html = '<div class="compute-result-shell">' +
+      '<h3 class="h3" style="margin-top:0;">VM Density</h3>' +
+      '<p class="muted">Shared VM Density summary renderer unavailable.</p>' +
+      vmDensityResultRow("Status", status) +
+      vmDensityResultRow("Primary Constraint", outputs.limiting || outputs.primaryConstraint || "Balanced") +
     '</div>';
+  }
 
-  card.hidden = false;
+  vmDensityShowCard(card, mount, html);
 }
 
-function buildVmDensityCapacityEnvelope(result) {
-  const outputs = result.outputs || {};
-  const inputs = result.inputs || {};
-  const status = String(outputs.status || result.status || "REVIEW").toUpperCase();
-  const modeled = Math.max(0, vmDensityNumber(outputs.vms ?? outputs.modeledVmCapacity, 0));
-  const demand = Math.max(0, vmDensityNumber(outputs.growthAdjustedVmDemand ?? inputs.targetVmCount, modeled));
-  const max = Math.max(1, modeled, demand);
-  const modeledPct = Math.max(4, Math.min(100, (modeled / max) * 100));
-  const demandPct = Math.max(4, Math.min(100, (demand / max) * 100));
-  const gap = Number.isFinite(modeled - demand) ? modeled - demand : 0;
 
-  return '<div style="border:1px solid rgba(47,255,128,.28); border-radius:20px; padding:18px; background:rgba(0,20,12,.45);">' +
-    '<div style="display:flex; justify-content:space-between; gap:16px; align-items:center; margin-bottom:12px;">' +
-      '<h3 class="h3" style="margin:0;">VM Density Capacity Envelope</h3>' +
-      '<span class="pill">' + vmDensityEsc(status) + '</span>' +
-    '</div>' +
-    '<div style="display:grid; gap:14px;">' +
-      '<div>' +
-        '<div style="display:flex; justify-content:space-between; font-weight:800;"><span>Modeled capacity</span><span>' + modeled + ' VMs</span></div>' +
-        '<div style="height:18px; border-radius:999px; background:rgba(255,255,255,.08); overflow:hidden; margin-top:6px;">' +
-          '<div style="height:100%; width:' + modeledPct + '%; background:linear-gradient(90deg,#2fff80,#55ffd6);"></div>' +
-        '</div>' +
-      '</div>' +
-      '<div>' +
-        '<div style="display:flex; justify-content:space-between; font-weight:800;"><span>Growth demand</span><span>' + demand + ' VMs</span></div>' +
-        '<div style="height:18px; border-radius:999px; background:rgba(255,255,255,.08); overflow:hidden; margin-top:6px;">' +
-          '<div style="height:100%; width:' + demandPct + '%; background:linear-gradient(90deg,#ffc857,#ff5c5c);"></div>' +
-        '</div>' +
-      '</div>' +
-      '<div class="results-grid">' +
-        vmDensityResultRow("Headroom / Gap", gap + " VMs") +
-        vmDensityResultRow("Primary Constraint", outputs.limiting || outputs.primaryConstraint || "Balanced") +
-        vmDensityResultRow("Usable Hosts", outputs.usableHosts ?? "Not set") +
-        vmDensityResultRow("Density Class", outputs.densityClass || "Not set") +
-      '</div>' +
-    '</div>' +
-  '</div>';
-}
 
 function renderVmDensityCapacityVisual(result) {
   const cards = ensureVmDensityOutputCards();
@@ -314,7 +274,7 @@ function renderVmDensityCapacityVisual(result) {
   }
 
   if (!html) {
-    html = buildVmDensityCapacityEnvelope(result);
+    html = '<p class="muted">Shared VM Density capacity envelope renderer unavailable.</p>';
   }
 
   vmDensityShowCard(cards.visualCard, cards.visual, html);

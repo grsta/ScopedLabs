@@ -1155,7 +1155,35 @@ function renderComputeRamRecommendationReferences(data) {
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
   const row = (label, value) => '<div class="result-row"><span class="k">' + esc(label) + '</span><span class="v">' + esc(value ?? "Not set") + '</span></div>';
 
-  api.renderVmDensityRecommendationReferences = function renderVmDensityRecommendationReferences(result) {
+  
+  /* compute-assistant-vm-density-summary-card-0706 */
+  api.renderVmDensitySummaryCard = function renderVmDensitySummaryCard(result) {
+    const outputs = result.outputs || {};
+    const inputs = result.inputs || {};
+    const status = String(outputs.status || result.status || "REVIEW").toUpperCase();
+    const modeled = Number.isFinite(Number(outputs.vms ?? outputs.modeledVmCapacity)) ? Number(outputs.vms ?? outputs.modeledVmCapacity) : 0;
+    const demand = Number.isFinite(Number(outputs.growthAdjustedVmDemand ?? inputs.targetVmCount)) ? Number(outputs.growthAdjustedVmDemand ?? inputs.targetVmCount) : modeled;
+    const limiter = outputs.limiting || outputs.primaryConstraint || "Balanced";
+    const gap = modeled - demand;
+    const recommendation = status === "RISK"
+      ? "Rework the density target before continuing to Power / Thermal validation."
+      : "Carry this VM Density result into Power / Thermal validation.";
+
+    return '<div class="compute-result-shell">' +
+      '<h3 class="h3" style="margin-top:0; text-transform:uppercase; letter-spacing:.05em;">VM Density</h3>' +
+      '<div style="font-weight:800; margin-bottom:14px;">' + esc(status) + '</div>' +
+      '<p class="muted">' + esc(recommendation) + '</p>' +
+      '<div class="results-grid">' +
+        row("Recommendation", recommendation) +
+        row("Confidence", status === "RISK" ? "MEDIUM" : "HIGH") +
+        row("Decision Flags", "Modeled " + modeled + " VMs | Demand " + demand + " VMs | Gap " + gap + " VMs") +
+        row("Primary Risk", limiter + " is the active density limiter.") +
+      '</div>' +
+      '<p class="muted" style="border-left:3px solid rgba(47,255,128,.75); padding-left:12px; margin-top:14px;">Carry this VM Density result into Power / Thermal. Do not treat the Compute plan as complete until power and thermal load are validated.</p>' +
+    '</div>';
+  };
+
+api.renderVmDensityRecommendationReferences = function renderVmDensityRecommendationReferences(result) {
     const outputs = result.outputs || {};
     const inputs = result.inputs || {};
     return '<div class="results-grid">' +
