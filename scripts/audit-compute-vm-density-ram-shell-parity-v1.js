@@ -290,6 +290,22 @@ check("VM_DENSITY_REFERENCE_MARKER_COLOR_PARITY",
   "VM Density Recommendation Reference marker numbers should use the same colors as the SVG checkpoint markers."
 );
 
+
+check("VM_DENSITY_TOP_CHROME_THROUGHPUT_PARITY",
+  (() => {
+    const mainIndex = src.html.indexOf('<main class="container page">');
+    const h1Index = src.html.indexOf('<h1>VM Density Estimator</h1>', mainIndex);
+    const top = mainIndex >= 0 && h1Index > mainIndex ? src.html.slice(mainIndex, h1Index) : "";
+    return mainIndex >= 0 &&
+      h1Index > mainIndex &&
+      !top.includes('class="crumbs"') &&
+      !top.includes('pill--pro') &&
+      !top.includes('Pro Tier') &&
+      before(src.html, '<h1>VM Density Estimator</h1>', '<div id="pipeline"></div>');
+  })(),
+  "VM Density top chrome should match Storage Throughput by removing breadcrumbs and the top Pro Tier pill."
+);
+
 const failed = results.filter((r) => !r.pass);
 console.log("\nVM Density RAM shell parity audit: " + (results.length - failed.length) + " passed / " + failed.length + " failed");
 if (failed.length) process.exit(1);
