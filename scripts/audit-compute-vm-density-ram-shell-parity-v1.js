@@ -24,12 +24,12 @@ function before(source, a, b) {
   return ia >= 0 && ib >= 0 && ia < ib;
 }
 
-check("VM_DENSITY_RAM_STATIC_SECTIONS", ["computeVmDensityVisualCard","computeVmDensityReferencesCard","computeVmDensityRecommendedActionsCard","computeVmDensityDecisionScheduleCard","Recommendation References","Assistant Recommended Actions","Decision Schedule"].every((t) => src.html.includes(t)), "VM Density should have RAM-style static output sections.");
+check("VM_DENSITY_RAM_STATIC_SECTIONS", ["computeVmDensitySummaryCard","computeVmDensityVisualCard","computeVmDensityReferencesCard","computeVmDensityRecommendedActionsCard","computeVmDensityDecisionScheduleCard","Recommendation References","Assistant Recommended Actions","Decision Schedule"].every((t) => src.html.includes(t)), "VM Density should have RAM-style static output sections.");
 
-check("VM_DENSITY_RAM_SECTION_ORDER", before(src.html, "computeVmDensityVisualCard", "computeVmDensityReferencesCard") && before(src.html, "computeVmDensityReferencesCard", "computeVmDensityRecommendedActionsCard") && before(src.html, "computeVmDensityRecommendedActionsCard", "computeVmDensityDecisionScheduleCard") && before(src.html, "computeVmDensityDecisionScheduleCard", "exportReport"), "VM Density visible order should be visual, references, actions, schedule, export.");
+check("VM_DENSITY_RAM_SECTION_ORDER", before(src.html, "computeVmDensitySummaryCard", "computeVmDensityVisualCard") && before(src.html, "computeVmDensityVisualCard", "computeVmDensityReferencesCard") && before(src.html, "computeVmDensityReferencesCard", "computeVmDensityRecommendedActionsCard") && before(src.html, "computeVmDensityRecommendedActionsCard", "computeVmDensityDecisionScheduleCard") && before(src.html, "computeVmDensityDecisionScheduleCard", "exportReport") && before(src.html, "exportReport", "continue-wrap"), "VM Density visible order should be summary, visual, references, actions, schedule, export, continue.");
 
 check("VM_DENSITY_ASSISTANT_CACHE_BUST",
-  src.html.includes("compute-assistant-vm-density-renderer-parity-075"),
+  src.html.includes("compute-assistant-vm-density-renderer-parity-076"),
   "VM Density should load the RAM-shell assistant contract cache-bust."
 );
 
@@ -84,6 +84,32 @@ check("VM_DENSITY_STORAGE_STYLE_RENDERER_RHYTHM",
     src.visuals.includes("zone-risk") &&
     src.visuals.includes("Density planning checkpoints"),
   "VM Density shared renderers should follow the Storage-style summary, references, actions, schedule, and visual rhythm."
+);
+
+check("VM_DENSITY_STORAGE_STYLE_CARD_CONTRACT",
+  src.html.includes("compute-static-summary-card-shell vm-density-result-summary-card") &&
+    src.html.includes("card compute-result-visual-card") &&
+    src.html.includes('data-output-visual-owner="compute-capacity-visuals"') &&
+    src.html.includes("card compute-recommendation-references-card") &&
+    src.html.includes("card compute-recommended-actions-card") &&
+    src.html.includes("card compute-decision-schedule-card") &&
+    src.html.includes('data-export-section="true"') &&
+    src.html.includes('data-export-svg="true"'),
+  "VM Density output cards should use the same Storage Throughput section contract classes and export markers."
+);
+
+check("VM_DENSITY_FLOW_ACTION_CONTRACT",
+  src.html.includes('class="compute-flow-actions"') &&
+    src.html.includes('data-compute-flow-owner="compute-shell-contract"') &&
+    src.html.includes('data-compute-flow-tool="vm-density"') &&
+    src.html.includes('data-vm-density-continue-target="power-thermal"'),
+  "VM Density Continue should keep shell-owned flow-action metadata while routing to Power / Thermal."
+);
+
+check("VM_DENSITY_VISUAL_SELF_CONTAINED",
+  src.visuals.includes("data-compute-vm-density-envelope-0706") &&
+    !src.visuals.includes("Reserve policy: HA "),
+  "VM Density capacity visual should stay self-contained like Storage Throughput, without a loose note under the SVG."
 );
 
 const failed = results.filter((r) => !r.pass);

@@ -1591,8 +1591,7 @@ function renderStorageIopsCapacityEnvelope(options) {
       footerStat(214, "Limiter", limiting, 150),
       footerStat(370, "CPU Pool", formatPool(cpuPool, "vCPU"), 162),
       footerStat(538, "RAM Pool", formatPool(ramPool, "GB"), 166),
-      '</svg>',
-      '<p class="muted mini-note">Reserve policy: HA ' + esc(haPolicy) + ' | maintenance ' + Math.round(maintenance) + '% | growth ' + Math.round(growth) + '%. Headroom: ' + esc(formatPool(cpuHeadroom, "vCPU")) + ' and ' + esc(formatPool(ramHeadroom, "GB")) + ' RAM.</p>'
+      '</svg>'
     ].join("");
 
     return true;
