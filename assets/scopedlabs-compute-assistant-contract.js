@@ -1094,7 +1094,7 @@ function renderComputeRamRecommendationReferences(data) {
 
 // compute-assistant-vm-density-status-card-0706
 (function () {
-  var api = window.ScopedLabsComputeAssistant || {};
+  var api = Object.assign({}, window.ScopedLabsComputeAssistant || {});
   if (api.renderVmDensityAssistantStatusCard) {
     window.ScopedLabsComputeAssistant = api;
     return;
@@ -1151,7 +1151,7 @@ function renderComputeRamRecommendationReferences(data) {
 /* compute-assistant-vm-density-ram-shell-renderers-0706 */
 (() => {
   "use strict";
-  const api = window.ScopedLabsComputeAssistant = window.ScopedLabsComputeAssistant || {};
+  const api = Object.assign({}, window.ScopedLabsComputeAssistant || {});
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
   const row = (label, value) => '<div class="result-row"><span class="k">' + esc(label) + '</span><span class="v">' + esc(value ?? "Not set") + '</span></div>';
 
@@ -1222,4 +1222,5 @@ api.renderVmDensityRecommendationReferences = function renderVmDensityRecommenda
       row("Route Hint", result.plannerRouteHint || routing.routeIntent || "continue-to-power-thermal") +
       '</div>';
   };
+  window.ScopedLabsComputeAssistant = api;
 })();

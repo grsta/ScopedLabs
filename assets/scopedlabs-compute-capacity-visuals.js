@@ -1422,7 +1422,7 @@ function renderStorageIopsCapacityEnvelope(options) {
 
 // compute-vm-density-capacity-envelope-0706
 (function () {
-  var api = window.ScopedLabsComputeCapacityVisuals || {};
+  var api = Object.assign({}, window.ScopedLabsComputeCapacityVisuals || {});
   if (api.renderVmDensityCapacityEnvelope) {
     window.ScopedLabsComputeCapacityVisuals = api;
     return;
