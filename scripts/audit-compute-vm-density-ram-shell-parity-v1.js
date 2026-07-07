@@ -222,6 +222,13 @@ check("VM_DENSITY_ACTIVE_WORKFLOW_SHELL_OWNER",
 );
 
 
+
+check("VM_DENSITY_NO_BEST_FOR_LINE",
+  !src.html.includes('class="tool-best-for"') &&
+    !src.html.includes("<strong>Best for:</strong>"),
+  "VM Density should not show the legacy Best for line once Active Workflow owns the top context."
+);
+
 const failed = results.filter((r) => !r.pass);
 console.log("\nVM Density RAM shell parity audit: " + (results.length - failed.length) + " passed / " + failed.length + " failed");
 if (failed.length) process.exit(1);
