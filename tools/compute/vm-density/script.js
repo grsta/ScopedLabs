@@ -22,6 +22,7 @@
   const $ = (id) => document.getElementById(id);
 
   let hasResult = false;
+  let currentVmDensityExportResult = null;
   let upstreamContext = null;
   let storagePressurePrefilled = false;
   let chartRef = { current: null };
@@ -385,6 +386,191 @@ function renderVmDensityCapacityVisual(result) {
     const schedule = renderVmDensityDecisionSchedule(result);
     return references || actions || schedule;
   }
+
+
+
+function vmDensityExportCleanText(value) {
+  return String(value == null ? "" : value).replace(/\s+/g, " ").trim();
+}
+
+function vmDensityExportFormatNumber(value, suffix) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "Not set";
+  const rounded = Math.abs(n) >= 100 ? Math.round(n) : Math.round(n * 10) / 10;
+  return String(rounded) + (suffix || "");
+}
+
+function vmDensityExportFormatVms(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "not set";
+  return String(Math.round(n)) + " VMs";
+}
+
+function vmDensityExportTableFromDom(selector) {
+  const table = document.querySelector(selector);
+  if (!table) return null;
+
+  const headers = Array.from(table.querySelectorAll("thead th")).map((cell) => vmDensityExportCleanText(cell.textContent));
+  const rows = Array.from(table.querySelectorAll("tbody tr")).map((row) => {
+    return Array.from(row.querySelectorAll("th, td")).map((cell) => vmDensityExportCleanText(cell.textContent));
+  }).filter((row) => row.some(Boolean));
+
+  if (!headers.length && !rows.length) return null;
+  return { headers, rows };
+}
+
+function buildVmDensityVisualExportSection() {
+  const svg = document.querySelector("#computeVmDensityVisual svg");
+  if (!svg) return null;
+  return {
+    title: "VM Density Capacity Envelope",
+    description: "Accepted VM Density capacity envelope from the calculated result.",
+    compactSvg: true,
+    svgs: [svg.outerHTML]
+  };
+}
+
+function buildVmDensityReferenceExportSection() {
+  const table = vmDensityExportTableFromDom("#computeVmDensityReferences table");
+  if (!table) return null;
+  return {
+    title: "Recommendation References",
+    description: "Reference markers used by the VM Density Capacity Envelope.",
+    tableClass: "extra-export-table--planner",
+    tables: [{ headers: table.headers.length ? table.headers : ["Marker", "Reference", "Reason"], rows: table.rows }]
+  };
+}
+
+function buildVmDensityRecommendedActionsExportSection() {
+  const rows = Array.from(document.querySelectorAll("#computeVmDensityRecommendedActions .compute-recommended-action")).map((node) => {
+    const strong = node.querySelector("strong");
+    const span = node.querySelector("span");
+    return [
+      vmDensityExportCleanText(strong ? strong.textContent : "Review VM Density plan"),
+      vmDensityExportCleanText(span ? span.textContent : node.textContent)
+    ];
+  }).filter((row) => row.some(Boolean));
+
+  if (!rows.length) return null;
+  return {
+    title: "Recommended Actions",
+    description: "Assistant recommended actions for the current VM Density result.",
+    tableClass: "extra-export-table--planner",
+    tables: [{ headers: ["Action", "Reason"], rows }]
+  };
+}
+
+function buildVmDensityDecisionScheduleExportSection() {
+  const table = vmDensityExportTableFromDom("#computeVmDensityDecisionSchedule table");
+  if (!table) return null;
+  return {
+    title: "VM Density Decision Schedule",
+    description: "Decision checkpoints generated from the VM Density result.",
+    tableClass: "extra-export-table--planner extra-export-table--decision",
+    tables: [{ headers: table.headers.length ? table.headers : ["Group", "Metric", "Value", "Engineering Note"], rows: table.rows }]
+  };
+}
+
+function buildVmDensityExportAnalysisSections(result) {
+  result = result || {};
+  const outputs = result.outputs || {};
+  const inputs = result.inputs || {};
+  const status = String(result.status || outputs.status || "REVIEW").toUpperCase();
+  const modeled = Number(outputs.vms || 0);
+  const demand = Number(outputs.growthAdjustedVmDemand || outputs.plannedVmDemand || modeled || 0);
+  const gap = Number(outputs.capacityGapVms || 0);
+  const limiting = outputs.limiting || outputs.primaryConstraint || "Balanced";
+  const gapLabel = gap >= 0 ? "headroom" : "deficit";
+
+  return [
+    {
+      title: "Status",
+      body: status + " - " + (status === "RISK"
+        ? "Modeled VM demand is at or beyond the usable consolidation envelope before Power / Thermal validation."
+        : status === "WATCH"
+          ? "The density plan is workable, but reserve pressure should be reviewed before downstream validation."
+          : "The modeled density remains inside the current CPU and RAM planning envelope.")
+    },
+    {
+      title: "Why it matters",
+      body: "The model compares " + vmDensityExportFormatVms(demand) + " of growth-adjusted demand against " + vmDensityExportFormatVms(modeled) + " of modeled capacity, leaving " + vmDensityExportFormatVms(Math.abs(gap)) + " of " + gapLabel + "."
+    },
+    {
+      title: "Primary constraint",
+      body: limiting + " is the active limiter. CPU limit " + vmDensityExportFormatVms(outputs.cpuLimitVms) + "; RAM limit " + vmDensityExportFormatVms(outputs.ramLimitVms) + ". Density class: " + (outputs.densityClass || "Modeled density") + "."
+    },
+    {
+      title: "Recommended correction",
+      body: result.guidance || "Validate host count, HA reserve, maintenance reserve, growth margin, and per-VM CPU/RAM allocation before continuing."
+    },
+    {
+      title: "Carry forward",
+      body: "Carry " + vmDensityExportFormatVms(modeled) + ", " + vmDensityExportFormatNumber(outputs.usableHostCount || outputs.usableHosts || inputs.hostCount || 1, " usable hosts") + ", " + vmDensityExportFormatNumber(outputs.cpuPoolVcpu, " vCPU") + ", " + vmDensityExportFormatNumber(outputs.ramPoolGb, " GB RAM") + ", HA " + String(inputs.haPolicy || "none").toUpperCase() + ", maintenance " + vmDensityExportFormatNumber(inputs.maintenanceReservePct || 0, "%") + ", and growth " + vmDensityExportFormatNumber(inputs.growthPct || 0, "%") + " into Power / Thermal validation."
+    }
+  ];
+}
+
+function buildVmDensityInterpretationExportSection(result) {
+  const text = buildVmDensityExportAnalysisSections(result).map((section) => {
+    return vmDensityExportCleanText(section.title) + ": " + vmDensityExportCleanText(section.body);
+  }).join("\n\n");
+
+  if (!text) return null;
+  return {
+    title: "Engineering Interpretation",
+    description: "Concise VM Density interpretation for report review.",
+    text
+  };
+}
+
+function vmDensityFilteredExportOutputs(rows) {
+  return (rows || []).filter((row) => {
+    const label = vmDensityExportCleanText(row && row.label);
+    return label && label !== "Chart";
+  });
+}
+
+function buildVmDensityExportPayload(context) {
+  context = context || {};
+  const getInputRows = typeof context.getInputRows === "function" ? context.getInputRows : () => [];
+  const getResultRows = typeof context.getResultRows === "function" ? context.getResultRows : () => [];
+  const options = context.options || {};
+  const result = currentVmDensityExportResult;
+  const inputs = getInputRows();
+  const outputs = vmDensityFilteredExportOutputs(getResultRows());
+
+  if (!result || !outputs.length) return null;
+
+  const resultOutputs = result.outputs || {};
+  const status = String(result.status || resultOutputs.status || "REVIEW").toUpperCase();
+  const modeled = Number(resultOutputs.vms || 0);
+  const limiting = resultOutputs.limiting || resultOutputs.primaryConstraint || "Balanced";
+  const gap = Number(resultOutputs.capacityGapVms || 0);
+
+  return {
+    status,
+    summary: "VM Density models " + vmDensityExportFormatVms(modeled) + " with " + limiting + " as the active limiter. Overall status: " + status + ". Headroom/deficit: " + vmDensityExportFormatVms(gap) + ".",
+    interpretation: "",
+    analysisSections: [],
+    inputs,
+    outputs,
+    chartImage: "",
+    extraSections: [
+      buildVmDensityVisualExportSection(),
+      buildVmDensityReferenceExportSection(),
+      buildVmDensityRecommendedActionsExportSection(),
+      buildVmDensityDecisionScheduleExportSection(),
+      buildVmDensityInterpretationExportSection(result)
+    ].filter(Boolean),
+    exportSectionsContract: "vm-density-visual-references-actions-schedule-interpretation",
+    assumptions: Array.isArray(options.assumptions) ? options.assumptions : [],
+    printLowInkChart: false
+  };
+}
+
+window.ScopedLabsComputeVmDensityExport = {
+  buildPayload: buildVmDensityExportPayload
+};
 
   function saveComputeLedgerResult(payload) {
     if (!State || typeof State.recordToolResult !== "function") return null;
@@ -770,6 +956,8 @@ function renderVmDensityCapacityVisual(result) {
       },
       updatedAt: new Date().toISOString()
     };
+
+    currentVmDensityExportResult = vmDensityResult;
 
     renderVmDensitySummaryCard(vmDensityResult);
     renderVmDensityCapacityVisual(vmDensityResult);

@@ -229,6 +229,34 @@ check("VM_DENSITY_NO_BEST_FOR_LINE",
   "VM Density should not show the legacy Best for line once Active Workflow owns the top context."
 );
 
+
+check("VM_DENSITY_EXPORT_REPORT_INTERPRETATION",
+  src.html.includes('"customPayloadBuilder": "ScopedLabsComputeVmDensityExport.buildPayload"') &&
+    src.script.includes("let currentVmDensityExportResult = null") &&
+    src.script.includes("currentVmDensityExportResult = vmDensityResult") &&
+    src.script.includes("function buildVmDensityExportPayload(context)") &&
+    src.script.includes("function buildVmDensityInterpretationExportSection(result)") &&
+    src.script.includes("function buildVmDensityExportAnalysisSections(result)") &&
+    src.script.includes('title: "Engineering Interpretation"') &&
+    src.script.includes("Why it matters") &&
+    src.script.includes("Primary constraint") &&
+    src.script.includes("Recommended correction") &&
+    src.script.includes("Carry forward") &&
+    src.script.includes("window.ScopedLabsComputeVmDensityExport"),
+  "VM Density export report should use a Throughput-style readable Engineering Interpretation payload."
+);
+
+check("VM_DENSITY_EXPORT_REPORT_SECTION_PARITY",
+  src.script.includes("buildVmDensityVisualExportSection()") &&
+    src.script.includes("buildVmDensityReferenceExportSection()") &&
+    src.script.includes("buildVmDensityRecommendedActionsExportSection()") &&
+    src.script.includes("buildVmDensityDecisionScheduleExportSection()") &&
+    src.script.includes('exportSectionsContract: "vm-density-visual-references-actions-schedule-interpretation"') &&
+    src.script.includes('interpretation: ""') &&
+    src.script.includes("analysisSections: []"),
+  "VM Density custom export should preserve visual, references, actions, and schedule while replacing only the generic interpretation narrative."
+);
+
 const failed = results.filter((r) => !r.pass);
 console.log("\nVM Density RAM shell parity audit: " + (results.length - failed.length) + " passed / " + failed.length + " failed");
 if (failed.length) process.exit(1);
