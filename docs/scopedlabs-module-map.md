@@ -1652,3 +1652,6 @@ Promotion note:
 - Boundary: Active VM Density branches remain Compute-only; electrical, cooling, rack, and switching concerns remain future Gold-tier handoff notes.
 - Audit: `scripts/audit-compute-vm-density-planning-inputs-v1.js`.
 - Runner: `scripts/run-compute-vm-density-planning-inputs-v1.js`.
+
+- COMPUTE_VM_DENSITY_RENDERER_PARITY_0707: VM Density renderer parity is now promoted through the shared Compute shell pattern. Active Workflow title/layout is owned by `assets/scopedlabs-compute-shell-contract.js` and uses `ScopedLabsComputePlanState.buildWorkloadDisplayContext()`, matching the accepted Storage IOPS source. Result Summary, Recommendation References, Assistant Recommended Actions, and Decision Schedule are owned by `assets/scopedlabs-compute-assistant-contract.js`. Capacity Envelope SVG, plotted checkpoint markers, chart-matched reference marker colors, and footer chips are owned by `assets/scopedlabs-compute-capacity-visuals.js`. VM Density page mounts/cache-busts and export payload wiring remain in `tools/compute/vm-density/index.html` and `tools/compute/vm-density/script.js`. Guardrail owner: `scripts/audit-compute-vm-density-ram-shell-parity-v1.js`.
+
