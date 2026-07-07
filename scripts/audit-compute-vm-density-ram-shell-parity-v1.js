@@ -24,7 +24,7 @@ function before(source, a, b) {
   return ia >= 0 && ib >= 0 && ia < ib;
 }
 
-check("VM_DENSITY_RAM_STATIC_SECTIONS", ["computeVmDensitySummaryCard","computeVmDensityVisualCard","computeVmDensityReferencesCard","computeVmDensityRecommendedActionsCard","computeVmDensityDecisionScheduleCard","Recommendation References","Assistant Recommended Actions","Decision Schedule"].every((t) => src.html.includes(t)), "VM Density should have RAM-style static output sections.");
+check("VM_DENSITY_RAM_STATIC_SECTIONS", ["computeVmDensitySummaryCard","computeVmDensityVisualCard","computeVmDensityReferencesCard","computeVmDensityRecommendedActionsCard","computeVmDensityDecisionScheduleCard","Recommendation References","Recommended Actions","Decision Schedule"].every((t) => src.html.includes(t)), "VM Density should have RAM-style static output sections.");
 
 check("VM_DENSITY_RAM_SECTION_ORDER", before(src.html, "computeVmDensitySummaryCard", "computeVmDensityVisualCard") && before(src.html, "computeVmDensityVisualCard", "computeVmDensityReferencesCard") && before(src.html, "computeVmDensityReferencesCard", "computeVmDensityRecommendedActionsCard") && before(src.html, "computeVmDensityRecommendedActionsCard", "computeVmDensityDecisionScheduleCard") && before(src.html, "computeVmDensityDecisionScheduleCard", "exportReport") && before(src.html, "exportReport", "continue-wrap"), "VM Density visible order should be summary, visual, references, actions, schedule, export, continue.");
 
@@ -93,6 +93,17 @@ check("VM_DENSITY_THROUGHPUT_DECISION_SCHEDULE_LAYOUT",
     !src.assistant.includes('compute-decision-schedule-row') &&
     !src.assistant.includes('compute-decision-schedule-head'),
   "VM Density decision schedule should use the exact Storage Throughput status header, table, and interpretation layout."
+);
+
+check("VM_DENSITY_THROUGHPUT_RECOMMENDED_ACTIONS_LAYOUT",
+  src.html.includes('<h3 class="h3" style="margin-top: 0;">Recommended Actions</h3>') &&
+    src.html.includes("Practical actions to validate or reduce VM density pressure before continuing downstream.") &&
+    src.html.includes('data-output-actions-owner="compute-assistant-contract"') &&
+    src.html.includes('data-export-title="Recommended Actions"') &&
+    src.assistant.includes('class="compute-recommended-actions-list"') &&
+    src.assistant.includes('class="compute-recommended-action" data-export-text="true" data-vm-density-action-export-row="0706"') &&
+    !src.html.includes(">Assistant Recommended Actions</h3>"),
+  "VM Density recommended actions should use the same Storage Throughput title, helper text, action row, and export marker layout."
 );
 
 check("VM_DENSITY_STORAGE_STYLE_CARD_CONTRACT",

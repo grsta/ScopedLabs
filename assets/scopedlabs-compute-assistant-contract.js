@@ -1281,7 +1281,7 @@ function renderComputeRamRecommendationReferences(data) {
       ];
     }
 
-    return '<div class="compute-recommended-actions-list" data-compute-vm-density-actions="0706">' + actions.map((item) => '<div class="compute-recommended-action"><strong>' + esc(item.action) + '</strong><span>' + esc(item.reason) + '</span></div>').join("") + '</div>';
+    return '<div class="compute-recommended-actions-list" data-compute-vm-density-actions="0706">' + actions.map((item) => '<div class="compute-recommended-action" data-export-text="true" data-vm-density-action-export-row="0706"><strong>' + esc(item.action) + '</strong> <span>' + esc(item.reason) + '</span></div>').join("") + '</div>';
   };
 
   api.renderVmDensityDecisionSchedule = function renderVmDensityDecisionSchedule(result) {
