@@ -113,7 +113,7 @@ check("VM_DENSITY_VISUAL_SELF_CONTAINED",
 );
 
 check("VM_DENSITY_FOOTER_CHIP_ICONS",
-  src.html.includes("scopedlabs-compute-capacity-visuals-029-vm-density-throughput-footer") &&
+  src.html.includes("scopedlabs-compute-capacity-visuals-030-vm-density-footer-fit") &&
     src.visuals.includes("function footerIcon(type)") &&
     src.visuals.includes('data-vm-density-footer-icon-chip="0706"') &&
     src.visuals.includes("sl-icon-line") &&
@@ -135,6 +135,13 @@ check("VM_DENSITY_FOOTER_CHIP_STYLE",
     src.visuals.includes("class=\"footer-label\"") &&
     src.visuals.includes("class=\"footer-value\""),
   "VM Density footer chips should use Storage Throughput footer classes and colors exactly."
+);
+
+check("VM_DENSITY_FOOTER_VALUE_FIT",
+  src.html.includes("scopedlabs-compute-capacity-visuals-030-vm-density-footer-fit") &&
+    src.visuals.includes("function compactDensityClass(value)") &&
+    src.visuals.includes('footerStat(58, "density", "Density", compactDensityClass(densityClass), 150)'),
+  "VM Density first footer chip should compact long density labels so text stays inside the Throughput-style chip."
 );
 
 const failed = results.filter((r) => !r.pass);

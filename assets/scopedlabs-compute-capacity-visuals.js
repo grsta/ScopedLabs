@@ -1473,6 +1473,16 @@ function renderStorageIopsCapacityEnvelope(options) {
     var gap = num(outputs.capacityGapVms || outputs.capacityGap, modeled - demand);
     var limiting = outputs.limiting || outputs.primaryConstraint || result.limiting || "Balanced";
     var densityClass = outputs.densityClass || result.densityClass || "Modeled consolidation";
+    function compactDensityClass(value) {
+      var text = String(value || "Modeled consolidation").trim();
+      var normalized = text.toLowerCase();
+      if (normalized.indexOf("aggressive") !== -1) return "Aggressive";
+      if (normalized.indexOf("high") !== -1) return "High consolidation";
+      if (normalized.indexOf("balanced") !== -1) return "Balanced";
+      if (normalized.indexOf("conservative") !== -1) return "Conservative";
+      if (text.length > 18) return text.slice(0, 17).trim() + "...";
+      return text;
+    }
     function footerIcon(type) {
       if (type === "density") {
         return '<g transform="translate(9 7)" aria-label="density icon"><rect x="1" y="2" width="8" height="6" rx="1" class="sl-icon-line"/><rect x="13" y="2" width="8" height="6" rx="1" class="sl-icon-line"/><rect x="7" y="15" width="8" height="6" rx="1" class="sl-icon-line"/><path d="M5 8v4h6M17 8v4h-6v3" class="sl-icon-accent"/></g>';
@@ -1599,7 +1609,7 @@ function renderStorageIopsCapacityEnvelope(options) {
       '<text x="' + stageX.ram.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">ram</text>',
       '<text x="' + stageX.modeled.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">modeled</text>',
       '<path d="M' + (plot.x + plot.w - 24).toFixed(1) + ' ' + gapTop.toFixed(1) + ' H' + (plot.x + plot.w - 8).toFixed(1) + '" class="bracket-line"/><path d="M' + (plot.x + plot.w - 24).toFixed(1) + ' ' + gapBottom.toFixed(1) + ' H' + (plot.x + plot.w - 8).toFixed(1) + '" class="bracket-line"/><path d="M' + (plot.x + plot.w - 10).toFixed(1) + ' ' + gapTop.toFixed(1) + ' V' + gapBottom.toFixed(1) + '" class="bracket-line"/><text x="' + (plot.x + plot.w - 1).toFixed(1) + '" y="' + (gapTextY - 7).toFixed(1) + '" class="bracket-text" text-anchor="start"><tspan x="' + (plot.x + plot.w - 1).toFixed(1) + '" dy="0">' + escapeXml(gapLabel) + '</tspan><tspan x="' + (plot.x + plot.w - 1).toFixed(1) + '" dy="14">' + escapeXml(formatVm(Math.abs(gap))) + '</tspan></text>',
-      footerStat(58, "density", "Density", densityClass, 150),
+      footerStat(58, "density", "Density", compactDensityClass(densityClass), 150),
       footerStat(214, "limiter", "Limiter", limiting, 150),
       footerStat(370, "cpu", "CPU Pool", formatPool(cpuPool, "vCPU"), 162),
       footerStat(538, "ram", "RAM Pool", formatPool(ramPool, "GB"), 166),
