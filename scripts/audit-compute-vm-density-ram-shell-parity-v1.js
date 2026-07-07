@@ -112,6 +112,18 @@ check("VM_DENSITY_VISUAL_SELF_CONTAINED",
   "VM Density capacity visual should stay self-contained like Storage Throughput, without a loose note under the SVG."
 );
 
+check("VM_DENSITY_FOOTER_CHIP_ICONS",
+  src.html.includes("scopedlabs-compute-capacity-visuals-027-vm-density-footer-icons") &&
+    src.visuals.includes("function footerIcon(type)") &&
+    src.visuals.includes('data-vm-density-footer-icon-chip="0706"') &&
+    src.visuals.includes(".chip-icon") &&
+    src.visuals.includes('footerStat(58, "density", "Density"') &&
+    src.visuals.includes('footerStat(214, "limiter", "Limiter"') &&
+    src.visuals.includes('footerStat(370, "cpu", "CPU Pool"') &&
+    src.visuals.includes('footerStat(538, "ram", "RAM Pool"'),
+  "VM Density footer chips should include local inline SVG icons for density, limiter, CPU pool, and RAM pool."
+);
+
 const failed = results.filter((r) => !r.pass);
 console.log("\nVM Density RAM shell parity audit: " + (results.length - failed.length) + " passed / " + failed.length + " failed");
 if (failed.length) process.exit(1);

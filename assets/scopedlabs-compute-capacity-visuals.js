@@ -1315,7 +1315,7 @@ function renderStorageIopsCapacityEnvelope(options) {
       return [
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Storage Throughput Capacity Envelope">',
         '<defs><style>',
-        '.bg{fill:#07100d}.panel{fill:rgba(255,255,255,.025);stroke:rgba(112,255,145,.16);stroke-width:1}.title{fill:#f8fafc;font-family:Inter,Arial,sans-serif;font-size:18px;font-weight:900}.sub{fill:rgba(203,213,225,.82);font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:700}.status-text{font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.8px}.zone-risk{fill:rgba(239,68,68,.22)}.zone-watch{fill:rgba(250,204,21,.18)}.zone-good{fill:rgba(52,211,153,.17)}.grid{stroke:rgba(148,163,184,.14);stroke-width:1}.grid-major{stroke:rgba(148,163,184,.24);stroke-width:1}.axis{stroke:rgba(226,232,240,.34);stroke-width:1.2}.tick{fill:rgba(203,213,225,.72);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:700}.axis-label{fill:rgba(203,213,225,.76);font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:800}.zone-text{font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.7px}.risk-text{fill:#ef4444}.watch-text{fill:#facc15}.good-text{fill:#34d399}.ceiling-line{stroke:#facc15;stroke-width:2;stroke-dasharray:7 5}.ceiling-label{fill:#facc15;font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:850}.curve-shadow{fill:none;stroke:rgba(0,0,0,.4);stroke-width:6;stroke-linecap:round}.curve-line{fill:none;stroke:#2cff9b;stroke-width:2.2;stroke-linecap:round}.drop-line{stroke:rgba(226,232,240,.20);stroke-width:1;stroke-dasharray:4 5}.marker-ring{fill:none;stroke:rgba(238,246,255,.72);stroke-width:1}.marker-base{fill:#38d9ff;stroke:#04110d;stroke-width:1.2}.marker-burst{fill:#a78bfa;stroke:#04110d;stroke-width:1.2}.marker-required{fill:#2cff9b;stroke:#04110d;stroke-width:1.2}.point-label{fill:#f8fafc;font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.6px}.point-note{fill:rgba(203,213,225,.84);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:750}.bracket-line{stroke:' + palette.stroke + ';stroke-width:1.5}.bracket-text{fill:' + palette.text + ';font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900}.chip-bg{fill:rgba(15,23,42,.72);stroke:rgba(112,255,145,.12)}.chip-text{fill:rgba(226,232,240,.86);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:750}' + computeCapacityGuideLineStyles() + computeCapacityFooterIconStyles() /* storage-throughput-footer-icon-style-injection-0705 */,
+        '.bg{fill:#07100d}.panel{fill:rgba(255,255,255,.025);stroke:rgba(112,255,145,.16);stroke-width:1}.title{fill:#f8fafc;font-family:Inter,Arial,sans-serif;font-size:18px;font-weight:900}.sub{fill:rgba(203,213,225,.82);font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:700}.status-text{font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.8px}.zone-risk{fill:rgba(239,68,68,.22)}.zone-watch{fill:rgba(250,204,21,.18)}.zone-good{fill:rgba(52,211,153,.17)}.grid{stroke:rgba(148,163,184,.14);stroke-width:1}.grid-major{stroke:rgba(148,163,184,.24);stroke-width:1}.axis{stroke:rgba(226,232,240,.34);stroke-width:1.2}.tick{fill:rgba(203,213,225,.72);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:700}.axis-label{fill:rgba(203,213,225,.76);font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:800}.zone-text{font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.7px}.risk-text{fill:#ef4444}.watch-text{fill:#facc15}.good-text{fill:#34d399}.ceiling-line{stroke:#facc15;stroke-width:2;stroke-dasharray:7 5}.ceiling-label{fill:#facc15;font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:850}.curve-shadow{fill:none;stroke:rgba(0,0,0,.4);stroke-width:6;stroke-linecap:round}.curve-line{fill:none;stroke:#2cff9b;stroke-width:2.2;stroke-linecap:round}.drop-line{stroke:rgba(226,232,240,.20);stroke-width:1;stroke-dasharray:4 5}.marker-ring{fill:none;stroke:rgba(238,246,255,.72);stroke-width:1}.marker-base{fill:#38d9ff;stroke:#04110d;stroke-width:1.2}.marker-burst{fill:#a78bfa;stroke:#04110d;stroke-width:1.2}.marker-required{fill:#2cff9b;stroke:#04110d;stroke-width:1.2}.point-label{fill:#f8fafc;font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.6px}.point-note{fill:rgba(203,213,225,.84);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:750}.bracket-line{stroke:' + palette.stroke + ';stroke-width:1.5}.bracket-text{fill:' + palette.text + ';font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900}.chip-bg{fill:rgba(15,23,42,.72);stroke:rgba(112,255,145,.12)}.chip-text{fill:rgba(226,232,240,.86);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:750}.chip-icon{fill:none;stroke:rgba(126,245,213,.84);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}' + computeCapacityGuideLineStyles() + computeCapacityFooterIconStyles() /* storage-throughput-footer-icon-style-injection-0705 */,
         '</style></defs>',
         '<rect width="' + width + '" height="' + height + '" class="bg"/>',
         '<rect x="24" y="22" width="712" height="384" rx="18" class="panel"/>',
@@ -1473,8 +1473,20 @@ function renderStorageIopsCapacityEnvelope(options) {
     var gap = num(outputs.capacityGapVms || outputs.capacityGap, modeled - demand);
     var limiting = outputs.limiting || outputs.primaryConstraint || result.limiting || "Balanced";
     var densityClass = outputs.densityClass || result.densityClass || "Modeled consolidation";
-    function footerStat(x, label, value, w) {
-      return '<g transform="translate(' + x + ' 360)"><rect width="' + w + '" height="40" rx="8" class="chip-bg"/><text x="14" y="16" class="chip-text">' + escapeXml(label) + '</text><text x="14" y="31" class="chip-text">' + escapeXml(value) + '</text></g>';
+    function footerIcon(type) {
+      if (type === "density") {
+        return '<g class="chip-icon" transform="translate(10 8)"><rect x="1" y="2" width="8" height="6" rx="1"/><rect x="13" y="2" width="8" height="6" rx="1"/><rect x="7" y="15" width="8" height="6" rx="1"/><path d="M5 8v4h6M17 8v4h-6v3"/></g>';
+      }
+      if (type === "limiter") {
+        return '<g class="chip-icon" transform="translate(10 7)"><path d="M3 3h18l-7 8v7l-4 2v-9z"/><path d="M7 3l5 8 5-8"/></g>';
+      }
+      if (type === "cpu") {
+        return '<g class="chip-icon" transform="translate(10 7)"><rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M1 8h4M1 12h4M1 16h4M19 8h4M19 12h4M19 16h4M8 1v4M12 1v4M16 1v4M8 19v4M12 19v4M16 19v4"/></g>';
+      }
+      return '<g class="chip-icon" transform="translate(10 8)"><rect x="2" y="5" width="20" height="12" rx="2"/><path d="M5 17v4M9 17v4M13 17v4M17 17v4M6 9h12M6 13h12"/></g>';
+    }
+    function footerStat(x, icon, label, value, w) {
+      return '<g transform="translate(' + x + ' 360)" data-vm-density-footer-icon-chip="0706"><rect width="' + w + '" height="40" rx="8" class="chip-bg"/>' + footerIcon(icon) + '<text x="38" y="16" class="chip-text">' + escapeXml(label) + '</text><text x="38" y="31" class="chip-text">' + escapeXml(value) + '</text></g>';
     }
     var haPolicy = String(inputs.haPolicy || result.haPolicy || "none").toUpperCase();
     var maintenance = num(inputs.maintenanceReservePct || result.maintenanceReservePct, 0);
@@ -1587,10 +1599,10 @@ function renderStorageIopsCapacityEnvelope(options) {
       '<text x="' + stageX.ram.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">ram</text>',
       '<text x="' + stageX.modeled.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">modeled</text>',
       '<path d="M' + (plot.x + plot.w - 24).toFixed(1) + ' ' + gapTop.toFixed(1) + ' H' + (plot.x + plot.w - 8).toFixed(1) + '" class="bracket-line"/><path d="M' + (plot.x + plot.w - 24).toFixed(1) + ' ' + gapBottom.toFixed(1) + ' H' + (plot.x + plot.w - 8).toFixed(1) + '" class="bracket-line"/><path d="M' + (plot.x + plot.w - 10).toFixed(1) + ' ' + gapTop.toFixed(1) + ' V' + gapBottom.toFixed(1) + '" class="bracket-line"/><text x="' + (plot.x + plot.w - 1).toFixed(1) + '" y="' + (gapTextY - 7).toFixed(1) + '" class="bracket-text" text-anchor="start"><tspan x="' + (plot.x + plot.w - 1).toFixed(1) + '" dy="0">' + escapeXml(gapLabel) + '</tspan><tspan x="' + (plot.x + plot.w - 1).toFixed(1) + '" dy="14">' + escapeXml(formatVm(Math.abs(gap))) + '</tspan></text>',
-      footerStat(58, "Density", densityClass, 150),
-      footerStat(214, "Limiter", limiting, 150),
-      footerStat(370, "CPU Pool", formatPool(cpuPool, "vCPU"), 162),
-      footerStat(538, "RAM Pool", formatPool(ramPool, "GB"), 166),
+      footerStat(58, "density", "Density", densityClass, 150),
+      footerStat(214, "limiter", "Limiter", limiting, 150),
+      footerStat(370, "cpu", "CPU Pool", formatPool(cpuPool, "vCPU"), 162),
+      footerStat(538, "ram", "RAM Pool", formatPool(ramPool, "GB"), 166),
       '</svg>'
     ].join("");
 
