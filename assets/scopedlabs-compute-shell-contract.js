@@ -1157,8 +1157,17 @@ function computeWorkloadToolLabelFromPage() {
 
     try { if (typeof State.getGuidedFlowContext === "function") context = State.getGuidedFlowContext(); } catch (error) { context = null; }
     if (context && context.workload && typeof context.workload === "object") workload = context.workload;
+    try { if (!workload && context && context.activeWorkload && typeof context.activeWorkload === "object") workload = context.activeWorkload; } catch (error) { workload = workload || null; }
     try { if (!workload && typeof State.getActiveWorkload === "function") workload = State.getActiveWorkload(); } catch (error) { workload = workload || null; }
     try { if (!workload && typeof State.getCurrentWorkload === "function") workload = State.getCurrentWorkload(); } catch (error) { workload = workload || null; }
+    try {
+      if (!workload && typeof State.load === "function" && typeof State.activeWorkload === "function") {
+        var plan = State.load();
+        workload = State.activeWorkload(plan);
+      }
+    } catch (error) {
+      workload = workload || null;
+    }
 
     return workload && typeof workload === "object" ? workload : {};
   }

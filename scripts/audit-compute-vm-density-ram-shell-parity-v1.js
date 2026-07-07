@@ -200,7 +200,7 @@ check("VM_DENSITY_STATUS_BADGE_CLASS",
 check("VM_DENSITY_ACTIVE_WORKFLOW_THROUGHPUT_LAYOUT",
   src.html.includes('id="computeVmDensityActiveWorkflowMount"') &&
     src.html.includes('data-vm-density-active-workflow-mount="0706"') &&
-    src.html.includes('compute-shell-vm-density-active-workflow-078') &&
+    src.html.includes('compute-shell-vm-density-active-workflow-title-080') &&
     !src.html.includes('Compute density validation') &&
     src.script.includes('refreshVmDensityActiveWorkflow(vmDensityResult)') &&
     src.script.includes('refreshVmDensityActiveWorkflow(null)') &&
@@ -308,9 +308,12 @@ check("VM_DENSITY_TOP_CHROME_THROUGHPUT_PARITY",
 
 
 check("VM_DENSITY_ACTIVE_WORKFLOW_TITLE_FROM_PLAN",
-  src.shell &&
+  src.html.includes("compute-shell-vm-density-active-workflow-title-080") &&
+    src.shell &&
     src.shell.includes("function readActiveWorkload()") &&
     src.shell.includes('workloadValue(workload, ["name", "title", "workloadName", "label"], "Active Workflow")') &&
+    src.shell.includes("typeof State.load === \"function\"") &&
+    src.shell.includes("typeof State.activeWorkload === \"function\"") &&
     src.shell.includes("title: workflowTitle") &&
     src.shell.includes("[data-vm-density-workflow-title]") &&
     src.shell.includes("if (title) title.textContent = data.title"),
