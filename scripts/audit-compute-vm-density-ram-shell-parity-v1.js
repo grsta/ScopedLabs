@@ -113,7 +113,7 @@ check("VM_DENSITY_VISUAL_SELF_CONTAINED",
 );
 
 check("VM_DENSITY_FOOTER_CHIP_ICONS",
-  src.html.includes("scopedlabs-compute-capacity-visuals-027-vm-density-footer-icons") &&
+  src.html.includes("scopedlabs-compute-capacity-visuals-028-vm-density-footer-chip-style") &&
     src.visuals.includes("function footerIcon(type)") &&
     src.visuals.includes('data-vm-density-footer-icon-chip="0706"') &&
     src.visuals.includes(".chip-icon") &&
@@ -122,6 +122,14 @@ check("VM_DENSITY_FOOTER_CHIP_ICONS",
     src.visuals.includes('footerStat(370, "cpu", "CPU Pool"') &&
     src.visuals.includes('footerStat(538, "ram", "RAM Pool"'),
   "VM Density footer chips should include local inline SVG icons for density, limiter, CPU pool, and RAM pool."
+);
+
+check("VM_DENSITY_FOOTER_CHIP_STYLE",
+  src.visuals.includes(".chip-bg{fill:rgba(0,0,0,.18);stroke:rgba(112,255,145,.20);stroke-width:1}") &&
+    src.visuals.includes(".chip-label{fill:rgba(203,213,225,.78)") &&
+    src.visuals.includes(".chip-value{fill:rgba(248,250,252,.92)") &&
+    src.visuals.includes(".chip-icon{fill:none;stroke:rgba(226,232,240,.70)"),
+  "VM Density footer chips should match Storage Throughput: black chips, muted white icons, muted labels, bright values."
 );
 
 const failed = results.filter((r) => !r.pass);
