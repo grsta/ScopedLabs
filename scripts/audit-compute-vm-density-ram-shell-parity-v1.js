@@ -29,14 +29,11 @@ check("VM_DENSITY_RAM_STATIC_SECTIONS", ["computeVmDensitySummaryCard","computeV
 check("VM_DENSITY_RAM_SECTION_ORDER", before(src.html, "computeVmDensitySummaryCard", "computeVmDensityVisualCard") && before(src.html, "computeVmDensityVisualCard", "computeVmDensityReferencesCard") && before(src.html, "computeVmDensityReferencesCard", "computeVmDensityRecommendedActionsCard") && before(src.html, "computeVmDensityRecommendedActionsCard", "computeVmDensityDecisionScheduleCard") && before(src.html, "computeVmDensityDecisionScheduleCard", "exportReport") && before(src.html, "exportReport", "continue-wrap"), "VM Density visible order should be summary, visual, references, actions, schedule, export, continue.");
 
 check("VM_DENSITY_ASSISTANT_CACHE_BUST",
-  src.html.includes("compute-assistant-vm-density-decision-schedule-077"),
+  src.html.includes("compute-assistant-vm-density-status-class-078"),
   "VM Density should load the RAM-shell assistant contract cache-bust."
 );
 
-check("VM_DENSITY_SHARED_ASSISTANT_RENDERERS",
-  ["renderVmDensityRecommendationReferences","renderVmDensityRecommendedActions","renderVmDensityDecisionSchedule","compute-assistant-vm-density-ram-shell-renderers-0706"].every((t) => src.assistant.includes(t)),
-  "Shared Compute assistant contract should own VM Density references/actions/schedule renderers."
-);
+check("VM_DENSITY_SHARED_ASSISTANT_RENDERERS", ["renderVmDensityRecommendationReferences","renderVmDensityRecommendedActions","renderVmDensityDecisionSchedule","compute-assistant-vm-density-ram-shell-renderers-0706"].every((t) => src.assistant.includes(t)), "Shared Compute assistant contract should own VM Density references/actions/schedule renderers.");
 
 check("VM_DENSITY_SCRIPT_RENDER_CALLS",
   ["renderVmDensityCapacityVisual(vmDensityResult)","renderVmDensityReferences(vmDensityResult)","renderVmDensityRecommendedActions(vmDensityResult)","renderVmDensityDecisionSchedule(vmDensityResult)"].every((t) => src.script.includes(t)),
@@ -154,6 +151,18 @@ check("VM_DENSITY_FOOTER_VALUE_FIT",
     src.visuals.includes("function compactDensityClass(value)") &&
     src.visuals.includes('footerStat(58, "density", "Density", compactDensityClass(densityClass), 150)'),
   "VM Density first footer chip should compact long density labels so text stays inside the Throughput-style chip."
+);
+
+check("VM_DENSITY_STATUS_BADGE_CLASS",
+  src.html.includes("compute-assistant-vm-density-status-class-078") &&
+    src.assistant.includes('return "is-risk"') &&
+    src.assistant.includes('return "is-watch"') &&
+    src.assistant.includes('return "is-good"') &&
+    src.assistant.includes('return "is-review"') &&
+    !src.assistant.includes('return "risk";') &&
+    !src.assistant.includes('return "watch";') &&
+    !src.assistant.includes('return "good";'),
+  "VM Density decision schedule status badges should use the same is-* status classes as Storage Throughput."
 );
 
 const failed = results.filter((r) => !r.pass);

@@ -1108,9 +1108,10 @@ function renderComputeRamRecommendationReferences(data) {
 
   function statusClass(status) {
     var value = String(status || "").toUpperCase();
-    if (value === "RISK" || value === "BLOCKED") return "risk";
-    if (value === "WATCH" || value === "REVIEW") return "watch";
-    return "good";
+    if (value === "RISK" || value === "BLOCKED") return "is-risk";
+    if (value === "WATCH" || value === "REVIEW") return "is-watch";
+    if (value === "GOOD" || value === "HEALTHY") return "is-good";
+    return "is-review";
   }
 
   function renderVmDensityAssistantStatusCard(target, result) {
@@ -1164,9 +1165,10 @@ function renderComputeRamRecommendationReferences(data) {
   const row = (label, value) => '<div class="scopedlabs-result-summary-item"><strong>' + esc(label) + '</strong><span>' + esc(value ?? "Not set") + '</span></div>';
   const statusClass = (status) => {
     const value = String(status || "").toUpperCase();
-    if (value === "RISK" || value === "BLOCKED") return "risk";
-    if (value === "WATCH" || value === "REVIEW") return "watch";
-    return "good";
+    if (value === "RISK" || value === "BLOCKED") return "is-risk";
+    if (value === "WATCH" || value === "REVIEW") return "is-watch";
+    if (value === "GOOD" || value === "HEALTHY") return "is-good";
+    return "is-review";
   };
 
   function vmDensityModel(result) {
