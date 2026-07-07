@@ -1301,3 +1301,219 @@ function computeWorkloadToolLabelFromPage() {
   window.setTimeout(run, 900);
   window.setTimeout(run, 1800);
 })();
+
+
+// compute-shell-vm-density-active-workflow-0706
+(function () {
+  if (window.__ScopedLabsComputeVmDensityActiveWorkflow0706) return;
+  window.__ScopedLabsComputeVmDensityActiveWorkflow0706 = true;
+
+  var STYLE_ID = "scopedlabs-compute-vm-density-active-workflow-0706";
+  var VM_RESULT_KEY = "scopedlabs:pipeline:compute:vm-density";
+  var STORAGE_RESULT_KEY = "scopedlabs:pipeline:compute:storage-throughput";
+
+  function isVmDensityPage() {
+    return !!(document.body && document.body.getAttribute("data-step") === "vm-density");
+  }
+
+  function injectStyle() {
+    if (!isVmDensityPage() || document.getElementById(STYLE_ID)) return;
+    var style = document.createElement("style");
+    style.id = STYLE_ID;
+    style.textContent = [
+      'body[data-step="vm-density"] #flow-note { display: none !important; visibility: hidden !important; }',
+      'body[data-step="vm-density"] .vm-density-active-workflow-card { margin-top: 16px; }',
+      'body[data-step="vm-density"] .vm-density-active-workflow-card .eyebrow { color: #3fff80; font-weight: 500; letter-spacing: 0.04em; }',
+      'body[data-step="vm-density"] .vm-density-active-workflow-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }',
+      'body[data-step="vm-density"] .vm-density-active-workflow-chip { border: 1px solid rgba(63, 255, 128, 0.14); border-radius: 10px; padding: 10px 12px; background: rgba(1, 18, 12, 0.55); min-height: 48px; }',
+      'body[data-step="vm-density"] .vm-density-active-workflow-chip .mini-label { display: block; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sl-muted, #9fb4ad); margin-bottom: 4px; }',
+      'body[data-step="vm-density"] .vm-density-active-workflow-chip strong { display: block; font-size: 0.86rem; }',
+      '@media (max-width: 760px) { body[data-step="vm-density"] .vm-density-active-workflow-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }'
+    ].join("\n");
+    document.head.appendChild(style);
+  }
+
+  function textOf(el) {
+    return (el && el.textContent ? el.textContent : "").replace(/\s+/g, " ").trim();
+  }
+
+  function selectedText(id, fallback) {
+    var el = document.getElementById(id);
+    if (!el) return fallback || "Not set";
+    if (el.options && el.selectedIndex >= 0) return textOf(el.options[el.selectedIndex]) || fallback || "Not set";
+    return String(el.value || "").trim() || fallback || "Not set";
+  }
+
+  function inputValue(id, suffix, fallback) {
+    var el = document.getElementById(id);
+    var value = el ? String(el.value || "").trim() : "";
+    return value ? value + (suffix || "") : fallback || "Not set";
+  }
+
+  function readJsonStorage(key) {
+    try {
+      var raw = window.sessionStorage ? window.sessionStorage.getItem(key) : null;
+      return raw ? JSON.parse(raw) : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function statusFromResult(result) {
+    if (result && (result.status || result.summaryStatus)) return String(result.status || result.summaryStatus).toUpperCase();
+    var stored = readJsonStorage(VM_RESULT_KEY);
+    var data = stored && stored.data ? stored.data : null;
+    if (data && (data.status || data.summaryStatus)) return String(data.status || data.summaryStatus).toUpperCase();
+    return "Pending Calculation";
+  }
+
+  function storageDemandSource() {
+    var stored = readJsonStorage(STORAGE_RESULT_KEY);
+    var data = stored && stored.data ? stored.data : null;
+    var status = data && (data.status || data.summaryStatus) ? String(data.status || data.summaryStatus).toUpperCase() : "";
+    return status ? "Storage Throughput / " + status : "Storage Throughput";
+  }
+
+  function workflowData(result) {
+    var workloadMix = selectedText("workloadMix", "Mixed / general");
+    var ha = selectedText("haPolicy", "No HA reserve");
+    var spare = inputValue("spare", "%", "15%");
+
+    return {
+      title: "Active Workflow",
+      summary: "Active workload | " + workloadMix + " | VM Density",
+      environment: "Active workload",
+      workloadMix: workloadMix,
+      demandSource: storageDemandSource(),
+      nextTool: "Power / Thermal",
+      plannedHosts: inputValue("hostCount", "", "1"),
+      reservePolicy: ha + " / spare " + spare,
+      growthReserve: inputValue("growthPct", "%", "20%"),
+      status: statusFromResult(result)
+    };
+  }
+
+  function buildMount() {
+    var mount = document.getElementById("computeVmDensityActiveWorkflowMount");
+    if (mount) return mount;
+
+    mount = document.createElement("div");
+    mount.id = "computeVmDensityActiveWorkflowMount";
+    mount.setAttribute("data-vm-density-active-workflow-mount", "0706");
+
+    var pipeline = document.getElementById("pipeline");
+    if (pipeline && pipeline.parentNode) {
+      pipeline.insertAdjacentElement("afterend", mount);
+      return mount;
+    }
+
+    var main = document.querySelector("main.container.page") || document.querySelector("main");
+    if (main) main.insertBefore(mount, main.firstChild);
+    return mount;
+  }
+
+  function removeLegacyStaticCards() {
+    Array.from(document.querySelectorAll("section.card, div.card")).forEach(function (card) {
+      if (card.getAttribute("data-vm-density-active-workflow-card")) return;
+      var text = textOf(card);
+      if (text.indexOf("Active Workflow") >= 0 && text.indexOf("Compute density validation") >= 0) {
+        card.parentNode.removeChild(card);
+      }
+    });
+  }
+
+  function removeDuplicateCards(keep) {
+    Array.from(document.querySelectorAll("[data-vm-density-active-workflow-card]")).forEach(function (card) {
+      if (card !== keep && card.parentNode) card.parentNode.removeChild(card);
+    });
+  }
+
+  function buildCard() {
+    var card = document.createElement("section");
+    card.className = "card vm-density-active-workflow-card";
+    card.setAttribute("data-vm-density-active-workflow-card", "0706");
+    card.setAttribute("data-compute-shell-owned-active-workflow", "0706");
+    card.setAttribute("data-compute-planner-routing-context", "vm-density-0706");
+    card.innerHTML = [
+      '<div class="eyebrow">ACTIVE WORKFLOW &rarr; VM DENSITY</div>',
+      '<h2 class="h2" style="margin-top: 8px;" data-vm-density-workflow-title>Active Workflow</h2>',
+      '<p class="muted" style="margin-top: 4px;" data-vm-density-workflow-summary>VM Density uses the active workload context and carries consolidation decisions into Power / Thermal.</p>',
+      '<div class="vm-density-active-workflow-grid" aria-label="Active workload context">',
+      '<div class="vm-density-active-workflow-chip"><span class="mini-label">Environment</span><strong data-vm-density-workflow-value="environment">Active workload</strong></div>',
+      '<div class="vm-density-active-workflow-chip"><span class="mini-label">Workload Mix</span><strong data-vm-density-workflow-value="workloadMix">Mixed / general</strong></div>',
+      '<div class="vm-density-active-workflow-chip"><span class="mini-label">Demand Source</span><strong data-vm-density-workflow-value="demandSource">Storage Throughput</strong></div>',
+      '<div class="vm-density-active-workflow-chip"><span class="mini-label">Next Tool</span><strong data-vm-density-workflow-value="nextTool">Power / Thermal</strong></div>',
+      '<div class="vm-density-active-workflow-chip"><span class="mini-label">Planned Hosts</span><strong data-vm-density-workflow-value="plannedHosts">1</strong></div>',
+      '<div class="vm-density-active-workflow-chip"><span class="mini-label">Reserve Policy</span><strong data-vm-density-workflow-value="reservePolicy">No HA reserve / spare 15%</strong></div>',
+      '<div class="vm-density-active-workflow-chip"><span class="mini-label">Growth Reserve</span><strong data-vm-density-workflow-value="growthReserve">20%</strong></div>',
+      '<div class="vm-density-active-workflow-chip"><span class="mini-label">Status</span><strong data-vm-density-workflow-value="status">Pending Calculation</strong></div>',
+      "</div>"
+    ].join("");
+    return card;
+  }
+
+  function setValue(card, key, value) {
+    var node = card.querySelector('[data-vm-density-workflow-value="' + key + '"]');
+    if (node) node.textContent = value;
+  }
+
+  function updateCard(result) {
+    if (!isVmDensityPage()) return;
+    var card = document.querySelector('[data-vm-density-active-workflow-card="0706"]');
+    if (!card) return;
+
+    var data = workflowData(result);
+    var title = card.querySelector("[data-vm-density-workflow-title]");
+    var summary = card.querySelector("[data-vm-density-workflow-summary]");
+    if (title) title.textContent = data.title;
+    if (summary) summary.textContent = data.summary;
+    setValue(card, "environment", data.environment);
+    setValue(card, "workloadMix", data.workloadMix);
+    setValue(card, "demandSource", data.demandSource);
+    setValue(card, "nextTool", data.nextTool);
+    setValue(card, "plannedHosts", data.plannedHosts);
+    setValue(card, "reservePolicy", data.reservePolicy);
+    setValue(card, "growthReserve", data.growthReserve);
+    setValue(card, "status", data.status);
+  }
+
+  function ensureCard(result) {
+    if (!isVmDensityPage()) return;
+    injectStyle();
+    removeLegacyStaticCards();
+
+    var mount = buildMount();
+    if (!mount) return;
+
+    var card = mount.querySelector('[data-vm-density-active-workflow-card="0706"]');
+    if (!card) {
+      card = buildCard();
+      mount.innerHTML = "";
+      mount.appendChild(card);
+    }
+
+    removeDuplicateCards(card);
+    updateCard(result);
+  }
+
+  function run(result) {
+    ensureCard(result || null);
+  }
+
+  window.ScopedLabsComputeVmDensityActiveWorkflow = {
+    refresh: function (result) {
+      run(result || null);
+    }
+  };
+
+  document.addEventListener("input", function () { updateCard(null); }, true);
+  document.addEventListener("change", function () { updateCard(null); }, true);
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", function () { run(null); }, { once: true });
+  else run(null);
+
+  window.addEventListener("load", function () { run(null); });
+  window.setTimeout(function () { run(null); }, 250);
+  window.setTimeout(function () { run(null); }, 900);
+  window.setTimeout(function () { run(null); }, 1800);
+})();

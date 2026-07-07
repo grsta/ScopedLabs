@@ -4,6 +4,7 @@ const path = require("path");
 const root = process.cwd();
 
 const files = {
+  shell: path.join(root, "assets", "scopedlabs-compute-shell-contract.js"),
   html: path.join(root, "tools", "compute", "vm-density", "index.html"),
   script: path.join(root, "tools", "compute", "vm-density", "script.js"),
   assistant: path.join(root, "assets", "scopedlabs-compute-assistant-contract.js"),
@@ -195,6 +196,31 @@ check("VM_DENSITY_STATUS_BADGE_CLASS",
     !src.assistant.includes('return "good";'),
   "VM Density decision schedule status badges should use the same is-* status classes as Storage Throughput."
 );
+
+
+check("VM_DENSITY_ACTIVE_WORKFLOW_THROUGHPUT_LAYOUT",
+  src.html.includes('id="computeVmDensityActiveWorkflowMount"') &&
+    src.html.includes('data-vm-density-active-workflow-mount="0706"') &&
+    src.html.includes('compute-shell-vm-density-active-workflow-078') &&
+    !src.html.includes('Compute density validation') &&
+    src.script.includes('refreshVmDensityActiveWorkflow(vmDensityResult)') &&
+    src.script.includes('refreshVmDensityActiveWorkflow(null)') &&
+    src.html.indexOf('data-vm-density-active-workflow-mount="0706"') === src.html.lastIndexOf('data-vm-density-active-workflow-mount="0706"'),
+  "VM Density should expose one shell-owned Active Workflow mount and remove the old static density workflow copy."
+);
+
+check("VM_DENSITY_ACTIVE_WORKFLOW_SHELL_OWNER",
+  src.shell &&
+    src.shell.includes('compute-shell-vm-density-active-workflow-0706') &&
+    src.shell.includes('ScopedLabsComputeVmDensityActiveWorkflow') &&
+    src.shell.includes('data-vm-density-active-workflow-card') &&
+    src.shell.includes('ACTIVE WORKFLOW &rarr; VM DENSITY') &&
+    src.shell.includes('vm-density-active-workflow-grid') &&
+    src.shell.includes('removeDuplicateCards(card)') &&
+    src.shell.includes('removeLegacyStaticCards()'),
+  "VM Density Active Workflow should be rendered once by the Compute shell using the Storage Throughput card rhythm without duplicating cards."
+);
+
 
 const failed = results.filter((r) => !r.pass);
 console.log("\nVM Density RAM shell parity audit: " + (results.length - failed.length) + " passed / " + failed.length + " failed");

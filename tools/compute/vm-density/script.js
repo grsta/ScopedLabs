@@ -119,6 +119,16 @@
     if (els.continue) els.continue.disabled = true;
   }
 
+  function refreshVmDensityActiveWorkflow(result) {
+    const workflow = window.ScopedLabsComputeVmDensityActiveWorkflow;
+    if (!workflow || typeof workflow.refresh !== "function") return;
+    try {
+      workflow.refresh(result || null);
+    } catch {
+      // Active Workflow is presentational; calculation must not depend on it.
+    }
+  }
+
   function boolSelectValue(node) {
     return String(node?.value || "no").toLowerCase() === "yes";
   }
@@ -411,6 +421,7 @@ function renderVmDensityCapacityVisual(result) {
     hasResult = false;
     hideContinue();
     refreshFlowNote();
+    refreshVmDensityActiveWorkflow(null);
   }
 
   function calc() {
@@ -776,6 +787,7 @@ ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
 
     hasResult = true;
     showContinue();
+    refreshVmDensityActiveWorkflow(vmDensityResult);
   
     if (window.ScopedLabsExport && typeof window.ScopedLabsExport.refresh === "function") {
       window.ScopedLabsExport.refresh();
@@ -852,5 +864,6 @@ ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
 
     refreshFlowNote();
     hideContinue();
+    refreshVmDensityActiveWorkflow(null);
   });
 })();
