@@ -1623,6 +1623,71 @@ function renderStorageIopsCapacityEnvelope(options) {
   window.ScopedLabsComputeCapacityVisuals = api;
 })();
 
+
+// compute-capacity-shared-label-placement-0708
+(function () {
+  var api = window.ScopedLabsComputeCapacityVisuals || {};
+
+  function capacitySharedNumber(value, fallback) {
+    var parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  function capacitySharedClamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function capacitySharedEscape(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  api.buildCapacityLeftBandLabels = function buildCapacityLeftBandLabels(options) {
+    options = options || {};
+    var plot = options.plot || { x: 58, y: 78, w: 646, h: 244 };
+    var escape = typeof options.escape === "function" ? options.escape : capacitySharedEscape;
+    var x = capacitySharedNumber(options.x, plot.x + 12);
+    var yWatch = capacitySharedNumber(options.yWatch, plot.y + plot.h * 0.30);
+    var yGood = capacitySharedNumber(options.yGood, plot.y + plot.h * 0.55);
+    var yLimit = capacitySharedNumber(options.yLimit, plot.y + plot.h * 0.25);
+
+    return [
+      '<text x="' + x.toFixed(1) + '" y="' + (plot.y + 15).toFixed(1) + '" text-anchor="start" class="zone-text risk-text">' + escape(options.riskLabel || "RISK") + '</text>',
+      '<text x="' + x.toFixed(1) + '" y="' + (yWatch + 15).toFixed(1) + '" text-anchor="start" class="zone-text watch-text">' + escape(options.watchLabel || "WATCH") + '</text>',
+      '<text x="' + x.toFixed(1) + '" y="' + (yGood + 15).toFixed(1) + '" text-anchor="start" class="zone-text good-text">' + escape(options.goodLabel || "GOOD") + '</text>',
+      '<text x="' + x.toFixed(1) + '" y="' + (yLimit - 8).toFixed(1) + '" text-anchor="start" class="limit-label">' + escape(options.limitLabel || "100% usable limit") + '</text>'
+    ].join("");
+  };
+
+  api.buildCapacityDynamicPointMarker = function buildCapacityDynamicPointMarker(options) {
+    options = options || {};
+    var plot = options.plot || { x: 58, y: 78, w: 646, h: 244 };
+    var escape = typeof options.escape === "function" ? options.escape : capacitySharedEscape;
+    var x = capacitySharedNumber(options.x, 0);
+    var y = capacitySharedNumber(options.y, 0);
+    var cls = options.cls || "marker-required";
+
+    var midY = plot.y + plot.h / 2;
+    var placeBelow = y <= midY;
+    var labelY = placeBelow ? y + 18 : y - 34;
+    var noteY = placeBelow ? y + 31 : y - 21;
+
+    labelY = capacitySharedClamp(labelY, plot.y + 12, plot.y + plot.h - 8);
+    noteY = capacitySharedClamp(noteY, plot.y + 24, plot.y + plot.h + 5);
+
+    return '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="6.5" class="marker-ring"/>' +
+      '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="4.5" class="' + cls + '"/>' +
+      '<text x="' + x.toFixed(1) + '" y="' + labelY.toFixed(1) + '" text-anchor="middle" class="point-label">' + escape(options.label || "") + '</text>' +
+      '<text x="' + x.toFixed(1) + '" y="' + noteY.toFixed(1) + '" text-anchor="middle" class="point-note">' + escape(options.note || "") + '</text>';
+  };
+
+  window.ScopedLabsComputeCapacityVisuals = api;
+})();
+
 // compute-power-thermal-capacity-envelope-0708
 (function () {
   var api = window.ScopedLabsComputeCapacityVisuals || {};
@@ -1740,13 +1805,28 @@ function renderStorageIopsCapacityEnvelope(options) {
     var gapLabel = deficitPct > 0 ? "deficit *5" : "headroom *5";
     var gapValue = Math.round(deficitPct > 0 ? deficitPct : headroomPct) + "%";
 
+    var bandLabels = api.buildCapacityLeftBandLabels({
+      plot: plot,
+      yWatch: yWatch,
+      yGood: yGood,
+      yLimit: yLimitRail,
+      escape: esc
+    });
+
     function markerPoint(x, y, cls, label, note, labelOffset) {
-      var textX = x + labelOffset;
-      return '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="6.5" class="marker-ring"/><circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="4.5" class="' + cls + '"/><text x="' + textX.toFixed(1) + '" y="' + (y - 34).toFixed(1) + '" class="point-label">' + esc(label) + '</text><text x="' + textX.toFixed(1) + '" y="' + (y - 21).toFixed(1) + '" class="point-note">' + esc(note) + '</text>';
+      return api.buildCapacityDynamicPointMarker({
+        x: x,
+        y: y,
+        cls: cls,
+        label: label,
+        note: note,
+        plot: plot,
+        escape: esc
+      });
     }
 
     return [
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Power / Thermal Infrastructure Envelope" data-compute-power-thermal-envelope-0708 data-power-thermal-marker-rhythm="vm-density-0708">',
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Power / Thermal Infrastructure Envelope" data-compute-power-thermal-envelope-0708 data-power-thermal-marker-rhythm="vm-density-shared-labels-0708">',
       '<defs><style>',
       '.bg{fill:#07100d}.panel{fill:rgba(255,255,255,.025);stroke:rgba(112,255,145,.16);stroke-width:1}.title{fill:#f8fafc;font-family:Inter,Arial,sans-serif;font-size:18px;font-weight:900}.sub{fill:rgba(203,213,225,.82);font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:700}.status-text{font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.8px}.zone-risk{fill:rgba(239,68,68,.22)}.zone-watch{fill:rgba(250,204,21,.18)}.zone-good{fill:rgba(52,211,153,.17)}.grid{stroke:rgba(148,163,184,.14);stroke-width:1}.grid-major{stroke:rgba(248,250,252,.34);stroke-width:1.2;stroke-dasharray:7 5}.axis{stroke:rgba(226,232,240,.34);stroke-width:1.2}.tick{fill:rgba(203,213,225,.72);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:700}.axis-label{fill:rgba(203,213,225,.76);font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:800}.zone-text{font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.7px}.risk-text{fill:#ef4444}.watch-text{fill:#facc15}.good-text{fill:#34d399}.limit-label{fill:#facc15;font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:850}.curve-shadow{fill:none;stroke:rgba(0,0,0,.4);stroke-width:6;stroke-linecap:round}.curve-line{fill:none;stroke:#2cff9b;stroke-width:2.2;stroke-linecap:round}.drop-line{stroke:rgba(226,232,240,.20);stroke-width:1;stroke-dasharray:4 5}.marker-ring{fill:none;stroke:rgba(238,246,255,.72);stroke-width:1}.marker-rack{fill:#38d9ff;stroke:#04110d;stroke-width:1.2}.marker-circuit{fill:#a78bfa;stroke:#04110d;stroke-width:1.2}.marker-cooling{fill:#60a5fa;stroke:#04110d;stroke-width:1.2}.marker-limit{fill:#2cff9b;stroke:#04110d;stroke-width:1.2}.point-label{fill:#f8fafc;font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.6px}.point-note{fill:rgba(203,213,225,.84);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:750}.bracket-line{stroke:' + colors.stroke + ';stroke-width:1.5}.bracket-text{fill:' + colors.text + ';font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900}.footer-pill{fill:rgba(0,0,0,.18);stroke:rgba(112,255,145,.20);stroke-width:1}.footer-label{fill:rgba(203,213,225,.78);font-family:Inter,Arial,sans-serif;font-size:8.5px;font-weight:850;letter-spacing:.45px;text-transform:uppercase}.footer-value{fill:rgba(248,250,252,.92);font-family:Inter,Arial,sans-serif;font-size:9.5px;font-weight:850}.sl-icon-line{fill:none;stroke:rgba(226,232,240,.70);stroke-width:1.35;stroke-linecap:round;stroke-linejoin:round}.sl-icon-accent{fill:none;stroke:#2cff9b;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}.sl-icon-dot{fill:#2cff9b}',
       '</style></defs>',
@@ -1764,10 +1844,8 @@ function renderStorageIopsCapacityEnvelope(options) {
       '<path d="M' + plot.x + ' ' + (plot.y + plot.h) + ' H' + (plot.x + plot.w) + '" class="axis"/>',
       '<text x="38" y="66" class="axis-label">UTIL %</text>',
       '<text x="' + (plot.x + plot.w / 2) + '" y="348" text-anchor="middle" class="axis-label">Infrastructure planning checkpoints</text>',
-      '<text x="' + (plot.x + plot.w - 10) + '" y="' + (plot.y + 14).toFixed(1) + '" text-anchor="end" class="zone-text risk-text">RISK</text>',
-      '<text x="' + (plot.x + plot.w - 10) + '" y="' + (yWatch + 14).toFixed(1) + '" text-anchor="end" class="zone-text watch-text">WATCH</text>',
-      '<text x="' + (plot.x + plot.w - 10) + '" y="' + (yGood + 14).toFixed(1) + '" text-anchor="end" class="zone-text good-text">GOOD</text>',
-      '<path d="M' + plot.x + ' ' + yLimitRail.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="grid-major"/><text x="' + (plot.x + plot.w - 12) + '" y="' + (yLimitRail - 8).toFixed(1) + '" text-anchor="end" class="limit-label">100% usable limit</text>',
+      bandLabels,
+      '<path d="M' + plot.x + ' ' + yLimitRail.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="grid-major"/>',
       '<path d="' + curvePath + '" class="curve-shadow"/>',
       '<path d="' + curvePath + '" class="curve-line"/>',
       '<path d="M' + stageX.circuit.toFixed(1) + ' ' + yCircuit.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="drop-line"/>',
