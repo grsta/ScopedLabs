@@ -166,6 +166,8 @@
     if (!card || !mount || !html) return false;
     mount.innerHTML = html;
     card.hidden = false;
+    card.removeAttribute("hidden");
+    card.style.display = "";
     return true;
   }
 
