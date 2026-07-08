@@ -94,8 +94,10 @@ check(
 
 check(
   "POWER_THERMAL_ASSISTANT_OWNER_TARGET",
-  assistant.includes("renderPowerThermal") ||
-    assistant.includes("Power / Thermal"),
+  assistant.includes("renderPowerThermalSummaryCard") &&
+    assistant.includes("renderPowerThermalRecommendationReferences") &&
+    assistant.includes("renderPowerThermalRecommendedActions") &&
+    assistant.includes("renderPowerThermalDecisionSchedule"),
   "Shared Compute assistant contract should own Power / Thermal summary/references/actions/schedule after modernization."
 );
 

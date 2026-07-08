@@ -1096,7 +1096,89 @@ function renderComputeRamRecommendationReferences(data) {
 (function () {
   var api = Object.assign({}, window.ScopedLabsComputeAssistant || {});
   if (api.renderVmDensityAssistantStatusCard) {
-    window.ScopedLabsComputeAssistant = api;
+    
+  function powerThermalModel(result) {
+    const outputs = result && result.outputs || {};
+    const inputs = result && result.inputs || {};
+    const routing = result && result.plannerRouting || {};
+    const status = String(result && result.status || "WATCH").toUpperCase();
+    return {
+      status: status,
+      totalW: Number(outputs.totalW || 0),
+      btu: Number(outputs.btu || 0),
+      tons: Number(outputs.tons || 0),
+      pressure: outputs.pressure || "Review",
+      rackPressure: Number(outputs.rackPowerPressure || 0),
+      coolingPressure: Number(outputs.coolingPressure || 0),
+      circuitPressure: Number(outputs.circuitPressure || 0),
+      dominantConstraint: outputs.dominantConstraint || "Infrastructure reserve",
+      nodes: Number(inputs.nodes || 0),
+      watts: Number(inputs.watts || 0),
+      peak: Number(inputs.peak || 0),
+      overhead: Number(inputs.overhead || 0),
+      rackKw: Number(inputs.rackKw || 0),
+      circuitVoltage: Number(inputs.circuitVoltage || 0),
+      circuitAmps: Number(inputs.circuitAmps || 0),
+      coolingTonsAvailable: Number(inputs.coolingTonsAvailable || 0),
+      nextTool: routing.nextTool || "summary",
+      nextHref: routing.nextHref || "/tools/compute/summary/",
+      routeIntent: routing.routeIntent || "continue-to-summary"
+    };
+  }
+
+  api.renderPowerThermalSummaryCard = function renderPowerThermalSummaryCard(result) {
+    const model = powerThermalModel(result);
+    return [
+      '<div class="scopedlabs-result-summary-card" data-compute-power-thermal-summary-card="0707">',
+      '  <div class="scopedlabs-result-summary-header">',
+      '    <div><span class="scopedlabs-result-summary-eyebrow">Result Summary</span><strong>Power / Thermal Infrastructure Check</strong></div>',
+      '    <span class="scopedlabs-status-badge is-' + esc(model.status.toLowerCase()) + '">' + esc(model.status) + '</span>',
+      '  </div>',
+      '  <p class="scopedlabs-result-summary-note">Modeled load is ' + esc(model.totalW.toFixed(0)) + ' W, producing ' + esc(model.btu.toFixed(0)) + ' BTU/hr and about ' + esc(model.tons.toFixed(2)) + ' cooling tons.</p>',
+      '</div>'
+    ].join("");
+  };
+
+  api.renderPowerThermalRecommendationReferences = function renderPowerThermalRecommendationReferences(result) {
+    const model = powerThermalModel(result);
+    return [
+      '<table class="scopedlabs-reference-table"><thead><tr><th>Marker</th><th>Reference</th><th>Reason</th></tr></thead><tbody>',
+      '<tr><td><strong>*1</strong></td><td>Modeled load</td><td>' + esc(model.nodes) + ' nodes at ' + esc(model.watts) + ' W baseline with peak factor ' + esc(model.peak) + '.</td></tr>',
+      '<tr><td><strong>*2</strong></td><td>Heat output</td><td>' + esc(model.btu.toFixed(0)) + ' BTU/hr must be supportable by the room, rack, or cooling plan.</td></tr>',
+      '<tr><td><strong>*3</strong></td><td>Reserve policy</td><td>' + esc(model.overhead) + '% growth / infrastructure reserve is carried into the pressure score.</td></tr>',
+      '</tbody></table>'
+    ].join("");
+  };
+
+  api.renderPowerThermalRecommendedActions = function renderPowerThermalRecommendedActions(result) {
+    const model = powerThermalModel(result);
+    const route = model.status === "RISK" ? "Rework load, rack, or cooling assumptions before Summary." : "Carry accepted infrastructure load into Compute Summary.";
+    return [
+      '<div class="scopedlabs-action-list" data-compute-power-thermal-actions="0707">',
+      '<div class="scopedlabs-action-row"><strong>Validate electrical capacity</strong><span>Confirm UPS, PDU, branch circuit, and rack loading can support ' + esc(model.totalW.toFixed(0)) + ' W.</span></div>',
+      '<div class="scopedlabs-action-row"><strong>Validate cooling capacity</strong><span>Confirm the cooling path can handle ' + esc(model.tons.toFixed(2)) + ' tons / ' + esc(model.btu.toFixed(0)) + ' BTU/hr.</span></div>',
+      '<div class="scopedlabs-action-row"><strong>Confirm route</strong><span>' + esc(route) + '</span></div>',
+      '</div>'
+    ].join("");
+  };
+
+  api.renderPowerThermalDecisionSchedule = function renderPowerThermalDecisionSchedule(result) {
+    const model = powerThermalModel(result);
+    const rows = [
+      { group: "Infrastructure", metric: "Status", value: model.status, note: model.pressure },
+      { group: "Power", metric: "Modeled Load", value: model.totalW.toFixed(0) + " W", note: "Rack pressure " + model.rackPressure.toFixed(0) + "% against " + model.rackKw.toFixed(1) + " kW." },
+      { group: "Thermal", metric: "Cooling Load", value: model.tons.toFixed(2) + " tons", note: "Cooling pressure " + model.coolingPressure.toFixed(0) + "% against " + model.coolingTonsAvailable.toFixed(1) + " available tons." },
+      { group: "Next Step", metric: "Route", value: model.nextTool, note: "Route intent: " + model.routeIntent + "." }
+    ];
+    return '<table class="scopedlabs-decision-table"><thead><tr><th>Group</th><th>Metric</th><th>Value</th><th>Engineering Note</th></tr></thead><tbody>' +
+      rows.map(function (row) {
+        return '<tr><td>' + esc(row.group) + '</td><td>' + esc(row.metric) + '</td><td><strong>' + esc(row.value) + '</strong></td><td>' + esc(row.note) + '</td></tr>';
+      }).join("") +
+      '</tbody></table><p class="scopedlabs-engineering-interpretation"><strong>Engineering Interpretation:</strong> Carry the accepted load and cooling requirement into Compute Summary unless power or thermal status requires rework.</p>';
+  };
+
+
+  window.ScopedLabsComputeAssistant = api;
     return;
   }
 

@@ -81,7 +81,7 @@
   </style>
 </head>
 
-<body data-tier="pro" data-category="compute" data-step="power-thermal" data-lane="v1">
+<body data-tier="pro" data-category="compute" data-step="power-thermal" data-lane="v1" data-compute-tool-shell="power-thermal-planning-shell-0707">
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/" aria-label="ScopedLabs Home">
@@ -125,17 +125,6 @@
     <h1>Compute Power &amp; Thermal</h1>
 
     <div id="pipeline"></div>
-
-    <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-      <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
-      <h2 class="h3" style="margin-top: 0;">This tool continues the Compute design flow</h2>
-      <p class="muted" style="margin-bottom: 0;">
-        Use this step to convert system density and accelerator choices into real rack power, circuit loading, and cooling demand before deployment assumptions harden.
-      </p>
-      <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-        This is where compute sizing becomes infrastructure reality — because power and thermal limits often become the next hard ceiling after CPU, memory, or GPU planning looks reasonable on paper.
-      </p>
-    </section>
 
     <p class="tool-best-for">
       <strong>Best for:</strong> validating rack power and cooling requirements before deployment.
@@ -238,7 +227,30 @@
         </p>
       </div>
     
-<section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+
+    <section id="computePowerThermalSummaryCard" class="card compute-static-summary-card-shell power-thermal-result-summary-card" style="margin-top: 14px;" hidden data-power-thermal-result-card data-export-section="true" data-export-title="Power / Thermal Result Summary">
+      <div id="computePowerThermalSummary" class="power-thermal-result-summary" aria-live="polite" data-export-text="true"></div>
+    </section>
+
+    <section id="computePowerThermalReferencesCard" class="card compute-recommendation-references-card" hidden data-compute-recommendation-references-card data-output-references-owner="compute-assistant-contract" data-export-section="true" data-export-title="Recommendation References">
+      <h3 class="h3" style="margin-top: 0;">Recommendation References</h3>
+      <p class="muted" style="margin-bottom: 0;">Reference markers explain how modeled load, heat output, and reserve pressure affect the infrastructure branch decision.</p>
+      <div id="computePowerThermalReferences" data-compute-recommendation-references="power-thermal"></div>
+    </section>
+
+    <section id="computePowerThermalActionsCard" class="card compute-recommended-actions-card" hidden data-compute-recommended-actions-card data-output-actions-owner="compute-assistant-contract" data-export-section="true" data-export-title="Assistant Recommended Actions">
+      <h3 class="h3" style="margin-top: 0;">Assistant Recommended Actions</h3>
+      <p class="muted" style="margin-bottom: 0;">Recommended infrastructure actions based on modeled power draw, cooling load, and active Compute workload context.</p>
+      <div id="computePowerThermalActions" data-compute-recommended-actions="power-thermal"></div>
+    </section>
+
+    <section id="computePowerThermalDecisionScheduleCard" class="card compute-decision-schedule-card" hidden data-compute-decision-schedule-card data-output-decision-owner="compute-assistant-contract" data-export-section="true" data-export-title="Power / Thermal Decision Schedule">
+      <h3 class="h3" style="margin-top: 0;">Power / Thermal Decision Schedule</h3>
+      <p class="muted" style="margin-bottom: 0;">Compact infrastructure status, load, cooling, reserve, and route schedule for the active Compute workload.</p>
+      <div id="computePowerThermalDecisionSchedule" data-compute-decision-schedule="power-thermal" role="group" aria-label="Power and Thermal decision schedule"></div>
+    </section>
+
+<section class="card compute-export-card" style="margin-top: 14px; background: rgba(0,0,0,.14);" data-power-thermal-export-card="0707">
         <div class="pill-row">
           <span class="pill pill--pro">Documentation & Export</span>
         </div>
@@ -248,32 +260,13 @@
           Add optional project context and generate a clean documentation view that can be printed or saved as a PDF for client or internal use.
         </p>
 
-        <div class="export-grid">
-          <label class="field">
-            <span class="label">Report Title</span>
-            <input id="reportTitle" type="text" placeholder="Compute Power &amp; Thermal Assessment" />
-          </label>
-
-          <label class="field">
-            <span class="label">Project Name</span>
-            <input id="projectName" type="text" placeholder="Project Name" />
-          </label>
-
-          <label class="field">
-            <span class="label">Client Name</span>
-            <input id="clientName" type="text" placeholder="Client / Site Name" />
-          </label>
-
-          <label class="field">
-            <span class="label">Prepared By</span>
-            <input id="preparedBy" type="text" placeholder="ScopedLabs Pro User" />
-          </label>
-
-          <label class="field full">
-            <span class="label">Custom Notes</span>
-            <textarea id="customNotes" placeholder="Optional notes, assumptions, workload details, or design caveats to include in the report."></textarea>
-          </label>
-        </div>
+        <div
+          id="reportMetadataMount"
+          data-report-metadata
+          data-report-title="Report details"
+          data-report-copy="Optional metadata can be included in the generated report. Leave blank to use the default report naming."
+          data-report-default-title="Compute Power & Thermal Assessment"
+        ></div>
 
         <div class="btn-row" style="margin-top: 14px;">
           <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Export Report</button>
@@ -281,14 +274,12 @@
         </div>
 
         <div id="exportStatus" class="export-status"></div>
+        <div id="continue-wrap" class="compute-flow-actions" style="display:none; margin-top:10px; align-items:center; gap:12px; width:100%;" data-compute-flow-actions="true" data-compute-flow-owner="compute-shell-contract" data-compute-flow-tool="power-thermal" data-compute-flow-placed="true" data-power-thermal-flow-actions="0707">
+          <a class="btn" href="/tools/compute/vm-density/">Back to VM Density</a>
+          <button id="continue" class="btn btn-primary" type="button" disabled style="margin-left:auto;" data-compute-continue-href="/tools/compute/summary/">Continue &rarr; Summary</button>
+        </div>
       </section>
 </section>
-
-    <div id="continue-wrap" class="btn-row" style="display:none; margin-top:12px;">
-      <a id="continue" class="btn btn-primary" href="/tools/compute/raid-rebuild-time/">
-        Continue → RAID Rebuild
-      </a>
-    </div>
 
     <footer class="site-footer">
       <div class="muted">© <span data-year></span> ScopedLabs</div>
@@ -317,6 +308,7 @@
       "toolLabel": "Compute Power &amp; Thermal",
       "toolSlug": "power-thermal",
       "reportPrefix": "SL-C-PT",
+      "customPayloadBuilder": "ScopedLabsComputePowerThermalExport.buildPayload",
       "assumptions": [
             "This report reflects the visible Compute Power &amp; Thermal inputs and outputs at the time the export was generated.",
             "The calculation output is intended for planning, comparison, and documentation support.",
@@ -326,10 +318,12 @@
 };
   </script>
 
+  <script src="/assets/scopedlabs-report-metadata.js?v=report-metadata-001"></script>
   <script src="/assets/export.js?v=shared-export-025-tool-notes-column-widths"></script>
 
+  <script src="/assets/scopedlabs-compute-assistant-contract.js?v=compute-assistant-power-thermal-shell-0707"></script>
   <script src="/assets/scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-007-workload-nav-links"></script>
-  <script src="./script.js?v=compute-ledger-contract-0620"></script>
+  <script src="./script.js?v=compute-power-thermal-planning-shell-0707"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
 </html>

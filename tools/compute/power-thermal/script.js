@@ -24,6 +24,7 @@
   let upstream = null;
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
+  let currentPowerThermalExportResult = null;
 
   const els = {
     nodes: $("nodes"),
@@ -39,6 +40,14 @@
     circuitAmps: $("circuitAmps"),
     coolingTons: $("coolingTons"),
     results: $("results"),
+    powerThermalSummaryCard: $("computePowerThermalSummaryCard"),
+    powerThermalSummary: $("computePowerThermalSummary"),
+    powerThermalReferencesCard: $("computePowerThermalReferencesCard"),
+    powerThermalReferences: $("computePowerThermalReferences"),
+    powerThermalActionsCard: $("computePowerThermalActionsCard"),
+    powerThermalActions: $("computePowerThermalActions"),
+    powerThermalDecisionScheduleCard: $("computePowerThermalDecisionScheduleCard"),
+    powerThermalDecisionSchedule: $("computePowerThermalDecisionSchedule"),
     flowNote: $("flow-note"),
     analysisCopy: $("analysis-copy"),
     continueWrap: $("continue-wrap"),
@@ -145,12 +154,69 @@
 
   function hideContinue() {
     if (els.continueWrap) els.continueWrap.style.display = "none";
+    if (els.continue) els.continue.disabled = true;
   }
 
   function showContinue() {
     if (els.continueWrap) els.continueWrap.style.display = "flex";
+    if (els.continue) els.continue.disabled = false;
   }
 
+
+
+  function showPowerThermalCard(card, mount, html) {
+    if (!card || !mount || !html) return false;
+    mount.innerHTML = html;
+    card.hidden = false;
+    return true;
+  }
+
+  function resolvePowerThermalNextRoute(status) {
+    return {
+      routeIntent: status === "RISK" ? "planner-review-before-summary" : "continue-to-summary",
+      nextTool: "summary",
+      nextHref: "/tools/compute/summary/"
+    };
+  }
+
+  function renderPowerThermalSharedOutput(result) {
+    const assistant = window.ScopedLabsComputeAssistant || window.ScopedLabsComputeAssistantContract || {};
+    if (typeof assistant.renderPowerThermalSummaryCard === "function") {
+      showPowerThermalCard(els.powerThermalSummaryCard, els.powerThermalSummary, assistant.renderPowerThermalSummaryCard(result));
+    }
+    if (typeof assistant.renderPowerThermalRecommendationReferences === "function") {
+      showPowerThermalCard(els.powerThermalReferencesCard, els.powerThermalReferences, assistant.renderPowerThermalRecommendationReferences(result));
+    }
+    if (typeof assistant.renderPowerThermalRecommendedActions === "function") {
+      showPowerThermalCard(els.powerThermalActionsCard, els.powerThermalActions, assistant.renderPowerThermalRecommendedActions(result));
+    }
+    if (typeof assistant.renderPowerThermalDecisionSchedule === "function") {
+      showPowerThermalCard(els.powerThermalDecisionScheduleCard, els.powerThermalDecisionSchedule, assistant.renderPowerThermalDecisionSchedule(result));
+    }
+  }
+
+  function buildPowerThermalExportPayload() {
+    const result = currentPowerThermalExportResult || {};
+    const sections = [];
+    [
+      ["Power / Thermal Result Summary", els.powerThermalSummaryCard],
+      ["Recommendation References", els.powerThermalReferencesCard],
+      ["Assistant Recommended Actions", els.powerThermalActionsCard],
+      ["Power / Thermal Decision Schedule", els.powerThermalDecisionScheduleCard]
+    ].forEach(function (item) {
+      if (item[1] && !item[1].hidden) sections.push({ title: item[0], html: item[1].innerHTML });
+    });
+    return {
+      title: "Compute Power & Thermal Assessment",
+      summary: result.summary || "",
+      status: result.status || "",
+      sections
+    };
+  }
+
+  window.ScopedLabsComputePowerThermalExport = {
+    buildPayload: buildPowerThermalExportPayload
+  };
 
   function saveComputeLedgerResult(payload) {
     if (!State || typeof State.recordToolResult !== "function") return null;
@@ -312,6 +378,16 @@
       { label: "Cross-Check", value: crossCheck }
     ];
 
+    const powerThermalResult = {
+      status: analyzer.status,
+      summary: totalW.toFixed(0) + " W / " + tons.toFixed(2) + " cooling tons; " + pressure,
+      inputs: { nodes, watts, peak, overhead, rackKw, circuitVoltage, circuitAmps, coolingTonsAvailable },
+      outputs: { totalW, btu, tons, amps120, amps208, circuitAmpsUsed, rackPowerLimitW, rackPowerPressure, coolingPressure, circuitPressure, dominantConstraint, pressure },
+      plannerRouting: resolvePowerThermalNextRoute(analyzer.status)
+    };
+    currentPowerThermalExportResult = powerThermalResult;
+    renderPowerThermalSharedOutput(powerThermalResult);
+
     ScopedLabsAnalyzer.renderOutput({
       resultsEl: els.results,
       analysisEl: els.analysisCopy,
@@ -377,6 +453,13 @@
   }
 
   els.calc.addEventListener("click", calculate);
+
+  if (els.continue) {
+    els.continue.addEventListener("click", function () {
+      const routing = currentPowerThermalExportResult && currentPowerThermalExportResult.plannerRouting || {};
+      window.location.href = routing.nextHref || els.continue.getAttribute("data-compute-continue-href") || "/tools/compute/summary/";
+    });
+  }
 
   els.reset.addEventListener("click", () => {
     els.nodes.value = 10;
