@@ -226,7 +226,7 @@
   }
 
   function renderPowerThermalSharedOutput(result) {
-    const assistant = Object.assign({}, window.ScopedLabsComputeAssistantContract || {}, window.ScopedLabsComputeAssistant || {});
+    const assistant = window.ScopedLabsComputeAssistant || window.ScopedLabsComputeAssistantContract || {};
     if (typeof assistant.renderPowerThermalSummaryCard === "function") {
       showPowerThermalCard(els.powerThermalSummaryCard, els.powerThermalSummary, assistant.renderPowerThermalSummaryCard(result));
     }

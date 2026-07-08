@@ -1421,3 +1421,117 @@ function renderComputeRamRecommendationReferences(data) {
   };
   window.ScopedLabsComputeAssistant = api;
 })();
+
+
+/* compute-assistant-power-thermal-independent-renderers-0708 */
+(() => {
+  "use strict";
+  const api = Object.assign({}, window.ScopedLabsComputeAssistant || {});
+  const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+  const num = (value, fallback) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : (Number.isFinite(Number(fallback)) ? Number(fallback) : 0);
+  };
+  const pct = (value) => Math.round(num(value, 0)) + "%";
+  const watts = (value) => {
+    const n = num(value, 0);
+    return n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 1 : 2).replace(/\.0$/, "") + " kW" : Math.round(n) + " W";
+  };
+  const row = (label, value) => '<div class="scopedlabs-result-summary-item"><strong>' + esc(label) + '</strong><span>' + esc(value ?? "Not set") + '</span></div>';
+  const statusClass = (status) => {
+    const value = String(status || "").toUpperCase();
+    if (value === "RISK" || value === "BLOCKED") return "is-risk";
+    if (value === "WATCH" || value === "REVIEW") return "is-watch";
+    return "is-good";
+  };
+
+  function powerThermalModel(result) {
+    result = result || {};
+    const outputs = result.outputs || {};
+    const inputs = result.inputs || {};
+    const routing = result.plannerRouting || {};
+    const status = String(outputs.status || result.status || result.summaryStatus || "WATCH").toUpperCase();
+    const totalW = num(outputs.totalW, 0);
+    const btu = num(outputs.btu, totalW * 3.412141633);
+    const tons = num(outputs.tons, 0);
+    const rackKw = num(inputs.rackKw, num(outputs.rackPowerLimitW, 5000) / 1000);
+    const circuitVoltage = num(inputs.circuitVoltage, 208);
+    const circuitAmps = num(inputs.circuitAmps, 24);
+    const circuitUsed = num(outputs.circuitAmpsUsed, circuitVoltage ? totalW / circuitVoltage : 0);
+    const coolingAvailable = num(inputs.coolingTonsAvailable ?? inputs.coolingTons, 3);
+    const rackPressure = num(outputs.rackPowerPressure, rackKw ? totalW / (rackKw * 1000) * 100 : 0);
+    const circuitPressure = num(outputs.circuitPressure, circuitAmps ? circuitUsed / circuitAmps * 100 : 0);
+    const coolingPressure = num(outputs.coolingPressure, coolingAvailable ? tons / coolingAvailable * 100 : 0);
+    const dominant = outputs.dominantConstraint || result.dominantConstraint || "Infrastructure reserve";
+    const pressure = outputs.pressure || result.pressure || "Modeled infrastructure pressure";
+    const nextTool = routing.nextTool || "summary";
+    return { status, totalW, btu, tons, rackKw, circuitVoltage, circuitAmps, circuitUsed, coolingAvailable, rackPressure, circuitPressure, coolingPressure, dominant, pressure, nextTool };
+  }
+
+  api.renderPowerThermalSummaryCard = function renderPowerThermalSummaryCard(result) {
+    const model = powerThermalModel(result);
+    return [
+      '<div class="scopedlabs-result-summary-card" data-compute-power-thermal-summary-card="0708">',
+      '  <div class="scopedlabs-result-summary-header">',
+      '    <div><h3>Power / Thermal Result Summary</h3><p>Infrastructure reserve is based on rack load, branch circuit loading, and cooling capacity.</p></div>',
+      '    <span class="scopedlabs-result-summary-status ' + esc(statusClass(model.status)) + '">' + esc(model.status) + '</span>',
+      '  </div>',
+      '  <div class="scopedlabs-result-summary-grid">',
+      row("Modeled Load", watts(model.totalW)),
+      row("Heat Load", Math.round(model.btu).toLocaleString() + " BTU/hr"),
+      row("Cooling Demand", model.tons.toFixed(2) + " tons"),
+      row("Primary Limiter", model.dominant),
+      '  </div>',
+      '</div>'
+    ].join("");
+  };
+
+  api.renderPowerThermalRecommendationReferences = function renderPowerThermalRecommendationReferences(result) {
+    const model = powerThermalModel(result);
+    return [
+      '<table class="compute-recommendation-references-table" data-compute-power-thermal-reference-marker-contract="plotted-checkpoints-0708"><thead><tr><th>Marker</th><th>Reference</th><th>Reason</th></tr></thead><tbody>',
+      '<tr><td><strong>*1</strong></td><td>Rack load</td><td>' + esc(watts(model.totalW)) + ' modeled against ' + esc(model.rackKw.toFixed(1)) + ' kW rack limit.</td></tr>',
+      '<tr><td><strong>*2</strong></td><td>Circuit loading</td><td>' + esc(model.circuitUsed.toFixed(1)) + ' A at ' + esc(model.circuitVoltage.toFixed(0)) + ' V against ' + esc(model.circuitAmps.toFixed(0)) + ' A usable capacity.</td></tr>',
+      '<tr><td><strong>*3</strong></td><td>Cooling reserve</td><td>' + esc(model.tons.toFixed(2)) + ' tons required against ' + esc(model.coolingAvailable.toFixed(1)) + ' tons available.</td></tr>',
+      '<tr><td><strong>*4</strong></td><td>Limiting pressure</td><td>Highest pressure drives the assistant status and Summary handoff.</td></tr>',
+      '</tbody></table>'
+    ].join("");
+  };
+
+  api.renderPowerThermalRecommendedActions = function renderPowerThermalRecommendedActions(result) {
+    const model = powerThermalModel(result);
+    const action = model.status === "RISK"
+      ? "Rework rack load, circuit capacity, or cooling reserve before accepting the infrastructure plan."
+      : model.status === "WATCH"
+        ? "Validate breaker policy, measured peak draw, and room cooling reserve before final deployment."
+        : "Carry the accepted infrastructure envelope into Compute Summary.";
+    return [
+      '<div class="compute-recommended-actions-list" data-compute-power-thermal-actions="0708">',
+      '  <div class="compute-recommended-action" data-export-text="true"><strong>1. Validate the primary limiter</strong><span>' + esc(model.dominant) + ' is currently the controlling infrastructure pressure.</span></div>',
+      '  <div class="compute-recommended-action" data-export-text="true"><strong>2. Confirm real peak draw</strong><span>Use measured or manufacturer peak power before locking circuit and cooling assumptions.</span></div>',
+      '  <div class="compute-recommended-action" data-export-text="true"><strong>3. Route the design</strong><span>' + esc(action) + '</span></div>',
+      '</div>'
+    ].join("");
+  };
+
+  api.renderPowerThermalDecisionSchedule = function renderPowerThermalDecisionSchedule(result) {
+    const model = powerThermalModel(result);
+    const rows = [
+      { group: "Infrastructure", metric: "Status", value: model.status, note: model.pressure },
+      { group: "Power", metric: "Rack Load", value: watts(model.totalW), note: "Rack pressure " + pct(model.rackPressure) + " against " + model.rackKw.toFixed(1) + " kW." },
+      { group: "Electrical", metric: "Circuit Load", value: model.circuitUsed.toFixed(1) + " A", note: "Circuit pressure " + pct(model.circuitPressure) + " at " + model.circuitVoltage.toFixed(0) + " V." },
+      { group: "Thermal", metric: "Cooling Load", value: model.tons.toFixed(2) + " tons", note: "Cooling pressure " + pct(model.coolingPressure) + " against " + model.coolingAvailable.toFixed(1) + " tons." },
+      { group: "Route", metric: "Next Step", value: model.nextTool, note: "Planner/shell route remains the owner of downstream navigation." }
+    ];
+    return [
+      '<div class="compute-decision-schedule" data-compute-power-thermal-decision-schedule="0708">',
+      '  <div class="compute-decision-schedule-status"><div><strong>' + esc(model.status) + ' Power / Thermal Decision Schedule</strong><span>' + esc(model.dominant) + '</span></div><span class="scopedlabs-result-summary-status ' + esc(statusClass(model.status)) + '">' + esc(model.status) + '</span></div>',
+      '  <table class="compute-decision-schedule-table"><thead><tr><th>Group</th><th>Metric</th><th>Value</th><th>Engineering Note</th></tr></thead><tbody>',
+      rows.map((item) => '<tr><td>' + esc(item.group) + '</td><td>' + esc(item.metric) + '</td><td>' + esc(item.value) + '</td><td>' + esc(item.note) + '</td></tr>').join(""),
+      '  </tbody></table>',
+      '</div>'
+    ].join("");
+  };
+
+  window.ScopedLabsComputeAssistant = api;
+})();

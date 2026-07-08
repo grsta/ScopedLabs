@@ -3,6 +3,7 @@ const path = require("path");
 
 const root = process.cwd();
 const files = {
+  assistant: path.join(root, "assets", "scopedlabs-compute-assistant-contract.js"),
   html: path.join(root, "tools", "compute", "power-thermal", "index.html"),
   script: path.join(root, "tools", "compute", "power-thermal", "script.js"),
   visuals: path.join(root, "assets", "scopedlabs-compute-capacity-visuals.js"),
@@ -34,7 +35,7 @@ check("POWER_THERMAL_ASSISTANT_CACHE_BUST_VISUAL", src.html.includes("scopedlabs
 check("POWER_THERMAL_VISUAL_ASSET_CACHE_BUST", src.html.includes("scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-032-power-thermal-envelope") && src.html.includes("script.js?v=compute-power-thermal-visual-envelope-0708"), "Power / Thermal should load cache-busted visual and local script assets.");
 check("POWER_THERMAL_SCRIPT_VISUAL_REFS", src.script.includes('powerThermalVisualCard: $("computePowerThermalVisualCard")') && src.script.includes('powerThermalVisual: $("computePowerThermalVisual")'), "Script should keep visual card and mount refs.");
 check("POWER_THERMAL_SCRIPT_RENDER_CLEAR", src.script.includes("function renderPowerThermalCapacityVisual") && src.script.includes("visuals.renderPowerThermalCapacityEnvelope") && src.script.includes("function clearPowerThermalCapacityVisual") && src.script.includes("clearPowerThermalCapacityVisual();"), "Script should render and clear the shared visual.");
-check("POWER_THERMAL_ASSISTANT_NAMESPACE_MERGE", src.script.includes("Object.assign({}, window.ScopedLabsComputeAssistantContract || {}, window.ScopedLabsComputeAssistant || {})"), "Power / Thermal should merge assistant namespaces so cached/global assistant objects do not hide tool renderers.");
+check("POWER_THERMAL_ASSISTANT_INDEPENDENT_RENDERERS", src.assistant.includes("compute-assistant-power-thermal-independent-renderers-0708") && src.assistant.includes("api.renderPowerThermalSummaryCard = function renderPowerThermalSummaryCard") && src.assistant.includes("api.renderPowerThermalRecommendationReferences = function renderPowerThermalRecommendationReferences") && src.assistant.includes("api.renderPowerThermalRecommendedActions = function renderPowerThermalRecommendedActions") && src.assistant.includes("api.renderPowerThermalDecisionSchedule = function renderPowerThermalDecisionSchedule") && src.assistant.includes("window.ScopedLabsComputeAssistant = api;"), "Power / Thermal assistant proof stack should be exported from an independent VM Density-style IIFE.");
 check("POWER_THERMAL_SCRIPT_RENDER_ORDER", (() => {
   const start = src.script.indexOf("function renderPowerThermalSharedOutput(result)");
   const end = start >= 0 ? src.script.indexOf("function buildPowerThermalExportPayload", start) : -1;

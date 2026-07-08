@@ -1,6 +1,7 @@
 const { spawnSync } = require("child_process");
 
 const checks = [
+  ["node", ["--check", "assets/scopedlabs-compute-assistant-contract.js"]],
   ["node", ["--check", "assets/scopedlabs-compute-capacity-visuals.js"]],
   ["node", ["--check", "tools/compute/power-thermal/script.js"]],
   ["node", ["--check", "scripts/audit-compute-power-thermal-planning-shell-v1.js"]],
