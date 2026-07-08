@@ -1673,11 +1673,11 @@ function renderStorageIopsCapacityEnvelope(options) {
 
     var midY = plot.y + plot.h / 2;
     var placeBelow = y <= midY;
-    var labelY = placeBelow ? y + 18 : y - 34;
-    var noteY = placeBelow ? y + 31 : y - 21;
+    var labelY = placeBelow ? y + 24 : y - 40;
+    var noteY = placeBelow ? y + 39 : y - 26;
 
-    labelY = capacitySharedClamp(labelY, plot.y + 12, plot.y + plot.h - 8);
-    noteY = capacitySharedClamp(noteY, plot.y + 24, plot.y + plot.h + 5);
+    labelY = capacitySharedClamp(labelY, plot.y + 10, plot.y + plot.h - 10);
+    noteY = capacitySharedClamp(noteY, plot.y + 22, plot.y + plot.h + 10);
 
     return '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="6.5" class="marker-ring"/>' +
       '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="4.5" class="' + cls + '"/>' +
