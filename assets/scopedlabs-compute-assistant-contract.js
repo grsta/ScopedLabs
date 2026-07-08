@@ -1128,30 +1128,25 @@ function renderComputeRamRecommendationReferences(data) {
 
   api.renderPowerThermalSummaryCard = function renderPowerThermalSummaryCard(result) {
     const model = powerThermalModel(result);
-    const confidence = model.status === "RISK" ? "MEDIUM" : model.status === "WATCH" ? "MEDIUM" : "HIGH";
+    const confidence = model.status === "GOOD" || model.status === "HEALTHY" ? "HIGH" : "MEDIUM";
     const recommendation = model.status === "RISK"
       ? "Rework rack load, circuit capacity, or cooling reserve before treating the Compute plan as complete."
       : model.status === "WATCH"
         ? "Validate measured peak draw, breaker policy, and room cooling reserve before final deployment."
         : "Carry the accepted infrastructure envelope into Compute Summary.";
-    const decisionFlags = [
-      "Rack " + pct(model.rackPressure),
-      "Circuit " + pct(model.circuitPressure),
-      "Cooling " + pct(model.coolingPressure),
-      "Limiter " + model.dominant
-    ].join(" | ");
+    const decisionFlags = "Rack " + pct(model.rackPressure) + " | Circuit " + pct(model.circuitPressure) + " | Cooling " + pct(model.coolingPressure) + " | Limiter " + model.dominant;
+    const primaryRisk = model.dominant + " is controlling infrastructure reserve before Compute Summary.";
     return [
-      '<div class="scopedlabs-result-summary-card" data-compute-power-thermal-summary-card="0708">',
+      '<div class="scopedlabs-result-summary-card" data-compute-power-thermal-summary-card="0708" data-power-thermal-summary-vm-density-rhythm="0708">',
       '  <div class="scopedlabs-result-summary-header">',
       '    <div><h3>POWER / THERMAL</h3><p>' + esc(model.status) + '</p></div>',
-      '    <span class="scopedlabs-result-summary-status ' + esc(statusClass(model.status)) + '">' + esc(model.status) + '</span>',
       '  </div>',
-      '  <p>' + esc(model.dominant) + ' is controlling infrastructure reserve before Compute Summary.</p>',
+      '  <p>' + esc(primaryRisk) + '</p>',
       '  <div class="scopedlabs-result-summary-grid">',
       row("Recommendation", recommendation),
       row("Confidence", confidence),
       row("Decision Flags", decisionFlags),
-      row("Primary Risk", model.dominant + " at " + esc(model.pressure)),
+      row("Primary Risk", primaryRisk),
       '  </div>',
       '  <p class="scopedlabs-result-summary-note">Carry this Power / Thermal result into Compute Summary. Do not treat the Compute plan as complete until rack load, circuit loading, and cooling reserve are accepted for the modeled deployment.</p>',
       '</div>'
