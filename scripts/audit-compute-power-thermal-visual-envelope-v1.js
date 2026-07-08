@@ -118,10 +118,15 @@ check("POWER_THERMAL_GAP_REFERENCE_CHIP", (() => {
   const assistantBlock = assistantAt >= 0 ? src.assistant.slice(assistantAt) : "";
   return block.includes('footerStat(578, "limit", "Gap *5", gapChipValue, 126)') &&
     block.includes('if (icon === "limit")') &&
-    assistantBlock.includes("<strong>*5</strong>") &&
+    assistantBlock.includes("<strong") &&
+    assistantBlock.includes("*5</strong>") &&
+    assistantBlock.includes('data-power-thermal-gap-reference-marker="0708"') &&
+    assistantBlock.includes("gapMarkerColor") &&
+    assistantBlock.includes("#ef4444") &&
+    assistantBlock.includes("#34d399") &&
     assistantBlock.includes("Headroom / deficit") &&
     assistantBlock.includes("gapReference");
-})(), "Power / Thermal *5 headroom/deficit reference should move into the footer chip and Recommendation References.");
+})(), "Power / Thermal *5 headroom/deficit reference should match the visual gap color and appear in the footer chip and Recommendation References.");
 
 const failed = results.filter((result) => !result.pass);
 console.log("");
