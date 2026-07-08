@@ -1688,6 +1688,109 @@ function renderStorageIopsCapacityEnvelope(options) {
   window.ScopedLabsComputeCapacityVisuals = api;
 })();
 
+
+// compute-capacity-generic-footer-chip-row-0708
+(function () {
+  var api = window.ScopedLabsComputeCapacityVisuals || {};
+
+  function chipNum(value, fallback) {
+    var parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  function chipEsc(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function chipIcon(icon) {
+    icon = String(icon || "generic").toLowerCase();
+    if (icon === "circuit" || icon === "network") {
+      return '<path d="M8 14h12l4 6h12" class="sl-icon-line"/><path d="M8 28h12l4-6h12" class="sl-icon-accent"/><rect x="34" y="17" width="8" height="8" rx="2" class="sl-icon-line"/>';
+    }
+    if (icon === "cooling") {
+      return '<path d="M21 7v30M7 22h30M11 12l20 20M31 12 11 32" class="sl-icon-line"/><circle cx="21" cy="22" r="4" class="sl-icon-accent"/>';
+    }
+    if (icon === "limit" || icon === "gap" || icon === "headroom" || icon === "deficit") {
+      return '<path d="M10 22h18" class="sl-icon-line"/><path d="M30 14v16" class="sl-icon-line"/><path d="M14 14l4 4-4 4M26 30l-4-4 4-4" class="sl-icon-accent"/>';
+    }
+    if (icon === "cpu") {
+      return '<rect x="10" y="10" width="22" height="22" rx="3" class="sl-icon-line"/><rect x="16" y="16" width="10" height="10" rx="2" class="sl-icon-accent"/><path d="M5 15h5M5 22h5M5 29h5M32 15h5M32 22h5M32 29h5" class="sl-icon-line"/>';
+    }
+    if (icon === "ram") {
+      return '<rect x="8" y="14" width="28" height="14" rx="2" class="sl-icon-line"/><path d="M12 28v5M18 28v5M24 28v5M30 28v5M13 19h18M13 24h18" class="sl-icon-accent"/>';
+    }
+    if (icon === "density" || icon === "workload") {
+      return '<rect x="8" y="9" width="10" height="8" rx="2" class="sl-icon-line"/><rect x="24" y="9" width="10" height="8" rx="2" class="sl-icon-line"/><rect x="16" y="25" width="10" height="8" rx="2" class="sl-icon-line"/><path d="M13 17v5h8M29 17v5h-8v3" class="sl-icon-accent"/>';
+    }
+    return '<path d="M22 5 10 25h11l-3 14 15-23H21l1-11Z" class="sl-icon-accent"/>';
+  }
+
+  api.buildCapacityFooterChip = function buildCapacityFooterChip(chip, options) {
+    chip = chip || {};
+    options = options || {};
+    var escape = typeof options.escape === "function" ? options.escape : chipEsc;
+    var x = chipNum(chip.x, 0);
+    var y = chipNum(chip.y, chipNum(options.y, 360));
+    var width = chipNum(chip.width, chipNum(options.width, 124));
+    var iconX = chipNum(options.iconX, 8);
+    var iconY = chipNum(options.iconY, 3);
+    var labelX = chipNum(options.labelX, 38);
+    var labelY = chipNum(options.labelY, 16);
+    var valueY = chipNum(options.valueY, 31);
+    var dataAttr = options.dataAttr || chip.dataAttr || 'data-compute-capacity-footer-chip="shared-0708"';
+
+    return '<g transform="translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ')" ' + dataAttr + '>' +
+      '<rect x="0" y="0" width="' + width.toFixed(1) + '" height="42" rx="10" class="footer-pill"/>' +
+      '<g transform="translate(' + iconX + ' ' + iconY + ')">' + chipIcon(chip.icon) + '</g>' +
+      '<text x="' + labelX + '" y="' + labelY + '" class="footer-label">' + escape(chip.label || "") + '</text>' +
+      '<text x="' + labelX + '" y="' + valueY + '" class="footer-value">' + escape(chip.value || "") + '</text>' +
+      '</g>';
+  };
+
+  api.buildCapacityFooterChipRow = function buildCapacityFooterChipRow(chips, options) {
+    options = options || {};
+    chips = Array.isArray(chips) ? chips.filter(Boolean) : [];
+    if (!chips.length) return "";
+
+    var startX = chipNum(options.x, 58);
+    var y = chipNum(options.y, 360);
+    var gap = chipNum(options.gap, 8);
+    var available = chipNum(options.availableWidth, 646);
+    var autoWidth = Math.max(86, Math.floor((available - gap * (chips.length - 1)) / chips.length));
+    var x = startX;
+
+    return chips.map(function (chip) {
+      var width = chipNum(chip.width, autoWidth);
+      var markup = api.buildCapacityFooterChip(Object.assign({}, chip, {
+        x: x,
+        y: y,
+        width: width
+      }), options);
+      x += width + gap;
+      return markup;
+    }).join("");
+  };
+
+  api.buildCapacityGapFooterChip = function buildCapacityGapFooterChip(options) {
+    options = options || {};
+    var value = chipNum(options.value, 0);
+    var reference = options.reference || "5";
+    var deficit = value > 0;
+    return {
+      icon: deficit ? "deficit" : "headroom",
+      label: "Gap *" + reference,
+      value: (deficit ? "Deficit " : "Headroom ") + Math.abs(Math.round(value)) + "%"
+    };
+  };
+
+  window.ScopedLabsComputeCapacityVisuals = api;
+})();
+
 // compute-power-thermal-capacity-envelope-0708
 (function () {
   var api = window.ScopedLabsComputeCapacityVisuals || {};
@@ -1808,6 +1911,21 @@ function renderStorageIopsCapacityEnvelope(options) {
     var gapLabel = deficitPct > 0 ? "deficit" : "headroom";
     var gapValue = Math.round(deficitPct > 0 ? deficitPct : headroomPct) + "%";
     var gapChipValue = (deficitPct > 0 ? "Deficit " : "Headroom ") + gapValue;
+    var footerChips = api.buildCapacityFooterChipRow([
+      { icon: "power", label: "Modeled", value: fmtKw(totalW) },
+      { icon: "power", label: "Rack Limit", value: fmtKw(rackLimitW) },
+      { icon: "circuit", label: "Circuit", value: circuitUsed.toFixed(1) + " / " + circuitLimit.toFixed(0) + " A" },
+      { icon: "cooling", label: "Cooling", value: coolingUsed.toFixed(2) + " / " + coolingLimit.toFixed(1) + " t" },
+      api.buildCapacityGapFooterChip({ value: deficitPct > 0 ? deficitPct : -headroomPct, reference: "5" })
+    ], {
+      x: 58,
+      y: 360,
+      availableWidth: 646,
+      gap: 8,
+      dataAttr: 'data-power-thermal-footer-icon-chip="0708"',
+      escape: esc
+    });
+
 
     var bandLabels = api.buildCapacityLeftBandLabels({
       plot: plot,
@@ -1830,7 +1948,7 @@ function renderStorageIopsCapacityEnvelope(options) {
     }
 
     return [
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Power / Thermal Infrastructure Envelope" data-compute-power-thermal-envelope-0708 data-power-thermal-marker-rhythm="vm-density-shared-labels-gap-chip-0708">',
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Power / Thermal Infrastructure Envelope" data-compute-power-thermal-envelope-0708 data-power-thermal-marker-rhythm="vm-density-generic-footer-row-0708">',
       '<defs><style>',
       '.bg{fill:#07100d}.panel{fill:rgba(255,255,255,.025);stroke:rgba(112,255,145,.16);stroke-width:1}.title{fill:#f8fafc;font-family:Inter,Arial,sans-serif;font-size:18px;font-weight:900}.sub{fill:rgba(203,213,225,.82);font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:700}.status-text{font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.8px}.zone-risk{fill:rgba(239,68,68,.22)}.zone-watch{fill:rgba(250,204,21,.18)}.zone-good{fill:rgba(52,211,153,.17)}.grid{stroke:rgba(148,163,184,.14);stroke-width:1}.grid-major{stroke:rgba(248,250,252,.34);stroke-width:1.2;stroke-dasharray:7 5}.axis{stroke:rgba(226,232,240,.34);stroke-width:1.2}.tick{fill:rgba(203,213,225,.72);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:700}.axis-label{fill:rgba(203,213,225,.76);font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:800}.zone-text{font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.7px}.risk-text{fill:#ef4444}.watch-text{fill:#facc15}.good-text{fill:#34d399}.limit-label{fill:#facc15;font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:850}.curve-shadow{fill:none;stroke:rgba(0,0,0,.4);stroke-width:6;stroke-linecap:round}.curve-line{fill:none;stroke:#2cff9b;stroke-width:2.2;stroke-linecap:round}.drop-line{stroke:rgba(226,232,240,.20);stroke-width:1;stroke-dasharray:4 5}.marker-ring{fill:none;stroke:rgba(238,246,255,.72);stroke-width:1}.marker-rack{fill:#38d9ff;stroke:#04110d;stroke-width:1.2}.marker-circuit{fill:#a78bfa;stroke:#04110d;stroke-width:1.2}.marker-cooling{fill:#60a5fa;stroke:#04110d;stroke-width:1.2}.marker-limit{fill:#2cff9b;stroke:#04110d;stroke-width:1.2}.point-label{fill:#f8fafc;font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.6px}.point-note{fill:rgba(203,213,225,.84);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:750}.bracket-line{stroke:' + colors.stroke + ';stroke-width:1.5}.bracket-text{fill:' + colors.text + ';font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900}.footer-pill{fill:rgba(0,0,0,.18);stroke:rgba(112,255,145,.20);stroke-width:1}.footer-label{fill:rgba(203,213,225,.78);font-family:Inter,Arial,sans-serif;font-size:8.5px;font-weight:850;letter-spacing:.45px;text-transform:uppercase}.footer-value{fill:rgba(248,250,252,.92);font-family:Inter,Arial,sans-serif;font-size:9.5px;font-weight:850}.sl-icon-line{fill:none;stroke:rgba(226,232,240,.70);stroke-width:1.35;stroke-linecap:round;stroke-linejoin:round}.sl-icon-accent{fill:none;stroke:#2cff9b;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}.sl-icon-dot{fill:#2cff9b}',
       '</style></defs>',
@@ -1864,11 +1982,7 @@ function renderStorageIopsCapacityEnvelope(options) {
       '<text x="' + stageX.cooling.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">cooling</text>',
       '<text x="' + stageX.limit.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">limit</text>',
       '<path d="M' + (plot.x + plot.w - 24).toFixed(1) + ' ' + gapTop.toFixed(1) + ' H' + (plot.x + plot.w - 8).toFixed(1) + '" class="bracket-line"/><path d="M' + (plot.x + plot.w - 24).toFixed(1) + ' ' + gapBottom.toFixed(1) + ' H' + (plot.x + plot.w - 8).toFixed(1) + '" class="bracket-line"/><path d="M' + (plot.x + plot.w - 10).toFixed(1) + ' ' + gapTop.toFixed(1) + ' V' + gapBottom.toFixed(1) + '" class="bracket-line"/><text x="' + (plot.x + plot.w - 1).toFixed(1) + '" y="' + (gapTextY - 7).toFixed(1) + '" class="bracket-text" text-anchor="start"><tspan x="' + (plot.x + plot.w - 1).toFixed(1) + '" dy="0">' + esc(gapLabel) + '</tspan><tspan x="' + (plot.x + plot.w - 1).toFixed(1) + '" dy="14">' + esc(gapValue) + '</tspan></text>',
-      footerStat(58, "power", "Modeled", fmtKw(totalW), 124),
-      footerStat(188, "power", "Rack Limit", fmtKw(rackLimitW), 124),
-      footerStat(318, "circuit", "Circuit", circuitUsed.toFixed(1) + " / " + circuitLimit.toFixed(0) + " A", 124),
-      footerStat(448, "cooling", "Cooling", coolingUsed.toFixed(2) + " / " + coolingLimit.toFixed(1) + " t", 124),
-      footerStat(578, "limit", "Gap *5", gapChipValue, 126),
+      footerChips,
       '</svg>'
     ].join("");
   }

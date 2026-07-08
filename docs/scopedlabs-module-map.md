@@ -1666,3 +1666,6 @@ Promotion note:
 
 
 - COMPUTE_POWER_THERMAL_GAP_REFERENCE_CHIP_0708: Moves the Power / Thermal headroom/deficit *5 marker out of the right-side bracket label and into a fifth shared Capacity Visual footer chip, with matching Recommendation References ownership in `assets/scopedlabs-compute-assistant-contract.js`. Owners: `assets/scopedlabs-compute-capacity-visuals.js`, `assets/scopedlabs-compute-assistant-contract.js`; audit: `scripts/audit-compute-power-thermal-visual-envelope-v1.js`.
+
+
+- COMPUTE_CAPACITY_GENERIC_FOOTER_CHIP_ROW_0708: Promotes shared Compute Capacity Visuals footer-chip row helpers so capacity envelope tools can render auto-spaced 4, 5, or larger chip rows without hardcoded x positions. Adds `buildCapacityFooterChip`, `buildCapacityFooterChipRow`, and `buildCapacityGapFooterChip`. First consumer: Power / Thermal Infrastructure Envelope `Gap *5` chip. Owner: `assets/scopedlabs-compute-capacity-visuals.js`; guardrail: `scripts/audit-compute-power-thermal-visual-envelope-v1.js`.

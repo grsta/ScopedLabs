@@ -35,14 +35,14 @@ check("POWER_THERMAL_VISUAL_STORAGE_STYLE", (() => {
     block.includes("zone-watch") &&
     block.includes("zone-good") &&
     block.includes("status-text") &&
-    block.includes('data-power-thermal-marker-rhythm="vm-density-shared-labels-gap-chip-0708"') &&
+    block.includes('data-power-thermal-marker-rhythm="vm-density-generic-footer-row-0708"') &&
     block.includes("buildCapacityLeftBandLabels") &&
     block.includes("buildCapacityDynamicPointMarker") &&
+    block.includes("buildCapacityFooterChipRow") &&
     block.includes('var gapLabel = deficitPct > 0 ? "deficit" : "headroom";') &&
-    block.includes("var gapChipValue =") &&
     block.includes("bracket-line") &&
     block.includes("bracket-text");
-})(), "Visual should use status bands, status badge, shared left-side band labels, dynamic checkpoint labels, and separate headroom/deficit bracket.");
+})(), "Visual should use status bands, shared left-side labels, dynamic checkpoint labels, generic footer chip row, and separate headroom/deficit bracket.");
 
 check("POWER_THERMAL_VISUAL_LABEL_FIT", (() => {
   const markerAt = src.visuals.indexOf("compute-power-thermal-capacity-envelope-0708");
@@ -63,20 +63,20 @@ check("POWER_THERMAL_VISUAL_FOOTER_CHIPS", (() => {
   const markerAt = src.visuals.indexOf("compute-power-thermal-capacity-envelope-0708");
   const endAt = markerAt >= 0 ? src.visuals.indexOf("})();", markerAt) : -1;
   const block = markerAt >= 0 && endAt > markerAt ? src.visuals.slice(markerAt, endAt) : "";
-  return block.includes('data-power-thermal-footer-icon-chip="0708"') &&
-    block.includes('footerStat(58, "power", "Modeled", fmtKw(totalW), 124)') &&
-    block.includes('footerStat(188, "power", "Rack Limit", fmtKw(rackLimitW), 124)') &&
-    block.includes('footerStat(318, "circuit", "Circuit"') &&
-    block.includes('footerStat(448, "cooling", "Cooling"') &&
-    block.includes('footerStat(578, "limit", "Gap *5", gapChipValue, 126)') &&
-    block.includes('if (icon === "limit")');
-})(), "Visual should include compact infrastructure footer chips including the *5 headroom/deficit gap chip.");
+  return src.visuals.includes("compute-capacity-generic-footer-chip-row-0708") &&
+    src.visuals.includes("api.buildCapacityFooterChipRow = function buildCapacityFooterChipRow") &&
+    src.visuals.includes("api.buildCapacityGapFooterChip = function buildCapacityGapFooterChip") &&
+    block.includes("var footerChips = api.buildCapacityFooterChipRow") &&
+    block.includes('data-power-thermal-footer-icon-chip="0708"') &&
+    block.includes('api.buildCapacityGapFooterChip({ value: deficitPct > 0 ? deficitPct : -headroomPct, reference: "5" })') &&
+    block.includes("footerChips,");
+})(), "Visual should use the generic shared footer chip row helper, including the *5 headroom/deficit gap chip.");
 
 check("POWER_THERMAL_HTML_VISUAL_CARD", src.html.includes("computePowerThermalVisualCard") && src.html.includes('data-output-visual-owner="compute-capacity-visuals"') && src.html.includes('data-export-title="Power / Thermal Infrastructure Envelope"'), "Power / Thermal page should expose a shared-owned visual card.");
 check("POWER_THERMAL_HTML_VISUAL_MOUNT", src.html.includes("computePowerThermalVisual") && src.html.includes('data-compute-capacity-visual="power-thermal"') && src.html.includes('data-export-svg="true"'), "Power / Thermal page should expose an export-ready visual mount.");
 check("POWER_THERMAL_HTML_VISUAL_ORDER", before(src.html, "computePowerThermalSummaryCard", "computePowerThermalVisualCard") && before(src.html, "computePowerThermalVisualCard", "computePowerThermalReferencesCard") && before(src.html, "computePowerThermalDecisionScheduleCard", "exportReport"), "Visible rhythm should be summary, visual, references, actions, schedule, export.");
 check("POWER_THERMAL_ASSISTANT_CACHE_BUST_VISUAL", src.html.includes("scopedlabs-compute-assistant-contract.js?v=compute-assistant-power-thermal-gap-chip-0708"), "Power / Thermal should force a fresh assistant contract for visual/proof stack rendering.");
-check("POWER_THERMAL_VISUAL_ASSET_CACHE_BUST", src.html.includes("scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-036-power-thermal-gap-chip") && src.html.includes("script.js?v=compute-power-thermal-visual-envelope-0708"), "Power / Thermal should load cache-busted visual and local script assets.");
+check("POWER_THERMAL_VISUAL_ASSET_CACHE_BUST", src.html.includes("scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-037-generic-footer-chip-row") && src.html.includes("script.js?v=compute-power-thermal-visual-envelope-0708"), "Power / Thermal should load cache-busted visual and local script assets.");
 check("POWER_THERMAL_SCRIPT_VISUAL_REFS", src.script.includes('powerThermalVisualCard: $("computePowerThermalVisualCard")') && src.script.includes('powerThermalVisual: $("computePowerThermalVisual")'), "Script should keep visual card and mount refs.");
 check("POWER_THERMAL_SCRIPT_RENDER_CLEAR", src.script.includes("function renderPowerThermalCapacityVisual") && src.script.includes("visuals.renderPowerThermalCapacityEnvelope") && src.script.includes("function clearPowerThermalCapacityVisual") && src.script.includes("clearPowerThermalCapacityVisual();"), "Script should render and clear the shared visual.");
 check("POWER_THERMAL_SUMMARY_VM_DENSITY_STYLE", src.assistant.includes("<h3>POWER / THERMAL</h3>") && src.assistant.includes("Recommendation") && src.assistant.includes("Confidence") && src.assistant.includes("Decision Flags") && src.assistant.includes("Primary Risk") && src.assistant.includes("Carry this Power / Thermal result into Compute Summary"), "Power / Thermal Result Summary should follow the VM Density summary-card rhythm.");
@@ -116,17 +116,17 @@ check("POWER_THERMAL_GAP_REFERENCE_CHIP", (() => {
   const block = markerAt >= 0 && endAt > markerAt ? src.visuals.slice(markerAt, endAt) : "";
   const assistantAt = src.assistant.indexOf("compute-assistant-power-thermal-independent-renderers-0708");
   const assistantBlock = assistantAt >= 0 ? src.assistant.slice(assistantAt) : "";
-  return block.includes('footerStat(578, "limit", "Gap *5", gapChipValue, 126)') &&
-    block.includes('if (icon === "limit")') &&
-    assistantBlock.includes("<strong") &&
-    assistantBlock.includes("*5</strong>") &&
+  return block.includes("api.buildCapacityGapFooterChip") &&
+    block.includes("var footerChips = api.buildCapacityFooterChipRow") &&
     assistantBlock.includes('data-power-thermal-gap-reference-marker="0708"') &&
     assistantBlock.includes("gapMarkerColor") &&
     assistantBlock.includes("#ef4444") &&
     assistantBlock.includes("#34d399") &&
     assistantBlock.includes("Headroom / deficit") &&
     assistantBlock.includes("gapReference");
-})(), "Power / Thermal *5 headroom/deficit reference should match the visual gap color and appear in the footer chip and Recommendation References.");
+})(), "Power / Thermal *5 headroom/deficit reference should use the generic footer gap chip and matching colored Recommendation References marker.");
+
+check("POWER_THERMAL_GENERIC_FOOTER_CHIP_ROW", src.visuals.includes("compute-capacity-generic-footer-chip-row-0708") && src.visuals.includes("api.buildCapacityFooterChip = function buildCapacityFooterChip") && src.visuals.includes("api.buildCapacityFooterChipRow = function buildCapacityFooterChipRow") && src.visuals.includes("api.buildCapacityGapFooterChip = function buildCapacityGapFooterChip") && src.visuals.includes("autoWidth = Math.max(86") && src.visuals.includes("chips.length"), "Shared Compute capacity visuals should expose a generic auto-spaced footer chip row helper for future tools.");
 
 const failed = results.filter((result) => !result.pass);
 console.log("");
