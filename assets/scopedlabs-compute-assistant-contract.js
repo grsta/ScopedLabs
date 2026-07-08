@@ -1511,12 +1511,15 @@ function renderComputeRamRecommendationReferences(data) {
 
   api.renderPowerThermalRecommendationReferences = function renderPowerThermalRecommendationReferences(result) {
     const model = powerThermalModel(result);
+    const maxPressure = Math.max(model.rackPressure, model.circuitPressure, model.coolingPressure);
+    const gapReference = maxPressure > 100 ? "Deficit " + Math.round(maxPressure - 100) + "% above the usable infrastructure limit." : "Headroom " + Math.round(100 - maxPressure) + "% before the usable infrastructure limit.";
     return [
       '<table class="compute-recommendation-references-table" data-compute-power-thermal-reference-marker-contract="plotted-checkpoints-0708"><thead><tr><th>Marker</th><th>Reference</th><th>Reason</th></tr></thead><tbody>',
       '<tr><td><strong>*1</strong></td><td>Rack load</td><td>' + esc(watts(model.totalW)) + ' modeled against ' + esc(model.rackKw.toFixed(1)) + ' kW rack limit.</td></tr>',
       '<tr><td><strong>*2</strong></td><td>Circuit loading</td><td>' + esc(model.circuitUsed.toFixed(1)) + ' A at ' + esc(model.circuitVoltage.toFixed(0)) + ' V against ' + esc(model.circuitAmps.toFixed(0)) + ' A usable capacity.</td></tr>',
       '<tr><td><strong>*3</strong></td><td>Cooling reserve</td><td>' + esc(model.tons.toFixed(2)) + ' tons required against ' + esc(model.coolingAvailable.toFixed(1)) + ' tons available.</td></tr>',
       '<tr><td><strong>*4</strong></td><td>Limiting pressure</td><td>Highest pressure drives the assistant status and Summary handoff.</td></tr>',
+      '<tr><td><strong>*5</strong></td><td>Headroom / deficit</td><td>' + esc(gapReference) + '</td></tr>',
       '</tbody></table>'
     ].join("");
   };

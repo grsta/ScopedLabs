@@ -1731,6 +1731,9 @@ function renderStorageIopsCapacityEnvelope(options) {
     if (icon === "cooling") {
       return '<path d="M21 7v30M7 22h30M11 12l20 20M31 12L11 32" class="sl-icon-line"/><circle cx="21" cy="22" r="4" class="sl-icon-accent"/>';
     }
+    if (icon === "limit") {
+      return '<path d="M10 22h20" class="sl-icon-line"/><path d="M30 14v16" class="sl-icon-line"/><path d="M14 14l4 4-4 4M26 30l-4-4 4-4" class="sl-icon-accent"/>';
+    }
     return '<path d="M21 5 10 25h10l-3 14 14-22H20l1-12Z" class="sl-icon-accent"/>';
   }
 
@@ -1802,8 +1805,9 @@ function renderStorageIopsCapacityEnvelope(options) {
     var gapTop = yScale(Math.max(limitPct, 100));
     var gapBottom = yScale(Math.min(limitPct, 100));
     var gapTextY = clamp((gapTop + gapBottom) / 2, plot.y + 34, plot.y + plot.h - 12);
-    var gapLabel = deficitPct > 0 ? "deficit *5" : "headroom *5";
+    var gapLabel = deficitPct > 0 ? "deficit" : "headroom";
     var gapValue = Math.round(deficitPct > 0 ? deficitPct : headroomPct) + "%";
+    var gapChipValue = (deficitPct > 0 ? "Deficit " : "Headroom ") + gapValue;
 
     var bandLabels = api.buildCapacityLeftBandLabels({
       plot: plot,
@@ -1826,7 +1830,7 @@ function renderStorageIopsCapacityEnvelope(options) {
     }
 
     return [
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Power / Thermal Infrastructure Envelope" data-compute-power-thermal-envelope-0708 data-power-thermal-marker-rhythm="vm-density-shared-labels-0708">',
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Power / Thermal Infrastructure Envelope" data-compute-power-thermal-envelope-0708 data-power-thermal-marker-rhythm="vm-density-shared-labels-gap-chip-0708">',
       '<defs><style>',
       '.bg{fill:#07100d}.panel{fill:rgba(255,255,255,.025);stroke:rgba(112,255,145,.16);stroke-width:1}.title{fill:#f8fafc;font-family:Inter,Arial,sans-serif;font-size:18px;font-weight:900}.sub{fill:rgba(203,213,225,.82);font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:700}.status-text{font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.8px}.zone-risk{fill:rgba(239,68,68,.22)}.zone-watch{fill:rgba(250,204,21,.18)}.zone-good{fill:rgba(52,211,153,.17)}.grid{stroke:rgba(148,163,184,.14);stroke-width:1}.grid-major{stroke:rgba(248,250,252,.34);stroke-width:1.2;stroke-dasharray:7 5}.axis{stroke:rgba(226,232,240,.34);stroke-width:1.2}.tick{fill:rgba(203,213,225,.72);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:700}.axis-label{fill:rgba(203,213,225,.76);font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:800}.zone-text{font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.7px}.risk-text{fill:#ef4444}.watch-text{fill:#facc15}.good-text{fill:#34d399}.limit-label{fill:#facc15;font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:850}.curve-shadow{fill:none;stroke:rgba(0,0,0,.4);stroke-width:6;stroke-linecap:round}.curve-line{fill:none;stroke:#2cff9b;stroke-width:2.2;stroke-linecap:round}.drop-line{stroke:rgba(226,232,240,.20);stroke-width:1;stroke-dasharray:4 5}.marker-ring{fill:none;stroke:rgba(238,246,255,.72);stroke-width:1}.marker-rack{fill:#38d9ff;stroke:#04110d;stroke-width:1.2}.marker-circuit{fill:#a78bfa;stroke:#04110d;stroke-width:1.2}.marker-cooling{fill:#60a5fa;stroke:#04110d;stroke-width:1.2}.marker-limit{fill:#2cff9b;stroke:#04110d;stroke-width:1.2}.point-label{fill:#f8fafc;font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.6px}.point-note{fill:rgba(203,213,225,.84);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:750}.bracket-line{stroke:' + colors.stroke + ';stroke-width:1.5}.bracket-text{fill:' + colors.text + ';font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900}.footer-pill{fill:rgba(0,0,0,.18);stroke:rgba(112,255,145,.20);stroke-width:1}.footer-label{fill:rgba(203,213,225,.78);font-family:Inter,Arial,sans-serif;font-size:8.5px;font-weight:850;letter-spacing:.45px;text-transform:uppercase}.footer-value{fill:rgba(248,250,252,.92);font-family:Inter,Arial,sans-serif;font-size:9.5px;font-weight:850}.sl-icon-line{fill:none;stroke:rgba(226,232,240,.70);stroke-width:1.35;stroke-linecap:round;stroke-linejoin:round}.sl-icon-accent{fill:none;stroke:#2cff9b;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}.sl-icon-dot{fill:#2cff9b}',
       '</style></defs>',
@@ -1860,10 +1864,11 @@ function renderStorageIopsCapacityEnvelope(options) {
       '<text x="' + stageX.cooling.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">cooling</text>',
       '<text x="' + stageX.limit.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">limit</text>',
       '<path d="M' + (plot.x + plot.w - 24).toFixed(1) + ' ' + gapTop.toFixed(1) + ' H' + (plot.x + plot.w - 8).toFixed(1) + '" class="bracket-line"/><path d="M' + (plot.x + plot.w - 24).toFixed(1) + ' ' + gapBottom.toFixed(1) + ' H' + (plot.x + plot.w - 8).toFixed(1) + '" class="bracket-line"/><path d="M' + (plot.x + plot.w - 10).toFixed(1) + ' ' + gapTop.toFixed(1) + ' V' + gapBottom.toFixed(1) + '" class="bracket-line"/><text x="' + (plot.x + plot.w - 1).toFixed(1) + '" y="' + (gapTextY - 7).toFixed(1) + '" class="bracket-text" text-anchor="start"><tspan x="' + (plot.x + plot.w - 1).toFixed(1) + '" dy="0">' + esc(gapLabel) + '</tspan><tspan x="' + (plot.x + plot.w - 1).toFixed(1) + '" dy="14">' + esc(gapValue) + '</tspan></text>',
-      footerStat(58, "power", "Modeled", fmtKw(totalW), 150),
-      footerStat(214, "power", "Rack Limit", fmtKw(rackLimitW), 150),
-      footerStat(370, "circuit", "Circuit", circuitUsed.toFixed(1) + " / " + circuitLimit.toFixed(0) + " A", 162),
-      footerStat(538, "cooling", "Cooling", coolingUsed.toFixed(2) + " / " + coolingLimit.toFixed(1) + " t", 166),
+      footerStat(58, "power", "Modeled", fmtKw(totalW), 124),
+      footerStat(188, "power", "Rack Limit", fmtKw(rackLimitW), 124),
+      footerStat(318, "circuit", "Circuit", circuitUsed.toFixed(1) + " / " + circuitLimit.toFixed(0) + " A", 124),
+      footerStat(448, "cooling", "Cooling", coolingUsed.toFixed(2) + " / " + coolingLimit.toFixed(1) + " t", 124),
+      footerStat(578, "limit", "Gap *5", gapChipValue, 126),
       '</svg>'
     ].join("");
   }
