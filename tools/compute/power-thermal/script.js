@@ -35,13 +35,11 @@
     circuitVoltage: $("circuitVoltage"),
     circuitAmps: $("circuitAmps"),
     coolingTons: $("coolingTons"),
-    rackKw: $("rackKw"),
-    circuitVoltage: $("circuitVoltage"),
-    circuitAmps: $("circuitAmps"),
-    coolingTons: $("coolingTons"),
     results: $("results"),
     powerThermalSummaryCard: $("computePowerThermalSummaryCard"),
     powerThermalSummary: $("computePowerThermalSummary"),
+    powerThermalVisualCard: $("computePowerThermalVisualCard"),
+    powerThermalVisual: $("computePowerThermalVisual"),
     powerThermalReferencesCard: $("computePowerThermalReferencesCard"),
     powerThermalReferences: $("computePowerThermalReferences"),
     powerThermalActionsCard: $("computePowerThermalActionsCard"),
@@ -179,11 +177,43 @@
     };
   }
 
+
+
+  function clearPowerThermalCapacityVisual() {
+    if (els.powerThermalVisual) els.powerThermalVisual.innerHTML = "";
+    if (els.powerThermalVisualCard) {
+      els.powerThermalVisualCard.hidden = true;
+      els.powerThermalVisualCard.setAttribute("hidden", "");
+      els.powerThermalVisualCard.style.display = "none";
+    }
+  }
+
+  function renderPowerThermalCapacityVisual(result) {
+    const visuals = window.ScopedLabsComputeCapacityVisuals || {};
+    if (!els.powerThermalVisual || typeof visuals.renderPowerThermalCapacityEnvelope !== "function") {
+      clearPowerThermalCapacityVisual();
+      return false;
+    }
+
+    const rendered = visuals.renderPowerThermalCapacityEnvelope(els.powerThermalVisual, result);
+    if (!rendered) {
+      clearPowerThermalCapacityVisual();
+      return false;
+    }
+
+    if (els.powerThermalVisualCard) {
+      els.powerThermalVisualCard.hidden = false;
+      els.powerThermalVisualCard.removeAttribute("hidden");
+      els.powerThermalVisualCard.style.display = "";
+    }
+    return true;
+  }
   function renderPowerThermalSharedOutput(result) {
     const assistant = window.ScopedLabsComputeAssistant || window.ScopedLabsComputeAssistantContract || {};
     if (typeof assistant.renderPowerThermalSummaryCard === "function") {
       showPowerThermalCard(els.powerThermalSummaryCard, els.powerThermalSummary, assistant.renderPowerThermalSummaryCard(result));
     }
+    renderPowerThermalCapacityVisual(result);
     if (typeof assistant.renderPowerThermalRecommendationReferences === "function") {
       showPowerThermalCard(els.powerThermalReferencesCard, els.powerThermalReferences, assistant.renderPowerThermalRecommendationReferences(result));
     }
@@ -466,10 +496,6 @@
     els.watts.value = 450;
     els.peak.value = "1.15";
     els.overhead.value = 8;
-    if (els.rackKw) els.rackKw.value = 5;
-    if (els.circuitVoltage) els.circuitVoltage.value = "208";
-    if (els.circuitAmps) els.circuitAmps.value = 24;
-    if (els.coolingTons) els.coolingTons.value = 3;
     if (els.rackKw) els.rackKw.value = 5;
     if (els.circuitVoltage) els.circuitVoltage.value = "208";
     if (els.circuitAmps) els.circuitAmps.value = 24;

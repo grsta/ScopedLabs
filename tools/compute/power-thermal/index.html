@@ -7,6 +7,7 @@
   <meta name="description" content="Estimate compute equipment power draw, heat output, rack impact, cooling pressure, and growth margin." />
   <meta name="robots" content="noindex,follow" />
   <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-025" />
+  <link rel="stylesheet" href="/assets/scopedlabs-compute-result-visuals.css?v=compute-result-visuals-0705" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -81,7 +82,7 @@
   </style>
 </head>
 
-<body data-tier="pro" data-category="compute" data-step="power-thermal" data-lane="v1" data-compute-tool-shell="power-thermal-planning-shell-0707">
+<body data-tier="pro" data-category="compute" data-step="power-thermal" data-lane="v1" data-compute-tool-shell="power-thermal-planning-shell-0707" data-power-thermal-visual-envelope="0708">
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/" aria-label="ScopedLabs Home">
@@ -232,6 +233,13 @@
       <div id="computePowerThermalSummary" class="power-thermal-result-summary" aria-live="polite" data-export-text="true"></div>
     </section>
 
+
+    <section id="computePowerThermalVisualCard" class="card compute-result-visual-card" hidden data-output-visual-owner="compute-capacity-visuals" data-export-section="true" data-export-title="Power / Thermal Infrastructure Envelope">
+      <h3 class="h3" style="margin-top: 0;">Power / Thermal Infrastructure Envelope</h3>
+      <p class="muted" style="margin-bottom: 0;">Modeled rack load, electrical circuit pressure, and cooling reserve shown against the active infrastructure limits.</p>
+      <div id="computePowerThermalVisual" data-compute-capacity-visual="power-thermal" data-export-svg="true" aria-live="polite"></div>
+    </section>
+
     <section id="computePowerThermalReferencesCard" class="card compute-recommendation-references-card" hidden data-compute-recommendation-references-card data-output-references-owner="compute-assistant-contract" data-export-section="true" data-export-title="Recommendation References">
       <h3 class="h3" style="margin-top: 0;">Recommendation References</h3>
       <p class="muted" style="margin-bottom: 0;">Reference markers explain how modeled load, heat output, and reserve pressure affect the infrastructure branch decision.</p>
@@ -322,8 +330,9 @@
   <script src="/assets/export.js?v=shared-export-025-tool-notes-column-widths"></script>
 
   <script src="/assets/scopedlabs-compute-assistant-contract.js?v=compute-assistant-power-thermal-shell-0707"></script>
+  <script src="/assets/scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-032-power-thermal-envelope"></script>
   <script src="/assets/scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-007-workload-nav-links"></script>
-  <script src="./script.js?v=compute-power-thermal-planning-shell-0707"></script>
+  <script src="./script.js?v=compute-power-thermal-visual-envelope-0708"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
 </html>

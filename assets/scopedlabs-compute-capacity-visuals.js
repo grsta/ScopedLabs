@@ -1622,3 +1622,167 @@ function renderStorageIopsCapacityEnvelope(options) {
   api.renderVmDensityCapacityEnvelope = renderVmDensityCapacityEnvelope;
   window.ScopedLabsComputeCapacityVisuals = api;
 })();
+
+// compute-power-thermal-capacity-envelope-0708
+(function () {
+  var api = Object.assign({}, window.ScopedLabsComputeCapacityVisuals || {});
+  if (api.renderPowerThermalCapacityEnvelope) {
+    window.ScopedLabsComputeCapacityVisuals = api;
+    return;
+  }
+
+  function esc(value) {
+    return String(value == null ? "" : value).replace(/[&<>"']/g, function (ch) {
+      return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch];
+    });
+  }
+
+  function num(value, fallback) {
+    var parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function palette(status) {
+    var key = String(status || "WATCH").toUpperCase();
+    if (key === "RISK") return { fill: "rgba(239,68,68,.16)", stroke: "#ef4444", text: "#fecaca" };
+    if (key === "GOOD" || key === "HEALTHY") return { fill: "rgba(52,211,153,.14)", stroke: "#34d399", text: "#bbf7d0" };
+    return { fill: "rgba(250,204,21,.14)", stroke: "#facc15", text: "#fef08a" };
+  }
+
+  function fmtWatts(value) {
+    value = num(value, 0);
+    if (value >= 1000) return (value / 1000).toFixed(value >= 10000 ? 1 : 2) + " kW";
+    return Math.round(value) + " W";
+  }
+
+  function fmtPct(value) {
+    return Math.round(num(value, 0)) + "%";
+  }
+
+  function footerIcon(type) {
+    if (type === "power") {
+      return '<g transform="translate(9 7)" aria-label="power icon"><path d="M12 1 5 13h6l-1 10 8-14h-6z" class="sl-icon-line"/><path d="M12 1 9 11h5l-4 12" class="sl-icon-accent"/></g>';
+    }
+    if (type === "circuit") {
+      return '<g transform="translate(9 7)" aria-label="circuit icon"><rect x="3" y="4" width="18" height="14" rx="2" class="sl-icon-line"/><path d="M7 9h4l2 5 2-8 2 5h3" class="sl-icon-accent"/></g>';
+    }
+    if (type === "cooling") {
+      return '<g transform="translate(9 7)" aria-label="cooling icon"><path d="M12 2v20M4 7l16 10M20 7 4 17" class="sl-icon-line"/><circle cx="12" cy="12" r="3" class="sl-icon-accent"/></g>';
+    }
+    return '<g transform="translate(9 7)" aria-label="limiter icon"><path d="M3 3h18l-7 8v7l-4 2v-9z" class="sl-icon-line"/><path d="M7 3l5 8 5-8" class="sl-icon-accent"/></g>';
+  }
+
+  function footerStat(x, icon, label, value, w) {
+    return '<g transform="translate(' + x + ' 360)" data-power-thermal-footer-icon-chip="0708"><rect x="0" y="0" width="' + w + '" height="42" rx="10" class="footer-pill"/>' + footerIcon(icon) + '<text x="38" y="16" class="footer-label">' + esc(label) + '</text><text x="38" y="31" class="footer-value">' + esc(value) + '</text></g>';
+  }
+
+  function buildPowerThermalCapacityEnvelopeSvg(result) {
+    result = result || {};
+    var outputs = result.outputs || result || {};
+    var inputs = result.inputs || {};
+    var status = String(outputs.status || result.status || result.summaryStatus || "WATCH").toUpperCase();
+    var colors = palette(status);
+
+    var totalW = Math.max(0, num(outputs.totalW, 0));
+    var rackLimitW = Math.max(1, num(outputs.rackPowerLimitW, num(inputs.rackKw, 5) * 1000));
+    var circuitUsed = Math.max(0, num(outputs.circuitAmpsUsed, 0));
+    var circuitLimit = Math.max(1, num(inputs.circuitAmps, 24));
+    var coolingUsed = Math.max(0, num(outputs.tons, 0));
+    var coolingLimit = Math.max(0.1, num(inputs.coolingTonsAvailable, inputs.coolingTons || 3));
+
+    var rackPct = Math.max(0, num(outputs.rackPowerPressure, (totalW / rackLimitW) * 100));
+    var circuitPct = Math.max(0, num(outputs.circuitPressure, (circuitUsed / circuitLimit) * 100));
+    var coolingPct = Math.max(0, num(outputs.coolingPressure, (coolingUsed / coolingLimit) * 100));
+    var maxPct = Math.max(rackPct, circuitPct, coolingPct);
+    var headroom = 100 - maxPct;
+    var bracketLabel = headroom >= 0 ? "HEADROOM +" + Math.round(headroom) + "%" : "DEFICIT " + Math.round(Math.abs(headroom)) + "%";
+    var dominant = esc(outputs.dominantConstraint || "Infrastructure reserve");
+
+    var width = 760;
+    var height = 430;
+    var plot = { x: 58, y: 78, w: 646, h: 244 };
+    var yMax = Math.max(120, Math.ceil(Math.max(maxPct, 100) * 1.08 / 10) * 10);
+    function y(value) {
+      return plot.y + plot.h - (clamp(value, 0, yMax) / yMax) * plot.h;
+    }
+    var yGood = y(65);
+    var yWatch = y(85);
+    var yLimit = y(100);
+    var points = [
+      { key: "rack", x: 165, y: y(rackPct), label: "RACK *1", note: fmtPct(rackPct), cls: "marker-rack" },
+      { key: "circuit", x: 330, y: y(circuitPct), label: "CIRCUIT *2", note: fmtPct(circuitPct), cls: "marker-circuit" },
+      { key: "cooling", x: 495, y: y(coolingPct), label: "COOLING *3", note: fmtPct(coolingPct), cls: "marker-cooling" },
+      { key: "limit", x: 640, y: y(maxPct), label: "LIMIT *4", note: fmtPct(maxPct), cls: "marker-limit" }
+    ];
+    var curve = "M" + points.map(function (p) { return p.x + " " + p.y.toFixed(1); }).join(" L");
+    var ticks = [0, 25, 50, 75, 100, yMax].filter(function (value, index, all) {
+      return all.indexOf(value) === index && value <= yMax;
+    });
+    var grid = ticks.map(function (tick) {
+      var yy = y(tick).toFixed(1);
+      return '<path d="M' + plot.x + ' ' + yy + ' H' + (plot.x + plot.w) + '" class="' + (tick === 100 ? "grid-major" : "grid") + '"/><text x="48" y="' + (Number(yy) + 3) + '" text-anchor="end" class="tick">' + tick + '%</text>';
+    }).join("");
+    var pointMarkup = points.map(function (point) {
+      return '<path d="M' + point.x + ' ' + point.y.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="drop-line"/><circle cx="' + point.x + '" cy="' + point.y.toFixed(1) + '" r="7" class="marker-ring"/><circle cx="' + point.x + '" cy="' + point.y.toFixed(1) + '" r="4.6" class="' + point.cls + '"/><text x="' + point.x + '" y="' + (point.y - 16).toFixed(1) + '" text-anchor="middle" class="point-label">' + point.label + '</text><text x="' + point.x + '" y="' + (point.y - 4).toFixed(1) + '" text-anchor="middle" class="point-note">' + point.note + '</text>';
+    }).join("");
+
+    return [
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Power / Thermal Infrastructure Envelope" data-compute-power-thermal-envelope-0708>',
+      '<defs><style>',
+      '.bg{fill:#07100d}.panel{fill:rgba(255,255,255,.025);stroke:rgba(112,255,145,.16);stroke-width:1}.title{fill:#f8fafc;font-family:Inter,Arial,sans-serif;font-size:18px;font-weight:900}.sub{fill:rgba(203,213,225,.82);font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:700}.status-text{font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.8px}.zone-risk{fill:rgba(239,68,68,.22)}.zone-watch{fill:rgba(250,204,21,.18)}.zone-good{fill:rgba(52,211,153,.17)}.grid{stroke:rgba(148,163,184,.14);stroke-width:1}.grid-major{stroke:rgba(248,250,252,.34);stroke-width:1.2;stroke-dasharray:7 5}.axis{stroke:rgba(226,232,240,.34);stroke-width:1.2}.tick{fill:rgba(203,213,225,.72);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:700}.axis-label{fill:rgba(203,213,225,.76);font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:800}.zone-text{font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.7px}.risk-text{fill:#ef4444}.watch-text{fill:#facc15}.good-text{fill:#34d399}.limit-label{fill:rgba(248,250,252,.94);font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:850}.curve-shadow{fill:none;stroke:rgba(0,0,0,.4);stroke-width:6;stroke-linecap:round;stroke-linejoin:round}.curve-line{fill:none;stroke:#2cff9b;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}.drop-line{stroke:rgba(226,232,240,.20);stroke-width:1;stroke-dasharray:4 5}.marker-ring{fill:none;stroke:rgba(238,246,255,.72);stroke-width:1}.marker-rack{fill:#38d9ff;stroke:#04110d;stroke-width:1.2}.marker-circuit{fill:#a78bfa;stroke:#04110d;stroke-width:1.2}.marker-cooling{fill:#60a5fa;stroke:#04110d;stroke-width:1.2}.marker-limit{fill:#2cff9b;stroke:#04110d;stroke-width:1.2}.point-label{fill:#f8fafc;font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.6px}.point-note{fill:rgba(203,213,225,.84);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:750}.bracket-line{stroke:' + colors.stroke + ';stroke-width:1.5}.bracket-text{fill:' + colors.text + ';font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900}.dominant{fill:rgba(203,213,225,.84);font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:800}.footer-pill{fill:rgba(0,0,0,.18);stroke:rgba(112,255,145,.20);stroke-width:1}.footer-label{fill:rgba(203,213,225,.78);font-family:Inter,Arial,sans-serif;font-size:8.5px;font-weight:850;letter-spacing:.45px;text-transform:uppercase}.footer-value{fill:rgba(248,250,252,.92);font-family:Inter,Arial,sans-serif;font-size:9.5px;font-weight:850}.sl-icon-line{fill:none;stroke:rgba(226,232,240,.70);stroke-width:1.35;stroke-linecap:round;stroke-linejoin:round}.sl-icon-accent{fill:none;stroke:#2cff9b;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}.sl-icon-dot{fill:#2cff9b}',
+      '</style></defs>',
+      '<rect width="' + width + '" height="' + height + '" class="bg"/>',
+      '<rect x="24" y="22" width="712" height="384" rx="18" class="panel"/>',
+      '<text x="380" y="54" text-anchor="middle" class="title">Power / Thermal Infrastructure Envelope</text>',
+      '<text x="380" y="74" text-anchor="middle" class="sub">Rack watts, circuit loading, and cooling pressure vs available limits</text>',
+      '<rect x="632" y="36" width="64" height="28" rx="4" fill="' + colors.fill + '" stroke="' + colors.stroke + '"/>',
+      '<text x="664" y="55" text-anchor="middle" fill="' + colors.text + '" class="status-text">' + esc(status) + '</text>',
+      '<rect x="' + plot.x + '" y="' + plot.y + '" width="' + plot.w + '" height="' + Math.max(0, yWatch - plot.y).toFixed(1) + '" class="zone-risk"/>',
+      '<rect x="' + plot.x + '" y="' + yWatch.toFixed(1) + '" width="' + plot.w + '" height="' + Math.max(0, yGood - yWatch).toFixed(1) + '" class="zone-watch"/>',
+      '<rect x="' + plot.x + '" y="' + yGood.toFixed(1) + '" width="' + plot.w + '" height="' + Math.max(0, plot.y + plot.h - yGood).toFixed(1) + '" class="zone-good"/>',
+      grid,
+      '<path d="M' + plot.x + ' ' + plot.y + ' V' + (plot.y + plot.h) + '" class="axis"/>',
+      '<path d="M' + plot.x + ' ' + (plot.y + plot.h) + ' H' + (plot.x + plot.w) + '" class="axis"/>',
+      '<text x="38" y="66" class="axis-label">UTIL %</text>',
+      '<text x="' + (plot.x + plot.w / 2) + '" y="348" text-anchor="middle" class="axis-label">Infrastructure planning checkpoints</text>',
+      '<text x="' + (plot.x + plot.w - 6) + '" y="' + (yLimit - 7).toFixed(1) + '" text-anchor="end" class="limit-label">100% usable limit</text>',
+      '<path d="' + curve + '" class="curve-shadow"/>',
+      '<path d="' + curve + '" class="curve-line"/>',
+      pointMarkup,
+      '<path d="M704 ' + y(maxPct).toFixed(1) + ' H724 V' + y(100).toFixed(1) + ' H704" class="bracket-line"/>',
+      '<text x="694" y="' + (Math.min(y(maxPct), y(100)) - 10).toFixed(1) + '" text-anchor="end" class="bracket-text">' + esc(bracketLabel) + '</text>',
+      '<text x="380" y="336" text-anchor="middle" class="dominant">Primary limiter: ' + dominant + '</text>',
+      footerStat(58, "power", "Modeled", fmtWatts(totalW), 150),
+      footerStat(214, "power", "Rack Limit", fmtWatts(rackLimitW), 150),
+      footerStat(370, "circuit", "Circuit", circuitUsed.toFixed(1) + " / " + circuitLimit.toFixed(0) + " A", 150),
+      footerStat(538, "cooling", "Cooling", coolingUsed.toFixed(2) + " / " + coolingLimit.toFixed(1) + " t", 166),
+      '</svg>'
+    ].join("");
+  }
+
+  function renderPowerThermalCapacityEnvelope(target, result) {
+    var mount = target && target.mount ? target.mount : (typeof target === "string" ? document.getElementById(target) : target);
+    var payload = target && target.result ? target.result : result;
+    if (!mount) return false;
+    mount.innerHTML = buildPowerThermalCapacityEnvelopeSvg(payload || {});
+    return true;
+  }
+
+  var originalBuild = typeof api.buildCapacityEnvelopeSvg === "function" ? api.buildCapacityEnvelopeSvg : null;
+  api.buildCapacityEnvelopeSvg = function buildCapacityEnvelopeSvg(config) {
+    config = config || {};
+    var type = String(config.type || config.tool || "").toLowerCase();
+    if (type === "power-thermal") {
+      return buildPowerThermalCapacityEnvelopeSvg(config.result || config.data || config);
+    }
+    return originalBuild ? originalBuild.apply(this, arguments) : "";
+  };
+  api.buildPowerThermalCapacityEnvelopeSvg = buildPowerThermalCapacityEnvelopeSvg;
+  api.renderPowerThermalCapacityEnvelope = renderPowerThermalCapacityEnvelope;
+  window.ScopedLabsComputeCapacityVisuals = api;
+})();
+
