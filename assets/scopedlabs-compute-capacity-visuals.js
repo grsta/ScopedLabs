@@ -1625,17 +1625,7 @@ function renderStorageIopsCapacityEnvelope(options) {
 
 // compute-power-thermal-capacity-envelope-0708
 (function () {
-  var api = Object.assign({}, window.ScopedLabsComputeCapacityVisuals || {});
-  if (api.renderPowerThermalCapacityEnvelope) {
-    window.ScopedLabsComputeCapacityVisuals = api;
-    return;
-  }
-
-  function esc(value) {
-    return String(value == null ? "" : value).replace(/[&<>"']/g, function (ch) {
-      return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch];
-    });
-  }
+  var api = window.ScopedLabsComputeCapacityVisuals || {};
 
   function num(value, fallback) {
     var parsed = Number(value);
@@ -1646,38 +1636,41 @@ function renderStorageIopsCapacityEnvelope(options) {
     return Math.max(min, Math.min(max, value));
   }
 
+  function esc(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&apos;");
+  }
+
+  function fmtKw(watts) {
+    return (num(watts, 0) / 1000).toFixed(2).replace(/\.00$/, "") + " kW";
+  }
+
   function palette(status) {
-    var key = String(status || "WATCH").toUpperCase();
-    if (key === "RISK") return { fill: "rgba(239,68,68,.16)", stroke: "#ef4444", text: "#fecaca" };
-    if (key === "GOOD" || key === "HEALTHY") return { fill: "rgba(52,211,153,.14)", stroke: "#34d399", text: "#bbf7d0" };
-    return { fill: "rgba(250,204,21,.14)", stroke: "#facc15", text: "#fef08a" };
+    var map = {
+      GOOD: { stroke: "#34d399", fill: "rgba(52,211,153,0.10)", text: "#7ef5d5" },
+      WATCH: { stroke: "#facc15", fill: "rgba(250,204,21,0.10)", text: "#facc15" },
+      RISK: { stroke: "#ef4444", fill: "rgba(239,68,68,0.11)", text: "#ef4444" },
+      BLOCKED: { stroke: "#ef4444", fill: "rgba(239,68,68,0.11)", text: "#ef4444" }
+    };
+    return map[status] || map.WATCH;
   }
 
-  function fmtWatts(value) {
-    value = num(value, 0);
-    if (value >= 1000) return (value / 1000).toFixed(value >= 10000 ? 1 : 2) + " kW";
-    return Math.round(value) + " W";
-  }
-
-  function fmtPct(value) {
-    return Math.round(num(value, 0)) + "%";
-  }
-
-  function footerIcon(type) {
-    if (type === "power") {
-      return '<g transform="translate(9 7)" aria-label="power icon"><path d="M12 1 5 13h6l-1 10 8-14h-6z" class="sl-icon-line"/><path d="M12 1 9 11h5l-4 12" class="sl-icon-accent"/></g>';
+  function footerIcon(icon) {
+    if (icon === "circuit") {
+      return '<path d="M10 14h10l3 5h12" class="sl-icon-line"/><path d="M10 26h10l3-5h12" class="sl-icon-accent"/><rect x="32" y="16" width="8" height="8" rx="2" class="sl-icon-line"/>';
     }
-    if (type === "circuit") {
-      return '<g transform="translate(9 7)" aria-label="circuit icon"><rect x="3" y="4" width="18" height="14" rx="2" class="sl-icon-line"/><path d="M7 9h4l2 5 2-8 2 5h3" class="sl-icon-accent"/></g>';
+    if (icon === "cooling") {
+      return '<path d="M21 7v30M7 22h30M11 12l20 20M31 12L11 32" class="sl-icon-line"/><circle cx="21" cy="22" r="4" class="sl-icon-accent"/>';
     }
-    if (type === "cooling") {
-      return '<g transform="translate(9 7)" aria-label="cooling icon"><path d="M12 2v20M4 7l16 10M20 7 4 17" class="sl-icon-line"/><circle cx="12" cy="12" r="3" class="sl-icon-accent"/></g>';
-    }
-    return '<g transform="translate(9 7)" aria-label="limiter icon"><path d="M3 3h18l-7 8v7l-4 2v-9z" class="sl-icon-line"/><path d="M7 3l5 8 5-8" class="sl-icon-accent"/></g>';
+    return '<path d="M21 5 10 25h10l-3 14 14-22H20l1-12Z" class="sl-icon-accent"/>';
   }
 
   function footerStat(x, icon, label, value, w) {
-    return '<g transform="translate(' + x + ' 382)" data-power-thermal-footer-icon-chip="0708"><rect x="0" y="0" width="' + w + '" height="42" rx="10" class="footer-pill"/>' + footerIcon(icon) + '<text x="38" y="16" class="footer-label">' + esc(label) + '</text><text x="38" y="31" class="footer-value">' + esc(value) + '</text></g>';
+    return '<g transform="translate(' + x + ' 360)" data-power-thermal-footer-icon-chip="0708"><rect x="0" y="0" width="' + w + '" height="42" rx="10" class="footer-pill"/>' + footerIcon(icon) + '<text x="38" y="16" class="footer-label">' + esc(label) + '</text><text x="38" y="31" class="footer-value">' + esc(value) + '</text></g>';
   }
 
   function buildPowerThermalCapacityEnvelopeSvg(result) {
@@ -1687,58 +1680,78 @@ function renderStorageIopsCapacityEnvelope(options) {
     var status = String(outputs.status || result.status || result.summaryStatus || "WATCH").toUpperCase();
     var colors = palette(status);
 
-    var totalW = Math.max(0, num(outputs.totalW, 0));
+    var totalW = Math.max(0, num(outputs.totalW, num(outputs.totalWatts, 0)));
     var rackLimitW = Math.max(1, num(outputs.rackPowerLimitW, num(inputs.rackKw, 5) * 1000));
-    var circuitUsed = Math.max(0, num(outputs.circuitAmpsUsed, 0));
-    var circuitLimit = Math.max(1, num(inputs.circuitAmps, 24));
-    var coolingUsed = Math.max(0, num(outputs.tons, 0));
-    var coolingLimit = Math.max(0.1, num(inputs.coolingTonsAvailable, inputs.coolingTons || 3));
+    var voltage = Math.max(1, num(outputs.circuitVoltage, num(inputs.circuitVoltage, num(inputs.voltage, 208))));
+    var circuitLimit = Math.max(1, num(outputs.circuitCapacityA, num(inputs.circuitCapacityA, num(inputs.usableCircuitCapacityA, 24))));
+    var circuitUsed = Math.max(0, num(outputs.circuitUsedA, totalW / voltage));
+    var coolingUsed = Math.max(0, num(outputs.coolingTons, totalW * 3.412 / 12000));
+    var coolingLimit = Math.max(0.1, num(outputs.coolingCapacityTons, num(inputs.coolingTons, num(inputs.availableCoolingTons, 3))));
 
-    var rackPct = Math.max(0, num(outputs.rackPowerPressure, (totalW / rackLimitW) * 100));
-    var circuitPct = Math.max(0, num(outputs.circuitPressure, (circuitUsed / circuitLimit) * 100));
-    var coolingPct = Math.max(0, num(outputs.coolingPressure, (coolingUsed / coolingLimit) * 100));
-    var maxPct = Math.max(rackPct, circuitPct, coolingPct);
-    var headroom = 100 - maxPct;
-    var bracketLabel = headroom >= 0 ? "HEADROOM +" + Math.round(headroom) + "%" : "DEFICIT " + Math.round(Math.abs(headroom)) + "%";
-    var dominant = esc(outputs.dominantConstraint || "Infrastructure reserve");
+    var rackPct = rackLimitW > 0 ? totalW / rackLimitW * 100 : 0;
+    var circuitPct = circuitLimit > 0 ? circuitUsed / circuitLimit * 100 : 0;
+    var coolingPct = coolingLimit > 0 ? coolingUsed / coolingLimit * 100 : 0;
+    var limitPct = Math.max(rackPct, circuitPct, coolingPct);
+    var limiter = outputs.primaryLimiter || result.primaryLimiter || (limitPct === circuitPct ? "Electrical circuit loading" : limitPct === coolingPct ? "Cooling capacity" : "Rack power limit");
 
     var width = 760;
-    var height = 450;
+    var height = 430;
     var plot = { x: 58, y: 78, w: 646, h: 244 };
-    var yMax = Math.max(120, Math.ceil(Math.max(maxPct, 100) * 1.08 / 10) * 10);
-    function y(value) {
+    var yMax = Math.max(130, Math.ceil((Math.max(limitPct, 100) * 1.12) / 10) * 10);
+
+    function yScale(value) {
       return plot.y + plot.h - (clamp(value, 0, yMax) / yMax) * plot.h;
     }
-    var yGood = y(65);
-    var yWatch = y(85);
-    var yLimit = y(100);
-    var points = [
-      { key: "rack", x: 165, y: y(rackPct), label: "RACK *1", note: fmtPct(rackPct), cls: "marker-rack" },
-      { key: "circuit", x: 330, y: y(circuitPct), label: "CIRCUIT *2", note: fmtPct(circuitPct), cls: "marker-circuit" },
-      { key: "cooling", x: 495, y: y(coolingPct), label: "COOLING *3", note: fmtPct(coolingPct), cls: "marker-cooling" },
-      { key: "limit", x: 616, y: y(maxPct), label: "LIMIT *4", note: fmtPct(maxPct), cls: "marker-limit" }
-    ];
-    var curve = "M" + points.map(function (p) { return p.x + " " + p.y.toFixed(1); }).join(" L");
-    var ticks = [0, 25, 50, 75, 100, yMax].filter(function (value, index, all) {
-      return all.indexOf(value) === index && value <= yMax;
-    });
-    var grid = ticks.map(function (tick) {
-      var yy = y(tick).toFixed(1);
-      return '<path d="M' + plot.x + ' ' + yy + ' H' + (plot.x + plot.w) + '" class="' + (tick === 100 ? "grid-major" : "grid") + '"/><text x="48" y="' + (Number(yy) + 3) + '" text-anchor="end" class="tick">' + tick + '%</text>';
-    }).join("");
-    var pointMarkup = points.map(function (point) {
-      var labelLift = point.key === "limit" ? 30 : 16;
-      var noteLift = point.key === "limit" ? 18 : 4;
-      return '<path d="M' + point.x + ' ' + point.y.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="drop-line"/><circle cx="' + point.x + '" cy="' + point.y.toFixed(1) + '" r="7" class="marker-ring"/><circle cx="' + point.x + '" cy="' + point.y.toFixed(1) + '" r="4.6" class="' + point.cls + '"/><text x="' + point.x + '" y="' + (point.y - labelLift).toFixed(1) + '" text-anchor="middle" class="point-label">' + point.label + '</text><text x="' + point.x + '" y="' + (point.y - noteLift).toFixed(1) + '" text-anchor="middle" class="point-note">' + point.note + '</text>';
+
+    var stageX = {
+      rack: plot.x + 130,
+      circuit: plot.x + 286,
+      cooling: plot.x + 442,
+      limit: plot.x + 586
+    };
+
+    var yRack = yScale(rackPct);
+    var yCircuit = yScale(circuitPct);
+    var yCooling = yScale(coolingPct);
+    var yLimitPoint = yScale(limitPct);
+    var yLimitRail = yScale(100);
+    var yGood = yScale(65);
+    var yWatch = yScale(85);
+
+    var curvePath = [
+      "M", stageX.rack.toFixed(1), yRack.toFixed(1),
+      "C", (stageX.circuit - 80).toFixed(1), yCircuit.toFixed(1), (stageX.circuit - 38).toFixed(1), yCircuit.toFixed(1), stageX.circuit.toFixed(1), yCircuit.toFixed(1),
+      "S", (stageX.cooling - 40).toFixed(1), yCooling.toFixed(1), stageX.cooling.toFixed(1), yCooling.toFixed(1),
+      "S", (stageX.limit - 46).toFixed(1), yLimitPoint.toFixed(1), stageX.limit.toFixed(1), yLimitPoint.toFixed(1)
+    ].join(" ");
+
+    var ticks = [0, 25, 50, 75, 100];
+    if (yMax > 100) ticks.push(yMax);
+    var gridLines = ticks.map(function (tick) {
+      var y = yScale(tick);
+      return '<path d="M' + plot.x + ' ' + y.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="' + (tick === 100 ? "grid-major" : "grid") + '"/><text x="' + (plot.x - 10) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end" class="tick">' + Math.round(tick) + "%</text>";
     }).join("");
 
+    var deficitPct = Math.max(0, limitPct - 100);
+    var headroomPct = Math.max(0, 100 - limitPct);
+    var gapTop = yScale(Math.max(limitPct, 100));
+    var gapBottom = yScale(Math.min(limitPct, 100));
+    var gapTextY = clamp((gapTop + gapBottom) / 2, plot.y + 34, plot.y + plot.h - 12);
+    var gapLabel = deficitPct > 0 ? "deficit *5" : "headroom *5";
+    var gapValue = Math.round(deficitPct > 0 ? deficitPct : headroomPct) + "%";
+
+    function markerPoint(x, y, cls, label, note, labelOffset) {
+      var textX = x + labelOffset;
+      return '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="6.5" class="marker-ring"/><circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="4.5" class="' + cls + '"/><text x="' + textX.toFixed(1) + '" y="' + (y - 34).toFixed(1) + '" class="point-label">' + esc(label) + '</text><text x="' + textX.toFixed(1) + '" y="' + (y - 21).toFixed(1) + '" class="point-note">' + esc(note) + '</text>';
+    }
+
     return [
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Power / Thermal Infrastructure Envelope" data-compute-power-thermal-envelope-0708>',
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Power / Thermal Infrastructure Envelope" data-compute-power-thermal-envelope-0708 data-power-thermal-marker-rhythm="vm-density-0708">',
       '<defs><style>',
-      '.bg{fill:#07100d}.panel{fill:rgba(255,255,255,.025);stroke:rgba(112,255,145,.16);stroke-width:1}.title{fill:#f8fafc;font-family:Inter,Arial,sans-serif;font-size:18px;font-weight:900}.sub{fill:rgba(203,213,225,.82);font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:700}.status-text{font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.8px}.zone-risk{fill:rgba(239,68,68,.22)}.zone-watch{fill:rgba(250,204,21,.18)}.zone-good{fill:rgba(52,211,153,.17)}.grid{stroke:rgba(148,163,184,.14);stroke-width:1}.grid-major{stroke:rgba(248,250,252,.34);stroke-width:1.2;stroke-dasharray:7 5}.axis{stroke:rgba(226,232,240,.34);stroke-width:1.2}.tick{fill:rgba(203,213,225,.72);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:700}.axis-label{fill:rgba(203,213,225,.76);font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:800}.zone-text{font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.7px}.risk-text{fill:#ef4444}.watch-text{fill:#facc15}.good-text{fill:#34d399}.limit-label{fill:rgba(248,250,252,.94);font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:850}.curve-shadow{fill:none;stroke:rgba(0,0,0,.4);stroke-width:6;stroke-linecap:round;stroke-linejoin:round}.curve-line{fill:none;stroke:#2cff9b;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}.drop-line{stroke:rgba(226,232,240,.20);stroke-width:1;stroke-dasharray:4 5}.marker-ring{fill:none;stroke:rgba(238,246,255,.72);stroke-width:1}.marker-rack{fill:#38d9ff;stroke:#04110d;stroke-width:1.2}.marker-circuit{fill:#a78bfa;stroke:#04110d;stroke-width:1.2}.marker-cooling{fill:#60a5fa;stroke:#04110d;stroke-width:1.2}.marker-limit{fill:#2cff9b;stroke:#04110d;stroke-width:1.2}.point-label{fill:#f8fafc;font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.6px}.point-note{fill:rgba(203,213,225,.84);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:750}.bracket-line{stroke:' + colors.stroke + ';stroke-width:1.5}.bracket-text{fill:' + colors.text + ';font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900}.dominant{fill:rgba(203,213,225,.84);font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:800}.footer-pill{fill:rgba(0,0,0,.18);stroke:rgba(112,255,145,.20);stroke-width:1}.footer-label{fill:rgba(203,213,225,.78);font-family:Inter,Arial,sans-serif;font-size:8.5px;font-weight:850;letter-spacing:.45px;text-transform:uppercase}.footer-value{fill:rgba(248,250,252,.92);font-family:Inter,Arial,sans-serif;font-size:9.5px;font-weight:850}.sl-icon-line{fill:none;stroke:rgba(226,232,240,.70);stroke-width:1.35;stroke-linecap:round;stroke-linejoin:round}.sl-icon-accent{fill:none;stroke:#2cff9b;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}.sl-icon-dot{fill:#2cff9b}',
+      '.bg{fill:#07100d}.panel{fill:rgba(255,255,255,.025);stroke:rgba(112,255,145,.16);stroke-width:1}.title{fill:#f8fafc;font-family:Inter,Arial,sans-serif;font-size:18px;font-weight:900}.sub{fill:rgba(203,213,225,.82);font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:700}.status-text{font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.8px}.zone-risk{fill:rgba(239,68,68,.22)}.zone-watch{fill:rgba(250,204,21,.18)}.zone-good{fill:rgba(52,211,153,.17)}.grid{stroke:rgba(148,163,184,.14);stroke-width:1}.grid-major{stroke:rgba(248,250,252,.34);stroke-width:1.2;stroke-dasharray:7 5}.axis{stroke:rgba(226,232,240,.34);stroke-width:1.2}.tick{fill:rgba(203,213,225,.72);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:700}.axis-label{fill:rgba(203,213,225,.76);font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:800}.zone-text{font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.7px}.risk-text{fill:#ef4444}.watch-text{fill:#facc15}.good-text{fill:#34d399}.limit-label{fill:#facc15;font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:850}.curve-shadow{fill:none;stroke:rgba(0,0,0,.4);stroke-width:6;stroke-linecap:round}.curve-line{fill:none;stroke:#2cff9b;stroke-width:2.2;stroke-linecap:round}.drop-line{stroke:rgba(226,232,240,.20);stroke-width:1;stroke-dasharray:4 5}.marker-ring{fill:none;stroke:rgba(238,246,255,.72);stroke-width:1}.marker-rack{fill:#38d9ff;stroke:#04110d;stroke-width:1.2}.marker-circuit{fill:#a78bfa;stroke:#04110d;stroke-width:1.2}.marker-cooling{fill:#60a5fa;stroke:#04110d;stroke-width:1.2}.marker-limit{fill:#2cff9b;stroke:#04110d;stroke-width:1.2}.point-label{fill:#f8fafc;font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.6px}.point-note{fill:rgba(203,213,225,.84);font-family:Inter,Arial,sans-serif;font-size:9px;font-weight:750}.bracket-line{stroke:' + colors.stroke + ';stroke-width:1.5}.bracket-text{fill:' + colors.text + ';font-family:Inter,Arial,sans-serif;font-size:10px;font-weight:900}.footer-pill{fill:rgba(0,0,0,.18);stroke:rgba(112,255,145,.20);stroke-width:1}.footer-label{fill:rgba(203,213,225,.78);font-family:Inter,Arial,sans-serif;font-size:8.5px;font-weight:850;letter-spacing:.45px;text-transform:uppercase}.footer-value{fill:rgba(248,250,252,.92);font-family:Inter,Arial,sans-serif;font-size:9.5px;font-weight:850}.sl-icon-line{fill:none;stroke:rgba(226,232,240,.70);stroke-width:1.35;stroke-linecap:round;stroke-linejoin:round}.sl-icon-accent{fill:none;stroke:#2cff9b;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}.sl-icon-dot{fill:#2cff9b}',
       '</style></defs>',
       '<rect width="' + width + '" height="' + height + '" class="bg"/>',
-      '<rect x="24" y="22" width="712" height="404" rx="18" class="panel"/>',
+      '<rect x="24" y="22" width="712" height="384" rx="18" class="panel"/>',
       '<text x="380" y="54" text-anchor="middle" class="title">Power / Thermal Infrastructure Envelope</text>',
       '<text x="380" y="74" text-anchor="middle" class="sub">Rack watts, circuit loading, and cooling pressure vs available limits</text>',
       '<rect x="632" y="36" width="64" height="28" rx="4" fill="' + colors.fill + '" stroke="' + colors.stroke + '"/>',
@@ -1746,43 +1759,57 @@ function renderStorageIopsCapacityEnvelope(options) {
       '<rect x="' + plot.x + '" y="' + plot.y + '" width="' + plot.w + '" height="' + Math.max(0, yWatch - plot.y).toFixed(1) + '" class="zone-risk"/>',
       '<rect x="' + plot.x + '" y="' + yWatch.toFixed(1) + '" width="' + plot.w + '" height="' + Math.max(0, yGood - yWatch).toFixed(1) + '" class="zone-watch"/>',
       '<rect x="' + plot.x + '" y="' + yGood.toFixed(1) + '" width="' + plot.w + '" height="' + Math.max(0, plot.y + plot.h - yGood).toFixed(1) + '" class="zone-good"/>',
-      grid,
+      gridLines,
       '<path d="M' + plot.x + ' ' + plot.y + ' V' + (plot.y + plot.h) + '" class="axis"/>',
       '<path d="M' + plot.x + ' ' + (plot.y + plot.h) + ' H' + (plot.x + plot.w) + '" class="axis"/>',
       '<text x="38" y="66" class="axis-label">UTIL %</text>',
-      '<text x="' + (plot.x + plot.w / 2) + '" y="342" text-anchor="middle" class="axis-label">Infrastructure planning checkpoints</text>',
-      '<text x="' + (plot.x + 12) + '" y="' + (yLimit - 7).toFixed(1) + '" text-anchor="start" class="limit-label">100% usable limit</text>',
-      '<path d="' + curve + '" class="curve-shadow"/>',
-      '<path d="' + curve + '" class="curve-line"/>',
-      pointMarkup,
-      '<path d="M710 ' + y(maxPct).toFixed(1) + ' H734 V' + y(100).toFixed(1) + ' H710" class="bracket-line"/>',
-      '<text x="724" y="' + Math.max(plot.y + 24, Math.min(y(maxPct), y(100)) - 18).toFixed(1) + '" text-anchor="middle" class="bracket-text">' + esc(bracketLabel) + '</text>',
-      '<text x="380" y="356" text-anchor="middle" class="dominant">Primary limiter: ' + dominant + '</text>',
-      footerStat(58, "power", "Modeled", fmtWatts(totalW), 150),
-      footerStat(214, "power", "Rack Limit", fmtWatts(rackLimitW), 150),
-      footerStat(370, "circuit", "Circuit", circuitUsed.toFixed(1) + " / " + circuitLimit.toFixed(0) + " A", 150),
+      '<text x="' + (plot.x + plot.w / 2) + '" y="348" text-anchor="middle" class="axis-label">Infrastructure planning checkpoints</text>',
+      '<text x="' + (plot.x + plot.w - 10) + '" y="' + (plot.y + 14).toFixed(1) + '" text-anchor="end" class="zone-text risk-text">RISK</text>',
+      '<text x="' + (plot.x + plot.w - 10) + '" y="' + (yWatch + 14).toFixed(1) + '" text-anchor="end" class="zone-text watch-text">WATCH</text>',
+      '<text x="' + (plot.x + plot.w - 10) + '" y="' + (yGood + 14).toFixed(1) + '" text-anchor="end" class="zone-text good-text">GOOD</text>',
+      '<path d="M' + plot.x + ' ' + yLimitRail.toFixed(1) + ' H' + (plot.x + plot.w) + '" class="grid-major"/><text x="' + (plot.x + plot.w - 12) + '" y="' + (yLimitRail - 8).toFixed(1) + '" text-anchor="end" class="limit-label">100% usable limit</text>',
+      '<path d="' + curvePath + '" class="curve-shadow"/>',
+      '<path d="' + curvePath + '" class="curve-line"/>',
+      '<path d="M' + stageX.circuit.toFixed(1) + ' ' + yCircuit.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="drop-line"/>',
+      '<path d="M' + stageX.cooling.toFixed(1) + ' ' + yCooling.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="drop-line"/>',
+      '<path d="M' + stageX.limit.toFixed(1) + ' ' + yLimitPoint.toFixed(1) + ' V' + (plot.y + plot.h) + '" class="drop-line"/>',
+      markerPoint(stageX.rack, yRack, "marker-rack", "RACK *1", Math.round(rackPct) + "%", -36),
+      markerPoint(stageX.circuit, yCircuit, "marker-circuit", "CIRCUIT *2", Math.round(circuitPct) + "%", -44),
+      markerPoint(stageX.cooling, yCooling, "marker-cooling", "COOLING *3", Math.round(coolingPct) + "%", -48),
+      markerPoint(stageX.limit, yLimitPoint, "marker-limit", "LIMIT *4", Math.round(limitPct) + "%", -54),
+      '<text x="' + stageX.rack.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">rack</text>',
+      '<text x="' + stageX.circuit.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">circuit</text>',
+      '<text x="' + stageX.cooling.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">cooling</text>',
+      '<text x="' + stageX.limit.toFixed(1) + '" y="' + (plot.y + plot.h + 18) + '" text-anchor="middle" class="tick">limit</text>',
+      '<path d="M' + (plot.x + plot.w - 24).toFixed(1) + ' ' + gapTop.toFixed(1) + ' H' + (plot.x + plot.w - 8).toFixed(1) + '" class="bracket-line"/><path d="M' + (plot.x + plot.w - 24).toFixed(1) + ' ' + gapBottom.toFixed(1) + ' H' + (plot.x + plot.w - 8).toFixed(1) + '" class="bracket-line"/><path d="M' + (plot.x + plot.w - 10).toFixed(1) + ' ' + gapTop.toFixed(1) + ' V' + gapBottom.toFixed(1) + '" class="bracket-line"/><text x="' + (plot.x + plot.w - 1).toFixed(1) + '" y="' + (gapTextY - 7).toFixed(1) + '" class="bracket-text" text-anchor="start"><tspan x="' + (plot.x + plot.w - 1).toFixed(1) + '" dy="0">' + esc(gapLabel) + '</tspan><tspan x="' + (plot.x + plot.w - 1).toFixed(1) + '" dy="14">' + esc(gapValue) + '</tspan></text>',
+      footerStat(58, "power", "Modeled", fmtKw(totalW), 150),
+      footerStat(214, "power", "Rack Limit", fmtKw(rackLimitW), 150),
+      footerStat(370, "circuit", "Circuit", circuitUsed.toFixed(1) + " / " + circuitLimit.toFixed(0) + " A", 162),
       footerStat(538, "cooling", "Cooling", coolingUsed.toFixed(2) + " / " + coolingLimit.toFixed(1) + " t", 166),
       '</svg>'
     ].join("");
   }
 
   function renderPowerThermalCapacityEnvelope(target, result) {
-    var mount = target && target.mount ? target.mount : (typeof target === "string" ? document.getElementById(target) : target);
-    var payload = target && target.result ? target.result : result;
+    var mount = target && target.nodeType ? target : target && target.mount;
+    var payload = target && target.nodeType ? result : target && (target.result || target.data || target);
     if (!mount) return false;
     mount.innerHTML = buildPowerThermalCapacityEnvelopeSvg(payload || {});
     return true;
   }
 
-  var originalBuild = typeof api.buildCapacityEnvelopeSvg === "function" ? api.buildCapacityEnvelopeSvg : null;
-  api.buildCapacityEnvelopeSvg = function buildCapacityEnvelopeSvg(config) {
-    config = config || {};
-    var type = String(config.type || config.tool || "").toLowerCase();
+  var previousBuildCapacityVisualSvg = api.buildCapacityVisualSvg;
+  api.buildCapacityVisualSvg = function (config) {
+    var type = String(config && (config.type || config.tool || config.visualType) || "").toLowerCase();
     if (type === "power-thermal") {
       return buildPowerThermalCapacityEnvelopeSvg(config.result || config.data || config);
     }
-    return originalBuild ? originalBuild.apply(this, arguments) : "";
+    if (typeof previousBuildCapacityVisualSvg === "function") {
+      return previousBuildCapacityVisualSvg.apply(this, arguments);
+    }
+    return "";
   };
+
   api.buildPowerThermalCapacityEnvelopeSvg = buildPowerThermalCapacityEnvelopeSvg;
   api.renderPowerThermalCapacityEnvelope = renderPowerThermalCapacityEnvelope;
   window.ScopedLabsComputeCapacityVisuals = api;
