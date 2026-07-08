@@ -36,6 +36,21 @@ check("POWER_THERMAL_VISUAL_ASSET_CACHE_BUST", src.html.includes("scopedlabs-com
 check("POWER_THERMAL_SCRIPT_VISUAL_REFS", src.script.includes('powerThermalVisualCard: $("computePowerThermalVisualCard")') && src.script.includes('powerThermalVisual: $("computePowerThermalVisual")'), "Script should keep visual card and mount refs.");
 check("POWER_THERMAL_SCRIPT_RENDER_CLEAR", src.script.includes("function renderPowerThermalCapacityVisual") && src.script.includes("visuals.renderPowerThermalCapacityEnvelope") && src.script.includes("function clearPowerThermalCapacityVisual") && src.script.includes("clearPowerThermalCapacityVisual();"), "Script should render and clear the shared visual.");
 check("POWER_THERMAL_SUMMARY_VM_DENSITY_STYLE", src.assistant.includes("<h3>POWER / THERMAL</h3>") && src.assistant.includes("Recommendation") && src.assistant.includes("Confidence") && src.assistant.includes("Decision Flags") && src.assistant.includes("Primary Risk") && src.assistant.includes("Carry this Power / Thermal result into Compute Summary"), "Power / Thermal Result Summary should follow the VM Density summary-card rhythm.");
+check("POWER_THERMAL_SUMMARY_INDEPENDENT_VM_DENSITY_STYLE", (() => {
+  const markerAt = src.assistant.indexOf("compute-assistant-power-thermal-independent-renderers-0708");
+  const start = markerAt >= 0 ? src.assistant.indexOf("api.renderPowerThermalSummaryCard", markerAt) : -1;
+  const end = start >= 0 ? src.assistant.indexOf("api.renderPowerThermalRecommendationReferences", start) : -1;
+  const block = start >= 0 && end > start ? src.assistant.slice(start, end) : "";
+  return block.includes('data-power-thermal-summary-vm-density-rhythm="0708"') &&
+    block.includes("<h3>POWER / THERMAL</h3>") &&
+    block.includes("Recommendation") &&
+    block.includes("Confidence") &&
+    block.includes("Decision Flags") &&
+    block.includes("Primary Risk") &&
+    !block.includes("Modeled Load") &&
+    !block.includes("Heat Load") &&
+    !block.includes("Cooling Demand");
+})(), "Independent Power / Thermal summary renderer should copy the VM Density summary rhythm, not the metric-grid summary.");
 check("POWER_THERMAL_ASSISTANT_INDEPENDENT_RENDERERS", src.assistant.includes("compute-assistant-power-thermal-independent-renderers-0708") && src.assistant.includes("api.renderPowerThermalSummaryCard = function renderPowerThermalSummaryCard") && src.assistant.includes("api.renderPowerThermalRecommendationReferences = function renderPowerThermalRecommendationReferences") && src.assistant.includes("api.renderPowerThermalRecommendedActions = function renderPowerThermalRecommendedActions") && src.assistant.includes("api.renderPowerThermalDecisionSchedule = function renderPowerThermalDecisionSchedule") && src.assistant.includes("window.ScopedLabsComputeAssistant = api;"), "Power / Thermal assistant proof stack should be exported from an independent VM Density-style IIFE.");
 check("POWER_THERMAL_SCRIPT_RENDER_ORDER", (() => {
   const start = src.script.indexOf("function renderPowerThermalSharedOutput(result)");
