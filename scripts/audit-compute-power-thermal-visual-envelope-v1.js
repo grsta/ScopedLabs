@@ -43,6 +43,8 @@ check("POWER_THERMAL_SCRIPT_RENDER_ORDER", (() => {
 check("POWER_THERMAL_DUPLICATE_INPUT_REFS_REMOVED", src.script.indexOf('rackKw: $("rackKw")') === src.script.lastIndexOf('rackKw: $("rackKw")') && src.script.indexOf('if (els.rackKw) els.rackKw.value = 5;') === src.script.lastIndexOf('if (els.rackKw) els.rackKw.value = 5;'), "Visual lane should clean duplicate Power / Thermal input refs/reset assignments.");
 check("POWER_THERMAL_VISUAL_MODULE_MAP", src.map.includes("COMPUTE_POWER_THERMAL_VISUAL_ENVELOPE_0708") && src.map.includes("buildPowerThermalCapacityEnvelopeSvg") && src.map.includes("renderPowerThermalCapacityEnvelope"), "Module map should record Power / Thermal visual ownership.");
 
+check("POWER_THERMAL_LEGACY_ANALYZER_SUPPRESSED", src.html.includes('data-power-thermal-internal-ledger="0708"') && src.script.includes("function hidePowerThermalLegacyAnalyzer") && src.script.includes("chartWrapRef.current.style.display = \"none\"") && src.script.includes("hidePowerThermalLegacyAnalyzer();"), "Legacy analyzer Results/chart should be hidden behind an internal ledger after the shared visual is wired.");
+
 const failed = results.filter((result) => !result.pass);
 console.log("");
 console.log("Compute Power / Thermal visual envelope audit: " + (results.length - failed.length) + " passed / " + failed.length + " failed");

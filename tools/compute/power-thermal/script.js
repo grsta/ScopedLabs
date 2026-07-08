@@ -208,12 +208,28 @@
     }
     return true;
   }
+
+  function hidePowerThermalLegacyAnalyzer() {
+    const legacyCard = els.results && typeof els.results.closest === "function" ? els.results.closest(".card") : null;
+    if (legacyCard) {
+      legacyCard.hidden = true;
+      legacyCard.setAttribute("hidden", "");
+      legacyCard.setAttribute("data-power-thermal-internal-ledger", "0708");
+      legacyCard.style.display = "none";
+    }
+    if (chartWrapRef.current) {
+      chartWrapRef.current.hidden = true;
+      chartWrapRef.current.style.display = "none";
+    }
+  }
+
   function renderPowerThermalSharedOutput(result) {
     const assistant = window.ScopedLabsComputeAssistant || window.ScopedLabsComputeAssistantContract || {};
     if (typeof assistant.renderPowerThermalSummaryCard === "function") {
       showPowerThermalCard(els.powerThermalSummaryCard, els.powerThermalSummary, assistant.renderPowerThermalSummaryCard(result));
     }
     renderPowerThermalCapacityVisual(result);
+    hidePowerThermalLegacyAnalyzer();
     if (typeof assistant.renderPowerThermalRecommendationReferences === "function") {
       showPowerThermalCard(els.powerThermalReferencesCard, els.powerThermalReferences, assistant.renderPowerThermalRecommendationReferences(result));
     }
@@ -428,24 +444,7 @@
       status: analyzer.status,
       interpretation,
       dominantConstraint,
-      guidance,
-      chart: {
-        labels: metrics.map((m) => m.label),
-        values: metrics.map((m) => m.value),
-        displayValues: metrics.map((m) => m.displayValue),
-        referenceValue: 65,
-        healthyMax: 65,
-        watchMax: 85,
-        axisTitle: "Power & Thermal Stress Magnitude",
-        referenceLabel: "Healthy Margin Floor",
-        healthyLabel: "Healthy",
-        watchLabel: "Watch",
-        riskLabel: "Risk",
-        chartMax: Math.max(
-          120,
-          Math.ceil(Math.max(...metrics.map((m) => m.value), 85) * 1.08)
-        )
-      }
+      guidance
     });
 
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
