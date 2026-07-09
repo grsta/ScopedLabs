@@ -143,6 +143,16 @@ check(
 );
 
 check(
+  "POWER_THERMAL_KB_CLEANUP_SHELL_CONTRACT",
+  html.includes('/assets/help.js?v=help-026') &&
+    html.includes('/assets/scopedlabs-compute-shell-contract.js?v=compute-shell-power-thermal-kb-cleanup-0709') &&
+    html.indexOf('/assets/help.js?v=help-026') < html.indexOf('/assets/scopedlabs-compute-shell-contract.js?v=compute-shell-power-thermal-kb-cleanup-0709'),
+  "Power / Thermal should mirror Storage Throughput by loading the Compute shell contract after help.js so shared KB pill cleanup owns the Knowledge Base label."
+);
+
+
+
+check(
   "POWER_THERMAL_RESET_CLEARS_SHARED_STACK",
   html.includes("./script.js?v=compute-power-thermal-visual-envelope-0708-reset-stack-0709") &&
     script.includes("power-thermal-reset-lifecycle-0709") &&
