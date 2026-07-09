@@ -275,7 +275,67 @@
       return null;
     }
   }
+
+  // power-thermal-reset-lifecycle-0709
+  function clearPowerThermalSubmittedStack0709() {
+    currentPowerThermalExportResult = null;
+
+    if (typeof clearPowerThermalCapacityVisual === "function") {
+      clearPowerThermalCapacityVisual();
+    }
+
+    [
+      els.powerThermalSummaryCard,
+      els.powerThermalVisualCard,
+      els.powerThermalReferencesCard,
+      els.powerThermalActionsCard,
+      els.powerThermalDecisionScheduleCard,
+      $("computePowerThermalSummaryCard"),
+      $("computePowerThermalVisualCard"),
+      $("computePowerThermalReferencesCard"),
+      $("computePowerThermalRecommendationReferencesCard"),
+      $("computePowerThermalActionsCard"),
+      $("computePowerThermalRecommendedActionsCard"),
+      $("computePowerThermalDecisionScheduleCard")
+    ].forEach(function (card) {
+      if (!card) return;
+      card.hidden = true;
+      card.setAttribute("hidden", "");
+      card.style.display = "";
+    });
+
+    [
+      els.powerThermalSummary,
+      els.powerThermalVisual,
+      els.powerThermalReferences,
+      els.powerThermalActions,
+      els.powerThermalDecisionSchedule,
+      $("computePowerThermalSummary"),
+      $("computePowerThermalVisual"),
+      $("computePowerThermalReferences"),
+      $("computePowerThermalRecommendationReferences"),
+      $("computePowerThermalActions"),
+      $("computePowerThermalRecommendedActions"),
+      $("computePowerThermalDecisionSchedule")
+    ].forEach(function (mount) {
+      if (mount) mount.innerHTML = "";
+    });
+
+    ["exportReport", "saveSnapshot", "continue"].forEach(function (id) {
+      const btn = $(id);
+      if (btn) btn.disabled = true;
+    });
+
+    const exportStatus = $("exportStatus");
+    if (exportStatus) exportStatus.textContent = "";
+
+    if (els.continueWrap) {
+      els.continueWrap.style.display = "none";
+    }
+  }
+
   function invalidate() {
+    clearPowerThermalSubmittedStack0709();
     try {
       sessionStorage.removeItem(FLOW_KEYS[STEP]);
       sessionStorage.removeItem(FLOW_KEYS["raid-rebuild-time"]);

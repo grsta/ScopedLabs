@@ -142,6 +142,24 @@ check(
   "Power / Thermal export card should match Storage Throughput report metadata, assistant export, and user notes asset contract."
 );
 
+check(
+  "POWER_THERMAL_RESET_CLEARS_SHARED_STACK",
+  html.includes("./script.js?v=compute-power-thermal-visual-envelope-0708-reset-stack-0709") &&
+    script.includes("power-thermal-reset-lifecycle-0709") &&
+    script.includes("function clearPowerThermalSubmittedStack0709") &&
+    script.includes("clearPowerThermalSubmittedStack0709();") &&
+    script.includes("currentPowerThermalExportResult = null") &&
+    script.includes("clearPowerThermalCapacityVisual();") &&
+    script.includes("computePowerThermalVisualCard") &&
+    script.includes("computePowerThermalRecommendationReferencesCard") &&
+    script.includes("computePowerThermalRecommendedActionsCard") &&
+    script.includes("computePowerThermalDecisionScheduleCard") &&
+    !script.includes("power-thermal-action-delegate-final-0709"),
+  "Reset and input invalidation should clear the submitted shared stack without alternate click delegation."
+);
+
+
+
 
 console.log("");
 console.log("Compute Power / Thermal planning shell audit: " + pass + " passed / " + fail + " failed");
