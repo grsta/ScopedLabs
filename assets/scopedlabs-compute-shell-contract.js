@@ -1088,7 +1088,7 @@ function computeWorkloadToolLabelFromPage() {
     if (!document.body || document.body.getAttribute('data-step') !== 'storage-throughput') return;
     injectStyle();
     hideKbPill(findStorageThroughputKbCard());
-    placeStorageThroughputWorkflowCard();
+    // storage-throughput-active-workflow-0709b: legacy 0705 renderer disabled; promoted 0706/strict singleton owns the card.
     normalizePlanningInputsTitle();
   }
 
@@ -1649,4 +1649,120 @@ function computeWorkloadToolLabelFromPage() {
   }
 
   window.addEventListener("pageshow", scheduleStorageThroughputWorkflowDedupe);
+})();
+
+
+// compute-shell-storage-throughput-active-workflow-strict-singleton-0709b
+(function () {
+  if (window.__ScopedLabsStorageThroughputActiveWorkflowStrictSingleton0709b) return;
+  window.__ScopedLabsStorageThroughputActiveWorkflowStrictSingleton0709b = true;
+
+  var STYLE_ID = "scopedlabs-storage-throughput-active-workflow-strict-singleton-0709b";
+
+  function isStorageThroughputPage() {
+    return !!(document.body && document.body.getAttribute("data-step") === "storage-throughput");
+  }
+
+  function textOf(el) {
+    return (el && el.textContent ? el.textContent : "").replace(/\s+/g, " ").trim();
+  }
+
+  function injectStrictSingletonStyle() {
+    if (!isStorageThroughputPage() || document.getElementById(STYLE_ID)) return;
+
+    var style = document.createElement("style");
+    style.id = STYLE_ID;
+    style.textContent = [
+      'body[data-step="storage-throughput"] [data-storage-throughput-active-workflow-card="0705"] { display: none !important; visibility: hidden !important; }',
+      'body[data-step="storage-throughput"] [data-storage-throughput-active-workflow-duplicate-removed="0709b"] { display: none !important; visibility: hidden !important; }'
+    ].join("\n");
+
+    document.head.appendChild(style);
+  }
+
+  function addUnique(list, node) {
+    if (!node) return;
+    var card = node.closest && node.closest(".card") ? node.closest(".card") : node;
+    if (card && list.indexOf(card) === -1) list.push(card);
+  }
+
+  function looksLikeStorageThroughputWorkflow(card) {
+    if (!card) return false;
+
+    if (
+      card.getAttribute("data-storage-throughput-active-workflow-card") ||
+      card.getAttribute("data-storage-throughput-active-workflow-singleton") ||
+      card.classList.contains("storage-throughput-active-workflow-card") ||
+      card.getAttribute("data-compute-planner-routing-context") === "storage-throughput-0706"
+    ) {
+      return true;
+    }
+
+    var text = textOf(card).toLowerCase();
+    return (
+      (text.indexOf("active workflow") >= 0 || text.indexOf("active workload") >= 0) &&
+      text.iif (card.getAttribute("data-compute-planner-routing-context") === "storage-throughput-0706") score += 80;
+    if (card.getAttribute("data-storage-throughput-active-workflow-singleton") === "0709") score += 60;
+    if (card.getAttribute("data-compute-shell-owned-active-workflow")) score += 40;
+    if (card.classList.contains("storage-throughput-active-workflow-card")) score += 20;
+    if (card.getAttribute("data-storage-throughput-active-workflow-card") === "0705") score -= 100;
+
+    return score;
+  }
+
+  function strictDedupeStorageThroughputWorkflowCards() {
+    if (!isStorageThroughputPage()) return;
+
+    injectStrictSingletonStyle();
+
+    var cards = collectStorageThroughputWorkflowCards();
+    if (cards.length <= 1) {
+      if (cards[0]) cards[0].setAttribute("data-storage-throughput-active-workflow-strict-singleton", "0709b");
+      return;
+    }
+
+    cards.sort(function (a, b) {
+      return scoreWorkflowCard(b) - scoreWorkflowCard(a);
+    });
+
+    var keep = cards[0];
+
+    cards.forEach(function (card) {
+      if (card === keep) return;
+
+      card.setAttribute("data-storage-throughput-active-workflow-duplicate-removed", "0709b");
+
+      if (card.parentNode) {
+        card.parentNode.removeChild(card);
+      }
+    });
+
+    keep.hidden = false;
+    keep.removeAttribute("hidden");
+    keep.style.display = "";
+    keep.style.visibility = "";
+    keep.setAttribute("data-storage-throughput-active-workflow-strict-singleton", "0709b");
+  }
+
+  function scheduleStrictStorageThroughputWorkflowDedupe() {
+    [0, 50, 150, 300, 700, 1200, 2000, 4000, 7000, 10000, 15000, 25000].forEach(function (delay) {
+      window.setTimeout(strictDedupeStorageThroughputWorkflowCards, delay);
+    });
+
+    var runs = 0;
+    var timer = window.setInterval(function () {
+      strictDedupeStorageThroughputWorkflowCards();
+      runs += 1;
+      if (runs >= 30) window.clearInterval(timer);
+    }, 1000);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", scheduleStrictStorageThroughputWorkflowDedupe);
+  } else {
+    scheduleStrictStorageThroughputWorkflowDedupe();
+  }
+
+  window.addEventListener("load", scheduleStrictStorageThroughputWorkflowDedupe);
+  window.addEventListener("pageshow", scheduleStrictStorageThroughputWorkflowDedupe);
 })();

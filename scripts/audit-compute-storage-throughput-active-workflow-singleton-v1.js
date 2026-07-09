@@ -17,14 +17,38 @@ function check(label, ok, message) {
   }
 }
 
-const marker = "compute-shell-storage-throughput-active-workflow-singleton-0709";
-const markerAt = shell.indexOf(marker);
-const singletonBlock = markerAt >= 0 ? shell.slice(markerAt) : "";
+const strictMarker = "compute-shell-storage-throughput-active-workflow-strict-singleton-0709b";
+const strictAt = shell.indexOf(strictMarker);
+const strictBlock = strictAt >= 0 ? shell.slice(strictAt) : "";
 
 check(
-  "STORAGE_THTORAGE_THROUGHPUT_ACTIVE_WORKFLOW_MODULE_MAP",
-  moduleMap.includes("COMPUTE_STORAGE_THROUGHPUT_ACTIVE_WORKFLOW_SINGLETON_0709"),
-  "Module map should document the Storage Throughput Active Workflow singleton guard."
+  "STORAGE_THROUGHPUT_ACTIVE_WORKFLOW_LEGACY_0705_DISABLED",
+  shell.includes("storage-throughput-active-workflow-0709b: legacy 0705 renderer disabled") &&
+    !/^\s*placeStorageThroughputWorkflowCard\(\);/m.test(shell),
+  "Legacy 0705 Storage Throughput Active Workflow renderer should not create a second card."
+);
+
+check(
+  "STORAGE_THROUGHPUT_ACTIVE_WORKFLOW_STRICT_SINGLETON",
+  shell.includes(strictMarker) &&
+    shell.includes("strictDedupeStorageThroughputWorkflowCards") &&
+    shell.includes("collectStorageThroughputWorkflowCards") &&
+    shell.includes("scoreWorkflowCard") &&
+    shell.includes('data-storage-throughput-active-workflow-strict-singleton", "0709b"') &&
+    html.includes("/assets/scopedlabs-compute-shell-contract.js?v=compute-shell-storage-throughput-active-workflow-strict-singleton-0709b"),
+  "Storage Throughput should enforce one Active Workflow card after older render paths run."
+);
+
+check(
+  "STORAGE_THROUGHPUT_ACTIVE_WORKFLOW_NO_OBSERVER_RECURSION",
+  strictBlock && !strictBlock.includes("MutationObserver"),
+  "Strict singleton guard should avoid MutationObserver recursion."
+);
+
+check(
+  "STORAGE_THROUGHPUT_ACTIVE_WORKFLOW_MODULE_MAP",
+  moduleMap.includes("COMPUTE_STORAGE_THROUGHPUT_ACTIVE_WORKFLOW_STRICT_SINGLETON_0709B"),
+  "Module map should document the strict singleton guard."
 );
 
 console.log("");

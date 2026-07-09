@@ -1672,3 +1672,6 @@ Promotion note:
 
 
 - COMPUTE_STORAGE_THROUGHPUT_ACTIVE_WORKFLOW_SINGLETON_0709 — Shared Compute shell contract keeps Storage Throughput to one Active Workflow card when legacy 0705, promoted 0706, or restored static planner-card paths overlap. Audit: scripts/audit-compute-storage-throughput-active-workflow-singleton-v1.js.
+
+
+- COMPUTE_STORAGE_THROUGHPUT_ACTIVE_WORKFLOW_STRICT_SINGLETON_0709B — Shared Compute shell contract disables the legacy Storage Throughput 0705 Active Workflow renderer and enforces one 0706-era Active Workflow card without MutationObserver recursion. Audit: scripts/audit-compute-storage-throughput-active-workflow-singleton-v1.js.
