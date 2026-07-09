@@ -80,6 +80,12 @@
       }
     }
   </style>
+  <style data-power-thermal-square-cta-style-0709>
+    body[data-step="power-thermal"] main[data-sl-square-ctas="true"] .btn,
+    body[data-step="power-thermal"] main[data-sl-square-ctas="true"] .compute-export-card .btn {
+      border-radius: 8px !important;
+    }
+  </style>
 </head>
 
 <body data-tier="pro" data-category="compute" data-step="power-thermal" data-lane="v1" data-compute-tool-shell="power-thermal-planning-shell-0707" data-power-thermal-visual-envelope="0708">
@@ -110,14 +116,8 @@
     </div>
   </header>
 
-  <main class="container page">
-    <div class="crumbs">
-      <a href="/tools/">Tools</a>
-      <span class="sep">/</span>
-      <a href="/tools/compute/">Compute</a>
-      <span class="sep">/</span>
-      <span>Power &amp; Thermal</span>
-    </div>    <h1>Compute Power &amp; Thermal</h1>
+  <main class="container page" data-sl-square-ctas="true" data-power-thermal-top-chrome-cleanup="0709">
+    <h1>Compute Power &amp; Thermal</h1>
 
     <div id="pipeline"></div>    <div id="flow-note" class="flow-note" hidden></div>
 
