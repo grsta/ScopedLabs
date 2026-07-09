@@ -1669,3 +1669,6 @@ Promotion note:
 
 
 - COMPUTE_CAPACITY_GENERIC_FOOTER_CHIP_ROW_0708: Promotes shared Compute Capacity Visuals footer-chip row helpers so capacity envelope tools can render auto-spaced 4, 5, or larger chip rows without hardcoded x positions. Adds `buildCapacityFooterChip`, `buildCapacityFooterChipRow`, and `buildCapacityGapFooterChip`. First consumer: Power / Thermal Infrastructure Envelope `Gap *5` chip. Owner: `assets/scopedlabs-compute-capacity-visuals.js`; guardrail: `scripts/audit-compute-power-thermal-visual-envelope-v1.js`.
+
+
+- COMPUTE_STORAGE_THROUGHPUT_ACTIVE_WORKFLOW_SINGLETON_0709 — Shared Compute shell contract keeps Storage Throughput to one Active Workflow card when legacy 0705, promoted 0706, or restored static planner-card paths overlap. Audit: scripts/audit-compute-storage-throughput-active-workflow-singleton-v1.js.
