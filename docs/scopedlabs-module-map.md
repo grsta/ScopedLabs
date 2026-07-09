@@ -1669,3 +1669,6 @@ Promotion note:
 
 
 - COMPUTE_CAPACITY_GENERIC_FOOTER_CHIP_ROW_0708: Promotes shared Compute Capacity Visuals footer-chip row helpers so capacity envelope tools can render auto-spaced 4, 5, or larger chip rows without hardcoded x positions. Adds `buildCapacityFooterChip`, `buildCapacityFooterChipRow`, and `buildCapacityGapFooterChip`. First consumer: Power / Thermal Infrastructure Envelope `Gap *5` chip. Owner: `assets/scopedlabs-compute-capacity-visuals.js`; guardrail: `scripts/audit-compute-power-thermal-visual-envelope-v1.js`.
+
+
+- COMPUTE_POWER_THERMAL_ACTIVE_WORKFLOW_CARD_0709 — Shared Compute shell contract renders the Power / Thermal Active Workflow card after the KB guide, mirroring Storage Throughput and VM Density planner-card ownership.

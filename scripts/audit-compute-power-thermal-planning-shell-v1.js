@@ -145,10 +145,30 @@ check(
 check(
   "POWER_THERMAL_KB_CLEANUP_SHELL_CONTRACT",
   html.includes('/assets/help.js?v=help-026') &&
-    html.includes('/assets/scopedlabs-compute-shell-contract.js?v=compute-shell-power-thermal-kb-cleanup-0709') &&
-    html.indexOf('/assets/help.js?v=help-026') < html.indexOf('/assets/scopedlabs-compute-shell-contract.js?v=compute-shell-power-thermal-kb-cleanup-0709'),
+    html.includes('/assets/scopedlabs-compute-shell-contract.js?v=compute-shell-power-thermal-active-workflow-0709') &&
+    html.indexOf('/assets/help.js?v=help-026') < html.indexOf('/assets/scopedlabs-compute-shell-contract.js?v=compute-shell-power-thermal-active-workflow-0709'),
   "Power / Thermal should mirror Storage Throughput by loading the Compute shell contract after help.js so shared KB pill cleanup owns the Knowledge Base label."
 );
+
+check(
+  "POWER_THERMAL_ACTIVE_WORKFLOW_SHELL_OWNER",
+  (() => {
+    return html.includes('/assets/scopedlabs-compute-shell-contract.js?v=compute-shell-power-thermal-active-workflow-0709') &&
+      shell.includes("compute-shell-power-thermal-active-workflow-0709") &&
+      shell.includes("power-thermal-active-workflow-card") &&
+      shell.includes('card.setAttribute("data-power-thermal-active-workflow-card", "0709")') &&
+      shell.includes('card.setAttribute("data-compute-shell-owned-active-workflow", "0709")') &&
+      shell.includes('card.setAttribute("data-compute-planner-routing-context", "power-thermal-0709")') &&
+      shell.includes('State.buildWorkloadDisplayContext("Power / Thermal")') &&
+      shell.includes("findPowerThermalKbCard") &&
+      shell.includes("placePowerThermalWorkflowCard") &&
+      shell.includes("updatePowerThermalWorkflowCard") &&
+      map.includes("COMPUTE_POWER_THERMAL_ACTIVE_WORKFLOW_CARD_0709");
+  })(),
+  "Power / Thermal should have a shared shell-owned Active Workflow card matching the Storage Throughput/VM Density planner-card pattern."
+);
+
+
 
 
 
