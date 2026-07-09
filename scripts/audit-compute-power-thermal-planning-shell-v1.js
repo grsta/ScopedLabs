@@ -122,6 +122,27 @@ check(
   "Module map/procedure should be available as modernization source of truth."
 );
 
+check(
+  "POWER_THERMAL_THROUGHPUT_CHROME_PARITY",
+  !/tool-best-for|Best for:|pill-row|pill--pro|breadcrumb|breadcrumbs/i.test(html) &&
+    html.includes('<div id="pipeline"></div>') &&
+    html.includes('<div id="flow-note" class="flow-note" hidden></div>'),
+  "Power / Thermal should match Storage Throughput chrome: no best-for line, no Pro/export pills, and no breadcrumbs."
+);
+
+check(
+  "POWER_THERMAL_EXPORT_THROUGHPUT_PARITY",
+  html.includes('class="card compute-export-card"') &&
+    html.includes('<h3 class="h3" style="margin-top: 0;">Export Report</h3>') &&
+    html.includes('data-report-title="Report details"') &&
+    html.includes('data-report-fields="reportTitle,projectName,clientName,preparedBy,customNotes"') &&
+    html.includes('data-collapsed="true"') &&
+    html.includes('/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-002') &&
+    html.includes('/assets/scopedlabs-user-tool-notes.js?v=scopedlabs-user-tool-notes-001-compute-proof'),
+  "Power / Thermal export card should match Storage Throughput report metadata, assistant export, and user notes asset contract."
+);
+
+
 console.log("");
 console.log("Compute Power / Thermal planning shell audit: " + pass + " passed / " + fail + " failed");
 

@@ -117,28 +117,11 @@
       <a href="/tools/compute/">Compute</a>
       <span class="sep">/</span>
       <span>Power &amp; Thermal</span>
-    </div>
+    </div>    <h1>Compute Power &amp; Thermal</h1>
 
-    <div class="pill-row" style="margin-top: 6px;">
-      <span class="pill pill--pro">Pro Tier</span>
-    </div>
+    <div id="pipeline"></div>    <div id="flow-note" class="flow-note" hidden></div>
 
-    <h1>Compute Power &amp; Thermal</h1>
-
-    <div id="pipeline"></div>
-
-    <p class="tool-best-for">
-      <strong>Best for:</strong> validating rack power and cooling requirements before deployment.
-    </p>
-
-    <div id="flow-note" class="flow-note" hidden></div>
-
-    <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
-      <div class="pill-row">
-        <span class="pill pill--pro">Pro Tier</span>
-      </div>
-
-      <h2 class="h2">🔒 Locked</h2>
+    <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">      <h2 class="h2">🔒 Locked</h2>
       <p class="muted">This tool is included with Pro access for this category.</p>
 
       <p class="muted"><strong>What this models</strong></p>
@@ -258,11 +241,7 @@
     </section>
 
 <section class="card compute-export-card" style="margin-top: 14px; background: rgba(0,0,0,.14);" data-power-thermal-export-card="0707">
-        <div class="pill-row">
-          <span class="pill pill--pro">Documentation & Export</span>
-        </div>
-
-        <h3 class="h3" style="margin-top: 10px;">Export Report</h3>
+<h3 class="h3" style="margin-top: 0;">Export Report</h3>
         <p class="muted" style="margin-bottom: 0;">
           Add optional project context and generate a clean documentation view that can be printed or saved as a PDF for client or internal use.
         </p>
@@ -273,6 +252,8 @@
           data-report-title="Report details"
           data-report-copy="Optional metadata can be included in the generated report. Leave blank to use the default report naming."
           data-report-default-title="Compute Power & Thermal Assessment"
+          data-report-fields="reportTitle,projectName,clientName,preparedBy,customNotes"
+          data-collapsed="true"
         ></div>
 
         <div class="btn-row" style="margin-top: 14px;">
@@ -329,6 +310,8 @@
   <script src="/assets/export.js?v=shared-export-025-tool-notes-column-widths"></script>
 
   <script src="/assets/scopedlabs-compute-assistant-contract.js?v=compute-assistant-power-thermal-gap-chip-0708"></script>
+  <script src="/assets/scopedlabs-user-tool-notes.js?v=scopedlabs-user-tool-notes-001-compute-proof"></script>  <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-002"></script>
+
   <script src="/assets/scopedlabs-compute-capacity-visuals.js?v=scopedlabs-compute-capacity-visuals-037-generic-footer-chip-row"></script>
   <script src="/assets/scopedlabs-compute-plan-state.js?v=scopedlabs-compute-plan-state-007-workload-nav-links"></script>
   <script src="./script.js?v=compute-power-thermal-visual-envelope-0708"></script>
